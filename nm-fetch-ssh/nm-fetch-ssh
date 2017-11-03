@@ -1,0 +1,244 @@
+#!/bin/bash --
+
+# =============================================================================
+# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+# Government retains certain rights in this software.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+# Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
+# =============================================================================
+
+###############################################################################
+# This script will establish an SSH connection to a host and execute the
+# supplied commands.  The results of which are saved on the local machine.
+###############################################################################
+
+# Usage information
+PROGRAM_NAME=`basename "$0"`;
+read -r -d '' USAGE <<EOF
+Fetch data leveraging an SSH connection.
+
+Usage: $PROGRAM_NAME [options] [user@]hostname [command]
+
+Options:
+  -d [ --directory ] arg (=~/.fetch-ssh)  Location to store results.
+  -h [ --help ]                           Show this help message, then exit.
+  -i [ --infile ] arg                     File containing commands to execute.
+  -v [ --version ]                        Show version information, then exit.
+EOF
+
+# Version information
+read -r -d '' VERSION <<EOF
+${PROGRAM_NAME} (Netmeld)
+EOF
+
+
+parse_args_and_configure() {
+  local cmdFile="";
+  local saveDir="$(echo $HOME)/.fetch-ssh";
+  local targFile="";
+
+  local optSpec="d:hi:v-:";
+  while getopts "$optSpec" opt; do
+    case "$opt" in
+      -)
+        case "${OPTARG}" in
+          directory)
+            saveDir="${!OPTIND}";
+            OPTIND="$(($OPTIND+1))";
+          ;;
+          help)
+            echo "${USAGE}";
+            exit 0;
+          ;;
+          infile)
+            cmdFile="${!OPTIND}";
+            OPTIND="$(($OPTIND+1))";
+          ;;
+          version)
+            echo "${VERSION}";
+            exit 0;
+          ;;
+          *)
+            if [[ "$OPTERR" = 1 ]] && [[ "${optSpec:0:1}" != ":" ]]; then
+              (>&2 echo "${PROGRAM_NAME}: illegal option -- ${OPTARG}");
+              echo "${USAGE}";
+              exit 1;
+            fi;
+          ;;
+        esac;;
+      d)
+        saveDir="${OPTARG}";
+      ;;
+      \?|h)
+        echo "${USAGE}";
+        exit 0;
+      ;;
+      i)
+        cmdFile="${OPTARG}";
+      ;;
+      v)
+        echo "${VERSION}";
+        exit 0;
+      ;;
+      *)
+        if [[ "$OPTERR" != 1 ]] || [[ "${optSpec:0:1}" = ":" ]]; then
+          (>&2 echo "${PROGRAM_NAME}: illegal option -- ${OPTARG}");
+          echo "${USAGE}";
+          exit 1;
+        fi;
+      ;;
+    esac;
+  done;
+
+  # Skip past parsed args
+  shift "$((OPTIND-1))";
+
+  g_targetHost="$1"; shift;
+  if [[ "${g_targetHost}" = "" ]]; then
+    (>&2 echo "ERROR: No hosts provided, exiting");
+    exit 1;
+  fi;
+
+  build_cmd_list "${cmdFile}" "$@";
+  build_save_dir "${saveDir}";
+  
+}
+
+build_cmd_list() {
+  local cmdList="";
+  local cmdFile="$1"; shift;
+
+  # Add commands, file first then command line
+  if [[ "${cmdFile}" ]]; then
+    if [[ ! -e "${cmdFile}" ]]; then
+      (>&2 echo "ERROR: File ${cmdFile} does not exist");
+      exit 1;
+    fi;
+    
+    cmdList=$(sed -e 's/#.*$//g' -e '/^$/d' "${cmdFile}" |\
+                while IFS='' read -r cmd || [[ -n "$cmd" ]]; do
+                  echo "echo \"$cmd\"";
+                  echo "$cmd";
+                  echo "echo \"$g_delimiter\"";
+                done;);
+  fi;
+
+  # add commands from the rest of the command line
+  for cmd in "$@"; do
+    cmdList="${cmdList} echo $cmd; $cmd; echo $g_delimiter;";
+  done;
+
+  if [[ "${cmdList}" = "" ]]; then
+    (>&2 echo "WARNING: No commands provided, doing nothing");
+    exit 0;
+  fi;
+ 
+  g_commandList="${cmdList}";
+}
+
+build_save_dir() {
+  local targetDir="$1";
+
+  if [[ ! -d "${targetDir}" ]]; then
+    mkdir -p "${targetDir}";
+    chmod 700 "${targetDir}";
+  fi;
+  
+  local timestamp="$(date +%Y%m%dT%H%M%S.%N)";
+  local uuid="$(cat /proc/sys/kernel/random/uuid)";
+  targetDir="${targetDir}/${g_targetHost}_${timestamp}_${uuid}";
+  mkdir -p "${targetDir}";
+
+  g_saveDirectory="${targetDir}";
+}
+
+execute_cmds() {
+  save=$IFS;
+  IFS=$'\r\n';
+  g_results=($(ssh -t "${g_targetHost}" "${g_commandList}" | \
+               tee >(cat - >&5)\
+              )\
+            );
+  IFS=$save;
+}
+
+save_results() {
+  local filename="";
+  local nextCmd=0;
+  local data="";
+
+  # Define replacements for troublesome characters
+  local altSpace="_";
+  local altSlash="$(echo -e "\xe2\x88\x95")";
+
+  for line in "${g_results[@]}"; do
+    # Generally ignore/skip certain lines
+    if   [[ "$line" =~ "[sudo] password for" ]] \
+      || [[ "$line" = "Sorry, try again." ]]; then
+        continue;
+    fi;
+
+    # Process flag for next command
+    if [[ "0" = "$nextCmd" ]]; then
+      filename="${line// /${altSpace}}";
+      filename="${filename//\//${altSlash}}";
+      nextCmd=1;
+      continue;
+    fi;
+
+    if [[ "$line" = "$g_delimiter" ]]; then
+      local dataFile="${g_saveDirectory}/${filename}.log";
+      echo -n "${data}" > "${dataFile}";
+      chmod u=rX,g-rwx,o-rwx "${dataFile}";
+      nextCmd=0;
+      data="";
+      continue;
+    fi;
+
+    # only gets here if nothing else matches
+    data=${data}${line}$'\n';
+  done;
+
+  # Ensure saved data only accessible by owner and read-only
+  chmod -R u=rX,g-rwx,o-rwx "${g_saveDirectory}";
+  echo "${PROGRAM_NAME} results stored in: ${g_saveDirectory}";
+}
+
+# Main, script entry point
+{
+  # Globals
+  g_delimiter="netmeld-fetcher-delimiter";
+  g_commandList="";
+  g_targetHost="";
+  g_saveDirectory="";
+  g_results=();
+  
+  # Used to output to stdout as well as store a file, needed for sudo
+  exec 5>&1;
+
+  # Do work
+  parse_args_and_configure "$@";
+  execute_cmds;
+  save_results;
+
+  exit 0;
+}

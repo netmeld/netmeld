@@ -1,0 +1,762 @@
+#!/usr/bin/python --
+
+# =============================================================================
+# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+# Government retains certain rights in this software.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+# Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
+# =============================================================================
+
+################################################################################
+# Parser for Cisco devices (and other devices with Cisco-based syntax).
+################################################################################
+
+from __future__ import print_function
+
+from ciscoconfparse import *
+from datetime import datetime
+from ipaddr import *
+
+import argparse
+import psycopg2
+import psycopg2.extras
+import re
+import sys
+import uuid
+import os.path
+
+psycopg2.extras.register_inet()
+psycopg2.extras.register_uuid()
+
+
+class CiscoInterfaceSettings:
+    def __init__(self):
+        # Default interface settings.
+        self.description = None
+        self.is_up = True
+        self.is_cdp_enabled = True
+
+        # Default "switchport" settings.
+        self.mode = "L3"
+        self.port_security_is_enabled = False
+        self.port_security_max_mac_addrs = 1
+        self.port_security_violation_action = "shutdown"
+        self.port_security_is_mac_addr_sticky = False
+        self.port_security_learned_mac_addrs = set()
+
+        # Default "spanning-tree" settings.
+        self.is_portfast_enabled = False
+        self.is_bpduguard_enabled = False
+        self.is_bpdufilter_enabled = False
+
+# end: class CiscoInterfaceSettings.
+
+
+def parse_interface(settings_iface, iface, cisco_config):
+    # Inherit Port-Profile
+    inherit_port_profiles = iface.re_search_children(r"inherit port-profile ")
+    for inherit_port_profile in inherit_port_profiles:
+        m = re.match(r"^inherit port-profile (.+)",
+                     inherit_port_profile.text.strip())
+        if m:
+            profile_name = m.group(1)
+            print("Need to inherit '%s'" % (profile_name))
+            port_profiles = \
+                cisco_config.find_objects(r"^port-profile .*(%s)" %
+                                          profile_name)
+            for port_profile in port_profiles:
+                print("Inheriting '%s'" % (profile_name))
+                # Port profiles are disabled by default.
+                if ((not port_profile.has_child_with(r"no state enabled")) and
+                    (port_profile.has_child_with(r"state enabled"))):
+                    parse_interface(settings_iface, port_profile, cisco_config)
+
+    # Description
+    iface_descs = iface.re_search_children(r"description ")
+    for iface_desc in iface_descs:
+        m = re.match(r"^description (.+)",
+                     iface_desc.text.strip())
+        if m:
+            settings_iface.description = m.group(1)
+
+    # Shutdown
+    if iface.has_child_with(r"no shutdown"):
+        settings_iface.is_up = True
+    elif iface.has_child_with(r"shutdown"):
+        settings_iface.is_up = False
+
+    # CDP
+    if iface.has_child_with(r"no cdp enable"):
+        settings_iface.is_cdp_enabled = False
+    elif iface.has_child_with(r"cdp enable"):
+        settings_iface.is_cdp_enabled = True
+
+    # Switchport: Mode
+    switchport_modes = iface.re_search_children(r"switchport mode ")
+    if (1 < len(switchport_modes)):
+        print(("NOTICE: Interface %s has multiple" +
+               " \"switchport mode\" statements.") %
+              (interface_name),
+              file=sys.stderr)
+
+    for switchport_mode in switchport_modes:
+        settings_iface.mode = (
+            "L2 " +
+            re.match(r"^switchport mode (.+)",
+                     switchport_mode.text.strip()).group(1)
+            )
+
+    # Switchport: Port-Security
+    children = iface.re_search_children(r"switchport port-security")
+    for child in children:
+        line = child.text.strip()
+
+        if re.match(r"^no switchport port-security$", line):
+            settings_iface.port_security_is_enabled = False
+        elif re.match(r"^switchport port-security$", line):
+            settings_iface.port_security_is_enabled = True
+
+        m = re.match(r"^switchport port-security maximum (\d+)$", line)
+        if m:
+            settings_iface.port_security_max_mac_addrs = int(m.group(1))
+
+        m = re.match(r"^switchport port-security violation (\w+)$", line)
+        if m:
+            settings_iface.port_security_violation_action = m.group(1)
+
+        if re.match(r"^no switchport port-security mac-address sticky$", line):
+            settings_iface.port_security_is_mac_addr_sticky = False
+        elif re.match(r"^switchport port-security mac-address sticky$", line):
+            settings_iface.port_security_is_mac_addr_sticky = True
+
+        m = re.match(r"^switchport port-security mac-address sticky (%s)" %
+                     (re_mac_addr_cisco), line)
+        if m:
+            settings_iface.port_security_learned_mac_addrs.add(m.group(1))
+
+        m = re.match(r"^switchport port-security mac-address (%s)" %
+                     (re_mac_addr_cisco), line)
+        if m:
+            settings_iface.port_security_learned_mac_addrs.add(m.group(1))
+
+    # Spanning-Tree: BPDU Guard
+    if iface.has_child_with(r"no spanning-tree bpduguard"):
+        settings_iface.is_bpduguard_enabled = False
+    elif iface.has_child_with(r"spanning-tree bpduguard"):
+        settings_iface.is_bpduguard_enabled = True
+
+    # Spanning-Tree: BPDU Filter
+    if iface.has_child_with(r"no spanning-tree bpdufilter"):
+        settings_iface.is_bpdufilter_enabled = False
+    elif iface.has_child_with(r"spanning-tree bpdufilter"):
+        settings_iface.is_bpdufilter_enabled = True
+
+    # Spanning-Tree: Portfast
+    if iface.has_child_with(r"no spanning-tree portfast"):
+        settings_iface.is_portfast_enabled = False
+    elif iface.has_child_with(r"spanning-tree portfast"):
+        settings_iface.is_portfast_enabled = True
+
+# end: def parse_interface.
+
+def piped_input_file(input_file_path):
+    if os.path.isfile(input_file_path):
+        raise RuntimeError("File already exists: "+ input_file_path)
+        return
+    try:
+        with open(input_file_path, 'w') as f:
+            while True:
+                f.write(raw_input()+'\n')
+    except EOFError:
+        pass
+
+# end: def piped_input_file
+
+opts_parser = argparse.ArgumentParser(description=
+    "Import Cisco switch, router, or firewall configuration file.",
+    usage='%(prog)s [options] {input-file}')
+opts_parser.add_argument("--device-color", action="store",
+                         dest="device_color",
+                         help="Graph color of device.")
+opts_parser.add_argument("--device-type", action="store",
+                         dest="device_type",
+                         help="Type of device, determines graph icon.")
+opts_parser.add_argument("--ios-type", action="store",
+                         dest="ios_type", default="cisco",
+                         help="IOS type of config (default: cisco).")
+opts_parser.add_argument("--db-name", action="store",
+                         dest="dbname", default="site",
+                         help="Database to connect to (default: site).")
+opts_parser.add_argument("--device-id", action="store",
+                         dest="device_id", #default="",
+                         help="Name of device.")
+opts_parser.add_argument("--tool-run-id", action="store",
+                         dest="tool_run_id",
+                         help="UUID for this run of the tool.")
+opts_parser.add_argument("input_file")
+opts_parser.add_argument("--pipe", action="store_true",
+                         help="Read input from STDIN; Save a copy to {input_file}.")
+opts_parser.add_argument("--version", action="version", version="%(prog)s 2.0")
+
+opts = opts_parser.parse_args()
+
+
+db = psycopg2.connect("dbname=%s" % opts.dbname)
+cur = db.cursor()
+
+
+re_mac_addr_cisco = r"[0-9A-Fa-f]{4,4}\.[0-9A-Fa-f]{4,4}\.[0-9A-Fa-f]{4,4}"
+
+re_ipv4_addr = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+re_ipv6_addr = r"[0-9A-Fa-f]{0,4}(?:\:[0-9A-Fa-f]{0,4}){0,7}"
+re_ip_addr = r"(?:%s)|(?:%s)" % (re_ipv4_addr, re_ipv6_addr)
+
+
+if opts.pipe:
+    piped_input_file(opts.input_file)
+    
+# Read the entire Cisco config file into memory.
+cisco_config_lines = open(opts.input_file).readlines()
+
+if "junos" == opts.ios_type:
+    # Convert Junos configuration to Cisco IOS style
+    cisco_config = CiscoConfParse(cisco_config_lines, syntax=opts.ios_type, comment='#!')
+else:
+    # Blank lines break the CiscoConfParse library
+    # (it expects the standard '!' lines from Cisco IOS configs).
+    # Unfortunately, Cisco Nexus devices and some other vendors that
+    # use Cisco-like syntax have blank lines instead of '!' lines.
+    #
+    # Convert blank lines to '!' lines so CiscoConfParse can still be used.
+    for i in range(len(cisco_config_lines)):
+        line = cisco_config_lines[i]
+        line = line.rstrip()
+        if (0 == len(line)):
+            line = "!"
+        cisco_config_lines[i] = line
+
+    # Parse the configuration file.
+    cisco_config = CiscoConfParse(cisco_config_lines)
+# end: if opts.ios_type
+
+# Tool Run ID
+tool_run_id = uuid.uuid4()
+if opts.tool_run_id:
+    tool_run_id = uuid.UUID(opts.tool_run_id)
+
+cur.execute(
+    ("INSERT INTO tool_runs" +
+     " (id, tool_name, command_line, data_path, execute_time)" +
+     " VALUES (%s, %s, %s, %s, TSRANGE(%s, %s, '[]'))"),
+    (tool_run_id,
+     "nmdb-import-cisco",
+     # TODO: (17JUN16 - Should this really be `more system:running-config`
+     #       or `show running-config full`?)
+     "show running-config", 
+     os.path.realpath(opts.input_file),
+     datetime.now(),
+     datetime.now()))
+
+
+# Device ID
+device_id = ""
+hostnames = cisco_config.find_objects(r"^hostname ")
+if opts.device_id:
+    device_id = opts.device_id
+elif (0 < len(hostnames)):
+    device_id = re.match(r"^hostname (.+)",
+                         hostnames[0].text.strip()).group(1).strip()
+else:
+    device_id = opts.input_file.strip()
+
+cur.execute(
+    ("INSERT INTO raw_devices" +
+     " (tool_run_id, device_id)" +
+     " VALUES (%s, lower(%s))"),
+    (tool_run_id,
+     device_id))
+
+
+# Device Color (optional)
+if ((opts.device_color) and (0 < len(opts.device_color))):
+    cur.execute(
+        ("INSERT INTO device_colors" +
+         " (device_id, color)" +
+         " SELECT lower(%s), %s" +
+         " WHERE NOT EXISTS (" +
+         "   SELECT 1 FROM device_colors" +
+         "   WHERE (lower(device_id) = lower(%s))" +
+         " )"),
+        (device_id,
+         opts.device_color,
+         device_id))
+
+# Device Type (optional)
+if ((opts.device_type) and (0 < len(opts.device_type))):
+  cur.execute(
+      ("INSERT INTO raw_device_types" +
+       " (tool_run_id, device_id, device_type)" +
+       " SELECT %s, lower(%s), lower(%s)" +
+       " WHERE NOT EXISTS (" +
+       "   SELECT 1 FROM raw_device_types" +
+       "   WHERE (tool_run_id = %s and " +
+       "          lower(device_id) = lower(%s) and" +
+       "          lower(device_type) = lower(%s))" +
+       " )"),
+      (tool_run_id,
+       device_id, 
+       opts.device_type,
+       tool_run_id,
+       device_id,
+       opts.device_type))
+
+# Device Hardware
+cur.execute(
+    ("INSERT INTO raw_device_hardware"
+     " (tool_run_id, device_id, vendor, model, hardware_revision,"
+     "  serial_number, description)"
+     " SELECT %s, lower(%s), lower(%s), upper(%s), upper(%s), upper(%s), %s"
+     " WHERE NOT EXISTS ("
+     "   SELECT 1 FROM raw_device_hardware"
+     "   WHERE (tool_run_id = %s) AND"
+     "         (lower(device_id) = lower(%s)) AND"
+     "         (lower(vendor) = lower(%s)) AND"
+     "         (upper(model) = upper(%s)) AND"
+     "         (upper(hardware_revision) = upper(%s)) AND"
+     "         (upper(serial_number) = upper(%s)) AND"
+     "         (lower(description) = lower(%s))"
+     " )"),
+    (tool_run_id,
+     device_id,
+     "Cisco",
+     None,None,None,None,
+     tool_run_id,
+     device_id,
+     "Cisco",
+     None,None,None,None))
+
+
+# CDP is enabled by default.
+#   Cisco IOS:   "no cdp run" at global scope disables CDP globally.
+#   Cisco NX-OS: "no cdp enable" at global scope disables CDP globally.
+global_is_cdp_enabled = True
+if (cisco_config.has_line_with(r"^no cdp run") or
+    cisco_config.has_line_with(r"^no cdp enable")):
+    global_is_cdp_enabled = False
+
+# CDP is not supported on Cisco ASA or PIX.
+if (cisco_config.has_line_with(r"^ASA Version ") or
+    cisco_config.has_line_with(r"^PIX Version ")):
+    global_is_cdp_enabled = False
+
+if global_is_cdp_enabled:
+    print("WARNING: CDP is enabled at global scope.",
+          file=sys.stderr)
+
+cur.execute(
+    ("INSERT INTO raw_devices_cdp" +
+     " (tool_run_id, device_id, is_cdp_enabled)" +
+     " VALUES (%s, lower(%s), %s)"),
+    (tool_run_id,
+     device_id,
+     global_is_cdp_enabled))
+
+
+# BPDU guard is disabled by default.
+global_is_bpduguard_enabled = False
+if (cisco_config.has_line_with(r"^spanning-tree portfast bpduguard")):
+    global_is_bpduguard_enabled = True
+
+# BPDU filter is disabled by default.
+global_is_bpdufilter_enabled = False
+if (cisco_config.has_line_with(r"^spanning-tree portfast bpdufilter")):
+    global_is_bpdufilter_enabled = True
+
+if (not global_is_bpduguard_enabled) and (not global_is_bpdufilter_enabled):
+    print("WARNING: BPDU guard/filter is not enabled at global scope.",
+          file=sys.stderr)
+
+cur.execute(
+    ("INSERT INTO raw_devices_bpdu" +
+     " (tool_run_id, device_id, is_bpduguard_enabled, is_bpdufilter_enabled)" +
+     " VALUES (%s, lower(%s), %s, %s)"),
+    (tool_run_id,
+     device_id,
+     global_is_bpduguard_enabled,
+     global_is_bpdufilter_enabled))
+
+
+# Warn about the presence of any helper addresses.
+if cisco_config.find_all_children(r"ip helper-address "):
+    print("WARNING: IP helper addresses were found.",
+          file=sys.stderr)
+
+
+# List of IP networks. Using a dictionary to ensure uniqueness.
+ip_nets = set()
+
+# List of already inserted IP addresses.
+ip_addrs_inserted = set()
+
+# List of already inserted MAC addresses.
+mac_addrs_inserted = set()
+
+# Process all device interfaces.
+ifaces = cisco_config.find_objects(r"^interface ")
+for iface in ifaces:
+    settings_iface = CiscoInterfaceSettings()
+
+    interface_name = re.match(r"^interface (.+)",
+                              iface.text.strip()).group(1)
+
+    interface_media_type = "Ethernet"
+
+    parse_interface(settings_iface, iface, cisco_config)
+
+
+    cur.execute(
+        ("INSERT INTO raw_device_interfaces" +
+         " (tool_run_id, device_id, interface_name, media_type, is_up)" +
+         " VALUES (%s, lower(%s), %s, %s, %s)"),
+        (tool_run_id,
+         device_id,
+         interface_name,
+         interface_media_type,
+         settings_iface.is_up))
+
+    cur.execute(
+        ("INSERT INTO raw_device_interfaces_cdp" +
+         " (tool_run_id, device_id, interface_name, is_cdp_enabled)" +
+         " VALUES (%s, lower(%s), %s, %s)"),
+        (tool_run_id,
+         device_id,
+         interface_name,
+         settings_iface.is_cdp_enabled))
+
+    cur.execute(
+        ("INSERT INTO raw_device_interfaces_bpdu" +
+         " (tool_run_id, device_id, interface_name," +
+         "  is_bpduguard_enabled, is_bpdufilter_enabled)" +
+         " VALUES (%s, lower(%s), %s, %s, %s)"),
+        (tool_run_id,
+         device_id,
+         interface_name,
+         settings_iface.is_bpduguard_enabled,
+         settings_iface.is_bpdufilter_enabled))
+
+    cur.execute(
+        ("INSERT INTO raw_device_interfaces_portfast" +
+         " (tool_run_id, device_id, interface_name, is_portfast_enabled)" +
+         " VALUES (%s, lower(%s), %s, %s)"),
+        (tool_run_id,
+         device_id,
+         interface_name,
+         settings_iface.is_portfast_enabled))
+
+    cur.execute(
+        ("INSERT INTO raw_device_interfaces_mode" +
+         " (tool_run_id, device_id, interface_name, interface_mode)" +
+         " VALUES (%s, lower(%s), %s, %s)"),
+        (tool_run_id,
+         device_id,
+         interface_name,
+         settings_iface.mode))
+
+
+    # Process interface "switchport access vlan" statements:
+
+
+    # Process interface "switchport trunk vlan" statements:
+
+
+    cur.execute(
+        ("INSERT INTO raw_device_interfaces_port_security" +
+         " (tool_run_id, device_id, interface_name," +
+         "  is_port_security_enabled, is_mac_addr_sticky,"
+         "  max_mac_addrs, violation_action)" +
+         " VALUES (%s, lower(%s), %s, %s, %s, %s, %s)"),
+        (tool_run_id,
+         device_id,
+         interface_name,
+         settings_iface.port_security_is_enabled,
+         settings_iface.port_security_is_mac_addr_sticky,
+         settings_iface.port_security_max_mac_addrs,
+         settings_iface.port_security_violation_action))
+
+
+    for mac_addr in settings_iface.port_security_learned_mac_addrs:
+        if mac_addr not in mac_addrs_inserted:
+            cur.execute(
+                ("INSERT INTO raw_mac_addrs" +
+                 " (tool_run_id, mac_addr, is_responding)" +
+                 " VALUES (%s, %s, %s)"),
+                (tool_run_id,
+                 mac_addr,
+                 None))
+            mac_addrs_inserted.add(mac_addr)
+
+        cur.execute(
+            ("INSERT INTO raw_device_link_connections" +
+             " (tool_run_id, self_device_id, self_interface_name," +
+             "  peer_mac_addr)" +
+             " VALUES (%s, lower(%s), %s, %s)"),
+            (tool_run_id,
+             device_id,
+             interface_name,
+             mac_addr))
+
+        cur.execute(
+            ("INSERT INTO raw_device_interfaces_port_security_mac_addrs" +
+             " (tool_run_id, device_id, interface_name, mac_addr)" +
+             " VALUES (%s, lower(%s), %s, %s)"),
+            (tool_run_id,
+             device_id,
+             interface_name,
+             mac_addr))
+
+
+    # Process interface "ip address" statements:
+    ip_addresses = iface.re_search_children(r"ip address ")
+    for ip_address in ip_addresses:
+        if not re.match(r"^no ip address", ip_address.text.strip()):
+            m = re.match(r"^ip address (%s)[ /](%s|\d{1,3})" %
+                         (re_ip_addr, re_ip_addr),
+                         ip_address.text.strip())
+            if m:
+                (ip_addr_str, ip_mask_str) = m.group(1,2)
+                ip_addr = IPNetwork(ip_addr_str + "/" + ip_mask_str)
+                ip_nets.add(ip_addr.masked())
+
+                if ip_addr.ip not in ip_addrs_inserted:
+                    cur.execute(
+                        ("INSERT INTO raw_ip_addrs" +
+                         " (tool_run_id, ip_addr, is_responding)" +
+                         " VALUES (%s, %s, %s)"),
+                        (tool_run_id,
+                         str(ip_addr.ip),
+                         True))
+                    ip_addrs_inserted.add(ip_addr.ip)
+
+                    cur.execute(
+                        ("INSERT INTO raw_device_ip_addrs" +
+                         " (tool_run_id, device_id, interface_name, ip_addr)" +
+                         " VALUES (%s, lower(%s), %s, %s)"),
+                        (tool_run_id,
+                         device_id,
+                         interface_name,
+                         str(ip_addr.ip)))
+
+
+    # Process interface "standby" statements:
+    standbys = iface.re_search_children(r"standby ")
+    for standby in standbys:
+        m = re.match(r"^standby \d+ ip (%s)" % (re_ip_addr),
+                     standby.text.strip())
+        if m:
+            ip_addr = IPAddress(m.group(1))
+            if ip_addr not in ip_addrs_inserted:
+                cur.execute(
+                    ("INSERT INTO raw_ip_addrs" +
+                     " (tool_run_id, ip_addr, is_responding)" +
+                     " VALUES (%s, %s, %s)"),
+                    (tool_run_id,
+                     str(ip_addr),
+                     True))
+                ip_addrs_inserted.add(ip_addr)
+
+            cur.execute(
+                ("INSERT INTO raw_device_ip_addrs" +
+                 " (tool_run_id, device_id, interface_name, ip_addr)" +
+                 " VALUES (%s, lower(%s), %s, %s)"),
+                (tool_run_id,
+                 device_id,
+                 interface_name,
+                 str(ip_addr)))
+
+
+    # Process interface "ip helper-address" statements:
+    ip_helper_addresses = iface.re_search_children(r"ip helper-address ")
+    for ip_helper_address in ip_helper_addresses:
+        m = re.match(r"^ip helper-address (%s)" % (re_ip_addr),
+                     ip_helper_address.text.strip())
+        if m:
+            ip_addr = IPAddress(m.group(1))
+            if ip_addr not in ip_addrs_inserted:
+                cur.execute(
+                    ("INSERT INTO raw_ip_addrs" +
+                     " (tool_run_id, ip_addr, is_responding)" +
+                     " VALUES (%s, %s, %s)"),
+                    (tool_run_id,
+                     str(ip_addr),
+                     None))
+                ip_addrs_inserted.add(ip_addr)
+
+
+    # Cisco N1000V virtual switches
+    vmware_vm_macs = iface.re_search_children(r"vmware vm mac ")
+    for vmware_vm_mac in vmware_vm_macs:
+        m = re.match(r"^vmware vm mac (%s)" % (re_mac_addr_cisco),
+                     vmware_vm_mac.text.strip())
+        if m:
+            mac_addr = m.group(1)
+            if mac_addr not in mac_addrs_inserted:
+                cur.execute(
+                    ("INSERT INTO raw_mac_addrs" +
+                     " (tool_run_id, mac_addr, is_responding)" +
+                     " VALUES (%s, %s, %s)"),
+                    (tool_run_id,
+                     mac_addr,
+                     None))
+                mac_addrs_inserted.add(mac_addr)
+
+            cur.execute(
+                ("INSERT INTO raw_device_link_connections" +
+                 " (tool_run_id, self_device_id, self_interface_name," +
+                 "  peer_mac_addr)" +
+                 " VALUES (%s, lower(%s), %s, %s)"),
+                (tool_run_id,
+                 device_id,
+                 interface_name,
+                 mac_addr))
+
+
+    # ADX configs
+    vrrps = iface.re_search_children(r"ip vrrp-extended ")
+    for vrrp in vrrps:
+        ip_addresses = iface.re_search_children(r"ip-address ")
+        for ip_address in ip_addresses:
+            m = re.match(r"^ip-address (%s)" % (re_ip_addr),
+                         ip_address.text.strip())
+            if m:
+                ip_addr = IPAddress(m.group(1))
+
+                if ip_addr.ip not in ip_addrs_inserted:
+                    cur.execute(
+                        ("INSERT INTO raw_ip_addrs" +
+                         " (tool_run_id, ip_addr, is_responding)" +
+                         " VALUES (%s, %s, %s)"),
+                        (tool_run_id,
+                         str(ip_addr),
+                         True))
+                    ip_addrs_inserted.add(ip_addr.ip)
+
+                cur.execute(
+                    ("INSERT INTO raw_device_ip_addrs" +
+                     " (tool_run_id, device_id, interface_name, ip_addr)" +
+                     " VALUES (%s, lower(%s), %s, %s)"),
+                    (tool_run_id,
+                     device_id,
+                     interface_name,
+                     str(ip_addr)))
+
+# end: for iface in ifaces.
+
+
+# Process all device routes.
+routes = cisco_config.find_objects(r"^ip route ")
+for route in routes:
+    m = re.match(r"^ip route (%s)[ /](%s|\d{1,3}) (%s|Null0)$" %
+                 (re_ip_addr, re_ip_addr, re_ip_addr),
+                 route.text.strip())
+    if m:
+        (dst_ip_addr_str, dst_ip_mask_str, rtr_ip_addr_str) = m.group(1,2,3)
+        dst_ip_net  = IPNetwork(dst_ip_addr_str + "/" + dst_ip_mask_str)
+        if ("Null0" == rtr_ip_addr_str):
+            rtr_ip_addr_str = None
+
+        if rtr_ip_addr_str:
+            rtr_ip_addr = IPAddress(rtr_ip_addr_str)
+            if rtr_ip_addr not in ip_addrs_inserted:
+                cur.execute(
+                    ("INSERT INTO raw_ip_addrs" +
+                     " (tool_run_id, ip_addr, is_responding)" +
+                     " VALUES (%s, %s, %s)"),
+                    (tool_run_id,
+                     str(rtr_ip_addr),
+                     None))
+                ip_addrs_inserted.add(IPAddress(rtr_ip_addr_str))
+
+        cur.execute(
+            ("INSERT INTO raw_device_ip_routes" +
+             " (tool_run_id, device_id, interface_name," +
+             "  dst_ip_net, rtr_ip_addr)" +
+             " VALUES (%s, lower(%s), %s, %s, %s)"),
+            (tool_run_id,
+             device_id,
+             None,
+             str(dst_ip_net),
+             rtr_ip_addr_str))  # string since None is a valid value.
+
+# end: for route in routes.
+
+
+# Process all device AAA settings.
+aaa_commands = cisco_config.find_objects(r"^aaa ")
+for aaa_command in aaa_commands:
+    cur.execute(
+        ("INSERT INTO raw_devices_aaa" +
+         " (tool_run_id, device_id, aaa_command)" +
+         " VALUES (%s, lower(%s), %s)"),
+        (tool_run_id,
+         device_id,
+         aaa_command.text.strip()))
+
+# end: for aaa_command in aaa_commands.
+
+
+# Process all device ACLs.
+acls = cisco_config.find_objects(r"^access-list ")
+#for acl in acls:
+#    m = re.match(r"^access-list (\d+) (\w+)")
+
+
+# Process all device NTP servers.
+ntp_servers = cisco_config.find_objects(r"^ntp server ")
+
+
+# Process all device SNMP servers.
+snmp_servers = cisco_config.find_objects(r"^snmp-server host ")
+
+
+# Process all device VLANs.
+vlans = cisco_config.find_objects(r"^vlan ")
+
+
+# Process all IP networks collected while processing the rest of the config.
+for ip_net in ip_nets:
+    cur.execute(
+        ("INSERT INTO raw_ip_nets" +
+         " (tool_run_id, ip_net, description)" +
+         " VALUES (%s, %s, %s)"),
+        (tool_run_id,
+         str(ip_net),
+         None))
+
+# end: for ip_net in ip_nets.
+
+
+db.commit()
+
+cur.close()
+db.close()
+
+exit(0)

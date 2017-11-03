@@ -1,0 +1,38 @@
+================================================================================
+Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+(NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+Government retains certain rights in this software.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+================================================================================
+/version number and exit/
+The tool relies on the \fBciscoconfparse\fR which supports parsing brace
+delimited configs as of version 1.2.40. However, the tool has not been
+tested for support of these types of actions.
+This tool also does a reasonable job importing configuration files
+from some non-Cisco equipment that uses a Cisco-like configuration syntax.
+[NOTES]
+the \fBdevice-id\fR is automatically extracted from the configuration file.
+[Examples]
+.PP
+\fBnmdb-import-cisco cisco.example\fR
+.PP
+\fBnmdb-import-cisco --device-color red cisco.example\fR
+.PP
+\fBcat cisco.example | nmdb-import-cisco --pipe copy.example\fR

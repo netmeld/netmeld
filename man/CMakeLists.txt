@@ -1,0 +1,52 @@
+# =============================================================================
+# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+# Government retains certain rights in this software.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+# Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
+# =============================================================================
+
+set(NETMELD_MAN_PAGE "Netmeld.7")
+set(NETMELD_MAN_SOURCE
+    "${CMAKE_CURRENT_SOURCE_DIR}/netmeld-man-page-from-readme.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Template.h2m"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../README.md"
+   )
+
+add_custom_command(
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${NETMELD_MAN_PAGE}"
+  COMMENT "Creating ${NETMELD_MAN_PAGE}"
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  COMMAND bash netmeld-man-page-from-readme.sh
+  COMMAND mv "${NETMELD_MAN_PAGE}" "${CMAKE_CURRENT_BINARY_DIR}"
+  VERBATIM
+  )
+
+add_custom_target(
+  "${NETMELD_MAN_PAGE}" ALL
+  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${NETMELD_MAN_PAGE}"
+          "${NETMELD_MAN_SOURCE}"
+  )
+
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/Netmeld.7
+  DESTINATION share/man/man7
+  )
