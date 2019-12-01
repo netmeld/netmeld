@@ -808,7 +808,7 @@ from_string(const char str[], CVE& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<CVE>::
 to_string(CVE const& obj)
 {
@@ -870,7 +870,7 @@ from_string(const char str[], boost::posix_time::ptime& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<boost::posix_time::ptime>::
 to_string(boost::posix_time::ptime const& obj)
 {
@@ -930,7 +930,7 @@ from_string(const char str[], boost::uuids::uuid& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<boost::uuids::uuid>::
 to_string(boost::uuids::uuid const& obj)
 {
@@ -983,7 +983,7 @@ from_string(const char str[], IPv4_Addr& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<IPv4_Addr>::
 to_string(IPv4_Addr const& obj)
 {
@@ -1036,7 +1036,7 @@ from_string(const char str[], IPv6_Addr& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<IPv6_Addr>::
 to_string(IPv6_Addr const& obj)
 {
@@ -1089,7 +1089,7 @@ from_string(const char str[], IP_Addr& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<IP_Addr>::
 to_string(IP_Addr const& obj)
 {
@@ -1142,7 +1142,7 @@ from_string(const char str[], IPv4_Addr_with_Prefix& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<IPv4_Addr_with_Prefix>::
 to_string(IPv4_Addr_with_Prefix const& obj)
 {
@@ -1195,7 +1195,7 @@ from_string(const char str[], IPv6_Addr_with_Prefix& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<IPv6_Addr_with_Prefix>::
 to_string(IPv6_Addr_with_Prefix const& obj)
 {
@@ -1248,7 +1248,7 @@ from_string(const char str[], IP_Addr_with_Prefix& obj)
 }
 
 
-PGSTD::string
+std::string
 string_traits<IP_Addr_with_Prefix>::
 to_string(IP_Addr_with_Prefix const& obj)
 {
