@@ -293,12 +293,10 @@ void insert_mac_prefixes(pqxx::work& work, string filename)
   }
 
   log("Inserting MAC prefixes");
-  pqxx::tablewriter tw(work, "vendor_mac_prefixes");
-  std::vector<string> temp;
+  pqxx::stream_to st(work, "vendor_mac_prefixes");
   for(auto const& entry : macs) {
-    temp = {entry.first + ":000000", entry.second};
-    tw.insert(temp);
+    st << std::make_tuple(entry.first + ":000000", entry.second);
   }
-  tw.complete();
+  st.complete();
 }
 
