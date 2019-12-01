@@ -54,7 +54,7 @@ struct PQXX_LIBEXPORT string_traits<CVE>
   static bool is_null(CVE const&);
   static CVE null();
   static void from_string(const char str[], CVE& obj);
-  static PGSTD::string to_string(CVE const& obj);
+  static std::string to_string(CVE const& obj);
 };
 
 
@@ -66,7 +66,7 @@ struct PQXX_LIBEXPORT string_traits<boost::posix_time::ptime>
   static bool is_null(boost::posix_time::ptime const& obj);
   static boost::posix_time::ptime null();
   static void from_string(const char str[], boost::posix_time::ptime& obj);
-  static PGSTD::string to_string(boost::posix_time::ptime const& obj);
+  static std::string to_string(boost::posix_time::ptime const& obj);
 };
 
 
@@ -78,7 +78,7 @@ struct PQXX_LIBEXPORT string_traits<boost::uuids::uuid>
   static bool is_null(boost::uuids::uuid const& obj);
   static boost::uuids::uuid null();
   static void from_string(const char str[], boost::uuids::uuid& obj);
-  static PGSTD::string to_string(boost::uuids::uuid const& obj);
+  static std::string to_string(boost::uuids::uuid const& obj);
 };
 
 
@@ -92,7 +92,7 @@ struct PQXX_LIBEXPORT string_traits<IPv4_Addr>
   static bool is_null(IPv4_Addr const& obj);
   static IPv4_Addr null();
   static void from_string(const char str[], IPv4_Addr& obj);
-  static PGSTD::string to_string(IPv4_Addr const& obj);
+  static std::string to_string(IPv4_Addr const& obj);
 };
 
 template<>
@@ -103,7 +103,7 @@ struct PQXX_LIBEXPORT string_traits<IPv6_Addr>
   static bool is_null(IPv6_Addr const& obj);
   static IPv6_Addr null();
   static void from_string(const char str[], IPv6_Addr& obj);
-  static PGSTD::string to_string(IPv6_Addr const& obj);
+  static std::string to_string(IPv6_Addr const& obj);
 };
 
 template<>
@@ -114,7 +114,7 @@ struct PQXX_LIBEXPORT string_traits<IP_Addr>
   static bool is_null(IP_Addr const& obj);
   static IP_Addr null();
   static void from_string(const char str[], IP_Addr& obj);
-  static PGSTD::string to_string(IP_Addr const& obj);
+  static std::string to_string(IP_Addr const& obj);
 };
 
 
@@ -128,7 +128,7 @@ struct PQXX_LIBEXPORT string_traits<IPv4_Addr_with_Prefix>
   static bool is_null(IPv4_Addr_with_Prefix const& obj);
   static IPv4_Addr_with_Prefix null();
   static void from_string(const char str[], IPv4_Addr_with_Prefix& obj);
-  static PGSTD::string to_string(IPv4_Addr_with_Prefix const& obj);
+  static std::string to_string(IPv4_Addr_with_Prefix const& obj);
 };
 
 template<>
@@ -139,7 +139,7 @@ struct PQXX_LIBEXPORT string_traits<IPv6_Addr_with_Prefix>
   static bool is_null(IPv6_Addr_with_Prefix const& obj);
   static IPv6_Addr_with_Prefix null();
   static void from_string(const char str[], IPv6_Addr_with_Prefix& obj);
-  static PGSTD::string to_string(IPv6_Addr_with_Prefix const& obj);
+  static std::string to_string(IPv6_Addr_with_Prefix const& obj);
 };
 
 template<>
@@ -150,7 +150,7 @@ struct PQXX_LIBEXPORT string_traits<IP_Addr_with_Prefix>
   static bool is_null(IP_Addr_with_Prefix const& obj);
   static IP_Addr_with_Prefix null();
   static void from_string(const char str[], IP_Addr_with_Prefix& obj);
-  static PGSTD::string to_string(IP_Addr_with_Prefix const& obj);
+  static std::string to_string(IP_Addr_with_Prefix const& obj);
 };
 
 
