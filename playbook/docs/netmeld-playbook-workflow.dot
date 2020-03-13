@@ -1,0 +1,71 @@
+digraph G {
+  rankdir=LR;
+  nodesep=0.5;
+  ranksep=0.5;
+  newrank=true;
+  splines=spline;
+
+  label="Netmeld Tool Suite 2.x -- Playbook Workflow";
+
+
+  node[shape="box"];
+  nmpbroe [label="ROE In-scope & Out-of-scope\l\
+    psql site -c \"INSERT INTO playbook_roe_ip_nets VALUES (ipNet, true)\"\l\
+    psql site -c \"INSERT INTO playbook_roe_ip_nets VALUES (ipNet, false)\""];
+  nmpbis [label="nmdb-playbook-insert-source\l\
+    Required Options:\l\
+      --[intra-network|inter-network]\l\
+      --db-name arg (=site)\l\
+      --interface arg\l\
+      --ip-addr arg\l\
+      --stage arg\l\
+    Optional Options:\l\
+      --description arg\l\
+      --mac-addr arg\l\
+      --ptp-rtr-ip-addr arg\l\
+      --vlan arg (=65535)\l"];
+  nmpbir [label="nmdb-playbook-insert-router\l\
+    Required:\l\
+      --db-name arg (=site)\l\
+      --ip-addr arg\l"];
+  nmpb [label="nmdb-playbook\l\
+    Required Options:\l\
+      --[intra-network|inter-network]\l\
+      --capture-duration arg (=300)\l\
+      --db-name arg (=site)\l\
+    Optional Options:\l\
+      --exclude-command arg (=none)\l\
+      --execute\l\
+      --no-prompt\l\
+      --phase arg (=all)\l\
+      --script arg\l\
+      --stage arg (=all)\l\
+    Advanced Options:\l\
+      --config-file arg (=/usr/local/etc/netmeld/nmdb-playbook.conf)\l"];
+
+  subgraph cluster_preparation {
+    label="Playbook preparation";
+    style="dashed";
+
+    rank="same";
+    nmpbroe;
+    nmpbis;
+    nmpbir;
+  }
+
+  subgraph cluster_execution {
+    label="Playbook review and execution";
+    style="dashed";
+
+    nmpb;
+  }
+
+  // Added to align things better
+  nmpbroe->nmpb [style="invis"];
+
+  nmpbroe->nmpbis [constraint="no"];
+  nmpbis->nmpbir [constraint="no"];
+
+  nmpbis->nmpb [label="--intra-network"];
+  nmpbir->nmpb [label="--inter-network"];
+}

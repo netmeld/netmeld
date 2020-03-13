@@ -1,0 +1,9 @@
+---
+- hosts:
+  - cisco
+
+  gather_facts: false
+
+  roles:
+  - gather-data-cisco
+  - save-local

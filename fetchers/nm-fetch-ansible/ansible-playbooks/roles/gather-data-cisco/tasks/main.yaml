@@ -1,0 +1,7 @@
+---
+- name: Gather data from Cisco type targets
+  ios_command:
+    commands: "{{ item }}"
+  register: cmd
+  loop: "{{ cmd_list | flatten(1) }}"
+  ignore_errors: yes

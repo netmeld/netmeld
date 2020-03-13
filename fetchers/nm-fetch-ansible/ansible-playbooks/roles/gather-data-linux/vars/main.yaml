@@ -1,0 +1,19 @@
+---
+# NOTE: \u2215, math symbol division slash, is different from / to the OS
+command_value: "{{ item.cmd | join('_') | regex_replace('/', '\u2215') }}"
+item_value: "{{ item.stdout }}"
+
+cmd_list:
+- hostname -A
+# IP address and route information
+- ip addr show
+- ip -6 addr show
+- ip route show
+- ip -6 route show
+# Get packages and/or services
+- netstat -auntpl
+- ss -auntpl
+- ps -ef
+- ls -lah /etc
+- rpm -qa --queryformat="%-50{NAME}%10{VERSION}-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n"
+- dpkg --list

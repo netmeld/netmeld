@@ -1,0 +1,113 @@
+digraph G {
+  rankdir=LR;
+  nodesep=0.75;
+  ranksep=0.75;
+  newrank=true;
+  splines=spline;
+
+  label="Playbook Intra-Network Execution Process\n
+Assume:\l\
+  psql site -c \"insert into playbook_roe_ip_nets values ('1.2.3.0/24', true)\"\l\
+  nmdb-playbook-insert-source --intra-network --interface eth0 --ip-addr 1.2.3.4/24 --stage 1\l\
+Execution:\l\
+  nmdb-playbook --intra-network --execute\l";
+
+  node[shape="box"];
+
+  subgraph cluster_initial {
+    label="Initial setup and passive listening";
+    rank="same";
+
+    passive [label="Passive network sniffing\n
+clw dumpcap -i eth0 -a duration:300\l"];
+
+    portfast [label="Wait for switch port to enter forwarding state\n
+clw dumpcap -i eth0 -a duration:90\l"];
+
+    excludes [label="Target Files (ROE excluded)\n
+psql -d site -A -t -c\l\
+  \"SELECT DISTINCT ip_net FROM playbook_roe_ip_nets\l\
+      WHERE (NOT in_scope) AND (4 = family(ip_net))\l\
+      ORDER BY ip_net\" >> ~/.clw/ROE-Excluded-IPV4-${UUID}\l"];
+  }
+
+  subgraph cluster_phase1 {
+    label="Phase 1";
+    rank="same";
+
+    discPing [label="Initial Host Discovery\n
+clw ping -4 -n -I eth0 -L -c 4 -b 1.2.3.255\l\
+clw ping -4 -n -I eth0 -L -c 4 -b 255.255.255.255\l"];
+
+    discNmap [label="Host Discovery and IP Protocol Scans\n
+clw nmap    -n -e eth0 -sn -PR -T4 --script '(ip-forwarding)'\l\
+  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l\
+  1.2.3.0/24\l
+clw nmap    -n -e eth0 -sO -PR -T4\l\
+  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l\
+  1.2.3.0/24\l"];
+  }
+
+  subgraph cluster_phase2 {
+    label="Phase 2";
+
+    targets [label="Target Files (Responding Hosts)\n
+psql -d site -A -t -c\l\
+  \"SELECT DISTINCT ia.ip_addr FROM raw_ip_addrs AS ia\l\
+    JOIN tool_runs AS tr\l\
+      ON (ia.tool_run_id = tr.id)\l\
+    JOIN playbook_roe_ip_nets AS roe\l\
+      ON (ia.ip_addr <<= roe.ip_net)\l\
+    WHERE (ia.is_responding)\l\
+      AND (4 = family(ia.ip_addr))\l\
+      AND (roe.in_scope)\l\
+      AND (ia.ip_addr <<= '1.2.3.0/24')\l\
+    ORDER BY ia.ip_addr\"\l\
+    >> ~/.netmeld/playbook/Responding-Hosts-IPv4-${UUID}\l"];
+
+    scans [label="Port Scans (plus basic info gathering)\n
+clw nmap    -n -e eth0 -sS -PR -T4 -O\l\
+  --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey\l\
+      or ssh2-enum-algos or ssl-cert or smtp-commands\l\
+      or smb-os-discovery or smbv2-enabled or vnc-info)'\l\
+  -p `nmdb-export-port-list --tcp-all`\l\
+  -iL ~/.netmeld/playbook/Responding-Hosts-IPv4-${UUID}\l\
+  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l
+clw nmap    -n -e eth0 -sU -PR -T4 -O\l\
+  --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey\l\
+      or ssh2-enum-algos or ssl-cert or smtp-commands\l\
+      or smb-os-discovery or smbv2-enabled or vnc-info)'\l\
+  -p `nmdb-export-port-list --udp`\l\
+  -iL ~/.netmeld/playbook/Responding-Hosts-IPv4-${UUID}\l\
+  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l
+Service Scans (most scripts enabled)\n
+clw nmap    -n -e eth0 -sS -PR -T4 -A\l\
+  --script '((default or discovery) and not (external or brute or dos))'\l\
+  -p `nmdb-export-port-list --tcp-all`\l\
+  -iL ~/.netmeld/playbook/Responding-Hosts-IPv4-${UUID}\l\
+  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l"];
+  }
+
+  subgraph cluster_phase3 {
+    label="Phase 3";
+    manual [label="Manual testing\nor script"];
+  }
+
+  subgraph cluster_final{
+    label="Tear down";
+    destroy [label="Deconfigure interface"];
+  }
+
+  passive->portfast->excludes [constraint="false"];
+
+  passive->discPing [style="invisible", dir="none"];
+  excludes->discPing;
+
+  discPing->discNmap [constraint="false"];
+  discNmap->targets;
+
+  targets->scans;
+
+  scans->manual;
+  manual->destroy;
+}

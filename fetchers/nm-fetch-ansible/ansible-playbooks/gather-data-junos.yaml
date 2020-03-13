@@ -1,0 +1,9 @@
+---
+- hosts:
+  - junos
+
+  gather_facts: false
+
+  roles:
+  - gather-data-junos
+  - save-local

@@ -1,0 +1,70 @@
+digraph netmeld {
+  rankdir=LR;
+  nodesep=0.75;
+  ranksep=0.75;
+  newrank=true;
+  splines=spline;
+
+  label="Netmeld Tool Suite 2.x -- Dataflow Overview";
+
+
+  { // Sources
+    rank=same;
+    node [shape=note];
+    srcManual [label="Targeted\nConfiguration\nSettings"];
+    srcConfigs [label="Configuration\n\& Other Files"];
+  }
+
+
+  // Modules
+  node [shape=rectangle];
+  clw [label="Command\nLine\nWrapper"];
+  datastore [label="Datastore \&\nCore Helpers"];
+  exporters [label="Exporters"];
+  fetchers [label="Fetchers"];
+  graphers [label="Graphers"];
+  importers [label="Importers"];
+  inserters [label="Inserters"];
+  playbook [label="Playbook"];
+
+  queries [label="Manual\nQueries"];
+
+
+  { // Artifacts
+    rank=same;
+    node [shape=note];
+    artConfigs [label="Aggregated\nConfiguration\nArtifacts"];
+    artGraphs [label="Topology\nGraphs"];
+    artReports [label="Formatted\nReports"];
+    artRaw [label="Arbitrary\nRaw\nData"];
+  }
+
+
+  {rank=same; fetchers clw}
+  {rank=same; inserters importers playbook}
+  {rank=same; exporters graphers queries}
+
+  // Sources modules
+  srcManual->inserters;
+  srcConfigs->importers;
+  srcConfigs->fetchers [dir="both"];
+  fetchers->importers [style="dashed"];
+
+  // Modules to modules
+  clw->importers;
+  playbook->clw;
+
+  // Modules to datastore
+  inserters->datastore;
+  importers->datastore;
+  playbook->datastore [dir="both"];
+
+  // Datastore to modules
+  datastore->{exporters graphers queries};
+
+  // Modules to artifacts
+  exporters->artConfigs;
+  graphers->artGraphs;
+  queries->{artReports artRaw};
+
+}

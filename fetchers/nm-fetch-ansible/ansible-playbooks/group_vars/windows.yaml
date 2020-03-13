@@ -1,0 +1,18 @@
+---
+# Run on host
+# winrm set --% winrm/config/service/auth @{Basic="true"; Kerberos="true"; CredSSP="true"; Certificate="true"}
+
+# General
+ansible_connection: winrm
+ansible_winrm_transport: basic, credssp, kerberos
+#ansible_user: puser
+#ansible_password: xyz
+ansible_port: 5985
+
+# Kerberos related
+#ansible_winrm_transport: kerberos
+#ansible_host: test@TESTDOM.LOCAL
+#ansible_user: puser@TESTDOM.LOCAL
+
+# Other
+#ansible_winrm_server_cert_validation: ignore

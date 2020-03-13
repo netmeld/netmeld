@@ -1,0 +1,19 @@
+---
+command_value: "{{ item.invocation.module_args.commands[0] | regex_replace(' ', '_')}}"
+item_value: "{{ item.stdout[0] }}"
+
+cmd_list:
+- show configuration
+- show configuration | display set
+- show configuration | display xml
+- show version detail
+- show arp no-resolve
+- show ethernet-switching table detail
+- show ethernet-switching table extensive
+- show chassis hardware
+- show chassis hardware detail
+- show chassis hardware extensive
+- show ldp neighbor detail
+- show ldp neighbor extensive
+- show system uptime
+- show ntp status no-resolve
