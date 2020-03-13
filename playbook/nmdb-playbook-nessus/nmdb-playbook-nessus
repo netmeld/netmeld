@@ -1,0 +1,259 @@
+#!/bin/bash --
+#set -xv
+
+# =============================================================================
+# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+# Government retains certain rights in this software.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+# Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
+# =============================================================================
+
+#########################
+# General configuration #
+#########################
+# Nessusd host ip and port
+nessus_ip="https://localhost:8834";
+
+# Scan configuration
+# Array entries are associated on a per scan basis for all scan_* variables
+scan_name=("First Scan Name"
+           "Second Scan Name"
+           "Third Scan Name"
+           "Fourth Scan Name");
+# Use nessus policy name
+#   Custom policy upload/import complicate matters (e.g. audit/plugin sync)
+scan_policy=("Kitchen Sink + VMware Compliance - Linux"
+             "Kitchen Sink + VMware Compliance - Linux"
+             "Kitchen Sink + VMware Compliance - Linux"
+             "Kitchen Sink + VMware Compliance - Linux");
+# Uses same formatting as nessus target list
+scan_targets=("127.0.0.0/31"
+              "127.0.0.0, 127.0.0.1"
+              "127.0.0.0-127.0.0.1"
+              "localhost");
+
+# Report configuration, used for all scans
+report_formats=("nessus" "pdf");
+chapters="vuln_hosts_summary;vuln_by_plugin;_vuln_by_host;remediations;compliance_exec;compliance;";
+
+########################
+# End of configuration #
+########################
+
+fail_code="failure";
+sleep_in_secs=5;
+
+printUsage()
+{
+  echo "Usage: $0 [-h|--help]";
+  echo "  To configure, directly edit the script (General configuration section)";
+  exit;
+}
+
+getJsonVal()
+{
+  {
+    python -c "import json,sys;obj=json.load(sys.stdin);print obj"$1"";
+  } || {
+    echo "$fail_code";
+  }
+}
+
+getJsonLen()
+{
+  {
+    python -c "import json,sys;obj=json.load(sys.stdin);print len(obj"$1")";
+  } || {
+    echo "$fail_code";
+  }
+}
+
+# main
+{
+
+  for arg in "$@"; do
+    shift;
+    case "$arg" in
+      "--help") set -- "$@" "-h" ;;
+      *)        set -- "$@" "-h" ;;
+    esac;
+  done;
+
+  while getopts "h" opt; do
+    case "$opt" in
+      "h") printUsage; exit ;;
+      "?") printUsage; exit ;;
+    esac;
+  done;
+
+  # Initialize associate array for formats
+  declare -A formats;
+  for format in ${report_formats[@]}; do
+    formats[$format]=0;
+  done;
+  nessus_session="${nessus_ip}/session";
+  nessus_scans="${nessus_ip}/scans";
+
+  read -e    -p "Nessus Username: " -i "somedefault" username;
+  read -e -s -p "Nessus Password: " -i "somedefault" password;
+  echo "";
+
+  # Nessus login and get session id
+  wget_get_prefix='--quiet -O - --no-check-certificate ';
+  session_details=$(wget $wget_get_prefix \
+                      --header='Content-Type:application/json' \
+                      --post-data='{"username":"'$username'","password":"'$password'"}' \
+                      $nessus_session);
+  session_id=$(echo $session_details | getJsonVal "['token']");
+  if [ "$session_id" == "$fail_code" ]; then
+    echo "Nessus authentication failure";
+    exit;
+  fi;
+  echo -e "\nSession ID: ${session_id}";
+
+  wget_get_prefix=$wget_get_prefix' --header=X-Cookie:token='$session_id;
+  wget_put_prefix=$wget_get_prefix' --header=Content-Type:application/json';
+
+  # Get all custom nessus policies, so we can choose the one we want
+  all_policies=$(wget $wget_get_prefix \
+                   ${nessus_ip}/policies);
+
+  # get target policy id number
+  policy_count=$(echo $all_policies | getJsonLen "['policies']");
+
+  for scan_loc in ${!scan_name[@]}; do
+    _scan_name=${scan_name[$scan_loc]};
+    _scan_policy=${scan_policy[$scan_loc]};
+    _scan_targets=${scan_targets[$scan_loc]};
+    echo -e "\nRunning with configuration:"
+    echo -e "  Scan name:    ${_scan_name}";
+    echo -e "  Scan policy:  ${_scan_policy}";
+    echo -e "  Scan targets: ${_scan_targets}";
+    echo "";
+
+    # Iterate policies to find match
+    counter=0;
+    policy_id=$fail_code;
+    template_id=$fail_code;
+    while [ "$counter" -lt "$policy_count" ]; do
+      policy_loc="['policies'][$counter]";
+      policy_name=$(echo $all_policies | getJsonVal "${policy_loc}['name']");
+      if [ "$policy_name" == "${_scan_policy}" ]; then
+        template_id=$(echo $all_policies | getJsonVal "${policy_loc}['template_uuid']");
+        policy_id=$(echo $all_policies | getJsonVal "${policy_loc}['id']");
+      fi;
+      let counter=counter+1;
+    done;
+    if [[ "$policy_id" == "$fail_code" || \
+          "$template_id" == "$fail_code" ]]; then
+      echo "Failed to find target policy, skipping";
+      continue;
+    fi;
+
+    echo "Using policy id: $policy_id";
+
+    # Create new scan
+    scan_details=$(wget $wget_put_prefix \
+                     --post-data='{"uuid":"'"$template_id"'","settings":{"name":"'"${_scan_name}"'","policy_id":"'"${policy_id}"'","text_targets":"'"${_scan_targets}"'"}}' \
+                   $nessus_scans);
+
+    # get new scan id
+    scan_id=$(echo $scan_details | getJsonVal "['scan']['id']");
+    if [[ "$scan_id" == "$fail_code" ]]; then
+      echo "Failed to create new scan";
+      continue;
+    fi;
+
+    echo "Created and using scanner id: ${scan_id}";
+
+    # Launch created scan
+    scan_launch_details=$(wget $wget_get_prefix \
+                            --post-data='' \
+                            ${nessus_scans}/${scan_id}/launch);
+    scan_uuid=$(echo $scan_launch_details | getJsonVal "['scan_uuid']");
+    if [[ "$scan_uuid" == "$fail_code" ]]; then
+      echo "Failed to launch scan";
+      continue;
+    fi;
+    echo "Launched scan id: " $scan_uuid;
+
+    # need wait for scan to complete
+    scan_status='';
+    sleep_count=0;
+    echo "Waiting on scan to complete";
+    while [[ "$scan_status" != "completed" ]]; do
+      sleep ${sleep_in_secs}s;
+      let sleep_count=sleep_count+${sleep_in_secs};
+      echo -ne "  Waited: ${sleep_count}s\r"
+      scan_details=$(wget $wget_get_prefix \
+                       ${nessus_scans}/${scan_id});
+      # We should always be creating a new scan...so our scan should always be 0
+      scan_status=$(echo $scan_details | getJsonVal "['history'][0]['status']");
+    done;
+    echo "";
+
+    # export scan according to formats identified
+    for format in ${!formats[@]}; do
+      scan_export_details=$(wget $wget_put_prefix \
+                              --post-data='{"history_id":"'$scan_uuid'","format":"'$format'","chapters":"'$chapters'"}' \
+                              ${nessus_scans}/${scan_id}/export);
+      #echo $scan_export_details;
+      formats[$format]=$(echo $scan_export_details | getJsonVal "['file']");
+      echo "Exported $format format id: ${formats[$format]}";
+    done;
+
+    # wait for exports to finish
+    for id in ${formats[@]}; do
+      file_status='';
+      sleep_count=0;
+      echo "Waiting on export $id to complete"
+      while [ "$file_status" != "ready" ]; do
+        sleep ${sleep_in_secs}s;
+        let sleep_count=sleep_count+${sleep_in_secs};
+        echo -ne "  Waited: ${sleep_count}s\r"
+        report_status=$(wget $wget_get_prefix \
+                          ${nessus_scans}/${scan_id}/export/${id}/status);
+        file_status=$(echo $report_status | getJsonVal "['status']");
+      done;
+      echo "";
+    done;
+
+    # download reports
+    report_dts=$(date +%Y%m%d%H%M%S);
+    for format in ${!formats[@]}; do
+      id=${formats[$format]};
+      filename="nessus-report-${_scan_name}-${report_dts}.${format}";
+      wget $wget_get_prefix \
+        ${nessus_scans}/${scan_id}/export/${id}/download -O "${filename}";
+      echo "Downloaded report to: ${filename}";
+    done;
+
+  done; # for each scan
+
+  # logout
+  # apparently '--method' is a newer feature than what is on some Kali's
+  wget $wget_get_prefix \
+    --header='X-HTTP-Method-Override: DELETE' \
+    --post-data='' \
+    $nessus_session;
+  echo "Deleted session id: ${session_id}";
+}

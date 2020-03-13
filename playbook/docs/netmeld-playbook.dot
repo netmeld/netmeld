@@ -1,0 +1,30 @@
+digraph netmeld {
+  rankdir=LR;
+  nodesep=0.75;
+  ranksep=0.75;
+  newrank=true;
+  splines=spline;
+
+  label="Netmeld Tool Suite 2.x -- Playbook Dataflow";
+
+
+  node [shape=rectangle];
+  datastore [label="Datastore \&\nCore Helpers"];
+  //ctd [label="cisco-type7-decode"];
+  nmpbis [label="nmdb-playbook-insert-source"];
+  nmpbir [label="nmdb-playbook-insert-router"];
+  nmpb [label="nmdb-playbook"];
+  pbcore [label="Playbook Core\nHelpers\nSchemas\lQueriesPlaybook"];
+  nmpbes [label="nmdb-playbook-export-scans"];
+  nmpbn [label="nmdb-playbook-nessus"];
+
+  {rank="same"; nmpbis nmpbir nmpb}
+
+  nmpb->pbcore;
+  pbcore->datastore;
+  {nmpbir nmpbis}->datastore;
+  nmpb->datastore [dir="both"];
+  datastore->nmpbes;
+
+  datastore->nmpbn [style="dashed"];
+}

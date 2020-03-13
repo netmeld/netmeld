@@ -1,0 +1,20 @@
+---
+# NOTE: \u2215, math symbol division slash, is different from / to the OS
+command_value: "{{ item.cmd | join('_') | regex_replace('/', '\u2215') }}"
+item_value: "{{ item.stdout }}"
+
+cmd_list:
+- whoami /all
+- systeminfo
+# IP address and route information
+- ipconfig /allcompartments /all
+- netstat -nr
+- netstat -ano
+- get-netipconfiguration -all -allcompartments -detailed
+- get-netipinterface -includeallcompartments
+- get-netneighbor -includeallcompartments
+- get-netroute -includeallcompartments
+# Get packages and/or services
+- ps
+- get-process
+- get-process -includeusername

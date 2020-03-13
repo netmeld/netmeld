@@ -1,0 +1,8 @@
+---
+- name: Gather data from Windows type targets
+  win_shell: "{{ item }}"
+  args:
+    warn: false
+  register: cmd
+  loop: "{{ cmd_list | flatten(1) }}"
+  ignore_errors: yes

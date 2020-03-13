@@ -1,0 +1,14 @@
+all:
+  children:
+    local:
+      hosts:
+        127.0.0.1:
+    cisco:
+      hosts:
+    junos:
+      hosts:
+    linux:
+      hosts:
+        sample.host:
+    windows:
+      hosts:

@@ -1,0 +1,7 @@
+---
+- hosts:
+  - windows
+  
+  roles:
+  - gather-data-windows
+  - save-local

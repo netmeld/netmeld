@@ -1,0 +1,7 @@
+---
+- hosts:
+  - linux
+  
+  roles:
+  - gather-data-linux
+  - save-local
