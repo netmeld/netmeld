@@ -30,6 +30,7 @@
 #include <netmeld/core/objects/DeviceInformation.hpp>
 #include <netmeld/core/objects/InterfaceNetwork.hpp>
 #include <netmeld/core/objects/ToolObservations.hpp>
+#include <netmeld/core/objects/Service.hpp>
 
 #include <netmeld/core/parsers/ParserDomainName.hpp>
 #include <netmeld/core/parsers/ParserIpAddress.hpp>

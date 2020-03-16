@@ -103,6 +103,12 @@ class Tool : public nmct::AbstractImportTool<P,R>
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
+
+        LOG_DEBUG << "Iterating over services\n";
+        for (auto& result : results.services) {
+          result.save(t, toolRunId, "");
+          LOG_DEBUG << result.toDebugString() << '\n';
+        }
       }
     }
 

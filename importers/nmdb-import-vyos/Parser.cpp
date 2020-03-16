@@ -101,7 +101,8 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   token =
-     (qi::lit('"') > *(qi::lit("\\\"") | (qi::char_ - qi::char_('"'))) > qi::lit('"'))
+     (qi::lit('"') > *(qi::lit("\\\"") | (qi::char_ - qi::char_('"'))) >
+      qi::lit('"'))
     | +(qi::ascii::graph - qi::char_("{}#"))
     ;
 
@@ -157,7 +158,7 @@ Parser::addServiceDns(const nmco::IpAddress& _ipAddr)
   service.addDstPort("53");
   service.setProtocol("udp");
   service.setServiceReason("VyOS device config");
-  d.services.push_back(service)
+  d.services.push_back(service);
 }
 
 
