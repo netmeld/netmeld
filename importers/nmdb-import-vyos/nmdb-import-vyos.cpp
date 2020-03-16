@@ -97,14 +97,12 @@ class Tool : public nmct::AbstractImportTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& result : this->tResults) {
-        // muck
-
-        // save
-        //result.save(t, toolRunId, deviceId);
-        //LOG_DEBUG << result.toDebugString() << std::endl;
-
-        // link
+      for (auto& results : this->tResults) {
+        LOG_DEBUG << "Iterating over interfaces\n";
+        for (auto& [name, result] : results.ifaces) {
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << '\n';
+        }
       }
     }
 

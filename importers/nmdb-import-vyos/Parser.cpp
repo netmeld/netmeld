@@ -32,7 +32,7 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    (config)
+    (config) [qi::_val = pnx::bind(&Parser::getData, this)]
     ;
 
   config =
@@ -48,8 +48,11 @@ Parser::Parser() : Parser::base_type(start)
   system =
     qi::lit("system") >> startBlock >
     *(  (qi::lit("host-name") > token)
+          [pnx::bind(&Parser::unsup, this, "host-name " + qi::_1)]
       | (qi::lit("domain-name") > fqdn)
+          [pnx::bind(&Parser::unsup, this, "domain-name " + qi::_1)]
       | (qi::lit("name-server") > ipAddr)
+          [pnx::bind(&Parser::addServiceDns, this, qi::_1)]
 //      | (login)
 //      | (ntp)
       | ignoredBlock
@@ -58,14 +61,22 @@ Parser::Parser() : Parser::base_type(start)
 
   interfaces =
     qi::lit("interfaces") >> startBlock >
-    *(  (token > token > startBlock > interface > stopBlock)
+    *(  ((token > token)
+           [pnx::bind(&Parser::initIface, this, qi::_2),
+            pnx::bind(&Parser::updateIfaceType, this, qi::_1)] >
+         startBlock > interface > stopBlock)
       | ignoredBlock
      ) > stopBlock
     ;
 
   interface =
-    *(  (qi::lit("address") > (ipAddr | token))
+    *(  (qi::lit("address") >
+         (  ipAddr [pnx::bind(&Parser::addIfaceIpAddr, this, qi::_1)]
+          | token  [pnx::bind(&Parser::unsup, this, "address " + qi::_1)]
+         )
+        )
       | (qi::lit("description") > token)
+          [pnx::bind(&Parser::updateIfaceDesc, this, qi::_1)]
       | ignoredBlock
      )
     ;
@@ -109,3 +120,59 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
 // Parser helper methods
 // =============================================================================
+void
+Parser::initIface(const std::string& _name)
+{
+  tgtIfaceName = _name;
+  auto& iface {d.ifaces[tgtIfaceName]};
+  iface.setName(tgtIfaceName);
+}
+
+void
+Parser::updateIfaceType(const std::string& _type)
+{
+  auto& iface {d.ifaces[tgtIfaceName]};
+  iface.setMediaType(_type);
+}
+
+void
+Parser::updateIfaceDesc(const std::string& _desc)
+{
+  auto& iface {d.ifaces[tgtIfaceName]};
+  iface.setDescription(_desc);
+}
+
+void
+Parser::addIfaceIpAddr(nmco::IpAddress& _ipAddr)
+{
+  auto& iface {d.ifaces[tgtIfaceName]};
+  iface.addIpAddress(_ipAddr);
+}
+
+
+void
+Parser::addServiceDns(const nmco::IpAddress& _ipAddr)
+{
+  nmco::Service service {"DNS", _ipAddr};
+  service.addDstPort("53");
+  service.setProtocol("udp");
+  service.setServiceReason("VyOS device config");
+  d.services.push_back(service)
+}
+
+
+void
+Parser::unsup(const std::string& _value)
+{
+  d.observations.addUnsupportedFeature(_value);
+}
+
+
+Result
+Parser::getData()
+{
+  Result r;
+  r.push_back(d);
+
+  return r;
+}

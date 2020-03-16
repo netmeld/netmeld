@@ -45,6 +45,8 @@ struct Data {
 
   std::map<std::string, nmco::InterfaceNetwork> ifaces;
 
+  std::vector<nmco::Service> services;
+
   nmco::ToolObservations observations;
 };
 typedef std::vector<Data>    Result;
@@ -82,6 +84,8 @@ class Parser :
     // Supporting data structures
     Data d;
 
+    std::string tgtIfaceName {""};
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -92,5 +96,15 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
+    void initIface(const std::string&);
+    void addIfaceIpAddr(nmco::IpAddress&);
+    void updateIfaceType(const std::string&);
+    void updateIfaceDesc(const std::string&);
+
+    void addServiceDns(const nmco::IpAddress&);
+
+    void unsup(const std::string&);
+
+    Result getData();
 };
 #endif // PARSER_HPP
