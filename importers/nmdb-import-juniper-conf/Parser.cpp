@@ -91,9 +91,11 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("application-set") >> token
       [pnx::bind(&Parser::updateBookName, this, qi::_1)] >>
     startBlock >>
-      *(qi::lit("application") >> token >> qi::eol)
-        [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)] >>
-      stopBlock
+    *( (qi::lit("application") >> token >> qi::eol)
+         [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
+     | ignoredBlock
+    ) >>
+    stopBlock
     ;
 
   application =
