@@ -28,6 +28,8 @@
 #define PARSER_HPP
 
 #include <netmeld/core/objects/AcNetworkBook.hpp>
+#include <netmeld/core/objects/AcRule.hpp>
+#include <netmeld/core/objects/AcServiceBook.hpp>
 #include <netmeld/core/objects/DeviceInformation.hpp>
 #include <netmeld/core/objects/InterfaceNetwork.hpp>
 #include <netmeld/core/objects/Service.hpp>
@@ -40,6 +42,8 @@ namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 
 typedef std::map<std::string, nmco::AcNetworkBook>  NetworkBook;
+//typedef std::map<std::string, nmco::AcServiceBook>  ServiceBook;
+typedef std::map<size_t, nmco::AcRule>              RuleBook;
 
 // =============================================================================
 // Data containers
@@ -51,7 +55,9 @@ struct Data {
 
   std::vector<nmco::Service> services;
 
-  std::map<std::string, NetworkBook> networkBooks;
+  std::map<std::string, NetworkBook>  networkBooks;
+//  std::map<std::string, ServiceBook>  serviceBooks;
+  std::map<std::string, RuleBook>     ruleBooks;
 
   nmco::ToolObservations observations;
 };
@@ -76,7 +82,7 @@ class Parser :
       config,
       system,
       interfaces, interface,
-      firewall, group, addressGroup,
+      firewall, group, addressGroup, ipv6Name, rule, destination,
       startBlock, stopBlock, ignoredBlock;
 
     qi::rule<nmcp::IstreamIter, std::string()>
@@ -96,6 +102,9 @@ class Parser :
     std::string tgtZone      {"global"};
     std::string tgtBook      {""};
 
+    size_t curRuleId {0};
+    nmco::AcRule* tgtRule;//  {&(d.ruleBooks[tgtZone][0])};
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -114,6 +123,9 @@ class Parser :
     void serviceAddDns(const nmco::IpAddress&);
 
     void netBookAddAddr(const nmco::IpAddress&);
+
+    //void ruleInit(const std::string&);
+    void ruleInit(int);
 
     void unsup(const std::string&);
 

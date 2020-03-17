@@ -119,6 +119,13 @@ class Tool : public nmct::AbstractImportTool<P,R>
             LOG_DEBUG << book.toDebugString() << '\n';
           }
         }
+        LOG_DEBUG << "Iterating over ruleBooks\n";
+        for (auto& [name, book] : results.ruleBooks) {
+          for (auto& [id, rule] : book) {
+            //rule.save(t, toolRunId, deviceId);
+            LOG_DEBUG << rule.toDebugString() << '\n';
+          }
+        }
       }
     }
 

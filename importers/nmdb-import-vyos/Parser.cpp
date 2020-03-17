@@ -62,10 +62,6 @@ Parser::Parser() : Parser::base_type(start)
   interfaces =
     qi::lit("interfaces") >> startBlock >
     *(  interface
-//        ((token > token)
-//           [pnx::bind(&Parser::ifaceInit, this, qi::_2),
-//            pnx::bind(&Parser::ifaceUpdateType, this, qi::_1)] >
-//         startBlock > interface > stopBlock)
       | ignoredBlock
      ) > stopBlock
     ;
@@ -89,7 +85,7 @@ Parser::Parser() : Parser::base_type(start)
   firewall =
     qi::lit("firewall") >> startBlock >
     *(  group
-//      | ipv6rules
+      | ipv6Name
 //      | ipv4rules
       | ignoredBlock
     ) > stopBlock
@@ -108,6 +104,41 @@ Parser::Parser() : Parser::base_type(start)
     startBlock >
     *(  (qi::lit("address") > ipAddr)
           [pnx::bind(&Parser::netBookAddAddr, this, qi::_1)]
+      | ignoredBlock
+    ) > stopBlock
+    ;
+
+  ipv6Name =
+    qi::lit("ipv6-name") > token
+      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >
+    startBlock >
+    *(  rule
+      | (qi::lit("default-action") > token)
+      | (qi::lit("enable-default-log"))
+      | ignoredBlock
+    ) > stopBlock
+    ;
+
+  rule =
+    qi::lit("rule") > qi::int_
+      [pnx::bind(&Parser::ruleInit, this, qi::_1)] >
+    startBlock >
+    *(  (qi::lit("action") > token)
+      | (qi::lit("description") > token)
+//      | (qi::lit("state") > startBlock > *() > stopBlock)
+      | (qi::lit("protocol") > token)
+      | (destination)
+//      | (qi::lit("source") > startBlock > qi::lit("port") > token > stopBlock)
+      | (qi::lit("log") > token)
+      | (qi::lit("disable"))
+      | ignoredBlock
+    ) > stopBlock
+    ;
+
+  destination =
+    qi::lit("destination") > startBlock >
+    *(  (qi::lit("port") > token)
+      | (qi::lit("group") > startBlock > qi::lit("address-group") > token > stopBlock)
       | ignoredBlock
     ) > stopBlock
     ;
@@ -143,6 +174,7 @@ Parser::Parser() : Parser::base_type(start)
       (config)
       (system)
       (interfaces)(interface)
+      (firewall)(group)(addressGroup)(ipv6Name)(rule)(destination)
       (startBlock)(stopBlock)(ignoredBlock)
       (token)(comment)
       );
@@ -197,6 +229,15 @@ void
 Parser::netBookAddAddr(const nmco::IpAddress& _ipAddr)
 {
   d.networkBooks[tgtZone][tgtBook].addData(_ipAddr.toString());
+}
+
+
+void
+Parser::ruleInit(int _ruleId)
+{
+  tgtRule = &d.ruleBooks[tgtZone][curRuleId];
+  tgtRule->setRuleId(_ruleId);
+  ++curRuleId;
 }
 
 
