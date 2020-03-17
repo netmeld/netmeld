@@ -38,7 +38,7 @@ Parser::Parser() : Parser::base_type(start)
   config =
     *( system
      | interfaces
-//     | firewall
+     | firewall
 //     | service
 //     | port-forward
      | ignoredBlock
@@ -52,7 +52,7 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("domain-name") > fqdn)
           [pnx::bind(&Parser::unsup, this, "domain-name " + qi::_1)]
       | (qi::lit("name-server") > ipAddr)
-          [pnx::bind(&Parser::addServiceDns, this, qi::_1)]
+          [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
 //      | (login)
 //      | (ntp)
       | ignoredBlock
@@ -61,24 +61,55 @@ Parser::Parser() : Parser::base_type(start)
 
   interfaces =
     qi::lit("interfaces") >> startBlock >
-    *(  ((token > token)
-           [pnx::bind(&Parser::initIface, this, qi::_2),
-            pnx::bind(&Parser::updateIfaceType, this, qi::_1)] >
-         startBlock > interface > stopBlock)
+    *(  interface
+//        ((token > token)
+//           [pnx::bind(&Parser::ifaceInit, this, qi::_2),
+//            pnx::bind(&Parser::ifaceUpdateType, this, qi::_1)] >
+//         startBlock > interface > stopBlock)
       | ignoredBlock
      ) > stopBlock
     ;
 
   interface =
+    (token > token)
+      [pnx::bind(&Parser::ifaceInit, this, qi::_2),
+       pnx::bind(&Parser::ifaceUpdateType, this, qi::_1)] >
+    startBlock >
     *(  (qi::lit("address") >
-         (  ipAddr [pnx::bind(&Parser::addIfaceIpAddr, this, qi::_1)]
+         (  ipAddr [pnx::bind(&Parser::ifaceAddIpAddr, this, qi::_1)]
           | token  [pnx::bind(&Parser::unsup, this, "address " + qi::_1)]
          )
         )
       | (qi::lit("description") > token)
-          [pnx::bind(&Parser::updateIfaceDesc, this, qi::_1)]
+          [pnx::bind(&Parser::ifaceUpdateDesc, this, qi::_1)]
       | ignoredBlock
-     )
+    ) > stopBlock
+    ;
+
+  firewall =
+    qi::lit("firewall") >> startBlock >
+    *(  group
+//      | ipv6rules
+//      | ipv4rules
+      | ignoredBlock
+    ) > stopBlock
+    ;
+
+  group =
+    qi::lit("group") >> startBlock >
+    *(  addressGroup
+      | ignoredBlock
+    ) > stopBlock
+    ;
+
+  addressGroup =
+    qi::lit("address-group") > token
+      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >
+    startBlock >
+    *(  (qi::lit("address") > ipAddr)
+          [pnx::bind(&Parser::netBookAddAddr, this, qi::_1)]
+      | ignoredBlock
+    ) > stopBlock
     ;
 
   ignoredBlock =
@@ -122,7 +153,7 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
 void
-Parser::initIface(const std::string& _name)
+Parser::ifaceInit(const std::string& _name)
 {
   tgtIfaceName = _name;
   auto& iface {d.ifaces[tgtIfaceName]};
@@ -130,21 +161,21 @@ Parser::initIface(const std::string& _name)
 }
 
 void
-Parser::updateIfaceType(const std::string& _type)
+Parser::ifaceUpdateType(const std::string& _type)
 {
   auto& iface {d.ifaces[tgtIfaceName]};
   iface.setMediaType(_type);
 }
 
 void
-Parser::updateIfaceDesc(const std::string& _desc)
+Parser::ifaceUpdateDesc(const std::string& _desc)
 {
   auto& iface {d.ifaces[tgtIfaceName]};
   iface.setDescription(_desc);
 }
 
 void
-Parser::addIfaceIpAddr(nmco::IpAddress& _ipAddr)
+Parser::ifaceAddIpAddr(nmco::IpAddress& _ipAddr)
 {
   auto& iface {d.ifaces[tgtIfaceName]};
   iface.addIpAddress(_ipAddr);
@@ -152,13 +183,20 @@ Parser::addIfaceIpAddr(nmco::IpAddress& _ipAddr)
 
 
 void
-Parser::addServiceDns(const nmco::IpAddress& _ipAddr)
+Parser::serviceAddDns(const nmco::IpAddress& _ipAddr)
 {
   nmco::Service service {"DNS", _ipAddr};
   service.addDstPort("53");
   service.setProtocol("udp");
   service.setServiceReason("VyOS device config");
   d.services.push_back(service);
+}
+
+
+void
+Parser::netBookAddAddr(const nmco::IpAddress& _ipAddr)
+{
+  d.networkBooks[tgtZone][tgtBook].addData(_ipAddr.toString());
 }
 
 

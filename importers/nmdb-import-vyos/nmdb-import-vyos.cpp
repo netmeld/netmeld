@@ -109,6 +109,16 @@ class Tool : public nmct::AbstractImportTool<P,R>
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << '\n';
         }
+
+        LOG_DEBUG << "Iterating over networkBooks\n";
+        for (auto& [zone, nets] : results.networkBooks) {
+          for (auto& [name, book] : nets) {
+            book.setId(zone);
+            book.setName(name);
+            book.save(t, toolRunId, deviceId);
+            LOG_DEBUG << book.toDebugString() << '\n';
+          }
+        }
       }
     }
 

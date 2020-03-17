@@ -27,16 +27,19 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include <netmeld/core/objects/AcNetworkBook.hpp>
 #include <netmeld/core/objects/DeviceInformation.hpp>
 #include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
 #include <netmeld/core/objects/Service.hpp>
+#include <netmeld/core/objects/ToolObservations.hpp>
 
 #include <netmeld/core/parsers/ParserDomainName.hpp>
 #include <netmeld/core/parsers/ParserIpAddress.hpp>
 
 namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
+
+typedef std::map<std::string, nmco::AcNetworkBook>  NetworkBook;
 
 // =============================================================================
 // Data containers
@@ -47,6 +50,8 @@ struct Data {
   std::map<std::string, nmco::InterfaceNetwork> ifaces;
 
   std::vector<nmco::Service> services;
+
+  std::map<std::string, NetworkBook> networkBooks;
 
   nmco::ToolObservations observations;
 };
@@ -71,6 +76,7 @@ class Parser :
       config,
       system,
       interfaces, interface,
+      firewall, group, addressGroup,
       startBlock, stopBlock, ignoredBlock;
 
     qi::rule<nmcp::IstreamIter, std::string()>
@@ -87,6 +93,9 @@ class Parser :
 
     std::string tgtIfaceName {""};
 
+    std::string tgtZone      {"global"};
+    std::string tgtBook      {""};
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -97,12 +106,14 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void initIface(const std::string&);
-    void addIfaceIpAddr(nmco::IpAddress&);
-    void updateIfaceType(const std::string&);
-    void updateIfaceDesc(const std::string&);
+    void ifaceInit(const std::string&);
+    void ifaceAddIpAddr(nmco::IpAddress&);
+    void ifaceUpdateType(const std::string&);
+    void ifaceUpdateDesc(const std::string&);
 
-    void addServiceDns(const nmco::IpAddress&);
+    void serviceAddDns(const nmco::IpAddress&);
+
+    void netBookAddAddr(const nmco::IpAddress&);
 
     void unsup(const std::string&);
 
