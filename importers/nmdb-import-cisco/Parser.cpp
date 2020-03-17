@@ -307,13 +307,13 @@ Parser::addManuallySetBpduFilterIface(const nmco::InterfaceNetwork& iface)
 void
 Parser::setVendor(const std::string& vendor)
 {
-  d.dhi.setVendor(nmcu::trim(vendor));
+  d.devInfo.setVendor(nmcu::trim(vendor));
 }
 
 void
 Parser::setDevId(const std::string& id)
 {
-  d.dhi.setDeviceId(nmcu::trim(id));
+  d.devInfo.setDeviceId(nmcu::trim(id));
 }
 
 void
@@ -336,7 +336,7 @@ Parser::addDhcpService(const nmco::IpAddress& ip, const nmco::InterfaceNetwork& 
   service.setProtocol("udp");
   service.addDstPort("67"); // port server uses
   service.addSrcPort("68"); // port client uses
-  service.setServiceReason(d.dhi.getDeviceId() + "'s config");
+  service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   service.setInterfaceName(iface.getName());
   d.services.push_back(service);
 }
@@ -348,7 +348,7 @@ Parser::addNtpService(const nmco::IpAddress& ip)
   service.setProtocol("udp");
   service.addDstPort("123"); // same port used by client and server
   service.addSrcPort("123");
-  service.setServiceReason(d.dhi.getDeviceId() + "'s config");
+  service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 
@@ -358,7 +358,7 @@ Parser::addSnmpService(const nmco::IpAddress& ip)
   nmco::Service service {"snmp", ip};
   service.setProtocol("udp");
   service.addDstPort("162"); // port manager receives on
-  service.setServiceReason(d.dhi.getDeviceId() + "'s config");
+  service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 

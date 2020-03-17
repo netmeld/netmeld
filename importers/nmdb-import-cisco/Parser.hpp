@@ -52,7 +52,7 @@ namespace nmcu  = netmeld::core::utils;
 // =============================================================================
 struct Data
 {
-  nmco::DeviceInformation              dhi;
+  nmco::DeviceInformation              devInfo;
   std::vector<std::string>             aaas;
   nmco::ToolObservations               observations;
   std::vector<nmco::Service>           services;
