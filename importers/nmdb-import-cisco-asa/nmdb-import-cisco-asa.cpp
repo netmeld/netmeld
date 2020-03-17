@@ -30,7 +30,6 @@
 
 namespace nmco = netmeld::core::objects;
 namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
 
 
 // =============================================================================
@@ -78,42 +77,43 @@ class Tool : public nmct::AbstractImportTool<P,R>
   private: // Methods part of internal API
     // Overriden from AbstractImportTool
     void
-    modifyToolOptions() override
-    {
-      this->opts.removeRequiredOption("device-id");
-      this->opts.removeAdvancedOption("tool-run-metadata");
-    }
-
-    // Overriden from AbstractImportTool
-    void
     specificInserts(pqxx::transaction_base& t) override
     {
-      const auto& toolRunId {this->getToolRunId()};
-      auto& results         {this->tResults};
+      const auto& toolRunId        {this->getToolRunId()};
+      const auto& defaultDeviceId  {this->getDeviceId()};
+
+      bool first {true};
 
       LOG_DEBUG << "Iterating over results\n";
-      for (auto& objects : results) {
-        auto& devInfo {objects.devInfo};
+      for (auto& results : this->tResults) {
+        auto deviceId {defaultDeviceId};
+
+        LOG_DEBUG << "Adding device information\n";
+        auto& devInfo {results.devInfo};
+        if (!first && !devInfo.getDeviceId().empty()) {
+          deviceId = defaultDeviceId + ":" + devInfo.getDeviceId();
+        }
+        devInfo.setDeviceId(deviceId);
+        if (this->opts.exists("device-type") &&
+            devInfo.getDeviceType().empty())
+        {
+          devInfo.setDeviceType(this->opts.getValue("device-type"));
+        }
         if (this->opts.exists("device-color")) {
           devInfo.setDeviceColor(this->opts.getValue("device-color"));
-        }
-        if (this->opts.exists("device-type")) {
-          devInfo.setDeviceType(this->opts.getValue("device-type"));
         }
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
 
-        const auto& deviceId {devInfo.getDeviceId()};
-
         // Process the rest of the results
         LOG_DEBUG << "Iterating over ifaces\n";
-        for (auto& result : objects.ifaces) {
+        for (auto& result : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over networkBooks\n";
-        for (auto& [zone, nets] : objects.networkBooks) {
+        for (auto& [zone, nets] : results.networkBooks) {
           for (auto& [name, book] : nets) {
             book.setId(zone);
             book.setName(name);
@@ -122,7 +122,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
           }
         }
         LOG_DEBUG << "Iterating over serviceBooks\n";
-        for (auto& [zone, apps] : objects.serviceBooks) {
+        for (auto& [zone, apps] : results.serviceBooks) {
           for (auto& [name, book] : apps) {
             book.setId(zone);
             book.setName(name);
@@ -131,7 +131,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
           }
         }
         LOG_DEBUG << "Iterating over ruleBooks\n";
-        for (auto& [name, book] : objects.ruleBooks) {
+        for (auto& [name, book] : results.ruleBooks) {
           LOG_DEBUG << name << '\n';
           for (auto& [id, rule] : book) {
             rule.save(t, toolRunId, deviceId);
@@ -140,8 +140,10 @@ class Tool : public nmct::AbstractImportTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over Observations\n";
-        objects.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << objects.observations.toDebugString() << "\n";
+        results.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.observations.toDebugString() << "\n";
+
+        first = false;
       }
     }
 
@@ -167,7 +169,9 @@ class Tool : public nmct::AbstractImportTool<P,R>
 // =============================================================================
 // Program entry point
 // =============================================================================
-int main(int argc, char** argv) {
+int
+main(int argc, char** argv)
+{
   Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
 }

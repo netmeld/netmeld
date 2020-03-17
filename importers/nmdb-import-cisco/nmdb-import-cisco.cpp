@@ -38,6 +38,14 @@ namespace nmct = netmeld::core::tools;
 template<typename P, typename R>
 class Tool : public nmct::AbstractImportTool<P,R>
 {
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
   public:
     Tool() : nmct::AbstractImportTool<P,R>
       (
@@ -47,6 +55,10 @@ class Tool : public nmct::AbstractImportTool<P,R>
       )
     {}
 
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private: // Methods part of internal API
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -74,7 +86,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
           devInfo.setDeviceColor(this->opts.getValue("device-color"));
         }
         devInfo.save(t, toolRunId);
-        LOG_DEBUG << dhi.toDebugString() << std::endl;
+        LOG_DEBUG << devInfo.toDebugString() << '\n';
 
         LOG_DEBUG << "Iteration over AAAs\n";
         for (auto& result : results.aaas) {
@@ -121,6 +133,10 @@ class Tool : public nmct::AbstractImportTool<P,R>
     }
 };
 
+
+// =============================================================================
+// Program entry point
+// =============================================================================
 int
 main(int argc, char** argv)
 {
