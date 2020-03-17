@@ -38,6 +38,14 @@ namespace nmcu = netmeld::core::utils;
 template<typename P, typename R>
 class Tool : public nmct::AbstractImportTool<P,R>
 {
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
   public:
     Tool() : nmct::AbstractImportTool<P,R>
       (
@@ -47,63 +55,79 @@ class Tool : public nmct::AbstractImportTool<P,R>
       )
     {}
 
-    void
-    modifyToolOptions() override
-    {
-      this->opts.removeRequiredOption("device-id");
-      this->opts.removeAdvancedOption("tool-run-metadata");
-    }
 
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private: // Methods part of internal API
     void
     specificInserts(pqxx::transaction_base& t) override
     {
-      const auto& toolRunId {this->getToolRunId()};
-      auto& results         {this->tResults};
+      const auto& toolRunId        {this->getToolRunId()};
+      const auto& defaultDeviceId  {this->getDeviceId()};
 
-      for (auto& objects : results) {
-        auto& devInfo {objects.devInfo};
+      bool first {true};
+
+      LOG_DEBUG << "Iterating over results\n";
+      for (auto& results : this->tResults) {
+        auto deviceId {defaultDeviceId};
+
+        LOG_DEBUG << "Adding device information\n";
+        auto& devInfo {results.devInfo};
+        if (!first && !devInfo.getDeviceId().empty()) {
+          deviceId = defaultDeviceId + ":" + devInfo.getDeviceId();
+        }
+        devInfo.setDeviceId(deviceId);
+        if (this->opts.exists("device-type") &&
+            devInfo.getDeviceType().empty())
+        {
+          devInfo.setDeviceType(this->opts.getValue("device-type"));
+        }
         if (this->opts.exists("device-color")) {
           devInfo.setDeviceColor(this->opts.getValue("device-color"));
         }
-        if (this->opts.exists("device-type")) {
-          devInfo.setDeviceType(this->opts.getValue("device-type"));
-        }
-        LOG_DEBUG << devInfo.toDebugString() << '\n';
         devInfo.save(t, toolRunId);
+        LOG_DEBUG << devInfo.toDebugString() << '\n';
+        
 
-        const auto& deviceId {devInfo.getDeviceId()};
         // Process the rest of the results
         LOG_DEBUG << "Iterating over vlans\n";
-        for (auto& result : objects.vlans) {
+        for (auto& result : results.vlans) {
           LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, deviceId);
         }
 
         LOG_DEBUG << "Iterating over ifaces\n";
-        for (auto& result : objects.ifaces) {
+        for (auto& result : results.ifaces) {
           LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, deviceId);
         }
 
         LOG_DEBUG << "Iterating over routes\n";
-        for (auto& result : objects.routes) {
+        for (auto& result : results.routes) {
           LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, deviceId);
         }
 
         LOG_DEBUG << "Iterating over services\n";
-        for (auto& result : objects.services) {
+        for (auto& result : results.services) {
           LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, "");
         }
 
         LOG_DEBUG << "Iterating over observations:\n";
-        LOG_DEBUG << objects.observations.toDebugString() << std::endl;
-        objects.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.observations.toDebugString() << std::endl;
+        results.observations.save(t, toolRunId, deviceId);
+
+        first = false;
       }
     }
 };
 
+
+// =============================================================================
+// Program entry point
+// =============================================================================
 int
 main(int argc, char** argv)
 {
