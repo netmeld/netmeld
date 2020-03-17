@@ -82,7 +82,7 @@ class Parser :
       config,
       system,
       interfaces, interface,
-      firewall, group, addressGroup, ipv6Name, rule, destination,
+      firewall, group, addressGroup, ruleSets, rule, destination, source,
       startBlock, stopBlock, ignoredBlock;
 
     qi::rule<nmcp::IstreamIter, std::string()>
@@ -97,13 +97,19 @@ class Parser :
     // Supporting data structures
     Data d;
 
-    std::string tgtIfaceName {""};
+    nmco::InterfaceNetwork*  tgtIface;
+    std::string              tgtIfaceName;
 
-    std::string tgtZone      {"global"};
-    std::string tgtBook      {""};
+    const std::string DEFAULT_ZONE {"global"};
 
-    size_t curRuleId {0};
-    nmco::AcRule* tgtRule;//  {&(d.ruleBooks[tgtZone][0])};
+    std::string tgtZone  {DEFAULT_ZONE};
+    std::string tgtBook;
+
+    size_t         curRuleId  {0};
+    nmco::AcRule*  tgtRule;
+    std::string    proto;
+    std::string    srcPort;
+    std::string    dstPort;
 
   // ===========================================================================
   // Constructors
@@ -116,16 +122,12 @@ class Parser :
   // ===========================================================================
   private:
     void ifaceInit(const std::string&);
-    void ifaceAddIpAddr(nmco::IpAddress&);
-    void ifaceUpdateType(const std::string&);
-    void ifaceUpdateDesc(const std::string&);
 
     void serviceAddDns(const nmco::IpAddress&);
 
     void netBookAddAddr(const nmco::IpAddress&);
 
-    //void ruleInit(const std::string&);
-    void ruleInit(int);
+    void ruleInit(size_t);
 
     void unsup(const std::string&);
 

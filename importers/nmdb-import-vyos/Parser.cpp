@@ -69,24 +69,37 @@ Parser::Parser() : Parser::base_type(start)
   interface =
     (token > token)
       [pnx::bind(&Parser::ifaceInit, this, qi::_2),
-       pnx::bind(&Parser::ifaceUpdateType, this, qi::_1)] >
+       pnx::bind(&nmco::InterfaceNetwork::setMediaType,
+                 pnx::bind(&Parser::tgtIface, this),
+                 qi::_1)] >
     startBlock >
     *(  (qi::lit("address") >
-         (  ipAddr [pnx::bind(&Parser::ifaceAddIpAddr, this, qi::_1)]
-          | token  [pnx::bind(&Parser::unsup, this, "address " + qi::_1)]
+         (  ipAddr
+              [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                         pnx::bind(&Parser::tgtIface, this),
+                         qi::_1)]
+          | token
+              [pnx::bind(&Parser::unsup, this, "address " + qi::_1)]
          )
         )
       | (qi::lit("description") > token)
-          [pnx::bind(&Parser::ifaceUpdateDesc, this, qi::_1)]
+          [pnx::bind(&nmco::InterfaceNetwork::setDescription,
+                     pnx::bind(&Parser::tgtIface, this),
+                     qi::_1)]
+//      | ifaceFirewall
       | ignoredBlock
     ) > stopBlock
     ;
 
+//  ifaceFirewall =
+//    qi::lit("firewall") >> startBlock >
+//    *() > stopBlock
+//    ;
+
   firewall =
     qi::lit("firewall") >> startBlock >
     *(  group
-      | ipv6Name
-//      | ipv4rules
+      | ruleSets
       | ignoredBlock
     ) > stopBlock
     ;
@@ -108,9 +121,9 @@ Parser::Parser() : Parser::base_type(start)
     ) > stopBlock
     ;
 
-  ipv6Name =
-    qi::lit("ipv6-name") > token
-      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >
+  ruleSets =
+    (qi::lit("ipv6-name")|qi::lit("name")) > token
+      [pnx::bind(&Parser::tgtZone, this) = qi::_1] >
     startBlock >
     *(  rule
       | (qi::lit("default-action") > token)
@@ -120,17 +133,24 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   rule =
-    qi::lit("rule") > qi::int_
+    qi::lit("rule") > qi::ulong_
       [pnx::bind(&Parser::ruleInit, this, qi::_1)] >
     startBlock >
     *(  (qi::lit("action") > token)
+          [pnx::bind(&nmco::AcRule::addAction,
+                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
       | (qi::lit("description") > token)
+          [pnx::bind(&nmco::AcRule::setRuleDescription,
+                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
 //      | (qi::lit("state") > startBlock > *() > stopBlock)
       | (qi::lit("protocol") > token)
-      | (destination)
-//      | (qi::lit("source") > startBlock > qi::lit("port") > token > stopBlock)
+          [pnx::bind(&Parser::proto, this) = qi::_1]
+      | destination
+      | source
       | (qi::lit("log") > token)
       | (qi::lit("disable"))
+          [pnx::bind(&nmco::AcRule::disable,
+                     pnx::bind(&Parser::tgtRule, this))]
       | ignoredBlock
     ) > stopBlock
     ;
@@ -138,7 +158,31 @@ Parser::Parser() : Parser::base_type(start)
   destination =
     qi::lit("destination") > startBlock >
     *(  (qi::lit("port") > token)
-      | (qi::lit("group") > startBlock > qi::lit("address-group") > token > stopBlock)
+          [pnx::bind(&Parser::dstPort, this) = qi::_1]
+      | (qi::lit("group") > startBlock >
+         qi::lit("address-group") > token
+          [pnx::bind(&nmco::AcRule::addDst,
+                     pnx::bind(&Parser::tgtRule, this), qi::_1)] >
+         qi::eol > stopBlock)
+      | (qi::lit("address") > token)
+          [pnx::bind(&nmco::AcRule::addDst,
+                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
+      | ignoredBlock
+    ) > stopBlock
+    ;
+
+  source =
+    qi::lit("source") > startBlock >
+    *(  (qi::lit("port") > token)
+          [pnx::bind(&Parser::srcPort, this) = qi::_1]
+      | (qi::lit("group") > startBlock >
+         qi::lit("address-group") > token
+          [pnx::bind(&nmco::AcRule::addSrc,
+                     pnx::bind(&Parser::tgtRule, this), qi::_1)] >
+         qi::eol > stopBlock)
+      | (qi::lit("address") > token)
+          [pnx::bind(&nmco::AcRule::addSrc,
+                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
       | ignoredBlock
     ) > stopBlock
     ;
@@ -174,7 +218,7 @@ Parser::Parser() : Parser::base_type(start)
       (config)
       (system)
       (interfaces)(interface)
-      (firewall)(group)(addressGroup)(ipv6Name)(rule)(destination)
+      (firewall)(group)(addressGroup)(ruleSets)(rule)(destination)
       (startBlock)(stopBlock)(ignoredBlock)
       (token)(comment)
       );
@@ -187,30 +231,8 @@ Parser::Parser() : Parser::base_type(start)
 void
 Parser::ifaceInit(const std::string& _name)
 {
-  tgtIfaceName = _name;
-  auto& iface {d.ifaces[tgtIfaceName]};
-  iface.setName(tgtIfaceName);
-}
-
-void
-Parser::ifaceUpdateType(const std::string& _type)
-{
-  auto& iface {d.ifaces[tgtIfaceName]};
-  iface.setMediaType(_type);
-}
-
-void
-Parser::ifaceUpdateDesc(const std::string& _desc)
-{
-  auto& iface {d.ifaces[tgtIfaceName]};
-  iface.setDescription(_desc);
-}
-
-void
-Parser::ifaceAddIpAddr(nmco::IpAddress& _ipAddr)
-{
-  auto& iface {d.ifaces[tgtIfaceName]};
-  iface.addIpAddress(_ipAddr);
+  tgtIface = &d.ifaces[_name];
+  tgtIface->setName(_name);
 }
 
 
@@ -233,11 +255,16 @@ Parser::netBookAddAddr(const nmco::IpAddress& _ipAddr)
 
 
 void
-Parser::ruleInit(int _ruleId)
+Parser::ruleInit(size_t _ruleId)
 {
   tgtRule = &d.ruleBooks[tgtZone][curRuleId];
-  tgtRule->setRuleId(_ruleId);
   ++curRuleId;
+
+  tgtRule->setRuleId(_ruleId);
+  tgtRule->setDstId(DEFAULT_ZONE);
+  tgtRule->addDstIface("any");
+  tgtRule->setSrcId(DEFAULT_ZONE);
+  tgtRule->addSrcIface("any");
 }
 
 
