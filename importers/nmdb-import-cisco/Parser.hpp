@@ -73,14 +73,6 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
-    Data d;
-    bool globalCdpEnabled {true};
-    bool globalBpduGuardEnabled {false};
-    bool globalBpduFilterEnabled {false};
-    std::set<std::string>  ifacesCdpManuallySet;
-    std::set<std::string>  ifacesBpduGuardManuallySet;
-    std::set<std::string>  ifacesBpduFilterManuallySet;
-
     // Rules
     qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -102,6 +94,19 @@ class Parser :
     nmcp::ParserIpAddress   ipAddr;
     nmcp::ParserMacAddress  macAddr;
 
+    // Supporting data structures 
+    Data d;
+
+    bool isNo {false};
+
+    bool globalCdpEnabled         {true};
+    bool globalBpduGuardEnabled   {false};
+    bool globalBpduFilterEnabled  {false};
+
+    std::set<std::string>  ifacesCdpManuallySet;
+    std::set<std::string>  ifacesBpduGuardManuallySet;
+    std::set<std::string>  ifacesBpduFilterManuallySet;
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -113,10 +118,6 @@ class Parser :
   // ===========================================================================
   private: // Methods which should be hidden from API users
     // Global Cdp/Bpdu related
-    void setGlobalCdp(bool);
-    void setGlobalBpduGuard(bool);
-    void setGlobalBpduFilter(bool);
-
     void addManuallySetCdpIface(const nmco::InterfaceNetwork&);
     void addManuallySetBpduGuardIface(const nmco::InterfaceNetwork&);
     void addManuallySetBpduFilterIface(const nmco::InterfaceNetwork&);
