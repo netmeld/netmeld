@@ -81,7 +81,7 @@ class Parser :
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
       system,
-      interfaces, interface,
+      interfaces, interface, ifaceFirewall,
       firewall, group, addressGroup, ruleSets, rule, destination, source,
       startBlock, stopBlock, ignoredBlock;
 
@@ -128,6 +128,8 @@ class Parser :
     void netBookAddAddr(const nmco::IpAddress&);
 
     void ruleInit(size_t);
+    void ruleAddDstIface(const std::string&);
+    void ruleAddSrcIface(const std::string&);
 
     void unsup(const std::string&);
 

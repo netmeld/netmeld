@@ -77,20 +77,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
   // ===========================================================================
   private: // Methods part of internal API
     // Overriden from AbstractImportTool
-//    void
-//    modifyToolOptions() override
-//    {
-//      this->opts.addRequiredOption("tool-option", std::make_tuple(
-//            "tool-option",
-//            po::value<std::string>()->required(),
-//            "Some tool option")
-//          );
-//
-//      this->opts.removeOptionalOption("pipe");
-//      this->opts.removeAdvancedOption("tool-run-metadata");
-//    }
-
-    // Overriden from AbstractImportTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {

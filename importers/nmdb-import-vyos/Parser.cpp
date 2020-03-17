@@ -86,15 +86,23 @@ Parser::Parser() : Parser::base_type(start)
           [pnx::bind(&nmco::InterfaceNetwork::setDescription,
                      pnx::bind(&Parser::tgtIface, this),
                      qi::_1)]
-//      | ifaceFirewall
+      | ifaceFirewall
       | ignoredBlock
     ) > stopBlock
     ;
 
-//  ifaceFirewall =
-//    qi::lit("firewall") >> startBlock >
-//    *() > stopBlock
-//    ;
+  ifaceFirewall =
+    qi::lit("firewall") >> startBlock >
+    *( (qi::lit("in") > startBlock >
+        *((qi::lit("ipv6-name") | qi::lit("name")) > token > qi::eol)
+          [pnx::bind(&Parser::ruleAddSrcIface, this, qi::_1)]
+        > stopBlock)
+     | ((qi::lit("out") | qi::lit("local")) > startBlock >
+        *((qi::lit("ipv6-name") | qi::lit("name")) > token > qi::eol)
+          [pnx::bind(&Parser::ruleAddDstIface, this, qi::_1)]
+        > stopBlock)
+    ) > stopBlock
+    ;
 
   firewall =
     qi::lit("firewall") >> startBlock >
@@ -262,9 +270,23 @@ Parser::ruleInit(size_t _ruleId)
 
   tgtRule->setRuleId(_ruleId);
   tgtRule->setDstId(DEFAULT_ZONE);
-  tgtRule->addDstIface("any");
   tgtRule->setSrcId(DEFAULT_ZONE);
-  tgtRule->addSrcIface("any");
+}
+
+void
+Parser::ruleAddDstIface(const std::string& _tgtZone)
+{
+  for (auto& [ruleId, rule] : d.ruleBooks[_tgtZone]) {
+    rule.addDstIface(tgtIface->getName());
+  }
+}
+
+void
+Parser::ruleAddSrcIface(const std::string& _tgtZone)
+{
+  for (auto& [ruleId, rule] : d.ruleBooks[_tgtZone]) {
+    rule.addSrcIface(tgtIface->getName());
+  }
 }
 
 
