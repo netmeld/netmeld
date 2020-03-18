@@ -24,6 +24,9 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+
+#include <netmeld/core/utils/StringUtilities.hpp>
+
 #include "Parser.hpp"
 
 // =============================================================================
@@ -53,10 +56,30 @@ Parser::Parser() : Parser::base_type(start)
           [pnx::bind(&Parser::unsup, this, "domain-name " + qi::_1)]
       | (qi::lit("name-server") > ipAddr)
           [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
-//      | (login)
+      | (login)
 //      | (ntp)
       | ignoredBlock
      ) > stopBlock
+    ;
+
+  login =
+    qi::lit("login") >> startBlock >
+    *(user [pnx::bind(&Parser::noteCredentials, this)]) > stopBlock
+    ;
+
+  user =
+    qi::lit("user") > token
+      [pnx::bind([&](std::string val){creds[1] = val;}, qi::_1)] >
+    startBlock >
+    *(  (qi::lit("level") > token > qi::eol)
+           [pnx::bind([&](std::string val){creds[0] = val;}, qi::_1)]
+      | (qi::lit("authentication") > startBlock >
+         *(  (qi::lit("encrypted-password") > token > qi::eol)
+                [pnx::bind([&](std::string val){creds[2] = val;}, qi::_1)]
+           | (qi::lit("plaintext-password") > token > qi::eol)
+                [pnx::bind([&](std::string val){creds[3] = val;}, qi::_1)]
+         ) > stopBlock)
+    ) > stopBlock
     ;
 
   interfaces =
@@ -93,11 +116,11 @@ Parser::Parser() : Parser::base_type(start)
 
   ifaceFirewall =
     qi::lit("firewall") >> startBlock >
-    *( (qi::lit("in") > startBlock >
+    *( (qi::lit("out") > startBlock >
         *((qi::lit("ipv6-name") | qi::lit("name")) > token > qi::eol)
           [pnx::bind(&Parser::ruleAddSrcIface, this, qi::_1)]
         > stopBlock)
-     | ((qi::lit("out") | qi::lit("local")) > startBlock >
+     | ((qi::lit("in") | qi::lit("local")) > startBlock >
         *((qi::lit("ipv6-name") | qi::lit("name")) > token > qi::eol)
           [pnx::bind(&Parser::ruleAddDstIface, this, qi::_1)]
         > stopBlock)
@@ -135,6 +158,7 @@ Parser::Parser() : Parser::base_type(start)
     startBlock >
     *(  rule
       | (qi::lit("default-action") > token)
+          [pnx::bind(&Parser::defaultAction, this) = qi::_1]
       | (qi::lit("enable-default-log"))
       | ignoredBlock
     ) > stopBlock
@@ -150,7 +174,9 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("description") > token)
           [pnx::bind(&nmco::AcRule::setRuleDescription,
                      pnx::bind(&Parser::tgtRule, this), qi::_1)]
-//      | (qi::lit("state") > startBlock > *() > stopBlock)
+      | (qi::lit("state") > startBlock > +(token > qi::lit("enable") > qi::eol) 
+          [pnx::bind([&](std::string val){states.push_back(val);},
+                     qi::_1)] > stopBlock)
       | (qi::lit("protocol") > token)
           [pnx::bind(&Parser::proto, this) = qi::_1]
       | destination
@@ -161,6 +187,7 @@ Parser::Parser() : Parser::base_type(start)
                      pnx::bind(&Parser::tgtRule, this))]
       | ignoredBlock
     ) > stopBlock
+      [pnx::bind(&Parser::ruleAddService, this)]
     ;
 
   destination =
@@ -224,9 +251,9 @@ Parser::Parser() : Parser::base_type(start)
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
       (config)
-      (system)
-      (interfaces)(interface)
-      (firewall)(group)(addressGroup)(ruleSets)(rule)(destination)
+      (system)(login)(user)
+      (interfaces)(interface)(ifaceFirewall)
+      (firewall)(group)(addressGroup)(ruleSets)(rule)(destination)(source)
       (startBlock)(stopBlock)(ignoredBlock)
       (token)(comment)
       );
@@ -289,6 +316,30 @@ Parser::ruleAddSrcIface(const std::string& _tgtZone)
   }
 }
 
+void
+Parser::ruleAddService()
+{
+  if (proto.empty() && srcPort.empty() && dstPort.empty()) {
+    tgtRule->addService("any");
+  } else {
+    tgtRule->addService(nmcu::getSrvcString(proto, srcPort, dstPort));
+  }
+  proto = srcPort = dstPort = "";
+
+  if (!states.empty()) {
+    tgtRule->addService("state:(" + nmcu::toString(states, ',') + ')');
+  }
+  states.clear();
+}
+
+
+void
+Parser::noteCredentials()
+{
+  std::vector<std::string> temp(std::begin(creds), std::end(creds));
+  d.observations.addNotable("Creds--" + nmcu::toString(temp, ':'));
+}
+
 
 void
 Parser::unsup(const std::string& _value)
@@ -300,6 +351,31 @@ Parser::unsup(const std::string& _value)
 Result
 Parser::getData()
 {
+  for (auto& [zone, ruleBook] : d.ruleBooks) {
+    for (auto& [ruleId, rule] : ruleBook) {
+      if (0 == rule.getSrcs().size()) {
+        rule.addSrc("any");
+      }
+      if (0 == rule.getSrcIfaces().size()) {
+        rule.addSrcIface("any");
+      }
+      if (0 == rule.getDsts().size()) {
+        rule.addDst("any");
+      }
+      if (0 == rule.getDstIfaces().size()) {
+        rule.addDstIface("any");
+      }
+      if (0 == rule.getServices().size()) {
+        rule.addService(nmcu::getSrvcString("all","",""));
+      }
+      if (0 == rule.getActions().size() && !defaultAction.empty()) {
+        rule.addAction(defaultAction);
+        defaultAction = "";
+      }
+    }
+  }
+
+
   Result r;
   r.push_back(d);
 

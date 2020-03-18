@@ -80,7 +80,7 @@ class Parser :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      system,
+      system,login,user,
       interfaces, interface, ifaceFirewall,
       firewall, group, addressGroup, ruleSets, rule, destination, source,
       startBlock, stopBlock, ignoredBlock;
@@ -110,6 +110,11 @@ class Parser :
     std::string    proto;
     std::string    srcPort;
     std::string    dstPort;
+    std::string    defaultAction;
+
+    std::vector<std::string> states;
+
+    std::string  creds[4];
 
   // ===========================================================================
   // Constructors
@@ -130,6 +135,9 @@ class Parser :
     void ruleInit(size_t);
     void ruleAddDstIface(const std::string&);
     void ruleAddSrcIface(const std::string&);
+    void ruleAddService();
+
+    void noteCredentials();
 
     void unsup(const std::string&);
 
