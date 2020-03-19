@@ -1,17 +1,17 @@
 DESCRIPTION
 ===========
 
-Description of what the tool parses.
+Parse and import VyOS configuration files (i.e., the output of
+`show configuration`).
 
-Various information about the tool.  Include any special considerations when
-using the tool.  Potentially explain option requirements more in depth.
+The tool has not had a chance to go through robust testing against multiple
+VyOS configurations.  Configurations tested against may have special cases
+as they all were from the same vendor.  In general, this behaves and processes
+in the same manner as the Cisco, JunOS, etc. import tools.
+
 
 EXAMPLES
 ======== 
 ``` 
-import-tool --device-id server tool-data.txt 
-command | 
-import-tool --pipe --device-id server tool-data.txt 
+nmdb-import-vyos --device-id router router-config.txt
 ``` 
-
-See Also: `related-tool (8)`
