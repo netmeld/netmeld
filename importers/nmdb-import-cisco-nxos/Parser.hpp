@@ -70,8 +70,6 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
-    Data d;
-
     // Rules
     qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -90,6 +88,11 @@ class Parser :
     nmcp::ParserDomainName  domainName;
     nmcp::ParserIpAddress   ipAddr;
     nmcp::ParserMacAddress  macAddr;
+
+    // Supporting data structures
+    Data d;
+
+    bool isNo {false};
 
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
@@ -118,10 +121,8 @@ class Parser :
     void addDnsService(const std::vector<nmco::IpAddress>&);
     void addLogService(const nmco::IpAddress&);
     void addRoute(const nmco::IpAddress&, const std::string&);
-    void setGlobalCdp(const bool);
-    void setGlobalBpduGuard(const bool);
-    void setGlobalBpduFilter(const bool);
-    void addSetIface(std::set<std::string>* const, const nmco::InterfaceNetwork&);
+    void addSetIface(std::set<std::string>* const,
+                     const nmco::InterfaceNetwork&);
 
     // Interface related
     void addIface(nmco::InterfaceNetwork&);
