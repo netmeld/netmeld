@@ -98,7 +98,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over ifaces\n";
-        for (auto& result : results.ifaces) {
+        for (auto& [name, result] : results.ifaces) {
           LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, deviceId);
         }

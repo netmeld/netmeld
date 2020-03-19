@@ -50,7 +50,8 @@ struct Data
   std::string                          domainName;
   nmco::DeviceInformation              devInfo;
 
-  std::vector<nmco::InterfaceNetwork>  ifaces;
+  //std::vector<nmco::InterfaceNetwork>  ifaces;
+  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
   std::vector<nmco::Route>             routes;
   std::vector<nmco::Service>           services;
   std::vector<nmco::Vlan>              vlans;
@@ -76,10 +77,9 @@ class Parser :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       vlanDef,
-      config;
-
-    qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type>
-      nxIface;
+      config,
+      interface, switchport, spanningTree
+      ;
 
     qi::rule<nmcp::IstreamIter, std::string()>
       tokens,
@@ -93,6 +93,8 @@ class Parser :
     Data d;
 
     bool isNo {false};
+
+    nmco::InterfaceNetwork* tgtIface;
 
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
@@ -121,11 +123,11 @@ class Parser :
     void addDnsService(const std::vector<nmco::IpAddress>&);
     void addLogService(const nmco::IpAddress&);
     void addRoute(const nmco::IpAddress&, const std::string&);
-    void addSetIface(std::set<std::string>* const,
-                     const nmco::InterfaceNetwork&);
+    void addSetIface(std::set<std::string>* const);
 
     // Interface related
-    void addIface(nmco::InterfaceNetwork&);
+    void addIface();
+    void ifaceInit(const std::string&);
 
     // Vlan related
     void addVlan(unsigned short, const std::string&);
