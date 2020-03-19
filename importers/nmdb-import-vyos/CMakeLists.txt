@@ -45,15 +45,5 @@ target_link_libraries(${TOOL_NAME}
 
 create_man_from_help(${TOOL_NAME})
 
-# The following is commented out as we don't want to actually install templates
-#install_bin(${TOOL_NAME} ${PROJECT_NAME})
-#install_man(${TOOL_NAME} ${PROJECT_NAME})
-
-#install(
-#  FILES
-#    example.conf
-#  OPTIONAL
-#  COMPONENT ${PROJECT_NAME}
-#  DESTINATION ${NETMELD_CONF_DIR}
-#  )
-
+install_bin(${TOOL_NAME} ${PROJECT_NAME})
+install_man(${TOOL_NAME} ${PROJECT_NAME})
