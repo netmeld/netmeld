@@ -78,7 +78,9 @@ class Parser :
       start;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
-      config;
+      config,
+      policy,
+      indent;
 
     qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type>
       interface;
@@ -143,6 +145,12 @@ class Parser :
 
     // Vlan related
     void addVlan(nmco::Vlan&);
+
+    // Policy related
+    void addPolicy(const std::string&, const std::string&);
+
+    void addPolicyRule(const std::string&,
+                       const nmco::IpAddress&);
 
     // Unsupported
     void unsup(const std::string&);

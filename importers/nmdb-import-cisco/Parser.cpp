@@ -78,8 +78,11 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("aaa ") >> tokens >> qi::eol)
             [pnx::bind(&Parser::addAaa, this, qi::_1)]
 
-      | (qi::lit("access-list") >> -tokens >> qi::eol)
-           [pnx::bind(&Parser::unsup, this, "access-list")]
+            // TODO 3-18-2020: The regression test has the cisco parser ingesting
+            // the same files as the asa parser. Does this need to support both
+            // or is that something the regression test needs to change?
+      //| (qi::lit("access-list") >> policy)
+      | (qi::lit("ip access-list") >> policy)
 
       | (qi::lit("ntp server") >> ipAddr >> qi::eol)
            [pnx::bind(&Parser::addNtpService, this, qi::_1)]
@@ -249,6 +252,21 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+  policy =
+    // TYPE{standard | extended} NAME
+    (token >> token >> qi::eol)
+      [pnx::bind(&Parser::addPolicy, this, qi::_1, qi::_2)] >>
+    *(indent >>
+        (token >> ipAddr >> -tokens)
+          [pnx::bind(&Parser::addPolicyRule, this, qi::_1, qi::_2)] >>
+        qi::eol
+     )
+    ;
+
+  indent = 
+    qi::no_skip[+qi::lit(' ')]
+    ;
+
   tokens =
     qi::as_string[+(token >> *qi::blank)]
     ;
@@ -400,6 +418,20 @@ void
 Parser::addVlan(nmco::Vlan& vlan)
 {
   d.vlans.push_back(vlan);
+}
+
+// Policy related
+void
+Parser::addPolicy(const std::string& type, const std::string& name)
+{
+  LOG_INFO << type << ':' << name << '\n';
+}
+
+void
+Parser::addPolicyRule(const std::string& action,
+                      const nmco::IpAddress& ip)
+{
+  LOG_INFO << "  " << action << ':' << ip << '\n';
 }
 
 // Unsupported
