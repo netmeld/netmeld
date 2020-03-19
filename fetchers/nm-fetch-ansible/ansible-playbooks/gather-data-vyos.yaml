@@ -1,0 +1,9 @@
+---
+- hosts:
+  - vyos
+
+  gather_facts: false
+
+  roles:
+  - gather-data-vyos
+  - save-local

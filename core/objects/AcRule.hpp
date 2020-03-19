@@ -50,10 +50,8 @@ namespace netmeld::core::objects {
       std::vector<std::string>  dsts;
       std::vector<std::string>  dstIfaces;
 
-      std::vector<std::string>  actions;
       std::vector<std::string>  services;
-      std::vector<std::string>  serviceDstPorts;
-      std::vector<std::string>  serviceSrcPorts;
+      std::vector<std::string>  actions;
 
       std::string               description;
 
