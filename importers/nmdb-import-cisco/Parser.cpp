@@ -257,9 +257,17 @@ Parser::Parser() : Parser::base_type(start)
     (token >> token >> qi::eol)
       [pnx::bind(&Parser::addPolicy, this, qi::_1, qi::_2)] >>
     *(indent >>
-        (token >> ipAddr >> -tokens)
-          [pnx::bind(&Parser::addPolicyRule, this, qi::_1, qi::_2)] >>
-        qi::eol
+        ( (token >> ipAddr >> -ipAddr)
+            [pnx::bind(&Parser::addPolicyRule, this, qi::_1, qi::_2, qi::_3)]
+/*
+         |
+          ()
+            []
+         |
+          ()
+            []
+*/
+        ) >> qi::eol
      )
     ;
 
@@ -429,9 +437,15 @@ Parser::addPolicy(const std::string& type, const std::string& name)
 
 void
 Parser::addPolicyRule(const std::string& action,
-                      const nmco::IpAddress& ip)
+                      const nmco::IpAddress& ip,
+                      const boost::optional<nmco::IpAddress>& netmask)
 {
-  LOG_INFO << "  " << action << ':' << ip << '\n';
+  LOG_INFO << "  " << action << ':' << ip;
+  if (netmask) {
+    LOG_INFO << ':' << *netmask << '\n';
+  } else {
+    LOG_INFO << '\n';
+  }
 }
 
 // Unsupported

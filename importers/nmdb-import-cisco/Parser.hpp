@@ -150,7 +150,8 @@ class Parser :
     void addPolicy(const std::string&, const std::string&);
 
     void addPolicyRule(const std::string&,
-                       const nmco::IpAddress&);
+                       const nmco::IpAddress&,
+                       const boost::optional<nmco::IpAddress>&);
 
     // Unsupported
     void unsup(const std::string&);
