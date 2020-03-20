@@ -239,12 +239,8 @@ namespace netmeld::core::objects {
         << dstIfaces
         ;
 
-    oss << actions
-        ;
-
     oss << services
-        << serviceDstPorts
-        << serviceSrcPorts
+        << actions
         ;
 
     oss << description
