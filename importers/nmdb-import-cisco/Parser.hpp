@@ -157,6 +157,8 @@ class Parser :
                                const boost::optional<std::string>&,
                                const boost::optional<std::string>&);
 
+    void addPolicyAnyRule(const std::string&, const std::string&);
+
     // Unsupported
     void unsup(const std::string&);
 

@@ -253,6 +253,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   // TODO 3-20-2020: Starting with only the rules I can find in the config files
+  // I need to look at the offical spec and cover all the cases (or do I?)
   policy =
     // TYPE{standard | extended} NAME
     (token >> token >> qi::eol)
@@ -270,6 +271,11 @@ Parser::Parser() : Parser::base_type(start)
           )
             [pnx::bind(&Parser::addPolicyProtocolRule, this,
                        qi::_1, qi::_2, qi::_3, qi::_4, qi::_5, qi::_6)]
+         |
+          // TODO: This is probably SUPER general, needs to match spec
+          // ACTION{permit | deny } ANY NEXT
+          (token >> qi::lit("any") >> token)
+            [pnx::bind(&Parser::addPolicyAnyRule, this, qi::_1, qi::_2)]
 /*
          |
           ()
@@ -470,6 +476,12 @@ Parser::addPolicyProtocolRule(const std::string& action, const std::string& prot
   LOG_INFO << '\n';
 }
 
+
+void
+Parser::addPolicyAnyRule(const std::string& action, const std::string& next)
+{
+  LOG_INFO << "  " << action << ":any:" << next << '\n';
+}
 
 // Unsupported
 void
