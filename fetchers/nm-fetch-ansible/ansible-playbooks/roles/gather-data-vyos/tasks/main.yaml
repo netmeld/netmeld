@@ -1,0 +1,7 @@
+---
+- name: Gather data from VyOS type targets
+  vyos_command:
+    commands: "{{ item }}"
+  register: cmd
+  loop: "{{ cmd_list | flatten(1) }}"
+  ignore_errors: yes

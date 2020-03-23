@@ -252,14 +252,36 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+  // TODO 3-20-2020: Starting with only the rules I can find in the config files
+  // I need to look at the offical spec and cover all the cases (or do I?)
   policy =
     // TYPE{standard | extended} NAME
     (token >> token >> qi::eol)
       [pnx::bind(&Parser::addPolicy, this, qi::_1, qi::_2)] >>
     *(indent >>
-        (token >> ipAddr >> -tokens)
-          [pnx::bind(&Parser::addPolicyRule, this, qi::_1, qi::_2)] >>
-        qi::eol
+          // ACTION{permit | deny } IPADDRESS [SUBNET]
+        ( (token >> ipAddr >> -ipAddr)
+            [pnx::bind(&Parser::addPolicyIpRule, this, qi::_1, qi::_2, qi::_3)]
+         |
+          // ACTION{permit | deny } PROTOCOL SRC DST
+          // [PORT_DESC (PORT | RANGE)]
+          (token >> token >> token >> token >>
+           -(qi::lit("eq") | qi::lit("range")) >>
+             -token >> -token
+          )
+            [pnx::bind(&Parser::addPolicyProtocolRule, this,
+                       qi::_1, qi::_2, qi::_3, qi::_4, qi::_5, qi::_6)]
+         |
+          // TODO: This is probably SUPER general, needs to match spec
+          // ACTION{permit | deny } ANY NEXT
+          (token >> qi::lit("any") >> token)
+            [pnx::bind(&Parser::addPolicyAnyRule, this, qi::_1, qi::_2)]
+/*
+         |
+          ()
+            []
+*/
+        ) >> qi::eol
      )
     ;
 
@@ -428,10 +450,37 @@ Parser::addPolicy(const std::string& type, const std::string& name)
 }
 
 void
-Parser::addPolicyRule(const std::string& action,
-                      const nmco::IpAddress& ip)
+Parser::addPolicyIpRule(const std::string& action, const nmco::IpAddress& ip,
+                      const boost::optional<nmco::IpAddress>& netmask)
 {
-  LOG_INFO << "  " << action << ':' << ip << '\n';
+  LOG_INFO << "  " << action << ':' << ip;
+  if (netmask) {
+    LOG_INFO << ':' << *netmask;
+  }
+  LOG_INFO << '\n';
+}
+
+void
+Parser::addPolicyProtocolRule(const std::string& action, const std::string& protocol,
+                              const std::string& src, const std::string& dst,
+                              const boost::optional<std::string>& port,
+                              const boost::optional<std::string>& portRange)
+{
+  LOG_INFO << "  " << action << ':' << protocol << ':' << src << ':' << dst;
+  if (port) {
+    LOG_INFO << ':' << *port;
+  }
+  if (portRange) {
+    LOG_INFO << "-->" << *portRange;
+  }
+  LOG_INFO << '\n';
+}
+
+
+void
+Parser::addPolicyAnyRule(const std::string& action, const std::string& next)
+{
+  LOG_INFO << "  " << action << ":any:" << next << '\n';
 }
 
 // Unsupported
