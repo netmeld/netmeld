@@ -57,8 +57,10 @@ struct Data
   nmco::ToolObservations               observations;
   std::vector<nmco::Service>           services;
   std::vector<nmco::Route>             routes;
-  std::vector<nmco::InterfaceNetwork>  ifaces;
+  //std::vector<nmco::InterfaceNetwork>  ifaces;
   std::vector<nmco::Vlan>              vlans;
+
+  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
 };
 typedef std::vector<Data> Result;
 
@@ -80,10 +82,11 @@ class Parser :
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
       policy,
+      interface, switchport, spanningTree,
       indent;
 
-    qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type>
-      interface;
+//    qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type>
+//      interface;
 
     qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
       vlan;
@@ -98,6 +101,8 @@ class Parser :
 
     // Supporting data structures 
     Data d;
+
+    nmco::InterfaceNetwork *tgtIface;
 
     bool isNo {false};
 
@@ -120,9 +125,9 @@ class Parser :
   // ===========================================================================
   private: // Methods which should be hidden from API users
     // Global Cdp/Bpdu related
-    void addManuallySetCdpIface(const nmco::InterfaceNetwork&);
-    void addManuallySetBpduGuardIface(const nmco::InterfaceNetwork&);
-    void addManuallySetBpduFilterIface(const nmco::InterfaceNetwork&);
+    void addManuallySetCdpIface();
+    void addManuallySetBpduGuardIface();
+    void addManuallySetBpduFilterIface();
 
     // Device related
     void setVendor(const std::string&);
@@ -131,7 +136,7 @@ class Parser :
     void addObservation(const std::string&);
 
     // Service related
-    void addDhcpService(const nmco::IpAddress&, const nmco::InterfaceNetwork&);
+    void addDhcpService(const nmco::IpAddress&);
     void addNtpService(const nmco::IpAddress&);
     void addSnmpService(const nmco::IpAddress&);
 
@@ -140,8 +145,8 @@ class Parser :
     void addRouteIface(const nmco::IpAddress&, const std::string&);
 
     // Interface related
-    void buildIfaceName(std::string&, const std::string&);
-    void addIface(nmco::InterfaceNetwork&);
+    void ifaceInit(const std::string&);
+    void ifaceFinalize();
 
     // Vlan related
     void addVlan(nmco::Vlan&);

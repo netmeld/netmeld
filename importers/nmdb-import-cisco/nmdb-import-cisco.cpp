@@ -123,7 +123,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over interfaces\n";
-        for (auto& result : results.ifaces) {
+        for (auto& [name, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
