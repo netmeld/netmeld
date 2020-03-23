@@ -147,7 +147,7 @@ class Parser :
     void addVlan(nmco::Vlan&);
 
     // Policy related
-    void addPolicy(const std::string&, const std::string&);
+    void addPolicy(const std::string&);
 
     void addPolicyIpRule(const std::string&, const nmco::IpAddress&,
                        const boost::optional<nmco::IpAddress>&);

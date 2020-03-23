@@ -256,32 +256,39 @@ Parser::Parser() : Parser::base_type(start)
   // I need to look at the offical spec and cover all the cases (or do I?)
   policy =
     // TYPE{standard | extended} NAME
-    (token >> token >> qi::eol)
-      [pnx::bind(&Parser::addPolicy, this, qi::_1, qi::_2)] >>
-    *(indent >>
-          // ACTION{permit | deny } IPADDRESS [SUBNET]
-        ( (token >> ipAddr >> -ipAddr)
-            [pnx::bind(&Parser::addPolicyIpRule, this, qi::_1, qi::_2, qi::_3)]
-         |
-          // ACTION{permit | deny } PROTOCOL SRC DST
-          // [PORT_DESC (PORT | RANGE)]
-          (token >> token >> token >> token >>
-           -(qi::lit("eq") | qi::lit("range")) >>
-             -token >> -token
-          )
-            [pnx::bind(&Parser::addPolicyProtocolRule, this,
-                       qi::_1, qi::_2, qi::_3, qi::_4, qi::_5, qi::_6)]
-         |
-          // TODO: This is probably SUPER general, needs to match spec
-          // ACTION{permit | deny } ANY NEXT
-          (token >> qi::lit("any") >> token)
-            [pnx::bind(&Parser::addPolicyAnyRule, this, qi::_1, qi::_2)]
-/*
-         |
-          ()
-            []
-*/
-        ) >> qi::eol
+    (
+       // TYPE{extended} NAME
+      (qi::lit("extended") >> token >> qi::eol)
+        [pnx::bind(&Parser::addPolicy, this, qi::_1)] >>
+      *(indent >>
+            // ACTION{permit | deny } IPADDRESS [SUBNET]
+          ( (token >> ipAddr >> -ipAddr)
+              [pnx::bind(&Parser::addPolicyIpRule, this, qi::_1, qi::_2, qi::_3)]
+           |
+            // ACTION{permit | deny } PROTOCOL SRC DST
+            // [PORT_DESC (PORT | RANGE)]
+            (token >> token >> token >> token >>
+             -(qi::lit("eq") | qi::lit("range")) >>
+               -token >> -token
+            )
+              [pnx::bind(&Parser::addPolicyProtocolRule, this,
+                         qi::_1, qi::_2, qi::_3, qi::_4, qi::_5, qi::_6)]
+           |
+            // TODO: This is probably SUPER general, needs to match spec
+            // ACTION{permit | deny } ANY NEXT
+            (token >> qi::lit("any") >> token)
+              [pnx::bind(&Parser::addPolicyAnyRule, this, qi::_1, qi::_2)]
+  /*
+           |
+            ()
+              []
+  */
+          ) >> qi::eol
+       )
+     |
+       // TYPE{standard} NAME
+      (qi::lit("standard") >> token >> qi::eol)
+        [pnx::bind(&Parser::unsup, this, "ip access-list standard " + qi::_1)]
      )
     ;
 
@@ -444,9 +451,9 @@ Parser::addVlan(nmco::Vlan& vlan)
 
 // Policy related
 void
-Parser::addPolicy(const std::string& type, const std::string& name)
+Parser::addPolicy(const std::string& name)
 {
-  LOG_INFO << type << ':' << name << '\n';
+  LOG_INFO << "extended:" << name << '\n';
 }
 
 void
