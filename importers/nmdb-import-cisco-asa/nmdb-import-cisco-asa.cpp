@@ -107,7 +107,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 
         // Process the rest of the results
         LOG_DEBUG << "Iterating over ifaces\n";
-        for (auto& result : results.ifaces) {
+        for (auto& [name, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
