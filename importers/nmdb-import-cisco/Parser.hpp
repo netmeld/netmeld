@@ -32,6 +32,7 @@
 #include <netmeld/core/parsers/ParserIpAddress.hpp>
 #include <netmeld/core/parsers/ParserMacAddress.hpp>
 
+#include <netmeld/core/objects/AcRule.hpp>
 #include <netmeld/core/objects/DeviceInformation.hpp>
 #include <netmeld/core/objects/InterfaceNetwork.hpp>
 #include <netmeld/core/objects/ToolObservations.hpp>
@@ -46,6 +47,7 @@ namespace nmco  = netmeld::core::objects;
 namespace nmcp  = netmeld::core::parsers;
 namespace nmcu  = netmeld::core::utils;
 
+typedef std::map<size_t, nmco::AcRule> RuleBook;
 
 // =============================================================================
 // Data containers
@@ -61,6 +63,7 @@ struct Data
   std::vector<nmco::Vlan>              vlans;
 
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
+  std::map<std::string, RuleBook>  ruleBooks;
 };
 typedef std::vector<Data> Result;
 
@@ -163,6 +166,7 @@ class Parser :
                                const boost::optional<std::string>&);
 
     void addPolicyAnyRule(const std::string&, const std::string&);
+    void addPolicyRemark(const std::string&);
 
     // Unsupported
     void unsup(const std::string&);

@@ -261,32 +261,47 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // TODO 3-20-2020: Starting with only the rules I can find in the config files
-  // I need to look at the offical spec and cover all the cases (or do I?)
   policy =
-    // TYPE{standard | extended} NAME
-    (
-       // TYPE{extended} NAME
+    ( // "ip access-list standard" NAME
+      //    - This isn't supported by other parsers, skippping here as well
+      (qi::lit("standard") >> token >> qi::eol)
+        [pnx::bind(&Parser::unsup, this, "ip access-list standard " + qi::_1)]
+     |
+       // "ip access-list extended" NAME
+       //    ACTION PROTOCOL SOURCE [PORTS] [ DEST [PORTS] ] ["log"]
+       //   ---
+       //    ACTION ( "permit" | "deny" )
+       //    PROTOCOL ( name )
+       //    SOURCE ( IpAddr *mask | "host" IpAddr | "any" )
+       //      - Note: *mask (wildcard mask) takes bit representation of mask and
+       //              compares with bits of IpAddr. (1=wild, 0=must match IpAddr)
+       //    DEST ( IpAddr *mask | "host" IpAddr | "any" | "object-group" name )
+       //    PORTS ( "eq" port | "range" startPort endPort )
+       //      - Note: Can either be a number, or a named alias (e.g. 22 | ssh)
+       //    "log" (Couldn't find anything about options to this in this context)
       (qi::lit("extended") >> token >> qi::eol)
         [pnx::bind(&Parser::addPolicy, this, qi::_1)] >>
       *(indent >>
+          (
             // ACTION{permit | deny } IPADDRESS [SUBNET]
-          ( (token >> ipAddr >> -ipAddr)
+            (token >> ipAddr >> -ipAddr)
               [pnx::bind(&Parser::addPolicyIpRule, this, qi::_1, qi::_2, qi::_3)]
            |
             // ACTION{permit | deny } PROTOCOL SRC DST
             // [PORT_DESC (PORT | RANGE)]
             (token >> token >> token >> token >>
              -(qi::lit("eq") | qi::lit("range")) >>
-               -token >> -token
-            )
+             -token >> -token)
               [pnx::bind(&Parser::addPolicyProtocolRule, this,
                          qi::_1, qi::_2, qi::_3, qi::_4, qi::_5, qi::_6)]
            |
-            // TODO: This is probably SUPER general, needs to match spec
             // ACTION{permit | deny } ANY NEXT
             (token >> qi::lit("any") >> token)
               [pnx::bind(&Parser::addPolicyAnyRule, this, qi::_1, qi::_2)]
+           |
+            // REMARK REMARKS
+            (qi::lit("remark") >> tokens)
+              [pnx::bind(&Parser::addPolicyRemark, this, qi::_1)]
   /*
            |
             ()
@@ -294,14 +309,10 @@ Parser::Parser() : Parser::base_type(start)
   */
           ) >> qi::eol
        )
-     |
-       // TYPE{standard} NAME
-      (qi::lit("standard") >> token >> qi::eol)
-        [pnx::bind(&Parser::unsup, this, "ip access-list standard " + qi::_1)]
      )
     ;
 
-  indent = 
+  indent =
     qi::no_skip[+qi::lit(' ')]
     ;
 
@@ -496,6 +507,13 @@ void
 Parser::addPolicyAnyRule(const std::string& action, const std::string& next)
 {
   LOG_INFO << "  " << action << ":any:" << next << '\n';
+}
+
+
+void
+Parser::addPolicyRemark(const std::string& remark)
+{
+  LOG_INFO << "  Remark: " << remark << '\n';
 }
 
 // Unsupported
