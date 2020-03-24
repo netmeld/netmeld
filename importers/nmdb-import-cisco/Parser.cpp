@@ -283,10 +283,6 @@ Parser::Parser() : Parser::base_type(start)
         [pnx::bind(&Parser::addPolicy, this, qi::_1)] >>
       *(indent >>
           (
-            // ACTION{permit | deny } IPADDRESS [SUBNET]
-            (token >> ipAddr >> -ipAddr)
-              [pnx::bind(&Parser::addPolicyIpRule, this, qi::_1, qi::_2, qi::_3)]
-           |
             // ACTION{permit | deny } PROTOCOL SRC DST
             // [PORT_DESC (PORT | RANGE)]
             (token >> token >> token >> token >>
@@ -298,10 +294,6 @@ Parser::Parser() : Parser::base_type(start)
             // ACTION{permit | deny } ANY NEXT
             (token >> qi::lit("any") >> token)
               [pnx::bind(&Parser::addPolicyAnyRule, this, qi::_1, qi::_2)]
-           |
-            // REMARK REMARKS
-            (qi::lit("remark") >> tokens)
-              [pnx::bind(&Parser::addPolicyRemark, this, qi::_1)]
   /*
            |
             ()
@@ -315,6 +307,44 @@ Parser::Parser() : Parser::base_type(start)
   indent =
     qi::no_skip[+qi::lit(' ')]
     ;
+/*
+  // SOURCE ( IpAddr *mask | "host" IpAddr | "any" )
+  source =
+    ( (IpAddr >> IpAddr)
+     |
+      (qi::lit("host") >> IpAddr)
+     |
+      (qi::lit("any")
+    )
+    ;
+
+  // DEST ( IpAddr *mask | "host" IpAddr | "any" | "object-group" name )
+  destination =
+    ( source // with symantic actions this might now work how I want without passing stuff
+     |
+      (qi::lit("object-group") >> token)
+    )
+
+    // OR
+
+    ( (IpAddr >> IpAddr)
+     |
+      (qi::lit("host") >> IpAddr)
+     |
+      (qi::lit("any")
+     |
+      (qi::lit("object-group") >> token)
+    )
+    ;
+
+  // PORTS ( "eq" port | "range" startPort endPort )
+  ports =
+    ( (qi::lit("eq") >> token)
+     |
+      (qi::lit("range") >> token >> token)
+    )
+    ;
+*/
 
   tokens =
     qi::as_string[+(token >> *qi::blank)]
