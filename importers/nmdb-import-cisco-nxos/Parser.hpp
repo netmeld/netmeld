@@ -50,7 +50,6 @@ struct Data
   std::string                          domainName;
   nmco::DeviceInformation              devInfo;
 
-  //std::vector<nmco::InterfaceNetwork>  ifaces;
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
   std::vector<nmco::Route>             routes;
   std::vector<nmco::Service>           services;
@@ -113,24 +112,20 @@ class Parser :
   // Methods
   // ===========================================================================
   private: // Methods which should be hidden from API users
-    // Device related
-    void setVendor(const std::string&);
-    void setDevId(const std::string&);
-    void addNtpService(const nmco::IpAddress&);
-    void addDhcpService(const nmco::IpAddress&);
-    void addSnmpService(const nmco::IpAddress&);
-    void addRadiusService(const nmco::IpAddress&);
-    void addDnsService(const std::vector<nmco::IpAddress>&);
-    void addLogService(const nmco::IpAddress&);
-    void addRoute(const nmco::IpAddress&, const std::string&);
-    void addSetIface(std::set<std::string>* const);
-
-    // Interface related
-    void addIface();
     void ifaceInit(const std::string&);
+    void ifaceSetUpdate(std::set<std::string>* const);
 
-    // Vlan related
-    void addVlan(unsigned short, const std::string&);
+    void routeAdd(const nmco::IpAddress&, const std::string&);
+
+    void serviceAddNtp(const nmco::IpAddress&);
+    void serviceAddDhcp(const nmco::IpAddress&);
+    void serviceAddSnmp(const nmco::IpAddress&);
+    void serviceAddRadius(const nmco::IpAddress&);
+    void serviceAddDns(const std::vector<nmco::IpAddress>&);
+    void serviceAddSyslog(const nmco::IpAddress&);
+
+    void vlanAdd(unsigned short, const std::string&);
+    void vlanAddIfaceData();
 
     // Unsupported
     void unsup(const std::string&);

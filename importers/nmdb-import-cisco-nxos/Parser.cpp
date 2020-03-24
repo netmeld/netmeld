@@ -34,7 +34,7 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     config
-      [pnx::bind(&Parser::setVendor, this, "cisco"),
+      [pnx::bind([&](){d.devInfo.setVendor("cisco");}),
        qi::_val = pnx::bind(&Parser::getData, this)]
     ;
 
@@ -46,7 +46,8 @@ Parser::Parser() : Parser::base_type(start)
   config =
     *(
         ((qi::lit("switchname") | qi::lit("hostname")) >> domainName >> qi::eol)
-           [pnx::bind(&Parser::setDevId, this, qi::_1)]
+           [pnx::bind([&](const std::string& val)
+                      {d.devInfo.setDeviceId(val);}, qi::_1)]
       | (qi::lit("ip domain-name") >> domainName >> qi::eol)
            [pnx::bind(&Parser::unsup, this, "ip domain-name")]
       | (qi::lit("no cdp") >> (qi::lit("run") | qi::lit("enable")) > qi::eol)
@@ -58,20 +59,20 @@ Parser::Parser() : Parser::base_type(start)
               [pnx::bind(&Parser::globalBpduFilterEnabled, this) = true]
          ) > *token > qi::eol)
       | (interface)
-           [pnx::bind(&Parser::addIface, this)]
+           [pnx::bind(&Parser::vlanAddIfaceData, this)]
       | (qi::lit("ntp server") >> ipAddr >> -qi::omit[+token] >> qi::eol)
-           [pnx::bind(&Parser::addNtpService, this, qi::_1)]
+           [pnx::bind(&Parser::serviceAddNtp, this, qi::_1)]
       | (qi::lit("snmp-server host") >> ipAddr >> -qi::omit[+token] >> qi::eol)
-           [pnx::bind(&Parser::addSnmpService, this, qi::_1)]
+           [pnx::bind(&Parser::serviceAddSnmp, this, qi::_1)]
       | (qi::lit("radius-server host") >> ipAddr >> -qi::omit[+token] >> qi::eol)
-           [pnx::bind(&Parser::addRadiusService, this, qi::_1)]
+           [pnx::bind(&Parser::serviceAddRadius, this, qi::_1)]
       | (qi::lit("ip name-server") >> +ipAddr >> qi::eol)
-           [pnx::bind(&Parser::addDnsService, this, qi::_1)]
+           [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
       | (qi::lit("logging server") >> ipAddr >> -qi::omit[+token] >> qi::eol)
-           [pnx::bind(&Parser::addLogService, this, qi::_1)]
+           [pnx::bind(&Parser::serviceAddSyslog, this, qi::_1)]
       | (((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
           ipAddr >> token >> -token) >> qi::eol)
-           [pnx::bind(&Parser::addRoute, this, qi::_1, qi::_2)]
+           [pnx::bind(&Parser::routeAdd, this, qi::_1, qi::_2)]
       | (vlanDef)
       | (qi::omit[+token >> qi::eol])
       | (qi::omit[+qi::eol])
@@ -116,12 +117,12 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind(&nmco::InterfaceNetwork::setDiscoveryProtocol,
                        pnx::bind(&Parser::tgtIface, this),
                        !pnx::bind(&Parser::isNo, this)),
-             pnx::bind(&Parser::addSetIface, this, &ifacesCdpManuallySet)]
+             pnx::bind(&Parser::ifaceSetUpdate, this, &ifacesCdpManuallySet)]
 //      | (qi::lit("ip helper-address") >> ipAddr)
 //           [pnx::bind(&nmco::InterfaceNetwork::addAddress,
 //                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("ip dhcp relay address") >> ipAddr)
-            [pnx::bind(&Parser::addDhcpService, this, qi::_1)]
+            [pnx::bind(&Parser::serviceAddDhcp, this, qi::_1)]
        | switchport
        | spanningTree
        // Ignore all other settings
@@ -205,14 +206,14 @@ Parser::Parser() : Parser::base_type(start)
          | qi::lit("disable")
              [pnx::bind([&](){tgtIface->setBpduGuard(false);})]
         )
-       ) [pnx::bind(&Parser::addSetIface, this, &ifacesBpduGuardManuallySet)]
+       ) [pnx::bind(&Parser::ifaceSetUpdate, this, &ifacesBpduGuardManuallySet)]
      | (qi::lit("bpdufilter") >
         (  qi::lit("enable")
              [pnx::bind([&](){tgtIface->setBpduFilter(true);})]
          | qi::lit("disable")
              [pnx::bind([&](){tgtIface->setBpduFilter(false);})]
         )
-       ) [pnx::bind(&Parser::addSetIface, this, &ifacesBpduFilterManuallySet)]
+       ) [pnx::bind(&Parser::ifaceSetUpdate, this, &ifacesBpduFilterManuallySet)]
      | (qi::lit("port type") >
         (  qi::lit("edge")    // == portfast on
              [pnx::bind([&](){tgtIface->setPortfast(true);})]
@@ -228,7 +229,7 @@ Parser::Parser() : Parser::base_type(start)
     ((qi::lit("vlan") >> qi::ushort_ >> qi::eol) >>
      (qi::lit("name") >> token >> qi::eol)
     )
-      [pnx::bind(&Parser::addVlan, this, qi::_1, qi::_2)]
+      [pnx::bind(&Parser::vlanAdd, this, qi::_1, qi::_2)]
     ;
 
   tokens =
@@ -252,29 +253,24 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
 
-// Device related
+// Interface related
 void
-Parser::setVendor(const std::string& vendor)
+Parser::ifaceInit(const std::string& _name)
 {
-  d.devInfo.setVendor(vendor);
+  tgtIface = &d.ifaces[_name];
+  tgtIface->setName(_name);
 }
 
 void
-Parser::setDevId(const std::string& id)
-{
-  d.devInfo.setDeviceId(id);
-}
-
-
-void
-Parser::addSetIface(std::set<std::string>* const set)
+Parser::ifaceSetUpdate(std::set<std::string>* const set)
 {
   set->insert(tgtIface->getName());
 }
 
+
 // Services related
 void
-Parser::addNtpService(const nmco::IpAddress& ip)
+Parser::serviceAddNtp(const nmco::IpAddress& ip)
 {
   nmco::Service service {"ntp", ip};
   service.setProtocol("udp");
@@ -285,7 +281,7 @@ Parser::addNtpService(const nmco::IpAddress& ip)
 }
 
 void
-Parser::addDhcpService(const nmco::IpAddress& ip)
+Parser::serviceAddDhcp(const nmco::IpAddress& ip)
 {
   nmco::Service service {"dhcps", ip}; // match nmap output
   service.setProtocol("udp");
@@ -296,7 +292,7 @@ Parser::addDhcpService(const nmco::IpAddress& ip)
 }
 
 void
-Parser::addSnmpService(const nmco::IpAddress& ip)
+Parser::serviceAddSnmp(const nmco::IpAddress& ip)
 {
   nmco::Service service {"snmp", ip};
   service.setProtocol("udp");
@@ -306,7 +302,7 @@ Parser::addSnmpService(const nmco::IpAddress& ip)
 }
 
 void
-Parser::addRadiusService(const nmco::IpAddress& ip)
+Parser::serviceAddRadius(const nmco::IpAddress& ip)
 {
   nmco::Service service {"radius", ip};
   service.setProtocol("udp");
@@ -317,7 +313,7 @@ Parser::addRadiusService(const nmco::IpAddress& ip)
 }
 
 void
-Parser::addDnsService(const std::vector<nmco::IpAddress>& ips)
+Parser::serviceAddDns(const std::vector<nmco::IpAddress>& ips)
 {
   for (auto& ip : ips) {
     nmco::Service service {"dns", ip};
@@ -329,7 +325,7 @@ Parser::addDnsService(const std::vector<nmco::IpAddress>& ips)
 }
 
 void
-Parser::addLogService(const nmco::IpAddress& ip)
+Parser::serviceAddSyslog(const nmco::IpAddress& ip)
 {
   nmco::Service service {"syslog", ip};
   service.setProtocol("udp");
@@ -338,8 +334,10 @@ Parser::addLogService(const nmco::IpAddress& ip)
   d.services.push_back(service);
 }
 
+
+// Route related
 void
-Parser::addRoute(const nmco::IpAddress& dstNet, const std::string& rtrIpStr)
+Parser::routeAdd(const nmco::IpAddress& dstNet, const std::string& rtrIpStr)
 {
   nmco::IpAddress rtrIp;
   if ("Null0" != rtrIpStr) {
@@ -353,18 +351,18 @@ Parser::addRoute(const nmco::IpAddress& dstNet, const std::string& rtrIpStr)
   d.routes.push_back(route);
 }
 
-// Interface related
-void
-Parser::ifaceInit(const std::string& _name)
-{
-  tgtIface = &d.ifaces[_name];
-  tgtIface->setName(_name);
-}
-void
-Parser::addIface()
-{
-//  d.ifaces.push_back(iface);
 
+// VLAN related
+void
+Parser::vlanAdd(unsigned short id, const std::string& description)
+{
+  nmco::Vlan vlan {id, description};
+  d.vlans.push_back(vlan);
+}
+
+void
+Parser::vlanAddIfaceData()
+{
   std::string vlanPrefix {"vlan"};
   std::string ifaceName {tgtIface->getName()};
   std::string ifacePrefix {ifaceName.substr(0, vlanPrefix.size())};
@@ -380,14 +378,6 @@ Parser::addIface()
   }
 }
 
-// Vlan related
-void
-Parser::addVlan(unsigned short id, const std::string& description)
-{
-  nmco::Vlan vlan {id, description};
-  d.vlans.push_back(vlan);
-}
-
 
 // Unsupported
 void
@@ -401,6 +391,7 @@ Parser::addObservation(const std::string& obs)
 {
   d.observations.addNotable(nmcu::trim(obs));
 }
+
 
 // Object return
 Result
