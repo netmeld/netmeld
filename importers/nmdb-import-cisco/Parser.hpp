@@ -157,6 +157,7 @@ class Parser :
     // Policy related
     void addPolicy(const std::string&); // TODO: Need to track current rule
 
+    // TODO: Should the be separate or should they be a single rule?
     void addPolicyIpRule(const std::string&, const nmco::IpAddress&,
                        const boost::optional<nmco::IpAddress>&);
 
