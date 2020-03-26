@@ -540,12 +540,6 @@ Parser::addPolicyAnyRule(const std::string& action, const std::string& next)
 }
 
 
-void
-Parser::addPolicyRemark(const std::string& remark)
-{
-  LOG_INFO << "  Remark: " << remark << '\n';
-}
-
 // Unsupported
 void
 Parser::unsup(const std::string& val)

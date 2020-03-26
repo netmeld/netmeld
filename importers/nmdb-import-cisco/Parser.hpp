@@ -155,8 +155,9 @@ class Parser :
     void addVlan(nmco::Vlan&);
 
     // Policy related
-    void addPolicy(const std::string&);
+    void addPolicy(const std::string&); // TODO: Need to track current rule
 
+    // TODO: Should the be separate or should they be a single rule?
     void addPolicyIpRule(const std::string&, const nmco::IpAddress&,
                        const boost::optional<nmco::IpAddress>&);
 
@@ -166,7 +167,6 @@ class Parser :
                                const boost::optional<std::string>&);
 
     void addPolicyAnyRule(const std::string&, const std::string&);
-    void addPolicyRemark(const std::string&);
 
     // Unsupported
     void unsup(const std::string&);
