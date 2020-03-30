@@ -408,3 +408,7 @@ add_project(playbook-core)
 set(NETMELD_PLAYBOOK_VERSION "2.0")
 set(TOOL_VERSION ${NETMELD_PLAYBOOK_VERSION})
 add_project(playbook)
+
+set(NETMELD_DATA_LAKE_VERSION "2.0")
+set(TOOL_VERSION ${NETMELD_DATA_LAKE_VERSION})
+add_project(data-lake)

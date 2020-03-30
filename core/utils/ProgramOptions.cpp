@@ -362,7 +362,8 @@ namespace netmeld::core::utils {
     addAdvancedOption("db-args", std::make_tuple(
           "db-args",
           po::value<std::string>()->default_value(""),
-          "Additional database connection args. Space separated `key=value` libpqxx connection string parameters.")
+          "Additional database connection args."
+          " Space separated `key=value` libpqxx connection string parameters.")
         );
 
     // Add on prefix to attempt to push to bottom
