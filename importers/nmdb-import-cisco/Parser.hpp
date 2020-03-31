@@ -85,6 +85,9 @@ class Parser :
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
       policy,
+      source,
+      destination,
+      ports,
       interface, switchport, spanningTree,
       indent;
 
@@ -116,6 +119,9 @@ class Parser :
     std::set<std::string>  ifacesCdpManuallySet;
     std::set<std::string>  ifacesBpduGuardManuallySet;
     std::set<std::string>  ifacesBpduFilterManuallySet;
+
+    std::string  curRuleBook {""};
+    size_t       curRuleId {0};
 
   // ===========================================================================
   // Constructors
@@ -154,19 +160,25 @@ class Parser :
     // Vlan related
     void addVlan(nmco::Vlan&);
 
-    // Policy related
-    void addPolicy(const std::string&); // TODO: Need to track current rule
+    // Policy Related
+    void updateCurrentRuleBook(const std::string&);
+    void updateCurrentRule();
+    void setCurrentRuleAction(const std::string&);
+    void setCurrentRuleProtocol(const std::string&);
+    void setCurrentRuleSourceIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
+    void setCurrentRuleSourceHostIp(const nmco::IpAddress&);
+    void setCurrentRuleSourceAny();
+    // TODO: setCurrentRuleSourcePorts
+    void setCurrentRuleDestinationIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
+    void setCurrentRuleDestinationHostIp(const nmco::IpAddress&);
+    void setCurrentRuleDestinationAny();
+    void setCurrentRuleDestinationObjectGroup(const std::string&);
+    // TODO: setCurrentRUleDestinationPorts
 
-    // TODO: Should the be separate or should they be a single rule?
-    void addPolicyIpRule(const std::string&, const nmco::IpAddress&,
-                       const boost::optional<nmco::IpAddress>&);
+    void tempPortTesting1_REMOVE_ME(const std::string&);
+    void tempPortTesting2_REMOVE_ME(const std::string&, const std::string&);
+    void DEBUG_NEW_LINE();
 
-    void addPolicyProtocolRule(const std::string&, const std::string&,
-                               const std::string&, const std::string&,
-                               const boost::optional<std::string>&,
-                               const boost::optional<std::string>&);
-
-    void addPolicyAnyRule(const std::string&, const std::string&);
 
     // Unsupported
     void unsup(const std::string&);
