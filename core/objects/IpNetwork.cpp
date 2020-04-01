@@ -220,6 +220,13 @@ namespace netmeld::core::objects {
   }
 
   void
+  IpNetwork::setWildcardNetmask(const IpNetwork& _mask)
+  {
+    //TODO: Implement this functionality
+    //TODO: Write a test for this functionality
+  }
+
+  void
   IpNetwork::setReason(const std::string& _reason)
   {
     reason = _reason;

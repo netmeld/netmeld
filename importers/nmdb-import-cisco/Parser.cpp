@@ -171,6 +171,8 @@ Parser::Parser() : Parser::base_type(start)
  
        | switchport
        | spanningTree
+
+       //TODO: Add ip access-group parser to add src/dest iface to acRules
  
        // Ignore all other settings
        | (qi::omit[+token])
@@ -285,13 +287,20 @@ Parser::Parser() : Parser::base_type(start)
          [pnx::bind(&Parser::updateCurrentRule, this)] >>
         token // ACTION
           [pnx::bind(&Parser::setCurrentRuleAction, this, qi::_1)] >>
-        token // PROTOCOL // TODO: handle adding Service with ports correctly
+        token // PROTOCOL
           [pnx::bind(&Parser::setCurrentRuleProtocol, this, qi::_1)] >>
-        source >> -ports >>
-        -(destination >> -ports) >>
+        source >>
+        -(ports
+           [pnx::bind(&Parser::setCurrentRuleSourcePorts, this, qi::_1)]
+         ) >>
+        -(destination >>
+          -(ports
+             [pnx::bind(&Parser::setCurrentRuleDestinationPorts, this, qi::_1)]
+           )
+         ) >>
         -qi::lit("log") >>
         qi::eol
-       ) [pnx::bind(&Parser::DEBUG_NEW_LINE, this)]
+       ) [pnx::bind(&Parser::finalizeCurrentRule, this)]
      )
     ;
 
@@ -329,12 +338,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   // PORTS ( "eq" port | "range" startPort endPort )
-  ports = // TODO: change rule signature to return (std::string, boost:optional<std::string>)
+  ports =
     ( (qi::lit("eq") >> token)
-        [pnx::bind(&Parser::tempPortTesting1_REMOVE_ME, this, qi::_1)]
+        [qi::_val = qi::_1]
      |
       (qi::lit("range") >> token >> token)
-        [pnx::bind(&Parser::tempPortTesting2_REMOVE_ME, this, qi::_1, qi::_2)]
+        [qi::_val = (qi::_1 + "-" + qi::_2)]
     )
     ;
 
@@ -490,6 +499,7 @@ Parser::addVlan(nmco::Vlan& vlan)
   d.vlans.push_back(vlan);
 }
 
+
 // Policy Related
 void
 Parser::updateCurrentRuleBook(const std::string& name)
@@ -500,12 +510,14 @@ Parser::updateCurrentRuleBook(const std::string& name)
   LOG_INFO << "extended:" << name << '\n';
 }
 
+
 void
 Parser::updateCurrentRule()
 {
   ++curRuleId;
   LOG_INFO << "  [" << curRuleId << ']';
 }
+
 
 void
 Parser::setCurrentRuleAction(const std::string& action)
@@ -516,89 +528,136 @@ Parser::setCurrentRuleAction(const std::string& action)
   LOG_INFO << ' ' << action;
 }
 
+
 void
 Parser::setCurrentRuleProtocol(const std::string& protocol)
 {
-  d.ruleBooks[curRuleBook][curRuleId].addService(protocol);
+  curRuleProtocol = protocol;
 
   LOG_INFO << ' ' << protocol;
 }
 
-void
-Parser::setCurrentRuleSourceIpMask(const nmco::IpAddress& ipAddr, const nmco::IpAddress& starMask)
-{
-  // TODO: Handle (or decided no to handle) wildcard netmasks
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddr.toString() + " *" + starMask.toString());
 
-  LOG_INFO << ' ' << ipAddr.toString() << " *" << starMask.toString();
+void
+Parser::setCurrentRuleSourcePorts(const std::string& ports)
+{
+  curRuleSourcePort = ports;
+
+  LOG_INFO << ' ' << ports;
 }
+
+
+void
+Parser::setCurrentRuleDestinationPorts(const std::string& ports)
+{
+  curRuleDestinationPort = ports;
+
+  LOG_INFO << ' ' << ports;
+}
+
+
+void
+Parser::setCurrentRuleSourceIpMask(const nmco::IpAddress& ipAddr,
+                                   const nmco::IpAddress& starMask)
+{
+  // TODO: Create a addWildcardMask to IpAddress object
+  const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
+
+  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
+  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
+
+  LOG_INFO << ' ' << ipAddrString;
+}
+
 
 void
 Parser::setCurrentRuleSourceHostIp(const nmco::IpAddress& ipAddr)
 {
+  const std::string ipAddrString {ipAddr.toString()};
 
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddr.toString());
+  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
+  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_INFO << " host " << ipAddr.toString();
+  LOG_INFO << " host " << ipAddrString;
 }
+
 
 void
 Parser::setCurrentRuleSourceAny()
 {
   d.ruleBooks[curRuleBook][curRuleId].addSrc("any");
+  d.networkBooks[ZONE]["any"].addData("any");
 
   LOG_INFO << " any";
 }
 
-void
-Parser::setCurrentRuleDestinationIpMask(const nmco::IpAddress& ipAddr, const nmco::IpAddress& starMask)
-{
-  // TODO: Handle (or decided no to handle) wildcard netmasks
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddr.toString() + " *" + starMask.toString());
 
-  LOG_INFO << ' ' << ipAddr.toString() << " *" << starMask.toString();
+void
+Parser::setCurrentRuleDestinationIpMask(const nmco::IpAddress& ipAddr,
+                                        const nmco::IpAddress& starMask)
+{
+  // TODO: Create a addWildcardMask to IpAddress object
+  const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
+
+  d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
+  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
+
+  LOG_INFO << ' ' << ipAddrString;
 }
+
 
 void
 Parser::setCurrentRuleDestinationHostIp(const nmco::IpAddress& ipAddr)
 {
+  const std::string ipAddrString {ipAddr.toString()};
 
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddr.toString());
+  d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
+  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_INFO << " host " << ipAddr.toString();
+  LOG_INFO << " host " << ipAddrString;
 }
+
 
 void
 Parser::setCurrentRuleDestinationAny()
 {
-  d.ruleBooks[curRuleBook][curRuleId].addSrc("any");
+  d.ruleBooks[curRuleBook][curRuleId].addDst("any");
+  d.networkBooks[ZONE]["any"].addData("any");
 
   LOG_INFO << " any";
 }
 
+
 void
 Parser::setCurrentRuleDestinationObjectGroup(const std::string& objectGroup)
 {
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(objectGroup);
+  d.ruleBooks[curRuleBook][curRuleId].addDst(objectGroup);
+  d.networkBooks[ZONE][objectGroup].addData(objectGroup);
+
+  d.observations.addNotable("access-list rule destination object-group " + objectGroup);
 
   LOG_INFO << " object-group " << objectGroup;
 }
 
-void
-Parser::tempPortTesting1_REMOVE_ME(const std::string& port)
-{
-  LOG_INFO << " eq " << port;
-}
 
 void
-Parser::tempPortTesting2_REMOVE_ME(const std::string& portStart, const std::string& portEnd)
+Parser::finalizeCurrentRule()
 {
-  LOG_INFO << " range " << portStart << " " << portEnd;
-}
+  const std::string serviceString = nmcu::getSrvcString(curRuleProtocol,
+                                                        curRuleSourcePort,
+                                                        curRuleDestinationPort);
+  curRuleProtocol = "";
+  curRuleSourcePort = "";
+  curRuleDestinationPort = "";
 
-void
-Parser::DEBUG_NEW_LINE()
-{
+  d.ruleBooks[curRuleBook][curRuleId].addService(serviceString);
+  d.serviceBooks[ZONE][serviceString].addData(serviceString);
+
+  LOG_INFO << " [" << serviceString << "]";
+
+  const std::string networkData; // TODO: Fill this in with src then dst
+  d.networkBooks[ZONE][networkData].addData(networkData);
+
   LOG_INFO << '\n';
 }
 

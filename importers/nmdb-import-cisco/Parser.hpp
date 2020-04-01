@@ -33,6 +33,8 @@
 #include <netmeld/core/parsers/ParserMacAddress.hpp>
 
 #include <netmeld/core/objects/AcRule.hpp>
+#include <netmeld/core/objects/AcNetworkBook.hpp>
+#include <netmeld/core/objects/AcServiceBook.hpp>
 #include <netmeld/core/objects/DeviceInformation.hpp>
 #include <netmeld/core/objects/InterfaceNetwork.hpp>
 #include <netmeld/core/objects/ToolObservations.hpp>
@@ -47,6 +49,8 @@ namespace nmco  = netmeld::core::objects;
 namespace nmcp  = netmeld::core::parsers;
 namespace nmcu  = netmeld::core::utils;
 
+typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
+typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
 typedef std::map<size_t, nmco::AcRule> RuleBook;
 
 // =============================================================================
@@ -63,7 +67,10 @@ struct Data
   std::vector<nmco::Vlan>              vlans;
 
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
-  std::map<std::string, RuleBook>  ruleBooks;
+
+  std::map<std::string, NetworkBook>  networkBooks;
+  std::map<std::string, ServiceBook>  serviceBooks;
+  std::map<std::string, RuleBook>     ruleBooks;
 };
 typedef std::vector<Data> Result;
 
@@ -87,9 +94,11 @@ class Parser :
       policy,
       source,
       destination,
-      ports,
       interface, switchport, spanningTree,
       indent;
+
+    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+      ports;
 
 //    qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type>
 //      interface;
@@ -120,8 +129,13 @@ class Parser :
     std::set<std::string>  ifacesBpduGuardManuallySet;
     std::set<std::string>  ifacesBpduFilterManuallySet;
 
+    const std::string ZONE  {"global"};
+
     std::string  curRuleBook {""};
     size_t       curRuleId {0};
+    std::string  curRuleProtocol {""};
+    std::string  curRuleSourcePort {""};
+    std::string  curRuleDestinationPort {""};
 
   // ===========================================================================
   // Constructors
@@ -163,21 +177,22 @@ class Parser :
     // Policy Related
     void updateCurrentRuleBook(const std::string&);
     void updateCurrentRule();
+
     void setCurrentRuleAction(const std::string&);
     void setCurrentRuleProtocol(const std::string&);
+    void setCurrentRuleSourcePorts(const std::string&);
+    void setCurrentRuleDestinationPorts(const std::string&);
+
     void setCurrentRuleSourceIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
     void setCurrentRuleSourceHostIp(const nmco::IpAddress&);
     void setCurrentRuleSourceAny();
-    // TODO: setCurrentRuleSourcePorts
+
     void setCurrentRuleDestinationIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
     void setCurrentRuleDestinationHostIp(const nmco::IpAddress&);
     void setCurrentRuleDestinationAny();
     void setCurrentRuleDestinationObjectGroup(const std::string&);
-    // TODO: setCurrentRUleDestinationPorts
 
-    void tempPortTesting1_REMOVE_ME(const std::string&);
-    void tempPortTesting2_REMOVE_ME(const std::string&, const std::string&);
-    void DEBUG_NEW_LINE();
+    void finalizeCurrentRule();
 
 
     // Unsupported
