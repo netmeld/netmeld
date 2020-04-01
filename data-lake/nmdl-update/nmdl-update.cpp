@@ -24,34 +24,15 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - Base classes contain some implementation (even if NOOP) for every method
-     - Method overriding is intentional to alter behaviour, not scope hiding
-     - Final has not been used to facilitate new concepts
-       - This may change as code base matures
-   - If tool is intended to be a "base" class
-     - It should not have a main
-     - It should have a separate header and implementation
-   - Data order
-     - 1st tier: Variables, Constructors, Methods
-     - 2nd tier: private, protected, public
-   - Section headers should generally be left to help code organization
-*/
 
 #include <netmeld/core/tools/AbstractTool.hpp>
 
-// Local includes should be done in this manner
-//#include "GeneralObject.hpp"
-//#include "ParserObject.hpp"
+#include "DataLake.hpp"
+#include "HandlerGit.hpp"
 
 namespace nmct = netmeld::core::tools;
+namespace nmcu = netmeld::core::utils;
+namespace nmdo = netmeld::datalake::objects;
 
 
 class Tool : public nmct::AbstractTool
@@ -92,16 +73,36 @@ class Tool : public nmct::AbstractTool
     void
     addToolBaseOptions() override // Pre-subclass operations
     {
+      opts.addRequiredOption("device-id", std::make_tuple(
+            "device-id",
+            po::value<std::string>()->required(),
+            "Name of device.")
+          );
+      opts.addRequiredOption("lake-type", std::make_tuple(
+            "lake-type",
+            po::value<std::string>()->required(),
+            "Data lake type.")
+          );
+
+      opts.addOptionalOption("pipe", std::make_tuple(
+            "pipe",
+            NULL_SEMANTIC,
+            "Read input from STDIN; Save a copy to DATA_PATH.")
+          );
+
+      opts.removeRequiredOption("db-name");
+      opts.removeAdvancedOption("db-args");
+    }
+
+    // Overriden from AbstractTool
+    void
+    modifyToolOptions() override
+    {
       opts.addRequiredOption("data-path", std::make_tuple(
             "data-path",
             po::value<std::string>()->required(),
             "Data to save."
             " Either --data-path param or implicit last argument.")
-          );
-      opts.addRequiredOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>()->required(),
-            "Name of device.")
           );
 
       opts.addOptionalOption("tool", std::make_tuple(
@@ -114,28 +115,64 @@ class Tool : public nmct::AbstractTool
             po::value<std::string>(),
             "Tool arguments during import.")
           );
-      opts.addOptionalOption("new", std::make_tuple(
-            "new",
+      opts.addOptionalOption("new-file", std::make_tuple(
+            "new-file",
             po::value<std::string>(),
             "File to replace the Add/update with new file.")
           );
-
-      opts.removeRequiredOption("db-name");
-      opts.removeRequiredOption("db-args");
-      //opts.removeOptionalOption("pipe");
-      opts.removeAdvancedOption("tool-run-metadata");
     }
-
-    // Overriden from AbstractTool
-    void
-    modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
   protected: // Methods part of subclass API
     // Inherited from AbstractTool at this scope
       // std::string const getDbName() const;
       // virtual void printHelp() const;
       // virtual void printVersion() const;
-      // virtual int  runTool();
+    int
+    runTool() override
+    {
+      const auto& lakeType {opts.getValue("lake-type")};
+
+      //nmdo::DataLake dataLake;
+      //try {
+      //  dataLake.setType(lakeType);
+      //} catch (const std::exception& e) {
+      //  LOG_ERROR << e.what() << '\n';
+      //  return nmcu::Exit::FAILURE;
+      //}
+      std::unique_ptr<nmdo::DataLake> dataLake = nullptr;
+      if ("git" == lakeType) {
+        dataLake = std::make_unique<nmdo::HandlerGit>();
+      }
+
+      if (nullptr == dataLake) {
+        LOG_ERROR << "Unsupported data lake type: " << lakeType << '\n';
+      }
+
+      const auto& deviceId {opts.getValue("device-id")};
+      dataLake->setDeviceId(deviceId);
+
+      const auto& dataPath {opts.getValue("data-path")};
+      dataLake->setDataPath(dataPath);
+
+      if (opts.exists("tool")) {
+        const auto& importTool {opts.getValue("tool")};
+        dataLake->setImportTool(importTool);
+      }
+
+      if (opts.exists("tool-args")) {
+        const auto& toolArgs {opts.getValue("tool-args")};
+        dataLake->setToolArgs(toolArgs);
+      }
+
+      if (opts.exists("new-file")){
+        const auto& newFile {opts.getValue("new-file")};
+        dataLake->setNewFile(newFile);
+      }
+
+      dataLake->commit();
+
+      return nmcu::Exit::SUCCESS;
+    }
 
   public: // Methods part of public API
     // Inherited from AbstractTool, don't override as primary tool entry point

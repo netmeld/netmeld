@@ -34,6 +34,8 @@ add_definitions(
 
 add_executable(${TOOL_NAME}
     ${TOOL_NAME}.cpp
+    DataLake.cpp
+    HandlerGit.cpp
   )
 
 target_link_libraries(${TOOL_NAME}
