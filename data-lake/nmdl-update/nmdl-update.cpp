@@ -87,7 +87,7 @@ class Tool : public nmct::AbstractTool
       opts.addOptionalOption("pipe", std::make_tuple(
             "pipe",
             NULL_SEMANTIC,
-            "Read input from STDIN; Save a copy to DATA_PATH.")
+            "Read input from STDIN to store.")
           );
 
       opts.removeRequiredOption("db-name");
@@ -101,7 +101,7 @@ class Tool : public nmct::AbstractTool
       opts.addRequiredOption("data-path", std::make_tuple(
             "data-path",
             po::value<std::string>()->required(),
-            "Data to save."
+            "Data to store."
             " Either --data-path param or implicit last argument.")
           );
 
@@ -115,10 +115,10 @@ class Tool : public nmct::AbstractTool
             po::value<std::string>(),
             "Tool arguments during import.")
           );
-      opts.addOptionalOption("new-file", std::make_tuple(
-            "new-file",
+      opts.addOptionalOption("rename", std::make_tuple(
+            "rename",
             po::value<std::string>(),
-            "File to replace the Add/update with new file.")
+            "Rename source file to this when stored.")
           );
     }
 
@@ -164,9 +164,9 @@ class Tool : public nmct::AbstractTool
         dataLake->setToolArgs(toolArgs);
       }
 
-      if (opts.exists("new-file")){
-        const auto& newFile {opts.getValue("new-file")};
-        dataLake->setNewFile(newFile);
+      if (opts.exists("rename")){
+        const auto& newName {opts.getValue("rename")};
+        dataLake->setNewName(newName);
       }
 
       dataLake->commit();

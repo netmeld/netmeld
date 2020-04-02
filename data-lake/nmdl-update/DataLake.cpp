@@ -83,10 +83,10 @@ namespace netmeld::datalake::objects {
   }
 
   void
-  DataLake::setNewFile(const std::string& _newFile)
+  DataLake::setNewName(const std::string& _newName)
   {
     // TODO validate?
-    newFile = _newFile;
+    newName = _newName;
   }
 
   void DataLake::commit()

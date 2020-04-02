@@ -19,11 +19,14 @@ nmdl-add (merge with update? have to distinguish between add new and update exis
 nmdl-update
   toolname somefile --device-id device
   toolname somefile --device-id device --tool nmdb-import-cisco
-  toolname repofile --device-id device --tool nmdb-import-cisco-nxos
+  toolname somefile --device-id device --tool nmdb-import-cisco-nxos
+    ~~toolname repofile --device-id device --tool nmdb-import-cisco-nxos~~
   toolname somefile --device-id device --tool nmdb-import-cisco --tool-args 'some args'
-  toolname repofile --device-id device --tool nmdb-import-cisco-nxos --tool-args 'some args'
-  toolname repofile --device-id device --tool-args 'some args'
-  toolname repofile --device-id device --new somefile
+  toolname somefile --device-id device --tool nmdb-import-cisco-nxos --tool-args 'some args'
+    ~~toolname repofile --device-id device --tool nmdb-import-cisco-nxos --tool-args 'some args'~~
+    ~~toolname repofile --device-id device --tool-args 'some args'~~
+  toolname somefile --device-id device --rename repofile
+    ~~toolname repofile --device-id device --new somefile~~
 nmdl-remove
   toolname repofile --device-id device
   toolname repofile --device-id device --permanent

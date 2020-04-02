@@ -44,7 +44,7 @@ namespace netmeld::datalake::objects {
       std::string dataPath;
       std::string importTool;
       std::string toolArgs;
-      std::string newFile;
+      std::string newName;
 
     public: // Variables should rarely appear at this scope
 
@@ -67,7 +67,7 @@ namespace netmeld::datalake::objects {
       void setDataPath(const std::string&);
       void setImportTool(const std::string&);
       void setToolArgs(const std::string&);
-      void setNewFile(const std::string&);
+      void setNewName(const std::string&);
 
       virtual void commit();
   };
