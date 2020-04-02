@@ -24,25 +24,27 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef HANDLER_GIT_HPP
-#define HANDLER_GIT_HPP
+#ifndef ABSTRACT_DATA_LAKE_HPP
+#define ABSTRACT_DATA_LAKE_HPP
 
 #include <netmeld/core/utils/LoggerSingleton.hpp>
-#include <netmeld/core/utils/FileManager.hpp>
 
-#include "DataLake.hpp"
 
-namespace nmcu = netmeld::core::utils;
+namespace netmeld::datalake::core::objects {
 
-namespace netmeld::datalake::objects {
-
-  class HandlerGit : public DataLake {
+  class DataLake {
     // =========================================================================
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
+      std::unique_ptr<DataLake> handler = nullptr;
+
     protected: // Variables intended for internal/subclass API
-      nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+      std::string deviceId;
+      std::string dataPath;
+      std::string importTool;
+      std::string toolArgs;
+      std::string newName;
 
     public: // Variables should rarely appear at this scope
 
@@ -52,7 +54,7 @@ namespace netmeld::datalake::objects {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      HandlerGit();
+      DataLake();
 
     // =========================================================================
     // Methods
@@ -60,7 +62,14 @@ namespace netmeld::datalake::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void commit() override;
+      void setType(const std::string&);
+      void setDeviceId(const std::string&);
+      void setDataPath(const std::string&);
+      void setImportTool(const std::string&);
+      void setToolArgs(const std::string&);
+      void setNewName(const std::string&);
+
+      virtual void commit();
   };
 }
-#endif // HANDLER_GIT_HPP
+#endif // ABSTRACT_DATA_LAKE_HPP

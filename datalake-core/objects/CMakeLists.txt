@@ -24,36 +24,10 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_NAME)
-get_git_timestamp(${TOOL_NAME}.cpp CODE_VERSION)
-
-add_definitions(
-    -DPROGRAM_NAME="${TOOL_NAME}"
-    -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
+foreach(TEST_NAME
+#    AcBook
   )
 
-add_executable(${TOOL_NAME}
-    ${TOOL_NAME}.cpp
-    DataLake.cpp
-    HandlerGit.cpp
-  )
+  create_test(${TEST_NAME})
 
-target_link_libraries(${TOOL_NAME}
-    netmeld-core
-    ${Boost_LIBRARIES}
-    pqxx
-  )
-
-create_man_from_help(${TOOL_NAME})
-
-# The following is commented out as we don't want to actually install templates
-#install_bin(${TOOL_NAME} ${PROJECT_NAME})
-#install_man(${TOOL_NAME} ${PROJECT_NAME})
-
-#install(
-#  FILES
-#    example.conf
-#  OPTIONAL
-#  COMPONENT ${PROJECT_NAME}
-#  DESTINATION ${NETMELD_CONF_DIR}
-#  )
+endforeach(TEST_NAME)

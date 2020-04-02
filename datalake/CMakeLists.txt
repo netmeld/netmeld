@@ -43,6 +43,7 @@ function(create_test TEST_NAME)
 
   target_link_libraries(Test.${TEST_NAME}
       netmeld-core
+      netmeld-datalake-core
       ${Boost_LIBRARIES}
     )
 
@@ -64,6 +65,7 @@ endfunction()
 # Add binary data
 ###############################################################################
 foreach(TOOL_NAME
+    nmdl-initialize
     nmdl-update
   )
 

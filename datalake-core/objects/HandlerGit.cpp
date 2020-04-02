@@ -29,7 +29,7 @@
 #include "HandlerGit.hpp"
 
 
-namespace netmeld::datalake::objects {
+namespace netmeld::datalake::core::objects {
 
   // ===========================================================================
   // Constructors
@@ -57,7 +57,7 @@ namespace netmeld::datalake::objects {
 
     // Ensure data lake pathing exists
     // TODO formalize path init logic
-    const sfs::path dlDir {nmfm.getSavePath()/"data-lake"};
+    const sfs::path dlDir {nmfm.getSavePath()/"datalake"};
     sfs::create_directories(dlDir);
    
 

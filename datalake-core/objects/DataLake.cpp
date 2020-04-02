@@ -29,7 +29,7 @@
 #include "HandlerGit.hpp"
 
 
-namespace netmeld::datalake::objects {
+namespace netmeld::datalake::core::objects {
 
   // ===========================================================================
   // Constructors
