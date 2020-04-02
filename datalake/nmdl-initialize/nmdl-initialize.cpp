@@ -28,7 +28,6 @@
 
 
 namespace nmcu = netmeld::core::utils;
-namespace nmdlco = netmeld::datalake::core::objects;
 namespace nmdlct = netmeld::datalake::core::tools;
 
 
@@ -79,6 +78,9 @@ class Tool : public nmdlct::AbstractDataLakeTool
     int
     runTool() override
     {
+      const auto& dataLake {getDataLakeHandler()};
+
+      dataLake->initialize();
 
       return nmcu::Exit::SUCCESS;
     }

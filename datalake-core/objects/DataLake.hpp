@@ -69,6 +69,7 @@ namespace netmeld::datalake::core::objects {
       void setToolArgs(const std::string&);
       void setNewName(const std::string&);
 
+      virtual void initialize();
       virtual void commit();
   };
 }

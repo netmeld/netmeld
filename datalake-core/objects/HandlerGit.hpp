@@ -41,6 +41,11 @@ namespace netmeld::datalake::core::objects {
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
+      sfs::path dataLakePath;
+
+      std::string dataLakeDir;
+      std::string deviceDir;
+
     protected: // Variables intended for internal/subclass API
       nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
 
@@ -58,8 +63,11 @@ namespace netmeld::datalake::core::objects {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
+      void cmdExec(const std::string&);
+
     protected: // Methods part of subclass API
     public: // Methods part of public API
+      void initialize() override;
       void commit() override;
   };
 }

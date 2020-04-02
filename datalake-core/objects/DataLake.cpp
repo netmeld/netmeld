@@ -89,10 +89,14 @@ namespace netmeld::datalake::core::objects {
     newName = _newName;
   }
 
+  void DataLake::initialize()
+  {
+    LOG_ERROR << "Handler failed to implement initialize logic\n";
+  }
+
   void DataLake::commit()
   {
-    LOG_ERROR << "Handler failed to implement logic\n";
-    //handler->commit();
+    LOG_ERROR << "Handler failed to implement commit logic\n";
   }
 
   // ===========================================================================

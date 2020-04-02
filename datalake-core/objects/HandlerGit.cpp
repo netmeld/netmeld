@@ -36,17 +36,7 @@ namespace netmeld::datalake::core::objects {
   // ===========================================================================
   HandlerGit::HandlerGit()
   {
-    LOG_DEBUG << "HandlerGit constructor\n";
-  }
-
-  // ===========================================================================
-  // Methods
-  // ===========================================================================
-  void
-  HandlerGit::commit()
-  {
-    LOG_DEBUG << "Data lake save with git\n";
-    LOG_DEBUG << "Vars:"
+    LOG_DEBUG << "Data lake with git, vars:"
               << "\n  deviceId: " << this->deviceId
               << "\n  dataPath: " << this->dataPath
               << "\n  importTool: " << this->importTool
@@ -54,58 +44,81 @@ namespace netmeld::datalake::core::objects {
               << "\n  rename: " << this->newName
               << '\n';
 
+    dataLakePath = {nmfm.getSavePath()/"datalake"};
+    dataLakeDir = dataLakePath.string();
+  }
 
-    // Ensure data lake pathing exists
-    // TODO formalize path init logic
-    const sfs::path dlDir {nmfm.getSavePath()/"datalake"};
-    sfs::create_directories(dlDir);
-   
-
-    // Standard exec call
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  void
+  HandlerGit::cmdExec(const std::string& _cmd)
+  {
     // TODO formalize command execution logic
-    std::string cmd;
-    auto cmdExec = [](const std::string& _cmd)
-    {
-      LOG_DEBUG << _cmd << '\n';
-      auto exitStatus {std::system(_cmd.c_str())};
-      if (0 != exitStatus) { LOG_WARN << "Failure: " << _cmd << '\n'; }
-    };
+    LOG_DEBUG << _cmd << '\n';
+    auto exitStatus {std::system(_cmd.c_str())};
+    if (-1 == exitStatus) { LOG_ERROR << "Failure: " << _cmd << '\n'; }
+    if (0 != exitStatus) { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
+  }
+
+  void
+  HandlerGit::initialize()
+  {
+    LOG_DEBUG << "Removing existing: " << dataLakePath << '\n';
+    sfs::remove_all(dataLakePath);
+    LOG_DEBUG << "Creating new: " << dataLakePath << '\n';
+    sfs::create_directories(dataLakePath);
 
 
     // Initialize data lake
     // TODO formalize logic
-    std::string saveDir {dlDir.string()};
-    cmd = "cd " + saveDir
-        + "; git init;"
-        ;
+    std::string cmd =
+        "cd " + dataLakeDir
+      + "; git init;"
+      ;
     cmdExec(cmd);
+  }
+
+  void
+  HandlerGit::commit()
+  {
+
+    // Ensure data lake pathing exists
+    if (!std::filesystem::exists(dataLakePath)) {
+      LOG_ERROR << "Data lake not initialized, doing nothing\n";
+      return;
+    }
+
+
+    std::string cmd;
 
 
     // Ensure device directory exists
-    const sfs::path devDir {dlDir/this->deviceId};
-    sfs::create_directories(devDir);
-    saveDir = devDir.string();
+    const sfs::path devicePath {dataLakePath/this->deviceId};
+    sfs::create_directories(devicePath);
+    deviceDir = devicePath.string();
     
 
     // Handle rename targeting
-    const sfs::path tgtFile {this->dataPath};
-    std::string tgtFilename {tgtFile.filename().string()};
+    const sfs::path srcFilePath {this->dataPath};
+    std::string dstFilename {srcFilePath.filename().string()};
     if (!(this->newName).empty()) {
       const sfs::path tmp {this->newName};
-      tgtFilename = tmp.filename().string();
+      dstFilename = tmp.filename().string();
     }
 
 
     // Copy file to store proper named
-    cmd = "cp " + tgtFile.string() + ' ' + saveDir + "/" + tgtFilename + ";";
+    cmd = "cp " + srcFilePath.string()
+        + ' ' + deviceDir + "/" + dstFilename + ";";
     cmdExec(cmd);
 
 
     // Store in data lake, git add and commit
-    std::string tgtFilePath {saveDir + '/' + tgtFilename};
-    cmd = "cd " + saveDir
+    std::string dstFilePath {deviceDir + '/' + dstFilename};
+    cmd = "cd " + deviceDir
         + "; git add ."
-        + "; git commit -m 'tool check-in: " + tgtFilePath +"';"
+        + "; git commit -m 'tool check-in: " + dstFilePath +"';"
         ;
     cmdExec(cmd);
 
@@ -120,10 +133,10 @@ namespace netmeld::datalake::core::objects {
       if (!(this->toolArgs).empty()) {
         note += " " + this->toolArgs;
       }
-      note += " " + tgtFilePath;
-      cmd = "cd " + saveDir +
+      note += " " + dstFilePath;
+      cmd = "cd " + deviceDir +
           + "; git notes add -f -m '" + note + '\''
-          + " `git log -n 1 --pretty=format:\"%H\" -- " + tgtFilePath + '`'
+          + " `git log -n 1 --pretty=format:\"%H\" -- " + dstFilePath + '`'
           ;
       cmdExec(cmd);
     }

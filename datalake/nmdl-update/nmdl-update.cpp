@@ -28,7 +28,6 @@
 
 
 namespace nmcu = netmeld::core::utils;
-namespace nmdlco = netmeld::datalake::core::objects;
 namespace nmdlct = netmeld::datalake::core::tools;
 
 
