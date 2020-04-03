@@ -100,10 +100,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
           LOG_DEBUG << result << std::endl;
         }
 
-        LOG_DEBUG << "Iterating over Observations\n";
-        results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << std::endl;
-
         LOG_DEBUG << "Iterating over Services\n";
         for (auto& result : results.services) {
           result.save(t, toolRunId, "");
@@ -127,6 +123,43 @@ class Tool : public nmct::AbstractImportTool<P,R>
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
+
+        LOG_DEBUG << "Iterating over networkBooks\n";
+        for (auto& [zone, nets] : results.networkBooks) {
+          for (auto& [name, book] : nets) {
+            book.setId(zone);
+            book.setName(name);
+            book.save(t, toolRunId, deviceId);
+            LOG_DEBUG << book.toDebugString() << '\n';
+          }
+        }
+
+        LOG_DEBUG << "Iterating over serviceBooks\n";
+        for (auto& [zone, apps] : results.serviceBooks) {
+          for (auto& [name, book] : apps) {
+            book.setId(zone);
+            book.setName(name);
+            book.save(t, toolRunId, deviceId);
+            LOG_DEBUG << book.toDebugString() << '\n';
+          }
+        }
+
+        LOG_DEBUG << "Iterating over ruleBooks\n";
+        for (auto& [name, book] : results.ruleBooks) {
+          LOG_DEBUG << name << '\n';
+          for (auto& [id, rule] : book) {
+            if (!rule.isValid()) {
+              results.observations.addNotable("RuleBook "
+                  + name + " is defined but not applied.");
+            }
+            rule.save(t, toolRunId, deviceId);
+            LOG_DEBUG << rule.toDebugString() << '\n';
+          }
+        }
+
+        LOG_DEBUG << "Iterating over Observations\n";
+        results.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.observations.toDebugString() << std::endl;
 
         first = false;
       }

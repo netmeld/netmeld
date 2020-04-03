@@ -172,7 +172,9 @@ Parser::Parser() : Parser::base_type(start)
        | switchport
        | spanningTree
 
-       //TODO: Add ip access-group parser to add src/dest iface to acRules
+       | (qi::lit("ip access-group") >> token >> token)
+            [pnx::bind(&Parser::createAccessGroup, this, 
+                pnx::bind(&Parser::tgtIface, this), qi::_1, qi::_2)]
  
        // Ignore all other settings
        | (qi::omit[+token])
@@ -502,12 +504,26 @@ Parser::addVlan(nmco::Vlan& vlan)
 
 // Policy Related
 void
+Parser::createAccessGroup(nmco::InterfaceNetwork* iface,
+                          const std::string& bookName,
+                          const std::string& direction)
+{
+  // These are actually applied to rules in Parser::getData() below
+  usedRuleBooks[bookName] = {iface->getName(), direction};
+
+  LOG_DEBUG << "access-group: " << bookName << " "
+                               << iface->getName() << " "
+                               << direction << '\n';
+}
+
+
+void
 Parser::updateCurrentRuleBook(const std::string& name)
 {
   curRuleBook = name;
   curRuleId = 0;
 
-  LOG_INFO << "extended:" << name << '\n';
+  LOG_DEBUG << "extended:" << name << '\n';
 }
 
 
@@ -515,7 +531,7 @@ void
 Parser::updateCurrentRule()
 {
   ++curRuleId;
-  LOG_INFO << "  [" << curRuleId << ']';
+  LOG_DEBUG << "  [" << curRuleId << ']';
 }
 
 
@@ -525,7 +541,7 @@ Parser::setCurrentRuleAction(const std::string& action)
   d.ruleBooks[curRuleBook][curRuleId].setRuleId(curRuleId);
   d.ruleBooks[curRuleBook][curRuleId].addAction(action);
 
-  LOG_INFO << ' ' << action;
+  LOG_DEBUG << ' ' << action;
 }
 
 
@@ -534,7 +550,7 @@ Parser::setCurrentRuleProtocol(const std::string& protocol)
 {
   curRuleProtocol = protocol;
 
-  LOG_INFO << ' ' << protocol;
+  LOG_DEBUG << ' ' << protocol;
 }
 
 
@@ -543,7 +559,7 @@ Parser::setCurrentRuleSourcePorts(const std::string& ports)
 {
   curRuleSourcePort = ports;
 
-  LOG_INFO << ' ' << ports;
+  LOG_DEBUG << ' ' << ports;
 }
 
 
@@ -552,7 +568,7 @@ Parser::setCurrentRuleDestinationPorts(const std::string& ports)
 {
   curRuleDestinationPort = ports;
 
-  LOG_INFO << ' ' << ports;
+  LOG_DEBUG << ' ' << ports;
 }
 
 
@@ -563,10 +579,11 @@ Parser::setCurrentRuleSourceIpMask(const nmco::IpAddress& ipAddr,
   // TODO: Create a addWildcardMask to IpAddress object
   const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
 
+  d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_INFO << ' ' << ipAddrString;
+  LOG_DEBUG << ' ' << ipAddrString;
 }
 
 
@@ -575,20 +592,22 @@ Parser::setCurrentRuleSourceHostIp(const nmco::IpAddress& ipAddr)
 {
   const std::string ipAddrString {ipAddr.toString()};
 
+  d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_INFO << " host " << ipAddrString;
+  LOG_DEBUG << " host " << ipAddrString;
 }
 
 
 void
 Parser::setCurrentRuleSourceAny()
 {
+  d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc("any");
   d.networkBooks[ZONE]["any"].addData("any");
 
-  LOG_INFO << " any";
+  LOG_DEBUG << " any";
 }
 
 
@@ -599,10 +618,11 @@ Parser::setCurrentRuleDestinationIpMask(const nmco::IpAddress& ipAddr,
   // TODO: Create a addWildcardMask to IpAddress object
   const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
 
+  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_INFO << ' ' << ipAddrString;
+  LOG_DEBUG << ' ' << ipAddrString;
 }
 
 
@@ -611,32 +631,35 @@ Parser::setCurrentRuleDestinationHostIp(const nmco::IpAddress& ipAddr)
 {
   const std::string ipAddrString {ipAddr.toString()};
 
+  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_INFO << " host " << ipAddrString;
+  LOG_DEBUG << " host " << ipAddrString;
 }
 
 
 void
 Parser::setCurrentRuleDestinationAny()
 {
+  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst("any");
   d.networkBooks[ZONE]["any"].addData("any");
 
-  LOG_INFO << " any";
+  LOG_DEBUG << " any";
 }
 
 
 void
 Parser::setCurrentRuleDestinationObjectGroup(const std::string& objectGroup)
 {
+  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(objectGroup);
   d.networkBooks[ZONE][objectGroup].addData(objectGroup);
 
   d.observations.addNotable("access-list rule destination object-group " + objectGroup);
 
-  LOG_INFO << " object-group " << objectGroup;
+  LOG_DEBUG << " object-group " << objectGroup;
 }
 
 
@@ -653,12 +676,9 @@ Parser::finalizeCurrentRule()
   d.ruleBooks[curRuleBook][curRuleId].addService(serviceString);
   d.serviceBooks[ZONE][serviceString].addData(serviceString);
 
-  LOG_INFO << " [" << serviceString << "]";
+  LOG_DEBUG << " [" << serviceString << "]";
 
-  const std::string networkData; // TODO: Fill this in with src then dst
-  d.networkBooks[ZONE][networkData].addData(networkData);
-
-  LOG_INFO << '\n';
+  LOG_DEBUG << '\n';
 }
 
 
@@ -692,6 +712,26 @@ Parser::getData()
     }
     if (!ifacesBpduFilterManuallySet.count(iface.getName())){
       iface.setBpduFilter(globalBpduFilterEnabled);
+    }
+  }
+
+  // Apply interface apply-groups to affected rules
+  for (auto& [bookName, dataPair] : usedRuleBooks) {
+    auto& [ifaceName, direction] = dataPair;
+
+    for (auto& [id, rule] : d.ruleBooks[bookName]) {
+      if ("in" == direction) {
+        // in: filter traffic entering iface, regardless destination
+        rule.addSrcIface(ifaceName);
+        rule.addDstIface("any");
+      } else if ("out" == direction) {
+        // out: filter traffic leaving iface, regardless origin
+        rule.addSrcIface("any");
+        rule.addDstIface(ifaceName);
+      } else {
+        LOG_ERROR << "Parser::assignRules: Unknown rule direction parsed: "
+                  << direction << std::endl;
+      }
     }
   }
 

@@ -131,6 +131,8 @@ class Parser :
 
     const std::string ZONE  {"global"};
 
+    std::map<std::string, std::pair<std::string, std::string>> usedRuleBooks;
+
     std::string  curRuleBook {""};
     size_t       curRuleId {0};
     std::string  curRuleProtocol {""};
@@ -175,6 +177,10 @@ class Parser :
     void addVlan(nmco::Vlan&);
 
     // Policy Related
+    void createAccessGroup(nmco::InterfaceNetwork*,
+                           const std::string&,
+                           const std::string&);
+
     void updateCurrentRuleBook(const std::string&);
     void updateCurrentRule();
 
@@ -183,17 +189,18 @@ class Parser :
     void setCurrentRuleSourcePorts(const std::string&);
     void setCurrentRuleDestinationPorts(const std::string&);
 
-    void setCurrentRuleSourceIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
+    void setCurrentRuleSourceIpMask(const nmco::IpAddress&,
+                                    const nmco::IpAddress&);
     void setCurrentRuleSourceHostIp(const nmco::IpAddress&);
     void setCurrentRuleSourceAny();
 
-    void setCurrentRuleDestinationIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
+    void setCurrentRuleDestinationIpMask(const nmco::IpAddress&,
+                                         const nmco::IpAddress&);
     void setCurrentRuleDestinationHostIp(const nmco::IpAddress&);
     void setCurrentRuleDestinationAny();
     void setCurrentRuleDestinationObjectGroup(const std::string&);
 
     void finalizeCurrentRule();
-
 
     // Unsupported
     void unsup(const std::string&);
@@ -202,3 +209,4 @@ class Parser :
     Result getData();
 };
 #endif // PARSER_HPP
+

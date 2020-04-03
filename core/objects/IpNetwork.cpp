@@ -222,6 +222,7 @@ namespace netmeld::core::objects {
   void
   IpNetwork::setWildcardNetmask(const IpNetwork& _mask)
   {
+    LOG_DEBUG << "IpNetwork::setWildcardNetmask called with " << _mask << '\n';
     //TODO: Implement this functionality
     //TODO: Write a test for this functionality
   }
