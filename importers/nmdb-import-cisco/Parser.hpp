@@ -189,13 +189,11 @@ class Parser :
     void setCurrentRuleSourcePorts(const std::string&);
     void setCurrentRuleDestinationPorts(const std::string&);
 
-    void setCurrentRuleSourceIpMask(const nmco::IpAddress&,
-                                    const nmco::IpAddress&);
+    void setCurrentRuleSourceIpMask(nmco::IpAddress, const nmco::IpAddress&);
     void setCurrentRuleSourceHostIp(const nmco::IpAddress&);
     void setCurrentRuleSourceAny();
 
-    void setCurrentRuleDestinationIpMask(const nmco::IpAddress&,
-                                         const nmco::IpAddress&);
+    void setCurrentRuleDestinationIpMask(nmco::IpAddress, const nmco::IpAddress&);
     void setCurrentRuleDestinationHostIp(const nmco::IpAddress&);
     void setCurrentRuleDestinationAny();
     void setCurrentRuleDestinationObjectGroup(const std::string&);

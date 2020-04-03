@@ -511,9 +511,9 @@ Parser::createAccessGroup(nmco::InterfaceNetwork* iface,
   // These are actually applied to rules in Parser::getData() below
   usedRuleBooks[bookName] = {iface->getName(), direction};
 
-  LOG_DEBUG << "access-group: " << bookName << " "
-                               << iface->getName() << " "
-                               << direction << '\n';
+  //LOG_DEBUG << "access-group: " << bookName << " "
+  //                             << iface->getName() << " "
+  //                             << direction << '\n';
 }
 
 
@@ -523,7 +523,7 @@ Parser::updateCurrentRuleBook(const std::string& name)
   curRuleBook = name;
   curRuleId = 0;
 
-  LOG_DEBUG << "extended:" << name << '\n';
+  //LOG_DEBUG << "extended:" << name << '\n';
 }
 
 
@@ -531,7 +531,7 @@ void
 Parser::updateCurrentRule()
 {
   ++curRuleId;
-  LOG_DEBUG << "  [" << curRuleId << ']';
+  //LOG_DEBUG << "  [" << curRuleId << ']';
 }
 
 
@@ -541,7 +541,7 @@ Parser::setCurrentRuleAction(const std::string& action)
   d.ruleBooks[curRuleBook][curRuleId].setRuleId(curRuleId);
   d.ruleBooks[curRuleBook][curRuleId].addAction(action);
 
-  LOG_DEBUG << ' ' << action;
+  //LOG_DEBUG << ' ' << action;
 }
 
 
@@ -550,7 +550,7 @@ Parser::setCurrentRuleProtocol(const std::string& protocol)
 {
   curRuleProtocol = protocol;
 
-  LOG_DEBUG << ' ' << protocol;
+  //LOG_DEBUG << ' ' << protocol;
 }
 
 
@@ -559,7 +559,7 @@ Parser::setCurrentRuleSourcePorts(const std::string& ports)
 {
   curRuleSourcePort = ports;
 
-  LOG_DEBUG << ' ' << ports;
+  //LOG_DEBUG << ' ' << ports;
 }
 
 
@@ -568,22 +568,22 @@ Parser::setCurrentRuleDestinationPorts(const std::string& ports)
 {
   curRuleDestinationPort = ports;
 
-  LOG_DEBUG << ' ' << ports;
+  //LOG_DEBUG << ' ' << ports;
 }
 
 
 void
-Parser::setCurrentRuleSourceIpMask(const nmco::IpAddress& ipAddr,
+Parser::setCurrentRuleSourceIpMask(nmco::IpAddress ipAddr,
                                    const nmco::IpAddress& starMask)
 {
-  // TODO: Create a addWildcardMask to IpAddress object
+  ipAddr.setWildcardNetmask(starMask);
   const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
 
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_DEBUG << ' ' << ipAddrString;
+  //LOG_DEBUG << ' ' << ipAddrString;
 }
 
 
@@ -596,7 +596,7 @@ Parser::setCurrentRuleSourceHostIp(const nmco::IpAddress& ipAddr)
   d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_DEBUG << " host " << ipAddrString;
+  //LOG_DEBUG << " host " << ipAddrString;
 }
 
 
@@ -607,22 +607,22 @@ Parser::setCurrentRuleSourceAny()
   d.ruleBooks[curRuleBook][curRuleId].addSrc("any");
   d.networkBooks[ZONE]["any"].addData("any");
 
-  LOG_DEBUG << " any";
+  //LOG_DEBUG << " any";
 }
 
 
 void
-Parser::setCurrentRuleDestinationIpMask(const nmco::IpAddress& ipAddr,
+Parser::setCurrentRuleDestinationIpMask(nmco::IpAddress ipAddr,
                                         const nmco::IpAddress& starMask)
 {
-  // TODO: Create a addWildcardMask to IpAddress object
+  ipAddr.setWildcardNetmask(starMask);
   const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
 
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_DEBUG << ' ' << ipAddrString;
+  //LOG_DEBUG << ' ' << ipAddrString;
 }
 
 
@@ -635,7 +635,7 @@ Parser::setCurrentRuleDestinationHostIp(const nmco::IpAddress& ipAddr)
   d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
 
-  LOG_DEBUG << " host " << ipAddrString;
+  //LOG_DEBUG << " host " << ipAddrString;
 }
 
 
@@ -646,7 +646,7 @@ Parser::setCurrentRuleDestinationAny()
   d.ruleBooks[curRuleBook][curRuleId].addDst("any");
   d.networkBooks[ZONE]["any"].addData("any");
 
-  LOG_DEBUG << " any";
+  //LOG_DEBUG << " any";
 }
 
 
@@ -659,7 +659,7 @@ Parser::setCurrentRuleDestinationObjectGroup(const std::string& objectGroup)
 
   d.observations.addNotable("access-list rule destination object-group " + objectGroup);
 
-  LOG_DEBUG << " object-group " << objectGroup;
+  //LOG_DEBUG << " object-group " << objectGroup;
 }
 
 
@@ -676,9 +676,9 @@ Parser::finalizeCurrentRule()
   d.ruleBooks[curRuleBook][curRuleId].addService(serviceString);
   d.serviceBooks[ZONE][serviceString].addData(serviceString);
 
-  LOG_DEBUG << " [" << serviceString << "]";
+  //LOG_DEBUG << " [" << serviceString << "]";
 
-  LOG_DEBUG << '\n';
+  //LOG_DEBUG << '\n';
 }
 
 
