@@ -16,7 +16,7 @@ jobs:
     - name: Configure
       run: |
         env
-        cmake -S . -B build
+        cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -S . -B build
     
     - name: Build
-      run: cmake --build
+      run: cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 --build
