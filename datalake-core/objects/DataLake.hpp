@@ -28,6 +28,7 @@
 #define ABSTRACT_DATA_LAKE_HPP
 
 #include <netmeld/core/utils/LoggerSingleton.hpp>
+#include <netmeld/datalake/core/objects/DataEntry.hpp>
 
 
 namespace netmeld::datalake::core::objects {
@@ -37,15 +38,7 @@ namespace netmeld::datalake::core::objects {
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
-      std::unique_ptr<DataLake> handler = nullptr;
-
     protected: // Variables intended for internal/subclass API
-      std::string deviceId;
-      std::string dataPath;
-      std::string importTool;
-      std::string toolArgs;
-      std::string newName;
-
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -62,15 +55,9 @@ namespace netmeld::datalake::core::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setType(const std::string&);
-      void setDeviceId(const std::string&);
-      void setDataPath(const std::string&);
-      void setImportTool(const std::string&);
-      void setToolArgs(const std::string&);
-      void setNewName(const std::string&);
-
-      virtual void initialize();
-      virtual void commit();
+      virtual void initialize() = 0;
+      virtual void commit(const DataEntry&) = 0;
+      virtual std::vector<DataEntry> getDataEntries() = 0;
   };
 }
 #endif // ABSTRACT_DATA_LAKE_HPP

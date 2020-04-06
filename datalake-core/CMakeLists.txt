@@ -65,6 +65,7 @@ endfunction()
 # Add library data
 ###############################################################################
 add_library(${PROJECT_NAME} SHARED
+    ./objects/DataEntry.cpp
     ./objects/DataLake.cpp
     ./objects/HandlerGit.cpp
 

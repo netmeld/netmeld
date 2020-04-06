@@ -24,12 +24,10 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datalake/core/objects/DataEntry.hpp>
 #include <netmeld/datalake/core/tools/AbstractDataLakeTool.hpp>
 
 
 namespace nmcu = netmeld::core::utils;
-namespace nmdlco = netmeld::datalake::core::objects;
 namespace nmdlct = netmeld::datalake::core::tools;
 
 
@@ -71,34 +69,67 @@ class Tool : public nmdlct::AbstractDataLakeTool
     void
     modifyToolOptions() override
     {
-      opts.addRequiredOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>()->required(),
-            "Name of device.")
+      //opts.addOptionalOption("by-device-id", std::make_tuple(
+      //      "by-device-id",
+      //      NULL_SEMANTIC,
+      //      "Produce a list of data lake content"
+      //      " ordered by device id.")
+      //    );
+      opts.addOptionalOption("by-tool", std::make_tuple(
+            "by-tool",
+            NULL_SEMANTIC,
+            "Produce a list of data lake content"
+            " ordered by import tool.")
           );
+      opts.addOptionalOption("unbinned", std::make_tuple(
+            "unbinned",
+            NULL_SEMANTIC,
+            "Produce a list of data lake content"
+            " which has no defined import tool.")
+          );
+    }
 
-      opts.addRequiredOption("data-path", std::make_tuple(
-            "data-path",
-            po::value<std::string>()->required(),
-            "Data to store."
-            " Either --data-path param or implicit last argument.")
-          );
+    void
+    displayByDevice(std::vector<nmdlco::DataEntry> _dataEntries)
+    {
+      LOG_INFO << "Device Format Listing: 'device_id->data_name'\n";
+      for (const auto& de : _dataEntries) {
+        LOG_INFO << de.getDeviceId()
+                 << "->" << de.getSaveName()
+                 << '\n'
+                 ;
+      }
+    }
 
-      opts.addOptionalOption("tool", std::make_tuple(
-            "tool",
-            po::value<std::string>(),
-            "Tool to leverage on import.")
-          );
-      opts.addOptionalOption("tool-args", std::make_tuple(
-            "tool-args",
-            po::value<std::string>(),
-            "Tool arguments during import.")
-          );
-      opts.addOptionalOption("rename", std::make_tuple(
-            "rename",
-            po::value<std::string>(),
-            "Rename source file to this when stored.")
-          );
+    void
+    displayByTool(std::vector<nmdlco::DataEntry> _dataEntries)
+    {
+      LOG_INFO << "Tool Format Listing: 'tool:device_id->data_name'\n";
+      for (const auto& de : _dataEntries) {
+        if (de.getImportTool().empty()) {
+          continue;
+        }
+        LOG_INFO << de.getImportTool()
+                 << ":" << de.getDeviceId()
+                 << "->" << de.getSaveName()
+                 << '\n'
+                 ;
+      }
+    }
+
+    void
+    displayUnbinned(std::vector<nmdlco::DataEntry> _dataEntries)
+    {
+      LOG_INFO << "Unbinned Format Listing: 'device_id->data_name'\n";
+      for (const auto& de : _dataEntries) {
+        if (!de.getImportTool().empty()) {
+          continue;
+        }
+        LOG_INFO << de.getDeviceId()
+                 << "->" << de.getSaveName()
+                 << '\n'
+                 ;
+      }
     }
 
   protected: // Methods part of subclass API
@@ -109,31 +140,17 @@ class Tool : public nmdlct::AbstractDataLakeTool
     int
     runTool() override
     {
-      auto const& dataLake {getDataLakeHandler()};
-      nmdlco::DataEntry de;
+      const auto& dataLake {getDataLakeHandler()};
 
-      const auto& deviceId {opts.getValue("device-id")};
-      de.setDeviceId(deviceId);
-
-      const auto& dataPath {opts.getValue("data-path")};
-      de.setDataPath(dataPath);
-
-      if (opts.exists("tool")) {
-        const auto& importTool {opts.getValue("tool")};
-        de.setImportTool(importTool);
+      //std::vector<nmdlco::DataEntry>
+      const auto& dataEntries {dataLake->getDataEntries()};
+      if (opts.exists("by-tool")) {
+        displayByTool(dataEntries);
+      } else if (opts.exists("unbinned")) {
+        displayUnbinned(dataEntries);
+      } else {
+        displayByDevice(dataEntries);
       }
-
-      if (opts.exists("tool-args")) {
-        const auto& toolArgs {opts.getValue("tool-args")};
-        de.setToolArgs(toolArgs);
-      }
-
-      if (opts.exists("rename")){
-        const auto& newName {opts.getValue("rename")};
-        de.setNewName(newName);
-      }
-
-      dataLake->commit(de);
 
       return nmcu::Exit::SUCCESS;
     }

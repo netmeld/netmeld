@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <regex>
+#include <netmeld/datalake/core/objects/DataEntry.hpp>
 
 #include "HandlerGit.hpp"
 
@@ -36,14 +36,6 @@ namespace netmeld::datalake::core::objects {
   // ===========================================================================
   HandlerGit::HandlerGit()
   {
-    LOG_DEBUG << "Data lake with git, vars:"
-              << "\n  deviceId: " << this->deviceId
-              << "\n  dataPath: " << this->dataPath
-              << "\n  importTool: " << this->importTool
-              << "\n  toolArgs: " << this->toolArgs
-              << "\n  rename: " << this->newName
-              << '\n';
-
     dataLakePath = {nmfm.getSavePath()/"datalake"};
     dataLakeDir = dataLakePath.string();
   }
@@ -56,9 +48,43 @@ namespace netmeld::datalake::core::objects {
   {
     // TODO formalize command execution logic
     LOG_DEBUG << _cmd << '\n';
+
     auto exitStatus {std::system(_cmd.c_str())};
     if (-1 == exitStatus) { LOG_ERROR << "Failure: " << _cmd << '\n'; }
     if (0 != exitStatus) { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
+  }
+
+  std::string
+  HandlerGit::cmdExecOut(const std::string& _cmd)
+  {
+    // TODO formalize command execution logic
+    LOG_DEBUG << _cmd << '\n';
+
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(_cmd.c_str(), "r"), pclose);
+    if (!pipe) {
+      LOG_ERROR << "Failure: " << _cmd << '\n';
+      return "";
+    }
+
+    std::array<char, 128> buffer;
+    std::string result;
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+      result += buffer.data();
+    }
+
+    return result;
+  }
+
+  bool
+  HandlerGit::initCheck()
+  {
+    // Ensure data lake pathing exists
+    if (!sfs::exists(dataLakePath)) {
+      LOG_ERROR << "Data lake not initialized, doing nothing\n";
+      return false;
+    }
+
+    return true;
   }
 
   void
@@ -80,41 +106,28 @@ namespace netmeld::datalake::core::objects {
   }
 
   void
-  HandlerGit::commit()
+  HandlerGit::commit(const DataEntry& _de)
   {
-
-    // Ensure data lake pathing exists
-    if (!std::filesystem::exists(dataLakePath)) {
-      LOG_ERROR << "Data lake not initialized, doing nothing\n";
-      return;
-    }
-
+    if (!initCheck()) { return; }
 
     std::string cmd;
 
 
     // Ensure device directory exists
-    const sfs::path devicePath {dataLakePath/this->deviceId};
+    const sfs::path devicePath {dataLakePath/_de.getDeviceId()};
     sfs::create_directories(devicePath);
     deviceDir = devicePath.string();
     
-
-    // Handle rename targeting
-    const sfs::path srcFilePath {this->dataPath};
-    std::string dstFilename {srcFilePath.filename().string()};
-    if (!(this->newName).empty()) {
-      const sfs::path tmp {this->newName};
-      dstFilename = tmp.filename().string();
-    }
+    const sfs::path srcFilePath {_de.getDataPath()};
+    std::string dstFilename {_de.getSaveName()};
 
 
-    // Copy file to store proper named
+    // Store in data lake
+    //// Copy file to store proper named
     cmd = "cp " + srcFilePath.string()
         + ' ' + deviceDir + "/" + dstFilename + ";";
     cmdExec(cmd);
-
-
-    // Store in data lake, git add and commit
+    //// git add and commit
     std::string dstFilePath {deviceDir + '/' + dstFilename};
     cmd = "cd " + deviceDir
         + "; git add ."
@@ -123,23 +136,65 @@ namespace netmeld::datalake::core::objects {
     cmdExec(cmd);
 
 
-    // Store import data, git notes
-    if (!(this->importTool).empty()) {
-      std::string note {this->importTool};
-      std::regex regexImportTool("nmdb-import-[-a-z]+");
-      if (std::regex_match(note, regexImportTool)) {
-        note += " --device-id " + this->deviceId;
-      }
-      if (!(this->toolArgs).empty()) {
-        note += " " + this->toolArgs;
-      }
-      note += " " + dstFilePath;
-      cmd = "cd " + deviceDir +
-          + "; git notes add -f -m '" + note + '\''
+    // Store import data
+    //// git notes
+    if (!(_de.getImportTool()).empty()) {
+      std::string importCmd {_de.getImportCmd(dstFilePath)};
+      cmd = "cd " + deviceDir
+          + "; git notes add -f -m '" + importCmd + '\''
           + " `git log -n 1 --pretty=format:\"%H\" -- " + dstFilePath + '`'
           ;
       cmdExec(cmd);
     }
+  }
+
+  std::vector<DataEntry>
+  HandlerGit::getDataEntries()
+  {
+    std::vector<DataEntry> vde;
+
+    if (!initCheck()) { return vde; }
+
+    DataEntry* de;
+    std::string deviceId;
+    for (auto i = sfs::recursive_directory_iterator(dataLakePath);
+         i != sfs::recursive_directory_iterator();
+         ++i)
+    {
+      // skip control directory
+      if (".git" == i->path().filename()) {
+        i.disable_recursion_pending();
+        continue;
+      }
+
+      const auto& filePath  {i->path().string()};
+      const auto& filename  {i->path().filename().string()};
+      LOG_DEBUG << std::string(i.depth(), ' ')
+                << filename
+                << '\n'
+                ;
+
+      if (0 == i.depth()) {
+        deviceId = filename;
+      } else {
+        vde.push_back({});
+        de = &vde.back();
+        de->setDeviceId(deviceId);
+        de->setDataPath(filename);
+
+        std::string cmd
+          = "cd " + dataLakePath.string()
+          + "; git notes show"
+          + " `git log -n 1 --pretty=format:\"%H\" -- " + filePath + '`'
+          + " 2> /dev/null"
+          ;
+
+        const auto& toolInfo {cmdExecOut(cmd)};
+        de->setToolAndArgsFromCmd(toolInfo);
+      }
+    }
+
+    return vde;
   }
 
   // ===========================================================================

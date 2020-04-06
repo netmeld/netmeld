@@ -26,7 +26,6 @@
 
 // Include the majority of required libraries here
 #include "DataLake.hpp"
-#include "HandlerGit.hpp"
 
 
 namespace netmeld::datalake::core::objects {
@@ -40,64 +39,7 @@ namespace netmeld::datalake::core::objects {
   // ===========================================================================
   // Methods
   // ===========================================================================
-  void
-  DataLake::setType(const std::string& _type)
-  {
-    LOG_DEBUG << "Data lake type: " << _type << '\n';
 
-    if ("git" == _type) {
-      handler = std::make_unique<HandlerGit>();
-    }
-
-    if (nullptr == handler) {
-      throw std::runtime_error("Unsupported data lake type: " + _type);
-    }
-  }
-
-  void
-  DataLake::setDeviceId(const std::string& _deviceId)
-  {
-    // TODO validate?
-    deviceId = _deviceId;
-  }
-
-  void
-  DataLake::setDataPath(const std::string& _dataPath)
-  {
-    // TODO validate?
-    dataPath = _dataPath;
-  }
-
-  void
-  DataLake::setImportTool(const std::string& _importTool)
-  {
-    // TODO validate?
-    importTool = _importTool;
-  }
-
-  void
-  DataLake::setToolArgs(const std::string& _toolArgs)
-  {
-    // TODO validate?
-    toolArgs = _toolArgs;
-  }
-
-  void
-  DataLake::setNewName(const std::string& _newName)
-  {
-    // TODO validate?
-    newName = _newName;
-  }
-
-  void DataLake::initialize()
-  {
-    LOG_ERROR << "Handler failed to implement initialize logic\n";
-  }
-
-  void DataLake::commit()
-  {
-    LOG_ERROR << "Handler failed to implement commit logic\n";
-  }
 
   // ===========================================================================
   // Friends

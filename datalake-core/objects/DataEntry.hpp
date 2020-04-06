@@ -24,30 +24,25 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef HANDLER_GIT_HPP
-#define HANDLER_GIT_HPP
+#ifndef DATA_ENTRY_HPP
+#define DATA_ENTRY_HPP
 
 #include <netmeld/core/utils/LoggerSingleton.hpp>
-#include <netmeld/core/utils/FileManager.hpp>
 
-#include "DataLake.hpp"
-
-namespace nmcu = netmeld::core::utils;
 
 namespace netmeld::datalake::core::objects {
 
-  class HandlerGit : public DataLake {
+  class DataEntry {
     // =========================================================================
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
-      sfs::path dataLakePath;
-
-      std::string dataLakeDir;
-      std::string deviceDir;
-
     protected: // Variables intended for internal/subclass API
-      nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+      std::string deviceId;
+      std::string dataPath;
+      std::string importTool;
+      std::string toolArgs;
+      std::string newName;
 
     public: // Variables should rarely appear at this scope
 
@@ -57,23 +52,32 @@ namespace netmeld::datalake::core::objects {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      HandlerGit();
+      DataEntry();
 
     // =========================================================================
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void cmdExec(const std::string&);
-      std::string cmdExecOut(const std::string&);
-
-      bool initCheck();
-
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void initialize() override;
-      void commit(const DataEntry&) override;
+      std::string getDeviceId() const;
+      std::string getDataPath() const;
+      std::string getImportTool() const;
+      std::string getToolArgs() const;
+      std::string getNewName() const;
 
-      std::vector<DataEntry> getDataEntries() override;
+      std::string getSaveName() const;
+      std::string getImportCmd(const std::string&) const;
+
+      void setDeviceId(const std::string&);
+      void setDataPath(const std::string&);
+      void setImportTool(const std::string&);
+      void setToolArgs(const std::string&);
+      void setNewName(const std::string&);
+
+      void setToolAndArgsFromCmd(const std::string&);
+
+      friend std::ostream& operator<<(std::ostream&, const DataEntry&);
   };
 }
-#endif // HANDLER_GIT_HPP
+#endif // DATA_ENTRY_HPP
