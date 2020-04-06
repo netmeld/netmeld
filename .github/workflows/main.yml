@@ -18,7 +18,7 @@ jobs:
     - name: Install Dependencies
       run: |
         apt-get update
-        apt-get install libpqxx-dev
+        apt-get -y install libpqxx-dev
     
     - name: Version Checks
       run: |
