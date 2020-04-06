@@ -15,7 +15,6 @@ jobs:
 
     - name: Configure
       run: cmake
-        -DCMAKE_CXX_COMPILER=g++
         -DBOOST_ROOT=$BOOST_ROOT_1_69_0
         -DBoost_ADDITIONAL_VERSIONS=1.69.0
         -DBoost_ARCHITECTURE=-x64
@@ -23,4 +22,9 @@ jobs:
         -S . -B build
     
     - name: Build
-      run: cmake --build build -j 4
+      run: cmake
+        -DBOOST_ROOT=$BOOST_ROOT_1_69_0
+        -DBoost_ADDITIONAL_VERSIONS=1.69.0
+        -DBoost_ARCHITECTURE=-x64
+        -DBoost_USE_MULTITHREADED=ON
+        --build build -j 4
