@@ -531,6 +531,7 @@ void
 Parser::updateCurrentRule()
 {
   ++curRuleId;
+  d.ruleBooks[curRuleBook][curRuleId].setRuleDescription(curRuleBook);
   //LOG_DEBUG << "  [" << curRuleId << ']';
 }
 
