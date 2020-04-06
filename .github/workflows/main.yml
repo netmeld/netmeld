@@ -15,12 +15,13 @@ jobs:
     
     - name: Version Checks
       run: |
-        g++ --version
+        g++-9 --version
         cmake --version
 
     - name: Configure
       run: cmake
         -DCMAKE_CXX_COMPILER=g++-9
+        -DCMAKE_C_COMPILER=gcc-9
         -DBOOST_ROOT=$BOOST_ROOT_1_69_0
         -DBoost_ADDITIONAL_VERSIONS=1.69.0
         -DBoost_ARCHITECTURE=-x64
