@@ -40,11 +40,17 @@ jobs:
           
     - name: Version Checks
       run: |
+        printf "System info"
         uname -a
+        
+        printf "\nApt Cache libpqxx"
         apt-cache search libpqxx
+        
+        printf "\ng++ version"
         g++ --version
+        
+        printf "\ncmake version"
         cmake --version
-        docker --version
 
     - name: Configure
       run: cmake
