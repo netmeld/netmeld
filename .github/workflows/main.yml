@@ -40,27 +40,26 @@ jobs:
           
     - name: Version Checks
       run: |
-        printf "System info"
+        printf "System info:\n"
         uname -a
         
-        printf "\nApt Cache libpqxx"
+        printf "\nApt Cache libpqxx:\n"
         apt-cache search libpqxx
         
-        printf "\ng++ version"
+        printf "\ng++ version:\n"
         g++ --version
         
-        printf "\ncmake version"
+        printf "\ncmake version:\n"
         cmake --version
 
     - name: Configure
-      run: cmake
-        -DCMAKE_CXX_COMPILER=g++-9
-        -DCMAKE_C_COMPILER=gcc-9
-        -DBOOST_ROOT=$BOOST_ROOT_1_69_0
-        -DBoost_ADDITIONAL_VERSIONS=1.69.0
-        -DBoost_ARCHITECTURE=-x64
-        -DBoost_USE_MULTITHREADED=ON
-        -S . -B build
+      run: cmake -S . -B build
+        #-DCMAKE_CXX_COMPILER=g++-9
+        #-DCMAKE_C_COMPILER=gcc-9
+        #-DBOOST_ROOT=$BOOST_ROOT_1_69_0
+        #-DBoost_ADDITIONAL_VERSIONS=1.69.0
+        #-DBoost_ARCHITECTURE=-x64
+        #-DBoost_USE_MULTITHREADED=ON
     
     - name: Build
       run: cmake --build build
