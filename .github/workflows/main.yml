@@ -18,7 +18,7 @@ jobs:
     
     - name: Version Checks
       run: |
-        uname -a
+        apt search libpqxx
         g++-9 --version
         cmake --version
 
