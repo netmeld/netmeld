@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Install Dependencies
-      run: sudo apt-get install  libpqxx-dev
+      run: apt-get install  libpqxx-dev
     
     - name: Version Checks
       run: |
