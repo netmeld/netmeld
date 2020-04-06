@@ -21,6 +21,7 @@ jobs:
         apt search libpqxx
         g++-9 --version
         cmake --version
+        docker --version
 
     - name: Configure
       run: cmake
