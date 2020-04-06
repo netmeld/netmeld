@@ -15,8 +15,10 @@ jobs:
     # Checks-out under $GITHUB_WORKSPACE
     - uses: actions/checkout@v2
     
-    #- name: Install Dependencies
-    #  run: apt-get install  libpqxx-dev
+    - name: Install Dependencies
+      run: |
+        apt-get update
+        apt-get install libpqxx-dev
     
     - name: Version Checks
       run: |
