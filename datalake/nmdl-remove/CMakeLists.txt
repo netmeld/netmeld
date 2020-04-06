@@ -24,56 +24,34 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} PROJECT_NAME_SUFFIX)
-set(PROJECT_NAME ${TOOL_SUITE}-${PROJECT_NAME_SUFFIX})
-add_custom_target(${PROJECT_NAME})
+get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_NAME)
+get_git_timestamp(${TOOL_NAME}.cpp CODE_VERSION)
 
-
-###############################################################################
-# Test hooks
-###############################################################################
-add_custom_target(Test.${PROJECT_NAME}
-    DEPENDS ${PROJECT_NAME}
-  )
-function(create_test TEST_NAME)
-  add_executable(Test.${TEST_NAME}
-      EXCLUDE_FROM_ALL
-      ${TEST_NAME}.test.cpp
-    )
-
-  target_link_libraries(Test.${TEST_NAME}
-      netmeld-core
-      netmeld-datalake-core
-      ${Boost_LIBRARIES}
-    )
-
-  add_test(${TEST_NAME}
-      Test.${TEST_NAME}
-    )
-
-  set_tests_properties(${TEST_NAME}
-      PROPERTIES LABELS "Test.${PROJECT_NAME}"
-    )
-
-  add_dependencies(Test.${PROJECT_NAME}
-      Test.${TEST_NAME}
-    )
-endfunction()
-
-
-###############################################################################
-# Add binary data
-###############################################################################
-foreach(TOOL_NAME
-    nmdl-initialize
-    nmdl-update
-    nmdl-list
-    nmdl-remove
+add_definitions(
+    -DPROGRAM_NAME="${TOOL_NAME}"
+    -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
   )
 
-  add_subdirectory(${TOOL_NAME})
+add_executable(${TOOL_NAME}
+    ${TOOL_NAME}.cpp
+  )
 
-  add_dependencies(${PROJECT_NAME}
-      ${TOOL_NAME}
-    )
-endforeach(TOOL_NAME)
+target_link_libraries(${TOOL_NAME}
+    netmeld-core
+    netmeld-datalake-core
+    ${Boost_LIBRARIES}
+  )
+
+create_man_from_help(${TOOL_NAME})
+
+# The following is commented out as we don't want to actually install templates
+#install_bin(${TOOL_NAME} ${PROJECT_NAME})
+#install_man(${TOOL_NAME} ${PROJECT_NAME})
+
+#install(
+#  FILES
+#    example.conf
+#  OPTIONAL
+#  COMPONENT ${PROJECT_NAME}
+#  DESTINATION ${NETMELD_CONF_DIR}
+#  )

@@ -58,6 +58,8 @@ namespace netmeld::datalake::core::objects {
       virtual void initialize() = 0;
       virtual void commit(const DataEntry&) = 0;
       virtual std::vector<DataEntry> getDataEntries() = 0;
+      virtual void removeLast(const std::string&, const std::string&) = 0;
+      virtual void removeAll(const std::string&, const std::string&) = 0;
   };
 }
 #endif // ABSTRACT_DATA_LAKE_HPP

@@ -100,7 +100,8 @@ namespace netmeld::datalake::core::objects {
     // TODO formalize logic
     std::string cmd =
         "cd " + dataLakeDir
-      + "; git init;"
+      + "; git init"
+      + ";"
       ;
     cmdExec(cmd);
   }
@@ -131,7 +132,8 @@ namespace netmeld::datalake::core::objects {
     std::string dstFilePath {deviceDir + '/' + dstFilename};
     cmd = "cd " + deviceDir
         + "; git add ."
-        + "; git commit -m 'tool check-in: " + dstFilePath +"';"
+        + "; git commit -m 'tool check-in: " + dstFilePath +"'"
+        + ";"
         ;
     cmdExec(cmd);
 
@@ -143,6 +145,7 @@ namespace netmeld::datalake::core::objects {
       cmd = "cd " + deviceDir
           + "; git notes add -f -m '" + importCmd + '\''
           + " `git log -n 1 --pretty=format:\"%H\" -- " + dstFilePath + '`'
+          + ";"
           ;
       cmdExec(cmd);
     }
@@ -169,12 +172,12 @@ namespace netmeld::datalake::core::objects {
 
       const auto& filePath  {i->path().string()};
       const auto& filename  {i->path().filename().string()};
-      LOG_DEBUG << std::string(i.depth(), ' ')
-                << filename
-                << '\n'
-                ;
+      auto depth {i.depth()};
 
-      if (0 == i.depth()) {
+      if (0 > depth) {
+        LOG_ERROR << "Exiting: Directory depth < 0, unknown issue\n";
+        std::exit(nmcu::Exit::FAILURE);
+      } else if (0 == depth) {
         deviceId = filename;
       } else {
         vde.push_back({});
@@ -187,6 +190,7 @@ namespace netmeld::datalake::core::objects {
           + "; git notes show"
           + " `git log -n 1 --pretty=format:\"%H\" -- " + filePath + '`'
           + " 2> /dev/null"
+          + ";"
           ;
 
         const auto& toolInfo {cmdExecOut(cmd)};
@@ -195,6 +199,71 @@ namespace netmeld::datalake::core::objects {
     }
 
     return vde;
+  }
+
+  void
+  HandlerGit::removeLast(const std::string& _deviceId,
+                         const std::string& _dataPath)
+  {
+    if (!initCheck()) { return; }
+
+    const sfs::path devicePath {dataLakePath/_deviceId};
+    if (!sfs::exists(devicePath)) {
+      LOG_WARN << "Device-id does not exists: "
+               << _deviceId << '\n';
+      return;
+    }
+
+    const sfs::path filePath {devicePath/_dataPath};
+    if (!sfs::exists(filePath)) {
+      LOG_WARN << "Device's data does not exists: "
+               << _deviceId << "->" << _dataPath << '\n';
+      return;
+    }
+
+    std::string cmd =
+        "cd " + dataLakeDir
+      + "; git rm --ignore-unmatch -r " + filePath.string()
+      + "; git commit -m 'tool removal'"
+      + ";"
+      ;
+
+    cmdExec(cmd);
+  }
+
+  void
+  HandlerGit::removeAll(const std::string& _deviceId,
+                        const std::string& _dataPath)
+  {
+    if (!initCheck()) { return; }
+
+    // TODO determine if both test needed for remove functions
+    const sfs::path devicePath {dataLakePath/_deviceId};
+    if (!sfs::exists(devicePath)) {
+      LOG_WARN << "Device-id does not exists: "
+               << _deviceId << '\n';
+      return;
+    }
+
+    // TODO standardize pathing re-alignment
+    sfs::current_path(dataLakeDir);
+
+    const sfs::path filePath {devicePath/_dataPath};
+    //if (!sfs::exists(filePath)) {
+    //  LOG_WARN << "Device's data does not exists: "
+    //           << _deviceId << "->" << _dataPath << '\n';
+    //  return;
+    //}
+
+    std::string cmd =
+        "cd " + dataLakeDir
+      + "; FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --prune-empty --index-filter"
+      + " 'git rm --cached --ignore-unmatch -fr " + sfs::relative(filePath).string() + "' HEAD"
+      + "; git for-each-ref --format=\"%(refname)\" refs/original/ | xargs -n 1 git update-ref -d 2>/dev/null"
+      + "; git reflog expire --expire=now --all && git gc --prune=now --aggressive"
+      + ";"
+      ;
+    cmdExec(cmd);
   }
 
   // ===========================================================================
