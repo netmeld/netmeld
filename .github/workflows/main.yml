@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # Checks-out under $GITHUB_WORKSPACE
+    - uses: actions/checkout@v2
+
+    - name: Configure
+      run: cmake -S . -B build
+    
+    - name: Build
+      run: cmake --build
