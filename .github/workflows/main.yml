@@ -13,6 +13,9 @@ jobs:
     # Checks-out under $GITHUB_WORKSPACE
     - uses: actions/checkout@v2
     
+    - name: Install Dependencies
+      run: apt install libpqxx-dev
+    
     - name: Version Checks
       run: |
         g++-9 --version
