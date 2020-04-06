@@ -15,7 +15,7 @@ jobs:
 
     - name: Configure
       run: |
-        ls  -lR ${BOOST_ROOT}
+        env
         cmake -S . -B build
     
     - name: Build
