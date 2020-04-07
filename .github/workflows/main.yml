@@ -9,10 +9,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: debian:testing-slim # TODO: Upload a docker image to Docker Hub with all the dependencies already installed
-    
+    container: debian:testing-slim
+   # TODO: Upload a docker image to Docker Hub with all the dependencies already installed
+     
     steps:
-    # Checks-out under $GITHUB_WORKSPACE
+    # Checks-out under $GITHUB_WORKSPACE, which is mapped in docker to /github/workspace/
     - uses: actions/checkout@v2
     
     - name: Install Dependencies
@@ -51,6 +52,8 @@ jobs:
         
         printf "\ncmake version:\n"
         cmake --version
+    
+    # TODO: Add ccache caching
 
     - name: Configure
       run: cmake -S . -B build
@@ -63,4 +66,4 @@ jobs:
         #-DBoost_USE_MULTITHREADED=ON
     
     - name: Build
-      run: cmake --build build -j 2
+      run: cmake --build build -j 2 # GitHub runners only have two cores
