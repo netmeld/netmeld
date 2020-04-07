@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: debian:testing-slim
+    container: debian:testing-slim # TODO: Upload a docker image to Docker Hub with all the dependencies already installed
     
     steps:
     # Checks-out under $GITHUB_WORKSPACE
@@ -54,6 +54,7 @@ jobs:
 
     - name: Configure
       run: cmake -S . -B build
+        # NOTE: The following options are needed if building outside of docker
         #-DCMAKE_CXX_COMPILER=g++-9
         #-DCMAKE_C_COMPILER=gcc-9
         #-DBOOST_ROOT=$BOOST_ROOT_1_69_0
@@ -62,4 +63,4 @@ jobs:
         #-DBoost_USE_MULTITHREADED=ON
     
     - name: Build
-      run: cmake --build build
+      run: cmake --build build -j 2
