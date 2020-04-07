@@ -1,4 +1,4 @@
-![](https://github.com/cctechwiz-forks/netmeld/workflows/CI/badge.svg)
+![](https://github.com/netmeld/netmeld/workflows/CI/badge.svg)
 
 NAME
 ====
