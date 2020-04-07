@@ -42,7 +42,7 @@ set(PROJECT_GNU_COMMON_FLAGS
   "-D_FORTIFY_SOURCE=2"
   "-Os"
   "-fdiagnostics-show-option"
-  #"-pedantic-errors"
+  "-pedantic-errors"
   "-Wall"
   "-Wextra"
   "-Wformat=2"
