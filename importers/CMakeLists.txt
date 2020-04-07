@@ -87,6 +87,7 @@ foreach(TOOL_NAME
     nmdb-import-show-inventory
     nmdb-import-show-mac-address-table
     nmdb-import-tshark
+    nmdb-import-vyos
   )
 
   add_subdirectory(${TOOL_NAME})
