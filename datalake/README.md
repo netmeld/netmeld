@@ -13,8 +13,7 @@ OTHER
 Potential tool names and args:
 ```
 nmdl-initialize
-toolname --type data-lake-type
-
+  toolname --type data-lake-type
 nmdl-add (merge with update? have to distinguish between add new and update existing...)
 nmdl-update
   toolname somefile --device-id device
@@ -30,17 +29,17 @@ nmdl-update
 nmdl-remove
   toolname repofile --device-id device
   toolname repofile --device-id device --permanent
+nmdl-import-script (merge with list?)
 nmdl-list
   toolname --by-device-id
   toolname --by-tool
   toolname --unbinned
-nmdl-import-script
-  toolname
-  toolname --dbname dbname
+  toolname --import-script
+    ~~toolname --dbname dbname~~ (maybe don't include as option, just variable)
   toolname --from-dts yyyymmdd
 ```
 
-Potential filesystem layout with remarks:
+(Defunct) Potential filesystem layout with remarks:
 ```
 ~/.netmeld/datalake/ (git storage mechanism?)
 |> by-device-id (binned primary storage?)

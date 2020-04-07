@@ -77,48 +77,26 @@ namespace netmeld::datalake::core::objects {
   }
 
   std::string
-  DataEntry::getImportCmd(const std::string& _filePath) const
+  DataEntry::getImportCmd() const
   {
     std::regex regexNetmeldImportTool("nmdb-import-[-a-z]+");
-    std::string cmd {getImportTool()};
+    std::ostringstream oss;
+    oss << getImportTool();
 
-    if (std::regex_match(cmd, regexNetmeldImportTool)) {
-      cmd += " --device-id " + getDeviceId();
+    if (std::regex_match(oss.str(), regexNetmeldImportTool)) {
+      oss << " --db-name \"${DB_NAME}\" --db-args \"${DB_ARGS}\""
+          << " --device-id " << getDeviceId();
     }
     if (!getToolArgs().empty()) {
-      cmd += " " + getToolArgs();
+      oss << " " << getToolArgs();
     }
-    cmd += " " + _filePath;
+    if (!getDataPath().empty()) {
+      oss << " " << getDataPath();
+    }
 
-    return cmd;
+    return oss.str();
   }
 
-  void
-  DataEntry::setToolAndArgsFromCmd(const std::string& _cmd)
-  {
-    std::regex regexNetmeldImportTool("^nmdb-import-[-a-z]+");
-    std::smatch m;
-    if (std::regex_search(_cmd, m, regexNetmeldImportTool)) {
-      importTool = m.str(0);
-      toolArgs = m.suffix().str();
-    } else {
-      size_t wsLoc {_cmd.find(' ')};
-      if (std::string::npos == wsLoc) {
-        importTool = _cmd;
-        toolArgs   = "";
-      } else {
-        importTool = _cmd.substr(0, wsLoc);
-        toolArgs   = _cmd.substr(wsLoc);
-      }
-    }
-
-    if ('\n' == importTool.back()) {
-      importTool.pop_back();
-    }
-    if ('\n' == toolArgs.back()) {
-      toolArgs.pop_back();
-    }
-  }
 
   void
   DataEntry::setDeviceId(const std::string& _deviceId)

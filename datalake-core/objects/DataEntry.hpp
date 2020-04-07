@@ -67,15 +67,13 @@ namespace netmeld::datalake::core::objects {
       std::string getNewName() const;
 
       std::string getSaveName() const;
-      std::string getImportCmd(const std::string&) const;
+      std::string getImportCmd() const;
 
       void setDeviceId(const std::string&);
       void setDataPath(const std::string&);
       void setImportTool(const std::string&);
       void setToolArgs(const std::string&);
       void setNewName(const std::string&);
-
-      void setToolAndArgsFromCmd(const std::string&);
 
       friend std::ostream& operator<<(std::ostream&, const DataEntry&);
   };

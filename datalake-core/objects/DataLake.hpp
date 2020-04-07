@@ -56,7 +56,7 @@ namespace netmeld::datalake::core::objects {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       virtual void initialize() = 0;
-      virtual void commit(const DataEntry&) = 0;
+      virtual void commit(DataEntry&) = 0;
       virtual std::vector<DataEntry> getDataEntries() = 0;
       virtual void removeLast(const std::string&, const std::string&) = 0;
       virtual void removeAll(const std::string&, const std::string&) = 0;

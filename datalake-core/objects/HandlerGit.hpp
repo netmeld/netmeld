@@ -71,7 +71,7 @@ namespace netmeld::datalake::core::objects {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void initialize() override;
-      void commit(const DataEntry&) override;
+      void commit(DataEntry&) override;
       void removeLast(const std::string&, const std::string&) override;
       void removeAll(const std::string&, const std::string&) override;
 

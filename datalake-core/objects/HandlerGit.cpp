@@ -24,6 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <regex>
+
 #include <netmeld/datalake/core/objects/DataEntry.hpp>
 
 #include "HandlerGit.hpp"
@@ -107,7 +109,7 @@ namespace netmeld::datalake::core::objects {
   }
 
   void
-  HandlerGit::commit(const DataEntry& _de)
+  HandlerGit::commit(DataEntry& _de)
   {
     if (!initCheck()) { return; }
 
@@ -141,9 +143,13 @@ namespace netmeld::datalake::core::objects {
     // Store import data
     //// git notes
     if (!(_de.getImportTool()).empty()) {
-      std::string importCmd {_de.getImportCmd(dstFilePath)};
+      std::ostringstream oss;
+      oss << "import-tool:" << _de.getImportTool()
+          << "\ntool-args:" << _de.getToolArgs()
+          << "\n"
+          ;
       cmd = "cd " + deviceDir
-          + "; git notes add -f -m '" + importCmd + '\''
+          + "; git notes add -f -m '" + oss.str() + '\''
           + " `git log -n 1 --pretty=format:\"%H\" -- " + dstFilePath + '`'
           + ";"
           ;
@@ -183,7 +189,7 @@ namespace netmeld::datalake::core::objects {
         vde.push_back({});
         de = &vde.back();
         de->setDeviceId(deviceId);
-        de->setDataPath(filename);
+        de->setDataPath(filePath);
 
         std::string cmd
           = "cd " + dataLakePath.string()
@@ -194,7 +200,15 @@ namespace netmeld::datalake::core::objects {
           ;
 
         const auto& toolInfo {cmdExecOut(cmd)};
-        de->setToolAndArgsFromCmd(toolInfo);
+        std::string reg {"import-tool:(.*)\ntool-args:(.*)\n"};
+        std::regex regex(reg, std::regex::extended);
+        std::smatch m;
+        if (std::regex_match(toolInfo, m, regex)) {
+          de->setImportTool(m.str(1));
+          de->setToolArgs(m.str(2));
+        } else {
+          LOG_DEBUG << "No import data found:\n" << filePath << '\n';
+        }
       }
     }
 
@@ -265,6 +279,7 @@ namespace netmeld::datalake::core::objects {
       ;
     cmdExec(cmd);
   }
+  // TODO what about restoring removed files (non-permanent)?
 
   // ===========================================================================
   // Friends
