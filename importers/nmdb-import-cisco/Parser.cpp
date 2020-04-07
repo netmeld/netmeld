@@ -98,7 +98,7 @@ Parser::Parser() : Parser::base_type(start)
   vlan =
     ((qi::lit("vlan") >> qi::ushort_ >> qi::eol)
         [pnx::bind(&nmco::Vlan::setId, &qi::_val, qi::_1)] >>
-     *(qi::no_skip[+qi::char_(' ')] >>
+     *(indent >>
        (
         (qi::lit("name") >> token)
            [pnx::bind(&nmco::Vlan::setDescription, &qi::_val, qi::_1)]
@@ -118,7 +118,7 @@ Parser::Parser() : Parser::base_type(start)
      | (token > qi::eol)
           [pnx::bind(&Parser::ifaceInit, this, qi::_1)]
     ) >>
-    *(qi::no_skip[+qi::char_(' ')] >>
+    *(indent >>
       qi::matches[qi::lit("no")]
         [pnx::bind(&Parser::isNo, this) = qi::_1] >>
       (  (qi::lit("inherit port-profile"))
@@ -263,7 +263,6 @@ Parser::Parser() : Parser::base_type(start)
 
   policy =
     ( // "ip access-list standard" NAME
-      //    - This isn't supported by other parsers, skippping here as well
       (qi::lit("standard") >> token >> qi::eol)
         [pnx::bind(&Parser::unsup, this, "ip access-list standard " + qi::_1)]
      |
@@ -279,52 +278,52 @@ Parser::Parser() : Parser::base_type(start)
        //    PORTS ( "eq" port | "range" startPort endPort )
        //    "log" (Couldn't find anything about options to this in this context)
       (qi::lit("extended") >> token >> qi::eol) // NAME
-        [pnx::bind(&Parser::updateCurrentRuleBook, this, qi::_1)] >>
+        [pnx::bind(&Parser::updateCurRuleBook, this, qi::_1)] >>
       *(indent
-         [pnx::bind(&Parser::updateCurrentRule, this)] >>
+         [pnx::bind(&Parser::updateCurRule, this)] >>
         token // ACTION
-          [pnx::bind(&Parser::setCurrentRuleAction, this, qi::_1)] >>
+          [pnx::bind(&Parser::setCurRuleAction, this, qi::_1)] >>
         token // PROTOCOL
-          [pnx::bind(&Parser::setCurrentRuleProtocol, this, qi::_1)] >>
+          [pnx::bind(&Parser::setCurRuleProtocol, this, qi::_1)] >>
         source >>
         -(ports
-           [pnx::bind(&Parser::setCurrentRuleSourcePorts, this, qi::_1)]
+           [pnx::bind(&Parser::setCurRuleSrcPorts, this, qi::_1)]
          ) >>
         -(destination >>
           -(ports
-             [pnx::bind(&Parser::setCurrentRuleDestinationPorts, this, qi::_1)]
+             [pnx::bind(&Parser::setCurRuleDstPorts, this, qi::_1)]
            )
          ) >>
         -qi::lit("log") >>
         qi::eol
-       ) [pnx::bind(&Parser::finalizeCurrentRule, this)]
+       ) [pnx::bind(&Parser::curRuleFinalize, this)]
      )
     ;
 
   source =
     ( (ipAddr >> ipAddr)
-        [pnx::bind(&Parser::setCurrentRuleSourceIpMask, this, qi::_1, qi::_2)]
+        [pnx::bind(&Parser::setCurRuleSrcIpMask, this, qi::_1, qi::_2)]
      |
       (qi::lit("host") >> ipAddr)
-        [pnx::bind(&Parser::setCurrentRuleSourceHostIp, this, qi::_1)]
+        [pnx::bind(&Parser::setCurRuleSrcHostIp, this, qi::_1)]
      |
       (qi::lit("any"))
-        [pnx::bind(&Parser::setCurrentRuleSourceAny, this)]
+        [pnx::bind(&Parser::setCurRuleSrcAny, this)]
     )
     ;
 
   destination =
     ( (ipAddr >> ipAddr)
-        [pnx::bind(&Parser::setCurrentRuleDestinationIpMask, this, qi::_1, qi::_2)]
+        [pnx::bind(&Parser::setCurRuleDstIpMask, this, qi::_1, qi::_2)]
      |
       (qi::lit("host") >> ipAddr)
-        [pnx::bind(&Parser::setCurrentRuleDestinationHostIp, this, qi::_1)]
+        [pnx::bind(&Parser::setCurRuleDstHostIp, this, qi::_1)]
      |
       (qi::lit("any"))
-        [pnx::bind(&Parser::setCurrentRuleDestinationAny, this)]
+        [pnx::bind(&Parser::setCurRuleDstAny, this)]
      |
       (qi::lit("object-group") >> token)
-        [pnx::bind(&Parser::setCurrentRuleDestinationObjectGroup, this, qi::_1)]
+        [pnx::bind(&Parser::setCurRuleDstObjectGroup, this, qi::_1)]
     )
     ;
 
@@ -338,7 +337,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   indent =
-    qi::no_skip[+qi::lit(' ')]
+    qi::no_skip[+qi::char_(' ')]
     ;
 
   tokens =
@@ -353,7 +352,7 @@ Parser::Parser() : Parser::base_type(start)
       //(start)
       (config)
       (interface)
-      (policy)
+      (policy)(source)(destination)(ports)
       (vlan)
       (tokens)(token)
       );
@@ -501,53 +500,58 @@ Parser::createAccessGroup(nmco::InterfaceNetwork* iface,
                           const std::string& bookName,
                           const std::string& direction)
 {
-  usedRuleBooks[bookName] = {iface->getName(), direction};
+  appliedRuleSets[bookName] = {iface->getName(), direction};
 }
 
 void
-Parser::updateCurrentRuleBook(const std::string& name)
+Parser::updateCurRuleBook(const std::string& name)
 {
   curRuleBook = name;
   curRuleId = 0;
 }
 
 void
-Parser::updateCurrentRule()
+Parser::updateCurRule()
 {
   ++curRuleId;
+  curRuleProtocol = "";
+  curRuleSrcPort = "";
+  curRuleDstPort = "";
+
+  d.ruleBooks[curRuleBook][curRuleId].setRuleId(curRuleId);
   d.ruleBooks[curRuleBook][curRuleId].setRuleDescription(curRuleBook);
 }
 
 void
-Parser::setCurrentRuleAction(const std::string& action)
+Parser::setCurRuleAction(const std::string& action)
 {
-  d.ruleBooks[curRuleBook][curRuleId].setRuleId(curRuleId);
   d.ruleBooks[curRuleBook][curRuleId].addAction(action);
 }
 
 void
-Parser::setCurrentRuleProtocol(const std::string& protocol)
+Parser::setCurRuleProtocol(const std::string& protocol)
 {
   curRuleProtocol = protocol;
 }
 
 void
-Parser::setCurrentRuleSourcePorts(const std::string& ports)
+Parser::setCurRuleSrcPorts(const std::string& ports)
 {
-  curRuleSourcePort = ports;
+  curRuleSrcPort = ports;
 }
 
 void
-Parser::setCurrentRuleDestinationPorts(const std::string& ports)
+Parser::setCurRuleDstPorts(const std::string& ports)
 {
-  curRuleDestinationPort = ports;
+  curRuleDstPort = ports;
 }
 
 void
-Parser::setCurrentRuleSourceIpMask(nmco::IpAddress ipAddr,
+Parser::setCurRuleSrcIpMask(nmco::IpAddress ipAddr,
                                    const nmco::IpAddress& starMask)
 {
   ipAddr.setWildcardNetmask(starMask);
+  //TODO 04-07-2020: This string will probably change after setWildcardNetmask is done
   const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
 
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
@@ -556,7 +560,7 @@ Parser::setCurrentRuleSourceIpMask(nmco::IpAddress ipAddr,
 }
 
 void
-Parser::setCurrentRuleSourceHostIp(const nmco::IpAddress& ipAddr)
+Parser::setCurRuleSrcHostIp(const nmco::IpAddress& ipAddr)
 {
   const std::string ipAddrString {ipAddr.toString()};
 
@@ -566,7 +570,7 @@ Parser::setCurrentRuleSourceHostIp(const nmco::IpAddress& ipAddr)
 }
 
 void
-Parser::setCurrentRuleSourceAny()
+Parser::setCurRuleSrcAny()
 {
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc("any");
@@ -574,10 +578,11 @@ Parser::setCurrentRuleSourceAny()
 }
 
 void
-Parser::setCurrentRuleDestinationIpMask(nmco::IpAddress ipAddr,
+Parser::setCurRuleDstIpMask(nmco::IpAddress ipAddr,
                                         const nmco::IpAddress& starMask)
 {
   ipAddr.setWildcardNetmask(starMask);
+  //TODO 04-07-2020: This string will probably change after setWildcardNetmask is done
   const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
 
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
@@ -586,7 +591,7 @@ Parser::setCurrentRuleDestinationIpMask(nmco::IpAddress ipAddr,
 }
 
 void
-Parser::setCurrentRuleDestinationHostIp(const nmco::IpAddress& ipAddr)
+Parser::setCurRuleDstHostIp(const nmco::IpAddress& ipAddr)
 {
   const std::string ipAddrString {ipAddr.toString()};
 
@@ -596,7 +601,7 @@ Parser::setCurrentRuleDestinationHostIp(const nmco::IpAddress& ipAddr)
 }
 
 void
-Parser::setCurrentRuleDestinationAny()
+Parser::setCurRuleDstAny()
 {
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst("any");
@@ -604,7 +609,7 @@ Parser::setCurrentRuleDestinationAny()
 }
 
 void
-Parser::setCurrentRuleDestinationObjectGroup(const std::string& objectGroup)
+Parser::setCurRuleDstObjectGroup(const std::string& objectGroup)
 {
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(objectGroup);
@@ -614,15 +619,11 @@ Parser::setCurrentRuleDestinationObjectGroup(const std::string& objectGroup)
 }
 
 void
-Parser::finalizeCurrentRule()
+Parser::curRuleFinalize()
 {
   const std::string serviceString = nmcu::getSrvcString(curRuleProtocol,
-                                                        curRuleSourcePort,
-                                                        curRuleDestinationPort);
-  curRuleProtocol = "";
-  curRuleSourcePort = "";
-  curRuleDestinationPort = "";
-
+                                                        curRuleSrcPort,
+                                                        curRuleDstPort);
   d.ruleBooks[curRuleBook][curRuleId].addService(serviceString);
   d.serviceBooks[ZONE][serviceString].addData(serviceString);
 }
@@ -661,7 +662,7 @@ Parser::getData()
   }
 
   // Apply interface apply-groups to affected rules
-  for (auto& [bookName, dataPair] : usedRuleBooks) {
+  for (auto& [bookName, dataPair] : appliedRuleSets) {
     auto& [ifaceName, direction] = dataPair;
 
     for (auto& [id, rule] : d.ruleBooks[bookName]) {

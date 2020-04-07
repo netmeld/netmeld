@@ -124,13 +124,13 @@ class Parser :
 
     const std::string ZONE  {"global"};
 
-    std::map<std::string, std::pair<std::string, std::string>> usedRuleBooks;
+    std::map<std::string, std::pair<std::string, std::string>> appliedRuleSets;
 
     std::string  curRuleBook {""};
     size_t       curRuleId {0};
     std::string  curRuleProtocol {""};
-    std::string  curRuleSourcePort {""};
-    std::string  curRuleDestinationPort {""};
+    std::string  curRuleSrcPort {""};
+    std::string  curRuleDstPort {""};
 
   // ===========================================================================
   // Constructors
@@ -174,24 +174,24 @@ class Parser :
                            const std::string&,
                            const std::string&);
 
-    void updateCurrentRuleBook(const std::string&);
-    void updateCurrentRule();
+    void updateCurRuleBook(const std::string&);
+    void updateCurRule();
 
-    void setCurrentRuleAction(const std::string&);
-    void setCurrentRuleProtocol(const std::string&);
-    void setCurrentRuleSourcePorts(const std::string&);
-    void setCurrentRuleDestinationPorts(const std::string&);
+    void setCurRuleAction(const std::string&);
+    void setCurRuleProtocol(const std::string&);
+    void setCurRuleSrcPorts(const std::string&);
+    void setCurRuleDstPorts(const std::string&);
 
-    void setCurrentRuleSourceIpMask(nmco::IpAddress, const nmco::IpAddress&);
-    void setCurrentRuleSourceHostIp(const nmco::IpAddress&);
-    void setCurrentRuleSourceAny();
+    void setCurRuleSrcIpMask(nmco::IpAddress, const nmco::IpAddress&);
+    void setCurRuleSrcHostIp(const nmco::IpAddress&);
+    void setCurRuleSrcAny();
 
-    void setCurrentRuleDestinationIpMask(nmco::IpAddress, const nmco::IpAddress&);
-    void setCurrentRuleDestinationHostIp(const nmco::IpAddress&);
-    void setCurrentRuleDestinationAny();
-    void setCurrentRuleDestinationObjectGroup(const std::string&);
+    void setCurRuleDstIpMask(nmco::IpAddress, const nmco::IpAddress&);
+    void setCurRuleDstHostIp(const nmco::IpAddress&);
+    void setCurRuleDstAny();
+    void setCurRuleDstObjectGroup(const std::string&);
 
-    void finalizeCurrentRule();
+    void curRuleFinalize();
 
     // Unsupported
     void unsup(const std::string&);
