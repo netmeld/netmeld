@@ -31,7 +31,6 @@
 #include <netmeld/core/utils/LoggerSingleton.hpp>
 #include <netmeld/datalake/core/objects/DataEntry.hpp>
 
-
 namespace nmco = netmeld::core::objects;
 
 
@@ -51,7 +50,6 @@ namespace netmeld::datalake::core::objects {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      DataLake();
 
     // =========================================================================
     // Methods
@@ -59,11 +57,12 @@ namespace netmeld::datalake::core::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      virtual void initialize() = 0;
       virtual void commit(DataEntry&) = 0;
-      virtual std::vector<DataEntry> getDataEntries(const nmco::Time& = {}) = 0;
-      virtual void removeLast(const std::string&, const std::string&) = 0;
+      virtual void initialize() = 0;
       virtual void removeAll(const std::string&, const std::string&) = 0;
+      virtual void removeLast(const std::string&, const std::string&) = 0;
+
+      virtual std::vector<DataEntry> getDataEntries(const nmco::Time& = {}) = 0;
   };
 }
 #endif // ABSTRACT_DATA_LAKE_HPP

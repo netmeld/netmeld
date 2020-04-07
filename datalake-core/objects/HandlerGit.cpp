@@ -27,7 +27,6 @@
 #include <regex>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
-#include <netmeld/datalake/core/objects/DataEntry.hpp>
 
 #include "HandlerGit.hpp"
 
@@ -49,7 +48,6 @@ namespace netmeld::datalake::core::objects {
   void
   HandlerGit::cmdExec(const std::string& _cmd)
   {
-    // TODO formalize command execution logic
     LOG_DEBUG << _cmd << '\n';
 
     auto exitStatus {std::system(_cmd.c_str())};
@@ -60,34 +58,99 @@ namespace netmeld::datalake::core::objects {
   std::string
   HandlerGit::cmdExecOut(const std::string& _cmd)
   {
-    // TODO formalize command execution logic
     LOG_DEBUG << _cmd << '\n';
 
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(_cmd.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, decltype(&pclose)>
+        pipe(popen(_cmd.c_str(), "r"), pclose);
     if (!pipe) {
       LOG_ERROR << "Failure: " << _cmd << '\n';
       return "";
     }
 
     std::array<char, 128> buffer;
-    std::string result;
+    std::ostringstream oss;
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-      result += buffer.data();
+      oss << buffer.data();
     }
 
-    return result;
+    return oss.str();
   }
 
   bool
-  HandlerGit::initCheck()
+  HandlerGit::changeDirToRepo()
   {
     // Ensure data lake pathing exists
     if (!sfs::exists(dataLakePath)) {
-      LOG_ERROR << "Data lake not initialized, doing nothing\n";
+      LOG_ERROR << "Repo not initialized, use nmdl-initialize\n";
       return false;
     }
 
+    // Operate in repo
+    sfs::current_path(dataLakePath);
+
     return true;
+  }
+
+  bool
+  HandlerGit::alignRepo(const nmco::Time& _dts)
+  {
+    LOG_DEBUG << "Target time: " << _dts << '\n';
+
+    std::ostringstream oss;
+    oss << "echo -n `git rev-list -n 1 --first-parent"
+          << " --before=\"" << _dts << "\" master`"
+        << ";"
+        ;
+    auto result {nmcu::trim(cmdExecOut(oss.str()))};
+    LOG_DEBUG << "Target SHA: " << result << '\n';
+
+    oss.str("");
+    if (result.empty()) {
+      oss << "git log --reverse --date='format-local:%FT%T'"
+            << " --format=\"format:%cd\""
+          << ";"
+          ;
+      auto const& validDates {cmdExecOut(oss.str())};
+      LOG_ERROR << "Invalid repository date: " << _dts << '\n'
+                << "Valid dates:"
+                << '\n' << validDates
+                << '\n'
+                ;
+      return false;
+    } else {
+      oss << "git checkout -q "
+          << ("infinity" == _dts.toString() ? "master;" : result)
+          << ";"
+          ;
+      cmdExec(oss.str());
+    }
+
+    return true;
+  }
+
+  void
+  HandlerGit::setImportToolData(DataEntry& _de, const std::string& _path)
+  {
+      std::ostringstream oss;
+      oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path
+          << ";"
+          ;
+
+      const auto& toolInfo {cmdExecOut(oss.str())};
+      std::string reg {
+        CHECK_IN_PREFIX    + "(.*)\n" +
+        IMPORT_TOOL_PREFIX + "(.*)\n" +
+        TOOL_ARGS_PREFIX   + "(.*)\n"
+      };
+
+      std::regex regex(reg, std::regex::extended);
+      std::smatch m;
+      if (std::regex_match(toolInfo, m, regex)) {
+        _de.setImportTool(m.str(2));
+        _de.setToolArgs(m.str(3));
+      } else {
+        LOG_DEBUG << "No import data found:\n" << _path << '\n';
+      }
   }
 
   void
@@ -98,76 +161,44 @@ namespace netmeld::datalake::core::objects {
     LOG_DEBUG << "Creating new: " << dataLakePath << '\n';
     sfs::create_directories(dataLakePath);
 
-
-    // Initialize data lake
-    // TODO formalize logic
-    std::string cmd =
-        "cd " + dataLakeDir
-      + "; git init"
-      + ";"
-      ;
-    cmdExec(cmd);
+    sfs::current_path(dataLakePath);
+    std::ostringstream oss;
+    oss << "git init;";
+    cmdExec(oss.str());
   }
 
   void
   HandlerGit::commit(DataEntry& _de)
   {
-    if (!initCheck()) { return; }
-
-    std::string cmd;
-
+    if (!changeDirToRepo()) { return; }
 
     // Ensure device directory exists
     const sfs::path devicePath {dataLakePath/_de.getDeviceId()};
     sfs::create_directories(devicePath);
-    deviceDir = devicePath.string();
-    
-    const sfs::path srcFilePath {_de.getDataPath()};
-    std::string dstFilename {_de.getSaveName()};
 
+    // Copy file to store, properly named
+    const sfs::path dstPath {devicePath/_de.getSaveName()};
+    const std::string dstRelPath {sfs::relative(dstPath).string()};
+    sfs::copy(_de.getDataPath(), dstRelPath);
 
-    // Store in data lake
-    //// Copy file to store proper named
-    cmd = "cp " + srcFilePath.string()
-        + ' ' + deviceDir + "/" + dstFilename + ";";
-    cmdExec(cmd);
-    //// git add and commit
-    std::string dstFilePath {deviceDir + '/' + dstFilename};
-    cmd = "cd " + deviceDir
-        + "; git add ."
-        + "; git commit -m 'tool check-in: " + dstFilePath +"'"
-        + ";"
-        ;
-    cmdExec(cmd);
-
-
-    // Store import data
-    //// git notes
-    if (!(_de.getImportTool()).empty()) {
-      std::ostringstream oss;
-      oss << "import-tool:" << _de.getImportTool()
-          << "\ntool-args:" << _de.getToolArgs()
-          << "\n"
-          ;
-      cmd = "cd " + deviceDir
-          + "; git notes add -f -m '" + oss.str() + '\''
-          + " `git log -n 1 --pretty=format:\"%H\" -- " + dstFilePath + '`'
-          + ";"
-          ;
-      cmdExec(cmd);
-    }
+    // Store data
+    std::ostringstream oss;
+    oss << "git add ."
+        << "; git commit -m '"
+          << CHECK_IN_PREFIX << dstRelPath
+          << '\n' << IMPORT_TOOL_PREFIX << _de.getImportTool()
+          << '\n' << TOOL_ARGS_PREFIX << _de.getToolArgs()
+        << "\n\'"
+        << ';';
+    cmdExec(oss.str());
   }
 
   std::vector<DataEntry>
   HandlerGit::getDataEntries(const nmco::Time& _dts)
   {
     std::vector<DataEntry> vde;
+    if (!(changeDirToRepo() && alignRepo(_dts))) { return vde; }
 
-    if (!initCheck()) { return vde; }
-
-    alignRepo(_dts);
-
-    DataEntry* de;
     std::string deviceId;
     for (auto i = sfs::recursive_directory_iterator(dataLakePath);
          i != sfs::recursive_directory_iterator();
@@ -179,154 +210,73 @@ namespace netmeld::datalake::core::objects {
         continue;
       }
 
-      const auto& filePath  {i->path().string()};
-      const auto& filename  {i->path().filename().string()};
       auto depth {i.depth()};
-
       if (0 > depth) {
-        LOG_ERROR << "Exiting: Directory depth < 0, unknown issue\n";
+        LOG_ERROR << "Exiting: Directory depth < 0\n";
         std::exit(nmcu::Exit::FAILURE);
       } else if (0 == depth) {
-        deviceId = filename;
+        deviceId = i->path().filename().string();
       } else {
-        vde.push_back({});
-        de = &vde.back();
-        de->setDeviceId(deviceId);
-        de->setDataPath(filePath);
+        const auto& filePath {i->path().string()};
+        DataEntry data;
 
-        std::string cmd
-          = "cd " + dataLakePath.string()
-          + "; git notes show"
-          + " `git log -n 1 --pretty=format:\"%H\" -- " + filePath + '`'
-          + " 2> /dev/null"
-          + ";"
-          ;
+        data.setDeviceId(deviceId);
+        data.setDataPath(filePath);
+        setImportToolData(data, filePath);
 
-        const auto& toolInfo {cmdExecOut(cmd)};
-        std::string reg {"import-tool:(.*)\ntool-args:(.*)\n"};
-        std::regex regex(reg, std::regex::extended);
-        std::smatch m;
-        if (std::regex_match(toolInfo, m, regex)) {
-          de->setImportTool(m.str(1));
-          de->setToolArgs(m.str(2));
-        } else {
-          LOG_DEBUG << "No import data found:\n" << filePath << '\n';
-        }
+        vde.push_back(data);
       }
     }
 
     alignRepo();
-
     return vde;
   }
 
-  void
-  HandlerGit::alignRepo(const nmco::Time& _dts)
-  {
-    LOG_DEBUG << "Target time: " << _dts << '\n';
-
-    std::ostringstream oss;
-    oss << "cd " + dataLakeDir
-        << "; echo -n `git rev-list -n 1 --first-parent"
-          << " --before=\"" << _dts << "\" master`"
-        << ";"
-      ;
-
-    auto result {cmdExecOut(oss.str())};
-    result = nmcu::trim(result);
-    LOG_DEBUG << "Target SHA: " << result << '\n';
-
-    if (result.empty()) {
-      LOG_ERROR << "Invalid repository date: " << _dts << '\n';
-      std::ostringstream oss1;
-      oss1 << "cd " + dataLakeDir
-           << "; git log --reverse --date='format-local:%FT%T'"
-            << " --format=\"format:%cd\""
-          << ";"
-        ;
-      auto const& validDates {cmdExecOut(oss1.str())};
-      LOG_ERROR << "Valid dates:"
-                << '\n' << validDates
-                << '\n'
-                ;
-      std::exit(1);
-    } else {
-      std::ostringstream oss1;
-      oss1 << "cd " + dataLakeDir
-           << "; git checkout -q "
-           ;
-      if ("infinity" == _dts.toString()) {
-        oss1 << "master;" ;
-      } else {
-        oss1 << result << ";";
-      }
-      cmdExec(oss1.str());
-    }
-  }
 
   void
   HandlerGit::removeLast(const std::string& _deviceId,
                          const std::string& _dataPath)
   {
-    if (!initCheck()) { return; }
+    if (!changeDirToRepo()) { return; }
 
-    const sfs::path devicePath {dataLakePath/_deviceId};
-    if (!sfs::exists(devicePath)) {
-      LOG_WARN << "Device-id does not exists: "
-               << _deviceId << '\n';
-      return;
+    const sfs::path tgtPath       {dataLakePath/_deviceId/_dataPath};
+    const std::string tgtRelPath  {sfs::relative(tgtPath).string()};
+    if (!sfs::exists(tgtPath)) {
+      LOG_WARN << "Target does not exists: " << tgtPath << '\n';
     }
 
-    const sfs::path filePath {devicePath/_dataPath};
-    if (!sfs::exists(filePath)) {
-      LOG_WARN << "Device's data does not exists: "
-               << _deviceId << "->" << _dataPath << '\n';
-      return;
-    }
+    std::ostringstream oss;
+    oss << "git rm --ignore-unmatch -r " << tgtRelPath
+        << "; git commit -m 'nmdl-remove: " << tgtRelPath << "'"
+        << ';'
+        ;
 
-    std::string cmd =
-        "cd " + dataLakeDir
-      + "; git rm --ignore-unmatch -r " + filePath.string()
-      + "; git commit -m 'tool removal'"
-      + ";"
-      ;
-
-    cmdExec(cmd);
+    cmdExec(oss.str());
   }
 
   void
   HandlerGit::removeAll(const std::string& _deviceId,
                         const std::string& _dataPath)
   {
-    if (!initCheck()) { return; }
+    if (!changeDirToRepo()) { return; }
 
-    // TODO determine if both test needed for remove functions
-    const sfs::path devicePath {dataLakePath/_deviceId};
-    if (!sfs::exists(devicePath)) {
-      LOG_WARN << "Device-id does not exists: "
-               << _deviceId << '\n';
-      return;
+    const sfs::path tgtPath       {dataLakePath/_deviceId/_dataPath};
+    const std::string tgtRelPath  {sfs::relative(tgtPath).string()};
+    if (!sfs::exists(tgtPath)) {
+      LOG_WARN << "Target does not exists: " << tgtPath << '\n';
     }
 
-    // TODO standardize pathing re-alignment
-    sfs::current_path(dataLakeDir);
-
-    const sfs::path filePath {devicePath/_dataPath};
-    //if (!sfs::exists(filePath)) {
-    //  LOG_WARN << "Device's data does not exists: "
-    //           << _deviceId << "->" << _dataPath << '\n';
-    //  return;
-    //}
-
-    std::string cmd =
-        "cd " + dataLakeDir
-      + "; FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --prune-empty --index-filter"
-      + " 'git rm --cached --ignore-unmatch -fr " + sfs::relative(filePath).string() + "' HEAD"
-      + "; git for-each-ref --format=\"%(refname)\" refs/original/ | xargs -n 1 git update-ref -d 2>/dev/null"
-      + "; git reflog expire --expire=now --all && git gc --prune=now --aggressive"
-      + ";"
-      ;
-    cmdExec(cmd);
+    std::ostringstream oss;
+    oss << "FILTER_BRANCH_SQUELCH_WARNING=1"
+          << " git filter-branch --prune-empty --index-filter"
+          << " 'git rm --cached --ignore-unmatch -fr " << tgtRelPath << "' HEAD"
+        << "; git for-each-ref --format=\"%(refname)\" refs/original/"
+          << " | xargs -n 1 git update-ref -d 2>/dev/null"
+        << "; git reflog expire --expire=now --all"
+        << "&& git gc --prune=now --aggressive"
+        << ';'
+        ;
+    cmdExec(oss.str());
   }
   // TODO what about restoring removed files (non-permanent)?
 

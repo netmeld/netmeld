@@ -51,6 +51,7 @@ namespace netmeld::datalake::core::tools {
   void
   AbstractDataLakeTool::addToolBaseOptions()
   {
+    // TODO make config file option
     opts.addRequiredOption("lake-type", std::make_tuple(
           "lake-type",
           po::value<std::string>()->required(),
@@ -68,7 +69,7 @@ namespace netmeld::datalake::core::tools {
   void
   AbstractDataLakeTool::printHelp() const
   {
-    LOG_NOTICE << "Generate " << helpBlurb
+    LOG_NOTICE << "Data lake tool to " << helpBlurb
                << "\nUsage: " << programName << " [options]"
                << "\nOptions:\n"
                << opts

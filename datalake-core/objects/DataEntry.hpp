@@ -60,20 +60,19 @@ namespace netmeld::datalake::core::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      std::string getDeviceId() const;
       std::string getDataPath() const;
-      std::string getImportTool() const;
-      std::string getToolArgs() const;
-      std::string getNewName() const;
-
-      std::string getSaveName() const;
+      std::string getDeviceId() const;
       std::string getImportCmd() const;
+      std::string getImportTool() const;
+      std::string getNewName() const;
+      std::string getSaveName() const;
+      std::string getToolArgs() const;
 
-      void setDeviceId(const std::string&);
       void setDataPath(const std::string&);
+      void setDeviceId(const std::string&);
       void setImportTool(const std::string&);
-      void setToolArgs(const std::string&);
       void setNewName(const std::string&);
+      void setToolArgs(const std::string&);
 
       friend std::ostream& operator<<(std::ostream&, const DataEntry&);
   };

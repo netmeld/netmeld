@@ -26,8 +26,6 @@
 
 #include <netmeld/datalake/core/tools/AbstractDataLakeTool.hpp>
 
-
-namespace nmcu = netmeld::core::utils;
 namespace nmdlct = netmeld::datalake::core::tools;
 
 
@@ -54,7 +52,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
   public: // Constructors should generally be public
     Tool() : nmdlct::AbstractDataLakeTool
       (
-       "general-tool",  // unused unless printHelp() is overridden
+       "initialize data lake backend",  // printHelp() message
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)
       )

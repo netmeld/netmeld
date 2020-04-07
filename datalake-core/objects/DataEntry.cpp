@@ -44,12 +44,12 @@ namespace netmeld::datalake::core::objects {
   // Methods
   // ===========================================================================
   std::string
-  DataEntry::getDeviceId() const
-  { return deviceId; }
-
-  std::string
   DataEntry::getDataPath() const
   { return dataPath; }
+
+  std::string
+  DataEntry::getDeviceId() const
+  { return deviceId; }
 
   std::string
   DataEntry::getImportTool() const
@@ -99,39 +99,35 @@ namespace netmeld::datalake::core::objects {
 
 
   void
-  DataEntry::setDeviceId(const std::string& _deviceId)
+  DataEntry::setDataPath(const std::string& _dataPath)
   {
-    // TODO validate?
-    deviceId = _deviceId;
+    dataPath = _dataPath;
   }
 
   void
-  DataEntry::setDataPath(const std::string& _dataPath)
+  DataEntry::setDeviceId(const std::string& _deviceId)
   {
-    // TODO validate?
-    dataPath = _dataPath;
+    deviceId = _deviceId;
   }
 
   void
   DataEntry::setImportTool(const std::string& _importTool)
   {
-    // TODO validate?
     importTool = _importTool;
-  }
-
-  void
-  DataEntry::setToolArgs(const std::string& _toolArgs)
-  {
-    // TODO validate?
-    toolArgs = _toolArgs;
   }
 
   void
   DataEntry::setNewName(const std::string& _newName)
   {
-    // TODO validate?
     newName = _newName;
   }
+
+  void
+  DataEntry::setToolArgs(const std::string& _toolArgs)
+  {
+    toolArgs = _toolArgs;
+  }
+
 
   // ===========================================================================
   // Friends
@@ -139,11 +135,11 @@ namespace netmeld::datalake::core::objects {
   std::ostream& operator<<(std::ostream& os, const DataEntry& de)
   {
     return os
-      << "deviceId: " << de.deviceId
-      << "\n  dataPath: " << de.dataPath
-      << "\n  importTool: " << de.importTool
-      << "\n  toolArgs: " << de.toolArgs
-      << "\n  rename: " << de.newName
+      << "deviceId: " << de.getDeviceId()
+      << "\n  dataPath: " << de.getDataPath()
+      << "\n  importTool: " << de.getImportTool()
+      << "\n  toolArgs: " << de.getToolArgs()
+      << "\n  rename: " << de.getNewName()
       ;
   }
 }

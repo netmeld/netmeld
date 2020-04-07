@@ -26,8 +26,6 @@
 
 #include <netmeld/datalake/core/tools/AbstractDataLakeTool.hpp>
 
-
-namespace nmcu = netmeld::core::utils;
 namespace nmdlct = netmeld::datalake::core::tools;
 
 
@@ -54,7 +52,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
   public: // Constructors should generally be public
     Tool() : nmdlct::AbstractDataLakeTool
       (
-       "general-tool",  // unused unless printHelp() is overridden
+       "remove data from storage",  // printHelp() message
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)
       )
@@ -72,13 +70,14 @@ class Tool : public nmdlct::AbstractDataLakeTool
       opts.addRequiredOption("device-id", std::make_tuple(
             "device-id",
             po::value<std::string>()->required(),
-            "Name of device.")
+            "Name of device for which to remove data."
+            " Leaving --data-file off will remove everything for this device.")
           );
 
       opts.addOptionalOption("data-file", std::make_tuple(
             "data-file",
             po::value<std::string>(),
-            "Data to remove."
+            "Specific data to remove; not a path."
             " Either --data-file param or implicit last argument.")
           );
       opts.addPositionalOption("data-file", -1);
@@ -87,7 +86,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
             "permanent",
             NULL_SEMANTIC,
             "Permanently remove the data and all associated history"
-            " from the data lake.")
+            " from storage.")
           );
     }
 
@@ -99,9 +98,8 @@ class Tool : public nmdlct::AbstractDataLakeTool
     int
     runTool() override
     {
-      const auto& dataLake {getDataLakeHandler()};
-
-      const auto& deviceId {opts.getValue("device-id")};
+      const auto& dataLake  {getDataLakeHandler()};
+      const auto& deviceId  {opts.getValue("device-id")};
       
       std::string dataPath;
       if (opts.exists("data-file")) {

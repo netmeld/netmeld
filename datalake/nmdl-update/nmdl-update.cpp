@@ -27,8 +27,6 @@
 #include <netmeld/datalake/core/objects/DataEntry.hpp>
 #include <netmeld/datalake/core/tools/AbstractDataLakeTool.hpp>
 
-
-namespace nmcu = netmeld::core::utils;
 namespace nmdlco = netmeld::datalake::core::objects;
 namespace nmdlct = netmeld::datalake::core::tools;
 
@@ -56,7 +54,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
   public: // Constructors should generally be public
     Tool() : nmdlct::AbstractDataLakeTool
       (
-       "general-tool",  // unused unless printHelp() is overridden
+       "add or update data in storage",  // printHelp() message
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)
       )
@@ -74,30 +72,32 @@ class Tool : public nmdlct::AbstractDataLakeTool
       opts.addRequiredOption("device-id", std::make_tuple(
             "device-id",
             po::value<std::string>()->required(),
-            "Name of device.")
+            "Device for which to associate data.")
           );
 
       opts.addRequiredOption("data-path", std::make_tuple(
             "data-path",
             po::value<std::string>()->required(),
-            "Data to store."
+            "Data of file system to store; a path."
             " Either --data-path param or implicit last argument.")
           );
 
       opts.addOptionalOption("tool", std::make_tuple(
             "tool",
             po::value<std::string>(),
-            "Tool to leverage on import.")
+            "Tool to associate for import operations"
+            " external to the data lake.")
           );
       opts.addOptionalOption("tool-args", std::make_tuple(
             "tool-args",
             po::value<std::string>(),
-            "Tool arguments during import.")
+            "Tool arguments to use during an import operation.")
           );
       opts.addOptionalOption("rename", std::make_tuple(
             "rename",
             po::value<std::string>(),
-            "Rename source file to this when stored.")
+            "Data file name to use instead when data path file is stored;"
+            " not a path.")
           );
     }
 

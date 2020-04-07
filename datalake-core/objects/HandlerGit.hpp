@@ -28,7 +28,6 @@
 #define HANDLER_GIT_HPP
 
 #include <netmeld/core/utils/FileManager.hpp>
-#include <netmeld/core/utils/LoggerSingleton.hpp>
 
 #include "DataLake.hpp"
 
@@ -42,10 +41,14 @@ namespace netmeld::datalake::core::objects {
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
-      sfs::path dataLakePath;
+      const std::string  CHECK_IN_PREFIX     {"check-in:"};
+      const std::string  IMPORT_TOOL_PREFIX  {"import-tool:"};
+      const std::string  TOOL_ARGS_PREFIX    {"tool-args:"};
 
-      std::string dataLakeDir;
-      std::string deviceDir;
+      sfs::path    dataLakePath;
+      std::string  dataLakeDir;
+      std::string  deviceDir;
+
 
     protected: // Variables intended for internal/subclass API
       nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
@@ -64,18 +67,20 @@ namespace netmeld::datalake::core::objects {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
+      void setImportToolData(DataEntry&, const std::string&);
+      
       void cmdExec(const std::string&);
       std::string cmdExecOut(const std::string&);
-      void alignRepo(const nmco::Time& = nmco::Time("infinity"));
 
-      bool initCheck();
+      bool alignRepo(const nmco::Time& = nmco::Time("infinity"));
+      bool changeDirToRepo();
 
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void initialize() override;
       void commit(DataEntry&) override;
-      void removeLast(const std::string&, const std::string&) override;
+      void initialize() override;
       void removeAll(const std::string&, const std::string&) override;
+      void removeLast(const std::string&, const std::string&) override;
 
       std::vector<DataEntry> getDataEntries(const nmco::Time& = {}) override;
   };
