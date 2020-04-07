@@ -27,12 +27,13 @@
 #ifndef HANDLER_GIT_HPP
 #define HANDLER_GIT_HPP
 
-#include <netmeld/core/utils/LoggerSingleton.hpp>
 #include <netmeld/core/utils/FileManager.hpp>
+#include <netmeld/core/utils/LoggerSingleton.hpp>
 
 #include "DataLake.hpp"
 
 namespace nmcu = netmeld::core::utils;
+
 
 namespace netmeld::datalake::core::objects {
 
@@ -65,6 +66,7 @@ namespace netmeld::datalake::core::objects {
     private: // Methods which should be hidden from API users
       void cmdExec(const std::string&);
       std::string cmdExecOut(const std::string&);
+      void alignRepo(const nmco::Time& = nmco::Time("infinity"));
 
       bool initCheck();
 
@@ -75,7 +77,7 @@ namespace netmeld::datalake::core::objects {
       void removeLast(const std::string&, const std::string&) override;
       void removeAll(const std::string&, const std::string&) override;
 
-      std::vector<DataEntry> getDataEntries() override;
+      std::vector<DataEntry> getDataEntries(const nmco::Time& = {}) override;
   };
 }
 #endif // HANDLER_GIT_HPP

@@ -26,6 +26,7 @@
 
 #include <regex>
 
+#include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datalake/core/objects/DataEntry.hpp>
 
 #include "HandlerGit.hpp"
@@ -158,11 +159,13 @@ namespace netmeld::datalake::core::objects {
   }
 
   std::vector<DataEntry>
-  HandlerGit::getDataEntries()
+  HandlerGit::getDataEntries(const nmco::Time& _dts)
   {
     std::vector<DataEntry> vde;
 
     if (!initCheck()) { return vde; }
+
+    alignRepo(_dts);
 
     DataEntry* de;
     std::string deviceId;
@@ -212,7 +215,53 @@ namespace netmeld::datalake::core::objects {
       }
     }
 
+    alignRepo();
+
     return vde;
+  }
+
+  void
+  HandlerGit::alignRepo(const nmco::Time& _dts)
+  {
+    LOG_DEBUG << "Target time: " << _dts << '\n';
+
+    std::ostringstream oss;
+    oss << "cd " + dataLakeDir
+        << "; echo -n `git rev-list -n 1 --first-parent"
+          << " --before=\"" << _dts << "\" master`"
+        << ";"
+      ;
+
+    auto result {cmdExecOut(oss.str())};
+    result = nmcu::trim(result);
+    LOG_DEBUG << "Target SHA: " << result << '\n';
+
+    if (result.empty()) {
+      LOG_ERROR << "Invalid repository date: " << _dts << '\n';
+      std::ostringstream oss1;
+      oss1 << "cd " + dataLakeDir
+           << "; git log --reverse --date='format-local:%FT%T'"
+            << " --format=\"format:%cd\""
+          << ";"
+        ;
+      auto const& validDates {cmdExecOut(oss1.str())};
+      LOG_ERROR << "Valid dates:"
+                << '\n' << validDates
+                << '\n'
+                ;
+      std::exit(1);
+    } else {
+      std::ostringstream oss1;
+      oss1 << "cd " + dataLakeDir
+           << "; git checkout -q "
+           ;
+      if ("infinity" == _dts.toString()) {
+        oss1 << "master;" ;
+      } else {
+        oss1 << result << ";";
+      }
+      cmdExec(oss1.str());
+    }
   }
 
   void

@@ -27,8 +27,12 @@
 #ifndef ABSTRACT_DATA_LAKE_HPP
 #define ABSTRACT_DATA_LAKE_HPP
 
+#include <netmeld/core/objects/Time.hpp>
 #include <netmeld/core/utils/LoggerSingleton.hpp>
 #include <netmeld/datalake/core/objects/DataEntry.hpp>
+
+
+namespace nmco = netmeld::core::objects;
 
 
 namespace netmeld::datalake::core::objects {
@@ -57,7 +61,7 @@ namespace netmeld::datalake::core::objects {
     public: // Methods part of public API
       virtual void initialize() = 0;
       virtual void commit(DataEntry&) = 0;
-      virtual std::vector<DataEntry> getDataEntries() = 0;
+      virtual std::vector<DataEntry> getDataEntries(const nmco::Time& = {}) = 0;
       virtual void removeLast(const std::string&, const std::string&) = 0;
       virtual void removeAll(const std::string&, const std::string&) = 0;
   };
