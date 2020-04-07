@@ -63,7 +63,6 @@ struct Data
   nmco::ToolObservations               observations;
   std::vector<nmco::Service>           services;
   std::vector<nmco::Route>             routes;
-  //std::vector<nmco::InterfaceNetwork>  ifaces;
   std::vector<nmco::Vlan>              vlans;
 
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
@@ -91,17 +90,11 @@ class Parser :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      policy,
-      source,
-      destination,
-      interface, switchport, spanningTree,
-      indent;
+      policy, source, destination, indent,
+      interface, switchport, spanningTree;
 
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
       ports;
-
-//    qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type>
-//      interface;
 
     qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
       vlan;
@@ -114,7 +107,7 @@ class Parser :
     nmcp::ParserIpAddress   ipAddr;
     nmcp::ParserMacAddress  macAddr;
 
-    // Supporting data structures 
+    // Supporting data structures
     Data d;
 
     nmco::InterfaceNetwork *tgtIface;

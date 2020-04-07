@@ -52,7 +52,7 @@ Parser::Parser() : Parser::base_type(start)
            [pnx::bind(&Parser::unsup, this, "(global) " + qi::_1 + " Version"),
             pnx::bind(&Parser::globalCdpEnabled, this) = false]
 
-      | (qi::lit("spanning-tree portfast") >> 
+      | (qi::lit("spanning-tree portfast") >>
           (  qi::lit("bpduguard")
                [pnx::bind(&Parser::globalBpduGuardEnabled, this) = true]
            | qi::lit("bpdufilter")
@@ -78,10 +78,6 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("aaa ") >> tokens >> qi::eol)
             [pnx::bind(&Parser::addAaa, this, qi::_1)]
 
-            // TODO 3-18-2020: The regression test has the cisco parser ingesting
-            // the same files as the asa parser. Does this need to support both
-            // or is that something the regression test needs to change?
-      //| (qi::lit("access-list") >> policy)
       | (qi::lit("ip access-list") >> policy)
 
       | (qi::lit("ntp server") >> ipAddr >> qi::eol)
@@ -139,7 +135,7 @@ Parser::Parser() : Parser::base_type(start)
                        pnx::bind(&Parser::tgtIface, this),
                        !pnx::bind(&Parser::isNo, this)),
              pnx::bind(&Parser::addManuallySetCdpIface, this)]
- 
+
        | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("address") >>
           (  (ipAddr >> ipAddr)
             [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
@@ -150,10 +146,10 @@ Parser::Parser() : Parser::base_type(start)
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
           )
          )
- 
+
        | (qi::lit("ip helper-address") >> ipAddr)
             [pnx::bind(&Parser::addDhcpService, this, qi::_1)]
- 
+
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
        | (qi::lit("standby")>> qi::int_ >> qi::lit("ip") >> ipAddr)
@@ -168,14 +164,14 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        /* END: No examples of these, cannot verify */
- 
+
        | switchport
        | spanningTree
 
        | (qi::lit("ip access-group") >> token >> token)
-            [pnx::bind(&Parser::createAccessGroup, this, 
+            [pnx::bind(&Parser::createAccessGroup, this,
                 pnx::bind(&Parser::tgtIface, this), qi::_1, qi::_2)]
- 
+
        // Ignore all other settings
        | (qi::omit[+token])
       ) >> qi::eol
@@ -190,7 +186,7 @@ Parser::Parser() : Parser::base_type(start)
      | (qi::lit("nonegotiate"))
           [pnx::bind(&nmco::InterfaceNetwork::setSwitchportMode,
                      pnx::bind(&Parser::tgtIface, this), "L2 nonegotiate")]
-     
+
      | (qi::lit("port-security mac-address") >> -qi::lit("sticky") >> macAddr)
           [pnx::bind(&nmco::InterfaceNetwork::addPortSecurityStickyMac,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
@@ -233,7 +229,7 @@ Parser::Parser() : Parser::base_type(start)
         )
        )
      // { VLAN-ID | [dot1p|none|untagged] }
-     | (qi::lit("voice vlan") >> 
+     | (qi::lit("voice vlan") >>
         (  qi::ushort_
              [pnx::bind(&nmco::InterfaceNetwork::addVlan,
                         pnx::bind(&Parser::tgtIface, this), qi::_1)]
@@ -281,9 +277,8 @@ Parser::Parser() : Parser::base_type(start)
        //              compares with bits of IpAddr. (1=wild, 0=must match IpAddr)
        //    DEST ( IpAddr *mask | "host" IpAddr | "any" | "object-group" name )
        //    PORTS ( "eq" port | "range" startPort endPort )
-       //      - Note: Can either be a number, or a named alias (e.g. 22 | ssh)
        //    "log" (Couldn't find anything about options to this in this context)
-      (qi::lit("extended") >> token >> qi::eol)
+      (qi::lit("extended") >> token >> qi::eol) // NAME
         [pnx::bind(&Parser::updateCurrentRuleBook, this, qi::_1)] >>
       *(indent
          [pnx::bind(&Parser::updateCurrentRule, this)] >>
@@ -306,11 +301,6 @@ Parser::Parser() : Parser::base_type(start)
      )
     ;
 
-  indent =
-    qi::no_skip[+qi::lit(' ')]
-    ;
-
-  // SOURCE ( IpAddr *mask | "host" IpAddr | "any" )
   source =
     ( (ipAddr >> ipAddr)
         [pnx::bind(&Parser::setCurrentRuleSourceIpMask, this, qi::_1, qi::_2)]
@@ -323,7 +313,6 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // DEST ( IpAddr *mask | "host" IpAddr | "any" | "object-group" name )
   destination =
     ( (ipAddr >> ipAddr)
         [pnx::bind(&Parser::setCurrentRuleDestinationIpMask, this, qi::_1, qi::_2)]
@@ -339,7 +328,6 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // PORTS ( "eq" port | "range" startPort endPort )
   ports =
     ( (qi::lit("eq") >> token)
         [qi::_val = qi::_1]
@@ -347,6 +335,10 @@ Parser::Parser() : Parser::base_type(start)
       (qi::lit("range") >> token >> token)
         [qi::_val = (qi::_1 + "-" + qi::_2)]
     )
+    ;
+
+  indent =
+    qi::no_skip[+qi::lit(' ')]
     ;
 
   tokens =
@@ -361,6 +353,7 @@ Parser::Parser() : Parser::base_type(start)
       //(start)
       (config)
       (interface)
+      (policy)
       (vlan)
       (tokens)(token)
       );
@@ -508,70 +501,47 @@ Parser::createAccessGroup(nmco::InterfaceNetwork* iface,
                           const std::string& bookName,
                           const std::string& direction)
 {
-  // These are actually applied to rules in Parser::getData() below
   usedRuleBooks[bookName] = {iface->getName(), direction};
-
-  //LOG_DEBUG << "access-group: " << bookName << " "
-  //                             << iface->getName() << " "
-  //                             << direction << '\n';
 }
-
 
 void
 Parser::updateCurrentRuleBook(const std::string& name)
 {
   curRuleBook = name;
   curRuleId = 0;
-
-  //LOG_DEBUG << "extended:" << name << '\n';
 }
-
 
 void
 Parser::updateCurrentRule()
 {
   ++curRuleId;
   d.ruleBooks[curRuleBook][curRuleId].setRuleDescription(curRuleBook);
-  //LOG_DEBUG << "  [" << curRuleId << ']';
 }
-
 
 void
 Parser::setCurrentRuleAction(const std::string& action)
 {
   d.ruleBooks[curRuleBook][curRuleId].setRuleId(curRuleId);
   d.ruleBooks[curRuleBook][curRuleId].addAction(action);
-
-  //LOG_DEBUG << ' ' << action;
 }
-
 
 void
 Parser::setCurrentRuleProtocol(const std::string& protocol)
 {
   curRuleProtocol = protocol;
-
-  //LOG_DEBUG << ' ' << protocol;
 }
-
 
 void
 Parser::setCurrentRuleSourcePorts(const std::string& ports)
 {
   curRuleSourcePort = ports;
-
-  //LOG_DEBUG << ' ' << ports;
 }
-
 
 void
 Parser::setCurrentRuleDestinationPorts(const std::string& ports)
 {
   curRuleDestinationPort = ports;
-
-  //LOG_DEBUG << ' ' << ports;
 }
-
 
 void
 Parser::setCurrentRuleSourceIpMask(nmco::IpAddress ipAddr,
@@ -583,10 +553,7 @@ Parser::setCurrentRuleSourceIpMask(nmco::IpAddress ipAddr,
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-
-  //LOG_DEBUG << ' ' << ipAddrString;
 }
-
 
 void
 Parser::setCurrentRuleSourceHostIp(const nmco::IpAddress& ipAddr)
@@ -596,10 +563,7 @@ Parser::setCurrentRuleSourceHostIp(const nmco::IpAddress& ipAddr)
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-
-  //LOG_DEBUG << " host " << ipAddrString;
 }
-
 
 void
 Parser::setCurrentRuleSourceAny()
@@ -607,10 +571,7 @@ Parser::setCurrentRuleSourceAny()
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc("any");
   d.networkBooks[ZONE]["any"].addData("any");
-
-  //LOG_DEBUG << " any";
 }
-
 
 void
 Parser::setCurrentRuleDestinationIpMask(nmco::IpAddress ipAddr,
@@ -622,10 +583,7 @@ Parser::setCurrentRuleDestinationIpMask(nmco::IpAddress ipAddr,
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-
-  //LOG_DEBUG << ' ' << ipAddrString;
 }
-
 
 void
 Parser::setCurrentRuleDestinationHostIp(const nmco::IpAddress& ipAddr)
@@ -635,10 +593,7 @@ Parser::setCurrentRuleDestinationHostIp(const nmco::IpAddress& ipAddr)
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
   d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-
-  //LOG_DEBUG << " host " << ipAddrString;
 }
-
 
 void
 Parser::setCurrentRuleDestinationAny()
@@ -646,10 +601,7 @@ Parser::setCurrentRuleDestinationAny()
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst("any");
   d.networkBooks[ZONE]["any"].addData("any");
-
-  //LOG_DEBUG << " any";
 }
-
 
 void
 Parser::setCurrentRuleDestinationObjectGroup(const std::string& objectGroup)
@@ -659,10 +611,7 @@ Parser::setCurrentRuleDestinationObjectGroup(const std::string& objectGroup)
   d.networkBooks[ZONE][objectGroup].addData(objectGroup);
 
   d.observations.addNotable("access-list rule destination object-group " + objectGroup);
-
-  //LOG_DEBUG << " object-group " << objectGroup;
 }
-
 
 void
 Parser::finalizeCurrentRule()
@@ -676,12 +625,7 @@ Parser::finalizeCurrentRule()
 
   d.ruleBooks[curRuleBook][curRuleId].addService(serviceString);
   d.serviceBooks[ZONE][serviceString].addData(serviceString);
-
-  //LOG_DEBUG << " [" << serviceString << "]";
-
-  //LOG_DEBUG << '\n';
 }
-
 
 // Unsupported
 void
