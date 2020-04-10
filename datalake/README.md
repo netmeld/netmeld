@@ -1,59 +1,56 @@
 DESCRIPTION
 ===========
 
-Description of what the tool parses.
+The `datalake` module provides a set of tools primarily focused to aid in the
+operations of getting data into and out of a data lake backend to allow further
+operation by an analyst or other tools.  Due to the nature of a data lake, this
+also provides new oppurtunties to both the analyst and a developer revolving
+around the concepts of:
+* Further inspection, querying, or processing of raw data
+* Analysis of change over time
+* Additional capabilites for tool or logic chaining
 
-Various information about the tool.  Include any special considerations when
-using the tool.  Potentially explain option requirements more in depth.
+![](docs/netmeld-datalake.png)
 
 
+DATA LAKE FUNDAMENTALS
+======================
 
-OTHER
-=====
-Potential tool names and args:
-```
-nmdl-initialize
-  toolname --type data-lake-type
-nmdl-add (merge with update? have to distinguish between add new and update existing...)
-nmdl-update
-  toolname somefile --device-id device
-  toolname somefile --device-id device --tool nmdb-import-cisco
-  toolname somefile --device-id device --tool nmdb-import-cisco-nxos
-    ~~toolname repofile --device-id device --tool nmdb-import-cisco-nxos~~
-  toolname somefile --device-id device --tool nmdb-import-cisco --tool-args 'some args'
-  toolname somefile --device-id device --tool nmdb-import-cisco-nxos --tool-args 'some args'
-    ~~toolname repofile --device-id device --tool nmdb-import-cisco-nxos --tool-args 'some args'~~
-    ~~toolname repofile --device-id device --tool-args 'some args'~~
-  toolname somefile --device-id device --rename repofile
-    ~~toolname repofile --device-id device --new somefile~~
-nmdl-remove
-  toolname repofile --device-id device
-  toolname repofile --device-id device --permanent
-nmdl-import-script (merge with list?)
-nmdl-list
-  toolname --by-device-id
-  toolname --by-tool
-  toolname --unbinned
-  toolname --import-script
-    ~~toolname --dbname dbname~~ (maybe don't include as option, just variable)
-  toolname --from-dts yyyymmdd
-```
+DATA LAKE TYPE AND INTERFACES
+-----------------------------
 
-(Defunct) Potential filesystem layout with remarks:
-```
-~/.netmeld/datalake/ (git storage mechanism?)
-|> by-device-id (binned primary storage?)
-|-> device01
-|--> config.txt (filename when added)
-|--> doc.txt
-|--> pic.png
-|--> scan.nessus
-|> by-tool (links only? ref to data in by-device-id?)
-|-> nmdb-import-cisco
-|--> device01--config.txt (device-id--filename?)
-|-> nmdb-import-nessus
-|--> device01--scan.nessus
-|> unbinned (link to data in by-device-id, but not in by-tool?)
-|--> device01--doc.txt
-|--> device01--pic.png
-```
+The provided tools try to be agnostic of the data lake backend, so in general
+the tools provide a common set of functionality that all data lake backends
+shall possess and support.  However, ultimately they need to operate on a
+targeted data lake type and capabilites of those greatly vary.  Thus an end
+user may directly manipulate the data lake as needed.  If there are
+stipulations for how data must be represented in the data lake for the end user
+tools to behave as expected, the data lake interface should clearly outline
+those requirements.
+
+TARGETED DATE AND TIME
+----------------------
+
+Support for tool interactions with the data lake as it exists at present or a
+specific date and time in the past shall be supported by all implemented
+backends.  Manipulation of the backend outside of the tools may lead to
+unexpected or unintentional outcomes.
+
+
+TOOL FUNDAMENTALS
+=================
+
+COMMON COMMAND-LINE OPTIONS
+---------------------------
+
+All of the tools shall support the same base options as defined in the Netmeld
+core library, that is:
+
+* `--help`
+* `--version`
+* `--verbosity`
+
+Additionally, all of the `nmdl-*` (Netmeld Datalake) tools shall support the
+following options:
+* `--lake-type`: The Netmeld data lake type to take action on.
+TODO: Describe this further.  Is this a config file setting or commandline default?

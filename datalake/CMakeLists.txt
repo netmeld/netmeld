@@ -66,7 +66,7 @@ endfunction()
 ###############################################################################
 foreach(TOOL_NAME
     nmdl-initialize
-    nmdl-update
+    nmdl-insert
     nmdl-list
     nmdl-remove
   )

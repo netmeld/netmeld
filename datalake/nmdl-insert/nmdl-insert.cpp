@@ -54,7 +54,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
   public: // Constructors should generally be public
     Tool() : nmdlct::AbstractDataLakeTool
       (
-       "add or update data in storage",  // printHelp() message
+       "add data in storage",  // printHelp() message
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)
       )
@@ -78,20 +78,20 @@ class Tool : public nmdlct::AbstractDataLakeTool
       opts.addRequiredOption("data-path", std::make_tuple(
             "data-path",
             po::value<std::string>()->required(),
-            "Data of file system to store; a path."
+            "Data on file system to store; a path."
             " Either --data-path param or implicit last argument.")
           );
 
       opts.addOptionalOption("tool", std::make_tuple(
             "tool",
             po::value<std::string>(),
-            "Tool to associate for import operations"
+            "Tool to associate for ingest operations"
             " external to the data lake.")
           );
       opts.addOptionalOption("tool-args", std::make_tuple(
             "tool-args",
             po::value<std::string>(),
-            "Tool arguments to use during an import operation.")
+            "Tool arguments to use during an ingest operation.")
           );
       opts.addOptionalOption("rename", std::make_tuple(
             "rename",
@@ -119,8 +119,8 @@ class Tool : public nmdlct::AbstractDataLakeTool
       de.setDataPath(dataPath);
 
       if (opts.exists("tool")) {
-        const auto& importTool {opts.getValue("tool")};
-        de.setImportTool(importTool);
+        const auto& ingestTool {opts.getValue("tool")};
+        de.setIngestTool(ingestTool);
       }
 
       if (opts.exists("tool-args")) {
