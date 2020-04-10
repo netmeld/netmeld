@@ -31,6 +31,7 @@
 #include "HandlerGit.hpp"
 
 
+// TODO initialize needs to create conf file...this is a bit complicated
 namespace netmeld::datalake::core::objects {
 
   // ===========================================================================
@@ -52,7 +53,7 @@ namespace netmeld::datalake::core::objects {
 
     auto exitStatus {std::system(_cmd.c_str())};
     if (-1 == exitStatus) { LOG_ERROR << "Failure: " << _cmd << '\n'; }
-    if (0 != exitStatus) { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
+    if (0 != exitStatus)  { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
   }
 
   std::string
@@ -79,15 +80,12 @@ namespace netmeld::datalake::core::objects {
   bool
   HandlerGit::changeDirToRepo()
   {
-    // Ensure data lake pathing exists
     if (!sfs::exists(dataLakePath)) {
-      LOG_ERROR << "Repo not initialized, use nmdl-initialize\n";
+      LOG_ERROR << "Storage not initialized, use nmdl-initialize\n";
       return false;
     }
 
-    // Operate in repo
     sfs::current_path(dataLakePath);
-
     return true;
   }
 
@@ -98,9 +96,7 @@ namespace netmeld::datalake::core::objects {
 
     std::ostringstream oss;
     oss << "echo -n `git rev-list -n 1 --first-parent"
-          << " --before=\"" << _dts << "\" master`"
-        << ";"
-        ;
+        << " --before=\"" << _dts << "\" master`" ;
     auto result {nmcu::trim(cmdExecOut(oss.str()))};
     LOG_DEBUG << "Target SHA: " << result << '\n';
 
@@ -108,20 +104,16 @@ namespace netmeld::datalake::core::objects {
     if (result.empty()) {
       oss << "git log --reverse --date='format-local:%FT%T'"
             << " --format=\"format:%cd\""
-          << ";"
           ;
       auto const& validDates {cmdExecOut(oss.str())};
       LOG_ERROR << "Invalid repository date: " << _dts << '\n'
                 << "Valid dates:"
                 << '\n' << validDates
-                << '\n'
-                ;
+                << '\n';
       return false;
     } else {
       oss << "git checkout -q "
-          << ("infinity" == _dts.toString() ? "master;" : result)
-          << ";"
-          ;
+          << ("infinity" == _dts.toString() ? "master" : result);
       cmdExec(oss.str());
     }
 
@@ -129,27 +121,25 @@ namespace netmeld::datalake::core::objects {
   }
 
   void
-  HandlerGit::setImportToolData(DataEntry& _de, const std::string& _path)
+  HandlerGit::setIngestToolData(DataEntry& _de, const std::string& _path)
   {
       std::ostringstream oss;
-      oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path
-          << ";"
-          ;
+      oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path;
 
       const auto& toolInfo {cmdExecOut(oss.str())};
       std::string reg {
         CHECK_IN_PREFIX    + "(.*)\n" +
-        IMPORT_TOOL_PREFIX + "(.*)\n" +
+        INGEST_TOOL_PREFIX + "(.*)\n" +
         TOOL_ARGS_PREFIX   + "(.*)\n"
       };
 
       std::regex regex(reg, std::regex::extended);
       std::smatch m;
       if (std::regex_match(toolInfo, m, regex)) {
-        _de.setImportTool(m.str(2));
+        _de.setIngestTool(m.str(2));
         _de.setToolArgs(m.str(3));
       } else {
-        LOG_DEBUG << "No import data found:\n" << _path << '\n';
+        LOG_DEBUG << "No ingest data found:\n" << _path << '\n';
       }
   }
 
@@ -163,8 +153,9 @@ namespace netmeld::datalake::core::objects {
 
     sfs::current_path(dataLakePath);
     std::ostringstream oss;
-    oss << "git init;";
+    oss << "git init";
     cmdExec(oss.str());
+
   }
 
   void
@@ -179,17 +170,16 @@ namespace netmeld::datalake::core::objects {
     // Copy file to store, properly named
     const sfs::path dstPath {devicePath/_de.getSaveName()};
     const std::string dstRelPath {sfs::relative(dstPath).string()};
-    sfs::copy(_de.getDataPath(), dstRelPath);
+    sfs::copy(_de.getDataPath(), dstRelPath, sfs::copy_options::overwrite_existing);
 
     // Store data
     std::ostringstream oss;
     oss << "git add ."
-        << "; git commit -m '"
+        << " && git commit -m '"
           << CHECK_IN_PREFIX << dstRelPath
-          << '\n' << IMPORT_TOOL_PREFIX << _de.getImportTool()
+          << '\n' << INGEST_TOOL_PREFIX << _de.getIngestTool()
           << '\n' << TOOL_ARGS_PREFIX << _de.getToolArgs()
-        << "\n\'"
-        << ';';
+        << "\n\'";
     cmdExec(oss.str());
   }
 
@@ -222,7 +212,7 @@ namespace netmeld::datalake::core::objects {
 
         data.setDeviceId(deviceId);
         data.setDataPath(filePath);
-        setImportToolData(data, filePath);
+        setIngestToolData(data, filePath);
 
         vde.push_back(data);
       }
@@ -247,9 +237,7 @@ namespace netmeld::datalake::core::objects {
 
     std::ostringstream oss;
     oss << "git rm --ignore-unmatch -r " << tgtRelPath
-        << "; git commit -m 'nmdl-remove: " << tgtRelPath << "'"
-        << ';'
-        ;
+        << " &&  git commit -m 'nmdl-remove: " << tgtRelPath << "'";
 
     cmdExec(oss.str());
   }
@@ -270,15 +258,12 @@ namespace netmeld::datalake::core::objects {
     oss << "FILTER_BRANCH_SQUELCH_WARNING=1"
           << " git filter-branch --prune-empty --index-filter"
           << " 'git rm --cached --ignore-unmatch -fr " << tgtRelPath << "' HEAD"
-        << "; git for-each-ref --format=\"%(refname)\" refs/original/"
+        << " && git for-each-ref --format=\"%(refname)\" refs/original/"
           << " | xargs -n 1 git update-ref -d 2>/dev/null"
-        << "; git reflog expire --expire=now --all"
-        << "&& git gc --prune=now --aggressive"
-        << ';'
-        ;
+        << " && git reflog expire --expire=now --all"
+        << "&& git gc --prune=now --aggressive";
     cmdExec(oss.str());
   }
-  // TODO what about restoring removed files (non-permanent)?
 
   // ===========================================================================
   // Friends

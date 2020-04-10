@@ -24,6 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/core/utils/FileManager.hpp>
 #include <netmeld/datalake/core/objects/HandlerGit.hpp>
 
 #include "AbstractDataLakeTool.hpp"
@@ -51,15 +52,21 @@ namespace netmeld::datalake::core::tools {
   void
   AbstractDataLakeTool::addToolBaseOptions()
   {
-    // TODO make config file option
-    opts.addRequiredOption("lake-type", std::make_tuple(
+    opts.removeRequiredOption("db-name");
+    opts.removeAdvancedOption("db-args");
+
+    std::string confFileLoc {NETMELD_CONF_DIR "/nmdl.conf"};
+    opts.addAdvancedOption("config-file", std::make_tuple(
+          "config-file",
+          po::value<std::string>()->required()->default_value(confFileLoc),
+          "Location of config file")
+        );
+    opts.setConfFile(confFileLoc);
+    opts.addConfFileOption("lake-type", std::make_tuple(
           "lake-type",
           po::value<std::string>()->required(),
           "Data lake type.")
         );
-
-    opts.removeRequiredOption("db-name");
-    opts.removeAdvancedOption("db-args");
   }
 
   void

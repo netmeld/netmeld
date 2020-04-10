@@ -40,7 +40,7 @@ namespace netmeld::datalake::core::objects {
     protected: // Variables intended for internal/subclass API
       std::string deviceId;
       std::string dataPath;
-      std::string importTool;
+      std::string ingestTool;
       std::string toolArgs;
       std::string newName;
 
@@ -62,15 +62,15 @@ namespace netmeld::datalake::core::objects {
     public: // Methods part of public API
       std::string getDataPath() const;
       std::string getDeviceId() const;
-      std::string getImportCmd() const;
-      std::string getImportTool() const;
+      std::string getIngestCmd() const;
+      std::string getIngestTool() const;
       std::string getNewName() const;
       std::string getSaveName() const;
       std::string getToolArgs() const;
 
       void setDataPath(const std::string&);
       void setDeviceId(const std::string&);
-      void setImportTool(const std::string&);
+      void setIngestTool(const std::string&);
       void setNewName(const std::string&);
       void setToolArgs(const std::string&);
 

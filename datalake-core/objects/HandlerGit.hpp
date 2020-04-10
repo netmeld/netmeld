@@ -42,7 +42,7 @@ namespace netmeld::datalake::core::objects {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
       const std::string  CHECK_IN_PREFIX     {"check-in:"};
-      const std::string  IMPORT_TOOL_PREFIX  {"import-tool:"};
+      const std::string  INGEST_TOOL_PREFIX  {"ingest-tool:"};
       const std::string  TOOL_ARGS_PREFIX    {"tool-args:"};
 
       sfs::path    dataLakePath;
@@ -67,7 +67,7 @@ namespace netmeld::datalake::core::objects {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void setImportToolData(DataEntry&, const std::string&);
+      void setIngestToolData(DataEntry&, const std::string&);
       
       void cmdExec(const std::string&);
       std::string cmdExecOut(const std::string&);

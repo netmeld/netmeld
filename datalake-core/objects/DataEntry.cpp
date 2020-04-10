@@ -52,8 +52,8 @@ namespace netmeld::datalake::core::objects {
   { return deviceId; }
 
   std::string
-  DataEntry::getImportTool() const
-  { return importTool; }
+  DataEntry::getIngestTool() const
+  { return ingestTool; }
 
   std::string
   DataEntry::getToolArgs() const
@@ -77,11 +77,11 @@ namespace netmeld::datalake::core::objects {
   }
 
   std::string
-  DataEntry::getImportCmd() const
+  DataEntry::getIngestCmd() const
   {
     std::regex regexNetmeldImportTool("nmdb-import-[-a-z]+");
     std::ostringstream oss;
-    oss << getImportTool();
+    oss << getIngestTool();
 
     if (std::regex_match(oss.str(), regexNetmeldImportTool)) {
       oss << " --db-name \"${DB_NAME}\" --db-args \"${DB_ARGS}\""
@@ -111,9 +111,9 @@ namespace netmeld::datalake::core::objects {
   }
 
   void
-  DataEntry::setImportTool(const std::string& _importTool)
+  DataEntry::setIngestTool(const std::string& _ingestTool)
   {
-    importTool = _importTool;
+    ingestTool = _ingestTool;
   }
 
   void
@@ -137,7 +137,7 @@ namespace netmeld::datalake::core::objects {
     return os
       << "deviceId: " << de.getDeviceId()
       << "\n  dataPath: " << de.getDataPath()
-      << "\n  importTool: " << de.getImportTool()
+      << "\n  ingestTool: " << de.getIngestTool()
       << "\n  toolArgs: " << de.getToolArgs()
       << "\n  rename: " << de.getNewName()
       ;
