@@ -46,11 +46,3 @@ create_man_from_help(${TOOL_NAME})
 
 install_bin(${TOOL_NAME} ${PROJECT_NAME})
 install_man(${TOOL_NAME} ${PROJECT_NAME})
-
-install(
-  FILES
-    nmdl.conf
-  OPTIONAL
-  COMPONENT ${PROJECT_NAME}
-  DESTINATION ${NETMELD_CONF_DIR}
-  )

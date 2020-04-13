@@ -55,16 +55,9 @@ namespace netmeld::datalake::core::tools {
     opts.removeRequiredOption("db-name");
     opts.removeAdvancedOption("db-args");
 
-    std::string confFileLoc {NETMELD_CONF_DIR "/nmdl.conf"};
-    opts.addAdvancedOption("config-file", std::make_tuple(
-          "config-file",
-          po::value<std::string>()->required()->default_value(confFileLoc),
-          "Location of config file")
-        );
-    opts.setConfFile(confFileLoc);
-    opts.addConfFileOption("lake-type", std::make_tuple(
+    opts.addRequiredOption("lake-type", std::make_tuple(
           "lake-type",
-          po::value<std::string>()->required(),
+          po::value<std::string>()->required()->default_value("git"),
           "Data lake type.")
         );
   }
