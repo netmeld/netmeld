@@ -28,7 +28,7 @@
 #include "DataLake.hpp"
 
 
-namespace netmeld::datalake::core::objects {
+namespace netmeld::datalake::objects {
 
   // ===========================================================================
   // Constructors

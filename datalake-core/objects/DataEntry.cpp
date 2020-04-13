@@ -32,7 +32,7 @@
 namespace sfs = std::filesystem;
 
 
-namespace netmeld::datalake::core::objects {
+namespace netmeld::datalake::objects {
 
   // ===========================================================================
   // Constructors

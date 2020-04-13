@@ -24,14 +24,14 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datalake/core/objects/DataEntry.hpp>
-#include <netmeld/datalake/core/tools/AbstractDataLakeTool.hpp>
+#include <netmeld/datalake/objects/DataEntry.hpp>
+#include <netmeld/datalake/tools/AbstractDataLakeTool.hpp>
 
-namespace nmdlco = netmeld::datalake::core::objects;
-namespace nmdlct = netmeld::datalake::core::tools;
+namespace nmdlo = netmeld::datalake::objects;
+namespace nmdlt = netmeld::datalake::tools;
 
 
-class Tool : public nmdlct::AbstractDataLakeTool
+class Tool : public nmdlt::AbstractDataLakeTool
 {
   // ===========================================================================
   // Variables
@@ -52,7 +52,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdlct::AbstractDataLakeTool
+    Tool() : nmdlt::AbstractDataLakeTool
       (
        "add data in storage",  // printHelp() message
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -110,7 +110,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
     runTool() override
     {
       auto const& dataLake {getDataLakeHandler()};
-      nmdlco::DataEntry de;
+      nmdlo::DataEntry de;
 
       const auto& deviceId {opts.getValue("device-id")};
       de.setDeviceId(deviceId);

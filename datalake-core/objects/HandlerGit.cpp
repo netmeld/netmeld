@@ -31,8 +31,7 @@
 #include "HandlerGit.hpp"
 
 
-// TODO initialize needs to create conf file...this is a bit complicated
-namespace netmeld::datalake::core::objects {
+namespace netmeld::datalake::objects {
 
   // ===========================================================================
   // Constructors

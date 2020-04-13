@@ -30,7 +30,7 @@
 #include <netmeld/core/utils/LoggerSingleton.hpp>
 
 
-namespace netmeld::datalake::core::objects {
+namespace netmeld::datalake::objects {
 
   class DataEntry {
     // =========================================================================

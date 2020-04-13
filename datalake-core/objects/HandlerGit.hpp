@@ -34,7 +34,7 @@
 namespace nmcu = netmeld::core::utils;
 
 
-namespace netmeld::datalake::core::objects {
+namespace netmeld::datalake::objects {
 
   class HandlerGit : public DataLake {
     // =========================================================================

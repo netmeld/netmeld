@@ -29,12 +29,12 @@
 
 #include <netmeld/core/objects/Time.hpp>
 #include <netmeld/core/utils/LoggerSingleton.hpp>
-#include <netmeld/datalake/core/objects/DataEntry.hpp>
+#include <netmeld/datalake/objects/DataEntry.hpp>
 
 namespace nmco = netmeld::core::objects;
 
 
-namespace netmeld::datalake::core::objects {
+namespace netmeld::datalake::objects {
 
   class DataLake {
     // =========================================================================

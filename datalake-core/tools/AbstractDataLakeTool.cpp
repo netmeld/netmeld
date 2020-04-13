@@ -25,12 +25,12 @@
 // =============================================================================
 
 #include <netmeld/core/utils/FileManager.hpp>
-#include <netmeld/datalake/core/objects/HandlerGit.hpp>
+#include <netmeld/datalake/objects/HandlerGit.hpp>
 
 #include "AbstractDataLakeTool.hpp"
 
 
-namespace netmeld::datalake::core::tools {
+namespace netmeld::datalake::tools {
 
   // ===========================================================================
   // Constructors
@@ -88,14 +88,14 @@ namespace netmeld::datalake::core::tools {
   // ===========================================================================
   // General Functions (alphabetical)
   // ===========================================================================
-  std::unique_ptr<nmdlco::DataLake>
+  std::unique_ptr<nmdlo::DataLake>
   AbstractDataLakeTool::getDataLakeHandler()
   {
     const auto& lakeType {opts.getValue("lake-type")};
 
-    std::unique_ptr<nmdlco::DataLake> dataLake = nullptr;
+    std::unique_ptr<nmdlo::DataLake> dataLake = nullptr;
     if ("git" == lakeType) {
-      dataLake = std::make_unique<nmdlco::HandlerGit>();
+      dataLake = std::make_unique<nmdlo::HandlerGit>();
     }
 
     if (nullptr == dataLake) {

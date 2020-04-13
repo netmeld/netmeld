@@ -29,14 +29,13 @@
 
 
 #include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/datalake/objects/DataLake.hpp>
 
-#include <netmeld/datalake/core/objects/DataLake.hpp>
-
-namespace nmct = netmeld::core::tools;
-namespace nmdlco = netmeld::datalake::core::objects;
+namespace nmct  = netmeld::core::tools;
+namespace nmdlo = netmeld::datalake::objects;
 
 
-namespace netmeld::datalake::core::tools {
+namespace netmeld::datalake::tools {
 
   class AbstractDataLakeTool : public nmct::AbstractTool
   {
@@ -90,7 +89,7 @@ namespace netmeld::datalake::core::tools {
       // Tool specific behavior entry point
       virtual int  runTool() override;
 
-      std::unique_ptr<nmdlco::DataLake> getDataLakeHandler();
+      std::unique_ptr<nmdlo::DataLake> getDataLakeHandler();
 
     public:
   };

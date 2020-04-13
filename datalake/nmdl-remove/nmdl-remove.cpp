@@ -24,12 +24,12 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datalake/core/tools/AbstractDataLakeTool.hpp>
+#include <netmeld/datalake/tools/AbstractDataLakeTool.hpp>
 
-namespace nmdlct = netmeld::datalake::core::tools;
+namespace nmdlt = netmeld::datalake::tools;
 
 
-class Tool : public nmdlct::AbstractDataLakeTool
+class Tool : public nmdlt::AbstractDataLakeTool
 {
   // ===========================================================================
   // Variables
@@ -50,7 +50,7 @@ class Tool : public nmdlct::AbstractDataLakeTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdlct::AbstractDataLakeTool
+    Tool() : nmdlt::AbstractDataLakeTool
       (
        "remove data from storage",  // printHelp() message
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
