@@ -27,9 +27,12 @@
 #include <filesystem>
 #include <regex>
 
+#include <netmeld/core/utils/StringUtilities.hpp>
+
 #include "DataEntry.hpp"
 
-namespace sfs = std::filesystem;
+namespace sfs  = std::filesystem;
+namespace nmcu = netmeld::core::utils;
 
 
 namespace netmeld::datalake::objects {
@@ -83,20 +86,22 @@ namespace netmeld::datalake::objects {
     std::ostringstream oss;
     oss << getIngestTool();
 
-    if (std::regex_match(oss.str(), regexNetmeldImportTool)) {
-      oss << " --db-name \"${DB_NAME}\" --db-args \"${DB_ARGS}\""
-          << " --device-id " << getDeviceId();
-    }
-    if (!getToolArgs().empty()) {
-      oss << " " << getToolArgs();
-    }
-    if (!getDataPath().empty()) {
-      oss << " " << getDataPath();
+    const auto& toolVal {oss.str()};
+    if (!toolVal.empty()) {
+      if (std::regex_match(toolVal, regexNetmeldImportTool)) {
+        oss << " --db-name \"${DB_NAME}\" --db-args \"${DB_ARGS}\""
+            << " --device-id " << getDeviceId();
+      }
+      if (!getToolArgs().empty()) {
+        oss << " " << getToolArgs();
+      }
+      if (!getDataPath().empty()) {
+        oss << " " << getDataPath();
+      }
     }
 
-    return oss.str();
+    return nmcu::trim(oss.str());
   }
-
 
   void
   DataEntry::setDataPath(const std::string& _dataPath)

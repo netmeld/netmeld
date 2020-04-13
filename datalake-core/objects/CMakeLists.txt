@@ -25,7 +25,7 @@
 # =============================================================================
 
 foreach(TEST_NAME
-#    AcBook
+    DataEntry
   )
 
   create_test(${TEST_NAME})

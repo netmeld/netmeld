@@ -43,7 +43,7 @@ function(create_test TEST_NAME)
 
   target_link_libraries(Test.${TEST_NAME}
       netmeld-core
-      datalake-core
+      netmeld-datalake-core
       ${Boost_LIBRARIES}
     )
 
