@@ -94,16 +94,11 @@ namespace netmeld::datalake::tools {
   {
     const auto& lakeType {opts.getValue("lake-type")};
 
-    std::unique_ptr<nmdlo::DataLake> dataLake = nullptr;
     if ("git" == lakeType) {
-      dataLake = std::make_unique<nmdlh::Git>();
-    }
-
-    if (nullptr == dataLake) {
+      return std::make_unique<nmdlh::Git>();
+    } else {
       LOG_ERROR << "Unsupported data lake type: " << lakeType << '\n';
       std::exit(nmcu::Exit::FAILURE);
-    } else {
-      return dataLake;
     }
   }
 }
