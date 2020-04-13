@@ -10,7 +10,7 @@ around the concepts of:
 * Analysis of change over time
 * Additional capabilites for tool or logic chaining
 
-![](docs/netmeld-datalake-dataflow.png)
+![](docs/netmeld-datalake-workflow.png)
 
 
 DATA LAKE FUNDAMENTALS
