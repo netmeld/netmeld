@@ -65,9 +65,10 @@ endfunction()
 # Add library data
 ###############################################################################
 add_library(${PROJECT_NAME} SHARED
+    ./handlers/Git.cpp
+
     ./objects/DataEntry.cpp
     ./objects/DataLake.cpp
-    ./objects/HandlerGit.cpp
 
     ./tools/AbstractDataLakeTool.cpp
   )
@@ -92,13 +93,15 @@ add_tool_suite_man(${PROJECT_NAME})
 
 install (
     DIRECTORY
+      handlers
       objects
       tools
     OPTIONAL
     COMPONENT ${PROJECT_NAME}
-    DESTINATION include/netmeld/datalake-core
+    DESTINATION include/netmeld/datalake
     FILES_MATCHING PATTERN "*.[hi]pp"
   )
 
+add_subdirectory(handlers)
 add_subdirectory(objects)
 add_subdirectory(tools)

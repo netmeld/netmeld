@@ -28,25 +28,24 @@
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
-#include "HandlerGit.hpp"
+#include "Git.hpp"
+
+namespace nmcu  = netmeld::core::utils;
 
 
-namespace netmeld::datalake::objects {
+namespace netmeld::datalake::handlers {
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  HandlerGit::HandlerGit()
-  {
-    dataLakePath = {nmfm.getSavePath()/"datalake"};
-    dataLakeDir = dataLakePath.string();
-  }
+  Git::Git()
+  {}
 
   // ===========================================================================
   // Methods
   // ===========================================================================
   void
-  HandlerGit::cmdExec(const std::string& _cmd)
+  Git::cmdExec(const std::string& _cmd)
   {
     LOG_DEBUG << _cmd << '\n';
 
@@ -56,7 +55,7 @@ namespace netmeld::datalake::objects {
   }
 
   std::string
-  HandlerGit::cmdExecOut(const std::string& _cmd)
+  Git::cmdExecOut(const std::string& _cmd)
   {
     LOG_DEBUG << _cmd << '\n';
 
@@ -77,19 +76,21 @@ namespace netmeld::datalake::objects {
   }
 
   bool
-  HandlerGit::changeDirToRepo()
+  Git::changeDirToRepo()
   {
-    if (!sfs::exists(dataLakePath)) {
+    const auto& tgtPath {this->dataLakePath};
+
+    if (!sfs::exists(tgtPath)) {
       LOG_ERROR << "Storage not initialized, use nmdl-initialize\n";
       return false;
     }
 
-    sfs::current_path(dataLakePath);
+    sfs::current_path(tgtPath);
     return true;
   }
 
   bool
-  HandlerGit::alignRepo(const nmco::Time& _dts)
+  Git::alignRepo(const nmco::Time& _dts)
   {
     LOG_DEBUG << "Target time: " << _dts << '\n';
 
@@ -120,7 +121,7 @@ namespace netmeld::datalake::objects {
   }
 
   void
-  HandlerGit::setIngestToolData(DataEntry& _de, const std::string& _path)
+  Git::setIngestToolData(nmdlo::DataEntry& _de, const std::string& _path)
   {
       std::ostringstream oss;
       oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path;
@@ -143,14 +144,16 @@ namespace netmeld::datalake::objects {
   }
 
   void
-  HandlerGit::initialize()
+  Git::initialize()
   {
-    LOG_DEBUG << "Removing existing: " << dataLakePath << '\n';
-    sfs::remove_all(dataLakePath);
-    LOG_DEBUG << "Creating new: " << dataLakePath << '\n';
-    sfs::create_directories(dataLakePath);
+    const auto& tgtPath {this->dataLakePath};
 
-    sfs::current_path(dataLakePath);
+    LOG_DEBUG << "Removing existing: " << tgtPath << '\n';
+    sfs::remove_all(tgtPath);
+    LOG_DEBUG << "Creating new: " << tgtPath << '\n';
+    sfs::create_directories(tgtPath);
+
+    sfs::current_path(tgtPath);
     std::ostringstream oss;
     oss << "git init";
     cmdExec(oss.str());
@@ -158,12 +161,12 @@ namespace netmeld::datalake::objects {
   }
 
   void
-  HandlerGit::commit(DataEntry& _de)
+  Git::commit(nmdlo::DataEntry& _de)
   {
     if (!changeDirToRepo()) { return; }
 
     // Ensure device directory exists
-    const sfs::path devicePath {dataLakePath/_de.getDeviceId()};
+    const sfs::path devicePath {this->dataLakePath/_de.getDeviceId()};
     sfs::create_directories(devicePath);
 
     // Copy file to store, properly named
@@ -182,14 +185,14 @@ namespace netmeld::datalake::objects {
     cmdExec(oss.str());
   }
 
-  std::vector<DataEntry>
-  HandlerGit::getDataEntries(const nmco::Time& _dts)
+  std::vector<nmdlo::DataEntry>
+  Git::getDataEntries(const nmco::Time& _dts)
   {
-    std::vector<DataEntry> vde;
+    std::vector<nmdlo::DataEntry> vde;
     if (!(changeDirToRepo() && alignRepo(_dts))) { return vde; }
 
     std::string deviceId;
-    for (auto i = sfs::recursive_directory_iterator(dataLakePath);
+    for (auto i = sfs::recursive_directory_iterator(this->dataLakePath);
          i != sfs::recursive_directory_iterator();
          ++i)
     {
@@ -207,7 +210,7 @@ namespace netmeld::datalake::objects {
         deviceId = i->path().filename().string();
       } else {
         const auto& filePath {i->path().string()};
-        DataEntry data;
+        nmdlo::DataEntry data;
 
         data.setDeviceId(deviceId);
         data.setDataPath(filePath);
@@ -223,12 +226,12 @@ namespace netmeld::datalake::objects {
 
 
   void
-  HandlerGit::removeLast(const std::string& _deviceId,
+  Git::removeLast(const std::string& _deviceId,
                          const std::string& _dataPath)
   {
     if (!changeDirToRepo()) { return; }
 
-    const sfs::path tgtPath       {dataLakePath/_deviceId/_dataPath};
+    const sfs::path tgtPath       {this->dataLakePath/_deviceId/_dataPath};
     const std::string tgtRelPath  {sfs::relative(tgtPath).string()};
     if (!sfs::exists(tgtPath)) {
       LOG_WARN << "Target does not exists: " << tgtPath << '\n';
@@ -242,12 +245,12 @@ namespace netmeld::datalake::objects {
   }
 
   void
-  HandlerGit::removeAll(const std::string& _deviceId,
+  Git::removeAll(const std::string& _deviceId,
                         const std::string& _dataPath)
   {
     if (!changeDirToRepo()) { return; }
 
-    const sfs::path tgtPath       {dataLakePath/_deviceId/_dataPath};
+    const sfs::path tgtPath       {this->dataLakePath/_deviceId/_dataPath};
     const std::string tgtRelPath  {sfs::relative(tgtPath).string()};
     if (!sfs::exists(tgtPath)) {
       LOG_WARN << "Target does not exists: " << tgtPath << '\n';

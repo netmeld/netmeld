@@ -52,5 +52,5 @@ core library, that is:
 
 Additionally, all of the `nmdl-*` (Netmeld Datalake) tools shall support the
 following options:
-* `--lake-type`: The Netmeld data lake type to take action on.
-TODO: Describe this further.  Is this a config file setting or commandline default?
+* `--lake-type`: The Netmeld data lake type to take action on.  This currently
+defaults to a data lake of type `git`.

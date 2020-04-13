@@ -27,7 +27,6 @@
 #ifndef ABSTRACT_DATA_LAKE_TOOL_HPP
 #define ABSTRACT_DATA_LAKE_TOOL_HPP
 
-
 #include <netmeld/core/tools/AbstractTool.hpp>
 #include <netmeld/datalake/objects/DataLake.hpp>
 

@@ -27,16 +27,15 @@
 #ifndef HANDLER_GIT_HPP
 #define HANDLER_GIT_HPP
 
-#include <netmeld/core/utils/FileManager.hpp>
+#include <netmeld/datalake/objects/DataEntry.hpp>
+#include <netmeld/datalake/objects/DataLake.hpp>
 
-#include "DataLake.hpp"
-
-namespace nmcu = netmeld::core::utils;
+namespace nmdlo = netmeld::datalake::objects;
 
 
-namespace netmeld::datalake::objects {
+namespace netmeld::datalake::handlers {
 
-  class HandlerGit : public DataLake {
+  class Git : public nmdlo::DataLake {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -45,14 +44,7 @@ namespace netmeld::datalake::objects {
       const std::string  INGEST_TOOL_PREFIX  {"ingest-tool:"};
       const std::string  TOOL_ARGS_PREFIX    {"tool-args:"};
 
-      sfs::path    dataLakePath;
-      std::string  dataLakeDir;
-      std::string  deviceDir;
-
-
     protected: // Variables intended for internal/subclass API
-      nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
-
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -61,13 +53,13 @@ namespace netmeld::datalake::objects {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      HandlerGit();
+      Git();
 
     // =========================================================================
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void setIngestToolData(DataEntry&, const std::string&);
+      void setIngestToolData(nmdlo::DataEntry&, const std::string&);
       
       void cmdExec(const std::string&);
       std::string cmdExecOut(const std::string&);
@@ -77,12 +69,13 @@ namespace netmeld::datalake::objects {
 
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void commit(DataEntry&) override;
+      void commit(nmdlo::DataEntry&) override;
       void initialize() override;
       void removeAll(const std::string&, const std::string&) override;
       void removeLast(const std::string&, const std::string&) override;
 
-      std::vector<DataEntry> getDataEntries(const nmco::Time& = {}) override;
+      std::vector<nmdlo::DataEntry>
+        getDataEntries(const nmco::Time& = {}) override;
   };
 }
 #endif // HANDLER_GIT_HPP

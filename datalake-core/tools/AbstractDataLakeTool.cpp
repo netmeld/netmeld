@@ -25,10 +25,11 @@
 // =============================================================================
 
 #include <netmeld/core/utils/FileManager.hpp>
-#include <netmeld/datalake/objects/HandlerGit.hpp>
+#include <netmeld/datalake/handlers/Git.hpp>
 
 #include "AbstractDataLakeTool.hpp"
 
+namespace nmdlh = netmeld::datalake::handlers;
 
 namespace netmeld::datalake::tools {
 
@@ -95,7 +96,7 @@ namespace netmeld::datalake::tools {
 
     std::unique_ptr<nmdlo::DataLake> dataLake = nullptr;
     if ("git" == lakeType) {
-      dataLake = std::make_unique<nmdlo::HandlerGit>();
+      dataLake = std::make_unique<nmdlh::Git>();
     }
 
     if (nullptr == dataLake) {

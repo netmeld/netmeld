@@ -42,6 +42,8 @@ namespace netmeld::datalake::objects {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
+      sfs::path dataLakePath;
+
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -49,6 +51,7 @@ namespace netmeld::datalake::objects {
     // =========================================================================
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
+      DataLake();
     public: // Constructors part of public API
 
     // =========================================================================

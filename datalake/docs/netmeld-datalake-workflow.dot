@@ -1,0 +1,17 @@
+digraph G {
+  rankdir=LR;
+  nodespace=0.5;
+  ranksep=0.5;
+  newrank=true;
+  splines=spline;
+
+  label="Netmeld Tool Suite 2.x -- Datalake Helper Dataflow";
+
+  node[shape="rectangle"];
+  objects [label="DataEntry\lDataLake\l"];
+  handlers [label="HandlerGit\l"];
+  tools   [label="AbstractDataLakeTool\l"];
+
+  node [shape="cylinder"];
+  datalake [label="git repository"];
+}

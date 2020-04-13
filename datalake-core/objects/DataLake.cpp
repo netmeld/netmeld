@@ -25,6 +25,8 @@
 // =============================================================================
 
 // Include the majority of required libraries here
+#include <netmeld/core/utils/FileManager.hpp>
+
 #include "DataLake.hpp"
 
 
@@ -33,6 +35,12 @@ namespace netmeld::datalake::objects {
   // ===========================================================================
   // Constructors
   // ===========================================================================
+  DataLake::DataLake()
+  {
+    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+
+    dataLakePath = {nmfm.getSavePath()/"datalake"};
+  }
 
 
   // ===========================================================================
