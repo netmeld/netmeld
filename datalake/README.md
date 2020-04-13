@@ -10,31 +10,31 @@ around the concepts of:
 * Analysis of change over time
 * Additional capabilites for tool or logic chaining
 
-![](docs/netmeld-datalake.png)
+![](docs/netmeld-datalake-dataflow.png)
 
 
 DATA LAKE FUNDAMENTALS
 ======================
 
-DATA LAKE TYPE AND INTERFACES
------------------------------
+DATA LAKE TYPE AND HANDLERS
+---------------------------
 
-The provided tools try to be agnostic of the data lake backend, so in general
-the tools provide a common set of functionality that all data lake backends
-shall possess and support.  However, ultimately they need to operate on a
-targeted data lake type and capabilites of those greatly vary.  Thus an end
-user may directly manipulate the data lake as needed.  If there are
-stipulations for how data must be represented in the data lake for the end user
-tools to behave as expected, the data lake interface should clearly outline
-those requirements.
+The provided interact with an interface which tries to be agnostic of the data
+lake backend, so in general the tools provide a common set of functionality
+that all data lake backends shall possess and support.  However, ultimately
+they need to operate on a targeted data lake type and capabilites of those
+greatly vary.  Thus an end user may directly manipulate the data lake as
+needed.  If there are stipulations for how data shall be represented in the
+data lake for the handler to operate and pass meaningful data back to the tools
+as expected, the data lake handler should clearly outline those requirements.
 
 TARGETED DATE AND TIME
 ----------------------
 
 Support for tool interactions with the data lake as it exists at present or a
-specific date and time in the past shall be supported by all implemented
-backends.  Manipulation of the backend outside of the tools may lead to
-unexpected or unintentional outcomes.
+specific date and time in the past shall be supported by all backends.
+Manipulation, specifically regarding this topic, of the backend outside of the
+tools may lead to unexpected or unintentional outcomes.
 
 
 TOOL FUNDAMENTALS
