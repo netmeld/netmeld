@@ -65,12 +65,12 @@ endfunction()
 # Add library data
 ###############################################################################
 add_library(${PROJECT_NAME} SHARED
+    ./handlers/AbstractHandler.cpp
     ./handlers/Git.cpp
 
     ./objects/DataEntry.cpp
-    ./objects/DataLake.cpp
 
-    ./tools/AbstractDataLakeTool.cpp
+    ./tools/AbstractDatalakeTool.cpp
   )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

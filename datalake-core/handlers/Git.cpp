@@ -123,24 +123,23 @@ namespace netmeld::datalake::handlers {
   void
   Git::setIngestToolData(nmdlo::DataEntry& _de, const std::string& _path)
   {
-      std::ostringstream oss;
-      oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path;
+    std::ostringstream oss;
+    oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path;
 
-      const auto& toolInfo {cmdExecOut(oss.str())};
-      std::string reg {
-        CHECK_IN_PREFIX    + "(.*)\n" +
-        INGEST_TOOL_PREFIX + "(.*)\n" +
-        TOOL_ARGS_PREFIX   + "(.*)\n"
-      };
+    std::istringstream iss(cmdExecOut(oss.str()));
 
-      std::regex regex(reg, std::regex::extended);
-      std::smatch m;
-      if (std::regex_match(toolInfo, m, regex)) {
-        _de.setIngestTool(m.str(2));
-        _de.setToolArgs(m.str(3));
-      } else {
-        LOG_DEBUG << "No ingest data found:\n" << _path << '\n';
+    std::regex toolRegex('^' + INGEST_TOOL_PREFIX + "(.*)$");
+    std::regex argsRegex('^' + TOOL_ARGS_PREFIX + "(.*)$");
+    std::smatch m;
+
+    for (std::string line; std::getline(iss, line);) {
+      if (std::regex_search(line, m, toolRegex)) {
+        _de.setIngestTool(m.str(1));
       }
+      if (std::regex_search(line, m, argsRegex)) {
+        _de.setToolArgs(m.str(1));
+      }
+    }
   }
 
   void

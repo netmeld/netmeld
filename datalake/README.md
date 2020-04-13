@@ -1,11 +1,11 @@
 DESCRIPTION
 ===========
 
-The `datalake` module provides a set of tools primarily focused to aid in the
-operations of getting data into and out of a data lake backend to allow further
-operation by an analyst or other tools.  Due to the nature of a data lake, this
-also provides new oppurtunties to both the analyst and a developer revolving
-around the concepts of:
+The Netmeld Datalake module provides a set of tools primarily focused to aid in
+the operations of getting data into and out of a data lake backend to allow
+further operation by an analyst or other tools.  Due to the nature of a data
+lake, this also provides new oppurtunties to both the analyst and a developer
+revolving around the concepts of:
 * Further inspection, querying, or processing of raw data
 * Analysis of change over time
 * Additional capabilites for tool or logic chaining

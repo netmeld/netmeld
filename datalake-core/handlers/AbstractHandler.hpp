@@ -24,73 +24,50 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef ABSTRACT_DATA_LAKE_TOOL_HPP
-#define ABSTRACT_DATA_LAKE_TOOL_HPP
+#ifndef ABSTRACT_HANDLER_HPP
+#define ABSTRACT_HANDLER_HPP
 
-#include <netmeld/core/tools/AbstractTool.hpp>
-#include <netmeld/datalake/objects/DataLake.hpp>
+#include <netmeld/core/objects/Time.hpp>
+#include <netmeld/core/utils/LoggerSingleton.hpp>
+#include <netmeld/datalake/objects/DataEntry.hpp>
 
-namespace nmct  = netmeld::core::tools;
+namespace nmco  = netmeld::core::objects;
 namespace nmdlo = netmeld::datalake::objects;
 
 
-namespace netmeld::datalake::tools {
+namespace netmeld::datalake::handlers {
 
-  class AbstractDataLakeTool : public nmct::AbstractTool
-  {
+  class AbstractHandler {
     // =========================================================================
     // Variables
     // =========================================================================
-    private: // Variables should generally be private
+    private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      // Inhertied from nmct::AbstractTool at this scope
-        // std::string            helpBlurb;
-        // std::string            programName;
-        // std::string            version;
-        // ProgramOptions         opts;
-    public: // Variables should rarely appear at this scope
+      sfs::path dataLakePath;
 
+    public: // Variables should rarely appear at this scope
 
     // =========================================================================
     // Constructors
     // =========================================================================
-    private: // Constructors should rarely appear at this scope
-    protected: // Constructors intended for internal/subclass API
-    public: // Constructors should generally be public
-    private:
-    protected:
-      // Default constructor, provided only for convienence
-      AbstractDataLakeTool();
-      // Standard constructor, should be primary
-      AbstractDataLakeTool(const char*, const char*, const char*);
-
-    public:
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+      AbstractHandler();
+    public: // Constructors part of public API
 
     // =========================================================================
     // Methods
     // =========================================================================
-    private: // Methods part of internal API
+    private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
-      // Inherited from nmct::AbstractTool at this scope
-        // std::string const getDbName() const;
-        // virtual void printHelp() const;
-        // virtual void printVersion() const;
-        // virtual int  runTool();
     public: // Methods part of public API
-      // Inherited from nmct::AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
-    private:
-      void addToolBaseOptions() override;
+      virtual void commit(nmdlo::DataEntry&) = 0;
+      virtual void initialize() = 0;
+      virtual void removeAll(const std::string&, const std::string&) = 0;
+      virtual void removeLast(const std::string&, const std::string&) = 0;
 
-    protected:
-      virtual void modifyToolOptions() override;
-      virtual void printHelp() const override;
-      // Tool specific behavior entry point
-      virtual int  runTool() override;
-
-      std::unique_ptr<nmdlo::DataLake> getDataLakeHandler();
-
-    public:
+      virtual std::vector<nmdlo::DataEntry>
+        getDataEntries(const nmco::Time& = {}) = 0;
   };
 }
-#endif // ABSTRACT_DATA_LAKE_TOOL_HPP
+#endif // ABSTRACT_HANDLER_HPP

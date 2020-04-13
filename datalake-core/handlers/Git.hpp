@@ -28,14 +28,14 @@
 #define HANDLER_GIT_HPP
 
 #include <netmeld/datalake/objects/DataEntry.hpp>
-#include <netmeld/datalake/objects/DataLake.hpp>
+#include <netmeld/datalake/handlers/AbstractHandler.hpp>
 
 namespace nmdlo = netmeld::datalake::objects;
 
 
 namespace netmeld::datalake::handlers {
 
-  class Git : public nmdlo::DataLake {
+  class Git : public AbstractHandler {
     // =========================================================================
     // Variables
     // =========================================================================

@@ -24,31 +24,80 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-// Include the majority of required libraries here
 #include <netmeld/core/utils/FileManager.hpp>
+#include <netmeld/datalake/handlers/Git.hpp>
 
-#include "DataLake.hpp"
+#include "AbstractDatalakeTool.hpp"
 
 
-namespace netmeld::datalake::objects {
+namespace netmeld::datalake::tools {
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  DataLake::DataLake()
-  {
-    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+  AbstractDatalakeTool::AbstractDatalakeTool()
+  {}
 
-    dataLakePath = {nmfm.getSavePath()/"datalake"};
+  AbstractDatalakeTool::AbstractDatalakeTool(
+      const char* _helpBlurb,
+      const char* _programName,
+      const char* _version) :
+    nmct::AbstractTool(_helpBlurb, _programName, _version)
+  {}
+
+
+  // ===========================================================================
+  // Tool Entry Points (execution order)
+  // ===========================================================================
+  void
+  AbstractDatalakeTool::addToolBaseOptions()
+  {
+    opts.removeRequiredOption("db-name");
+    opts.removeAdvancedOption("db-args");
+
+    opts.addRequiredOption("lake-type", std::make_tuple(
+          "lake-type",
+          po::value<std::string>()->required()->default_value("git"),
+          "Data lake type.")
+        );
+  }
+
+  void
+  AbstractDatalakeTool::modifyToolOptions()
+  {}
+
+  void
+  AbstractDatalakeTool::printHelp() const
+  {
+    LOG_NOTICE << "Data lake tool to " << helpBlurb
+               << "\nUsage: " << programName << " [options]"
+               << "\nOptions:\n"
+               << opts
+               << this->bugTeam
+               << '\n';
+  }
+
+  int
+  AbstractDatalakeTool::runTool()
+  {
+    LOG_WARN << "Data lake tool did not implement execution logic\n";
+    return nmcu::Exit::SUCCESS;
   }
 
 
   // ===========================================================================
-  // Methods
+  // General Functions (alphabetical)
   // ===========================================================================
+  std::unique_ptr<nmdlh::AbstractHandler>
+  AbstractDatalakeTool::getDatalakeHandler()
+  {
+    const auto& lakeType {opts.getValue("lake-type")};
 
-
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+    if ("git" == lakeType) {
+      return std::make_unique<nmdlh::Git>();
+    } else {
+      LOG_ERROR << "Unsupported data lake type: " << lakeType << '\n';
+      std::exit(nmcu::Exit::FAILURE);
+    }
+  }
 }

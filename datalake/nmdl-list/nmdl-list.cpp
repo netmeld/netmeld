@@ -24,12 +24,12 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datalake/tools/AbstractDataLakeTool.hpp>
+#include <netmeld/datalake/tools/AbstractDatalakeTool.hpp>
 
 namespace nmdlt = netmeld::datalake::tools;
 
 
-class Tool : public nmdlt::AbstractDataLakeTool
+class Tool : public nmdlt::AbstractDatalakeTool
 {
   // ===========================================================================
   // Variables
@@ -50,7 +50,7 @@ class Tool : public nmdlt::AbstractDataLakeTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdlt::AbstractDataLakeTool
+    Tool() : nmdlt::AbstractDatalakeTool
       (
        "list data in storage",  // printHelp() message
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -162,7 +162,7 @@ class Tool : public nmdlt::AbstractDataLakeTool
     int
     runTool() override
     {
-      const auto& dataLake     {getDataLakeHandler()};
+      const auto& dataLake     {getDatalakeHandler()};
       const auto& time         {opts.getValueAs<nmco::Time>("before")};
       const auto& dataEntries  {dataLake->getDataEntries(time)};
 
