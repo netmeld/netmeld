@@ -127,6 +127,7 @@ class Parser :
 
     std::map<std::string, std::pair<std::string, std::string>> appliedRuleSets;
 
+    nmco::AcRule *curRule {nullptr};
     std::string  curRuleBook {""};
     size_t       curRuleId {0};
     std::string  curRuleProtocol {""};

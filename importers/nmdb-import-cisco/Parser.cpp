@@ -281,6 +281,7 @@ Parser::Parser() : Parser::base_type(start)
       *(indent
          [pnx::bind(&Parser::updateCurRule, this)] >>
         token // ACTION
+          //[pnx::bind(&nmco::AcRule::addAction, curRule, qi::_1)] >>
           [pnx::bind(&Parser::setCurRuleAction, this, qi::_1)] >>
         token // PROTOCOL
           [pnx::bind(&Parser::curRuleProtocol, this) = qi::_1] >>
@@ -502,30 +503,32 @@ Parser::updateCurRule()
   curRuleSrcPort = "";
   curRuleDstPort = "";
 
-  d.ruleBooks[curRuleBook][curRuleId].setRuleId(curRuleId);
-  d.ruleBooks[curRuleBook][curRuleId].setRuleDescription(curRuleBook);
+  curRule = &(d.ruleBooks[curRuleBook][curRuleId]);
+
+  curRule->setRuleId(curRuleId);
+  curRule->setRuleDescription(curRuleBook);
 }
 
 void
 Parser::setCurRuleAction(const std::string& action)
 {
   //TODO: Move this one to setting value direction in symantic action
-  d.ruleBooks[curRuleBook][curRuleId].addAction(action);
+  curRule->addAction(action);
 }
 
 void
 Parser::setCurRuleSrc(const std::string& addr)
 {
-  d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(addr);
+  curRule->setSrcId(ZONE);
+  curRule->addSrc(addr);
   d.networkBooks[ZONE][addr].addData(addr);
 }
 
 void
 Parser::setCurRuleDst(const std::string& addr)
 {
-  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addDst(addr);
+  curRule->setDstId(ZONE);
+  curRule->addDst(addr);
   d.networkBooks[ZONE][addr].addData(addr);
 }
 
@@ -551,7 +554,7 @@ Parser::curRuleFinalize()
   const std::string serviceString = nmcu::getSrvcString(curRuleProtocol,
                                                         curRuleSrcPort,
                                                         curRuleDstPort);
-  d.ruleBooks[curRuleBook][curRuleId].addService(serviceString);
+  curRule->addService(serviceString);
   d.serviceBooks[ZONE][serviceString].addData(serviceString);
 }
 
