@@ -306,8 +306,10 @@ Parser::Parser() : Parser::base_type(start)
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
      |
       (qi::lit("object-group") >> token)
+        [qi::_val = qi::_1]
      |
       (qi::string("any"))
+        [qi::_val = qi::_1]
     )
     ;
 
