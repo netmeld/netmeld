@@ -170,17 +170,12 @@ class Parser :
     void addVlan(nmco::Vlan&);
 
     // Policy Related
-    void createAccessGroup(nmco::InterfaceNetwork*,
-                           const std::string&,
-                           const std::string&);
+    void createAccessGroup(const std::string&, const std::string&);
 
     void updateCurRuleBook(const std::string&);
     void updateCurRule();
 
     void setCurRuleAction(const std::string&);
-    void setCurRuleProtocol(const std::string&);
-    void setCurRuleSrcPorts(const std::string&);
-    void setCurRuleDstPorts(const std::string&);
 
     void setCurRuleSrcIpMask(nmco::IpAddress&, const nmco::IpAddress&);
     void setCurRuleSrcHostIp(const nmco::IpAddress&);

@@ -169,8 +169,7 @@ Parser::Parser() : Parser::base_type(start)
        | spanningTree
 
        | (qi::lit("ip access-group") >> token >> token)
-            [pnx::bind(&Parser::createAccessGroup, this,
-                pnx::bind(&Parser::tgtIface, this), qi::_1, qi::_2)]
+            [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
 
        // Ignore all other settings
        | (qi::omit[+token])
@@ -284,14 +283,14 @@ Parser::Parser() : Parser::base_type(start)
         token // ACTION
           [pnx::bind(&Parser::setCurRuleAction, this, qi::_1)] >>
         token // PROTOCOL
-          [pnx::bind(&Parser::setCurRuleProtocol, this, qi::_1)] >>
+          [pnx::bind(&Parser::curRuleProtocol, this) = qi::_1] >>
         source >>
         -(ports
-           [pnx::bind(&Parser::setCurRuleSrcPorts, this, qi::_1)]
+          [pnx::bind(&Parser::curRuleSrcPort, this) = qi::_1]
          ) >>
         -(destination >>
           -(ports
-             [pnx::bind(&Parser::setCurRuleDstPorts, this, qi::_1)]
+             [pnx::bind(&Parser::curRuleDstPort, this) = qi::_1]
            )
          ) >>
         -qi::lit("log") >>
@@ -496,11 +495,9 @@ Parser::addVlan(nmco::Vlan& vlan)
 
 // Policy Related
 void
-Parser::createAccessGroup(nmco::InterfaceNetwork* iface,
-                          const std::string& bookName,
-                          const std::string& direction)
+Parser::createAccessGroup(const std::string& bookName, const std::string& direction)
 {
-  appliedRuleSets[bookName] = {iface->getName(), direction};
+  appliedRuleSets[bookName] = {tgtIface->getName(), direction};
 }
 
 void
@@ -525,25 +522,8 @@ Parser::updateCurRule()
 void
 Parser::setCurRuleAction(const std::string& action)
 {
+  //TODO: Move this one to setting value direction in symantic action
   d.ruleBooks[curRuleBook][curRuleId].addAction(action);
-}
-
-void
-Parser::setCurRuleProtocol(const std::string& protocol)
-{
-  curRuleProtocol = protocol;
-}
-
-void
-Parser::setCurRuleSrcPorts(const std::string& ports)
-{
-  curRuleSrcPort = ports;
-}
-
-void
-Parser::setCurRuleDstPorts(const std::string& ports)
-{
-  curRuleDstPort = ports;
 }
 
 void
