@@ -284,45 +284,30 @@ Parser::Parser() : Parser::base_type(start)
           [pnx::bind(&Parser::setCurRuleAction, this, qi::_1)] >>
         token // PROTOCOL
           [pnx::bind(&Parser::curRuleProtocol, this) = qi::_1] >>
-        source >>
-        -(ports
-          [pnx::bind(&Parser::curRuleSrcPort, this) = qi::_1]
-         ) >>
-        -(destination >>
-          -(ports
-             [pnx::bind(&Parser::curRuleDstPort, this) = qi::_1]
-           )
-         ) >>
+        addressArgument // SOURCE
+          [pnx::bind(&Parser::setCurRuleSrc, this, qi::_1)] >>
+        -(ports // SOURCE PORTS
+          [pnx::bind(&Parser::curRuleSrcPort, this) = qi::_1]) >>
+        -(addressArgument // DESTINATION
+            [pnx::bind(&Parser::setCurRuleDst, this, qi::_1)] >>
+          -(ports // DESTINATION PORTS
+             [pnx::bind(&Parser::curRuleDstPort, this) = qi::_1])) >>
         -qi::lit("log") >>
         qi::eol
        ) [pnx::bind(&Parser::curRuleFinalize, this)]
      )
     ;
 
-  source =
+  addressArgument =
     ( (ipAddr >> ipAddr)
-        [pnx::bind(&Parser::setCurRuleSrcIpMask, this, qi::_1, qi::_2)]
+        [qi::_val = pnx::bind(&Parser::setWildcardNetmask, this, qi::_1, qi::_2)]
      |
       (qi::lit("host") >> ipAddr)
-        [pnx::bind(&Parser::setCurRuleSrcHostIp, this, qi::_1)]
-     |
-      (qi::lit("any"))
-        [pnx::bind(&Parser::setCurRuleSrcAny, this)]
-    )
-    ;
-
-  destination =
-    ( (ipAddr >> ipAddr)
-        [pnx::bind(&Parser::setCurRuleDstIpMask, this, qi::_1, qi::_2)]
-     |
-      (qi::lit("host") >> ipAddr)
-        [pnx::bind(&Parser::setCurRuleDstHostIp, this, qi::_1)]
-     |
-      (qi::lit("any"))
-        [pnx::bind(&Parser::setCurRuleDstAny, this)]
+         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
      |
       (qi::lit("object-group") >> token)
-        [pnx::bind(&Parser::setCurRuleDstObjectGroup, this, qi::_1)]
+     |
+      (qi::string("any"))
     )
     ;
 
@@ -351,7 +336,7 @@ Parser::Parser() : Parser::base_type(start)
       //(start)
       (config)
       (interface)
-      (policy)(source)(destination)(ports)
+      (policy)(addressArgument)(ports)
       (vlan)
       (tokens)(token)
       );
@@ -527,69 +512,19 @@ Parser::setCurRuleAction(const std::string& action)
 }
 
 void
-Parser::setCurRuleSrcIpMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
-{
-  const std::string ipAddrString {setWildcardNetmask(ipAddr, mask)};
-
-  d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
-  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-}
-
-void
-Parser::setCurRuleSrcHostIp(const nmco::IpAddress& ipAddr)
-{
-  const std::string ipAddrString {ipAddr.toString()};
-
-  d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
-  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-}
-
-void
-Parser::setCurRuleSrcAny()
+Parser::setCurRuleSrc(const std::string& addr)
 {
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addSrc("any");
-  d.networkBooks[ZONE]["any"].addData("any");
+  d.ruleBooks[curRuleBook][curRuleId].addSrc(addr);
+  d.networkBooks[ZONE][addr].addData(addr);
 }
 
 void
-Parser::setCurRuleDstIpMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
-{
-  const std::string ipAddrString {setWildcardNetmask(ipAddr, mask)};
-
-  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
-  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-}
-
-void
-Parser::setCurRuleDstHostIp(const nmco::IpAddress& ipAddr)
-{
-  const std::string ipAddrString {ipAddr.toString()};
-
-  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
-  d.networkBooks[ZONE][ipAddrString].addData(ipAddrString);
-}
-
-void
-Parser::setCurRuleDstAny()
+Parser::setCurRuleDst(const std::string& addr)
 {
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addDst("any");
-  d.networkBooks[ZONE]["any"].addData("any");
-}
-
-void
-Parser::setCurRuleDstObjectGroup(const std::string& objectGroup)
-{
-  d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
-  d.ruleBooks[curRuleBook][curRuleId].addDst(objectGroup);
-  d.networkBooks[ZONE][objectGroup].addData(objectGroup);
-
-  d.observations.addNotable("access-list rule destination object-group " + objectGroup);
+  d.ruleBooks[curRuleBook][curRuleId].addDst(addr);
+  d.networkBooks[ZONE][addr].addData(addr);
 }
 
 std::string

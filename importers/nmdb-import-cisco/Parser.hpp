@@ -90,10 +90,11 @@ class Parser :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      policy, source, destination, indent,
+      policy, indent,
       interface, switchport, spanningTree;
 
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+      addressArgument,
       ports;
 
     qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
@@ -177,14 +178,8 @@ class Parser :
 
     void setCurRuleAction(const std::string&);
 
-    void setCurRuleSrcIpMask(nmco::IpAddress&, const nmco::IpAddress&);
-    void setCurRuleSrcHostIp(const nmco::IpAddress&);
-    void setCurRuleSrcAny();
-
-    void setCurRuleDstIpMask(nmco::IpAddress&, const nmco::IpAddress&);
-    void setCurRuleDstHostIp(const nmco::IpAddress&);
-    void setCurRuleDstAny();
-    void setCurRuleDstObjectGroup(const std::string&);
+    void setCurRuleSrc(const std::string&);
+    void setCurRuleDst(const std::string&);
 
     std::string setWildcardNetmask(nmco::IpAddress&, const nmco::IpAddress&);
 
