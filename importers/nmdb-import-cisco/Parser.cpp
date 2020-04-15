@@ -281,7 +281,6 @@ Parser::Parser() : Parser::base_type(start)
       *(indent
          [pnx::bind(&Parser::updateCurRule, this)] >>
         token // ACTION
-          //[pnx::bind(&nmco::AcRule::addAction, curRule, qi::_1)] >>
           [pnx::bind(&Parser::setCurRuleAction, this, qi::_1)] >>
         token // PROTOCOL
           [pnx::bind(&Parser::curRuleProtocol, this) = qi::_1] >>
