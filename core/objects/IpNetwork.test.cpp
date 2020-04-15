@@ -161,6 +161,73 @@ BOOST_AUTO_TEST_CASE(testSetters)
   }
 
   {
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {32, "0.0.0.0"},
+      {31, "0.0.0.1"},
+      {30, "0.0.0.3"},
+      {29, "0.0.0.7"},
+      {28, "0.0.0.15"},
+      {27, "0.0.0.31"},
+      {26, "0.0.0.63"},
+      {25, "0.0.0.127"},
+      {24, "0.0.0.255"},
+      {23, "0.0.1.255"},
+      {22, "0.0.3.255"},
+      {21, "0.0.7.255"},
+      {20, "0.0.15.255"},
+      {19, "0.0.31.255"},
+      {18, "0.0.63.255"},
+      {17, "0.0.127.255"},
+      {16, "0.0.255.255"},
+      {15, "0.1.255.255"},
+      {14, "0.3.255.255"},
+      {13, "0.7.255.255"},
+      {12, "0.15.255.255"},
+      {11, "0.31.255.255"},
+      {10, "0.63.255.255"},
+      {9,  "0.127.255.255"},
+      {8,  "0.255.255.255"},
+      {7,  "1.255.255.255"},
+      {6,  "3.255.255.255"},
+      {5,  "7.255.255.255"},
+      {4,  "15.255.255.255"},
+      {3,  "31.255.255.255"},
+      {2,  "63.255.255.255"},
+      {1,  "127.255.255.255"},
+      {0,  "255.255.255.255"},
+    };
+
+    for (const auto& [cidr, mask] : masks) {
+      TestIpNetwork ipMask;
+      ipMask.setAddress(mask);
+
+      TestIpNetwork ipNet;
+      bool is_contiguous = ipNet.setWildcardNetmask(ipMask);
+
+      BOOST_TEST(is_contiguous);
+      BOOST_TEST(ipNet.getCidr() == cidr);
+    }
+  }
+  {
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {32, "0.0.0.27"},
+      {32, "0.1.0.1"},
+      {32, "1.1.1.1"},
+    };
+
+    for (const auto& [cidr, mask] : masks) {
+      TestIpNetwork ipMask;
+      ipMask.setAddress(mask);
+
+      TestIpNetwork ipNet;
+      bool is_contiguous = ipNet.setWildcardNetmask(ipMask);
+
+      BOOST_TEST(!is_contiguous);
+      BOOST_TEST(ipNet.getCidr() == cidr);
+    }
+  }
+
+  {
     TestIpNetwork ipNet;
 
     BOOST_TEST(ipNet.getReason().empty());

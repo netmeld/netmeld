@@ -219,11 +219,51 @@ namespace netmeld::core::objects {
     cidr = count;
   }
 
-  void
+  bool
   IpNetwork::setWildcardNetmask(const IpNetwork& _mask)
   {
-    LOG_DEBUG << "IpNetwork::setWildcardNetmask called with " << _mask << '\n';
-    //TODO 04-07-2020: Implement this functionality
+    if (_mask.isV6()) {
+      LOG_ERROR << "IpNetwork::setWildcardNetmask was called with an Ipv6 address\n";
+      return false;
+    }
+
+    size_t count {32};
+    bool is_contiguous {true};
+    bool seen_zero {false};
+
+    std::istringstream maskStream(_mask.address.to_string());
+    std::vector<std::string> octets;
+
+    // Insert the octets in reverse order, so we read from right to left
+    for (std::string octet;
+         std::getline(maskStream, octet, '.') && !octet.empty();
+        ) {
+        octets.insert(octets.begin(), octet);
+    }
+
+    for (auto& octet : octets) {
+        size_t end;
+        unsigned long val = std::stoul(octet, &end, 10);
+        std::bitset<8> bVal(val);
+
+        // bitsets index from lsb to msb (so we are reading right to left)
+        for (size_t i {0}; i < 8; ++i) {
+            bool is_one = bVal[i] & 0x1;
+            if (is_one and seen_zero) {
+                is_contiguous = false;
+                count = 32;
+            } else if (is_one) {
+                --count;
+            } else {
+                seen_zero = true;
+            }
+        }
+    }
+
+    cidr = count;
+
+    return is_contiguous;
+
     //TODO 04-07-2020: Write a test for this functionality
   }
 

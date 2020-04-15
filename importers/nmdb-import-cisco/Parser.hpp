@@ -182,14 +182,16 @@ class Parser :
     void setCurRuleSrcPorts(const std::string&);
     void setCurRuleDstPorts(const std::string&);
 
-    void setCurRuleSrcIpMask(nmco::IpAddress, const nmco::IpAddress&);
+    void setCurRuleSrcIpMask(nmco::IpAddress&, const nmco::IpAddress&);
     void setCurRuleSrcHostIp(const nmco::IpAddress&);
     void setCurRuleSrcAny();
 
-    void setCurRuleDstIpMask(nmco::IpAddress, const nmco::IpAddress&);
+    void setCurRuleDstIpMask(nmco::IpAddress&, const nmco::IpAddress&);
     void setCurRuleDstHostIp(const nmco::IpAddress&);
     void setCurRuleDstAny();
     void setCurRuleDstObjectGroup(const std::string&);
+
+    std::string setWildcardNetmask(nmco::IpAddress&, const nmco::IpAddress&);
 
     void curRuleFinalize();
 

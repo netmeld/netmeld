@@ -547,12 +547,9 @@ Parser::setCurRuleDstPorts(const std::string& ports)
 }
 
 void
-Parser::setCurRuleSrcIpMask(nmco::IpAddress ipAddr,
-                                   const nmco::IpAddress& starMask)
+Parser::setCurRuleSrcIpMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 {
-  ipAddr.setWildcardNetmask(starMask);
-  //TODO 04-07-2020: This string will probably change after setWildcardNetmask is done
-  const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
+  const std::string ipAddrString {setWildcardNetmask(ipAddr, mask)};
 
   d.ruleBooks[curRuleBook][curRuleId].setSrcId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addSrc(ipAddrString);
@@ -578,12 +575,9 @@ Parser::setCurRuleSrcAny()
 }
 
 void
-Parser::setCurRuleDstIpMask(nmco::IpAddress ipAddr,
-                                        const nmco::IpAddress& starMask)
+Parser::setCurRuleDstIpMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 {
-  ipAddr.setWildcardNetmask(starMask);
-  //TODO 04-07-2020: This string will probably change after setWildcardNetmask is done
-  const std::string ipAddrString {ipAddr.toString() + " *" + starMask.toString()};
+  const std::string ipAddrString {setWildcardNetmask(ipAddr, mask)};
 
   d.ruleBooks[curRuleBook][curRuleId].setDstId(ZONE);
   d.ruleBooks[curRuleBook][curRuleId].addDst(ipAddrString);
@@ -616,6 +610,22 @@ Parser::setCurRuleDstObjectGroup(const std::string& objectGroup)
   d.networkBooks[ZONE][objectGroup].addData(objectGroup);
 
   d.observations.addNotable("access-list rule destination object-group " + objectGroup);
+}
+
+std::string
+Parser::setWildcardNetmask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
+{
+  bool is_contiguous = ipAddr.setWildcardNetmask(mask);
+  if (!is_contiguous) {
+    std::ostringstream msg;
+    msg << "IpAddress (" << ipAddr
+      << ") set with non-contiguous wildcard netmask (" << mask << ")";
+
+    LOG_WARN << msg.str() << '\n';
+    d.observations.addUnsupportedFeature(msg.str());
+  }
+
+  return ipAddr.toString();
 }
 
 void
