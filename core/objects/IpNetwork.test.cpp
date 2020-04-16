@@ -115,22 +115,23 @@ BOOST_AUTO_TEST_CASE(testSetters)
   }
 
   {
-    TestIpNetwork ipNet;
+    TestIpNetwork ipNet {"1.2.3.4", ""};
 
     const size_t NUM_OCTETS {4};
     const size_t OCTET_SIZE {8};
     std::bitset<OCTET_SIZE> maskBits[NUM_OCTETS];
-    struct in_addr addr;
-    int domain {AF_INET};
-    char maskStr[INET_ADDRSTRLEN];
+    std::ostringstream oss;
     for (size_t z {0}; z < NUM_OCTETS; z++) {
       for (size_t i {1}; i <= OCTET_SIZE; i++) {
+        oss.str("");
         for (size_t pos {0}; pos < NUM_OCTETS; pos++) {
-          addr.s_addr <<= OCTET_SIZE;
-          addr.s_addr |= maskBits[pos].to_ulong();
+          oss << maskBits[pos].to_ulong();
+          if ((pos+1) < NUM_OCTETS) {
+            oss << '.';
+          }
         }
-        inet_ntop(domain, &addr, maskStr, INET_ADDRSTRLEN);
-        ipNet.setNetmask(nmco::IpNetwork(std::string(maskStr)));
+        nmco::IpNetwork mask {oss.str()};
+        ipNet.setNetmask(mask);
         BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getCidr());
 
         maskBits[z].set(OCTET_SIZE-i);
@@ -138,21 +139,23 @@ BOOST_AUTO_TEST_CASE(testSetters)
     }
   }
   {
-    TestIpNetwork ipNet;
+    TestIpNetwork ipNet {"1234:5678:abcd:ef01:2345:6789:0abc:def0", ""};
 
-    const size_t NUM_OCTETS {16};
-    const size_t OCTET_SIZE {8};
+    const size_t NUM_OCTETS {8};
+    const size_t OCTET_SIZE {16};
     std::bitset<OCTET_SIZE> maskBits[NUM_OCTETS];
-    struct in6_addr addr;
-    int domain {AF_INET6};
-    char maskStr[INET6_ADDRSTRLEN];
+    std::ostringstream oss;
     for (size_t z {0}; z < NUM_OCTETS; z++) {
       for (size_t i {1}; i <= OCTET_SIZE; i++) {
+        oss.str("");
         for (size_t pos {0}; pos < NUM_OCTETS; pos++) {
-          addr.s6_addr[pos] = maskBits[pos].to_ulong();
+          oss << std::hex << maskBits[pos].to_ulong();
+          if ((pos+1) < NUM_OCTETS) {
+            oss << ':';
+          }
         }
-        inet_ntop(domain, &addr, maskStr, INET6_ADDRSTRLEN);
-        ipNet.setNetmask(nmco::IpNetwork(std::string(maskStr)));
+        nmco::IpNetwork mask {oss.str()};
+        ipNet.setNetmask(mask);
         BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getCidr());
 
         maskBits[z].set(OCTET_SIZE-i);
