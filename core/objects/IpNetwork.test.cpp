@@ -139,6 +139,20 @@ BOOST_AUTO_TEST_CASE(testSetters)
     }
   }
   {
+    TestIpNetwork ipNet {"1.2.3.4", ""};
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {32, "255.0.255.0"},
+      {32, "255.255.255.138"},
+      {32, "1.1.1.1"},
+    };
+
+    for (const auto& [cidr, mask] : masks) {
+      ipNet.setNetmask(nmco::IpNetwork(mask));
+      BOOST_TEST(cidr == ipNet.getCidr());
+    }
+  }
+
+  {
     TestIpNetwork ipNet {"1234:5678:abcd:ef01:2345:6789:0abc:def0", ""};
 
     const size_t NUM_OCTETS {8};
@@ -159,6 +173,46 @@ BOOST_AUTO_TEST_CASE(testSetters)
         BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getCidr());
 
         maskBits[z].set(OCTET_SIZE-i);
+      }
+    }
+  }
+  {
+    TestIpNetwork ipNet {"1234:5678:abcd:ef01:2345:6789:0abc:def0", ""};
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {128, "ffff:0000:ffff::0"},
+      {128, "ffff:ffaf::0"},
+      {128, "1:1:1:1:1:1:1:1"},
+    };
+
+    for (const auto& [cidr, mask] : masks) {
+      ipNet.setNetmask(nmco::IpNetwork(mask));
+      BOOST_TEST(cidr == ipNet.getCidr());
+    }
+  }
+
+  {
+    TestIpNetwork ipNet {"1.2.3.4", ""};
+
+    const size_t NUM_OCTETS {4};
+    const size_t OCTET_SIZE {8};
+    std::bitset<OCTET_SIZE> maskBits[NUM_OCTETS];
+    std::ostringstream oss;
+    for (size_t z {0}; z < NUM_OCTETS; ++z) {
+      for (size_t i {1}; i <= OCTET_SIZE; ++i) {
+        oss.str("");
+        for (size_t pos {0}; pos < NUM_OCTETS; ++pos) {
+          oss << maskBits[pos].to_ulong();
+          if ((pos+1) < NUM_OCTETS) {
+            oss << '.';
+          }
+        }
+        nmco::IpNetwork mask {oss.str()};
+        const auto& isContiguous = ipNet.setWildcardMask(mask);
+        BOOST_TEST(isContiguous);
+        size_t val {((NUM_OCTETS*OCTET_SIZE)-((z*OCTET_SIZE)+(i-1)))};
+        BOOST_TEST(val == ipNet.getCidr());
+
+        maskBits[NUM_OCTETS-1-z].set(i-1);
       }
     }
   }
@@ -205,7 +259,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
       ipMask.setAddress(mask);
 
       TestIpNetwork ipNet;
-      bool is_contiguous = ipNet.setWildcardNetmask(ipMask);
+      bool is_contiguous = ipNet.setWildcardMask(ipMask);
 
       BOOST_TEST(is_contiguous);
       BOOST_TEST(ipNet.getCidr() == cidr);
@@ -223,7 +277,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
       ipMask.setAddress(mask);
 
       TestIpNetwork ipNet;
-      bool is_contiguous = ipNet.setWildcardNetmask(ipMask);
+      bool is_contiguous = ipNet.setWildcardMask(ipMask);
 
       BOOST_TEST(!is_contiguous);
       BOOST_TEST(ipNet.getCidr() == cidr);

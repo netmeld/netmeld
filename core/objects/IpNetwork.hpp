@@ -79,7 +79,7 @@ namespace netmeld::core::objects {
       void setCidr(uint8_t);
       void setExtraWeight(const uint32_t);
       void setNetmask(const IpNetwork&);
-      bool setWildcardNetmask(const IpNetwork&);
+      bool setWildcardMask(const IpNetwork&);
       void setReason(const std::string&);
 
       bool isDefault() const;

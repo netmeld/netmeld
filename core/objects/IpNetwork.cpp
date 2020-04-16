@@ -236,7 +236,7 @@ namespace netmeld::core::objects {
   }
 
   bool
-  IpNetwork::setWildcardNetmask(const IpNetwork& _mask)
+  IpNetwork::setWildcardMask(const IpNetwork& _mask)
   {
     if (_mask.isV4()) {
       return setCidrFromMask<8>(_mask, 10, '.', true);

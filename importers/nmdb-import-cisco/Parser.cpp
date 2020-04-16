@@ -300,7 +300,7 @@ Parser::Parser() : Parser::base_type(start)
 
   addressArgument =
     ( (ipAddr >> ipAddr)
-        [qi::_val = pnx::bind(&Parser::setWildcardNetmask, this, qi::_1, qi::_2)]
+        [qi::_val = pnx::bind(&Parser::setWildcardMask, this, qi::_1, qi::_2)]
      |
       (qi::lit("host") >> ipAddr)
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
@@ -532,16 +532,15 @@ Parser::setCurRuleDst(const std::string& addr)
 }
 
 std::string
-Parser::setWildcardNetmask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
+Parser::setWildcardMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 {
-  bool is_contiguous = ipAddr.setWildcardNetmask(mask);
-  if (!is_contiguous) {
-    std::ostringstream msg;
-    msg << "IpAddress (" << ipAddr
-      << ") set with non-contiguous wildcard netmask (" << mask << ")";
+  bool isContiguous {ipAddr.setWildcardMask(mask)};
+  if (!isContiguous) {
+    std::ostringstream oss;
+    oss << "IpAddress (" << ipAddr
+        << ") set with non-contiguous wildcard netmask (" << mask << ")";
 
-    LOG_WARN << msg.str() << '\n';
-    d.observations.addUnsupportedFeature(msg.str());
+    d.observations.addUnsupportedFeature(oss.str());
   }
 
   return ipAddr.toString();

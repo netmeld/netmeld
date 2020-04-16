@@ -182,7 +182,7 @@ class Parser :
     void setCurRuleSrc(const std::string&);
     void setCurRuleDst(const std::string&);
 
-    std::string setWildcardNetmask(nmco::IpAddress&, const nmco::IpAddress&);
+    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
 
     void curRuleFinalize();
 
