@@ -65,7 +65,10 @@ namespace netmeld::core::objects {
     private:
     protected:
       template<size_t n>
-      std::string convert() const;
+        bool setCidrFromMask(const IpNetwork&, const size_t, const char, bool);
+      template<size_t n>
+        std::string convert() const;
+
       std::string getNetwork() const;
 
     public:

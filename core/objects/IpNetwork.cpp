@@ -188,83 +188,61 @@ namespace netmeld::core::objects {
     extraWeight = _extraWeight;
   }
 
-  void
-  IpNetwork::setNetmask(const IpNetwork& _mask)
+  template<size_t bits> bool
+  IpNetwork::setCidrFromMask(const IpNetwork& _mask,
+                             const size_t base,
+                             const char sep,
+                             bool flipIt)
   {
     size_t count {0};
-    size_t base;
-    char   sep;
-
-    if (_mask.isV4()) {
-      base = 10;
-      sep = '.';
-    } else {
-      base = 16;
-      sep = ':';
-    }
+    bool isContiguous {true};
+    bool seenZero {false};
 
     std::istringstream octets(_mask.address.to_string());
     for (std::string octet;
          std::getline(octets, octet, sep) && !octet.empty();
         ) {
       size_t end;
-      unsigned long val = std::stoul(octet, &end, base);
+      unsigned long val {std::stoul(octet, &end, base)};
+      std::bitset<bits> bVal(val);
+      if (flipIt) {bVal.flip();}
 
-      while (val != 0) {
-        if (val & 0x1) { count++; }
-        val >>= 1;
+      for (size_t i {1}; i <= bits; ++i) {
+        bool isOne {bVal.test(bits-i)};
+        if (isOne && seenZero) {
+          isContiguous = false;
+          count = ((address.is_v4()) ? 32 : 128);
+        } else if (isOne) {
+          ++count;
+        } else {
+          seenZero = true;
+        }
       }
     }
 
     cidr = count;
+
+    return isContiguous;
+  }
+
+  void
+  IpNetwork::setNetmask(const IpNetwork& _mask)
+  {
+    if (_mask.isV4()) {
+      setCidrFromMask<8>(_mask, 10, '.', false);
+    } else {
+      setCidrFromMask<16>(_mask, 16, ':', false);
+    }
   }
 
   bool
   IpNetwork::setWildcardNetmask(const IpNetwork& _mask)
   {
-    if (_mask.isV6()) {
-      LOG_ERROR << "IpNetwork::setWildcardNetmask was called with an Ipv6 address\n";
-      return false;
+    if (_mask.isV4()) {
+      return setCidrFromMask<8>(_mask, 10, '.', true);
+    } else {
+      return setCidrFromMask<16>(_mask, 16, ':', true);
     }
-
-    size_t count {32};
-    bool is_contiguous {true};
-    bool seen_zero {false};
-
-    std::istringstream maskStream(_mask.address.to_string());
-    std::vector<std::string> octets;
-
-    // Insert the octets in reverse order, so we read from right to left
-    for (std::string octet;
-         std::getline(maskStream, octet, '.') && !octet.empty();
-        ) {
-        octets.insert(octets.begin(), octet);
-    }
-
-    for (auto& octet : octets) {
-        size_t end;
-        unsigned long val = std::stoul(octet, &end, 10);
-        std::bitset<8> bVal(val);
-
-        // bitsets index from lsb to msb (so we are reading right to left)
-        for (size_t i {0}; i < 8; ++i) {
-            bool is_one = bVal[i] & 0x1;
-            if (is_one and seen_zero) {
-                is_contiguous = false;
-                count = 32;
-            } else if (is_one) {
-                --count;
-            } else {
-                seen_zero = true;
-            }
-        }
-    }
-
-    cidr = count;
-
-    return is_contiguous;
-
-    //TODO 04-07-2020: Write a test for this functionality
   }
 
   void
