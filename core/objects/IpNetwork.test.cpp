@@ -191,6 +191,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
   }
 
   {
+    // This is another way to do the test directly below
     TestIpNetwork ipNet {"1.2.3.4", ""};
 
     const size_t NUM_OCTETS {4};
@@ -216,7 +217,6 @@ BOOST_AUTO_TEST_CASE(testSetters)
       }
     }
   }
-
   {
     std::vector<std::pair<unsigned int, std::string>> masks {
       {32, "0.0.0.0"},

@@ -241,7 +241,9 @@ namespace netmeld::core::objects {
     if (_mask.isV4()) {
       return setCidrFromMask<8>(_mask, 10, '.', true);
     } else {
-      return setCidrFromMask<16>(_mask, 16, ':', true);
+      LOG_ERROR << "IpNetwork::setWildcardMask was called with"
+                << " an IPv6 address\n";
+      return false;
     }
   }
 
