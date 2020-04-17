@@ -88,34 +88,37 @@ class Tool : public nmct::AbstractImportTool<P,R>
         }
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
-        
 
         // Process the rest of the results
-        LOG_DEBUG << "Iterating over vlans\n";
-        for (auto& result : results.vlans) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
-          result.save(t, toolRunId, deviceId);
-        }
 
-        LOG_DEBUG << "Iterating over ifaces\n";
-        for (auto& [name, result] : results.ifaces) {
+
+        LOG_DEBUG << "Iterating over Services\n";
+        for (auto& result : results.services) {
+          result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
-          result.save(t, toolRunId, deviceId);
         }
 
         LOG_DEBUG << "Iterating over routes\n";
         for (auto& result : results.routes) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, deviceId);
-        }
-
-        LOG_DEBUG << "Iterating over services\n";
-        for (auto& result : results.services) {
           LOG_DEBUG << result.toDebugString() << std::endl;
-          result.save(t, toolRunId, "");
         }
 
-        LOG_DEBUG << "Iterating over observations:\n";
+        LOG_DEBUG << "Iterating over vlans\n";
+        for (auto& result : results.vlans) {
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
+        }
+
+        LOG_DEBUG << "Iterating over interfaces\n";
+        for (auto& [name, result] : results.ifaces) {
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
+        }
+
+
+
+        LOG_DEBUG << "Iterating over Observations\n";
         LOG_DEBUG << results.observations.toDebugString() << std::endl;
         results.observations.save(t, toolRunId, deviceId);
 

@@ -121,6 +121,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
             LOG_DEBUG << book.toDebugString() << '\n';
           }
         }
+
         LOG_DEBUG << "Iterating over serviceBooks\n";
         for (auto& [zone, apps] : results.serviceBooks) {
           for (auto& [name, book] : apps) {
@@ -130,6 +131,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
             LOG_DEBUG << book.toDebugString() << '\n';
           }
         }
+
         LOG_DEBUG << "Iterating over ruleBooks\n";
         for (auto& [name, book] : results.ruleBooks) {
           LOG_DEBUG << name << '\n';
@@ -140,8 +142,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over Observations\n";
+        LOG_DEBUG << results.observations.toDebugString() << '\n';
         results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << "\n";
 
         first = false;
       }

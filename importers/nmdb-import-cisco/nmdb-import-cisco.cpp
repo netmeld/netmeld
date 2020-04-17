@@ -30,6 +30,7 @@
 
 namespace nmco = netmeld::core::objects;
 namespace nmct = netmeld::core::tools;
+namespace nmcu = netmeld::core::utils;
 
 
 // =============================================================================
@@ -41,24 +42,43 @@ class Tool : public nmct::AbstractImportTool<P,R>
   // ===========================================================================
   // Variables
   // ===========================================================================
+  private: // Variables should generally be private
+  protected: // Variables intended for internal/subclass API
+    // Inhertied from AbstractTool at this scope
+      // std::string            helpBlurb;
+      // std::string            programName;
+      // std::string            version;
+      // ProgramOptions         opts;
+    // Inhertied from AbstractImportTool at this scope
+      // TResults               tResults;
+      // nmco::Uuid              toolRunId;
+      // nmco::Time              executionStart;
+      // nmco::Time              executionStop;
+  public: // Variables should rarely appear at this scope
 
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  public:
+  private: // Constructors should rarely appear at this scope
+  protected: // Constructors intended for internal/subclass API
+  public: // Constructors should generally be public
     Tool() : nmct::AbstractImportTool<P,R>
       (
-       "show running-config",
-       PROGRAM_NAME,
-       PROGRAM_VERSION
+       // TODO Add for each OS supported?
+       "IOS|NXOS|ASA: show running-config all",  // command line tool imports data from
+       // WLC|WISM: "show run-config startup-commands"
+       PROGRAM_NAME,     // program name (set in CMakeLists.txt)
+       PROGRAM_VERSION   // program version (set in CMakeLists.txt)
       )
     {}
+
 
   // ===========================================================================
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
+    // Overriden from AbstractImportTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -97,31 +117,31 @@ class Tool : public nmct::AbstractImportTool<P,R>
               deviceId,
               result);
 
-          LOG_DEBUG << result << std::endl;
+          LOG_DEBUG << result << '\n';
         }
 
         LOG_DEBUG << "Iterating over Services\n";
         for (auto& result : results.services) {
           result.save(t, toolRunId, "");
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over routes\n";
         for (auto& result : results.routes) {
           result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over vlans\n";
         for (auto& result : results.vlans) {
           result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over interfaces\n";
         for (auto& [name, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over networkBooks\n";
@@ -158,12 +178,29 @@ class Tool : public nmct::AbstractImportTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over Observations\n";
+        LOG_DEBUG << results.observations.toDebugString() << '\n';
         results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << std::endl;
 
         first = false;
       }
     }
+
+  protected: // Methods part of subclass API
+    // Inherited from AbstractTool at this scope
+      // std::string const getDbName() const;
+      // virtual void printVersion() const;
+    // Inherited from AbstractImportTool at this scope
+      // fs::path    const getDataPath() const;
+      // std::string const getDeviceId() const;
+      // nmco::Uuid   const getToolRunId() const;
+      // virtual void parseData();
+      // virtual void printHelp() const;
+      // virtual int  runTool();
+      // virtual void setToolRunId();
+      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
+  public: // Methods part of public API
+    // Inherited from AbstractTool, don't override as primary tool entry point
+      // int start(int, char**) noexcept;
 };
 
 
@@ -173,6 +210,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<Parser, Result> tool;
+  Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
 }
