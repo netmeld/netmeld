@@ -49,13 +49,13 @@ struct Data
 {
   std::string                          domainName;
   nmco::DeviceInformation              devInfo;
+  nmco::ToolObservations               observations;
 
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
   std::vector<nmco::Route>             routes;
   std::vector<nmco::Service>           services;
   std::vector<nmco::Vlan>              vlans;
 
-  nmco::ToolObservations               observations;
 };
 typedef std::vector<Data> Result;
 
@@ -77,8 +77,7 @@ class Parser :
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       vlanDef,
       config,
-      interface, switchport, spanningTree
-      ;
+      interface, switchport, spanningTree;
 
     qi::rule<nmcp::IstreamIter, std::string()>
       tokens,
@@ -112,10 +111,6 @@ class Parser :
   // Methods
   // ===========================================================================
   private: // Methods which should be hidden from API users
-    void ifaceInit(const std::string&);
-    void ifaceSetUpdate(std::set<std::string>* const);
-
-    void routeAdd(const nmco::IpAddress&, const std::string&);
 
     void serviceAddNtp(const nmco::IpAddress&);
     void serviceAddDhcp(const nmco::IpAddress&);
@@ -123,6 +118,10 @@ class Parser :
     void serviceAddRadius(const nmco::IpAddress&);
     void serviceAddDns(const std::vector<nmco::IpAddress>&);
     void serviceAddSyslog(const nmco::IpAddress&);
+
+    void routeAdd(const nmco::IpAddress&, const std::string&);
+    void ifaceInit(const std::string&);
+    void ifaceSetUpdate(std::set<std::string>* const);
 
     void vlanAdd(unsigned short, const std::string&);
     void vlanAddIfaceData();

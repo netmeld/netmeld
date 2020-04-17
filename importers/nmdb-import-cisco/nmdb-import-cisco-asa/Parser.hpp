@@ -27,16 +27,16 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/AcRule.hpp>
 #include <netmeld/core/objects/AcNetworkBook.hpp>
+#include <netmeld/core/objects/AcRule.hpp>
 #include <netmeld/core/objects/AcServiceBook.hpp>
 #include <netmeld/core/objects/DeviceInformation.hpp>
 #include <netmeld/core/objects/InterfaceNetwork.hpp>
 #include <netmeld/core/objects/Route.hpp>
+#include <netmeld/core/objects/ToolObservations.hpp>
 #include <netmeld/core/parsers/ParserDomainName.hpp>
 #include <netmeld/core/parsers/ParserIpAddress.hpp>
 #include <netmeld/core/parsers/ParserMacAddress.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
 
 
 namespace nmco = netmeld::core::objects;
@@ -53,13 +53,12 @@ typedef std::map<size_t, nmco::AcRule> RuleBook;
 struct Data
 {
   nmco::DeviceInformation              devInfo;
+  nmco::ToolObservations observations;
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
 
   std::map<std::string, NetworkBook>  networkBooks;
   std::map<std::string, ServiceBook>  serviceBooks;
   std::map<std::string, RuleBook>     ruleBooks;
-
-  nmco::ToolObservations observations;
 };
 typedef std::vector<Data> Result;
 
