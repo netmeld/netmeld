@@ -87,8 +87,9 @@ class Parser :
       start;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
-      vlanDef,
       config,
+      domainData,
+      vlanDef,
       policy, indent,
       interface, switchport, spanningTree;
 
@@ -142,33 +143,20 @@ class Parser :
   // Methods
   // ===========================================================================
   private: // Methods which should be hidden from API users
-    // Global Cdp/Bpdu related
-//    void ifaceSetUpdate(std::set<std::string>* const);
-//    void addManuallySetCdpIface();
-//    void addManuallySetBpduGuardIface();
-//    void addManuallySetBpduFilterIface();
-
     // Device related
-//    void setVendor(const std::string&);
-//    void setDevId(const std::string&);
-    void addAaa(const std::string&);
+    void deviceAaaAdd(const std::string&);
 
     // Service related
     void serviceAddDhcp(const nmco::IpAddress&);
     void serviceAddNtp(const nmco::IpAddress&);
     void serviceAddSnmp(const nmco::IpAddress&);
-    /*
     void serviceAddRadius(const nmco::IpAddress&);
     void serviceAddDns(const std::vector<nmco::IpAddress>&);
     void serviceAddSyslog(const nmco::IpAddress&);
-    */
 
     // Route related
-    void addRouteIp(const nmco::IpAddress&, const nmco::IpAddress&);
-    void addRouteIface(const nmco::IpAddress&, const std::string&);
-    /*
-    void routeAdd(const nmco::IpAddress&, const std::string&);
-    */
+    void routeAddIp(const nmco::IpAddress&, const nmco::IpAddress&);
+    void routeAddIface(const nmco::IpAddress&, const std::string&);
 
     // Interface related
     void ifaceInit(const std::string&);
@@ -176,11 +164,8 @@ class Parser :
     void ifaceSetUpdate(std::set<std::string>* const);
 
     // Vlan related
-    void addVlan(nmco::Vlan&);
-    /*
-    void vlanAdd(unsigned short, const std::string&);
+    void vlanAdd(nmco::Vlan&);
     void vlanAddIfaceData();
-    */
 
     // Policy Related
     void createAccessGroup(const std::string&, const std::string&);
@@ -205,4 +190,3 @@ class Parser :
     Result getData();
 };
 #endif // PARSER_HPP
-
