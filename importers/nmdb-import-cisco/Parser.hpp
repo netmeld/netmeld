@@ -42,13 +42,17 @@
 #include <netmeld/core/tools/AbstractImportTool.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
+#include "CommonRules.hpp"
+
 namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 namespace nmcu = netmeld::core::utils;
+namespace nmdsic = netmeld::datastore::importers::cisco;
 
 typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
 typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
 typedef std::map<size_t, nmco::AcRule> RuleBook;
+
 
 // =============================================================================
 // Data containers
@@ -100,9 +104,9 @@ class Parser :
     qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
       vlan;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
-      tokens,
-      token;
+//    qi::rule<nmcp::IstreamIter, std::string()>
+//      tokens,
+//      token;
 
     nmcp::ParserDomainName  domainName;
     nmcp::ParserIpAddress   ipAddr;

@@ -33,6 +33,7 @@ add_definitions(
   )
 
 add_executable(${TOOL_NAME}
+  CommonRules.cpp
   Parser.cpp
   ${TOOL_NAME}.cpp
   )

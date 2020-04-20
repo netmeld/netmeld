@@ -51,7 +51,7 @@ Parser::Parser() : Parser::base_type(start)
 
         // TODO this goes away when ASA collapsed
       | ((qi::string("PIX") | qi::string("ASA")) >>
-         qi::lit("Version") > *token > qi::eol)
+         qi::lit("Version") > *nmdsic::token > qi::eol)
            [pnx::bind(&Parser::unsup, this, "(global) " + qi::_1 + " Version"),
             pnx::bind(&Parser::globalCdpEnabled, this) = false]
 
@@ -61,7 +61,7 @@ Parser::Parser() : Parser::base_type(start)
                [pnx::bind(&Parser::globalBpduGuardEnabled, this) = true]
            | qi::lit("bpdufilter")
                [pnx::bind(&Parser::globalBpduFilterEnabled, this) = true]
-          ) > *token > qi::eol)
+          ) > *nmdsic::token > qi::eol)
 
       | (interface)
           [pnx::bind(&Parser::vlanAddIfaceData, this)]
@@ -71,16 +71,16 @@ Parser::Parser() : Parser::base_type(start)
          (   (ipAddr >> ipAddr >> ipAddr)
                [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
                 pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_3)]
-           | (ipAddr >> ipAddr >> token)
+           | (ipAddr >> ipAddr >> nmdsic::token)
                [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
                 pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_3)]
            | (ipAddr >> ipAddr)
                [pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2)]
-           | (ipAddr >> token)
+           | (ipAddr >> nmdsic::token)
                [pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2)]
-         ) >> -token >> qi::eol)
+         ) >> -nmdsic::token >> qi::eol)
 
-      | (qi::lit("aaa ") >> tokens >> qi::eol)
+      | (qi::lit("aaa ") >> nmdsic::tokens >> qi::eol)
             [pnx::bind(&Parser::deviceAaaAdd, this, qi::_1)]
 
       | (qi::lit("ip access-list") >> policy)
@@ -91,46 +91,41 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("ntp server") >> ipAddr > qi::eol)
            [pnx::bind(&Parser::serviceAddNtp, this, qi::_1)]
         // TODO doesn't catch when alias
-      | (qi::lit("snmp-server host") >> ipAddr > -tokens > qi::eol)
+      | (qi::lit("snmp-server host") >> ipAddr > -nmdsic::tokens > qi::eol)
            [pnx::bind(&Parser::serviceAddSnmp, this, qi::_1)]
         // TODO doesn't catch when it is a block
-      | (qi::lit("radius-server host") > ipAddr > -qi::omit[+token] > qi::eol)
+      | (qi::lit("radius-server host") > ipAddr > -qi::omit[+nmdsic::token] > qi::eol)
            [pnx::bind(&Parser::serviceAddRadius, this, qi::_1)]
         // TODO doesn't handle vrf
         // TODO ip name-server [vrf vrf-name] ip1
       | (qi::lit("ip name-server") > +ipAddr > qi::eol)
            [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
-      | (qi::lit("logging server") > ipAddr > -qi::omit[+token] > qi::eol)
+      | (qi::lit("logging server") > ipAddr > -qi::omit[+nmdsic::token] > qi::eol)
            [pnx::bind(&Parser::serviceAddSyslog, this, qi::_1)]
 
       | (vlan)
           [pnx::bind(&Parser::vlanAdd, this, qi::_1)]
 
       // ignore the rest
-      | (qi::omit[+token > -qi::eol])
+      | (qi::omit[+nmdsic::token > -qi::eol])
       | (qi::omit[+qi::eol])
     )
     ;
 //  config =
 //    *(
-//        (qi::lit("hostname") >> fqdn >> qi::eol)
-//           [pnx::bind([&](const std::string& val)
-//                      {d.devInfo.setDeviceId(val);}, qi::_1)]
-//      | (qi::lit("domain-name") >> fqdn >> qi::eol)
-//           [pnx::bind(&Parser::unsup, this, "domain-name")]
 //      | (qi::lit("name") >> ipAddr >> fqdn
 //           [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
-//         -(qi::lit("description") >> tokens) >> qi::eol)
+//         -(qi::lit("description") >> nmdsic::tokens) >> qi::eol)
 //           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
-//      | (qi::lit("name") >> tokens >> qi::eol)
+//      | (qi::lit("name") >> nmdsic::tokens >> qi::eol)
 //           [pnx::bind(&Parser::unsup, this, "name")]
 //      | (asaIface)
 //      | (qi::lit("object-group") > (objGrpNet | objGrpSrv | objGrpProto))
 //      | (qi::lit("object") > (objNet | objSrv))
 //      | (qi::lit("access-list") >> policy)
 //      // access-group ac-list {in|out} interface ifaceName
-//      | (qi::lit("access-group") >> token >> token >>
-//         qi::lit("interface") >> token)
+//      | (qi::lit("access-group") >> nmdsic::token >> nmdsic::token >>
+//         qi::lit("interface") >> nmdsic::token)
 //           [pnx::bind(&Parser::assignRules, this, qi::_1, qi::_2, qi::_3)]
 //      | ignoredLine
 //     )
@@ -151,18 +146,18 @@ Parser::Parser() : Parser::base_type(start)
     (qi::lit("vlan") >> qi::ushort_ >> qi::eol)
        [pnx::bind(&nmco::Vlan::setId, &qi::_val, qi::_1)] >>
     *(indent >>
-      (  (qi::lit("name") >> token)
+      (  (qi::lit("name") >> nmdsic::token)
             [pnx::bind(&nmco::Vlan::setDescription, &qi::_val, qi::_1)]
-       | (qi::omit[+token]) // Ignore all other settings
+       | (qi::omit[+nmdsic::token]) // Ignore all other settings
       ) >> qi::eol
     )
     ;
 
   interface =
     qi::lit("interface") >> // TODO can this be collapsed?
-    (  (token >> token > qi::eol)
+    (  (nmdsic::token >> nmdsic::token > qi::eol)
           [pnx::bind(&Parser::ifaceInit, this, qi::_1 + " " + qi::_2)]
-     | (token > qi::eol)
+     | (nmdsic::token > qi::eol)
           [pnx::bind(&Parser::ifaceInit, this, qi::_1)]
     ) >>
     *(indent >>
@@ -170,7 +165,7 @@ Parser::Parser() : Parser::base_type(start)
         [pnx::bind(&Parser::isNo, this) = qi::_1] >>
       (  (qi::lit("inherit port-profile"))
             [pnx::bind(&Parser::unsup, this, "port-profile")]
-       | (qi::lit("description") >> tokens)
+       | (qi::lit("description") >> nmdsic::tokens)
             [pnx::bind(&nmco::InterfaceNetwork::setDescription,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("shutdown"))
@@ -203,7 +198,7 @@ Parser::Parser() : Parser::base_type(start)
        | switchport
        | spanningTree
 
-       | (qi::lit("ip access-group") >> token >> token)
+       | (qi::lit("ip access-group") >> nmdsic::token >> nmdsic::token)
             [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
 
        /* START: No examples of these, cannot verify */
@@ -224,21 +219,21 @@ Parser::Parser() : Parser::base_type(start)
        /* END: No examples of these, cannot verify */
 
        // Ignore all other settings
-       | (qi::omit[+token])
+       | (qi::omit[+nmdsic::token])
       ) >> qi::eol
     )
     ;
 //  asaIface =
-//    (qi::lit("interface") >> token >> qi::eol)
+//    (qi::lit("interface") >> nmdsic::token >> qi::eol)
 //       [pnx::bind(&Parser::ifaceInit, this, qi::_1)] >>
 //    // Explicitly check to ensure still in interface scope
 //    *(qi::no_skip[+qi::char_(' ')] >>
 //      (
 //       // Capture general settings
-//         (qi::lit("description") >> tokens)
+//         (qi::lit("description") >> nmdsic::tokens)
 //            [pnx::bind(&nmco::InterfaceNetwork::setDescription,
 //                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
-//       | (qi::lit("nameif") >> token)
+//       | (qi::lit("nameif") >> nmdsic::token)
 //            [pnx::bind([&](const std::string& val)
 //                       {ifaceAliases.emplace(val, *tgtIface);}, qi::_1)]
 //       | qi::lit("ipv6 address") >>
@@ -262,7 +257,7 @@ Parser::Parser() : Parser::base_type(start)
 //          //  pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
 //          //            pnx::bind(&Parser::tgtIface, this), qi::_1)]
 //       // Ignore all other settings
-//       | (qi::omit[+token])
+//       | (qi::omit[+nmdsic::token])
 //       | (&qi::eol) // space prefixed blank line
 //      ) >> qi::eol
 //    )
@@ -271,7 +266,7 @@ Parser::Parser() : Parser::base_type(start)
   // TODO migrate
   switchport =
     qi::lit("switchport") >>
-    (  (qi::lit("mode") >> token)
+    (  (qi::lit("mode") >> nmdsic::token)
           [pnx::bind(&nmco::InterfaceNetwork::setSwitchportMode,
                      pnx::bind(&Parser::tgtIface, this), "L2 " + qi::_1)]
      | (qi::lit("nonegotiate"))
@@ -295,7 +290,7 @@ Parser::Parser() : Parser::base_type(start)
      | (qi::lit("port-security maximum") >> qi::ushort_)
           [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     | (qi::lit("port-security violation") >> token)
+     | (qi::lit("port-security violation") >> nmdsic::token)
           [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityViolationAction,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
        // TODO add non-consuming lookahead to ensure ends in eol
@@ -322,7 +317,7 @@ Parser::Parser() : Parser::base_type(start)
                    [pnx::bind(&nmco::InterfaceNetwork::addVlan,
                               pnx::bind(&Parser::tgtIface, this), qi::_1)]
              ) % qi::lit(',')))
-         | (token >> token)
+         | (nmdsic::token >> nmdsic::token)
               [pnx::bind(&Parser::addObservation, this,
                          "VLAN trunk " + qi::_1)]
         )
@@ -332,7 +327,7 @@ Parser::Parser() : Parser::base_type(start)
         (  qi::ushort_
              [pnx::bind(&nmco::InterfaceNetwork::addVlan,
                         pnx::bind(&Parser::tgtIface, this), qi::_1)]
-         | token
+         | nmdsic::token
              [pnx::bind(&Parser::addObservation, this,
                         "voice VLAN " + qi::_1)]
         )
@@ -375,14 +370,14 @@ Parser::Parser() : Parser::base_type(start)
 //             [pnx::bind([&](){tgtIface->setPortfast(false);})]
 //        )
 //       )
-     | qi::omit[+token]
+     | qi::omit[+nmdsic::token]
     )
     ;
 
   // TODO double check vs other types
   policy =
     ( // "ip access-list standard" NAME
-      (qi::lit("standard") >> token >> qi::eol)
+      (qi::lit("standard") >> nmdsic::token >> qi::eol)
         [pnx::bind(&Parser::unsup, this, "ip access-list standard " + qi::_1)]
      |
        // "ip access-list extended" NAME
@@ -396,13 +391,13 @@ Parser::Parser() : Parser::base_type(start)
        //    DEST ( IpAddr *mask | "host" IpAddr | "any" | "object-group" name )
        //    PORTS ( "eq" port | "range" startPort endPort )
        //    "log" (Couldn't find anything about options to this in this context)
-      (qi::lit("extended") >> token >> qi::eol) // NAME
+      (qi::lit("extended") >> nmdsic::token >> qi::eol) // NAME
         [pnx::bind(&Parser::updateCurRuleBook, this, qi::_1)] >>
       *(indent
          [pnx::bind(&Parser::updateCurRule, this)] >>
-        token // ACTION
+        nmdsic::token // ACTION
           [pnx::bind(&Parser::setCurRuleAction, this, qi::_1)] >>
-        token // PROTOCOL
+        nmdsic::token // PROTOCOL
           [pnx::bind(&Parser::curRuleProtocol, this) = qi::_1] >>
         addressArgument // SOURCE
           [pnx::bind(&Parser::setCurRuleSrc, this, qi::_1)] >>
@@ -420,15 +415,15 @@ Parser::Parser() : Parser::base_type(start)
 //// access-list access_list_name
 ////   standard {deny | permit}
 ////   {any4 | host ip_address | ip_address mask }
-//       (token >> qi::lit("standard"))
+//       (nmdsic::token >> qi::lit("standard"))
 //          [pnx::bind(&Parser::unsup, this, "access-list NAME standard")]
 //          /* Get AcBook so can add rule after defined */
 //          /* AcRule.addAction, AcRule.addDst */
 //
 //// access-list access_list_name
-////   remark {tokens}
-//    | (token >> qi::lit("remark") >>
-//       tokens [pnx::bind(&Parser::curRuleDescription, this) = qi::_1]
+////   remark {nmdsic::tokens}
+//    | (nmdsic::token >> qi::lit("remark") >>
+//       nmdsic::tokens [pnx::bind(&Parser::curRuleDescription, this) = qi::_1]
 //      )
 //
 //// access-list access_list_name [line line_number]
@@ -441,16 +436,16 @@ Parser::Parser() : Parser::base_type(start)
 ////   [inactive]
 //// NOTE: port_arguments only seem to appear if protocol_argument is not an
 ////       object-group of type protocol
-//     | (token
+//     | (nmdsic::token
 //          [qi::_a = qi::_1] >>
-//        qi::lit("extended") >> token
+//        qi::lit("extended") >> nmdsic::token
 //          [pnx::bind(&Parser::updateCurRuleId, this, qi::_a),
 //           pnx::bind(&Parser::updateRuleAction, this, qi::_a, qi::_1)] >>
 //        // protocol_argument
-//        ((  (qi::lit("object-group") >> token)
-//          | (qi::lit("object") >> token)
+//        ((  (qi::lit("object-group") >> nmdsic::token)
+//          | (qi::lit("object") >> nmdsic::token)
 //         ) [pnx::bind(&Parser::updateTgtProto, this, qi::_1, true)]
-//         | (token)
+//         | (nmdsic::token)
 //             [pnx::bind(&Parser::updateTgtProto, this, qi::_1, false)]
 //        ) >>
 //        // source_address_argument
@@ -464,7 +459,7 @@ Parser::Parser() : Parser::base_type(start)
 //          [pnx::bind(&Parser::updateRuleDst, this, qi::_a, qi::_1)] >>
 //        (-(  (portArgument)
 //              [pnx::bind(&Parser::updateTgtDstPort, this, qi::_1, false)]
-//          | (qi::lit("object-group") >> token)
+//          | (qi::lit("object-group") >> nmdsic::token)
 //              [pnx::bind(&Parser::updateTgtDstPort, this, qi::_1, true)]
 //         )
 //        ) [pnx::bind(&Parser::updateRuleService, this, qi::_a)] >>
@@ -472,7 +467,7 @@ Parser::Parser() : Parser::base_type(start)
 //        -(logVal
 //            [pnx::bind(&Parser::updateRuleAction, this, qi::_a, qi::_1)]
 //         ) >>
-//        -(qi::string("time-range") >> token)
+//        -(qi::string("time-range") >> nmdsic::token)
 //            [pnx::bind(&Parser::updateRuleAction, this,
 //                       qi::_a, qi::_1+":"+qi::_2)] >>
 //        -(qi::lit("inactive"))
@@ -484,7 +479,7 @@ Parser::Parser() : Parser::base_type(start)
 //    qi::as_string[
 //      qi::string("log") >>
 //      *(qi::blank >>
-//        !&(qi::lit("time-range") | qi::lit("inactive")) >> token
+//        !&(qi::lit("time-range") | qi::lit("inactive")) >> nmdsic::token
 //       )
 //    ]
 //    ;
@@ -496,7 +491,7 @@ Parser::Parser() : Parser::base_type(start)
       (qi::lit("host") >> ipAddr)
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
      |
-      (qi::lit("object-group") >> token)
+      (qi::lit("object-group") >> nmdsic::token)
         [qi::_val = qi::_1]
      |
       (qi::string("any"))
@@ -504,9 +499,9 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 //  addressArgument =
-//    (  (qi::lit("object-group") >> token)
-//     | (qi::lit("object") >> token)
-//     | (qi::lit("interface") >> token)
+//    (  (qi::lit("object-group") >> nmdsic::token)
+//     | (qi::lit("object") >> nmdsic::token)
+//     | (qi::lit("interface") >> nmdsic::token)
 //     | (qi::lit("host") >> ipAddrStr)
 //     | (qi::string("any4"))
 //     | (qi::string("any6"))
@@ -524,10 +519,10 @@ Parser::Parser() : Parser::base_type(start)
 //    ;
 
   ports =
-    ( (qi::lit("eq") >> token)
+    ( (qi::lit("eq") >> nmdsic::token)
         [qi::_val = qi::_1]
      |
-      (qi::lit("range") >> token >> token)
+      (qi::lit("range") >> nmdsic::token >> nmdsic::token)
         [qi::_val = (qi::_1 + "-" + qi::_2)]
     )
     ;
@@ -536,15 +531,15 @@ Parser::Parser() : Parser::base_type(start)
     qi::no_skip[+qi::char_(' ')]
     ;
 
-  tokens =
-    qi::as_string[+(token >> *qi::blank)]
-    ;
-
-  token =
-    +(qi::ascii::graph)
-    ;
+//  nmdsic::tokens =
+//    qi::as_string[+(nmdsic::token >> *qi::blank)]
+//    ;
+//
+//  nmdsic::token =
+//    +(qi::ascii::graph)
+//    ;
 //  ignoredLine =
-//      (+token >> -qi::eol) // ignored config lines
+//      (+nmdsic::token >> -qi::eol) // ignored config lines
 //    | (+qi::eol)          // ignored empty lines
 //    ;
 
@@ -554,14 +549,14 @@ Parser::Parser() : Parser::base_type(start)
       (interface)
       (policy)(addressArgument)(ports)
       (vlan)
-      (tokens)(token)
+      (nmdsic::tokens)(nmdsic::token)
       );
 //  // object *
 //
 //  // object network val_name
 //  //  { host val_ip | subnet val_ip val_mask | range val_ip val_ip }
 //  objNet =
-//    (qi::lit("network") >> token >> qi::eol)
+//    (qi::lit("network") >> nmdsic::token >> qi::eol)
 //      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
 //    // Explicitly check to ensure still in interface scope
 //    *(qi::no_skip[+qi::char_(' ')] >>
@@ -572,11 +567,11 @@ Parser::Parser() : Parser::base_type(start)
 //           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
 //       | (qi::lit("host") >> ipAddr)
 //           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
-//       | (qi::lit("range") >> token >> token)
+//       | (qi::lit("range") >> nmdsic::token >> nmdsic::token)
 //           [pnx::bind(&Parser::updateNetBookRange, this, qi::_1, qi::_2)]
 //
 //       // Ignore all other settings
-//       | (qi::omit[+token])
+//       | (qi::omit[+nmdsic::token])
 //       | (&qi::eol) // space prefixed blank line
 //      ) >> qi::eol
 //    )
@@ -586,7 +581,7 @@ Parser::Parser() : Parser::base_type(start)
 //  //  service { val_proto | icmp val_type | icmp6 val_type | { tcp | udp } [ source operator val_port ] [ destination operator val_port ]}
 //  // NOTE: operator = { eq | neq | lt | gt | range }
 //  objSrv =
-//    (qi::lit("service") >> token >> qi::eol)
+//    (qi::lit("service") >> nmdsic::token >> qi::eol)
 //      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
 //    // Explicitly check to ensure still in scope
 //    *(qi::no_skip[+qi::char_(' ')] >>
@@ -597,17 +592,17 @@ Parser::Parser() : Parser::base_type(start)
 //                      qi::_1+":"+qi::_2+":"+qi::_3)]
 //
 //       // Ignore all other settings
-//       | (qi::omit[+token])
+//       | (qi::omit[+nmdsic::token])
 //       | (&qi::eol) // space prefixed blank line
 //      ) >> qi::eol
 //    )
 //    ;
 //
 //  objSrvProto =
-//    (  ((qi::string("icmp6") | qi::string("icmp")) >> qi::omit[-tokens])
+//    (  ((qi::string("icmp6") | qi::string("icmp")) >> qi::omit[-nmdsic::tokens])
 //     | (qi::string("tcp"))
 //     | (qi::string("udp"))
-//     | (token)
+//     | (nmdsic::token)
 //    )
 //    ;
 //
@@ -620,21 +615,21 @@ Parser::Parser() : Parser::base_type(start)
 //    ;
 //
 //  portArgument =
-//    (  (qi::lit("eq") >> token)
+//    (  (qi::lit("eq") >> nmdsic::token)
 //          [qi::_val = qi::_1]
 //     | (qi::lit("range") >> srvRngVal)
 //          [qi::_val = qi::_1]
-//     | (qi::lit("neq") >> qi::omit[token])
+//     | (qi::lit("neq") >> qi::omit[nmdsic::token])
 //          [pnx::bind(&Parser::unsup, this, "neq PORT")]
-//     | (qi::lit("lt") >> qi::omit[token])
+//     | (qi::lit("lt") >> qi::omit[nmdsic::token])
 //          [pnx::bind(&Parser::unsup, this, "lt PORT")]
-//     | (qi::lit("gt") >> qi::omit[token])
+//     | (qi::lit("gt") >> qi::omit[nmdsic::token])
 //          [pnx::bind(&Parser::unsup, this, "gt PORT")]
 //    )
 //    ;
 //
 //  srvRngVal =
-//    (token >> token)
+//    (nmdsic::token >> nmdsic::token)
 //      [qi::_val = qi::_1 + "-" + qi::_2]
 //    ;
 //
@@ -644,23 +639,23 @@ Parser::Parser() : Parser::base_type(start)
 //  //  network-object { object val_name | host val_ip | val_ip val_mask}
 //  //  group-object val_name
 //  objGrpNet =
-//    (qi::lit("network") >> token >> qi::eol)
+//    (qi::lit("network") >> nmdsic::token >> qi::eol)
 //      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
 //    *(qi::no_skip[+qi::char_(' ')] >>
-//      (  (qi::lit("network-object object") >> token)
+//      (  (qi::lit("network-object object") >> nmdsic::token)
 //           [pnx::bind(&Parser::updateNetBookGroup, this, qi::_1)]
 //       | (qi::lit("network-object host") >> ipAddr)
 //           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
 //       | (qi::lit("network-object") >> ipAddr >> ipAddr)
 //           [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
 //            pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
-//       | (qi::lit("network-object") >> token >> ipAddr)
+//       | (qi::lit("network-object") >> nmdsic::token >> ipAddr)
 //           [pnx::bind(&Parser::updateNetBookGroupMask, this, qi::_1, qi::_2)]
-//       | (qi::lit("group-object") >> token)
+//       | (qi::lit("group-object") >> nmdsic::token)
 //           [pnx::bind(&Parser::updateNetBookGroup, this, qi::_1)]
 //
 //       // Ignore all other settings
-//       | (qi::omit[+token])
+//       | (qi::omit[+nmdsic::token])
 //       | (&qi::eol) // space prefixed blank line
 //      ) >> qi::eol
 //    )
@@ -674,24 +669,24 @@ Parser::Parser() : Parser::base_type(start)
 //  // NOTE: operator = { eq | neq | lt | gt | range }
 //  objGrpSrv =
 //    (qi::lit("service") >>
-//     token [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
-//     -token [qi::_a = qi::_1] >>
+//     nmdsic::token [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
+//     -nmdsic::token [qi::_a = qi::_1] >>
 //     qi::eol
 //    ) >
 //    // Explicitly check to ensure still in interface scope
 //    *(qi::no_skip[+qi::char_(' ')] >>
 //      (  (qi::lit("port-object") >> portArgument)
 //           [pnx::bind(&Parser::updateSrvcBook, this, qi::_a+"::"+qi::_1)]
-//       | (qi::lit("group-object") >> token)
+//       | (qi::lit("group-object") >> nmdsic::token)
 //           [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
-//       | (qi::lit("service-object object") >> token)
+//       | (qi::lit("service-object object") >> nmdsic::token)
 //           [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
 //       | (qi::lit("service-object") >> objSrvProto >> objSrvSrc >> objSrvDst)
 //           [pnx::bind(&Parser::updateSrvcBook, this,
 //                      qi::_1+":"+qi::_2+":"+qi::_3)]
 // 
 //       // Ignore all other settings
-//       | (qi::omit[+token])
+//       | (qi::omit[+nmdsic::token])
 //       | (&qi::eol) // space prefixed blank line
 //      ) >> qi::eol
 //    )
@@ -702,17 +697,17 @@ Parser::Parser() : Parser::base_type(start)
 //  //  protocol-object val_proto
 //  //  group-object val_name
 //  objGrpProto =
-//    (qi::lit("protocol") >> token >> qi::eol)
+//    (qi::lit("protocol") >> nmdsic::token >> qi::eol)
 //       [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
 //    // Explicitly check to ensure still in interface scope
 //    *(qi::no_skip[+qi::char_(' ')] >>
-//      (  (qi::lit("protocol-object") >> token)
+//      (  (qi::lit("protocol-object") >> nmdsic::token)
 //           [pnx::bind(&Parser::updateSrvcBook, this, qi::_1)]
-//       | (qi::lit("group-object") >> token)
+//       | (qi::lit("group-object") >> nmdsic::token)
 //           [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
 //
 //       // Ignore all other settings
-//       | (qi::omit[+token])
+//       | (qi::omit[+nmdsic::token])
 //       | (&qi::eol) // space prefixed blank line
 //      ) >> qi::eol
 //    )
