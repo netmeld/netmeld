@@ -27,7 +27,7 @@
 // Include the majority of required libraries here
 #include <netmeld/core/utils/FileManager.hpp>
 
-#include "AbstractHandler.hpp"
+#include <netmeld/datalake/handlers/AbstractHandler.hpp>
 
 
 namespace netmeld::datalake::handlers {

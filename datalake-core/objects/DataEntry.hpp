@@ -27,12 +27,14 @@
 #ifndef DATA_ENTRY_HPP
 #define DATA_ENTRY_HPP
 
-#include <netmeld/core/utils/LoggerSingleton.hpp>
+#include <netmeld/core/objects/AbstractObject.hpp>
+
+namespace nmco = netmeld::core::objects;
 
 
 namespace netmeld::datalake::objects {
 
-  class DataEntry {
+  class DataEntry : public nmco::AbstractObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -74,7 +76,7 @@ namespace netmeld::datalake::objects {
       void setNewName(const std::string&);
       void setToolArgs(const std::string&);
 
-      friend std::ostream& operator<<(std::ostream&, const DataEntry&);
+      std::string toDebugString() const;
   };
 }
 #endif // DATA_ENTRY_HPP

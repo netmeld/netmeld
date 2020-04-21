@@ -29,7 +29,7 @@
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
-#include "DataEntry.hpp"
+#include <netmeld/datalake/objects/DataEntry.hpp>
 
 namespace sfs  = std::filesystem;
 namespace nmcu = netmeld::core::utils;
@@ -133,18 +133,20 @@ namespace netmeld::datalake::objects {
     toolArgs = _toolArgs;
   }
 
+  std::string
+  DataEntry::toDebugString() const
+  {
+    std::ostringstream oss;
+    oss << "deviceId: " << getDeviceId()
+        << "\n  dataPath: " << getDataPath()
+        << "\n  ingestTool: " << getIngestTool()
+        << "\n  toolArgs: " << getToolArgs()
+        << "\n  rename: " << getNewName()
+        ;
+    return oss.str();
+  }
 
   // ===========================================================================
   // Friends
   // ===========================================================================
-  std::ostream& operator<<(std::ostream& os, const DataEntry& de)
-  {
-    return os
-      << "deviceId: " << de.getDeviceId()
-      << "\n  dataPath: " << de.getDataPath()
-      << "\n  ingestTool: " << de.getIngestTool()
-      << "\n  toolArgs: " << de.getToolArgs()
-      << "\n  rename: " << de.getNewName()
-      ;
-  }
 }

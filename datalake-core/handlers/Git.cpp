@@ -28,7 +28,7 @@
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
-#include "Git.hpp"
+#include <netmeld/datalake/handlers/Git.hpp>
 
 namespace nmcu  = netmeld::core::utils;
 

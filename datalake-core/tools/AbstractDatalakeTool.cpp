@@ -27,7 +27,7 @@
 #include <netmeld/core/utils/FileManager.hpp>
 #include <netmeld/datalake/handlers/Git.hpp>
 
-#include "AbstractDatalakeTool.hpp"
+#include <netmeld/datalake/tools/AbstractDatalakeTool.hpp>
 
 
 namespace netmeld::datalake::tools {
