@@ -180,7 +180,7 @@ namespace netmeld::datalake::handlers {
           << CHECK_IN_PREFIX << dstRelPath
           << '\n' << INGEST_TOOL_PREFIX << _de.getIngestTool()
           << '\n' << TOOL_ARGS_PREFIX << _de.getToolArgs()
-        << '\n';
+        << "\n'";
     cmdExec(oss.str());
   }
 
