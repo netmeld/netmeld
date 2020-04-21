@@ -93,6 +93,9 @@ class Parser :
       policy, indent,
       interface, switchport, spanningTree;
 
+    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
+      policyMap, classMap;
+
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
       addressArgument,
       ports;
@@ -173,6 +176,9 @@ class Parser :
 
     // Policy Related
     void createAccessGroup(const std::string&, const std::string&);
+    void createServicePolicy(const std::string&, const std::string&);
+    void createPolicyClass(const std::string&, const std::string&);
+    void createClassAccess(const std::string&, const std::string&);
 
     void updateCurRuleBook(const std::string&);
     void updateCurRule();

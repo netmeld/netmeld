@@ -62,6 +62,10 @@ Parser::Parser() : Parser::base_type(start)
       | (interface)
           [pnx::bind(&Parser::ifaceFinalize, this)]
 
+      | (qi::lit("policy-map") >> policyMap)
+
+      | (qi::lit("class-map") >> classMap)
+
       | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
          (   (ipAddr >> ipAddr >> ipAddr)
                [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
@@ -170,6 +174,9 @@ Parser::Parser() : Parser::base_type(start)
 
        | (qi::lit("ip access-group") >> token >> token)
             [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
+
+       | (qi::lit("service-policy") >> token >> token)
+            [pnx::bind(&Parser::createServicePolicy, this, qi::_1, qi::_2)]
 
        // Ignore all other settings
        | (qi::omit[+token])
@@ -320,6 +327,24 @@ Parser::Parser() : Parser::base_type(start)
       (qi::lit("range") >> token >> token)
         [qi::_val = (qi::_1 + "-" + qi::_2)]
     )
+    ;
+
+  policyMap =
+    token [qi::_a = qi::_1] >> qi::eol >>
+    *( (indent >> qi::lit("class") >> token >> qi::eol)
+         [pnx::bind(&Parser::createPolicyClass, this, qi::_a, qi::_1)]
+      |
+       qi::omit[(+indent >> tokens >> qi::eol)]
+     )
+    ;
+
+  classMap =
+    qi::omit[token] >> token [qi::_a = qi::_1] >> qi::eol >>
+    *( (indent >> qi::lit("match access-group name") >> token >> qi::eol)
+         [pnx::bind(&Parser::createClassAccess, this, qi::_a, qi::_1)]
+      |
+       qi::omit[(+indent >> tokens >> qi::eol)]
+     )
     ;
 
   indent =
@@ -485,6 +510,24 @@ void
 Parser::createAccessGroup(const std::string& bookName, const std::string& direction)
 {
   appliedRuleSets[bookName] = {tgtIface->getName(), direction};
+}
+
+void
+Parser::createServicePolicy(const std::string& direction, const std::string& policyName)
+{
+  std::cout << tgtIface->getName() << " service-policy " << direction << " " << policyName << '\n';
+}
+
+void
+Parser::createPolicyClass(const std::string& policyName, const std::string& className)
+{
+  std::cout << "policy-map " << policyName << " -> class: " << className << '\n';
+}
+
+void
+Parser::createClassAccess(const std::string& className, const std::string& aclName)
+{
+  std::cout << "class-map " << className << " -> acl: " << aclName << '\n';
 }
 
 void
