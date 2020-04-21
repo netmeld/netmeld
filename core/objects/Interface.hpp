@@ -27,14 +27,14 @@
 #ifndef INTERFACE_HPP
 #define INTERFACE_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 #include <netmeld/core/objects/MacAddress.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class Interface : public AbstractObject {
+  class Interface : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================

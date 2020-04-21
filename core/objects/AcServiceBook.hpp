@@ -66,11 +66,11 @@ namespace netmeld::core::objects {
       //   void removeData(const TData&);
       //   std::set<TData> getData() const;
 
-      // Inherited from AbstractObject at this scope
+      // Inherited from AbstractDatastoreObject at this scope
         // virtual void saveAsMetadata(pqxx::transaction_base&, Uuid);
-        // friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
+        // friend std::ostream& operator<<(std::ostream&, const AbstractDatastoreObject&);
 
-      // Always overriden from AbstractObject
+      // Always overriden from AbstractDatastoreObject
       bool isValid() const override;
       void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
       //std::string toDebugString() const override;

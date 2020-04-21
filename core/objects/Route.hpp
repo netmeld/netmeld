@@ -27,14 +27,14 @@
 #ifndef ROUTE_HPP
 #define ROUTE_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 #include <netmeld/core/objects/IpNetwork.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class Route : public AbstractObject {
+  class Route : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -66,10 +66,10 @@ namespace netmeld::core::objects {
       void setRtrIp(const IpAddress&);
       void setIfaceName(const std::string&);
 
-      // Inherited from AbstractObject at this scope
-        // friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
+      // Inherited from AbstractDatastoreObject at this scope
+        // friend std::ostream& operator<<(std::ostream&, const AbstractDatastoreObject&);
 
-      // Always overriden from AbstractObject
+      // Always overriden from AbstractDatastoreObject
       bool isValid() const override;
       void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
       void saveAsMetadata(pqxx::transaction_base&, const Uuid&) override;

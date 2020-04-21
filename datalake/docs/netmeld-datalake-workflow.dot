@@ -1,0 +1,58 @@
+digraph G {
+  rankdir=LR;
+  nodespace=0.5;
+  ranksep=0.5;
+  newrank=true;
+  splines=spline;
+  compound=true;
+  concentrate=true;
+
+  label="Netmeld Tool Suite 2.x -- Datalake Dataflow";
+
+  node[shape="circle"];
+  users [label="End\nUsers"];
+
+  node[shape="rectangle",margin=0.1];
+  bins [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="5">Bin(s)</td></tr>
+      <tr><td align="left">nmdb-initialize</td></tr>
+      <tr><td align="left">nmdl-insert</td></tr>
+      <tr><td align="left">nmdl-remove</td></tr>
+      <tr><td align="left">nmdl-list</td></tr>
+    </table>>];
+
+  subgraph cluster_lib {
+    label="Library Resources";
+    style="dashed";
+
+    node[shape="rectangle"];
+    objects [label="DataEntry"];
+    tools [label="AbstractDatalakeTool"];
+
+    node[shape="none",margin=0];
+    node[shape="rectangle",margin=0.1];
+    handlers [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="2">AbstractHandler</td></tr>
+        <tr><td align="left" port="git">Git</td></tr>
+      </table>>];
+  }
+
+  subgraph cluster_datalake {
+    label="Data Lake(s)";
+    style="dashed";
+
+    node [shape="cylinder"];
+    git [label="git repository"];
+  }
+  
+
+  users->bins;
+  users->git [lhead=cluster_datalake];
+  bins->tools;
+  bins->handlers;
+  tools->handlers;
+  handlers->objects;
+  handlers:git->git;
+}

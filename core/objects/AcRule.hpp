@@ -29,12 +29,12 @@
 
 #include <vector>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class AcRule : public AbstractObject {
+  class AcRule : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -100,11 +100,11 @@ namespace netmeld::core::objects {
       const std::vector<std::string>& getServices() const;
       const std::vector<std::string>& getActions() const;
 
-      // Inherited from AbstractObject at this scope
+      // Inherited from AbstractDatastoreObject at this scope
         // virtual void saveAsMetadata(pqxx::transaction_base&, Uuid);
-        // friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
+        // friend std::ostream& operator<<(std::ostream&, const AbstractDatastoreObject&);
 
-      // Always overriden from AbstractObject
+      // Always overriden from AbstractDatastoreObject
       bool isValid() const override;
       void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
       std::string toDebugString() const override;

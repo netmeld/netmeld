@@ -27,12 +27,12 @@
 #ifndef SSH_ALGORITHM
 #define SSH_ALGORITHM
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/Port.hpp>
 
 namespace nmco = netmeld::core::objects;
 
-class SshAlgorithm : public nmco::AbstractObject
+class SshAlgorithm : public nmco::AbstractDatastoreObject
 {
   public:
     nmco::Port   port;

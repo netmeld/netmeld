@@ -27,12 +27,12 @@
 #ifndef NESSUS_RESULT
 #define NESSUS_RESULT
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/Port.hpp>
 
 namespace nmco = netmeld::core::objects;
 
-class NessusResult : public nmco::AbstractObject
+class NessusResult : public nmco::AbstractDatastoreObject
 {
   public:
     nmco::Port    port;

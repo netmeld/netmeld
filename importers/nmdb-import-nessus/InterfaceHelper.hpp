@@ -27,7 +27,6 @@
 #ifndef INTERFACE_HELPER
 #define INTERFACE_HELPER
 
-#include <netmeld/core/objects/AbstractObject.hpp>
 #include <netmeld/core/objects/Interface.hpp>
 
 namespace nmco = netmeld::core::objects;
