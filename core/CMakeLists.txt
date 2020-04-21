@@ -65,6 +65,7 @@ endfunction()
 ###############################################################################
 add_library(${PROJECT_NAME} SHARED
     ./objects/AbstractObject.cpp
+    ./objects/AbstractDatastoreObject.cpp
     ./objects/AcNetworkBook.cpp
     ./objects/AcServiceBook.cpp
     ./objects/AcRule.cpp

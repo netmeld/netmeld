@@ -27,12 +27,12 @@
 #ifndef PORT_HPP
 #define PORT_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 
 
 namespace netmeld::core::objects {
-  class Port : public AbstractObject {
+  class Port : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================

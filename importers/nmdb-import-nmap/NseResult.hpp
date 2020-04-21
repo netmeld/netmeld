@@ -27,12 +27,12 @@
 #ifndef NSE_RESULT
 #define NSE_RESULT
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/Port.hpp>
 
 namespace nmco = netmeld::core::objects;
 
-class NseResult : public nmco::AbstractObject
+class NseResult : public nmco::AbstractDatastoreObject
 {
   public:
     nmco::Port       port;

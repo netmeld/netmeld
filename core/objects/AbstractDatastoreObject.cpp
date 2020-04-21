@@ -24,31 +24,30 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef NESSUS_RESULT
-#define NESSUS_RESULT
-
 #include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/Port.hpp>
 
-namespace nmco = netmeld::core::objects;
 
-class NessusResult : public nmco::AbstractDatastoreObject
-{
-  public:
-    nmco::Port    port;
-    unsigned int  pluginId;
-    std::string   pluginName;
-    std::string   pluginFamily;
-    std::string   pluginType;
-    std::string   pluginOutput;
-    unsigned int  severity;
-    std::string   description;
-    std::string   solution;
+namespace netmeld::core::objects {
 
-  public:
-    bool isValid() const override;
-    void save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&) override;
-    std::string toString() const;
-};
+  AbstractDatastoreObject::AbstractDatastoreObject()
+  {}
 
-#endif //NESSUS_RESULT
+  bool
+  AbstractDatastoreObject::isValid() const
+  {
+    return true;
+  }
+
+  void
+  AbstractDatastoreObject::save(pqxx::transaction_base&, const Uuid&, const std::string&)
+  {
+    LOG_WARN << "AbstractDatastoreObject::save called, nothing done" << std::endl;
+  }
+
+  void
+  AbstractDatastoreObject::saveAsMetadata(pqxx::transaction_base&, const Uuid&)
+  {
+    LOG_WARN << "AbstractDatastoreObject::saveAsMetadata called, nothing done"
+             << std::endl;
+  }
+}

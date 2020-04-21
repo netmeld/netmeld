@@ -29,7 +29,7 @@
 
 #include <set>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 #include <netmeld/core/objects/MacAddress.hpp>
 #include <netmeld/core/objects/Vlan.hpp>
@@ -37,7 +37,7 @@
 
 namespace netmeld::core::objects {
 
-  class InterfaceNetwork : public AbstractObject {
+  class InterfaceNetwork : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -90,9 +90,9 @@ namespace netmeld::core::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      // Inherited from AbstractObject at this scope
+      // Inherited from AbstractDatastoreObject at this scope
         // virtual void saveAsMetadata(pqxx::transaction_base&);
-        // friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
+        // friend std::ostream& operator<<(std::ostream&, const AbstractDatastoreObject&);
 
       void addIpAddress(IpAddress&);
       void addPortSecurityStickyMac(MacAddress&);
@@ -119,7 +119,7 @@ namespace netmeld::core::objects {
       bool getState() const;
       std::vector<IpAddress> getIpAddresses() const;
 
-      // Always overriden from AbstractObject
+      // Always overriden from AbstractDatastoreObject
       bool isValid() const override;
       void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
       std::string toDebugString() const override;

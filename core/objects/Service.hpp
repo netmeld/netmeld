@@ -29,13 +29,13 @@
 
 #include <set>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class Service : public AbstractObject {
+  class Service : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================

@@ -24,72 +24,50 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef INTERFACE_HPP
-#define INTERFACE_HPP
+#ifndef ABSTRACT_DATASTORE_OBJECT_HPP
+#define ABSTRACT_DATASTORE_OBJECT_HPP
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/MacAddress.hpp>
+#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/Uuid.hpp>
+#include <netmeld/core/utils/LoggerSingleton.hpp>
+#include <netmeld/core/utils/QueriesCommon.hpp>
 
+namespace nmcu = netmeld::core::utils;
 
 namespace netmeld::core::objects {
 
-  class Interface : public AbstractDatastoreObject {
+  class AbstractDatastoreObject : public AbstractObject {
     // =========================================================================
     // Variables
     // =========================================================================
-    private:
-    protected:
-      std::string  name;
-      std::string  mediaType {"ethernet"};
-      bool         isUp      {false};
-      MacAddress   macAddr;
-
-      // Linux specific
-      std::string  flags;
-      uint32_t     mtu {0}; // never used
-
-    public:
-
+    private: // Variables will probably rarely appear at this scope
+    protected: // Variables intended for internal/subclass API
+    public: // Variables should rarely appear at this scope
 
     // =========================================================================
     // Constructors
     // =========================================================================
-    private:
-    protected:
-    public:
-      Interface();
-      explicit Interface(const std::string&);
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
+      AbstractDatastoreObject();
 
-      
     // =========================================================================
     // Methods
     // =========================================================================
-    private:
-    protected:
-    public:
-      void addIpAddress(IpAddress&);
+    private: // Methods which should be hidden from API users
+    protected: // Methods part of subclass API
+    public: // Methods part of public API
+      virtual bool isValid() const;
 
-      void setName(const std::string&);
-      void setMediaType(const std::string&);
-      void setMacAddress(const MacAddress&);
-      void setUp();
-      void setDown();
+      virtual void save(pqxx::transaction_base&,
+                        const Uuid&, const std::string&);
+      virtual void saveAsMetadata(pqxx::transaction_base&, const Uuid&);
 
-      std::string getName() const;
-      MacAddress getMacAddress() const;
-      std::vector<IpAddress> getIpAddresses() const;
-
-      bool isValid() const override;
-
-      void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
-      void saveAsMetadata(pqxx::transaction_base&, const Uuid&) override;
-
-      std::string toDebugString() const override;
-
-      // Linux specific
-      void setFlags(const std::string&);
-      void setMtu(uint32_t);
+      // Inherited from AbstractObject at this scope
+      //virtual std::string toDebugString() const;
+      //friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
   };
 }
-#endif // INTERFACE_HPP
+
+#endif // ABSTRACT_DATASTORE_OBJECT_HPP
