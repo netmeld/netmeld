@@ -29,14 +29,14 @@
 
 #include <boost/asio/ip/address.hpp>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 
 using IpAddr = boost::asio::ip::address;
 
 
 namespace netmeld::core::objects {
 
-  class IpNetwork : public AbstractObject {
+  class IpNetwork : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================

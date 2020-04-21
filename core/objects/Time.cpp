@@ -134,6 +134,15 @@ namespace netmeld::core::objects {
   {
     return os << t1.toString();
   }
+
+  std::istream&
+  operator>>(std::istream& is, Time& t1)
+  {
+    pt::time_input_facet facet;
+    facet.set_iso_extended_format();
+    is.imbue(std::locale(is.getloc(), &facet));
+    return is >> t1.time;
+  }
 }
 
 

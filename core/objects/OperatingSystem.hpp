@@ -27,13 +27,13 @@
 #ifndef OPERATING_SYSTEM_HPP
 #define OPERATING_SYSTEM_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class OperatingSystem : public AbstractObject {
+  class OperatingSystem : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================

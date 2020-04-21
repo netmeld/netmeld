@@ -27,11 +27,9 @@
 #ifndef ABSTRACT_OBJECT_HPP
 #define ABSTRACT_OBJECT_HPP
 
-#include <netmeld/core/objects/Uuid.hpp>
-#include <netmeld/core/utils/LoggerSingleton.hpp>
-#include <netmeld/core/utils/QueriesCommon.hpp>
+#include <ostream>
+#include <string>
 
-namespace nmcu = netmeld::core::utils;
 
 namespace netmeld::core::objects {
 
@@ -39,30 +37,24 @@ namespace netmeld::core::objects {
     // =========================================================================
     // Variables
     // =========================================================================
-    private:
-    protected:
-    public:
+    private: // Variables will probably rarely appear at this scope
+    protected: // Variables intended for internal/subclass API
+    public: // Variables should rarely appear at this scope
 
     // =========================================================================
     // Constructors
     // =========================================================================
-    private:
-    protected:
-    public:
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
       AbstractObject();
 
     // =========================================================================
     // Methods
     // =========================================================================
-    private:
-    protected:
-    public:
-      virtual bool isValid() const;
-
-      virtual void save(pqxx::transaction_base&,
-                        const Uuid&, const std::string&);
-      virtual void saveAsMetadata(pqxx::transaction_base&, const Uuid&);
-
+    private: // Methods which should be hidden from API users
+    protected: // Methods part of subclass API
+    public: // Methods part of public API
       virtual std::string toDebugString() const;
 
       friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
