@@ -13,20 +13,21 @@ revolving around the concepts of:
 ![](docs/netmeld-datalake-workflow.png)
 
 
-DATA LAKE FUNDAMENTALS
+DATALAKE MODULE FUNDAMENTALS
 ======================
 
 DATA LAKE TYPE AND HANDLERS
 ---------------------------
 
-The provided interact with an interface which tries to be agnostic of the data
-lake backend, so in general the tools provide a common set of functionality
-that all data lake backends shall possess and support.  However, ultimately
-they need to operate on a targeted data lake type and capabilites of those
-greatly vary.  Thus an end user may directly manipulate the data lake as
-needed.  If there are stipulations for how data shall be represented in the
-data lake for the handler to operate and pass meaningful data back to the tools
-as expected, the data lake handler should clearly outline those requirements.
+The Datalake module tools interact with an interface which tries to be agnostic
+of the data lake backend, so in general the tools provide a common set of
+functionality that all data lake backends shall possess and support.
+However, ultimately they need to operate on a targeted data lake type and
+capabilites of those greatly vary.  Thus an end user may directly manipulate
+the data lake as needed.  If there are stipulations for how data shall be
+represented in the data lake for the handler to operate and pass meaningful
+data back to the tools as expected, the data lake handler shall clearly
+outline those requirements.
 
 TARGETED DATE AND TIME
 ----------------------
