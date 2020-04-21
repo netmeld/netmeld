@@ -178,8 +178,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over Observations\n";
-        LOG_DEBUG << results.observations.toDebugString() << '\n';
         results.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.observations.toDebugString() << '\n';
 
         first = false;
       }

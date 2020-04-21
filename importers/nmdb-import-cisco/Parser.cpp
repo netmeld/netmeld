@@ -94,7 +94,8 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("snmp-server host") >> ipAddr > -nmdsic::tokens > qi::eol)
            [pnx::bind(&Parser::serviceAddSnmp, this, qi::_1)]
         // TODO doesn't catch when it is a block
-      | (qi::lit("radius-server host") > ipAddr > -qi::omit[+nmdsic::token] > qi::eol)
+        // TODO radius-server host source-interface iface
+      | (qi::lit("radius-server host") >> ipAddr > -qi::omit[+nmdsic::token] > qi::eol)
            [pnx::bind(&Parser::serviceAddRadius, this, qi::_1)]
         // TODO doesn't handle vrf
         // TODO ip name-server [vrf vrf-name] ip1
@@ -188,6 +189,26 @@ Parser::Parser() : Parser::base_type(start)
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
           )
          )
+//       | qi::lit("ipv6 address") >>
+//         (  (ipAddr)
+//               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+//                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
+//          | (fqdn)
+//               [pnx::bind(&Parser::unsup, this, "ipv6 address DOMAIN-NAME")]
+//         )
+//       | qi::lit("ip address") >>
+//         (  (ipAddr >> ipAddr)
+//               [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+//                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+//                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
+//          | (fqdn >> ipAddr)
+//               [qi::_a = pnx::bind(&Parser::getIpFromAlias, this, qi::_1),
+//                pnx::bind(&nmco::IpAddress::setNetmask, &qi::_a, qi::_2),
+//                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+//                          pnx::bind(&Parser::tgtIface, this), qi::_a)]
+//         )// [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+//          //  pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+//          //            pnx::bind(&Parser::tgtIface, this), qi::_1)]
 
          // TODO ip helper-address [vrf name | global] ip [redundancy vrg-name]
        | (qi::lit("ip helper-address") >> ipAddr)
@@ -200,6 +221,10 @@ Parser::Parser() : Parser::base_type(start)
 
        | (qi::lit("ip access-group") >> nmdsic::token >> nmdsic::token)
             [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
+
+//       | (qi::lit("nameif") >> nmdsic::token)
+//            [pnx::bind([&](const std::string& val)
+//                       {ifaceAliases.emplace(val, *tgtIface);}, qi::_1)]
 
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
@@ -223,45 +248,6 @@ Parser::Parser() : Parser::base_type(start)
       ) >> qi::eol
     )
     ;
-//  asaIface =
-//    (qi::lit("interface") >> nmdsic::token >> qi::eol)
-//       [pnx::bind(&Parser::ifaceInit, this, qi::_1)] >>
-//    // Explicitly check to ensure still in interface scope
-//    *(qi::no_skip[+qi::char_(' ')] >>
-//      (
-//       // Capture general settings
-//         (qi::lit("description") >> nmdsic::tokens)
-//            [pnx::bind(&nmco::InterfaceNetwork::setDescription,
-//                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
-//       | (qi::lit("nameif") >> nmdsic::token)
-//            [pnx::bind([&](const std::string& val)
-//                       {ifaceAliases.emplace(val, *tgtIface);}, qi::_1)]
-//       | qi::lit("ipv6 address") >>
-//         (  (ipAddr)
-//               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
-//          | (fqdn)
-//               [pnx::bind(&Parser::unsup, this, "ipv6 address DOMAIN-NAME")]
-//         )
-//       | qi::lit("ip address") >>
-//         (  (ipAddr >> ipAddr)
-//               [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-//                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
-//          | (fqdn >> ipAddr)
-//               [qi::_a = pnx::bind(&Parser::getIpFromAlias, this, qi::_1),
-//                pnx::bind(&nmco::IpAddress::setNetmask, &qi::_a, qi::_2),
-//                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//                          pnx::bind(&Parser::tgtIface, this), qi::_a)]
-//         )// [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-//          //  pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//          //            pnx::bind(&Parser::tgtIface, this), qi::_1)]
-//       // Ignore all other settings
-//       | (qi::omit[+nmdsic::token])
-//       | (&qi::eol) // space prefixed blank line
-//      ) >> qi::eol
-//    )
-//    ;
 
   // TODO migrate
   switchport =
