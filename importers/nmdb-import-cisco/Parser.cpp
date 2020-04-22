@@ -332,7 +332,7 @@ Parser::Parser() : Parser::base_type(start)
   policyMap =
     token [qi::_a = qi::_1] >> qi::eol >>
     *( (indent >> qi::lit("class") >> token >> qi::eol)
-         [pnx::bind(&Parser::createPolicyClass, this, qi::_a, qi::_1)]
+         [pnx::bind(&Parser::updatePolicyMap, this, qi::_a, qi::_1)]
       |
        qi::omit[(+indent >> tokens >> qi::eol)]
      )
@@ -341,7 +341,7 @@ Parser::Parser() : Parser::base_type(start)
   classMap =
     qi::omit[token] >> token [qi::_a = qi::_1] >> qi::eol >>
     *( (indent >> qi::lit("match access-group name") >> token >> qi::eol)
-         [pnx::bind(&Parser::createClassAccess, this, qi::_a, qi::_1)]
+         [pnx::bind(&Parser::updateClassMap, this, qi::_a, qi::_1)]
       |
        qi::omit[(+indent >> tokens >> qi::eol)]
      )
@@ -515,19 +515,19 @@ Parser::createAccessGroup(const std::string& bookName, const std::string& direct
 void
 Parser::createServicePolicy(const std::string& direction, const std::string& policyName)
 {
-  std::cout << tgtIface->getName() << " service-policy " << direction << " " << policyName << '\n';
+  servicePolicies[tgtIface->getName()].insert({policyName, direction});
 }
 
 void
-Parser::createPolicyClass(const std::string& policyName, const std::string& className)
+Parser::updatePolicyMap(const std::string& policyName, const std::string& className)
 {
-  std::cout << "policy-map " << policyName << " -> class: " << className << '\n';
+  policies[policyName].insert(className);
 }
 
 void
-Parser::createClassAccess(const std::string& className, const std::string& aclName)
+Parser::updateClassMap(const std::string& className, const std::string& bookName)
 {
-  std::cout << "class-map " << className << " -> acl: " << aclName << '\n';
+  classes[className].insert(bookName);
 }
 
 void
@@ -646,8 +646,30 @@ Parser::getData()
         rule.addSrcIface("any");
         rule.addDstIface(ifaceName);
       } else {
-        LOG_ERROR << "Parser::assignRules: Unknown rule direction parsed: "
+        LOG_ERROR << "(apply-groups) Unknown rule direction parsed: "
                   << direction << std::endl;
+      }
+    }
+  }
+
+  // Apply rules from interface->service-policy->policy-map->class-map
+  for (const auto& [ifaceName, policyPairs] : servicePolicies) {
+    for (const auto& [policyName, direction] : policyPairs) {
+      for (const auto& className : policies[policyName]) {
+        for (const auto& bookName : classes[className]) {
+          for (auto& [id, rule] : d.ruleBooks[bookName]) {
+            if ("input" == direction) {
+              rule.addSrcIface(ifaceName);
+              rule.addDstIface("any");
+            } else if ("output" == direction) {
+              rule.addSrcIface("any");
+              rule.addDstIface(ifaceName);
+            } else {
+              LOG_ERROR << "(service-policy) Unknown rule direction parsed: "
+                        << direction << std::endl;
+            }
+          }
+        }
       }
     }
   }

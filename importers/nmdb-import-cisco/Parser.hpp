@@ -130,6 +130,10 @@ class Parser :
 
     std::map<std::string, std::pair<std::string, std::string>> appliedRuleSets;
 
+    std::map<std::string, std::set<std::pair<std::string, std::string>>> servicePolicies;
+    std::map<std::string, std::set<std::string>> policies;
+    std::map<std::string, std::set<std::string>> classes;
+
     nmco::AcRule *curRule {nullptr};
     std::string  curRuleBook {""};
     size_t       curRuleId {0};
@@ -177,8 +181,8 @@ class Parser :
     // Policy Related
     void createAccessGroup(const std::string&, const std::string&);
     void createServicePolicy(const std::string&, const std::string&);
-    void createPolicyClass(const std::string&, const std::string&);
-    void createClassAccess(const std::string&, const std::string&);
+    void updatePolicyMap(const std::string&, const std::string&);
+    void updateClassMap(const std::string&, const std::string&);
 
     void updateCurRuleBook(const std::string&);
     void updateCurRule();
