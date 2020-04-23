@@ -53,6 +53,9 @@ typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
 typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
 typedef std::map<size_t, nmco::AcRule> RuleBook;
 
+typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
+typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
+typedef std::map<size_t, nmco::AcRule> RuleBook;
 
 // =============================================================================
 // Data containers
@@ -65,6 +68,7 @@ struct Data
   nmco::ToolObservations               observations;
 
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
+
   std::vector<nmco::Route>             routes;
   std::vector<nmco::Service>           services;
   std::vector<nmco::Vlan>              vlans;
@@ -97,6 +101,9 @@ class Parser :
       policy, indent,
       interface, switchport, spanningTree;
 
+    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
+      policyMap, classMap;
+
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
       addressArgument,
       ports;
@@ -122,6 +129,7 @@ class Parser :
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
     bool globalBpduFilterEnabled  {false};
+
     std::set<std::string>  ifaceSpecificCdp;
     std::set<std::string>  ifaceSpecificBpduGuard;
     std::set<std::string>  ifaceSpecificBpduFilter;
@@ -129,6 +137,11 @@ class Parser :
     const std::string ZONE  {"global"};
 
     std::map<std::string, std::pair<std::string, std::string>> appliedRuleSets;
+
+    std::map<std::string, std::set<std::pair<std::string, std::string>>>
+      servicePolicies;
+    std::map<std::string, std::set<std::string>> policies;
+    std::map<std::string, std::set<std::string>> classes;
 
     nmco::AcRule *curRule {nullptr};
     std::string  curRuleBook {""};
@@ -186,6 +199,24 @@ class Parser :
 
     void curRuleFinalize();
 
+    // Policy Related
+    void createAccessGroup(const std::string&, const std::string&);
+    void createServicePolicy(const std::string&, const std::string&);
+    void updatePolicyMap(const std::string&, const std::string&);
+    void updateClassMap(const std::string&, const std::string&);
+
+    void updateCurRuleBook(const std::string&);
+    void updateCurRule();
+
+    void setCurRuleAction(const std::string&);
+
+    void setCurRuleSrc(const std::string&);
+    void setCurRuleDst(const std::string&);
+
+    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
+
+    void curRuleFinalize();
+
     // Unsupported
     void unsup(const std::string&);
     void addObservation(const std::string&);
@@ -194,3 +225,4 @@ class Parser :
     Result getData();
 };
 #endif // PARSER_HPP
+

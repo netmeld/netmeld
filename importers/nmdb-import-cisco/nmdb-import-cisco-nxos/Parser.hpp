@@ -111,7 +111,6 @@ class Parser :
   // Methods
   // ===========================================================================
   private: // Methods which should be hidden from API users
-
     void serviceAddNtp(const nmco::IpAddress&);
     void serviceAddDhcp(const nmco::IpAddress&);
     void serviceAddSnmp(const nmco::IpAddress&);

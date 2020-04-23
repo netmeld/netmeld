@@ -89,9 +89,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
 
+
         // Process the rest of the results
-
-
         LOG_DEBUG << "Iterating over Services\n";
         for (auto& result : results.services) {
           result.save(t, toolRunId, "");
@@ -115,7 +114,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
-
 
 
         LOG_DEBUG << "Iterating over Observations\n";

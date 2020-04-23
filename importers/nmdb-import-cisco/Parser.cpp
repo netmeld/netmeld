@@ -66,6 +66,10 @@ Parser::Parser() : Parser::base_type(start)
       | (interface)
           [pnx::bind(&Parser::vlanAddIfaceData, this)]
 
+      | (qi::lit("policy-map") >> policyMap)
+
+      | (qi::lit("class-map") >> classMap)
+
         // TODO clean this up
       | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
          (   (ipAddr >> ipAddr >> ipAddr)
@@ -221,6 +225,8 @@ Parser::Parser() : Parser::base_type(start)
 
        | (qi::lit("ip access-group") >> nmdsic::token >> nmdsic::token)
             [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
+       | (qi::lit("service-policy") >> token >> token)
+            [pnx::bind(&Parser::createServicePolicy, this, qi::_1, qi::_2)]
 
 //       | (qi::lit("nameif") >> nmdsic::token)
 //            [pnx::bind([&](const std::string& val)
@@ -242,6 +248,7 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        /* END: No examples of these, cannot verify */
+
 
        // Ignore all other settings
        | (qi::omit[+nmdsic::token])
@@ -942,6 +949,101 @@ Parser::curRuleFinalize()
   d.serviceBooks[ZONE][serviceString].addData(serviceString);
 }
 
+
+// Policy Related
+void
+Parser::createAccessGroup(const std::string& bookName, const std::string& direction)
+{
+  appliedRuleSets[bookName] = {tgtIface->getName(), direction};
+}
+
+void
+Parser::createServicePolicy(const std::string& direction, const std::string& policyName)
+{
+  servicePolicies[tgtIface->getName()].insert({policyName, direction});
+}
+
+void
+Parser::updatePolicyMap(const std::string& policyName, const std::string& className)
+{
+  policies[policyName].insert(className);
+}
+
+void
+Parser::updateClassMap(const std::string& className, const std::string& bookName)
+{
+  classes[className].insert(bookName);
+}
+
+void
+Parser::updateCurRuleBook(const std::string& name)
+{
+  curRuleBook = name;
+  curRuleId = 0;
+}
+
+void
+Parser::updateCurRule()
+{
+  ++curRuleId;
+  curRuleProtocol = "";
+  curRuleSrcPort = "";
+  curRuleDstPort = "";
+
+  curRule = &(d.ruleBooks[curRuleBook][curRuleId]);
+
+  curRule->setRuleId(curRuleId);
+  curRule->setRuleDescription(curRuleBook);
+}
+
+void
+Parser::setCurRuleAction(const std::string& action)
+{
+  //TODO: Move this one to setting value direction in symantic action
+  curRule->addAction(action);
+}
+
+void
+Parser::setCurRuleSrc(const std::string& addr)
+{
+  curRule->setSrcId(ZONE);
+  curRule->addSrc(addr);
+  d.networkBooks[ZONE][addr].addData(addr);
+}
+
+void
+Parser::setCurRuleDst(const std::string& addr)
+{
+  curRule->setDstId(ZONE);
+  curRule->addDst(addr);
+  d.networkBooks[ZONE][addr].addData(addr);
+}
+
+std::string
+Parser::setWildcardMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
+{
+  bool isContiguous {ipAddr.setWildcardMask(mask)};
+  if (!isContiguous) {
+    std::ostringstream oss;
+    oss << "IpAddress (" << ipAddr
+        << ") set with non-contiguous wildcard netmask (" << mask << ")";
+
+    d.observations.addUnsupportedFeature(oss.str());
+  }
+
+  return ipAddr.toString();
+}
+
+void
+Parser::curRuleFinalize()
+{
+  const std::string serviceString = nmcu::getSrvcString(curRuleProtocol,
+                                                        curRuleSrcPort,
+                                                        curRuleDstPort);
+  curRule->addService(serviceString);
+  d.serviceBooks[ZONE][serviceString].addData(serviceString);
+}
+
 // Unsupported
 void
 Parser::unsup(const std::string& val)
@@ -994,8 +1096,30 @@ Parser::getData()
         rule.addSrcIface("any");
         rule.addDstIface(ifaceName);
       } else {
-        LOG_ERROR << "Parser::assignRules: Unknown rule direction parsed: "
+        LOG_ERROR << "(apply-groups) Unknown rule direction parsed: "
                   << direction << std::endl;
+      }
+    }
+  }
+
+  // Apply rules from interface->service-policy->policy-map->class-map
+  for (const auto& [ifaceName, policyPairs] : servicePolicies) {
+    for (const auto& [policyName, direction] : policyPairs) {
+      for (const auto& className : policies[policyName]) {
+        for (const auto& bookName : classes[className]) {
+          for (auto& [id, rule] : d.ruleBooks[bookName]) {
+            if ("input" == direction) {
+              rule.addSrcIface(ifaceName);
+              rule.addDstIface("any");
+            } else if ("output" == direction) {
+              rule.addSrcIface("any");
+              rule.addDstIface(ifaceName);
+            } else {
+              LOG_ERROR << "(service-policy) Unknown rule direction parsed: "
+                        << direction << std::endl;
+            }
+          }
+        }
       }
     }
   }
