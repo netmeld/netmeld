@@ -3,7 +3,8 @@ DESCRIPTION
 
 The `nmdl-list` tool is utilized to display the data stored in the data lake in
 targeted ways.  The primary focus is to display "binned" data and as may be
-needed, for an ingest script geared towards usage with the Netmeld datastore.
+needed, for an ingest script geared towards usage with the Netmeld Datastore
+module tools.
 
 This tool supports extracting information from the data lake from a
 particular instance in time via the `--before` option.  This means any data
@@ -36,7 +37,13 @@ added before January 25, 2001.
 nmdl-list --before '2001-01-25'
 ```
 
-Generate a script typical of for an ingest into the Netmeld datastore.
+Generate a script typical for an ingest into the Netmeld datastore.
 ```
 nmdl-list --ingest-script
+```
+
+Generate an ingest script as it would have looked on or before
+`January 25, 2001 at 18:30:54`.
+```
+nmdl-list --ingest-script --before '2001-01-25T18:30:54'
 ```
