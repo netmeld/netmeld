@@ -65,7 +65,10 @@ namespace netmeld::core::objects {
     private:
     protected:
       template<size_t n>
-      std::string convert() const;
+        bool setCidrFromMask(const IpNetwork&, const size_t, const char, bool);
+      template<size_t n>
+        std::string convert() const;
+
       std::string getNetwork() const;
 
     public:
@@ -76,6 +79,7 @@ namespace netmeld::core::objects {
       void setCidr(uint8_t);
       void setExtraWeight(const uint32_t);
       void setNetmask(const IpNetwork&);
+      bool setWildcardMask(const IpNetwork&);
       void setReason(const std::string&);
 
       bool isDefault() const;

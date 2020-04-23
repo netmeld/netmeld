@@ -115,22 +115,23 @@ BOOST_AUTO_TEST_CASE(testSetters)
   }
 
   {
-    TestIpNetwork ipNet;
+    TestIpNetwork ipNet {"1.2.3.4", ""};
 
     const size_t NUM_OCTETS {4};
     const size_t OCTET_SIZE {8};
     std::bitset<OCTET_SIZE> maskBits[NUM_OCTETS];
-    struct in_addr addr;
-    int domain {AF_INET};
-    char maskStr[INET_ADDRSTRLEN];
+    std::ostringstream oss;
     for (size_t z {0}; z < NUM_OCTETS; z++) {
       for (size_t i {1}; i <= OCTET_SIZE; i++) {
+        oss.str("");
         for (size_t pos {0}; pos < NUM_OCTETS; pos++) {
-          addr.s_addr <<= OCTET_SIZE;
-          addr.s_addr |= maskBits[pos].to_ulong();
+          oss << maskBits[pos].to_ulong();
+          if ((pos+1) < NUM_OCTETS) {
+            oss << '.';
+          }
         }
-        inet_ntop(domain, &addr, maskStr, INET_ADDRSTRLEN);
-        ipNet.setNetmask(nmco::IpNetwork(std::string(maskStr)));
+        nmco::IpNetwork mask {oss.str()};
+        ipNet.setNetmask(mask);
         BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getCidr());
 
         maskBits[z].set(OCTET_SIZE-i);
@@ -138,25 +139,148 @@ BOOST_AUTO_TEST_CASE(testSetters)
     }
   }
   {
-    TestIpNetwork ipNet;
+    TestIpNetwork ipNet {"1.2.3.4", ""};
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {32, "255.0.255.0"},
+      {32, "255.255.255.138"},
+      {32, "1.1.1.1"},
+    };
 
-    const size_t NUM_OCTETS {16};
-    const size_t OCTET_SIZE {8};
+    for (const auto& [cidr, mask] : masks) {
+      ipNet.setNetmask(nmco::IpNetwork(mask));
+      BOOST_TEST(cidr == ipNet.getCidr());
+    }
+  }
+
+  {
+    TestIpNetwork ipNet {"1234:5678:abcd:ef01:2345:6789:0abc:def0", ""};
+
+    const size_t NUM_OCTETS {8};
+    const size_t OCTET_SIZE {16};
     std::bitset<OCTET_SIZE> maskBits[NUM_OCTETS];
-    struct in6_addr addr;
-    int domain {AF_INET6};
-    char maskStr[INET6_ADDRSTRLEN];
+    std::ostringstream oss;
     for (size_t z {0}; z < NUM_OCTETS; z++) {
       for (size_t i {1}; i <= OCTET_SIZE; i++) {
+        oss.str("");
         for (size_t pos {0}; pos < NUM_OCTETS; pos++) {
-          addr.s6_addr[pos] = maskBits[pos].to_ulong();
+          oss << std::hex << maskBits[pos].to_ulong();
+          if ((pos+1) < NUM_OCTETS) {
+            oss << ':';
+          }
         }
-        inet_ntop(domain, &addr, maskStr, INET6_ADDRSTRLEN);
-        ipNet.setNetmask(nmco::IpNetwork(std::string(maskStr)));
+        nmco::IpNetwork mask {oss.str()};
+        ipNet.setNetmask(mask);
         BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getCidr());
 
         maskBits[z].set(OCTET_SIZE-i);
       }
+    }
+  }
+  {
+    TestIpNetwork ipNet {"1234:5678:abcd:ef01:2345:6789:0abc:def0", ""};
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {128, "ffff:0000:ffff::0"},
+      {128, "ffff:ffaf::0"},
+      {128, "1:1:1:1:1:1:1:1"},
+    };
+
+    for (const auto& [cidr, mask] : masks) {
+      ipNet.setNetmask(nmco::IpNetwork(mask));
+      BOOST_TEST(cidr == ipNet.getCidr());
+    }
+  }
+
+  {
+    // This is another way to do the test directly below
+    TestIpNetwork ipNet {"1.2.3.4", ""};
+
+    const size_t NUM_OCTETS {4};
+    const size_t OCTET_SIZE {8};
+    std::bitset<OCTET_SIZE> maskBits[NUM_OCTETS];
+    std::ostringstream oss;
+    for (size_t z {0}; z < NUM_OCTETS; ++z) {
+      for (size_t i {1}; i <= OCTET_SIZE; ++i) {
+        oss.str("");
+        for (size_t pos {0}; pos < NUM_OCTETS; ++pos) {
+          oss << maskBits[pos].to_ulong();
+          if ((pos+1) < NUM_OCTETS) {
+            oss << '.';
+          }
+        }
+        nmco::IpNetwork mask {oss.str()};
+        const auto& isContiguous = ipNet.setWildcardMask(mask);
+        BOOST_TEST(isContiguous);
+        size_t val {((NUM_OCTETS*OCTET_SIZE)-((z*OCTET_SIZE)+(i-1)))};
+        BOOST_TEST(val == ipNet.getCidr());
+
+        maskBits[NUM_OCTETS-1-z].set(i-1);
+      }
+    }
+  }
+  {
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {32, "0.0.0.0"},
+      {31, "0.0.0.1"},
+      {30, "0.0.0.3"},
+      {29, "0.0.0.7"},
+      {28, "0.0.0.15"},
+      {27, "0.0.0.31"},
+      {26, "0.0.0.63"},
+      {25, "0.0.0.127"},
+      {24, "0.0.0.255"},
+      {23, "0.0.1.255"},
+      {22, "0.0.3.255"},
+      {21, "0.0.7.255"},
+      {20, "0.0.15.255"},
+      {19, "0.0.31.255"},
+      {18, "0.0.63.255"},
+      {17, "0.0.127.255"},
+      {16, "0.0.255.255"},
+      {15, "0.1.255.255"},
+      {14, "0.3.255.255"},
+      {13, "0.7.255.255"},
+      {12, "0.15.255.255"},
+      {11, "0.31.255.255"},
+      {10, "0.63.255.255"},
+      {9,  "0.127.255.255"},
+      {8,  "0.255.255.255"},
+      {7,  "1.255.255.255"},
+      {6,  "3.255.255.255"},
+      {5,  "7.255.255.255"},
+      {4,  "15.255.255.255"},
+      {3,  "31.255.255.255"},
+      {2,  "63.255.255.255"},
+      {1,  "127.255.255.255"},
+      {0,  "255.255.255.255"},
+    };
+
+    for (const auto& [cidr, mask] : masks) {
+      TestIpNetwork ipMask;
+      ipMask.setAddress(mask);
+
+      TestIpNetwork ipNet;
+      bool is_contiguous = ipNet.setWildcardMask(ipMask);
+
+      BOOST_TEST(is_contiguous);
+      BOOST_TEST(ipNet.getCidr() == cidr);
+    }
+  }
+  {
+    std::vector<std::pair<unsigned int, std::string>> masks {
+      {32, "0.0.0.27"},
+      {32, "0.1.0.1"},
+      {32, "1.1.1.1"},
+    };
+
+    for (const auto& [cidr, mask] : masks) {
+      TestIpNetwork ipMask;
+      ipMask.setAddress(mask);
+
+      TestIpNetwork ipNet;
+      bool is_contiguous = ipNet.setWildcardMask(ipMask);
+
+      BOOST_TEST(!is_contiguous);
+      BOOST_TEST(ipNet.getCidr() == cidr);
     }
   }
 

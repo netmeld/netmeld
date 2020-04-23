@@ -53,7 +53,7 @@ typedef std::map<size_t, nmco::AcRule> RuleBook;
 struct Data
 {
   nmco::DeviceInformation              devInfo;
-  std::vector<nmco::InterfaceNetwork>  ifaces;
+  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
 
   std::map<std::string, NetworkBook>  networkBooks;
   std::map<std::string, ServiceBook>  serviceBooks;
@@ -80,16 +80,12 @@ class Parser :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       ignoredLine,
-      config;
+      config,
+      objNet, objGrpNet;
 
     qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type,
              qi::locals<nmco::IpAddress>>
       asaIface;
-
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
-             qi::locals<std::string>>
-      objNet,
-      objGrpNet;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
              qi::locals<std::string, std::string>>
@@ -121,11 +117,15 @@ class Parser :
     nmcp::ParserIpAddress   ipAddr;
     nmcp::ParserMacAddress  macAddr;
 
+    // Supporting data structures
     Data d;
+
+    nmco::InterfaceNetwork *tgtIface;
 
     std::map<std::string, nmco::InterfaceNetwork>  ifaceAliases;
 
-    const std::string ZONE {"global"};
+    const std::string ZONE  {"global"};
+    std::string tgtBook;
 
     std::pair<bool, std::string>  tgtProto;
     std::pair<bool, std::string>  tgtSrcPort;
@@ -145,25 +145,19 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    // Device related
-    void setDevId(const std::string&);
-    void setVendor(const std::string&);
-
     // Interface related
+    void ifaceInit(const std::string&);
     void addIface(nmco::InterfaceNetwork&);
-    void addIfaceAlias(const nmco::InterfaceNetwork&, const std::string&);
     nmco::IpAddress getIpFromAlias(const std::string&);
 
     // AC related
-    void updateNetBookIp(const std::string&, const nmco::IpAddress&);
-    void updateNetBookRange(const std::string&,
-                            const std::string&, const std::string&);
-    void updateNetBookGroup(const std::string&, const std::string&);
-    void updateNetBookGroupMask(const std::string&, const std::string&,
-                                const nmco::IpAddress&);
+    void updateNetBookIp(const nmco::IpAddress&);
+    void updateNetBookRange(const std::string&, const std::string&);
+    void updateNetBookGroup(const std::string&);
+    void updateNetBookGroupMask(const std::string&, const nmco::IpAddress&);
 
-    void updateSrvcBook(const std::string&, const std::string&);
-    void updateSrvcBookGroup(const std::string&, const std::string&);
+    void updateSrvcBook(const std::string&);
+    void updateSrvcBookGroup(const std::string&);
 
     void updateCurRuleId(const std::string&);
     void updateRuleAction(const std::string&, const std::string&);
