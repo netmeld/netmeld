@@ -67,6 +67,8 @@ endfunction()
 foreach(TOOL_NAME
     nmdb-import-brocade
     nmdb-import-cisco
+    nmdb-import-cisco-asa
+    nmdb-import-cisco-wireless
     nmdb-import-clw
     nmdb-import-hosts
     nmdb-import-ip-addr-show

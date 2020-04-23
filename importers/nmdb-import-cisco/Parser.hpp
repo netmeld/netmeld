@@ -97,6 +97,7 @@ class Parser :
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
       domainData,
+      route,
       vlanDef,
       policy, indent,
       interface, switchport, spanningTree;
@@ -186,21 +187,6 @@ class Parser :
 
     // Policy Related
     void createAccessGroup(const std::string&, const std::string&);
-
-    void updateCurRuleBook(const std::string&);
-    void updateCurRule();
-
-    void setCurRuleAction(const std::string&);
-
-    void setCurRuleSrc(const std::string&);
-    void setCurRuleDst(const std::string&);
-
-    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
-
-    void curRuleFinalize();
-
-    // Policy Related
-    void createAccessGroup(const std::string&, const std::string&);
     void createServicePolicy(const std::string&, const std::string&);
     void updatePolicyMap(const std::string&, const std::string&);
     void updateClassMap(const std::string&, const std::string&);
@@ -217,6 +203,7 @@ class Parser :
 
     void curRuleFinalize();
 
+
     // Unsupported
     void unsup(const std::string&);
     void addObservation(const std::string&);
@@ -225,4 +212,3 @@ class Parser :
     Result getData();
 };
 #endif // PARSER_HPP
-

@@ -151,6 +151,7 @@ namespace netmeld::core::objects {
     oss << toString() << ", ";
     for (const auto& ip : ipAddrs) { oss << ip.toDebugString() << ", "; }
     oss << isResponding;
+//    oss << "isResponding: " << std::boolalpha << isResponding;
     oss << "]";
 
     return oss.str();
