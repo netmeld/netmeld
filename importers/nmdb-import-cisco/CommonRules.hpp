@@ -37,8 +37,12 @@ namespace nmcp = netmeld::core::parsers;
 //struct CommonRules 
 //{
 namespace netmeld::datastore::importers::cisco {
-  extern qi::rule<nmcp::IstreamIter, std::string()> token;
-  extern qi::rule<nmcp::IstreamIter, std::string()> tokens;
+  extern qi::rule<nmcp::IstreamIter, std::string()>
+    token;
+  extern qi::rule<nmcp::IstreamIter, std::string()>
+    tokens;
+  extern qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    indent;
 }
 //;
 #endif // NMDICR_HPP

@@ -37,4 +37,8 @@ namespace netmeld::datastore::importers::cisco {
     qi::as_string[+(token >> *qi::blank)]
     ;
 
+  qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+  indent =
+    qi::no_skip[+qi::char_(' ')]
+    ;
 }

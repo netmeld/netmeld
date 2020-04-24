@@ -24,8 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#ifndef CISCO_GRAMMAR_ACLS_HPP
+#define CISCO_GRAMMAR_ACLS_HPP
 
 #include <netmeld/core/objects/AcNetworkBook.hpp>
 #include <netmeld/core/objects/AcRule.hpp>
@@ -42,46 +42,26 @@
 #include <netmeld/core/tools/AbstractImportTool.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
-#include "Acls.hpp"
 #include "CommonRules.hpp"
 
-namespace nmdsic = netmeld::datastore::importers::cisco;
+namespace netmeld::datastore::importers::cisco {
 
 namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 namespace nmcu = netmeld::core::utils;
 
-typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
 typedef std::map<size_t, nmco::AcRule> RuleBook;
 
 // =============================================================================
 // Data containers
 // =============================================================================
-struct Data
-{
-  std::string                          domainName;
-  nmco::DeviceInformation              devInfo;
-  std::vector<std::string>             aaas;
-  nmco::ToolObservations               observations;
-
-  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
-
-  std::vector<nmco::Route>             routes;
-  std::vector<nmco::Service>           services;
-  std::vector<nmco::Vlan>              vlans;
-
-  std::map<std::string, NetworkBook>  networkBooks;
-  std::map<std::string, ServiceBook>  serviceBooks;
-  std::map<std::string, RuleBook>     ruleBooks;
-};
-typedef std::vector<Data> Result;
+typedef std::pair<std::string, RuleBook> Result;
 
 
 // =============================================================================
 // Parser definition
 // =============================================================================
-class Parser :
+class Acls :
   public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
@@ -94,54 +74,23 @@ class Parser :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      domainData,
-      route,
-      vlanDef,
-      policy,
-      interface, switchport, spanningTree;
-
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
-      policyMap, classMap;
+      ipAccessListStandard, ipAccessListExtended, ipAccessList;
 
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
       addressArgument,
       ports;
 
-    qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
-      vlan;
-
-    nmcp::ParserDomainName  domainName;
     nmcp::ParserIpAddress   ipAddr;
-    nmcp::ParserMacAddress  macAddr;
 
-    nmdsic::Acls aclNameBook;
 
     // Supporting data structures
-    Data d;
-
-    bool isNo {false};
-
-    nmco::InterfaceNetwork* tgtIface;
-
-    bool globalCdpEnabled         {true};
-    bool globalBpduGuardEnabled   {false};
-    bool globalBpduFilterEnabled  {false};
-
-    std::set<std::string>  ifaceSpecificCdp;
-    std::set<std::string>  ifaceSpecificBpduGuard;
-    std::set<std::string>  ifaceSpecificBpduFilter;
-
     const std::string ZONE  {"global"};
 
-    std::map<std::string, std::pair<std::string, std::string>> appliedRuleSets;
+    std::string  ruleBookName {""};
+    RuleBook     ruleBook;
 
-    std::map<std::string, std::set<std::pair<std::string, std::string>>>
-      servicePolicies;
-    std::map<std::string, std::set<std::string>> policies;
-    std::map<std::string, std::set<std::string>> classes;
 
     nmco::AcRule *curRule {nullptr};
-    std::string  curRuleBook {""};
     size_t       curRuleId {0};
     std::string  curRuleProtocol {""};
     std::string  curRuleSrcPort {""};
@@ -151,60 +100,27 @@ class Parser :
   // Constructors
   // ===========================================================================
   public: // Constructor is only default and must be public
-    Parser();
+    Acls();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
   private: // Methods which should be hidden from API users
-    // Device related
-    void deviceAaaAdd(const std::string&);
-
-    // Service related
-    void serviceAddDhcp(const nmco::IpAddress&);
-    void serviceAddNtp(const nmco::IpAddress&);
-    void serviceAddSnmp(const nmco::IpAddress&);
-    void serviceAddRadius(const nmco::IpAddress&);
-    void serviceAddDns(const std::vector<nmco::IpAddress>&);
-    void serviceAddSyslog(const nmco::IpAddress&);
-
-    // Route related
-    void routeAddIp(const nmco::IpAddress&, const nmco::IpAddress&);
-    void routeAddIface(const nmco::IpAddress&, const std::string&);
-
-    // Interface related
-    void ifaceInit(const std::string&);
-    void ifaceFinalize();
-    void ifaceSetUpdate(std::set<std::string>* const);
-
-    // Vlan related
-    void vlanAdd(nmco::Vlan&);
-    void vlanAddIfaceData();
-
     // Policy Related
-    void createAccessGroup(const std::string&, const std::string&);
-    void createServicePolicy(const std::string&, const std::string&);
-    void updatePolicyMap(const std::string&, const std::string&);
-    void updateClassMap(const std::string&, const std::string&);
+    void updateCurRuleBook(const std::string&);
+    void updateCurRule();
 
-//    void updateCurRuleBook(const std::string&);
-//    void updateCurRule();
-//
-//    void setCurRuleAction(const std::string&);
-//
-//    void setCurRuleSrc(const std::string&);
-//    void setCurRuleDst(const std::string&);
-//
-//    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
-//
-//    void curRuleFinalize();
+    void setCurRuleAction(const std::string&);
 
+    void setCurRuleSrc(const std::string&);
+    void setCurRuleDst(const std::string&);
 
-    // Unsupported
-    void unsup(const std::string&);
-    void addObservation(const std::string&);
+    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
+
+    void curRuleFinalize();
 
     // Object return
     Result getData();
 };
-#endif // PARSER_HPP
+}
+#endif // CISCO_GRAMMAR_ACLS_HPP
