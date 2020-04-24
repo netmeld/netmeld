@@ -573,8 +573,10 @@ Parser::Parser() : Parser::base_type(start)
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (config)
-      (interface)
-      (policy)(addressArgument)(ports)
+      (domainData)(route)(vlanDef)
+      (policy)(policyMap)(classMap)(addressArgument)(ports)
+      (indent)
+      (interface)(switchport)(spanningTree)
       (vlan)
       (nmdsic::tokens)(nmdsic::token)
       );
