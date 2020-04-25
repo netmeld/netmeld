@@ -44,6 +44,10 @@ function(create_test TEST_NAME)
   add_executable(Test.${TEST_NAME}
       EXCLUDE_FROM_ALL
       ${TEST_NAME}.test.cpp
+      ${TEST_NAME}.hpp
+      ${TEST_NAME}.cpp
+      CommonRules.cpp
+      CommonRules.hpp
     )
 
   target_link_libraries(Test.${TEST_NAME}

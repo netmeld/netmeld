@@ -82,6 +82,9 @@ class Acls :
 
     nmcp::ParserIpAddress   ipAddr;
 
+    qi::rule<nmcp::IstreamIter, std::string()>
+      ipNoCidr;
+
 
     // Supporting data structures
     const std::string ZONE  {"global"};

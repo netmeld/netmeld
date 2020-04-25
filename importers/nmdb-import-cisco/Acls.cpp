@@ -45,7 +45,7 @@ Acls::Acls() : Acls::base_type(start)
   config =
     (  ipAccessListStandard
      | ipAccessListExtended
-//     | ipAccessList
+     | ipAccessList
     );
 
   // TODO double check vs other types
@@ -79,8 +79,6 @@ Acls::Acls() : Acls::base_type(start)
     (qi::lit("ip access-list extended") > token > qi::eol)
       [pnx::bind(&Acls::updateCurRuleBook, this, qi::_1)] >>
     *(indent [pnx::bind(&Acls::updateCurRule, this)] >>
-      // TODO ensure this gets NXOS rules
-      -(*qi::uint_) >>
       // ACTION
       token [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)] >>
       // PROTOCOL
@@ -97,8 +95,40 @@ Acls::Acls() : Acls::base_type(start)
     ) [pnx::bind(&Acls::curRuleFinalize, this)]
     ;
 
-//  ipAccessList =
-//    ;
+  /*
+     NXOS
+     (ip | ipv6) access-list NAME
+      ID ACTION PROTOCOL SOURCE [PORTS] [DEST [PORTS]] [log]
+    ---
+    ID (it is the sequence number)
+    ACTION ( permit | deny )
+    PROTOCOL ( name )
+    SOURCE ( IP *MASK | IP/CIDR | any )
+    DEST   ( IP *MASK | IP/CIDR | any )
+    PORTS ( eq PORT | range START END )
+    log
+  */
+  ipAccessList =
+    ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("access-list") > token > qi::eol)
+      [pnx::bind(&Acls::updateCurRuleBook, this, qi::_1)] >>
+    *(indent [pnx::bind(&Acls::updateCurRule, this)] >>
+      // ID
+      +qi::uint_ >>
+      // ACTION
+      token [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)] >>
+      // PROTOCOL
+      token [pnx::bind(&Acls::curRuleProtocol, this) = qi::_1] >>
+      // SOURCE
+      addressArgument [pnx::bind(&Acls::setCurRuleSrc, this, qi::_1)] >>
+      // SOURCE PORTS
+      -(ports [pnx::bind(&Acls::curRuleSrcPort, this) = qi::_1]) >>
+      // DESTINATION
+      -(addressArgument [pnx::bind(&Acls::setCurRuleDst, this, qi::_1)] >>
+        // DESTINATION PORTS
+        -(ports [pnx::bind(&Acls::curRuleDstPort, this) = qi::_1])
+      ) >> -qi::lit("log") >> qi::eol
+    ) [pnx::bind(&Acls::curRuleFinalize, this)]
+    ;
 
 
   //========
@@ -106,18 +136,24 @@ Acls::Acls() : Acls::base_type(start)
   //========
 
   /*
-    ( IpAddr *mask | "host" IpAddr | "any" | "object-group" name )
+    ( IP *MASK | IP/CIDR | host IP | object-group NAME | any )
   */
   addressArgument =
-    (  (ipAddr >> ipAddr)
-         [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
-     | (qi::lit("host") >> ipAddr)
+    (  (qi::lit("host") > ipAddr)
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-     | (qi::lit("object-group") >> token)
+     | (qi::lit("object-group") > token)
          [qi::_val = qi::_1]
+     | (&ipNoCidr > ipAddr > ipAddr)
+         [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
+     | (ipAddr)
+         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
      | (qi::string("any"))
          [qi::_val = qi::_1]
     )
+    ;
+
+  ipNoCidr =
+    (qi::uint_ % qi::char_('.')) >> qi::blank
     ;
 
   ports =
@@ -128,12 +164,12 @@ Acls::Acls() : Acls::base_type(start)
     )
     ;
 
-
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (config)
       (ipAccessListStandard)(ipAccessListExtended)(ipAccessList)
-      (addressArgument)(ports)
+      (addressArgument)(ipNoCidr)(ports)
+      //(token)(tokens)(indent)
       );
 }
 

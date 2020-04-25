@@ -45,6 +45,13 @@ target_link_libraries(${TOOL_NAME}
     pqxx
   )
 
+foreach(TEST_NAME
+    Acls
+  )
+  
+  create_test(${TEST_NAME})
+endforeach(TEST_NAME)
+
 create_man_from_help(${TOOL_NAME})
 
 install_bin(${TOOL_NAME} ${PROJECT_NAME})
