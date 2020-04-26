@@ -64,27 +64,21 @@ bool parse(nmdsic::Result& result, const std::string& text)
 BOOST_AUTO_TEST_CASE(testAclStandard)
 {
 //  nmcu::LoggerSingleton::getInstance().setLevel(nmcu::Severity::ALL);
-  const std::string acl {
-    "ip access-list standard TEST\n"
-    " permit 1.2.3.4 0.0.0.255\n"
-  };
+  {
+    const std::string acl {
+      "ip access-list standard TEST\n"
+      " permit 1.2.3.4 0.0.0.255\n"
+    };
 
-  nmdsic::Result result;
-  BOOST_TEST(parse(result, acl));
+    nmdsic::Result result;
+    BOOST_TEST(parse(result, acl));
 
-  auto& ruleName  {result.first};
-  //BOOST_TEST_EQUAL("TEST", ruleName);
-  BOOST_TEST("" == ruleName);
+    auto& ruleName  {result.first};
+    BOOST_TEST("" == ruleName);
 
-  auto& ruleBook  {result.second};
-  //BOOST_TEST(1 == ruleBook.size());
-  BOOST_TEST(0 == ruleBook.size());
-
-//  auto& rule  {ruleBook.at(0)};
-//  BOOST_TEST_EQUAL("permit", rule.getActions().at(0));
-//  BOOST_TEST_EQUAL("ip", rule.getServices().at(0));
-//  BOOST_TEST_EQUAL("any", rule.getSrcs().at(0));
-//  BOOST_TEST_EQUAL("10.52.0.0/16", rule.getDsts().at(0));
+    auto& ruleBook  {result.second};
+    BOOST_TEST(0 == ruleBook.size());
+  }
 }
 
 BOOST_AUTO_TEST_CASE(testAclExtended)
