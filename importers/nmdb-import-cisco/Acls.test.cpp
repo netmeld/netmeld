@@ -37,10 +37,44 @@ namespace nmcp = netmeld::core::parsers;
 namespace nmdsic = netmeld::datastore::importers::cisco;
 
 using qi::ascii::blank;
+
 BOOST_AUTO_TEST_CASE(testAclRules)
 {
+  // TODO move protected, subclass, refactor
   nmdsic::Acls acl;
+  nmco::AcRule temp;
+  acl.curRule = &temp;
 
+  {
+    const auto& rule = acl.action;
+    // OK
+    BOOST_TEST(nmcp::test("permit", rule, blank));
+    BOOST_TEST(nmcp::test("deny", rule, blank));
+    BOOST_TEST(nmcp::test(" permit ", rule, blank));
+    BOOST_TEST("permit" == temp.getActions().at(0));
+    // BAD
+    BOOST_TEST(!nmcp::test("other", rule, blank));
+  }
+
+  // TODO protocolArgument
+
+  {
+    const auto& rule = acl.addressArgumentIos;
+    // OK
+    BOOST_TEST(nmcp::test("host 1.2.3.4", rule, blank));
+    BOOST_TEST(nmcp::test("host 1234::aBcD", rule, blank));
+    BOOST_TEST(nmcp::test("any", rule, blank));
+    BOOST_TEST(nmcp::test("1.2.3.4 0.0.0.255", rule, blank));
+    BOOST_TEST(nmcp::test("1.2.3.4/24", rule, blank));
+    BOOST_TEST(nmcp::test("1234::aBcD/112", rule, blank));
+    // BAD
+    BOOST_TEST(!nmcp::test("host 1.2.3.4/24", rule, blank));
+    BOOST_TEST(!nmcp::test("host 1234::aBcD/112", rule, blank));
+    BOOST_TEST(!nmcp::test("any4", rule, blank));
+    BOOST_TEST(!nmcp::test("any6", rule, blank));
+    BOOST_TEST(!nmcp::test("1.2.3.4/24 1.2.3.4/24", rule, blank));
+    BOOST_TEST(!nmcp::test("1234::aBcD/112 1234::aBcD/112", rule, blank));
+  }
   {
     const auto& rule = acl.ipLikeNoCidr;
     // OK
@@ -63,7 +97,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
   }
 
   {
-    const auto& rule = acl.ports;
+    const auto& rule = acl.portArgument;
     // OK
     BOOST_TEST(nmcp::test("eq 123", rule, blank));
     BOOST_TEST(nmcp::test("eq http", rule, blank));
@@ -109,6 +143,8 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     out.clear();
   }
 
+  // TODO logArgument
+
   {
     const auto& rule = acl.addressArgument;
     // OK
@@ -131,25 +167,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testIosStandard)
-{
-  {
-    const std::string acl {
-      "ip access-list standard TEST\n"
-      " permit 1.2.3.4 0.0.0.255\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank, false));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("" == ruleName);
-
-    auto& ruleBook  {result.second};
-    BOOST_TEST(0 == ruleBook.size());
-  }
-}
-
+/*
 BOOST_AUTO_TEST_CASE(testIosExtended)
 {
   {
@@ -660,41 +678,365 @@ BOOST_AUTO_TEST_CASE(testNxos)
     }
   }
 }
-
-/*
-  NOTE: These are single lines.
-    More info: https://www.cisco.com/c/en/us/td/docs/security/asa/asa96/configuration/firewall/asa-96-firewall-config/access-acls.html
-
-  Common format?
-  - access-list NAME [line NUM] extended ACTION PROTO_ARG SRC_ARG DST_ARG [log [[LVL] [interval SEC] | disable | default]] [time-range RANGE_NAME] [inactive]
-
-  Specific ones...
-  - access-list access_list_name [line line_number] extended {deny | permit} protocol_argument source_address_argument dest_address_argument [log [[level] [interval secs] | disable | default]] [time-range time_range_name] [inactive]
-  - access-list access_list_name [line line_number] extended {deny | permit} {tcp | udp | sctp} source_address_argument [port_argument] dest_address_argument [port_argument] [log [[level] [interval secs] | disable | default] [time-range time-range-name] [inactive]
-  - access-list access_list_name [line line_number] extended {deny | permit} {icmp | icmp6} source_address_argument dest_address_argument [icmp_argument] [log [[level] [interval secs] | disable | default]] [time-range time_range_name] [inactive]
-  - access-list access_list_name [line line_number] extended {deny | permit} protocol_argument [user_argument] source_address_argument [port_argument] dest_address_argument [port_argument] [log [[level] [interval secs] | disable | default]] [time-range time_range_name] [inactive]
-  - access-list access_list_name [line line_number] extended {deny | permit} protocol_argument [security_group_argument] source_address_argument [port_argument] [security_group_argument] dest_address_argument [port_argument] [log [[level] [interval secs] | disable | default]] [inactive | time-range time_range_name]
-  - access-list access_list_name standard {deny | permit} {any4 | host ip_address | ip_address mask }
-  - access-list access_list_name webtype {deny | permit} url {url_string | any} [log [[level] [interval secs] | disable | default]] [time_range time_range_name] [inactive]
-  - access-list access_list_name webtype {deny | permit } tcp dest_address_argument [operator port] [log [[level] [interval secs] | disable | default]] [time_range time_range_name]] [inactive]]
-  - access-list access_list_name ethertype {deny | permit} {any | bpdu | dsap hex_address | ipx | isis | mpls-multicast | mpls-unicast | hex_number}
-  ---
-  NAME
-    ACL name
-  ACTION
-    ( deny | permit )
-  PROTO_ARG
-    ( NAME | NUMBER | object-group ( PROTO_GROUP | SRVC_GROUP ) | object SRVC_OBJ )
-  (SRC|DST)_ARG
-    ( host IP | IP MASK | IP/CIDR | any[4|6] | interface IFACE | object NW_OBJ | object-group NW_OBJ_GRP )
-  LVL
-    0-7
-
-  
-
-  port_argument ( OPERATOR PORT )
-    
 */
-BOOST_AUTO_TEST_CASE(testAsa)
+
+//=============================================================================
+// IOS tests
+//=============================================================================
+/*
+More info:
+- https://www.cisco.com/c/en/us/support/docs/security/ios-firewall/23602-confaccesslists.html#standacl
+  - Not a great example, CLI to enter...not show format
+  - Allows for both one and multi line show format (depending on usage)
+
+KEY: (unless otherwise stated)
+  LIST        -- Access list name
+  ACTION      -- ( deny | permit )
+  DYNAMIC_ARG -- ( dynamic NAME [timeout MINUTES] )
+  ADDR_ARG    -- (  host IP
+                  | IP WILDMASK
+                  | IPv6/PREFIX
+                  | any
+                 )
+  PROTO_ARG   -- ( NAME | NUMBER )
+  PORT_ARG    -- (  ( lt | gt | eq | neq ) PORT
+                  | range PORT PORT
+                 )
+  ICMP_ARG    -- ( ICMP_TYPE [ ICMP_CODE ] | ICMP_MESSAGE )
+  LOG         -- ( log | log-input )
+  TIME        -- ( time-range RANGE_NAME )
+
+*/
+
+/* NOTE: Below is a multi-liner, as defined in spec
+   ip access-list standard LIST
+    ACTION ADDR_ARG 
+
+   NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST ACTION ADDR_ARG
+
+   ---
+   ADDR_ARG -- (  IP
+                | IP WILDMASK
+                | any
+               )
+*/
+BOOST_AUTO_TEST_CASE(testIosStandard)
+{
+  {
+    nmdsic::Acls acl;
+    const auto& rule = acl.iosStandard;
+    // OK
+    const std::string prefix {"access-list TEST permit"};
+    std::string test;
+
+    test = prefix + " 1.2.3.4 0.0.0.255\n";
+    BOOST_TEST(nmcp::test(test.c_str(), rule, blank));
+    test = prefix + " 1.2.3.4\n";
+    BOOST_TEST(nmcp::test(test.c_str(), rule, blank));
+    test = prefix + " 1234::aBcD\n";
+    BOOST_TEST(nmcp::test(test.c_str(), rule, blank));
+    test = prefix + " any\n";
+    BOOST_TEST(nmcp::test(test.c_str(), rule, blank));
+    // BAD
+    BOOST_TEST(!nmcp::test(prefix.c_str(), rule, blank));
+    test = "access-list standard TEST permit any\n";
+    BOOST_TEST(!nmcp::test(test.c_str(), rule, blank, false));
+  }
+
+  // Full trip
+  {
+    const std::string acl {
+      "ip access-list standard TEST\n"
+      " permit 1.2.3.4 0.0.0.255\n"
+      " permit 1.2.3.4\n"
+      " permit 1234::aBcD\n"
+      " deny   any\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank, false));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    // TODO update
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST(0 == rule.getServices().size());
+      BOOST_TEST(0 == rule.getSrcs().size());
+      BOOST_TEST(0 == rule.getDsts().size());
+    }
+  }
+}
+
+/* NOTE: Below is a multi-liner
+   ip access-list ( standard | extended ) LIST
+    remark TEXT
+
+   NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST remark TEXT
+*/
+BOOST_AUTO_TEST_CASE(testIosRemark)
+{
+  {
+    nmdsic::Acls acl;
+    const auto& rule = acl.iosRemark;
+    // OK
+    BOOST_TEST(nmcp::test("access-list TEST remark some\n", rule, blank));
+    BOOST_TEST(nmcp::test("access-list TEST remark s r t\n", rule, blank));
+    //// BAD
+    BOOST_CHECK_THROW(
+          nmcp::test("access-list TEST remark \n", rule, blank, false),
+          std::runtime_error
+        );
+    BOOST_CHECK_THROW(
+          nmcp::test("access-list TEST remark\n", rule, blank, false),
+          std::runtime_error
+        );
+    BOOST_TEST(!nmcp::test("\n", rule, blank, false));
+    BOOST_TEST(!nmcp::test("", rule, blank, false));
+  }
+
+  // Full trip
+  {
+    const std::string acl {
+      "ip access-list standard TEST\n"
+      " remark some random text\n"
+      " permit any\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    BOOST_TEST(2 == ruleBook.size());
+
+    // TODO update
+  }
+//  {
+//    const std::string acl {
+//      "ip access-list extended TEST\n"
+//      " remark some random text\n"
+//      " permit ip any any\n"
+//    };
+//
+//    nmdsic::Result result;
+//    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+//
+//    auto& ruleName  {result.first};
+//    BOOST_TEST("TEST" == ruleName);
+//
+//    auto& ruleBook  {result.second};
+//    size_t count {1};
+//    BOOST_TEST(count <= ruleBook.size());
+//    for (auto& [id, rule] : ruleBook) {
+//      BOOST_TEST(count == (id));
+//      ++count;
+//      BOOST_TEST("permit" == rule.getActions().at(0));
+//      BOOST_TEST("ip::" == rule.getServices().at(0));
+//      BOOST_TEST("any" == rule.getSrcs().at(0));
+//      BOOST_TEST("any" == rule.getDsts().at(0));
+//    }
+//  }
+}
+
+/* NOTE: Below is a multi-liner, as defined in spec
+   ip access-list extended LIST
+
+   NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG ADDR_ARG
+    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG ADDR_ARG
+    [ICMP_ARG]
+    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
+    [established] [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
+    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+*/
+#if false
+BOOST_AUTO_TEST_CASE(testIosExtended)
 {
 }
+/*
+*/
+BOOST_AUTO_TEST_CASE(testIos)
+{
+}
+
+
+//=============================================================================
+// ASA tests
+//=============================================================================
+
+
+/*
+More info:
+- https://www.cisco.com/c/en/us/td/docs/security/asa/asa96/configuration/firewall/asa-96-firewall-config/access-acls.html
+  - Appears to be representative of show format
+
+KEY: (unless otherwise stated)
+  *_OBJECT_ID   -- An object ID as created via the `object *` command.
+  *_GROUP_ID    -- An object ID as created via the `object-group *` command.
+  LIST        -- Access list name
+  ACTION      -- ( deny | permit )
+  ADDR_ARG    -- (  host IP
+                  | IP NETMASK
+                  | IPv6/PREFIX
+                  | any[46]
+                  | interface IFACE_NAME
+                  | object NETWORK_OBJECT_ID
+                  | object-group NETWORK_GROUP_ID
+                 )
+  PROTO_ARG   -- (  ( NAME | NUMBER )
+                  | object SERVICE_OBJECT_ID
+                  | object-group ( PROTOCOL_GROUP_ID | SERVICE_GROUP_ID )
+                 )
+  PORT_ARG    -- (  ( lt | gt | eq | neq ) PORT
+                  | range PORT PORT
+                  | object-group SERVICE_GROUP_ID
+                 )
+  ICMP_ARG    -- (  ICMP_TYPE [ ICMP_CODE ]
+                  | object-group ICMP_GROUP_ID
+                 )
+  USER_ARG    -- (  user ( [DOMAIN\]NAME | any | none )
+                  | user-group [DOMAIN\\]GROUP
+                  | object-group USER_GROUP_ID
+                 )
+  SEC_GRP_ARG -- (  security-group ( name NAME | tag TAG )
+                  | object-group-security SECURITY_GROUP_ID
+                 )
+  LOG         -- ( log [[LEVEL] [interval SECS] | disable | default] )
+  TIME        -- ( time-range RANGE_NAME )
+
+*/
+/* NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST remark SPACED_FILLED_TEXT
+*/
+BOOST_AUTO_TEST_CASE(testAsaRemark)
+{
+}
+/* NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST standard ACTION ADDR_ARG
+   ---
+   ADDR_ARG -- ( host IP | IP MASK | any4)
+*/
+BOOST_AUTO_TEST_CASE(testAsaStandard)
+{
+}
+/* NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST extended ACTION
+    PROTO_ARG
+    ADDR_ARG ADDR_ARG
+    [LOG] [TIME] [inactive]
+   access-list LIST extended ACTION
+    {tcp | udp | sctp}
+    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
+    [LOG] [TIME] [inactive]
+   access-list LIST extended ACTION
+    {icmp | icmp6}
+    ADDR_ARG ADDR_ARG
+    [ICMP_ARG]
+    [LOG] [TIME] [inactive]
+   access-list LIST extended ACTION
+    PROTO_ARG [USER_ARG]
+    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
+    [LOG] [TIME] [inactive]
+   access-list LIST extended ACTION
+    PROTO_ARG
+    [SEC_GRP_ARG] ADDR_ARG [PORT_ARG]
+    [SEC_GRP_ARG] ADDR_ARG [PORT_ARG]
+    [LOG] [TIME] [inactive]
+*/
+BOOST_AUTO_TEST_CASE(testAsaExtended)
+{
+}
+/* NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST webtype ACTION
+    url ( URL_REGEX | any )
+    [LOG] [TIME] [inactive]
+   access-list LIST webtype ACTION
+    tcp ADDR_ARG
+    [PORT_ARG]
+    [LOG] [TIME] [inactive]
+  PORT_ARG -- (  ( lt | gt | eq | neq ) PORT
+               | range PORT PORT
+              )
+*/
+BOOST_AUTO_TEST_CASE(testAsaWebType)
+{
+}
+/* NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST ethertype ACTION
+    {  any
+     | bpdu
+     | dsap hex_address
+     | ipx
+     | isis
+     | mpls-multicast
+     | mpls-unicast
+     | hex_number
+    }
+*/
+BOOST_AUTO_TEST_CASE(testAsaEthertype)
+{
+  {
+    const auto& rule = acl.asaEther;
+    // OK
+    BOOST_TEST(nmcp::test("ethertype permit any", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype deny any", rule, blank));
+    // Cisco note: no longer matches as intended, use dsap instead
+    BOOST_TEST(nmcp::test("ethertype permit bpdu", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit dsap 0x42", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit dsap 0x01", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit dsap 0xff", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit ipx", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit isis", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit mpls-multicast", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit mpls-unicast", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit 0x600", rule, blank));
+    BOOST_TEST(nmcp::test("ethertype permit 0xffff", rule, blank));
+    // BAD
+    BOOST_TEST(!nmcp::test("ethertype permit", rule, blank));
+    BOOST_TEST(!nmcp::test("ethertype permit asdf", rule, blank));
+  }
+
+  // Full trip
+  {
+    const std::string acl {
+      "access-list TEST ethertype permit any\n"
+      "access-list TEST ethertype deny any\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("" == ruleName);
+
+    auto& ruleBook  {result.second};
+    BOOST_TEST(0 == ruleBook.size());
+  }
+}
+#endif

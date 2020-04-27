@@ -74,11 +74,17 @@ class Acls :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      ipAccessListStandard, ipAccessListExtended, ipAccessList;
+      remarkLine,
+      iosRule, iosRemark, iosStandard, iosExtended,
+      logArgument,
+      ipAccessListExtended, ipAccessList;
 
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
-      addressArgument,
-      ports;
+      bookName,
+      action,
+      protocolArgument,
+      addressArgument, addressArgumentIos,
+      portArgument;
 
     nmcp::ParserIpAddress   ipAddr;
 
@@ -86,6 +92,7 @@ class Acls :
       ipLikeNoCidr;
 
 
+    nmco::AcRule *curRule {nullptr};
   private:
     // Supporting data structures
     const std::string ZONE  {"global"};
@@ -94,7 +101,6 @@ class Acls :
     RuleBook     ruleBook;
 
 
-    nmco::AcRule *curRule {nullptr};
     size_t       curRuleId {0};
     std::string  curRuleProtocol {""};
     std::string  curRuleSrcPort {""};
