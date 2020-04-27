@@ -98,7 +98,7 @@ Acls::Acls() : Acls::base_type(start)
   /*
      NXOS
      (ip | ipv6) access-list NAME
-      ID ACTION PROTOCOL SOURCE [PORTS] [DEST [PORTS]] [log]
+      ID ACTION PROTOCOL SOURCE [PORTS] [DEST [PORTS]] [ACTIONS]
     ---
     ID (it is the sequence number)
     ACTION ( permit | deny )
@@ -126,7 +126,8 @@ Acls::Acls() : Acls::base_type(start)
       -(addressArgument [pnx::bind(&Acls::setCurRuleDst, this, qi::_1)] >>
         // DESTINATION PORTS
         -(ports [pnx::bind(&Acls::curRuleDstPort, this) = qi::_1])
-      ) >> -qi::lit("log") >> qi::eol
+      ) >> -(+token [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]) >>
+      qi::eol
     ) [pnx::bind(&Acls::curRuleFinalize, this)]
     ;
 
@@ -139,26 +140,36 @@ Acls::Acls() : Acls::base_type(start)
     ( IP *MASK | IP/CIDR | host IP | object-group NAME | any )
   */
   addressArgument =
-    (  (qi::lit("host") > ipAddr)
-         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-     | (qi::lit("object-group") > token)
+    (  (qi::lit("object-group") > token)
          [qi::_val = qi::_1]
-     | (&ipNoCidr > ipAddr > ipAddr)
+     | (qi::lit("object") > token)
+         [qi::_val = qi::_1]
+     | (qi::lit("interface") > token)
+         [qi::_val = qi::_1]
+     | (qi::lit("host") >> (&ipLikeNoCidr > ipAddr))
+         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+     | (qi::lexeme[qi::as_string[qi::string("any") >> -qi::char_("46")]])
+         [qi::_val = qi::_1]
+     | (&ipLikeNoCidr > ipAddr > ipAddr)
          [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
      | (ipAddr)
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-     | (qi::string("any"))
-         [qi::_val = qi::_1]
     )
     ;
 
-  ipNoCidr =
-    (qi::uint_ % qi::char_('.')) >> qi::blank
+  ipLikeNoCidr =
+    (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.cidr)
     ;
 
   ports =
     (  (qi::lit("eq") >> token)
          [qi::_val = qi::_1]
+     | (qi::lit("neq") >> token)
+         [qi::_val = "!" + qi::_1]
+     | (qi::lit("lt") >> token)
+         [qi::_val = "<" + qi::_1]
+     | (qi::lit("gt") >> token)
+         [qi::_val = ">" + qi::_1]
      | (qi::lit("range") >> token >> token)
          [qi::_val = (qi::_1 + "-" + qi::_2)]
     )
@@ -168,7 +179,7 @@ Acls::Acls() : Acls::base_type(start)
       //(start)
       (config)
       (ipAccessListStandard)(ipAccessListExtended)(ipAccessList)
-      (addressArgument)(ipNoCidr)(ports)
+      (addressArgument)(ipLikeNoCidr)(ports)
       //(token)(tokens)(indent)
       );
 }

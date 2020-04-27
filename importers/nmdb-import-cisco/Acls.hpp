@@ -67,7 +67,7 @@ class Acls :
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private:
+  public:
     // Rules
     qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -83,9 +83,10 @@ class Acls :
     nmcp::ParserIpAddress   ipAddr;
 
     qi::rule<nmcp::IstreamIter, std::string()>
-      ipNoCidr;
+      ipLikeNoCidr;
 
 
+  private:
     // Supporting data structures
     const std::string ZONE  {"global"};
 

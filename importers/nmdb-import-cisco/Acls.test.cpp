@@ -28,10 +28,7 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
+#include <netmeld/core/parsers/ParserTestHelper.hpp>
 
 #include "Acls.hpp"
 
@@ -39,31 +36,103 @@ namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 namespace nmdsic = netmeld::datastore::importers::cisco;
 
-
-bool parse(nmdsic::Result&, const std::string&);
-bool parse(nmdsic::Result& result, const std::string& text)
+using qi::ascii::blank;
+BOOST_AUTO_TEST_CASE(testAclRules)
 {
-  std::istringstream dataStream(text);
-  dataStream.unsetf(std::ios::skipws);
-  nmcp::IstreamIter i(dataStream), e;
-  auto success =
-    qi::phrase_parse(i, e, nmdsic::Acls(), qi::ascii::blank, result);
+  nmdsic::Acls acl;
 
-  //if ((!success) || (i != e)) {
-  //  LOG_INFO << "Parser failed around:\n";
-  //  std::ostringstream oss;
-  //  for (size_t count {0}; (count < 20) && (i != e); ++count, ++i) {
-  //    oss << *i;
-  //  }
-  //  LOG_INFO << oss.str() << std::endl;
-  //}
-  return success;
+  {
+    const auto& rule = acl.ipLikeNoCidr;
+    // OK
+    BOOST_TEST(nmcp::test("1.2.3.4", rule));
+    BOOST_TEST(nmcp::test("1234::aBcD", rule));
+    BOOST_TEST(nmcp::test("1.2.3.4 ", rule, false));
+    BOOST_TEST(nmcp::test("1234::aBcD ", rule, false));
+    // BAD
+    BOOST_TEST(!nmcp::test("1.2.3.4/24", rule));
+    BOOST_TEST(!nmcp::test("1.2.3.4/", rule));
+    BOOST_TEST(!nmcp::test("1234::aBcD/112", rule));
+    BOOST_TEST(!nmcp::test("1234::aBcD/", rule));
+    // FORMAT
+    std::string out;
+    BOOST_TEST(nmcp::testAttr("1.2.3.4", rule, out));
+    BOOST_TEST("1.2.3.4" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("1234::aBcD ", rule, out, false));
+    BOOST_TEST("1234::aBcD" == out);
+  }
+
+  {
+    const auto& rule = acl.ports;
+    // OK
+    BOOST_TEST(nmcp::test("eq 123", rule, blank));
+    BOOST_TEST(nmcp::test("eq http", rule, blank));
+    BOOST_TEST(nmcp::test("neq 123", rule, blank));
+    BOOST_TEST(nmcp::test("neq http", rule, blank));
+    BOOST_TEST(nmcp::test("lt 123", rule, blank));
+    BOOST_TEST(nmcp::test("lt http", rule, blank));
+    BOOST_TEST(nmcp::test("gt 123", rule, blank));
+    BOOST_TEST(nmcp::test("gt http", rule, blank));
+    BOOST_TEST(nmcp::test("range 123 456", rule, blank));
+    // BAD
+    // FORMAT
+    std::string out;
+    BOOST_TEST(nmcp::testAttr("eq 123", rule, out, blank));
+    BOOST_TEST("123" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("neq 123", rule, out, blank));
+    BOOST_TEST("!123" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("lt 123", rule, out, blank));
+    BOOST_TEST("<123" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("gt 123", rule, out, blank));
+    BOOST_TEST(">123" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("range 123 456", rule, out, blank));
+    BOOST_TEST("123-456" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("eq http", rule, out, blank));
+    BOOST_TEST("http" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("neq http", rule, out, blank));
+    BOOST_TEST("!http" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("lt http", rule, out, blank));
+    BOOST_TEST("<http" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("gt http", rule, out, blank));
+    BOOST_TEST(">http" == out);
+    out.clear();
+    BOOST_TEST(nmcp::testAttr("range http https", rule, out, blank));
+    BOOST_TEST("http-https" == out);
+    out.clear();
+  }
+
+  {
+    const auto& rule = acl.addressArgument;
+    // OK
+    BOOST_TEST(nmcp::test("host 1.2.3.4", rule, blank));
+    BOOST_TEST(nmcp::test("host 1234::aBcD", rule, blank));
+    BOOST_TEST(nmcp::test("object-group group", rule, blank));
+    BOOST_TEST(nmcp::test("object object", rule, blank));
+    BOOST_TEST(nmcp::test("interface iface", rule, blank));
+    BOOST_TEST(nmcp::test("any", rule, blank));
+    BOOST_TEST(nmcp::test("any4", rule, blank));
+    BOOST_TEST(nmcp::test("any6", rule, blank));
+    BOOST_TEST(nmcp::test("1.2.3.4 0.0.0.255", rule, blank));
+    BOOST_TEST(nmcp::test("1.2.3.4/24", rule, blank));
+    BOOST_TEST(nmcp::test("1234::aBcD/112", rule, blank));
+    // BAD
+    BOOST_TEST(!nmcp::test("1.2.3.4/24 1.2.3.4/24", rule, blank));
+    BOOST_TEST(!nmcp::test("1234::aBcD/112 1234::aBcD/112", rule, blank));
+    BOOST_TEST(!nmcp::test("host 1.2.3.4/24", rule, blank));
+    BOOST_TEST(!nmcp::test("host 1234::aBcD/112", rule, blank));
+  }
 }
 
-
-BOOST_AUTO_TEST_CASE(testAclStandard)
+BOOST_AUTO_TEST_CASE(testIosStandard)
 {
-//  nmcu::LoggerSingleton::getInstance().setLevel(nmcu::Severity::ALL);
   {
     const std::string acl {
       "ip access-list standard TEST\n"
@@ -71,7 +140,7 @@ BOOST_AUTO_TEST_CASE(testAclStandard)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank, false));
 
     auto& ruleName  {result.first};
     BOOST_TEST("" == ruleName);
@@ -81,7 +150,7 @@ BOOST_AUTO_TEST_CASE(testAclStandard)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testAclExtended)
+BOOST_AUTO_TEST_CASE(testIosExtended)
 {
   {
     const std::string acl {
@@ -93,7 +162,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -120,7 +189,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -147,7 +216,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -174,7 +243,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -201,7 +270,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -229,7 +298,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -255,7 +324,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -279,7 +348,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -303,7 +372,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -322,7 +391,7 @@ BOOST_AUTO_TEST_CASE(testAclExtended)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testAcl)
+BOOST_AUTO_TEST_CASE(testNxos)
 {
   {
     const std::string acl {
@@ -334,7 +403,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -346,6 +415,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
       BOOST_TEST(count == (id));
       ++count;
       BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("log" == rule.getActions().at(1));
       BOOST_TEST("ip:123:123" == rule.getServices().at(0));
       BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
       BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
@@ -361,7 +431,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -388,7 +458,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -415,7 +485,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -442,7 +512,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -470,7 +540,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };   
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -482,6 +552,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
       BOOST_TEST(count == (id));
       ++count;
       BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("log" == rule.getActions().at(1));
       BOOST_TEST("ip:123:123" == rule.getServices().at(0));
       BOOST_TEST("1.2.3.4/32" == rule.getSrcs().at(0));
       BOOST_TEST("1.2.3.4/32" == rule.getDsts().at(0));
@@ -496,7 +567,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -520,7 +591,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -532,6 +603,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
       BOOST_TEST(count == (id));
       ++count;
       BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("log" == rule.getActions().at(1));
       BOOST_TEST("ip:123:123" == rule.getServices().at(0));
       BOOST_TEST("any" == rule.getSrcs().at(0));
       BOOST_TEST("any" == rule.getDsts().at(0));
@@ -544,7 +616,7 @@ BOOST_AUTO_TEST_CASE(testAcl)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(parse(result, acl));
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
 
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
@@ -561,4 +633,68 @@ BOOST_AUTO_TEST_CASE(testAcl)
       BOOST_TEST("any" == rule.getDsts().at(0));
     }
   }
+  {
+    const std::string acl {
+      "ip access-list TEST\n"
+      " 20 permit ip any any log tracked\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("log" == rule.getActions().at(1));
+      BOOST_TEST("tracked" == rule.getActions().at(2));
+      BOOST_TEST("ip::" == rule.getServices().at(0));
+      BOOST_TEST("any" == rule.getSrcs().at(0));
+      BOOST_TEST("any" == rule.getDsts().at(0));
+    }
+  }
+}
+
+/*
+  NOTE: These are single lines.
+    More info: https://www.cisco.com/c/en/us/td/docs/security/asa/asa96/configuration/firewall/asa-96-firewall-config/access-acls.html
+
+  Common format?
+  - access-list NAME [line NUM] extended ACTION PROTO_ARG SRC_ARG DST_ARG [log [[LVL] [interval SEC] | disable | default]] [time-range RANGE_NAME] [inactive]
+
+  Specific ones...
+  - access-list access_list_name [line line_number] extended {deny | permit} protocol_argument source_address_argument dest_address_argument [log [[level] [interval secs] | disable | default]] [time-range time_range_name] [inactive]
+  - access-list access_list_name [line line_number] extended {deny | permit} {tcp | udp | sctp} source_address_argument [port_argument] dest_address_argument [port_argument] [log [[level] [interval secs] | disable | default] [time-range time-range-name] [inactive]
+  - access-list access_list_name [line line_number] extended {deny | permit} {icmp | icmp6} source_address_argument dest_address_argument [icmp_argument] [log [[level] [interval secs] | disable | default]] [time-range time_range_name] [inactive]
+  - access-list access_list_name [line line_number] extended {deny | permit} protocol_argument [user_argument] source_address_argument [port_argument] dest_address_argument [port_argument] [log [[level] [interval secs] | disable | default]] [time-range time_range_name] [inactive]
+  - access-list access_list_name [line line_number] extended {deny | permit} protocol_argument [security_group_argument] source_address_argument [port_argument] [security_group_argument] dest_address_argument [port_argument] [log [[level] [interval secs] | disable | default]] [inactive | time-range time_range_name]
+  - access-list access_list_name standard {deny | permit} {any4 | host ip_address | ip_address mask }
+  - access-list access_list_name webtype {deny | permit} url {url_string | any} [log [[level] [interval secs] | disable | default]] [time_range time_range_name] [inactive]
+  - access-list access_list_name webtype {deny | permit } tcp dest_address_argument [operator port] [log [[level] [interval secs] | disable | default]] [time_range time_range_name]] [inactive]]
+  - access-list access_list_name ethertype {deny | permit} {any | bpdu | dsap hex_address | ipx | isis | mpls-multicast | mpls-unicast | hex_number}
+  ---
+  NAME
+    ACL name
+  ACTION
+    ( deny | permit )
+  PROTO_ARG
+    ( NAME | NUMBER | object-group ( PROTO_GROUP | SRVC_GROUP ) | object SRVC_OBJ )
+  (SRC|DST)_ARG
+    ( host IP | IP MASK | IP/CIDR | any[4|6] | interface IFACE | object NW_OBJ | object-group NW_OBJ_GRP )
+  LVL
+    0-7
+
+  
+
+  port_argument ( OPERATOR PORT )
+    
+*/
+BOOST_AUTO_TEST_CASE(testAsa)
+{
 }
