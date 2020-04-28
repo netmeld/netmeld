@@ -146,16 +146,16 @@ BOOST_AUTO_TEST_CASE(testAclRules)
   // TODO logArgument
 
   {
-    const auto& rule = acl.addressArgument;
+    const auto& rule = acl.addressArgumentIos;
     // OK
     BOOST_TEST(nmcp::test("host 1.2.3.4", rule, blank));
     BOOST_TEST(nmcp::test("host 1234::aBcD", rule, blank));
-    BOOST_TEST(nmcp::test("object-group group", rule, blank));
-    BOOST_TEST(nmcp::test("object object", rule, blank));
-    BOOST_TEST(nmcp::test("interface iface", rule, blank));
+//    BOOST_TEST(nmcp::test("object-group group", rule, blank));
+ //   BOOST_TEST(nmcp::test("object object", rule, blank));
+  //  BOOST_TEST(nmcp::test("interface iface", rule, blank));
     BOOST_TEST(nmcp::test("any", rule, blank));
-    BOOST_TEST(nmcp::test("any4", rule, blank));
-    BOOST_TEST(nmcp::test("any6", rule, blank));
+   // BOOST_TEST(nmcp::test("any4", rule, blank));
+    //BOOST_TEST(nmcp::test("any6", rule, blank));
     BOOST_TEST(nmcp::test("1.2.3.4 0.0.0.255", rule, blank));
     BOOST_TEST(nmcp::test("1.2.3.4/24", rule, blank));
     BOOST_TEST(nmcp::test("1234::aBcD/112", rule, blank));
@@ -168,247 +168,6 @@ BOOST_AUTO_TEST_CASE(testAclRules)
 }
 
 /*
-BOOST_AUTO_TEST_CASE(testIosExtended)
-{
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4 0.0.0.255 eq 123 log\n"
-      " permit ip 1.2.3.4/24 eq 123 1.2.3.4 0.0.0.255 eq 123 log\n"
-      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4/24 eq 123 log\n"
-      " permit ip 1.2.3.4/24 eq 123 1.2.3.4/24 eq 123 log\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
-    }
-  }
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4 0.0.0.255 eq 123\n"
-      " permit ip 1.2.3.4/24 eq 123 1.2.3.4 0.0.0.255 eq 123\n"
-      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4/24 eq 123\n"
-      " permit ip 1.2.3.4/24 eq 123 1.2.3.4/24 eq 123\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
-    }
-  }
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4 0.0.0.255\n"
-      " permit ip 1.2.3.4/24 eq 123 1.2.3.4 0.0.0.255\n"
-      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4/24\n"
-      " permit ip 1.2.3.4/24 eq 123 1.2.3.4/24\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip:123:" == rule.getServices().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
-    }
-  }
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4 0.0.0.255 eq 123\n"
-      " permit ip 1.2.3.4/24 1.2.3.4 0.0.0.255 eq 123\n"
-      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4/24 eq 123\n"
-      " permit ip 1.2.3.4/24 1.2.3.4/24 eq 123\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip::123" == rule.getServices().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
-    }
-  }
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4 0.0.0.255\n"
-      " permit ip 1.2.3.4/24 1.2.3.4 0.0.0.255\n"
-      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4/24\n"
-      " permit ip 1.2.3.4/24 1.2.3.4/24\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip::" == rule.getServices().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
-      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
-    }
-  }
-
-  // Given above, should not need exhaustive permutation testing for the rest
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip host 1.2.3.4 eq 123 1.2.3.4 0.0.0.0 eq 123 log\n"
-      " permit ip 1.2.3.4 0.0.0.0 eq 123 host 1.2.3.4 eq 123 log\n"
-      " permit ip host 1.2.3.4 eq 123 host 1.2.3.4 eq 123 log\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
-      BOOST_TEST("1.2.3.4/32" == rule.getSrcs().at(0));
-      BOOST_TEST("1.2.3.4/32" == rule.getDsts().at(0));
-    }
-  }
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip host 1.2.3.4 1.2.3.4 0.0.0.0\n"
-      " permit ip 1.2.3.4 0.0.0.0 host 1.2.3.4\n"
-      " permit ip host 1.2.3.4 host 1.2.3.4\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip::" == rule.getServices().at(0));
-      BOOST_TEST("1.2.3.4/32" == rule.getSrcs().at(0));
-      BOOST_TEST("1.2.3.4/32" == rule.getDsts().at(0));
-    }
-  }
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip any eq 123 any eq 123 log\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
-      BOOST_TEST("any" == rule.getSrcs().at(0));
-      BOOST_TEST("any" == rule.getDsts().at(0));
-    }
-  }
-  {
-    const std::string acl {
-      "ip access-list extended TEST\n"
-      " permit ip any any\n"
-    };
-
-    nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
-
-    auto& ruleName  {result.first};
-    BOOST_TEST("TEST" == ruleName);
-
-    auto& ruleBook  {result.second};
-    size_t count {1};
-    BOOST_TEST(count <= ruleBook.size());
-    for (auto& [id, rule] : ruleBook) {
-      BOOST_TEST(count == (id));
-      ++count;
-      BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST("ip::" == rule.getServices().at(0));
-      BOOST_TEST("any" == rule.getSrcs().at(0));
-      BOOST_TEST("any" == rule.getDsts().at(0));
-    }
-  }
-}
-
 BOOST_AUTO_TEST_CASE(testNxos)
 {
   {
@@ -760,7 +519,65 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
     auto& ruleName  {result.first};
     BOOST_TEST("TEST" == ruleName);
 
-    // TODO update
+    auto& ruleBook  {result.second};
+    BOOST_TEST(4 == ruleBook.size());
+    BOOST_TEST("permit" == ruleBook.at(1).getActions().at(0));
+    BOOST_TEST("permit" == ruleBook.at(2).getActions().at(0));
+    BOOST_TEST("permit" == ruleBook.at(3).getActions().at(0));
+    BOOST_TEST("deny" == ruleBook.at(4).getActions().at(0));
+    BOOST_TEST("1.2.3.4/24" == ruleBook.at(1).getSrcs().at(0));
+    BOOST_TEST("1.2.3.4/32" == ruleBook.at(2).getSrcs().at(0));
+    BOOST_TEST("1234::abcd/128" == ruleBook.at(3).getSrcs().at(0));
+    BOOST_TEST("any" == ruleBook.at(4).getSrcs().at(0));
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(0 == rule.getServices().size());
+      BOOST_TEST(0 == rule.getDsts().size());
+    }
+  }
+}
+
+/* NOTE: Below is a multi-liner, as defined in spec
+   ip access-list extended LIST
+
+   NOTE: Below is a one-liner wrapped for clarity
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG ADDR_ARG
+    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG ADDR_ARG
+    [ICMP_ARG]
+    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
+    [established] [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+
+   access-list LIST [DYNAMIC_ARG]
+    ACTION PROTO_ARG
+    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
+    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
+*/
+BOOST_AUTO_TEST_CASE(testIosExtended)
+{
+  // TODO need to convert to test for above
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4 0.0.0.255 eq 123 log\n"
+      " permit ip 1.2.3.4/24 eq 123 1.2.3.4 0.0.0.255 eq 123 log\n"
+      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4/24 eq 123 log\n"
+      " permit ip 1.2.3.4/24 eq 123 1.2.3.4/24 eq 123 log\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
 
     auto& ruleBook  {result.second};
     size_t count {1};
@@ -769,9 +586,219 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
       BOOST_TEST(count == (id));
       ++count;
       BOOST_TEST("permit" == rule.getActions().at(0));
-      BOOST_TEST(0 == rule.getServices().size());
-      BOOST_TEST(0 == rule.getSrcs().size());
-      BOOST_TEST(0 == rule.getDsts().size());
+      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
+    }
+  }
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4 0.0.0.255 eq 123\n"
+      " permit ip 1.2.3.4/24 eq 123 1.2.3.4 0.0.0.255 eq 123\n"
+      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4/24 eq 123\n"
+      " permit ip 1.2.3.4/24 eq 123 1.2.3.4/24 eq 123\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
+    }
+  }
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4 0.0.0.255\n"
+      " permit ip 1.2.3.4/24 eq 123 1.2.3.4 0.0.0.255\n"
+      " permit ip 1.2.3.4 0.0.0.255 eq 123 1.2.3.4/24\n"
+      " permit ip 1.2.3.4/24 eq 123 1.2.3.4/24\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip:123:" == rule.getServices().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
+    }
+  }
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4 0.0.0.255 eq 123\n"
+      " permit ip 1.2.3.4/24 1.2.3.4 0.0.0.255 eq 123\n"
+      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4/24 eq 123\n"
+      " permit ip 1.2.3.4/24 1.2.3.4/24 eq 123\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip::123" == rule.getServices().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
+    }
+  }
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4 0.0.0.255\n"
+      " permit ip 1.2.3.4/24 1.2.3.4 0.0.0.255\n"
+      " permit ip 1.2.3.4 0.0.0.255 1.2.3.4/24\n"
+      " permit ip 1.2.3.4/24 1.2.3.4/24\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip::" == rule.getServices().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getSrcs().at(0));
+      BOOST_TEST("1.2.3.4/24" == rule.getDsts().at(0));
+    }
+  }
+
+  // Given above, should not need exhaustive permutation testing for the rest
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip host 1.2.3.4 eq 123 1.2.3.4 0.0.0.0 eq 123 log\n"
+      " permit ip 1.2.3.4 0.0.0.0 eq 123 host 1.2.3.4 eq 123 log\n"
+      " permit ip host 1.2.3.4 eq 123 host 1.2.3.4 eq 123 log\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
+      BOOST_TEST("1.2.3.4/32" == rule.getSrcs().at(0));
+      BOOST_TEST("1.2.3.4/32" == rule.getDsts().at(0));
+    }
+  }
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip host 1.2.3.4 1.2.3.4 0.0.0.0\n"
+      " permit ip 1.2.3.4 0.0.0.0 host 1.2.3.4\n"
+      " permit ip host 1.2.3.4 host 1.2.3.4\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip::" == rule.getServices().at(0));
+      BOOST_TEST("1.2.3.4/32" == rule.getSrcs().at(0));
+      BOOST_TEST("1.2.3.4/32" == rule.getDsts().at(0));
+    }
+  }
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip any eq 123 any eq 123 log\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip:123:123" == rule.getServices().at(0));
+      BOOST_TEST("any" == rule.getSrcs().at(0));
+      BOOST_TEST("any" == rule.getDsts().at(0));
+    }
+  }
+  {
+    const std::string acl {
+      "ip access-list extended TEST\n"
+      " permit ip any any\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(acl, nmdsic::Acls(), result, blank));
+
+    auto& ruleName  {result.first};
+    BOOST_TEST("TEST" == ruleName);
+
+    auto& ruleBook  {result.second};
+    size_t count {1};
+    BOOST_TEST(count <= ruleBook.size());
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("permit" == rule.getActions().at(0));
+      BOOST_TEST("ip::" == rule.getServices().at(0));
+      BOOST_TEST("any" == rule.getSrcs().at(0));
+      BOOST_TEST("any" == rule.getDsts().at(0));
     }
   }
 }
@@ -820,8 +847,12 @@ BOOST_AUTO_TEST_CASE(testIosRemark)
 
     auto& ruleBook  {result.second};
     BOOST_TEST(2 == ruleBook.size());
-
-    // TODO update
+    BOOST_TEST("permit" == ruleBook.at(2).getActions().at(0));
+    BOOST_TEST("any" == ruleBook.at(2).getSrcs().at(0));
+    for (auto& [id, rule] : ruleBook) {
+      BOOST_TEST(0 == rule.getServices().size());
+      BOOST_TEST(0 == rule.getDsts().size());
+    }
   }
 //  {
 //    const std::string acl {
@@ -849,36 +880,7 @@ BOOST_AUTO_TEST_CASE(testIosRemark)
 //    }
 //  }
 }
-
-/* NOTE: Below is a multi-liner, as defined in spec
-   ip access-list extended LIST
-
-   NOTE: Below is a one-liner wrapped for clarity
-   access-list LIST [DYNAMIC_ARG]
-    ACTION PROTO_ARG
-    ADDR_ARG ADDR_ARG
-    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
-
-   access-list LIST [DYNAMIC_ARG]
-    ACTION PROTO_ARG
-    ADDR_ARG ADDR_ARG
-    [ICMP_ARG]
-    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
-
-   access-list LIST [DYNAMIC_ARG]
-    ACTION PROTO_ARG
-    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
-    [established] [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
-
-   access-list LIST [DYNAMIC_ARG]
-    ACTION PROTO_ARG
-    ADDR_ARG [PORT_ARG] ADDR_ARG [PORT_ARG]
-    [precedence PRECEDENCE] [tos TOS] [LOG] [TIME]
-*/
 #if false
-BOOST_AUTO_TEST_CASE(testIosExtended)
-{
-}
 /*
 */
 BOOST_AUTO_TEST_CASE(testIos)
