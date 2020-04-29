@@ -74,8 +74,10 @@ class Acls :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      remarkLine,
-      iosRule, iosRemark, iosStandard, iosExtended,
+      iosRule,
+        iosRemark,   iosRemarkRuleLine,
+        iosStandard, iosStandardRuleLine,
+        iosExtended, iosExtendedRuleLine,
       dynamicArgument,
       sourceAddrIos, destinationAddrIos,
       sourcePort, destinationPort,

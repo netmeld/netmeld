@@ -54,53 +54,46 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   iosRemark =
-    // one-liner
-    qi::lit("access-list") >> bookName
-      [pnx::bind(&Acls::updateCurRule, this)]
-    >> remarkLine
-      [pnx::bind(&Acls::curRuleFinalize, this)]
-    // multi-liner, see iosStandard or iosExtended
+    qi::lit("access-list") >> bookName >> iosRemarkRuleLine
+    // multi-liner - see iosStandard or iosExtended
     ;
 
-  remarkLine =
+  iosRemarkRuleLine =
     qi::lit("remark") > tokens > qi::eol
     ;
 
   iosStandard =
-      // one-liner
-    ( (qi::lit("access-list") >> bookName
-         [pnx::bind(&Acls::updateCurRule, this)]
-       >> action
-       >> sourceAddrIos > qi::eol)
-        [pnx::bind(&Acls::curRuleFinalize, this)]
-      // multi-liner
-     | ((qi::lit("ip access-list standard") > bookName > qi::eol)
-        > *(indent [pnx::bind(&Acls::updateCurRule, this)]
-            > (  (action > sourceAddrIos > qi::eol)
-               | remarkLine
-              )
-          ) [pnx::bind(&Acls::curRuleFinalize, this)]
-       )
-    );
+    (  (qi::lit("ip access-list standard")
+        > bookName > qi::eol
+        > *(indent > (iosRemarkRuleLine | iosStandardRuleLine)))
+     | (qi::lit("access-list") >> bookName >> iosStandardRuleLine)
+    )
+    ;
+  iosStandardRuleLine =
+    action
+    >> sourceAddrIos
+    > qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+    ;
 
   iosExtended =
-    // multi-liner
-    (qi::lit("ip access-list extended")
-     > bookName
-     >> -dynamicArgument
-     > qi::eol)
-    >> *(indent [pnx::bind(&Acls::updateCurRule, this)]
-         >> action
-         >> protocolArgument
-         >> sourceAddrIos >> -sourcePort
-         >> -(destinationAddrIos >> -destinationPort)
-         >> -establishedArgument
-         >> -precedenceArgument
-         >> -tosArgument
-         >> -logArgument
-         >> -timeRangeArgument
-         > qi::eol
-       ) [pnx::bind(&Acls::curRuleFinalize, this)]
+    (  (qi::lit("ip access-list extended")
+        > bookName >> -dynamicArgument > qi::eol
+        >> *(indent > (iosRemarkRuleLine | iosExtendedRuleLine)))
+     | (qi::lit("access-list")
+        >> bookName >> -dynamicArgument >> iosExtendedRuleLine)
+    )
+    ;
+  iosExtendedRuleLine =
+    action
+    >> protocolArgument
+    >> sourceAddrIos >> -sourcePort
+    >> -(destinationAddrIos >> -destinationPort)
+    >> -establishedArgument
+    >> -precedenceArgument
+    >> -tosArgument
+    >> -logArgument
+    >> -timeRangeArgument
+    > qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
     ;
 
   //==========
@@ -234,7 +227,8 @@ Acls::Acls() : Acls::base_type(start)
 
   action =
     (qi::string("permit") | qi::string("deny"))
-      [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
+      [pnx::bind(&Acls::updateCurRule, this),
+       pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
     ;
 
   // IOS specific
@@ -256,12 +250,12 @@ Acls::Acls() : Acls::base_type(start)
     (
        (qi::lit("host") >> (&ipLikeNoCidr > ipAddr))
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-     | (qi::string("any"))
+     | (qi::lexeme[qi::string("any") >> &qi::space])
          [qi::_val = qi::_1]
        // TODO needs to be ipAddr.ipv4
-     | (&ipLikeNoCidr >> ipAddr >> ipAddr)
+     | (&ipLikeNoCidr >> ipAddr >> &ipLikeNoCidr >> ipAddr)
          [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
-     | (ipAddr)
+     | (&((ipLikeNoCidr >> qi::eol) | !ipLikeNoCidr) >> ipAddr)
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
     )
     ;
@@ -302,7 +296,8 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   logArgument =
-    (qi::lit("log") | qi::lit("log-input"))
+    (qi::string("log-input") | qi::string("log"))
+      [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
     ;
 
   timeRangeArgument =
