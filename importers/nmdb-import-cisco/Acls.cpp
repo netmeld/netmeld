@@ -44,11 +44,14 @@ Acls::Acls() : Acls::base_type(start)
 
   config =
     (  iosRule
-     | ipAccessListExtended
-//     | ipAccessList
+     | nxosRule
 //     | asaRule
     );
 
+
+  //====
+  // IOS
+  //====
   iosRule =
     (iosRemark | iosStandard | iosExtended)
     ;
@@ -57,13 +60,12 @@ Acls::Acls() : Acls::base_type(start)
     qi::lit("access-list") >> bookName >> iosRemarkRuleLine
     // multi-liner - see iosStandard or iosExtended
     ;
-
   iosRemarkRuleLine =
     qi::lit("remark") > tokens > qi::eol
     ;
 
   iosStandard =
-    (  (qi::lit("ip access-list standard")
+    (  (ipv46 >> qi::lit("access-list standard")
         > bookName > qi::eol
         > *(indent > (iosRemarkRuleLine | iosStandardRuleLine)))
      | (qi::lit("access-list") >> bookName >> iosStandardRuleLine)
@@ -76,7 +78,7 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   iosExtended =
-    (  (qi::lit("ip access-list extended")
+    (  (ipv46 >> qi::lit("access-list extended")
         > bookName >> -dynamicArgument > qi::eol
         >> *(indent > (iosRemarkRuleLine | iosExtendedRuleLine)))
      | (qi::lit("access-list")
@@ -87,13 +89,45 @@ Acls::Acls() : Acls::base_type(start)
     action
     >> protocolArgument
     >> sourceAddrIos >> -sourcePort
-    >> -(destinationAddrIos >> -destinationPort)
-    >> -establishedArgument
-    >> -precedenceArgument
-    >> -tosArgument
-    >> -logArgument
-    >> -timeRangeArgument
+    >> -(destinationAddrIos >> -(destinationPort | icmpArgument))
+      // Not exactly right, but we don't care about order
+    >> *(  establishedArgument
+         | precedenceArgument
+         | tosArgument
+         | logArgument
+         | timeRangeArgument
+        )
     > qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+    ;
+
+
+  //====
+  // NXOS
+  //====
+  nxosRule =
+    (nxosRemark | nxosStandard | nxosExtended)
+    ;
+  
+  nxosRemark =
+    !qi::attr("")
+    ;
+  nxosRemarkRuleLine =
+    qi::uint_ >> iosRemarkRuleLine
+    ;
+
+  nxosStandard =
+    !qi::attr("")
+    ;
+  nxosStandardRuleLine =
+    !qi::attr("")
+    ;
+
+  nxosExtended =
+    !qi::attr("")
+    ;
+  nxosExtendedRuleLine =
+    qi::uint_
+    >> iosExtendedRuleLine
     ;
 
   //==========
@@ -221,6 +255,9 @@ Acls::Acls() : Acls::base_type(start)
   //========
   // Helpers
   //========
+  ipv46 =
+    (qi::lit("ipv6") | qi::lit("ip"))
+    ;
   bookName =
     token [pnx::bind(&Acls::updateCurRuleBook, this, qi::_1)]
     ;
@@ -280,6 +317,60 @@ Acls::Acls() : Acls::base_type(start)
          [qi::_val = ">" + qi::_1]
      | (qi::lit("range") > token > token)
          [qi::_val = (qi::_1 + "-" + qi::_2)]
+    )
+    ;
+  icmpArgument = 
+    (icmpTypeCode | icmpMessage)
+    ;
+  icmpTypeCode =
+    qi::ushort_ [qi::_pass = (0 <= qi::_1 && qi::_1 <= 255)]
+    >> -qi::short_ [qi::_pass = (qi::_1 >= 0 && qi::_1 <= 255)]
+    ;
+  icmpMessage = // A token is too greedy, so...
+    (  qi::lit("administratively-prohibited")
+     | qi::lit("alternate-address")
+     | qi::lit("conversion-error")
+     | qi::lit("dod-host-prohibited")
+     | qi::lit("dod-net-prohibited")
+     | qi::lit("echo")
+     | qi::lit("echo-reply")
+     | qi::lit("general-parameter-problem")
+     | qi::lit("host-isolated")
+     | qi::lit("host-precedence-unreachable")
+     | qi::lit("host-redirect")
+     | qi::lit("host-tos-redirect")
+     | qi::lit("host-tos-unreachable")
+     | qi::lit("host-unknown")
+     | qi::lit("host-unreachable")
+     | qi::lit("information-reply")
+     | qi::lit("information-request")
+     | qi::lit("mask-reply")
+     | qi::lit("mask-request")
+     | qi::lit("mobile-redirect")
+     | qi::lit("net-redirect")
+     | qi::lit("net-tos-redirect")
+     | qi::lit("net-tos-unreachable")
+     | qi::lit("net-unreachable")
+     | qi::lit("network-unknown")
+     | qi::lit("no-room-for-option")
+     | qi::lit("option-missing")
+     | qi::lit("packet-too-big")
+     | qi::lit("parameter-problem")
+     | qi::lit("port-unreachable")
+     | qi::lit("precedence-unreachable")
+     | qi::lit("protocol-unreachable")
+     | qi::lit("reassembly-timeout")
+     | qi::lit("redirect")
+     | qi::lit("router-advertisement")
+     | qi::lit("router-solicitation")
+     | qi::lit("source-quench")
+     | qi::lit("source-route-failed")
+     | qi::lit("time-exceeded")
+     | qi::lit("timestamp-reply")
+     | qi::lit("timestamp-request")
+     | qi::lit("traceroute")
+     | qi::lit("ttl-exceeded")
+     | qi::lit("unreachable")
     )
     ;
 
