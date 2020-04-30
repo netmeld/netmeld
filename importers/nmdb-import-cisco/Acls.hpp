@@ -80,9 +80,13 @@ class Acls :
         iosStandard, iosStandardRuleLine,
         iosExtended, iosExtendedRuleLine,
       nxosRule,
-        nxosRemark, nxosRemarkRuleLine,
+        nxosRemark,   nxosRemarkRuleLine,
         nxosStandard, nxosStandardRuleLine,
         nxosExtended, nxosExtendedRuleLine,
+      asaRule,
+        asaRemark,   asaRemarkRuleLine,
+        asaStandard, asaStandardRuleLine,
+        asaExtended, asaExtendedRuleLine,
       dynamicArgument,
       sourceAddrIos, destinationAddrIos,
       sourcePort, destinationPort,
@@ -100,17 +104,24 @@ class Acls :
       bookName,
       action,
       protocolArgument,
-      addressArgument, addressArgumentIos,
+      addressArgument,
+        addressArgumentIos,
+        mask,
       portArgument;
 
     nmcp::ParserIpAddress   ipAddr;
 
     qi::rule<nmcp::IstreamIter, std::string()>
-      ipLikeNoCidr;
+      addrFromIpNoPrefix,
+        ipNoPrefix,
+      addrFromIpMask,
+      addrFromIpPrefix,
+      anyTerm,
+      ignoredRuleLine;
 
 
-    nmco::AcRule *curRule {nullptr};
-  private:
+//  protected:
+    nmco::AcRule curRule;
     // Supporting data structures
     const std::string ZONE  {"global"};
 
@@ -123,6 +134,10 @@ class Acls :
     std::string  curRuleSrcPort {""};
     std::string  curRuleDstPort {""};
 
+    std::set<std::string> ignoredRuleData;
+
+  private:
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -132,10 +147,16 @@ class Acls :
   // ===========================================================================
   // Methods
   // ===========================================================================
+  public:
+    std::set<std::string> getIgnoredRuleData();
+
+    void initCurRule();
+  protected:
   private: // Methods which should be hidden from API users
+    void addIgnoredRuleData(const std::string&);
+
     // Policy Related
-    void updateCurRuleBook(const std::string&);
-    void updateCurRule();
+    void initRuleBook(const std::string&);
 
     void setCurRuleAction(const std::string&);
 

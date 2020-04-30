@@ -45,7 +45,7 @@ Acls::Acls() : Acls::base_type(start)
   config =
     (  iosRule
      | nxosRule
-//     | asaRule
+     | asaRule
     );
 
 
@@ -67,7 +67,10 @@ Acls::Acls() : Acls::base_type(start)
   iosStandard =
     (  (ipv46 >> qi::lit("access-list standard")
         > bookName > qi::eol
-        > *(indent > (iosRemarkRuleLine | iosStandardRuleLine)))
+        > *(indent > (  iosRemarkRuleLine
+                      | iosStandardRuleLine
+                      | ignoredRuleLine
+                     )))
      | (qi::lit("access-list") >> bookName >> iosStandardRuleLine)
     )
     ;
@@ -80,7 +83,10 @@ Acls::Acls() : Acls::base_type(start)
   iosExtended =
     (  (ipv46 >> qi::lit("access-list extended")
         > bookName >> -dynamicArgument > qi::eol
-        >> *(indent > (iosRemarkRuleLine | iosExtendedRuleLine)))
+        >> *(indent > (  iosRemarkRuleLine
+                       | iosExtendedRuleLine
+                       | ignoredRuleLine
+                      )))
      | (qi::lit("access-list")
         >> bookName >> -dynamicArgument >> iosExtendedRuleLine)
     )
@@ -92,12 +98,13 @@ Acls::Acls() : Acls::base_type(start)
     >> -(destinationAddrIos >> -(destinationPort | icmpArgument))
       // Not exactly right, but we don't care about order
     >> *(  establishedArgument
+         | fragmentsArgument
          | precedenceArgument
          | tosArgument
          | logArgument
          | timeRangeArgument
         )
-    > qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+    >> qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
     ;
 
 
@@ -123,53 +130,45 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   nxosExtended =
-    !qi::attr("")
+    ipv46 >> qi::lit("access-list")
+    > bookName >> -dynamicArgument > qi::eol
+    >> *(indent > (  nxosRemarkRuleLine
+                   | nxosExtendedRuleLine
+                   | ignoredRuleLine
+                  ))
     ;
   nxosExtendedRuleLine =
-    qi::uint_
-    >> iosExtendedRuleLine
+    qi::uint_ >> iosExtendedRuleLine
     ;
 
   //==========
-  // ACL Types
+  // ASA
   //==========
-
-  /*
-     NXOS
-     (ip | ipv6) access-list NAME
-      ID ACTION PROTOCOL SOURCE [PORTS] [DEST [PORTS]] [ACTIONS]
-    ---
-    ID (it is the sequence number)
-    ACTION ( permit | deny )
-    PROTOCOL ( name )
-    SOURCE ( IP *MASK | IP/CIDR | any )
-    DEST   ( IP *MASK | IP/CIDR | any )
-    PORTS ( eq PORT | range START END )
-    log
-  */
-  ipAccessList =
-    ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("access-list") > token > qi::eol)
-      [pnx::bind(&Acls::updateCurRuleBook, this, qi::_1)] >>
-    *(indent [pnx::bind(&Acls::updateCurRule, this)] >>
-      // ID
-      +qi::uint_ >>
-      // ACTION
-      token [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)] >>
-      // PROTOCOL
-      token [pnx::bind(&Acls::curRuleProtocol, this) = qi::_1] >>
-      // SOURCE
-      addressArgument [pnx::bind(&Acls::setCurRuleSrc, this, qi::_1)] >>
-      // SOURCE PORTS
-      -(portArgument [pnx::bind(&Acls::curRuleSrcPort, this) = qi::_1]) >>
-      // DESTINATION
-      -(addressArgument [pnx::bind(&Acls::setCurRuleDst, this, qi::_1)] >>
-        // DESTINATION PORTS
-        -(portArgument [pnx::bind(&Acls::curRuleDstPort, this) = qi::_1])
-      ) >> -(+token [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]) >>
-      qi::eol
-    ) [pnx::bind(&Acls::curRuleFinalize, this)]
+  asaRule =
+    (asaRemark | asaStandard | asaExtended)
     ;
 
+  asaRemark =
+    iosRemark
+    ;
+  asaRemarkRuleLine =
+    iosRemarkRuleLine
+    ;
+
+  asaStandard =
+    qi::lit("access-list") >> bookName >> qi::lit("standard")
+    >> asaStandardRuleLine
+    ;
+  asaStandardRuleLine =
+    iosStandardRuleLine
+    ;
+
+  asaExtended =
+    !qi::attr("")
+    ;
+  asaExtendedRuleLine =
+    !qi::attr("")
+    ;
 //  asaRule =
 //    qi::lit("access-list") >> token
 //    >> (  asaRemark
@@ -184,14 +183,6 @@ Acls::Acls() : Acls::base_type(start)
 //    qi::lit("remark")
 //    // DESCRIPTION
 //    > tokens
-//    ;
-//
-//  asaStandard =
-//    qi::lit("standard")
-//    // ACTION
-//    > token
-//    // TARGET
-//    > addressArgument
 //    ;
 //
 //  asaExtended =
@@ -253,28 +244,28 @@ Acls::Acls() : Acls::base_type(start)
 
 
   //========
-  // Helpers
+  // Helper piece-wise rules
   //========
   ipv46 =
     (qi::lit("ipv6") | qi::lit("ip"))
     ;
   bookName =
-    token [pnx::bind(&Acls::updateCurRuleBook, this, qi::_1)]
+    token [pnx::bind(&Acls::initRuleBook, this, qi::_1)]
     ;
 
   action =
     (qi::string("permit") | qi::string("deny"))
-      [pnx::bind(&Acls::updateCurRule, this),
+      [pnx::bind(&Acls::initCurRule, this),
        pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
     ;
 
-  // IOS specific
   dynamicArgument =
     qi::lit("dynamic") > token >> -(qi::lit("timeout") > qi::uint_)
     ;
 
   protocolArgument =
-    token [pnx::bind(&Acls::curRuleProtocol, this) = qi::_1]
+    -(qi::lit("object") >> -qi::lit("-group"))
+    >> token [pnx::bind(&Acls::curRuleProtocol, this) = qi::_1]
     ;
 
   sourceAddrIos =
@@ -283,21 +274,34 @@ Acls::Acls() : Acls::base_type(start)
   destinationAddrIos =
     addressArgumentIos [pnx::bind(&Acls::setCurRuleDst, this, qi::_1)]
     ;
+  // TODO Need to handle wildcard or netmask...
   addressArgumentIos =
     (
-       (qi::lit("host") >> (&ipLikeNoCidr > ipAddr))
+       (qi::lit("host") >> (&ipNoPrefix > ipAddr))
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-     | (qi::lexeme[qi::string("any") >> &qi::space])
+     | (qi::lit("object") >> -qi::lit("-group") > token)
+         [qi::_val = qi::_1]
+     | (qi::lit("interface") > token)
+         [qi::_val = qi::_1]
+     | (anyTerm)
          [qi::_val = qi::_1]
        // TODO needs to be ipAddr.ipv4
-     | (&ipLikeNoCidr >> ipAddr >> &ipLikeNoCidr >> ipAddr)
+     | (&ipNoPrefix >> ipAddr >> &ipNoPrefix >> ipAddr)
          [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
-     | (&((ipLikeNoCidr >> qi::eol) | !ipLikeNoCidr) >> ipAddr)
+     | (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
          [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
     )
     ;
-  ipLikeNoCidr =
+  ipNoPrefix =
     (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.cidr)
+    ;
+  anyTerm =
+    qi::string("any") >> -qi::char_("46") >> &qi::space
+    ;
+  mask =
+    (!(qi::lit("0.0.0.0") | qi::lit("255.255.255.255"))
+    >> ipAddr)
+      [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
     ;
 
   sourcePort =
@@ -307,16 +311,11 @@ Acls::Acls() : Acls::base_type(start)
     portArgument [pnx::bind(&Acls::curRuleDstPort, this) = qi::_1]
     ;
   portArgument =
-    (  (qi::lit("eq") > token)
-         [qi::_val = qi::_1]
-     | (qi::lit("neq") > token)
-         [qi::_val = "!" + qi::_1]
-     | (qi::lit("lt") > token)
-         [qi::_val = "<" + qi::_1]
-     | (qi::lit("gt") > token)
-         [qi::_val = ">" + qi::_1]
-     | (qi::lit("range") > token > token)
-         [qi::_val = (qi::_1 + "-" + qi::_2)]
+    (  (qi::lit("eq") > token) [qi::_val = qi::_1]
+     | (qi::lit("neq") > token) [qi::_val = "!" + qi::_1]
+     | (qi::lit("lt") > token) [qi::_val = "<" + qi::_1]
+     | (qi::lit("gt") > token) [qi::_val = ">" + qi::_1]
+     | (qi::lit("range") > token > token) [qi::_val = (qi::_1 + "-" + qi::_2)]
     )
     ;
   icmpArgument = 
@@ -375,7 +374,11 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   establishedArgument =
-    qi::string("established")
+    qi::string("established") | qi::string("tracked") /* arista equivalent */
+    ;
+
+  fragmentsArgument =
+    qi::string("fragments")
     ;
 
   precedenceArgument =
@@ -407,13 +410,13 @@ Acls::Acls() : Acls::base_type(start)
 //     | (qi::lit("interface") > token)
 //         [qi::_val = qi::_1]
 //     // host IP
-//     | (qi::lit("host") >> (&ipLikeNoCidr > ipAddr))
+//     | (qi::lit("host") >> (&ipNoPrefix > ipAddr))
 //         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
 //     // any[46]
 //     | (qi::lexeme[qi::as_string[qi::string("any") >> -qi::char_("46")]])
 //         [qi::_val = qi::_1]
 //     // IP *MASK
-//     | (&ipLikeNoCidr > ipAddr > ipAddr)
+//     | (&ipNoPrefix > ipAddr > ipAddr)
 //         [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
 //     // TODO IP NETMASK
 //     // IP/CIDR
@@ -470,11 +473,45 @@ Acls::Acls() : Acls::base_type(start)
 //    qi::lit("inactive")
 //    ;
 
+  ignoredRuleLine =
+    tokens [pnx::bind(&Acls::addIgnoredRuleData, this, qi::_1)]
+    >> qi::eol
+    ;
+
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (config)
+      (iosRule)
+        (iosRemark)   (iosRemarkRuleLine)
+        (iosStandard) (iosStandardRuleLine)
+        (iosExtended) (iosExtendedRuleLine)
+      (nxosRule)
+        (nxosRemark)   (nxosRemarkRuleLine)
+        (nxosStandard) (nxosStandardRuleLine)
+        (nxosExtended) (nxosExtendedRuleLine)
+      (asaRule)
+        (asaRemark)   (asaRemarkRuleLine)
+        (asaStandard) (asaStandardRuleLine)
+        (asaExtended) (asaExtendedRuleLine)
+      (dynamicArgument)
+      (sourceAddrIos) (destinationAddrIos)
+      (sourcePort) (destinationPort)
+      (icmpArgument)
+        (icmpTypeCode) (icmpMessage)
+      (establishedArgument)
+      (fragmentsArgument)
+      (precedenceArgument)
+      (tosArgument)
+      (logArgument)
+      (timeRangeArgument)
       (ipAccessListExtended)(ipAccessList)
-      (addressArgument)(ipLikeNoCidr)(portArgument)
+      (bookName)
+      (action)
+      (protocolArgument)
+      (addressArgument) (addressArgumentIos)
+      (portArgument)
+      (ipNoPrefix)
+      (ignoredRuleLine)
       //(token)(tokens)(indent)
       );
 }
@@ -485,45 +522,41 @@ Acls::Acls() : Acls::base_type(start)
 
 // Policy Related
 void
-Acls::updateCurRuleBook(const std::string& name)
+Acls::initRuleBook(const std::string& name)
 {
   ruleBookName = name;
-  curRuleId = 0;
+  curRuleId = 1;
   ruleBook.clear();
 }
 
 void
-Acls::updateCurRule()
+Acls::initCurRule()
 {
-  ++curRuleId;
   curRuleProtocol = "";
   curRuleSrcPort = "";
   curRuleDstPort = "";
 
-  curRule = &(ruleBook[curRuleId]);
-
-  curRule->setRuleId(curRuleId);
-  curRule->setRuleDescription(ruleBookName);
+  curRule = {};
 }
 
 void
 Acls::setCurRuleAction(const std::string& action)
 {
-  curRule->addAction(action);
+  curRule.addAction(action);
 }
 
 void
 Acls::setCurRuleSrc(const std::string& addr)
 {
-  curRule->setSrcId(ZONE);
-  curRule->addSrc(addr);
+  curRule.setSrcId(ZONE);
+  curRule.addSrc(addr);
 }
 
 void
 Acls::setCurRuleDst(const std::string& addr)
 {
-  curRule->setDstId(ZONE);
-  curRule->addDst(addr);
+  curRule.setDstId(ZONE);
+  curRule.addDst(addr);
 }
 
 std::string
@@ -542,13 +575,29 @@ Acls::setWildcardMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 void
 Acls::curRuleFinalize()
 {
-  if (curRuleProtocol.empty()) {
-    return;
-  }
-  const std::string serviceString
-    {nmcu::getSrvcString(curRuleProtocol, curRuleSrcPort, curRuleDstPort)};
+  curRule.setRuleId(curRuleId);
+  curRule.setRuleDescription(ruleBookName);
 
-  curRule->addService(serviceString);
+  if (!curRuleProtocol.empty()) {
+    const std::string serviceString
+      {nmcu::getSrvcString(curRuleProtocol, curRuleSrcPort, curRuleDstPort)};
+    curRule.addService(serviceString);
+  }
+
+  ruleBook.emplace(curRuleId, curRule);
+  ++curRuleId;
+}
+
+void
+Acls::addIgnoredRuleData(const std::string& _data)
+{
+  ignoredRuleData.emplace(_data);
+}
+
+std::set<std::string>
+Acls::getIgnoredRuleData()
+{
+  return ignoredRuleData;
 }
 
 // Object return
