@@ -46,12 +46,12 @@
 #define GENERAL_OBJECT_HPP
 
 // Includes should be limited to what is absolutely necessary for header only
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class GeneralObject : public AbstractObject {
+  class GeneralObject : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
