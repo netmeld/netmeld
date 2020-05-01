@@ -98,18 +98,17 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"object-group NGI", "NGI"},
       {"object NOI", "NOI"},
       {"interface IF/AC.E", "IF/AC.E"},
-      {"1.2.3.4 127.255.255.255", "1.2.3.4/1"},   // WILDCARD
-      {"1.2.3.4 128.0.0.0", "1.2.3.4/1"},         // NETMASK
-      {"1.2.3.4 0.0.0.1", "1.2.3.4/31"},          // WILDCARD
-      {"1.2.3.4 255.255.255.254", "1.2.3.4/31"},  // NETMASK
-      {"1::2 0:0:0:0:ffff:ffff:ffff:ffff", "1::2/64"},                  // WILDCARD
-      {"1::2 ffff:ffff:ffff:ffff:0:0:0:0", "1::2/64"},                  // NETMASK
+      {"1.2.3.4 127.255.255.255", "1.2.3.4/1"},        // WILDCARD
+      {"1.2.3.4 128.0.0.0", "1.2.3.4/1"},              // NETMASK
+      {"1.2.3.4 0.0.0.1", "1.2.3.4/31"},               // WILDCARD
+      {"1.2.3.4 255.255.255.254", "1.2.3.4/31"},       // NETMASK
+      {"1::2 0:0:0:0:ffff:ffff:ffff:ffff", "1::2/64"}, // WILDCARD
+      {"1::2 ffff:ffff:ffff:ffff:0:0:0:0", "1::2/64"}, // NETMASK
     };
     for (const auto& [test, format] : testsOk) {
-//      LOG_INFO << "testing: " << test << " vs " << format << std::endl;
       std::string out;
       BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
-      //BOOST_TEST(format == out);
+      BOOST_TEST(format == out);
       out.clear();
       const auto& testSpace = ' ' + test + ' ';
       BOOST_TEST(nmcp::testAttr(testSpace.c_str(),
@@ -191,6 +190,11 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"log", "log"},
       {" log ", "log"},
       {"log-input", "log-input"},
+      {"log default", "log default"},
+      {"log disable", "log disable"},
+      {"log 0 interval 1", "log 0 interval 1"},
+      {"log interval 600", "log interval 600"},
+      {"log 7", "log 7"},
     };
     for (const auto& [test, format] : testsOk) {
       parserAcl.initCurRule();
@@ -203,6 +207,10 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // BAD
     BOOST_TEST(!nmcp::test("gol", parserRule, blank, false));
   }
+
+  // TODO icmpArgument
+  // TODO userArgument
+  // TODO securityGroupArgument
 }
 
 
@@ -981,7 +989,6 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
     }
   }
 }
-#if false
 /* NOTE: Below is a one-liner wrapped for clarity
    access-list LIST extended ACTION
     PROTO_ARG
@@ -998,14 +1005,14 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
       "permit ip"
       " security-group name SGN1 1.2.3.4 0.0.0.255 range 123 456"
       " security-group name SGN2 1.2.3.4 0.0.0.255 range 123 456"
-      " log LEVEL interval 10 time-range RANGE_NAME inactive\n"
+      " log 5 interval 10 time-range RANGE_NAME inactive\n"
     };
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
       {" time-range RANGE_NAME"},
       {" inactive"},
-      {" log LEVEL interval 10"},
+      {" log 5 interval 10"},
       {" security-group name SGN2"},
       {" security-group name SGN1"},
       {" range 123 456"},
@@ -1064,7 +1071,6 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
 BOOST_AUTO_TEST_CASE(testAsaExtended)
 {
 }
-#endif
 /* NOTE: Below is a one-liner wrapped for clarity
    access-list LIST remark SPACED_FILLED_TEXT
 */

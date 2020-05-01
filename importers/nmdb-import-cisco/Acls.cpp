@@ -167,8 +167,40 @@ Acls::Acls() : Acls::base_type(start)
     !qi::attr("")
     ;
   asaExtendedRuleLine =
-    !qi::attr("")
+    action
+    >> protocolArgument
+    >> -(securityGroupArgument | userArgument)
+    >> sourceAddrIos >> -sourcePort
+    >> -(securityGroupArgument)
+    >> -(destinationAddrIos >> -(destinationPort | icmpArgument))
+      // Not exactly right, but we don't care about order
+    >> *(  establishedArgument
+         | fragmentsArgument
+         | precedenceArgument
+         | tosArgument
+         | logArgument
+         | timeRangeArgument
+         | inactiveArgument
+        )
+    >> qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
     ;
+
+//  asaWebType =
+//    qi::lit("access-list") >> bookName >> qi::lit("webtype")
+//    >> asaWebtypeRuleLine
+//    ;
+//  asaWebtypeRuleLine =
+//    action
+//    >> (url | address | addressPort)
+//      // Not exactly right, but we don't care about order
+//    >> *(
+//         | logArgument
+//         | timeRangeArgument
+//         | inactive
+//        )
+//    >> qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+//    ;
+
 //  asaRule =
 //    qi::lit("access-list") >> token
 //    >> (  asaRemark
@@ -286,7 +318,10 @@ Acls::Acls() : Acls::base_type(start)
     )
     ;
   icmpArgument = 
-    (icmpTypeCode | icmpMessage)
+    (  (qi::lit("object-group") > token)
+     | icmpTypeCode
+     | icmpMessage
+    )
     ;
   icmpTypeCode =
     qi::ushort_ [qi::_pass = (0 <= qi::_1 && qi::_1 <= 255)]
@@ -357,88 +392,42 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   logArgument =
-    (qi::string("log-input") | qi::string("log"))
-      [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
+    logArgumentString [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
+    ;
+  logArgumentString =
+    qi::string("log") >> -qi::string("-input")
+    >> -qi::hold[+qi::blank >>
+         (  qi::string("default")
+          | qi::string("disable")
+          | logInterval
+          | (+qi::digit >> -qi::hold[+qi::blank >> logInterval])
+         )
+    ]
+    ;
+  logInterval =
+    qi::string("interval") > +qi::blank > +qi::digit
     ;
 
   timeRangeArgument =
     qi::lit("time-range") > token
     ;
 
-//  addressArgument =
-//    (
-//     // object-group NETWORK_GROUP_ID
-//       (qi::lit("object-group") > token)
-//         [qi::_val = qi::_1]
-//     // object NETWORK_OBJECT_ID
-//     | (qi::lit("object") > token)
-//         [qi::_val = qi::_1]
-//     // interface IFACE_NAME
-//     | (qi::lit("interface") > token)
-//         [qi::_val = qi::_1]
-//     // host IP
-//     | (qi::lit("host") >> (&ipNoPrefix > ipAddr))
-//         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-//     // any[46]
-//     | (qi::lexeme[qi::as_string[qi::string("any") >> -qi::char_("46")]])
-//         [qi::_val = qi::_1]
-//     // IP *MASK
-//     | (&ipNoPrefix > ipAddr > ipAddr)
-//         [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
-//     // TODO IP NETMASK
-//     // IP/CIDR
-//     | (ipAddr)
-//         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-//    )
-//    ;
 
-//  protocolArgument =
-//    (  (qi::lit("object-group") > token)
-//     | (qi::lit("object") > token)
-//     // NAME | NUMBER
-//     | token
-//    )
-//    ;
-//
-//  icmpArgument =
-//    (  (qi::lit("object-group") > token)
-//     // ICMP_TYPE [ ICMP_CODE ]
-//     | (token >> -token)
-//    )
-//    ;
-//
-//  userArgument =
-//    (  (qi::lit("object-group") > token)
-//     | (qi::lit("user-group") > token)
-//     | (qi::lit("user") > token)
-//    )
-//    ;
-//
-//  securityGroupArgument =
-//    (  (qi::lit("object-group-security") > token)
-//     | (qi::lit("security-group") > (qi::lit("name") | qi::lit("tag")) > token)
-//    )
-//    ;
-//
-//  logArgument =
-//    qi::lit("log")
-//    // LEVEL
-//    >> -qi::uint_ /* 0-7*/
-//    // INTERVAL BETWEEN MESSAGES
-//    >> -(  (qi::lit("interval") > qi::uint_ /* 1-600 */)
-//    // DISABLE LOGGING
-//         | (qi::lit("disable"))
-//    // SAME AS NOT INCLUDING "log"
-//         | (qi::lit("default"))
-//        )
-//    >>
-//    ;
-//
-//
-//  inactive =
-//    // RULE STATE
-//    qi::lit("inactive")
-//    ;
+  userArgument =
+    (  (qi::lit("object-group") > token)
+     | (qi::lit("user") >> -qi::lit("-group") > token)
+    )
+    ;
+
+  securityGroupArgument =
+    (  (qi::lit("object-group-security") > token)
+     | (qi::lit("security-group") > (qi::lit("name") | qi::lit("tag")) > token)
+    )
+    ;
+  
+  inactiveArgument =
+    qi::lit("inactive")
+    ;
 
   ignoredRuleLine =
     tokens [pnx::bind(&Acls::addIgnoredRuleData, this, qi::_1)]
@@ -469,15 +458,20 @@ Acls::Acls() : Acls::base_type(start)
       (fragmentsArgument)
       (precedenceArgument)
       (tosArgument)
-      (logArgument)
       (timeRangeArgument)
+      (userArgument)
+      (securityGroupArgument)
+      (inactiveArgument)
       (ipAccessListExtended)(ipAccessList)
       (bookName)
       (action)
       (protocolArgument)
-      (addressArgument) (addressArgumentIos)
+      (addressArgument) (addressArgumentIos) (mask)
       (portArgument)
-      (ipNoPrefix)
+      (addrIpOnly) (addrIpMask) (addrIpPrefix)
+        (ipNoPrefix)
+      (anyTerm)
+      (logArgument)
       (ignoredRuleLine)
       //(token)(tokens)(indent)
       );

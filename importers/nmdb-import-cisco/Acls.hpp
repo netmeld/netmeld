@@ -98,6 +98,9 @@ class Acls :
       tosArgument,
       logArgument,
       timeRangeArgument,
+      userArgument,
+      securityGroupArgument,
+      inactiveArgument,
       ipAccessListExtended, ipAccessList;
 
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
@@ -112,11 +115,10 @@ class Acls :
     nmcp::ParserIpAddress   ipAddr;
 
     qi::rule<nmcp::IstreamIter, std::string()>
-      addrIpOnly,
+      addrIpOnly, addrIpMask, addrIpPrefix,
         ipNoPrefix,
-      addrIpMask,
-      addrIpPrefix,
       anyTerm,
+      logArgumentString, logInterval,
       ignoredRuleLine;
 
 
