@@ -89,16 +89,15 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
       {"host 1.2.3.4", "1.2.3.4/32"},
-      {"host 1234::aBcD ", "1234::abcd/128"},
+      {"host 1234::aBcD", "1234::abcd/128"},
       {"any ", "any"},
-      {" any4 ", "any4"},
+      {"any4 ", "any4"},
       {"any6 ", "any6"},
-      {"1.2.3.4/24 ", "1.2.3.4/24"},
-      {" 1234::aBcD/112 ", "1234::abcd/112"},
+      {"1.2.3.4/24", "1.2.3.4/24"},
+      {"1234::aBcD/112", "1234::abcd/112"},
       {"object-group NGI", "NGI"},
       {"object NOI", "NOI"},
       {"interface IF/AC.E", "IF/AC.E"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
       {"1.2.3.4 127.255.255.255", "1.2.3.4/1"},   // WILDCARD
       {"1.2.3.4 128.0.0.0", "1.2.3.4/1"},         // NETMASK
       {"1.2.3.4 0.0.0.1", "1.2.3.4/31"},          // WILDCARD
@@ -107,8 +106,12 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"1::2 3::4", "1::2/100"},                  // NETMASK
     };
     for (const auto& [test, format] : testsOk) {
+//      LOG_INFO << "testing: " << test << " vs " << format << std::endl;
       std::string out;
       BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      const auto& testSpace = ' ' + test + ' ';
+      BOOST_TEST(nmcp::testAttr(testSpace.c_str(),
+                 parserRule, out, blank, false));
       BOOST_TEST(format == out);
     }
     // BAD

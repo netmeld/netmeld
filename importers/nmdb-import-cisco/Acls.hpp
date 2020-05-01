@@ -112,10 +112,10 @@ class Acls :
     nmcp::ParserIpAddress   ipAddr;
 
     qi::rule<nmcp::IstreamIter, std::string()>
-      addrFromIpNoPrefix,
+      addrIpOnly,
         ipNoPrefix,
-      addrFromIpMask,
-      addrFromIpPrefix,
+      addrIpMask,
+      addrIpPrefix,
       anyTerm,
       ignoredRuleLine;
 

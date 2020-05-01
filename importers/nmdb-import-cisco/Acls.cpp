@@ -179,41 +179,6 @@ Acls::Acls() : Acls::base_type(start)
 //       ) > qi::eol
 //    ;
 //
-//  asaRemark =
-//    qi::lit("remark")
-//    // DESCRIPTION
-//    > tokens
-//    ;
-//
-//  asaExtended =
-//    qi::lit("extended")
-//    // ACTION
-//    > token
-//    // PROTOCOL
-//    > protocolArgument
-//    // USER
-//    >> -(  userArgument
-//    // SOURCE SECURITY GROUP
-//         | securityArgument
-//        )
-//    // SROUCE
-//    > addressArgument
-//    // SROUCE PORTS
-//    >> -(portArgument)
-//    // DESTINATION SECURITY GROUP
-//    >> -(securityArgument)
-//    // DESTINATION
-//    > addressArgument
-//    // DESTINATION PORTS
-//    >> -(portArgument)
-//    // LOG
-//    >> -(logArgument)
-//    // TIME RANGE
-//    >> -(timeRangeArgument)
-//    // STATE
-//    >> -(inactive)
-//    ;
-//
 //  asaWeb =
 //    qi::lit("webtype")
 //    // ACTION
@@ -277,8 +242,10 @@ Acls::Acls() : Acls::base_type(start)
   // TODO Need to handle wildcard or netmask...
   addressArgumentIos =
     (
-       (qi::lit("host") >> (&ipNoPrefix > ipAddr))
-         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+//       (qi::lit("host") >> (&ipNoPrefix > ipAddr))
+//         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+       (qi::lit("host") >> addrIpOnly)
+         [qi::_val = qi::_1]
      | (qi::lit("object") >> -qi::lit("-group") > token)
          [qi::_val = qi::_1]
      | (qi::lit("interface") > token)
@@ -286,22 +253,34 @@ Acls::Acls() : Acls::base_type(start)
      | (anyTerm)
          [qi::_val = qi::_1]
        // TODO needs to be ipAddr.ipv4
-     | (&ipNoPrefix >> ipAddr >> &ipNoPrefix >> ipAddr)
-         [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
-     | (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
-         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+     | addrIpMask
+         [qi::_val = qi::_1]
+//     | (&ipNoPrefix >> ipAddr >> &ipNoPrefix >> ipAddr)
+//         [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
+     | addrIpPrefix
+         [qi::_val = qi::_1]
+//     | (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
+//         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
     )
+    ;
+  addrIpOnly =
+    (&ipNoPrefix > ipAddr)
+      [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+
     ;
   ipNoPrefix =
     (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.cidr)
     ;
+  addrIpPrefix =
+     (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
+       [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+    ;
+  addrIpMask =
+     (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank] >> &ipNoPrefix >> ipAddr)
+       [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
+    ;
   anyTerm =
     qi::string("any") >> -qi::char_("46") >> &qi::space
-    ;
-  mask =
-    (!(qi::lit("0.0.0.0") | qi::lit("255.255.255.255"))
-    >> ipAddr)
-      [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
     ;
 
   sourcePort =
