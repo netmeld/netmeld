@@ -50,7 +50,7 @@ struct Data
   std::string                          domainName;
   nmco::DeviceInformation              devInfo;
 
-  std::vector<nmco::InterfaceNetwork>  ifaces;
+  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
   std::vector<nmco::Route>             routes;
   std::vector<nmco::Service>           services;
   std::vector<nmco::Vlan>              vlans;
@@ -70,18 +70,15 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
-    Data d;
-
     // Rules
     qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       vlanDef,
-      config;
-
-    qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type>
-      nxIface;
+      config,
+      interface, switchport, spanningTree
+      ;
 
     qi::rule<nmcp::IstreamIter, std::string()>
       tokens,
@@ -90,6 +87,13 @@ class Parser :
     nmcp::ParserDomainName  domainName;
     nmcp::ParserIpAddress   ipAddr;
     nmcp::ParserMacAddress  macAddr;
+
+    // Supporting data structures
+    Data d;
+
+    bool isNo {false};
+
+    nmco::InterfaceNetwork* tgtIface;
 
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
@@ -108,26 +112,20 @@ class Parser :
   // Methods
   // ===========================================================================
   private: // Methods which should be hidden from API users
-    // Device related
-    void setVendor(const std::string&);
-    void setDevId(const std::string&);
-    void addNtpService(const nmco::IpAddress&);
-    void addDhcpService(const nmco::IpAddress&);
-    void addSnmpService(const nmco::IpAddress&);
-    void addRadiusService(const nmco::IpAddress&);
-    void addDnsService(const std::vector<nmco::IpAddress>&);
-    void addLogService(const nmco::IpAddress&);
-    void addRoute(const nmco::IpAddress&, const std::string&);
-    void setGlobalCdp(const bool);
-    void setGlobalBpduGuard(const bool);
-    void setGlobalBpduFilter(const bool);
-    void addSetIface(std::set<std::string>* const, const nmco::InterfaceNetwork&);
+    void ifaceInit(const std::string&);
+    void ifaceSetUpdate(std::set<std::string>* const);
 
-    // Interface related
-    void addIface(nmco::InterfaceNetwork&);
+    void routeAdd(const nmco::IpAddress&, const std::string&);
 
-    // Vlan related
-    void addVlan(unsigned short, const std::string&);
+    void serviceAddNtp(const nmco::IpAddress&);
+    void serviceAddDhcp(const nmco::IpAddress&);
+    void serviceAddSnmp(const nmco::IpAddress&);
+    void serviceAddRadius(const nmco::IpAddress&);
+    void serviceAddDns(const std::vector<nmco::IpAddress>&);
+    void serviceAddSyslog(const nmco::IpAddress&);
+
+    void vlanAdd(unsigned short, const std::string&);
+    void vlanAddIfaceData();
 
     // Unsupported
     void unsup(const std::string&);

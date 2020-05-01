@@ -27,12 +27,12 @@
 #ifndef SSH_PUBLIC_KEY
 #define SSH_PUBLIC_KEY
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/Port.hpp>
 
 namespace nmco = netmeld::core::objects;
 
-class SshPublicKey : public nmco::AbstractObject
+class SshPublicKey : public nmco::AbstractDatastoreObject
 {
   public:
     nmco::Port   port;

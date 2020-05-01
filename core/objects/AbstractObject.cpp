@@ -24,6 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <sstream>
+
 #include <netmeld/core/objects/AbstractObject.hpp>
 
 
@@ -31,25 +33,6 @@ namespace netmeld::core::objects {
 
   AbstractObject::AbstractObject()
   {}
-
-  bool
-  AbstractObject::isValid() const
-  {
-    return true;
-  }
-
-  void
-  AbstractObject::save(pqxx::transaction_base&, const Uuid&, const std::string&)
-  {
-    LOG_WARN << "AbstractObject::save called, nothing done" << std::endl;
-  }
-
-  void
-  AbstractObject::saveAsMetadata(pqxx::transaction_base&, const Uuid&)
-  {
-    LOG_WARN << "AbstractObject::saveAsMetadata called, nothing done"
-             << std::endl;
-  }
 
   std::string
   AbstractObject::toDebugString() const

@@ -26,11 +26,12 @@ apt install \
 apt install \
   postgresql postgresql-client \
   arping nmap macchanger wireshark-common \
-  ansible
+  ansible \
+  git
 
 # Useful, but not technically needed
 apt install \
-  git help2man pandoc \
+  help2man pandoc \
   graphviz \
   postgresql-contrib postgresql-autodoc
 ```

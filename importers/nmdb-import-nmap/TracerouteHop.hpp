@@ -27,12 +27,12 @@
 #ifndef TRACEROUTE_HOP
 #define TRACEROUTE_HOP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 
 namespace nmco = netmeld::core::objects;
 
-class TracerouteHop : public nmco::AbstractObject
+class TracerouteHop : public nmco::AbstractDatastoreObject
 {
   public :
     nmco::IpAddress  rtrIpAddr;
