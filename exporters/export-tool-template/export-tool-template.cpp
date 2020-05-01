@@ -46,7 +46,7 @@
 */
 
 #include <netmeld/core/tools/AbstractExportTool.hpp>
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 
 namespace nmco  = netmeld::core::objects;
 namespace nmct = netmeld::core::tools;

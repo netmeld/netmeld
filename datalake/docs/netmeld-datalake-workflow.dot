@@ -16,7 +16,7 @@ digraph G {
   bins [label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
       <tr><td rowspan="5">Bin(s)</td></tr>
-      <tr><td align="left">nmdb-initialize</td></tr>
+      <tr><td align="left">nmdl-initialize</td></tr>
       <tr><td align="left">nmdl-insert</td></tr>
       <tr><td align="left">nmdl-remove</td></tr>
       <tr><td align="left">nmdl-list</td></tr>
