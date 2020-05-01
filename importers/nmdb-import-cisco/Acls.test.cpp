@@ -102,13 +102,15 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"1.2.3.4 128.0.0.0", "1.2.3.4/1"},         // NETMASK
       {"1.2.3.4 0.0.0.1", "1.2.3.4/31"},          // WILDCARD
       {"1.2.3.4 255.255.255.254", "1.2.3.4/31"},  // NETMASK
-      {"1::2 3::4", "1::2/100"},                  // WILDCARD
-      {"1::2 3::4", "1::2/100"},                  // NETMASK
+      {"1::2 0:0:0:0:ffff:ffff:ffff:ffff", "1::2/64"},                  // WILDCARD
+      {"1::2 ffff:ffff:ffff:ffff:0:0:0:0", "1::2/64"},                  // NETMASK
     };
     for (const auto& [test, format] : testsOk) {
 //      LOG_INFO << "testing: " << test << " vs " << format << std::endl;
       std::string out;
       BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      //BOOST_TEST(format == out);
+      out.clear();
       const auto& testSpace = ' ' + test + ' ';
       BOOST_TEST(nmcp::testAttr(testSpace.c_str(),
                  parserRule, out, blank, false));

@@ -46,7 +46,7 @@ namespace netmeld::core::objects {
   {
     IpNetwork temp = nmcp::fromString<nmcp::ParserIpAddress, IpAddress>(_addr);
     address        = temp.address;
-    cidr           = temp.cidr;
+    prefix           = temp.prefix;
   }
 
   IpNetwork::IpNetwork(const std::vector<uint8_t>& _addr)
@@ -81,13 +81,13 @@ namespace netmeld::core::objects {
   template<size_t n> std::string
   IpNetwork::convert() const
   {
-    if (cidr == n) { // Short circuit trivial case
+    if (prefix == n) { // Short circuit trivial case
       return address.to_string();
     }
 
-    // Convert cidr to bitset
+    // Convert prefix to bitset
     std::bitset<n> maskBits;
-    for (size_t i {n}; i > n-cidr; i--) {
+    for (size_t i {n}; i > n-prefix; i--) {
       maskBits.set(i-1);
     }
 
@@ -130,13 +130,13 @@ namespace netmeld::core::objects {
     if (isDefault()) {
       return address.to_string();
     } else if (isV4()) {
-      if (32 < cidr) {
+      if (32 < prefix) {
         LOG_ERROR << "IPv4 network with invalid CIDR" << std::endl;
         return "";
       }
       return convert<32>();
     } else if (isV6()) {
-      if (128 < cidr) {
+      if (128 < prefix) {
         LOG_ERROR << "IPv6 network with invalid CIDR" << std::endl;
         return "";
       }
@@ -165,7 +165,7 @@ namespace netmeld::core::objects {
   {
     try {
       address = IpAddr::from_string(_addr);
-      setCidr(cidr);
+      setPrefix(prefix);
     } catch (std::exception& e) {
       LOG_ERROR << "IP address malformed for parser: " << _addr << std::endl;
       std::exit(nmcu::Exit::FAILURE);
@@ -173,12 +173,12 @@ namespace netmeld::core::objects {
   }
 
   void
-  IpNetwork::setCidr(uint8_t _cidr)
+  IpNetwork::setPrefix(uint8_t _prefix)
   {
-    if (UINT8_MAX == _cidr) {
-      cidr = (address.is_v4()) ? 32 : 128;
+    if (UINT8_MAX == _prefix) {
+      prefix = (address.is_v4()) ? 32 : 128;
     } else {
-      cidr = _cidr;
+      prefix = _prefix;
     }
   }
 
@@ -189,7 +189,7 @@ namespace netmeld::core::objects {
   }
 
   template<size_t bits> bool
-  IpNetwork::setCidrFromMask(const IpNetwork& _mask,
+  IpNetwork::setPrefixFromMask(const IpNetwork& _mask,
                              const size_t base,
                              const char sep,
                              bool flipIt)
@@ -220,18 +220,20 @@ namespace netmeld::core::objects {
       }
     }
 
-    cidr = count;
+    prefix = count;
 
+    LOG_INFO << "prefix: " << (unsigned int)prefix
+             << " -- contig: " << std::boolalpha << isContiguous << '\n';
     return isContiguous;
   }
 
-  void
+  bool
   IpNetwork::setNetmask(const IpNetwork& _mask)
   {
     if (_mask.isV4()) {
-      setCidrFromMask<8>(_mask, 10, '.', false);
+      return setPrefixFromMask<8>(_mask, 10, '.', false);
     } else {
-      setCidrFromMask<16>(_mask, 16, ':', false);
+      return setPrefixFromMask<16>(_mask, 16, ':', false);
     }
   }
 
@@ -239,11 +241,55 @@ namespace netmeld::core::objects {
   IpNetwork::setWildcardMask(const IpNetwork& _mask)
   {
     if (_mask.isV4()) {
-      return setCidrFromMask<8>(_mask, 10, '.', true);
+      return setPrefixFromMask<8>(_mask, 10, '.', true);
     } else {
-      LOG_ERROR << "IpNetwork::setWildcardMask was called with"
-                << " an IPv6 address\n";
-      return false;
+      return setPrefixFromMask<16>(_mask, 16, ':', true);
+    }
+  }
+
+  template<size_t n> std::bitset<n>
+  IpNetwork::asBitset() const
+  {
+    std::bitset<n> addrBits;
+    if (isV4()) {
+      for (auto byte : address.to_v4().to_bytes()) {
+        addrBits <<= 8;
+        addrBits |= byte;
+      }
+    } else {
+      for (auto byte : address.to_v6().to_bytes()) {
+        addrBits <<= 8;
+        addrBits |= byte;
+      }
+    }
+
+    return addrBits;
+  }
+
+  bool
+  IpNetwork::setMask(const IpNetwork& _mask)
+  {
+//    const auto& ipStr = _mask.toString();
+//    if (0 == ipStr.find("0.0.0.0") || 0 == ipStr.find("255.255.255.255")) {
+//      LOG_WARN << "Cannot differentiate between Wildcard/Netmask for: "
+//               << _mask << '\n';
+//      return false;
+//    }
+
+    if (_mask.isV4()) {
+      const auto& bVal {_mask.asBitset<32>()};
+      if (bVal.test(0)) {
+        return setWildcardMask(_mask);
+      } else {
+        return setNetmask(_mask);
+      }
+    } else {
+      const auto& bVal {_mask.asBitset<128>()};
+      if (bVal.test(0)) {
+        return setWildcardMask(_mask);
+      } else {
+        return setNetmask(_mask);
+      }
     }
   }
 
@@ -256,7 +302,7 @@ namespace netmeld::core::objects {
   bool
   IpNetwork::isDefault() const
   {
-    return UINT8_MAX == cidr;
+    return UINT8_MAX == prefix;
   }
 
   bool
@@ -275,8 +321,8 @@ namespace netmeld::core::objects {
             || address.is_unspecified()
             )
         && (
-              (isV4() && 32  > cidr)
-           || (isV6() && 128 > cidr)
+              (isV4() && 32  > prefix)
+           || (isV6() && 128 > prefix)
            )
         ;
   }
@@ -323,7 +369,7 @@ namespace netmeld::core::objects {
   IpNetwork::toString() const
   {
     std::ostringstream oss;
-    oss << getNetwork() << '/' << static_cast<unsigned int>(cidr);
+    oss << getNetwork() << '/' << static_cast<unsigned int>(prefix);
     return oss.str();
   }
 
@@ -354,7 +400,7 @@ namespace netmeld::core::objects {
   operator==(const IpNetwork& first, const IpNetwork& second)
   {
     return first.address == second.address
-        && first.cidr == second.cidr
+        && first.prefix == second.prefix
         && first.reason == second.reason
         && first.extraWeight == second.extraWeight
         ;

@@ -46,8 +46,8 @@ class TestIpNetwork : public nmco::IpNetwork {
     IpAddr getAddress() const
     { return address; }
 
-    uint8_t getCidr() const
-    { return cidr; }
+    uint8_t getPrefix() const
+    { return prefix; }
 
     std::string getReason() const
     { return reason; }
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestIpNetwork ipNet;
 
     BOOST_TEST(IpAddr() == ipNet.getAddress());
-    BOOST_TEST(UINT8_MAX == ipNet.getCidr());
+    BOOST_TEST(UINT8_MAX == ipNet.getPrefix());
     BOOST_TEST(ipNet.getReason().empty());
     BOOST_TEST(0 == ipNet.getExtraWeight());
   }
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestIpNetwork ipNet {"10.0.0.1/24", "Some Description"};
 
     BOOST_TEST(IpAddr::from_string("10.0.0.1") == ipNet.getAddress());
-    BOOST_TEST(24 == ipNet.getCidr());
+    BOOST_TEST(24 == ipNet.getPrefix());
     BOOST_TEST("Some Description" == ipNet.getReason());
     BOOST_TEST(0 == ipNet.getExtraWeight());
   }
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     std::string ip {"10.0.0.1"};
     ipNet.setAddress(ip);
     BOOST_TEST(IpAddr::from_string(ip) == ipNet.getAddress());
-    BOOST_TEST(32 == ipNet.getCidr());
+    BOOST_TEST(32 == ipNet.getPrefix());
   }
 
   {
@@ -94,17 +94,17 @@ BOOST_AUTO_TEST_CASE(testSetters)
     std::string ip {"1:2:3:4:5:6:7:8"};
     ipNet.setAddress(ip);
     BOOST_TEST(IpAddr::from_string(ip) == ipNet.getAddress());
-    BOOST_TEST(128 == ipNet.getCidr());
+    BOOST_TEST(128 == ipNet.getPrefix());
   }
 
   {
     TestIpNetwork ipNet;
 
-    ipNet.setCidr(15);
-    BOOST_TEST(15 == ipNet.getCidr());
+    ipNet.setPrefix(15);
+    BOOST_TEST(15 == ipNet.getPrefix());
 
-    ipNet.setCidr(150);
-    BOOST_TEST(150 == ipNet.getCidr());
+    ipNet.setPrefix(150);
+    BOOST_TEST(150 == ipNet.getPrefix());
   }
 
   {
@@ -115,12 +115,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
   }
 
   {
+    LOG_INFO << "here1\n";
     TestIpNetwork ipNet {"1.2.3.4", ""};
+    LOG_INFO << "here2\n";
 
     const size_t NUM_OCTETS {4};
     const size_t OCTET_SIZE {8};
     std::bitset<OCTET_SIZE> maskBits[NUM_OCTETS];
     std::ostringstream oss;
+    LOG_INFO << "here1\n";
     for (size_t z {0}; z < NUM_OCTETS; z++) {
       for (size_t i {1}; i <= OCTET_SIZE; i++) {
         oss.str("");
@@ -131,13 +134,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
           }
         }
         nmco::IpNetwork mask {oss.str()};
+    
         ipNet.setNetmask(mask);
-        BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getCidr());
+        BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getPrefix());
 
         maskBits[z].set(OCTET_SIZE-i);
       }
     }
   }
+
   {
     TestIpNetwork ipNet {"1.2.3.4", ""};
     std::vector<std::pair<unsigned int, std::string>> masks {
@@ -146,9 +151,9 @@ BOOST_AUTO_TEST_CASE(testSetters)
       {32, "1.1.1.1"},
     };
 
-    for (const auto& [cidr, mask] : masks) {
+    for (const auto& [prefix, mask] : masks) {
       ipNet.setNetmask(nmco::IpNetwork(mask));
-      BOOST_TEST(cidr == ipNet.getCidr());
+      BOOST_TEST(prefix == ipNet.getPrefix());
     }
   }
 
@@ -170,7 +175,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
         }
         nmco::IpNetwork mask {oss.str()};
         ipNet.setNetmask(mask);
-        BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getCidr());
+        BOOST_TEST(((z*OCTET_SIZE)+(i-1)) == ipNet.getPrefix());
 
         maskBits[z].set(OCTET_SIZE-i);
       }
@@ -184,9 +189,9 @@ BOOST_AUTO_TEST_CASE(testSetters)
       {128, "1:1:1:1:1:1:1:1"},
     };
 
-    for (const auto& [cidr, mask] : masks) {
+    for (const auto& [prefix, mask] : masks) {
       ipNet.setNetmask(nmco::IpNetwork(mask));
-      BOOST_TEST(cidr == ipNet.getCidr());
+      BOOST_TEST(prefix == ipNet.getPrefix());
     }
   }
 
@@ -211,7 +216,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
         const auto& isContiguous = ipNet.setWildcardMask(mask);
         BOOST_TEST(isContiguous);
         size_t val {((NUM_OCTETS*OCTET_SIZE)-((z*OCTET_SIZE)+(i-1)))};
-        BOOST_TEST(val == ipNet.getCidr());
+        BOOST_TEST(val == ipNet.getPrefix());
 
         maskBits[NUM_OCTETS-1-z].set(i-1);
       }
@@ -254,7 +259,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
       {0,  "255.255.255.255"},
     };
 
-    for (const auto& [cidr, mask] : masks) {
+    for (const auto& [prefix, mask] : masks) {
       TestIpNetwork ipMask;
       ipMask.setAddress(mask);
 
@@ -262,7 +267,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
       bool is_contiguous = ipNet.setWildcardMask(ipMask);
 
       BOOST_TEST(is_contiguous);
-      BOOST_TEST(ipNet.getCidr() == cidr);
+      BOOST_TEST(ipNet.getPrefix() == prefix);
     }
   }
   {
@@ -272,7 +277,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
       {32, "1.1.1.1"},
     };
 
-    for (const auto& [cidr, mask] : masks) {
+    for (const auto& [prefix, mask] : masks) {
       TestIpNetwork ipMask;
       ipMask.setAddress(mask);
 
@@ -280,7 +285,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
       bool is_contiguous = ipNet.setWildcardMask(ipMask);
 
       BOOST_TEST(!is_contiguous);
-      BOOST_TEST(ipNet.getCidr() == cidr);
+      BOOST_TEST(ipNet.getPrefix() == prefix);
     }
   }
 
@@ -296,15 +301,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
     TestIpNetwork ipNet;
 
     BOOST_TEST(ipNet.isDefault());
-    ipNet.setCidr(0);
+    ipNet.setPrefix(0);
     BOOST_TEST(!ipNet.isDefault());
-    ipNet.setCidr(24);
+    ipNet.setPrefix(24);
     BOOST_TEST(!ipNet.isDefault());
-    ipNet.setCidr(32);
+    ipNet.setPrefix(32);
     BOOST_TEST(!ipNet.isDefault());
-    ipNet.setCidr(128);
+    ipNet.setPrefix(128);
     BOOST_TEST(!ipNet.isDefault());
-    ipNet.setCidr(UINT8_MAX);
+    ipNet.setPrefix(UINT8_MAX);
     BOOST_TEST(!ipNet.isDefault()); // once set, can never be unset
   }
 
@@ -329,24 +334,24 @@ BOOST_AUTO_TEST_CASE(testSetters)
     std::string dip {"0.0.0.0/" + std::to_string(UINT8_MAX)};
     BOOST_TEST(dip == ipNet.toString());
 
-    // ensure cidr is unsigned otherwise checks for below zero are needed
-    BOOST_TEST((typeid(uint8_t) == typeid(ipNet.getCidr())));
+    // ensure prefix is unsigned otherwise checks for below zero are needed
+    BOOST_TEST((typeid(uint8_t) == typeid(ipNet.getPrefix())));
 
     ipNet.setAddress("1.2.3.255");
-    ipNet.setCidr(24);
+    ipNet.setPrefix(24);
     BOOST_TEST(std::string("1.2.3.0/24") == ipNet.toString());
     ipNet.setAddress("1.2.3.255");
-    ipNet.setCidr(27);
+    ipNet.setPrefix(27);
     BOOST_TEST(std::string("1.2.3.224/27") == ipNet.toString());
 
     ipNet.setAddress("fe00::aabb:ccdd");
-    ipNet.setCidr(128);
+    ipNet.setPrefix(128);
     BOOST_TEST(std::string("fe00::aabb:ccdd/128") == ipNet.toString());
     ipNet.setAddress("fe00::aabb:ffff");
-    ipNet.setCidr(120);
+    ipNet.setPrefix(120);
     BOOST_TEST(std::string("fe00::aabb:ff00/120") == ipNet.toString());
     ipNet.setAddress("fe00::aabb:ffff");
-    ipNet.setCidr(100);
+    ipNet.setPrefix(100);
     BOOST_TEST(std::string("fe00::a000:0/100") == ipNet.toString());
   }
 }
@@ -380,13 +385,13 @@ BOOST_AUTO_TEST_CASE(testValidity)
     BOOST_TEST(!ipNet.isValid());
     ipNet.setAddress("1.2.3.4");
     BOOST_TEST(!ipNet.isValid());
-    ipNet.setCidr(0);
+    ipNet.setPrefix(0);
     BOOST_TEST(ipNet.isValid());
-    ipNet.setCidr(31);
+    ipNet.setPrefix(31);
     BOOST_TEST(ipNet.isValid());
-    ipNet.setCidr(32);
+    ipNet.setPrefix(32);
     BOOST_TEST(!ipNet.isValid());
-    ipNet.setCidr(33);
+    ipNet.setPrefix(33);
     BOOST_TEST(!ipNet.isValid());
   }
 
@@ -396,13 +401,13 @@ BOOST_AUTO_TEST_CASE(testValidity)
     BOOST_TEST(!ipNet.isValid());
     ipNet.setAddress("0123::0123");
     BOOST_TEST(!ipNet.isValid());
-    ipNet.setCidr(0);
+    ipNet.setPrefix(0);
     BOOST_TEST(ipNet.isValid());
-    ipNet.setCidr(127);
+    ipNet.setPrefix(127);
     BOOST_TEST(ipNet.isValid());
-    ipNet.setCidr(128);
+    ipNet.setPrefix(128);
     BOOST_TEST(!ipNet.isValid());
-    ipNet.setCidr(129);
+    ipNet.setPrefix(129);
     BOOST_TEST(!ipNet.isValid());
   }
 }

@@ -241,46 +241,34 @@ Acls::Acls() : Acls::base_type(start)
     ;
   // TODO Need to handle wildcard or netmask...
   addressArgumentIos =
-    (
-//       (qi::lit("host") >> (&ipNoPrefix > ipAddr))
-//         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-       (qi::lit("host") >> addrIpOnly)
-         [qi::_val = qi::_1]
+    (  (qi::lit("host") >> addrIpOnly)
      | (qi::lit("object") >> -qi::lit("-group") > token)
-         [qi::_val = qi::_1]
      | (qi::lit("interface") > token)
-         [qi::_val = qi::_1]
      | (anyTerm)
-         [qi::_val = qi::_1]
-       // TODO needs to be ipAddr.ipv4
-     | addrIpMask
-         [qi::_val = qi::_1]
-//     | (&ipNoPrefix >> ipAddr >> &ipNoPrefix >> ipAddr)
-//         [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
-     | addrIpPrefix
-         [qi::_val = qi::_1]
-//     | (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
-//         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-    )
+     | (addrIpMask)
+     | (addrIpPrefix)
+    )// [qi::_val = qi::_1]
     ;
   addrIpOnly =
     (&ipNoPrefix > ipAddr)
       [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
-
     ;
   ipNoPrefix =
-    (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.cidr)
+    (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
     ;
   addrIpPrefix =
      (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
        [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
     ;
   addrIpMask =
-     (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank] >> &ipNoPrefix >> ipAddr)
+     (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank]
+      >> !(&(qi::lit("0.0.0.0") | qi::lit("255.255.255.255")))
+      >> &ipNoPrefix >> ipAddr)
        [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
     ;
   anyTerm =
-    qi::string("any") >> -qi::char_("46") >> &qi::space
+    qi::as_string[qi::string("any") >> -qi::char_("46") >> &qi::space]
+      [qi::_val = qi::_1] // Needed as partial match returns itself
     ;
 
   sourcePort =
@@ -538,10 +526,12 @@ Acls::setCurRuleDst(const std::string& addr)
   curRule.addDst(addr);
 }
 
+// TODO fix IpNetwork testing
 std::string
 Acls::setWildcardMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 {
-  bool isContiguous {ipAddr.setWildcardMask(mask)};
+//  bool isContiguous {ipAddr.setWildcardMask(mask)};
+  bool isContiguous {ipAddr.setMask(mask)};
   if (!isContiguous) {
     std::ostringstream oss;
     oss << "IpAddress (" << ipAddr

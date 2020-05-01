@@ -43,7 +43,7 @@ namespace netmeld::core::objects {
     private:
     protected:
       IpAddr       address;
-      uint8_t      cidr        {UINT8_MAX};
+      uint8_t      prefix      {UINT8_MAX};
       std::string  reason;
       uint32_t     extraWeight {0};
 
@@ -65,20 +65,23 @@ namespace netmeld::core::objects {
     private:
     protected:
       template<size_t n>
-        bool setCidrFromMask(const IpNetwork&, const size_t, const char, bool);
+        bool setPrefixFromMask(const IpNetwork&, const size_t, const char, bool);
       template<size_t n>
         std::string convert() const;
 
       std::string getNetwork() const;
+
+      template<size_t n>
+        std::bitset<n> asBitset() const;
 
     public:
       static IpNetwork getIpv4Default();
       static IpNetwork getIpv6Default();
 
       void setAddress(const std::string&);
-      void setCidr(uint8_t);
+      void setPrefix(uint8_t);
       void setExtraWeight(const uint32_t);
-      void setNetmask(const IpNetwork&);
+      bool setNetmask(const IpNetwork&);
       bool setWildcardMask(const IpNetwork&);
       void setReason(const std::string&);
 
@@ -91,6 +94,17 @@ namespace netmeld::core::objects {
 
       std::string toString() const;
       std::string toDebugString() const override;
+
+      /* CAUTION: Use at your own risk
+         This attempts to guess the type of mask between a
+         wildcard or netmask.  To do this, it examines the
+         most significant bit.  If it is a one then assume a
+         wildcard mask, otherwise assume netmask.  It will
+         WARN it cannot guess for '0.0.0.0' and
+         '255.255.255.255'.  It returns true if applied and
+         false if not applied.
+      */
+      bool setMask(const IpNetwork&);
 
       friend bool operator<(const IpNetwork&, const IpNetwork&);
       friend bool operator==(const IpNetwork&, const IpNetwork&);
