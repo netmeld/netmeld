@@ -189,41 +189,28 @@ namespace netmeld::core::objects {
   }
 
   template<size_t bits> bool
-  IpNetwork::setPrefixFromMask(const IpNetwork& _mask,
-                             const size_t base,
-                             const char sep,
-                             bool flipIt)
+  IpNetwork::setPrefixFromMask(const IpNetwork& _mask, bool flipIt)
   {
     size_t count {0};
     bool isContiguous {true};
     bool seenZero {false};
 
-    std::istringstream octets(_mask.address.to_string());
-    for (std::string octet;
-         std::getline(octets, octet, sep) && !octet.empty();
-        ) {
-      size_t end;
-      unsigned long val {std::stoul(octet, &end, base)};
-      std::bitset<bits> bVal(val);
-      if (flipIt) {bVal.flip();}
-
-      for (size_t i {1}; i <= bits; ++i) {
-        bool isOne {bVal.test(bits-i)};
-        if (isOne && seenZero) {
-          isContiguous = false;
-          count = ((address.is_v4()) ? 32 : 128);
-        } else if (isOne) {
-          ++count;
-        } else {
-          seenZero = true;
-        }
+    std::bitset<bits> bVal = _mask.asBitset<bits>();
+    if (flipIt) {bVal.flip();}
+    for (size_t i {1}; i <= bits; ++i) {
+      bool isOne {bVal.test(bits-i)};
+      if (isOne && seenZero) {
+        isContiguous = false;
+        count = bits;
+      } else if (isOne) {
+        ++count;
+      } else {
+        seenZero = true;
       }
     }
 
     prefix = count;
 
-    LOG_INFO << "prefix: " << (unsigned int)prefix
-             << " -- contig: " << std::boolalpha << isContiguous << '\n';
     return isContiguous;
   }
 
@@ -231,9 +218,9 @@ namespace netmeld::core::objects {
   IpNetwork::setNetmask(const IpNetwork& _mask)
   {
     if (_mask.isV4()) {
-      return setPrefixFromMask<8>(_mask, 10, '.', false);
+      return setPrefixFromMask<32>(_mask, false);
     } else {
-      return setPrefixFromMask<16>(_mask, 16, ':', false);
+      return setPrefixFromMask<128>(_mask, false);
     }
   }
 
@@ -241,9 +228,9 @@ namespace netmeld::core::objects {
   IpNetwork::setWildcardMask(const IpNetwork& _mask)
   {
     if (_mask.isV4()) {
-      return setPrefixFromMask<8>(_mask, 10, '.', true);
+      return setPrefixFromMask<32>(_mask, true);
     } else {
-      return setPrefixFromMask<16>(_mask, 16, ':', true);
+      return setPrefixFromMask<128>(_mask, true);
     }
   }
 
@@ -269,13 +256,6 @@ namespace netmeld::core::objects {
   bool
   IpNetwork::setMask(const IpNetwork& _mask)
   {
-//    const auto& ipStr = _mask.toString();
-//    if (0 == ipStr.find("0.0.0.0") || 0 == ipStr.find("255.255.255.255")) {
-//      LOG_WARN << "Cannot differentiate between Wildcard/Netmask for: "
-//               << _mask << '\n';
-//      return false;
-//    }
-
     if (_mask.isV4()) {
       const auto& bVal {_mask.asBitset<32>()};
       if (bVal.test(0)) {

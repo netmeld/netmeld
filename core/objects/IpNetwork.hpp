@@ -65,7 +65,7 @@ namespace netmeld::core::objects {
     private:
     protected:
       template<size_t n>
-        bool setPrefixFromMask(const IpNetwork&, const size_t, const char, bool);
+        bool setPrefixFromMask(const IpNetwork&, bool);
       template<size_t n>
         std::string convert() const;
 
@@ -90,7 +90,8 @@ namespace netmeld::core::objects {
       bool isV4() const;
       bool isV6() const;
 
-      void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
+      void save(pqxx::transaction_base&,
+                const Uuid&, const std::string&) override;
 
       std::string toString() const;
       std::string toDebugString() const override;
@@ -99,10 +100,10 @@ namespace netmeld::core::objects {
          This attempts to guess the type of mask between a
          wildcard or netmask.  To do this, it examines the
          most significant bit.  If it is a one then assume a
-         wildcard mask, otherwise assume netmask.  It will
-         WARN it cannot guess for '0.0.0.0' and
-         '255.255.255.255'.  It returns true if applied and
-         false if not applied.
+         wildcard mask, otherwise assume netmask.  So this
+         means '0.0.0.0' and '255.255.255.255' will always
+         result in a '/0' prefix.  It returns true if
+         applied and false if not applied.
       */
       bool setMask(const IpNetwork&);
 
