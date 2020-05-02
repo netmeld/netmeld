@@ -97,7 +97,6 @@ class Parser :
       domainData,
       route,
       vlanDef,
-      policy,
       interface, switchport, spanningTree;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
@@ -186,19 +185,7 @@ class Parser :
     void createServicePolicy(const std::string&, const std::string&);
     void updatePolicyMap(const std::string&, const std::string&);
     void updateClassMap(const std::string&, const std::string&);
-
-//    void updateCurRuleBook(const std::string&);
-//    void updateCurRule();
-//
-//    void setCurRuleAction(const std::string&);
-//
-//    void setCurRuleSrc(const std::string&);
-//    void setCurRuleDst(const std::string&);
-//
-//    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
-//
-//    void curRuleFinalize();
-
+    void aclBookAdd(const std::pair<std::string, RuleBook>&);
 
     // Unsupported
     void unsup(const std::string&);

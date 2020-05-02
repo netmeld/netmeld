@@ -77,6 +77,7 @@ Acls::Acls() : Acls::base_type(start)
   iosStandardRuleLine =
     action
     >> sourceAddrIos
+    >> *(logArgument)
     > qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
     ;
 

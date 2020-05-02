@@ -43,9 +43,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   // Unknown where belongs
-  // vmware vm mac
   // ip vrrp-extended (vrrrpv3 for nexus?)
-  // standby \d+ ip
 
   config =
     *(  (qi::lit("no cdp") >> (qi::lit("run") | qi::lit("enable")) > qi::eol)
@@ -67,8 +65,6 @@ Parser::Parser() : Parser::base_type(start)
 
       | (qi::lit("aaa ") >> tokens >> qi::eol)
             [pnx::bind(&Parser::deviceAaaAdd, this, qi::_1)]
-
-//      | (qi::lit("ip access-list") >> policy)
 
       | (qi::lit("policy-map") >> policyMap)
 
@@ -100,12 +96,7 @@ Parser::Parser() : Parser::base_type(start)
       | vlan
           [pnx::bind(&Parser::vlanAdd, this, qi::_1)]
       | aclNameBook
-          [pnx::bind([&](const std::pair<std::string, RuleBook>& _pair)
-                      {
-                        if (!_pair.first.empty()) {
-                          d.ruleBooks.emplace(_pair);
-                        }
-                      }, qi::_1)]
+          [pnx::bind(&Parser::aclBookAdd, this, qi::_1)]
 
       // ignore the rest
       | (qi::omit[+token > -qi::eol])
@@ -409,7 +400,7 @@ Parser::Parser() : Parser::base_type(start)
       //(start)
       (config)
       (domainData)(route)(vlanDef)
-      (policy)(policyMap)(classMap)(addressArgument)(ports)
+      (policyMap)(classMap)(addressArgument)(ports)
       (interface)(switchport)(spanningTree)
       (vlan)
       (tokens)(token)
@@ -605,6 +596,23 @@ void
 Parser::updateClassMap(const std::string& className, const std::string& bookName)
 {
   classes[className].insert(bookName);
+}
+
+void
+Parser::aclBookAdd(const std::pair<std::string, RuleBook>& _pair)
+{
+  if (_pair.first.empty()) { return; }
+
+  auto search = d.ruleBooks.find(_pair.first);
+  if (search == d.ruleBooks.end()) {
+    d.ruleBooks.emplace(_pair);
+  } else {
+    auto* book = &(search->second);
+    size_t count {book->size()};
+    for (auto& [_, rule] : _pair.second) {
+      book->emplace(++count, rule);
+    }
+  }
 }
 
 

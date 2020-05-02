@@ -321,11 +321,11 @@ KEY: (unless otherwise stated)
 
 */
 /* NOTE: Below is a one-liner, wrapped for clarity
-   access-list LIST ACTION ADDR_ARG
+   access-list LIST ACTION ADDR_ARG LOG
 ---
    NOTE: Below is a multi-liner, where \ == line wrap
    IPV46 access-list standard LIST
-    ACTION ADDR_ARG
+    ACTION ADDR_ARG LOG
 ---
   ADDR_ARG -- ( IP | IP WILDMASK | any )
 */
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
   const auto& parserRule = tpca.iosStandardRuleLine;
   {
     const std::string fullText {
-      "permit 1.2.3.4 0.0.0.255\n"
+      "permit 1.2.3.4 0.0.0.255 log\n"
     };
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
 
@@ -370,7 +370,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
     const std::string fullText {
       "ip access-list standard TEST\n"
       " remark crazy rule\n"
-      " permit any\n"
+      " permit any log\n"
       " remark crazy rule\n"
       " deny   any\n"
     };
