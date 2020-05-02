@@ -122,14 +122,13 @@ class Acls :
       ignoredRuleLine;
 
 
-//  protected:
-    nmco::AcRule curRule;
+  protected:
     // Supporting data structures
+    nmco::AcRule curRule;
     const std::string ZONE  {"global"};
 
     std::string  ruleBookName {""};
     RuleBook     ruleBook;
-
 
     size_t       curRuleId {0};
     std::string  curRuleProtocol {""};
@@ -152,8 +151,9 @@ class Acls :
   public:
     std::set<std::string> getIgnoredRuleData();
 
-    void initCurRule();
   protected:
+    void initCurRule();
+
   private: // Methods which should be hidden from API users
     void addIgnoredRuleData(const std::string&);
 
@@ -165,7 +165,7 @@ class Acls :
     void setCurRuleSrc(const std::string&);
     void setCurRuleDst(const std::string&);
 
-    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
+    std::string setMask(nmco::IpAddress&, const nmco::IpAddress&);
 
     void curRuleFinalize();
 

@@ -164,7 +164,8 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   asaExtended =
-    !qi::attr("")
+    qi::lit("access-list") >> bookName >> qi::lit("extended")
+    >> asaExtendedRuleLine
     ;
   asaExtendedRuleLine =
     action
@@ -271,7 +272,6 @@ Acls::Acls() : Acls::base_type(start)
   destinationAddrIos =
     addressArgumentIos [pnx::bind(&Acls::setCurRuleDst, this, qi::_1)]
     ;
-  // TODO Need to handle wildcard or netmask...
   addressArgumentIos =
     (  (qi::lit("host") >> addrIpOnly)
      | (qi::lit("object") >> -qi::lit("-group") > token)
@@ -279,7 +279,7 @@ Acls::Acls() : Acls::base_type(start)
      | (anyTerm)
      | (addrIpMask)
      | (addrIpPrefix)
-    )// [qi::_val = qi::_1]
+    )
     ;
   addrIpOnly =
     (&ipNoPrefix > ipAddr)
@@ -296,7 +296,7 @@ Acls::Acls() : Acls::base_type(start)
      (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank]
       >> !(&(qi::lit("0.0.0.0") | qi::lit("255.255.255.255")))
       >> &ipNoPrefix >> ipAddr)
-       [qi::_val = pnx::bind(&Acls::setWildcardMask, this, qi::_1, qi::_2)]
+       [qi::_val = pnx::bind(&Acls::setMask, this, qi::_1, qi::_2)]
     ;
   anyTerm =
     qi::as_string[qi::string("any") >> -qi::char_("46") >> &qi::space]
@@ -520,11 +520,9 @@ Acls::setCurRuleDst(const std::string& addr)
   curRule.addDst(addr);
 }
 
-// TODO fix IpNetwork testing
 std::string
-Acls::setWildcardMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
+Acls::setMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 {
-//  bool isContiguous {ipAddr.setWildcardMask(mask)};
   bool isContiguous {ipAddr.setMask(mask)};
   if (!isContiguous) {
     std::ostringstream oss;

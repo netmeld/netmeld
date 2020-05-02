@@ -38,13 +38,39 @@ namespace nmdsic = netmeld::datastore::importers::cisco;
 
 using qi::ascii::blank;
 
+class TestParserCiscoAcl : public nmdsic::Acls {
+  public:
+    using nmdsic::Acls::initCurRule;
+//    void initCurRule()
+//    { initCurRule(); }
+  public:
+    const nmco::AcRule& getCurRule()
+    { return curRule; }
+    const std::string& getZone()
+    { return ZONE; }
+    const std::string& getRuleBookName()
+    { return ruleBookName; }
+    const nmdsic::RuleBook& getRuleBook()
+    { return ruleBook; }
+    size_t getCurRuleId()
+    { return curRuleId; }
+    const std::string& getCurRuleProtocol()
+    { return curRuleProtocol; }
+    const std::string& getCurRuleSrcPort()
+    { return curRuleSrcPort; }
+    const std::string& getCurRuleDstPort()
+    { return curRuleDstPort; }
+    const std::set<std::string>& getIgnoredRuleData()
+    { return ignoredRuleData; }
+
+};
+
 BOOST_AUTO_TEST_CASE(testAclRules)
 {
-  // TODO move protected, subclass, refactor
-  nmdsic::Acls parserAcl;
+  TestParserCiscoAcl tpca;
 
   {
-    const auto& parserRule = parserAcl.action;
+    const auto& parserRule = tpca.action;
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
@@ -54,7 +80,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     for (const auto& [test, format] : testsOk) {
       std::string out;
       BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
-      const auto& temp = parserAcl.curRule;
+      const auto& temp = tpca.getCurRule();
       BOOST_TEST("" == out);
       BOOST_TEST(format == temp.getActions().at(0));
     }
@@ -63,7 +89,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
   }
 
   {
-    const auto& parserRule = parserAcl.protocolArgument;
+    const auto& parserRule = tpca.protocolArgument;
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
@@ -77,14 +103,14 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
-      BOOST_TEST(format == parserAcl.curRuleProtocol);
+      BOOST_TEST(format == tpca.getCurRuleProtocol());
     }
     // BAD
     // -- The parser is a 'token', so no checkable bad case?
   }
 
   {
-    const auto& parserRule = parserAcl.addressArgumentIos;
+    const auto& parserRule = tpca.addressArgumentIos;
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
@@ -136,7 +162,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     }
   }
   {
-    const auto& parserRule = parserAcl.ipNoPrefix;
+    const auto& parserRule = tpca.ipNoPrefix;
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
@@ -157,7 +183,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
   }
 
   {
-    const auto& parserRule = parserAcl.portArgument;
+    const auto& parserRule = tpca.portArgument;
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
@@ -183,7 +209,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
   }
 
   {
-    const auto& parserRule = parserAcl.logArgument;
+    const auto& parserRule = tpca.logArgument;
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
@@ -197,20 +223,72 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"log 7", "log 7"},
     };
     for (const auto& [test, format] : testsOk) {
-      parserAcl.initCurRule();
+      tpca.initCurRule();
       std::string out;
       BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST("" == out);
-      nmco::AcRule temp = parserAcl.curRule;
+      nmco::AcRule temp = tpca.getCurRule();
       BOOST_TEST(format == temp.getActions().at(0));
     }
     // BAD
     BOOST_TEST(!nmcp::test("gol", parserRule, blank, false));
   }
 
-  // TODO icmpArgument
-  // TODO userArgument
-  // TODO securityGroupArgument
+  {
+    const auto& parserRule = tpca.icmpArgument;
+    // OK
+    std::vector<std::string> testsOk {
+      // {test}
+      {"0"},
+      {"255"},
+      {"0 0"},
+      {"255 255"},
+      {"100 1"},
+      {"1 100"},
+      {"echo"},
+      {"general-parameter-problem"},
+      {"object-group IGI"},
+    };
+    for (const auto& test : testsOk) {
+      std::string out;
+      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST("" == out);
+    }
+  }
+
+  {
+    const auto& parserRule = tpca.userArgument;
+    // OK
+    std::vector<std::string> testsOk {
+      // {test}
+      {"user SOMEDOM\\myUser"},
+      {"user any"},
+      {"user none"},
+      {"user-group SOMEDOM\\\\myGroup"},
+      {"object-group UGI"},
+    };
+    for (const auto& test : testsOk) {
+      std::string out;
+      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST("" == out);
+    }
+  }
+
+  {
+    const auto& parserRule = tpca.securityGroupArgument;
+    // OK
+    std::vector<std::string> testsOk {
+      // {test}
+      {"security-group name someName"},
+      {"security-group tag someTag"},
+      {"object-group-security SGI"},
+    };
+    for (const auto& test : testsOk) {
+      std::string out;
+      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST("" == out);
+    }
+  }
 }
 
 
@@ -253,8 +331,8 @@ KEY: (unless otherwise stated)
 */
 BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.iosStandardRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.iosStandardRuleLine;
   {
     const std::string fullText {
       "permit 1.2.3.4 0.0.0.255\n"
@@ -279,8 +357,8 @@ BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testIosStandard)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.iosStandard;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.iosStandard;
   {
     const std::string fullText {
       "access-list TEST permit any\n"
@@ -300,7 +378,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, nmdsic::Acls(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -359,8 +437,8 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
 */
 BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.iosExtendedRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.iosExtendedRuleLine;
   {
     const std::string fullText {
       "permit ip"
@@ -475,8 +553,8 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testIosExtended)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.iosExtended;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.iosExtended;
   {
     const std::string fullText {
       "access-list TEST dynamic NAME timeout 5 permit ip any any\n"
@@ -514,7 +592,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
     }
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, nmdsic::Acls(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -554,8 +632,8 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
 */
 BOOST_AUTO_TEST_CASE(testIosRemarkRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.iosRemarkRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.iosRemarkRuleLine;
   {
     // OK
     BOOST_TEST(nmcp::test("remark some\n", parserRule, blank));
@@ -572,12 +650,12 @@ BOOST_AUTO_TEST_CASE(testIosRemarkRuleLine)
 BOOST_AUTO_TEST_CASE(testIosRemark)
 {
   {
-    const std::string parserAcl {
+    const std::string full {
       "access-list TEST remark crazy rules\n"
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(parserAcl, nmdsic::Acls(), result, blank));
+    BOOST_TEST(nmcp::testAttr(full, TestParserCiscoAcl(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -610,8 +688,6 @@ KEY: (unless otherwise stated)
                   | IP WILDMASK
                   | IP/PREFIX
                  )
-TODO Need to figure out how to handle/determine NET vs WILD mask
-                 )
   PORT_ARG    -- (  ( lt | gt | eq | neq ) PORT
                   | range PORT PORT
                   | object-group SERVICE_GROUP_ID
@@ -638,8 +714,8 @@ TODO Need to figure out how to handle/determine NET vs WILD mask
 */
 BOOST_AUTO_TEST_CASE(testNxosStandardRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.nxosStandardRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.nxosStandardRuleLine;
 
   {
     const std::string fullText {
@@ -651,8 +727,8 @@ BOOST_AUTO_TEST_CASE(testNxosStandardRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testNxosStandard)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.nxosStandardRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.nxosStandardRuleLine;
 
   {
     const std::string fullText {
@@ -698,8 +774,8 @@ NOTE: Appears to support objects, but no documenation shows output format
 */
 BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.nxosExtendedRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.nxosExtendedRuleLine;
   {
     const std::string fullText {
       "10 permit ip"
@@ -763,8 +839,8 @@ BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testNxosExtended)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.nxosExtended;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.nxosExtended;
   {
     const std::string fullText {
       "ip access-list TEST dynamic NAME timeout 5\n"
@@ -784,7 +860,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     }
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, nmdsic::Acls(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -818,7 +894,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, parserAcl, result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, tpca, result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -826,7 +902,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     auto& aclBook  {result.second};
     BOOST_TEST(1 == aclBook.size());
     BOOST_TEST("deny" == aclBook.at(1).getActions().at(0));
-    const auto& ignoredRules = parserAcl.getIgnoredRuleData();
+    const auto& ignoredRules = tpca.getIgnoredRuleData();
     BOOST_TEST(5 == ignoredRules.size());
   }
 }
@@ -842,8 +918,8 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
 */
 BOOST_AUTO_TEST_CASE(testNxosRemarkRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.nxosRemarkRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.nxosRemarkRuleLine;
   {
     const std::vector<std::string> tests {
       {"10 remark some\n"},
@@ -930,8 +1006,8 @@ KEY: (unless otherwise stated)
 */
 BOOST_AUTO_TEST_CASE(testAsaStandardRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.asaStandardRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.asaStandardRuleLine;
   {
     const std::string fullText {
       "permit 1.2.3.4 0.0.0.255\n"
@@ -960,8 +1036,8 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
 {
 //  nmcu::LoggerSingleton::getInstance().setLevel(nmcu::Severity::ALL);
 
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.asaStandard;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.asaStandard;
   {
     const std::string fullText {
       "access-list TEST standard permit any\n"
@@ -970,7 +1046,7 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank, false));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, nmdsic::Acls(), result, blank, false));
+    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank, false));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -998,8 +1074,8 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
 */
 BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.asaExtendedRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.asaExtendedRuleLine;
   {
     const std::string fullText {
       "permit ip"
@@ -1070,14 +1146,42 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testAsaExtended)
 {
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.asaExtended;
+  {
+    const std::string fullText {
+      "access-list TEST extended permit ip user any any any\n"
+      "access-list TEST extended deny ip any any\n"
+    };
+    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank, false));
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank, false));
+
+    auto& aclBookName  {result.first};
+    BOOST_TEST("TEST" == aclBookName);
+
+    auto& aclBook  {result.second};
+    BOOST_TEST(1 == aclBook.size());
+    BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
+    size_t count {1};
+    BOOST_TEST(count <= aclBook.size());
+    for (auto& [id, aclLine] : aclBook) {
+      BOOST_TEST(count == (id));
+      ++count;
+      BOOST_TEST("any" == aclLine.getSrcs().at(0));
+      BOOST_TEST("any" == aclLine.getDsts().at(0));
+      BOOST_TEST("ip::" == aclLine.getServices().at(0));
+    }
+  }
 }
 /* NOTE: Below is a one-liner wrapped for clarity
    access-list LIST remark SPACED_FILLED_TEXT
 */
 BOOST_AUTO_TEST_CASE(testAsaRemarkRuleLine)
 {
-  nmdsic::Acls parserAcl;
-  const auto& parserRule = parserAcl.asaRemarkRuleLine;
+  TestParserCiscoAcl tpca;
+  const auto& parserRule = tpca.asaRemarkRuleLine;
   {
     // OK
     BOOST_TEST(nmcp::test("remark some\n", parserRule, blank));
@@ -1094,12 +1198,12 @@ BOOST_AUTO_TEST_CASE(testAsaRemarkRuleLine)
 BOOST_AUTO_TEST_CASE(testAsaRemark)
 {
   {
-    const std::string parserAcl {
+    const std::string full {
       "access-list TEST remark - crazy rules\n"
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(parserAcl, nmdsic::Acls(), result, blank));
+    BOOST_TEST(nmcp::testAttr(full, TestParserCiscoAcl(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -1108,6 +1212,7 @@ BOOST_AUTO_TEST_CASE(testAsaRemark)
     BOOST_TEST(0 == aclBook.size());
   }
 }
+// TODO add webtype and ethertype?
 #if false
 /* NOTE: Below is a one-liner wrapped for clarity
    access-list LIST webtype ACTION
@@ -1139,7 +1244,7 @@ BOOST_AUTO_TEST_CASE(testAsaWebType)
 BOOST_AUTO_TEST_CASE(testAsaEthertype)
 {
   {
-    const auto& parserRule = parserAcl.asaEther;
+    const auto& parserRule = tpca.asaEther;
     // OK
     BOOST_TEST(nmcp::test("ethertype permit any", parserRule, blank));
     BOOST_TEST(nmcp::test("ethertype deny any", parserRule, blank));
@@ -1167,7 +1272,7 @@ BOOST_AUTO_TEST_CASE(testAsaEthertype)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, nmdsic::Acls(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("" == aclBookName);
