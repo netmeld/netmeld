@@ -10,20 +10,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: debian:testing-slim
+    #container: debian:testing-slim
+    container: docker://docker.pkg.github.com/cctechwiz-forks/netmeld/netmeld-dev:latest
 
     steps:
     - uses: actions/checkout@v2 # Checks-out under $GITHUB_WORKSPACE
 
-    - name: Install Dependencies
-      run: |
-        apt-get update
-        apt-get install --assume-yes --no-install-recommends \
-          debconf help2man pandoc python \
-          build-essential cmake make gcc g++ git \
-          libboost-date-time-dev libboost-iostreams-dev libboost-test-dev \
-          libboost-program-options-dev libboost-system-dev \
-          libpqxx-dev libpugixml-dev libpcap0.8-dev
+    #- name: Install Dependencies
+    #  run: |
+    #    apt-get update
+    #    apt-get install --assume-yes --no-install-recommends \
+    #      debconf help2man pandoc python \
+    #      build-essential cmake make gcc g++ git \
+    #      libboost-date-time-dev libboost-iostreams-dev libboost-test-dev \
+    #      libboost-program-options-dev libboost-system-dev \
+    #      libpqxx-dev libpugixml-dev libpcap0.8-dev
 
     - name: Configure
       run: cmake -S . -B build
