@@ -21,6 +21,6 @@ RUN apt update \
     libpcap0.8-dev \
     python \
   && rm -rf /var/lib/apt/lists/* \
-  && groupadd -r netmeld && useradd -r -s /bin/false -g netmeld netmeld
+  #&& groupadd -r netmeld && useradd -r -s /bin/false -g netmeld netmeld
 
-USER netmeld
+#USER netmeld
