@@ -5,13 +5,12 @@ on: push
 jobs:
   docker:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: docker/build-push-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        registry: docker.pkg.github.com
-        repository: cctechwiz-forks/netmeld
-        tags: latest
-    - name: Build and upload docker image
+      - uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: docker.pkg.github.com
+          repository: cctechwiz-forks/netmeld
+          tags: latest
+      
