@@ -170,7 +170,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
           for (auto& [id, rule] : book) {
             if (!rule.isValid()) {
               results.observations.addNotable("RuleBook "
-                  + name + " is defined but not applied.");
+                  + name + " is defined but not applied to interface.");
             }
             rule.save(t, toolRunId, deviceId);
             LOG_DEBUG << rule.toDebugString() << '\n';

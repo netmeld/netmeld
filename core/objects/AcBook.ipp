@@ -37,6 +37,20 @@ AcBook<TData>::AcBook()
 // Methods
 // ===========================================================================
 template<typename TData>
+const std::string&
+AcBook<TData>::getName() const
+{
+  return name;
+}
+
+template<typename TData>
+std::set<TData>
+AcBook<TData>::getData() const
+{
+  return data;
+}
+
+template<typename TData>
 void
 AcBook<TData>::setId(const std::string& _id)
 {
@@ -78,14 +92,6 @@ AcBook<TData>::removeData(const TData& _key)
              << _key << std::endl;
   }
 }
-
-template<typename TData>
-std::set<TData>
-AcBook<TData>::getData() const
-{
-  return data;
-}
-
 
 template<typename TData>
 bool

@@ -50,18 +50,18 @@ namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 namespace nmcu = netmeld::core::utils;
 
-typedef std::map<size_t, nmco::AcRule> RuleBook;
 
 // =============================================================================
 // Data containers
 // =============================================================================
+typedef std::map<size_t, nmco::AcRule> RuleBook;
 typedef std::pair<std::string, RuleBook> Result;
 
 
 // =============================================================================
 // Parser definition
 // =============================================================================
-class Acls :
+class CiscoAcls :
   public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
@@ -143,7 +143,7 @@ class Acls :
   // Constructors
   // ===========================================================================
   public: // Constructor is only default and must be public
-    Acls();
+    CiscoAcls();
 
   // ===========================================================================
   // Methods

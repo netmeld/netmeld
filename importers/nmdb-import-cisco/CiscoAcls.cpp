@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "Acls.hpp"
+#include "CiscoAcls.hpp"
 
 namespace nmdsic = netmeld::datastore::importers::cisco;
 
@@ -32,14 +32,14 @@ namespace netmeld::datastore::importers::cisco {
 // =============================================================================
 // Parser logic
 // =============================================================================
-Acls::Acls() : Acls::base_type(start)
+CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
 {
   using nmdsic::token;
   using nmdsic::tokens;
   using nmdsic::indent;
 
   start =
-    config [qi::_val = pnx::bind(&Acls::getData, this)]
+    config [qi::_val = pnx::bind(&CiscoAcls::getData, this)]
     ;
 
   config =
@@ -78,7 +78,7 @@ Acls::Acls() : Acls::base_type(start)
     action
     >> sourceAddrIos
     >> *(logArgument)
-    > qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+    > qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
     ;
 
   iosExtended =
@@ -105,7 +105,7 @@ Acls::Acls() : Acls::base_type(start)
          | logArgument
          | timeRangeArgument
         )
-    >> qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+    >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
     ;
 
 
@@ -184,7 +184,7 @@ Acls::Acls() : Acls::base_type(start)
          | timeRangeArgument
          | inactiveArgument
         )
-    >> qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+    >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
     ;
 
 //  asaWebType =
@@ -200,7 +200,7 @@ Acls::Acls() : Acls::base_type(start)
 //         | timeRangeArgument
 //         | inactive
 //        )
-//    >> qi::eol [pnx::bind(&Acls::curRuleFinalize, this)]
+//    >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
 //    ;
 
 //  asaRule =
@@ -249,13 +249,13 @@ Acls::Acls() : Acls::base_type(start)
     (qi::lit("ipv6") | qi::lit("ip"))
     ;
   bookName =
-    token [pnx::bind(&Acls::initRuleBook, this, qi::_1)]
+    token [pnx::bind(&CiscoAcls::initRuleBook, this, qi::_1)]
     ;
 
   action =
     (qi::string("permit") | qi::string("deny"))
-      [pnx::bind(&Acls::initCurRule, this),
-       pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
+      [pnx::bind(&CiscoAcls::initCurRule, this),
+       pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1)]
     ;
 
   dynamicArgument =
@@ -264,14 +264,14 @@ Acls::Acls() : Acls::base_type(start)
 
   protocolArgument =
     -(qi::lit("object") >> -qi::lit("-group"))
-    >> token [pnx::bind(&Acls::curRuleProtocol, this) = qi::_1]
+    >> token [pnx::bind(&CiscoAcls::curRuleProtocol, this) = qi::_1]
     ;
 
   sourceAddrIos =
-    addressArgumentIos [pnx::bind(&Acls::setCurRuleSrc, this, qi::_1)]
+    addressArgumentIos [pnx::bind(&CiscoAcls::setCurRuleSrc, this, qi::_1)]
     ;
   destinationAddrIos =
-    addressArgumentIos [pnx::bind(&Acls::setCurRuleDst, this, qi::_1)]
+    addressArgumentIos [pnx::bind(&CiscoAcls::setCurRuleDst, this, qi::_1)]
     ;
   addressArgumentIos =
     (  (qi::lit("host") >> addrIpOnly)
@@ -297,7 +297,7 @@ Acls::Acls() : Acls::base_type(start)
      (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank]
       >> !(&(qi::lit("0.0.0.0") | qi::lit("255.255.255.255")))
       >> &ipNoPrefix >> ipAddr)
-       [qi::_val = pnx::bind(&Acls::setMask, this, qi::_1, qi::_2)]
+       [qi::_val = pnx::bind(&CiscoAcls::setMask, this, qi::_1, qi::_2)]
     ;
   anyTerm =
     qi::as_string[qi::string("any") >> -qi::char_("46") >> &qi::space]
@@ -305,10 +305,10 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   sourcePort =
-    portArgument [pnx::bind(&Acls::curRuleSrcPort, this) = qi::_1]
+    portArgument [pnx::bind(&CiscoAcls::curRuleSrcPort, this) = qi::_1]
     ;
   destinationPort =
-    portArgument [pnx::bind(&Acls::curRuleDstPort, this) = qi::_1]
+    portArgument [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
     ;
   portArgument =
     (  (qi::lit("eq") > token) [qi::_val = qi::_1]
@@ -392,8 +392,9 @@ Acls::Acls() : Acls::base_type(start)
     qi::lit("tos") > token
     ;
 
+  // TODO log debugging
   logArgument =
-    logArgumentString [pnx::bind(&Acls::setCurRuleAction, this, qi::_1)]
+    logArgumentString [pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1)]
     ;
   logArgumentString =
     qi::string("log") >> -qi::string("-input")
@@ -431,7 +432,7 @@ Acls::Acls() : Acls::base_type(start)
     ;
 
   ignoredRuleLine =
-    tokens [pnx::bind(&Acls::addIgnoredRuleData, this, qi::_1)]
+    tokens [pnx::bind(&CiscoAcls::addIgnoredRuleData, this, qi::_1)]
     >> qi::eol
     ;
 
@@ -484,7 +485,7 @@ Acls::Acls() : Acls::base_type(start)
 
 // Policy Related
 void
-Acls::initRuleBook(const std::string& name)
+CiscoAcls::initRuleBook(const std::string& name)
 {
   ruleBookName = name;
   curRuleId = 1;
@@ -492,7 +493,7 @@ Acls::initRuleBook(const std::string& name)
 }
 
 void
-Acls::initCurRule()
+CiscoAcls::initCurRule()
 {
   curRuleProtocol = "";
   curRuleSrcPort = "";
@@ -502,27 +503,27 @@ Acls::initCurRule()
 }
 
 void
-Acls::setCurRuleAction(const std::string& action)
+CiscoAcls::setCurRuleAction(const std::string& action)
 {
   curRule.addAction(action);
 }
 
 void
-Acls::setCurRuleSrc(const std::string& addr)
+CiscoAcls::setCurRuleSrc(const std::string& addr)
 {
   curRule.setSrcId(ZONE);
   curRule.addSrc(addr);
 }
 
 void
-Acls::setCurRuleDst(const std::string& addr)
+CiscoAcls::setCurRuleDst(const std::string& addr)
 {
   curRule.setDstId(ZONE);
   curRule.addDst(addr);
 }
 
 std::string
-Acls::setMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
+CiscoAcls::setMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 {
   bool isContiguous {ipAddr.setMask(mask)};
   if (!isContiguous) {
@@ -535,7 +536,7 @@ Acls::setMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
 }
 
 void
-Acls::curRuleFinalize()
+CiscoAcls::curRuleFinalize()
 {
   curRule.setRuleId(curRuleId);
   curRule.setRuleDescription(ruleBookName);
@@ -551,20 +552,20 @@ Acls::curRuleFinalize()
 }
 
 void
-Acls::addIgnoredRuleData(const std::string& _data)
+CiscoAcls::addIgnoredRuleData(const std::string& _data)
 {
   ignoredRuleData.emplace(_data);
 }
 
 std::set<std::string>
-Acls::getIgnoredRuleData()
+CiscoAcls::getIgnoredRuleData()
 {
   return ignoredRuleData;
 }
 
 // Object return
 Result
-Acls::getData()
+CiscoAcls::getData()
 {
   Result r(ruleBookName, ruleBook);
   return r;

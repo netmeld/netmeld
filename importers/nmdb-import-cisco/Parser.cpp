@@ -52,8 +52,8 @@ Parser::Parser() : Parser::base_type(start)
         // TODO this goes away when ASA collapsed
       | ((qi::string("PIX") | qi::string("ASA")) >>
          qi::lit("Version") > *token > qi::eol)
-           [pnx::bind(&Parser::unsup, this, "(global) " + qi::_1 + " Version"),
-            pnx::bind(&Parser::globalCdpEnabled, this) = false]
+//           [pnx::bind(&Parser::unsup, this, "(global) " + qi::_1 + " Version"),
+           [pnx::bind(&Parser::globalCdpEnabled, this) = false]
 
         // TODO does it make since to collapse with other calls?
       | (qi::lit("spanning-tree portfast") >>
@@ -65,10 +65,6 @@ Parser::Parser() : Parser::base_type(start)
 
       | (qi::lit("aaa ") >> tokens >> qi::eol)
             [pnx::bind(&Parser::deviceAaaAdd, this, qi::_1)]
-
-      | (qi::lit("policy-map") >> policyMap)
-
-      | (qi::lit("class-map") >> classMap)
 
         // TODO These are more opportunistic right? Or guarenteed?
         // TODO doesn't handle sntp, vrf, or alias
@@ -95,42 +91,23 @@ Parser::Parser() : Parser::base_type(start)
       | route
       | vlan
           [pnx::bind(&Parser::vlanAdd, this, qi::_1)]
-      | aclNameBook
-          [pnx::bind(&Parser::aclBookAdd, this, qi::_1)]
+      | networkBooks
+      | accessPolicyRelated
 
       // ignore the rest
       | (qi::omit[+token > -qi::eol])
       | (qi::omit[+qi::eol])
     )
     ;
-//  config =
-//    *(
-//      | (qi::lit("name") >> ipAddr >> fqdn
-//           [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
-//         -(qi::lit("description") >> tokens) >> qi::eol)
-//           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
-//      | (qi::lit("name") >> tokens >> qi::eol)
-//           [pnx::bind(&Parser::unsup, this, "name")]
-//      | (asaIface)
-//      | (qi::lit("object-group") > (objGrpNet | objGrpSrv | objGrpProto))
-//      | (qi::lit("object") > (objNet | objSrv))
-//      | (qi::lit("access-list") >> policy)
-//      // access-group ac-list {in|out} interface ifaceName
-//      | (qi::lit("access-group") >> token >> token >>
-//         qi::lit("interface") >> token)
-//           [pnx::bind(&Parser::assignRules, this, qi::_1, qi::_2, qi::_3)]
-//      | ignoredLine
-//     )
-//    ;
 
   domainData =
     ( ((qi::lit("switchname") | qi::lit("hostname")) > domainName > qi::eol)
-        [pnx::bind([&](const std::string& val)
-                    {d.devInfo.setDeviceId(val);}, qi::_1)]
-    | (qi::lit("ip domain-name") > domainName > qi::eol)
-        [pnx::bind(&Parser::unsup, this, "ip domain-name")]
-//    | (qi::lit("domain-name") >> fqdn >> qi::eol)
-//        [pnx::bind(&Parser::unsup, this, "domain-name")]
+          [pnx::bind([&](const std::string& val)
+                     {d.devInfo.setDeviceId(val);}, qi::_1)]
+     | (qi::lit("ip domain-name") > domainName > qi::eol)
+          [pnx::bind(&Parser::unsup, this, "ip domain-name")]
+     | (qi::lit("domain-name") >> domainName >> qi::eol)
+          [pnx::bind(&Parser::unsup, this, "domain-name")]
     )
     ;
 
@@ -168,6 +145,7 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+  // TODO consider moving interface to own parser
   interface =
     qi::lit("interface") >> // TODO can this be collapsed?
     (  (token >> token > qi::eol)
@@ -380,6 +358,34 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+//  namedBooks =
+//    (  networkBook
+//     | serviceBook
+//    )
+//    ;
+//    (  (qi::lit("name") >> ipAddr
+//        >> fqdn [pnx::bind(&Parser::tgtBook, this) = qi::_1]
+//        >> -(qi::lit("description") >> tokens) >> qi::eol)
+//             [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
+//     | (qi::lit("name") >> tokens >> qi::eol)
+//        [pnx::bind(&Parser::unsup, this, "name")]
+//     | (qi::lit("object-group") > (objGrpNet | objGrpSrv | objGrpProto))
+//     | (qi::lit("object") > (objNet | objSrv))
+//    );
+//    ;
+
+  accessPolicyRelated =
+    (  (qi::lit("policy-map") >> policyMap)
+     | (qi::lit("class-map") >> classMap)
+     | aclRuleBook [pnx::bind(&Parser::aclRuleBookAdd, this, qi::_1)]
+       // access-group ac-list {in|out} interface ifaceName
+     | (qi::lit("access-group") >> token >> token >>
+        qi::lit("interface") >> token)
+          [pnx::bind(&Parser::ifaceInit, this, qi::_3),
+           pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
+    )
+    ;
+
   policyMap =
     token [qi::_a = qi::_1] >> qi::eol >>
     *(  (indent >> qi::lit("class") >> token >> qi::eol)
@@ -531,14 +537,8 @@ Parser::ifaceInit(const std::string& _name)
 {
   tgtIface = &d.ifaces[_name];
   tgtIface->setName(_name);
-}
-//void
-//Parser::ifaceInit(const std::string& _name)
-//{
-//  tgtIface = &d.ifaces[_name];
-//  tgtIface->setName(_name);
 //  tgtIface->setState(true);
-//}
+}
 
 void
 Parser::ifaceSetUpdate(std::set<std::string>* const set)
@@ -599,7 +599,7 @@ Parser::updateClassMap(const std::string& className, const std::string& bookName
 }
 
 void
-Parser::aclBookAdd(const std::pair<std::string, RuleBook>& _pair)
+Parser::aclRuleBookAdd(const std::pair<std::string, RuleBook>& _pair)
 {
   if (_pair.first.empty()) { return; }
 

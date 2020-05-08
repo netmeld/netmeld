@@ -33,7 +33,8 @@ add_definitions(
   )
 
 add_executable(${TOOL_NAME}
-    Acls.cpp
+    CiscoAcls.cpp
+    CiscoNetworkBook.cpp
     CommonRules.cpp
     Parser.cpp
     ${TOOL_NAME}.cpp
@@ -46,7 +47,8 @@ target_link_libraries(${TOOL_NAME}
   )
 
 foreach(TEST_NAME
-    Acls
+    CiscoAcls
+    CiscoNetworkBook
   )
   
   create_test(${TEST_NAME})

@@ -30,7 +30,7 @@
 
 #include <netmeld/core/parsers/ParserTestHelper.hpp>
 
-#include "Acls.hpp"
+#include "CiscoAcls.hpp"
 
 namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
@@ -38,11 +38,10 @@ namespace nmdsic = netmeld::datastore::importers::cisco;
 
 using qi::ascii::blank;
 
-class TestParserCiscoAcl : public nmdsic::Acls {
+class TestCiscoAcls : public nmdsic::CiscoAcls {
   public:
-    using nmdsic::Acls::initCurRule;
-//    void initCurRule()
-//    { initCurRule(); }
+    using nmdsic::CiscoAcls::initCurRule;
+
   public:
     const nmco::AcRule& getCurRule()
     { return curRule; }
@@ -67,7 +66,7 @@ class TestParserCiscoAcl : public nmdsic::Acls {
 
 BOOST_AUTO_TEST_CASE(testAclRules)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
 
   {
     const auto& parserRule = tpca.action;
@@ -331,7 +330,7 @@ KEY: (unless otherwise stated)
 */
 BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.iosStandardRuleLine;
   {
     const std::string fullText {
@@ -357,7 +356,7 @@ BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testIosStandard)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.iosStandard;
   {
     const std::string fullText {
@@ -378,7 +377,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -437,7 +436,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
 */
 BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.iosExtendedRuleLine;
   {
     const std::string fullText {
@@ -553,7 +552,7 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testIosExtended)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.iosExtended;
   {
     const std::string fullText {
@@ -592,7 +591,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
     }
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -632,7 +631,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
 */
 BOOST_AUTO_TEST_CASE(testIosRemarkRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.iosRemarkRuleLine;
   {
     // OK
@@ -655,7 +654,7 @@ BOOST_AUTO_TEST_CASE(testIosRemark)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(full, TestParserCiscoAcl(), result, blank));
+    BOOST_TEST(nmcp::testAttr(full, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -714,7 +713,7 @@ KEY: (unless otherwise stated)
 */
 BOOST_AUTO_TEST_CASE(testNxosStandardRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.nxosStandardRuleLine;
 
   {
@@ -727,7 +726,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandardRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testNxosStandard)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.nxosStandardRuleLine;
 
   {
@@ -774,7 +773,7 @@ NOTE: Appears to support objects, but no documenation shows output format
 */
 BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.nxosExtendedRuleLine;
   {
     const std::string fullText {
@@ -839,7 +838,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testNxosExtended)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.nxosExtended;
   {
     const std::string fullText {
@@ -860,7 +859,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     }
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -918,7 +917,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
 */
 BOOST_AUTO_TEST_CASE(testNxosRemarkRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.nxosRemarkRuleLine;
   {
     const std::vector<std::string> tests {
@@ -1006,7 +1005,7 @@ KEY: (unless otherwise stated)
 */
 BOOST_AUTO_TEST_CASE(testAsaStandardRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.asaStandardRuleLine;
   {
     const std::string fullText {
@@ -1036,7 +1035,7 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
 {
 //  nmcu::LoggerSingleton::getInstance().setLevel(nmcu::Severity::ALL);
 
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.asaStandard;
   {
     const std::string fullText {
@@ -1046,7 +1045,7 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank, false));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank, false));
+    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -1074,7 +1073,7 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
 */
 BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.asaExtendedRuleLine;
   {
     const std::string fullText {
@@ -1146,7 +1145,7 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testAsaExtended)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.asaExtended;
   {
     const std::string fullText {
@@ -1156,7 +1155,7 @@ BOOST_AUTO_TEST_CASE(testAsaExtended)
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank, false));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank, false));
+    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -1180,7 +1179,7 @@ BOOST_AUTO_TEST_CASE(testAsaExtended)
 */
 BOOST_AUTO_TEST_CASE(testAsaRemarkRuleLine)
 {
-  TestParserCiscoAcl tpca;
+  TestCiscoAcls tpca;
   const auto& parserRule = tpca.asaRemarkRuleLine;
   {
     // OK
@@ -1203,7 +1202,7 @@ BOOST_AUTO_TEST_CASE(testAsaRemark)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(full, TestParserCiscoAcl(), result, blank));
+    BOOST_TEST(nmcp::testAttr(full, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -1272,7 +1271,7 @@ BOOST_AUTO_TEST_CASE(testAsaEthertype)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestParserCiscoAcl(), result, blank));
+    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("" == aclBookName);

@@ -40,9 +40,6 @@ class TestAcBook : public nmco::AcBook<T> {
   public:
     const std::string& getId() const
     { return id; }
-
-    const std::string& getName() const
-    { return name; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)

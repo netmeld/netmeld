@@ -24,8 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#ifndef CISCO_NAMED_BOOKS_HPP
+#define CISCO_NAMED_BOOKS_HPP
 
 #include <netmeld/core/objects/AcNetworkBook.hpp>
 #include <netmeld/core/objects/AcRule.hpp>
@@ -42,163 +42,148 @@
 #include <netmeld/core/tools/AbstractImportTool.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
-#include "CiscoAcls.hpp"
-#include "CiscoNetworkBook.hpp"
 #include "CommonRules.hpp"
 
-namespace nmdsic = netmeld::datastore::importers::cisco;
+namespace netmeld::datastore::importers::cisco {
 
 namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 namespace nmcu = netmeld::core::utils;
 
-//typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
-//typedef std::map<size_t, nmco::AcRule> RuleBook;
-using nmdsic::RuleBook;
-using nmdsic::NetworkBook;
+typedef std::map<size_t, nmco::AcRule> RuleBook;
+typedef std::map<std::string, nmco::AcNetworkBook> NetworkBooks;
+typedef std::map<std::string, nmco::AcServiceBook> ServiceBooks;
 
 // =============================================================================
 // Data containers
 // =============================================================================
-struct Data
-{
-  std::string                          domainName;
-  nmco::DeviceInformation              devInfo;
-  std::vector<std::string>             aaas;
-  nmco::ToolObservations               observations;
-
-  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
-
-  std::vector<nmco::Route>             routes;
-  std::vector<nmco::Service>           services;
-  std::vector<nmco::Vlan>              vlans;
-
-  std::map<std::string, NetworkBook>  networkBooks;
-  std::map<std::string, ServiceBook>  serviceBooks;
-  std::map<std::string, RuleBook>     ruleBooks;
-};
-typedef std::vector<Data> Result;
+typedef std::pair<std::string, NetworkBook> Result;
 
 
 // =============================================================================
 // Parser definition
 // =============================================================================
-class Parser :
+class CiscoNamedBooks :
   public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private:
+  public:
     // Rules
     qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      domainData,
-      route,
-      vlanDef,
-      interface, switchport, spanningTree,
-      namedBooks,
-      accessPolicyRelated
-      ;
-
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
-      policyMap, classMap;
+      ipv46,
+      iosRule,
+        iosRemark,   iosRemarkRuleLine,
+        iosStandard, iosStandardRuleLine,
+        iosExtended, iosExtendedRuleLine,
+      nxosRule,
+        nxosRemark,   nxosRemarkRuleLine,
+        nxosStandard, nxosStandardRuleLine,
+        nxosExtended, nxosExtendedRuleLine,
+      asaRule,
+        asaRemark,   asaRemarkRuleLine,
+        asaStandard, asaStandardRuleLine,
+        asaExtended, asaExtendedRuleLine,
+      dynamicArgument,
+      sourceAddrIos, destinationAddrIos,
+      sourcePort, destinationPort,
+      icmpArgument,
+        icmpTypeCode, icmpMessage,
+      establishedArgument,
+      fragmentsArgument,
+      precedenceArgument,
+      tosArgument,
+      logArgument,
+      timeRangeArgument,
+      userArgument,
+      securityGroupArgument,
+      inactiveArgument,
+      ipAccessListExtended, ipAccessList;
 
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+      bookName,
+      action,
+      protocolArgument,
       addressArgument,
-      ports;
+        addressArgumentIos,
+        mask,
+      portArgument;
 
-    qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
-      vlan;
-
-    nmcp::ParserDomainName  domainName;
     nmcp::ParserIpAddress   ipAddr;
-    nmcp::ParserMacAddress  macAddr;
 
-    nmdsic::CiscoAcls         aclRuleBook;
-    nmdsic::CiscoNetworkBook  networkBooks;
+    qi::rule<nmcp::IstreamIter, std::string()>
+      addrIpOnly, addrIpMask, addrIpPrefix,
+        ipNoPrefix,
+      anyTerm,
+      logArgumentString, logInterval,
+      ignoredRuleLine;
 
+
+  protected:
     // Supporting data structures
-    Data d;
-
-    bool isNo {false};
-
-    nmco::InterfaceNetwork* tgtIface;
-
-    bool globalCdpEnabled         {true};
-    bool globalBpduGuardEnabled   {false};
-    bool globalBpduFilterEnabled  {false};
-
-    std::set<std::string>  ifaceSpecificCdp;
-    std::set<std::string>  ifaceSpecificBpduGuard;
-    std::set<std::string>  ifaceSpecificBpduFilter;
-
+    NetworkBooks networkBooks;
+    nmco::AcNetworkBook curBook;
     const std::string ZONE  {"global"};
 
-    std::map<std::string, std::pair<std::string, std::string>> appliedRuleSets;
+    
+    std::string  curRuleProtocol {""};
+    std::string  curRuleSrcPort {""};
+    std::string  curRuleDstPort {""};
 
-    std::map<std::string, std::set<std::pair<std::string, std::string>>>
-      servicePolicies;
-    std::map<std::string, std::set<std::string>> policies;
-    std::map<std::string, std::set<std::string>> classes;
 
-    nmco::AcRule *curRule {nullptr};
-    std::string  curRuleBook {""};
+
+    nmco::AcRule curRule;
+    const std::string ZONE  {"global"};
+
+    std::string  ruleBookName {""};
+    RuleBook     ruleBook;
+
     size_t       curRuleId {0};
     std::string  curRuleProtocol {""};
     std::string  curRuleSrcPort {""};
     std::string  curRuleDstPort {""};
 
+    std::set<std::string> ignoredRuleData;
+
+  private:
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
   public: // Constructor is only default and must be public
-    Parser();
+    CiscoNamedBooks();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
+  public:
+    std::set<std::string> getIgnoredRuleData();
+
+  protected:
+    void initCurRule();
+
   private: // Methods which should be hidden from API users
-    // Device related
-    void deviceAaaAdd(const std::string&);
-
-    // Service related
-    void serviceAddDhcp(const nmco::IpAddress&);
-    void serviceAddNtp(const nmco::IpAddress&);
-    void serviceAddSnmp(const nmco::IpAddress&);
-    void serviceAddRadius(const nmco::IpAddress&);
-    void serviceAddDns(const std::vector<nmco::IpAddress>&);
-    void serviceAddSyslog(const nmco::IpAddress&);
-
-    // Route related
-    void routeAddIp(const nmco::IpAddress&, const nmco::IpAddress&);
-    void routeAddIface(const nmco::IpAddress&, const std::string&);
-
-    // Interface related
-    void ifaceInit(const std::string&);
-    void ifaceFinalize();
-    void ifaceSetUpdate(std::set<std::string>* const);
-
-    // Vlan related
-    void vlanAdd(nmco::Vlan&);
-    void vlanAddIfaceData();
+    void addIgnoredRuleData(const std::string&);
 
     // Policy Related
-    void createAccessGroup(const std::string&, const std::string&);
-    void createServicePolicy(const std::string&, const std::string&);
-    void updatePolicyMap(const std::string&, const std::string&);
-    void updateClassMap(const std::string&, const std::string&);
-    void aclRuleBookAdd(const std::pair<std::string, RuleBook>&);
+    void initRuleBook(const std::string&);
 
-    // Unsupported
-    void unsup(const std::string&);
-    void addObservation(const std::string&);
+    void setCurRuleAction(const std::string&);
+
+    void setCurRuleSrc(const std::string&);
+    void setCurRuleDst(const std::string&);
+
+    std::string setMask(nmco::IpAddress&, const nmco::IpAddress&);
+
+    void curRuleFinalize();
 
     // Object return
     Result getData();
 };
-#endif // PARSER_HPP
+}
+#endif // CISCO_NAMED_BOOKS_HPP
