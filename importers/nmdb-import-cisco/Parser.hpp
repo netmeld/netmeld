@@ -44,6 +44,7 @@
 
 #include "CiscoAcls.hpp"
 #include "CiscoNetworkBook.hpp"
+#include "CiscoServiceBook.hpp"
 #include "CommonRules.hpp"
 
 namespace nmdsic = netmeld::datastore::importers::cisco;
@@ -52,11 +53,9 @@ namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 namespace nmcu = netmeld::core::utils;
 
-//typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
-//typedef std::map<size_t, nmco::AcRule> RuleBook;
 using nmdsic::RuleBook;
 using nmdsic::NetworkBook;
+using nmdsic::ServiceBook;
 
 // =============================================================================
 // Data containers
@@ -101,7 +100,6 @@ class Parser :
       route,
       vlanDef,
       interface, switchport, spanningTree,
-      namedBooks,
       accessPolicyRelated
       ;
 
@@ -121,6 +119,7 @@ class Parser :
 
     nmdsic::CiscoAcls         aclRuleBook;
     nmdsic::CiscoNetworkBook  networkBooks;
+    nmdsic::CiscoServiceBook  serviceBooks;
 
     // Supporting data structures
     Data d;
@@ -193,6 +192,9 @@ class Parser :
     void updatePolicyMap(const std::string&, const std::string&);
     void updateClassMap(const std::string&, const std::string&);
     void aclRuleBookAdd(const std::pair<std::string, RuleBook>&);
+
+    // Named Books Related
+    void finalizeNamedBooks();
 
     // Unsupported
     void unsup(const std::string&);

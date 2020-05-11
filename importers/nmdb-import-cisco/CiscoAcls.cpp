@@ -334,8 +334,8 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
      | qi::lit("conversion-error")
      | qi::lit("dod-host-prohibited")
      | qi::lit("dod-net-prohibited")
-     | qi::lit("echo")
      | qi::lit("echo-reply")
+     | qi::lit("echo")
      | qi::lit("general-parameter-problem")
      | qi::lit("host-isolated")
      | qi::lit("host-precedence-unreachable")
@@ -416,7 +416,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
 
 
   userArgument =
-    (  (qi::lit("object-group") > token)
+    (  (qi::lit("object-group-user") > token)
      | (qi::lit("user") >> -qi::lit("-group") > token)
     )
     ;

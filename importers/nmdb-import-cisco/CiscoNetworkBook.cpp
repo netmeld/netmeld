@@ -40,28 +40,28 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
 
   start =
     config
-    [pnx::bind(&CiscoNetworkBook::finalizeCurBook, this),
-     qi::_val = pnx::bind(&CiscoNetworkBook::getData, this)]
+     [qi::_val = pnx::bind(&CiscoNetworkBook::getData, this)]
     ;
 
   config =
     (  nameLine
      | objectNetwork
      | objectGroupNetwork
-    )
+    ) [pnx::bind(&CiscoNetworkBook::finalizeCurBook, this)]
     ;
 
   nameLine =
-    qi::lit("name") > dataIp > bookName > (description | qi::eol)
+    qi::lit("name ") > dataIp > bookName > (description | qi::eol)
     ;
 
   objectNetwork =
-    qi::lit("object network") > bookName > qi::eol
+    qi::lit("object network ") > bookName > qi::eol
     > *(indent
         > (  objectNetworkHostLine
            | objectNetworkSubnetLine
            | objectNetworkRangeLine
            | objectNetworkNatLine
+           | objectNetworkFqdnLine
            | description
            | (&qi::eol) // space prefixed blank line
           )
@@ -71,17 +71,21 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
     hostArgument > qi::eol
     ;
   objectNetworkSubnetLine =
-    qi::lit("subnet") > (dataIpMask | dataIpPrefix) > qi::eol
+    qi::lit("subnet ") > (dataIpMask | dataIpPrefix) > qi::eol
     ;
   objectNetworkRangeLine =
-    qi::lit("range") > dataIpRange > qi::eol
+    qi::lit("range ") > dataIpRange > qi::eol
     ;
   objectNetworkNatLine =
-    qi::lit("nat") > tokens > qi::eol
+    qi::lit("nat ") > tokens > qi::eol
+    ;
+  objectNetworkFqdnLine =
+    qi::lit("fqdn ") > -(qi::lit("v4 ") | qi::lit("v6 "))
+    > dataString > qi::eol
     ;
 
   objectGroupNetwork =
-    qi::lit("object-group network") > bookName > qi::eol
+    qi::lit("object-group network ") > bookName > qi::eol
     > *(indent
         > (  networkObjectLine
            | groupObjectLine
@@ -91,7 +95,7 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
        )
     ;
   networkObjectLine =
-    qi::lit("network-object")
+    qi::lit("network-object ")
     > (  objectArgument
        | hostArgument
        | dataNetworkObjectMask
@@ -99,7 +103,7 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
     ) > qi::eol
     ;
   groupObjectLine =
-    qi::lit("group-object") > dataString
+    qi::lit("group-object ") > dataString > qi::eol
     ;
 
 
@@ -112,12 +116,11 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
     ;
 
   description =
-    qi::lit("description") > tokens > qi::eol
+    qi::lit("description ") > tokens > qi::eol
     ;
 
   hostArgument =
-    qi::lit("host")
-    > (dataIp | dataString)
+    qi::lit("host ") > (dataIp | dataString)
     ;
   ipNoPrefix =
     (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
@@ -131,13 +134,11 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
       [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
     ;
   dataIpMask =
-     (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank]
-      >> !(&(qi::lit("0.0.0.0") | qi::lit("255.255.255.255")))
-      >> &ipNoPrefix >> ipAddr)
-       [pnx::bind(&CiscoNetworkBook::fromIpMask, this, qi::_1, qi::_2)]
+    (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank] >> &ipNoPrefix >> ipAddr)
+      [pnx::bind(&CiscoNetworkBook::fromIpMask, this, qi::_1, qi::_2)]
     ;
   dataIpRange =
-    (ipAddr >> ipAddr)
+    (ipAddr >> qi::omit[+qi::blank] >> ipAddr)
       [pnx::bind(&CiscoNetworkBook::fromIpRange, this, qi::_1, qi::_2)]
     ;
   dataString =
@@ -145,11 +146,12 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
     ;
 
   objectArgument =
-    qi::lit("object") > dataString
+    qi::lit("object ") > dataString
     ;
   dataNetworkObjectMask =
-    (token >> ipAddr) [pnx::bind(&CiscoNetworkBook::fromNetworkObjectMask,
-                                 this, qi::_1, qi::_2)]
+    (&(!ipAddr) >> token >> ipAddr)
+      [pnx::bind(&CiscoNetworkBook::fromNetworkObjectMask,
+                 this, qi::_1, qi::_2)]
     ;
 
 
@@ -201,15 +203,21 @@ CiscoNetworkBook::fromIpMask(const nmco::IpAddress& _ip,
                              const nmco::IpAddress& _mask)
 {
   auto temp {_ip};
-  temp.setMask(_mask);
-  addData(temp.toString());
+  auto maskStr {_mask.toString()};
+  if ("0.0.0.0/32" == maskStr || "255.255.255.255/32" == maskStr) {
+    temp.setNetmask(_mask);
+    addData(temp.toString());
+  } else {
+    temp.setMask(_mask);
+    addData(temp.toString());
+  }
 }
 void
 CiscoNetworkBook::fromIpRange(const nmco::IpAddress& _start,
                               const nmco::IpAddress& _end)
 {
   std::ostringstream oss;
-  oss << _start << "-" << _end;
+  oss << _start.toString() << "-" << _end.toString();
   addData(oss.str());
 }
 
@@ -247,6 +255,23 @@ CiscoNetworkBook::finalizeCurBook()
 
 
 // Object return
+NetworkBooks
+CiscoNetworkBook::getFinalVersion()
+{
+  NetworkBooks zoneBooks;
+  zoneBooks.emplace(ZONE, networkBooks);
+  for (const auto& [zone, books] : zoneBooks) {
+    for (const auto& [name, book] : books) {
+      nmcu::expanded(zoneBooks, zone, name, ZONE);
+    }
+  }
+  for (const auto& [zone, books] : zoneBooks) {
+    LOG_INFO << zone << "--" << books << '\n';
+  }
+
+  return zoneBooks;
+}
+
 NetworkBooks
 CiscoNetworkBook::getData()
 {

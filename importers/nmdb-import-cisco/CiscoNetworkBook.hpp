@@ -28,18 +28,8 @@
 #define CISO_NETWORK_BOOK_HPP
 
 #include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/objects/Service.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
-#include <netmeld/core/objects/Vlan.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
 #include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/core/utils/AcBookUtilities.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "CommonRules.hpp"
@@ -55,7 +45,7 @@ namespace nmcu = netmeld::core::utils;
 // Data containers
 // =============================================================================
 typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::pair<std::string, NetworkBook> NetworkBooks;
+typedef std::map<std::string, NetworkBook>         NetworkBooks;
 
 
 // =============================================================================
@@ -80,6 +70,7 @@ class CiscoNetworkBook :
         objectNetworkSubnetLine,
         objectNetworkRangeLine,
         objectNetworkNatLine,
+        objectNetworkFqdnLine,
       objectGroupNetwork,
         networkObjectLine,
         groupObjectLine,
@@ -89,27 +80,15 @@ class CiscoNetworkBook :
       bookName,
       hostArgument,
       dataIp,
-      dataIpPrefix,
-      dataIpMask,
-      dataIpRange,
       dataString;
 
-
-
-//    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
-//      bookName,
-//      action,
-//      protocolArgument,
-//      addressArgument,
-//        addressArgumentIos,
-//        mask,
-//      portArgument;
-
-    nmcp::ParserIpAddress   ipAddr;
-
     qi::rule<nmcp::IstreamIter>
+      dataIpMask,
+      dataIpPrefix,
+      dataIpRange,
       ipNoPrefix;
 
+    nmcp::ParserIpAddress   ipAddr;
 
   protected:
     // Supporting data structures
@@ -131,7 +110,7 @@ class CiscoNetworkBook :
   // Methods
   // ===========================================================================
   public:
-    std::set<std::string> getIgnoredRuleData();
+    NetworkBooks getFinalVersion();
 
   protected:
   private: // Methods which should be hidden from API users

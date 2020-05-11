@@ -35,48 +35,64 @@ namespace netmeld::core::parsers {
   bool test(const Data* in, const Parser& p,
             bool fullMatch = true)
   {
-    qi::what(p);
-    std::istringstream dataStream(in);
-    dataStream.unsetf(std::ios::skipws);
-    IstreamIter i(dataStream), e;
-    return qi::parse(i, e, p)
-      && (!fullMatch || (i == e));
+    try {
+      qi::what(p);
+      std::istringstream dataStream(in);
+      dataStream.unsetf(std::ios::skipws);
+      IstreamIter i(dataStream), e;
+      return qi::parse(i, e, p)
+        && (!fullMatch || (i == e));
+    } catch (std::exception& e) {
+      return false;
+    }
   }
 
   template<typename Data, typename Parser, typename Skipper>
   bool test(const Data* in, const Parser& p, const Skipper& s,
             bool fullMatch = true)
   {
-    qi::what(p);
-    std::istringstream dataStream(in);
-    dataStream.unsetf(std::ios::skipws);
-    IstreamIter i(dataStream), e;
-    return qi::phrase_parse(i, e, p, s)
-      && (!fullMatch || (i == e));
+    try {
+      qi::what(p);
+      std::istringstream dataStream(in);
+      dataStream.unsetf(std::ios::skipws);
+      IstreamIter i(dataStream), e;
+      return qi::phrase_parse(i, e, p, s)
+        && (!fullMatch || (i == e));
+    } catch (std::exception& e) {
+      return false;
+    }
   }
 
   template<typename Data, typename Parser, typename Attr>
   bool testAttr(const Data* in, const Parser& p, Attr& a,
                 bool fullMatch = true)
   {
-    qi::what(p);
-    std::istringstream dataStream(in);
-    dataStream.unsetf(std::ios::skipws);
-    IstreamIter i(dataStream), e;
-    return qi::parse(i, e, p, a)
-      && (!fullMatch || (i == e));
+    try {
+      qi::what(p);
+      std::istringstream dataStream(in);
+      dataStream.unsetf(std::ios::skipws);
+      IstreamIter i(dataStream), e;
+      return qi::parse(i, e, p, a)
+        && (!fullMatch || (i == e));
+    } catch (std::exception& e) {
+      return false;
+    }
   }
 
   template<typename Data, typename Parser, typename Attr, typename Skipper>
   bool testAttr(const Data in, const Parser& p, Attr& a, const Skipper& s,
                 bool fullMatch = true)
   {
-    qi::what(p);
-    std::istringstream dataStream(in);
-    dataStream.unsetf(std::ios::skipws);
-    IstreamIter i(dataStream), e;
-    return qi::phrase_parse(i, e, p, s, a)
-      && (!fullMatch || (i == e));
+    try {
+      qi::what(p);
+      std::istringstream dataStream(in);
+      dataStream.unsetf(std::ios::skipws);
+      IstreamIter i(dataStream), e;
+      return qi::phrase_parse(i, e, p, s, a)
+        && (!fullMatch || (i == e));
+    } catch (std::exception& e) {
+      return false;
+    }
   }
 
 }

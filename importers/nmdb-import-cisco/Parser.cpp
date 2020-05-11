@@ -92,6 +92,7 @@ Parser::Parser() : Parser::base_type(start)
       | vlan
           [pnx::bind(&Parser::vlanAdd, this, qi::_1)]
       | networkBooks
+      | serviceBooks
       | accessPolicyRelated
 
       // ignore the rest
@@ -358,22 +359,6 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-//  namedBooks =
-//    (  networkBook
-//     | serviceBook
-//    )
-//    ;
-//    (  (qi::lit("name") >> ipAddr
-//        >> fqdn [pnx::bind(&Parser::tgtBook, this) = qi::_1]
-//        >> -(qi::lit("description") >> tokens) >> qi::eol)
-//             [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
-//     | (qi::lit("name") >> tokens >> qi::eol)
-//        [pnx::bind(&Parser::unsup, this, "name")]
-//     | (qi::lit("object-group") > (objGrpNet | objGrpSrv | objGrpProto))
-//     | (qi::lit("object") > (objNet | objSrv))
-//    );
-//    ;
-
   accessPolicyRelated =
     (  (qi::lit("policy-map") >> policyMap)
      | (qi::lit("class-map") >> classMap)
@@ -616,6 +601,15 @@ Parser::aclRuleBookAdd(const std::pair<std::string, RuleBook>& _pair)
 }
 
 
+// Named Books Related
+void
+Parser::finalizeNamedBooks()
+{
+  d.networkBooks = networkBooks.getFinalVersion();
+//  d.serviceBooks = serviceBooks.getFinalVersion();
+}
+
+
 // Unsupported
 void
 Parser::unsup(const std::string& val)
@@ -632,6 +626,8 @@ Parser::addObservation(const std::string& obs)
 Result
 Parser::getData()
 {
+  finalizeNamedBooks();
+
   if (globalCdpEnabled) {
     d.observations.addNotable("CDP is enabled at global scope.");
   }

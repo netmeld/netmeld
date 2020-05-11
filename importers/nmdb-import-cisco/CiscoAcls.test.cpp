@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"user any"},
       {"user none"},
       {"user-group SOMEDOM\\\\myGroup"},
-      {"object-group UGI"},
+      {"object-group-user UGI"},
     };
     for (const auto& test : testsOk) {
       std::string out;
@@ -638,10 +638,8 @@ BOOST_AUTO_TEST_CASE(testIosRemarkRuleLine)
     BOOST_TEST(nmcp::test("remark some\n", parserRule, blank));
     BOOST_TEST(nmcp::test("remark s r t\n", parserRule, blank));
     //// BAD
-    BOOST_CHECK_THROW(nmcp::test("remark \n", parserRule, blank, false),
-                      std::runtime_error);
-    BOOST_CHECK_THROW(nmcp::test("remark\n", parserRule, blank, false),
-                      std::runtime_error);
+    BOOST_TEST(!nmcp::test("remark \n", parserRule, blank, false));
+    BOOST_TEST(!nmcp::test("remark\n", parserRule, blank, false));
     BOOST_TEST(!nmcp::test("\n", parserRule, blank, false));
     BOOST_TEST(!nmcp::test("", parserRule, blank, false));
   }
@@ -696,7 +694,7 @@ KEY: (unless otherwise stated)
                  )
   USER_ARG    -- (  user ( [DOMAIN\]NAME | any | none )
                   | user-group [DOMAIN\\]GROUP
-                  | object-group USER_GROUP_ID
+                  | object-group-user USER_GROUP_ID
                  )
   SEC_GRP_ARG -- (  security-group ( name NAME | tag TAG )
                   | object-group-security SECURITY_GROUP_ID
@@ -934,8 +932,7 @@ BOOST_AUTO_TEST_CASE(testNxosRemarkRuleLine)
       {"10 remark\n"},
     };
     for (const auto& test : tests) {
-      BOOST_CHECK_THROW(!nmcp::test(test.c_str(), parserRule, blank, false),
-                        std::runtime_error);
+      BOOST_TEST(!nmcp::test(test.c_str(), parserRule, blank, false));
     }
   }
   {
@@ -1102,7 +1099,7 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
       {"user domain\\name", "user any"},
       {"user any", "user none"},
       {"user none", "user-group domain\\group"},
-      {"user-group domain\\group", "object-group UGI"},
+      {"user-group domain\\group", "object-group-user UGI"},
       {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
       {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
       {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
@@ -1186,10 +1183,8 @@ BOOST_AUTO_TEST_CASE(testAsaRemarkRuleLine)
     BOOST_TEST(nmcp::test("remark some\n", parserRule, blank));
     BOOST_TEST(nmcp::test("remark s r t\n", parserRule, blank));
     //// BAD
-    BOOST_CHECK_THROW(nmcp::test("remark \n", parserRule, blank, false),
-                      std::runtime_error);
-    BOOST_CHECK_THROW(nmcp::test("remark\n", parserRule, blank, false),
-                      std::runtime_error);
+    BOOST_TEST(!nmcp::test("remark \n", parserRule, blank, false));
+    BOOST_TEST(!nmcp::test("remark\n", parserRule, blank, false));
     BOOST_TEST(!nmcp::test("\n", parserRule, blank, false));
     BOOST_TEST(!nmcp::test("", parserRule, blank, false));
   }
