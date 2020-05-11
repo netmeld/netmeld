@@ -63,8 +63,11 @@ jobs:
     strategy:
       matrix:
         modules: [core-bin, playbook, datalake, clw, exporters, fetchers, graphers, importers, inserters]
-    
+       
     steps:
+    - name: Configure All
+      run: cmake -S . -B build
+
     - name: Build Modules
       run: cmake --build build -j 2 --target netmeld-${{ matrix.modules }}
 
