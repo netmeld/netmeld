@@ -8,7 +8,7 @@ on:
 
 
 jobs:
-  Build Core:
+  BuildCore:
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
     
@@ -28,7 +28,7 @@ jobs:
         ctest -L Test.netmeld
   
   
-  Build Core Modules:
+  BuildCoreModules:
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
 
@@ -52,7 +52,7 @@ jobs:
         ctest -L Test.netmeld
   
   
-  Build Modules:
+  BuildModules:
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
 
