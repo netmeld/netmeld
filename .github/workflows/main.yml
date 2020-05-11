@@ -13,18 +13,28 @@ jobs:
 
     strategy:
       matrix:
-        modules: [core, playbook-core, datalake-core, core-bin, playbook, datalake, clw, exporters, fetchers, graphers, importers, inserters]
+        core-modules: [core, playbook-core, datalake-core]
+        modules: [core-bin, playbook, datalake, clw, exporters, fetchers, graphers, importers, inserters]
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Configure
+    - name: Configure All
       run: cmake -S . -B build
 
-    - name: Build
+    - name: Build Core
+      run: cmake --build build -j 2 --target netmeld-${{ matrix.core-modules }}
+
+    - name: Test Core
+      run: |
+        cmake --build build -j 2 --target Test.netmeld-${{ matrix.core-modules }}
+        cd build
+        ctest -L Test.netmeld
+    
+    - name: Build Modules
       run: cmake --build build -j 2 --target netmeld-${{ matrix.modules }}
 
-    - name: Test
+    - name: Test Modules
       run: |
         cmake --build build -j 2 --target Test.netmeld-${{ matrix.modules }}
         cd build
