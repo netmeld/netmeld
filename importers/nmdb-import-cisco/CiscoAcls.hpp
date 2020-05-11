@@ -168,6 +168,7 @@ class CiscoAcls :
     std::string setMask(nmco::IpAddress&, const nmco::IpAddress&);
 
     void curRuleFinalize();
+    void updateRuleService();
 
     // Object return
     Result getData();

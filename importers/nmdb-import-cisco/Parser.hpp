@@ -191,7 +191,7 @@ class Parser :
     void createServicePolicy(const std::string&, const std::string&);
     void updatePolicyMap(const std::string&, const std::string&);
     void updateClassMap(const std::string&, const std::string&);
-    void aclRuleBookAdd(const std::pair<std::string, RuleBook>&);
+    void aclRuleBookAdd(std::pair<std::string, RuleBook>&);
 
     // Named Books Related
     void finalizeNamedBooks();

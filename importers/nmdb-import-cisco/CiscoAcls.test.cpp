@@ -607,7 +607,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
       ++count;
       BOOST_TEST("any" == aclLine.getSrcs().at(0));
       BOOST_TEST("any" == aclLine.getDsts().at(0));
-      BOOST_TEST("ip::" == aclLine.getServices().at(0));
+      BOOST_TEST("ip" == aclLine.getServices().at(0));
     }
   }
   {
@@ -873,7 +873,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
       ++count;
       BOOST_TEST("any" == aclLine.getSrcs().at(0));
       BOOST_TEST("any" == aclLine.getDsts().at(0));
-      BOOST_TEST("ip::" == aclLine.getServices().at(0));
+      BOOST_TEST("ip" == aclLine.getServices().at(0));
     }
   }
   {
@@ -1167,7 +1167,7 @@ BOOST_AUTO_TEST_CASE(testAsaExtended)
       ++count;
       BOOST_TEST("any" == aclLine.getSrcs().at(0));
       BOOST_TEST("any" == aclLine.getDsts().at(0));
-      BOOST_TEST("ip::" == aclLine.getServices().at(0));
+      BOOST_TEST("ip" == aclLine.getServices().at(0));
     }
   }
 }

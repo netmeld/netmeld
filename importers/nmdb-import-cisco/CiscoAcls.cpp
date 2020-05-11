@@ -57,21 +57,21 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
   iosRemark =
-    qi::lit("access-list") >> bookName >> iosRemarkRuleLine
+    qi::lit("access-list ") >> bookName >> iosRemarkRuleLine
     // multi-liner - see iosStandard or iosExtended
     ;
   iosRemarkRuleLine =
-    qi::lit("remark") > tokens > qi::eol
+    qi::lit("remark ") > tokens > qi::eol
     ;
 
   iosStandard =
-    (  (ipv46 >> qi::lit("access-list standard")
+    (  (ipv46 >> qi::lit("access-list standard ")
         > bookName > qi::eol
         > *(indent > (  iosRemarkRuleLine
                       | iosStandardRuleLine
                       | ignoredRuleLine
                      )))
-     | (qi::lit("access-list") >> bookName >> iosStandardRuleLine)
+     | (qi::lit("access-list ") >> bookName >> iosStandardRuleLine)
     )
     ;
   iosStandardRuleLine =
@@ -82,13 +82,13 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
   iosExtended =
-    (  (ipv46 >> qi::lit("access-list extended")
+    (  (ipv46 >> qi::lit("access-list extended ")
         > bookName >> -dynamicArgument > qi::eol
         >> *(indent > (  iosRemarkRuleLine
                        | iosExtendedRuleLine
                        | ignoredRuleLine
                       )))
-     | (qi::lit("access-list")
+     | (qi::lit("access-list ")
         >> bookName >> -dynamicArgument >> iosExtendedRuleLine)
     )
     ;
@@ -131,7 +131,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
   nxosExtended =
-    ipv46 >> qi::lit("access-list")
+    ipv46 >> qi::lit("access-list ")
     > bookName >> -dynamicArgument > qi::eol
     >> *(indent > (  nxosRemarkRuleLine
                    | nxosExtendedRuleLine
@@ -157,7 +157,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
   asaStandard =
-    qi::lit("access-list") >> bookName >> qi::lit("standard")
+    qi::lit("access-list ") >> bookName >> qi::lit("standard ")
     >> asaStandardRuleLine
     ;
   asaStandardRuleLine =
@@ -165,7 +165,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
   asaExtended =
-    qi::lit("access-list") >> bookName >> qi::lit("extended")
+    qi::lit("access-list ") >> bookName >> qi::lit("extended ")
     >> asaExtendedRuleLine
     ;
   asaExtendedRuleLine =
@@ -188,7 +188,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
 //  asaWebType =
-//    qi::lit("access-list") >> bookName >> qi::lit("webtype")
+//    qi::lit("access-list ") >> bookName >> qi::lit("webtype ")
 //    >> asaWebtypeRuleLine
 //    ;
 //  asaWebtypeRuleLine =
@@ -204,7 +204,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
 //    ;
 
 //  asaRule =
-//    qi::lit("access-list") >> token
+//    qi::lit("access-list ") >> token
 //    >> (  asaRemark
 //        | asaStandard
 //        | asaExtended
@@ -214,15 +214,15 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
 //    ;
 //
 //  asaWeb =
-//    qi::lit("webtype")
+//    qi::lit("webtype ")
 //    // ACTION
 //    > token
 //    // URL
-//    > (  (qi::lit("url") >> token)
+//    > (  (qi::lit("url ") >> token)
 //    // ADDRESS
-//       | (qi::lit("tcp") > addressArgument
+//       | (qi::lit("tcp ") > addressArgument
 //    // ADDRESS PORT
-//          >> -(qi::lit("operator") > token)
+//          >> -(qi::lit("operator ") > token)
 //         )
 //      )
 //    // LOG
@@ -234,7 +234,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
 //    ;
 //
 //  asaEther =
-//    qi::lit("ethertype")
+//    qi::lit("ethertype ")
 //    // ACTION
 //    > token
 //    // TYPE
@@ -259,11 +259,11 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
   dynamicArgument =
-    qi::lit("dynamic") > token >> -(qi::lit("timeout") > qi::uint_)
+    qi::lit("dynamic ") > token >> -(qi::lit("timeout ") > qi::uint_)
     ;
 
   protocolArgument =
-    -(qi::lit("object") >> -qi::lit("-group"))
+    -(qi::lit("object") >> -qi::lit("-group "))
     >> token [pnx::bind(&CiscoAcls::curRuleProtocol, this) = qi::_1]
     ;
 
@@ -274,9 +274,9 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     addressArgumentIos [pnx::bind(&CiscoAcls::setCurRuleDst, this, qi::_1)]
     ;
   addressArgumentIos =
-    (  (qi::lit("host") >> addrIpOnly)
-     | (qi::lit("object") >> -qi::lit("-group") > token)
-     | (qi::lit("interface") > token)
+    (  (qi::lit("host ") >> addrIpOnly)
+     | (qi::lit("object") >> -qi::lit("-group ") > token)
+     | (qi::lit("interface ") > token)
      | (anyTerm)
      | (addrIpMask)
      | (addrIpPrefix)
@@ -311,69 +311,72 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     portArgument [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
     ;
   portArgument =
-    (  (qi::lit("eq") > token) [qi::_val = qi::_1]
-     | (qi::lit("neq") > token) [qi::_val = "!" + qi::_1]
-     | (qi::lit("lt") > token) [qi::_val = "<" + qi::_1]
-     | (qi::lit("gt") > token) [qi::_val = ">" + qi::_1]
-     | (qi::lit("range") > token > token) [qi::_val = (qi::_1 + "-" + qi::_2)]
+    (  (qi::lit("eq ") > token) [qi::_val = qi::_1]
+     | (qi::lit("neq ") > token) [qi::_val = "!" + qi::_1]
+     | (qi::lit("lt ") > token) [qi::_val = "<" + qi::_1]
+     | (qi::lit("gt ") > token) [qi::_val = ">" + qi::_1]
+     | (qi::lit("range ") > token > token) [qi::_val = (qi::_1 + "-" + qi::_2)]
     )
     ;
-  icmpArgument = 
-    (  (qi::lit("object-group") > token)
+  icmpArgument =
+    (  (qi::lit("object-group ") > token)
+        [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
      | icmpTypeCode
      | icmpMessage
     )
     ;
   icmpTypeCode =
-    qi::ushort_ [qi::_pass = (0 <= qi::_1 && qi::_1 <= 255)]
-    >> -qi::short_ [qi::_pass = (qi::_1 >= 0 && qi::_1 <= 255)]
+    qi::as_string[+qi::digit]
+      [pnx::bind(&CiscoAcls::curRuleSrcPort, this) = qi::_1]
+    > -(+qi::blank > -qi::as_string[+qi::digit]
+      [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1])
     ;
   icmpMessage = // A token is too greedy, so...
-    (  qi::lit("administratively-prohibited")
-     | qi::lit("alternate-address")
-     | qi::lit("conversion-error")
-     | qi::lit("dod-host-prohibited")
-     | qi::lit("dod-net-prohibited")
-     | qi::lit("echo-reply")
-     | qi::lit("echo")
-     | qi::lit("general-parameter-problem")
-     | qi::lit("host-isolated")
-     | qi::lit("host-precedence-unreachable")
-     | qi::lit("host-redirect")
-     | qi::lit("host-tos-redirect")
-     | qi::lit("host-tos-unreachable")
-     | qi::lit("host-unknown")
-     | qi::lit("host-unreachable")
-     | qi::lit("information-reply")
-     | qi::lit("information-request")
-     | qi::lit("mask-reply")
-     | qi::lit("mask-request")
-     | qi::lit("mobile-redirect")
-     | qi::lit("net-redirect")
-     | qi::lit("net-tos-redirect")
-     | qi::lit("net-tos-unreachable")
-     | qi::lit("net-unreachable")
-     | qi::lit("network-unknown")
-     | qi::lit("no-room-for-option")
-     | qi::lit("option-missing")
-     | qi::lit("packet-too-big")
-     | qi::lit("parameter-problem")
-     | qi::lit("port-unreachable")
-     | qi::lit("precedence-unreachable")
-     | qi::lit("protocol-unreachable")
-     | qi::lit("reassembly-timeout")
-     | qi::lit("redirect")
-     | qi::lit("router-advertisement")
-     | qi::lit("router-solicitation")
-     | qi::lit("source-quench")
-     | qi::lit("source-route-failed")
-     | qi::lit("time-exceeded")
-     | qi::lit("timestamp-reply")
-     | qi::lit("timestamp-request")
-     | qi::lit("traceroute")
-     | qi::lit("ttl-exceeded")
-     | qi::lit("unreachable")
-    )
+    (  qi::string("administratively-prohibited")
+     | qi::string("alternate-address")
+     | qi::string("conversion-error")
+     | qi::string("dod-host-prohibited")
+     | qi::string("dod-net-prohibited")
+     | qi::string("echo-reply")
+     | qi::string("echo")
+     | qi::string("general-parameter-problem")
+     | qi::string("host-isolated")
+     | qi::string("host-precedence-unreachable")
+     | qi::string("host-redirect")
+     | qi::string("host-tos-redirect")
+     | qi::string("host-tos-unreachable")
+     | qi::string("host-unknown")
+     | qi::string("host-unreachable")
+     | qi::string("information-reply")
+     | qi::string("information-request")
+     | qi::string("mask-reply")
+     | qi::string("mask-request")
+     | qi::string("mobile-redirect")
+     | qi::string("net-redirect")
+     | qi::string("net-tos-redirect")
+     | qi::string("net-tos-unreachable")
+     | qi::string("net-unreachable")
+     | qi::string("network-unknown")
+     | qi::string("no-room-for-option")
+     | qi::string("option-missing")
+     | qi::string("packet-too-big")
+     | qi::string("parameter-problem")
+     | qi::string("port-unreachable")
+     | qi::string("precedence-unreachable")
+     | qi::string("protocol-unreachable")
+     | qi::string("reassembly-timeout")
+     | qi::string("redirect")
+     | qi::string("router-advertisement")
+     | qi::string("router-solicitation")
+     | qi::string("source-quench")
+     | qi::string("source-route-failed")
+     | qi::string("time-exceeded")
+     | qi::string("timestamp-reply")
+     | qi::string("timestamp-request")
+     | qi::string("traceroute")
+     | qi::string("ttl-exceeded")
+     | qi::string("unreachable")
+    ) [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
     ;
 
   establishedArgument =
@@ -411,24 +414,25 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
 
   timeRangeArgument =
-    qi::lit("time-range") > token
+    qi::lit("time-range ") > token
     ;
 
 
   userArgument =
-    (  (qi::lit("object-group-user") > token)
+    (  (qi::lit("object-group-user ") > token)
      | (qi::lit("user") >> -qi::lit("-group") > token)
     )
     ;
 
   securityGroupArgument =
-    (  (qi::lit("object-group-security") > token)
-     | (qi::lit("security-group") > (qi::lit("name") | qi::lit("tag")) > token)
+    (  (qi::lit("object-group-security ") > token)
+     | (qi::lit("security-group ") > (qi::lit("name ") | qi::lit("tag "))
+        > token)
     )
     ;
   
   inactiveArgument =
-    qi::lit("inactive")
+    qi::lit("inactive") [pnx::bind([&](){curRule.disable();})]
     ;
 
   ignoredRuleLine =
@@ -488,7 +492,7 @@ void
 CiscoAcls::initRuleBook(const std::string& name)
 {
   ruleBookName = name;
-  curRuleId = 1;
+  curRuleId = 0;
   ruleBook.clear();
 }
 
@@ -541,14 +545,24 @@ CiscoAcls::curRuleFinalize()
   curRule.setRuleId(curRuleId);
   curRule.setRuleDescription(ruleBookName);
 
-  if (!curRuleProtocol.empty()) {
+  updateRuleService();
+
+  ruleBook.emplace(curRuleId, curRule);
+  ++curRuleId;
+}
+
+void
+CiscoAcls::updateRuleService()
+{
+  if (curRuleProtocol.empty()) { return; }
+
+  if (curRuleSrcPort.empty() && curRuleDstPort.empty()) {
+    curRule.addService(curRuleProtocol);
+  } else {
     const std::string serviceString
       {nmcu::getSrvcString(curRuleProtocol, curRuleSrcPort, curRuleDstPort)};
     curRule.addService(serviceString);
   }
-
-  ruleBook.emplace(curRuleId, curRule);
-  ++curRuleId;
 }
 
 void

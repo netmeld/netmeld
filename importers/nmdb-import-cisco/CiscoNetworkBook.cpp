@@ -63,7 +63,7 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
            | objectNetworkNatLine
            | objectNetworkFqdnLine
            | description
-           | (&qi::eol) // space prefixed blank line
+           | (qi::eol) // space prefixed blank line
           )
        )
     ;
@@ -90,7 +90,7 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
         > (  networkObjectLine
            | groupObjectLine
            | description
-           | (&qi::eol) // space prefixed blank line
+           | (qi::eol) // space prefixed blank line
           )
        )
     ;
@@ -190,7 +190,8 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
 void
 CiscoNetworkBook::addData(const std::string& _data)
 {
-  curBook.addData(nmcu::trim(_data));
+  const auto& data {nmcu::trim(_data)};
+  curBook.addData(data);
 }
 
 void
@@ -249,7 +250,15 @@ CiscoNetworkBook::fromNetworkObjectMask(const std::string& _otherBook,
 void
 CiscoNetworkBook::finalizeCurBook()
 {
-  networkBooks.emplace(curBook.getName(), curBook);
+  const auto& tgtBook {curBook.getName()};
+  if (0 == networkBooks.count(tgtBook)) {
+    networkBooks.emplace(curBook.getName(), curBook);
+  } else {
+    auto& existingBook {networkBooks.at(tgtBook)};
+    for (auto& data : curBook.getData()) {
+      existingBook.addData(data);
+    }
+  }
   curBook = nmco::AcNetworkBook();
 }
 
@@ -264,9 +273,6 @@ CiscoNetworkBook::getFinalVersion()
     for (const auto& [name, book] : books) {
       nmcu::expanded(zoneBooks, zone, name, ZONE);
     }
-  }
-  for (const auto& [zone, books] : zoneBooks) {
-    LOG_INFO << zone << "--" << books << '\n';
   }
 
   return zoneBooks;

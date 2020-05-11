@@ -56,7 +56,7 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
     >> *(indent
          > (  objectServiceLine
             | description
-            | (&qi::eol) // space prefixed blank line
+            | (qi::eol) // space prefixed blank line
            )
        )
     ;
@@ -75,7 +75,7 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
             | serviceObjectLine
             | groupObjectLine
             | description
-            | (&qi::eol) // space prefixed blank line
+            | (qi::eol) // space prefixed blank line
            )
        )
     ;
@@ -101,7 +101,7 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
          > (  protocolObjectLine
             | groupObjectLine
             | description
-            | (&qi::eol) // space prefixed blank line
+            | (qi::eol) // space prefixed blank line
            )
        )
     ;
@@ -192,7 +192,7 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
      | qi::string("traceroute")
      | qi::string("ttl-exceeded")
      | qi::string("unreachable")
-    ) [pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1]
+    ) [pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1]
     ;
 
   unallocatedPort =
@@ -254,7 +254,8 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
 void
 CiscoServiceBook::addData(const std::string& _data)
 {
-  curBook.addData(nmcu::trim(_data));
+  const auto& data {nmcu::trim(_data)};
+  curBook.addData(data);
 }
 
 void
@@ -263,7 +264,6 @@ CiscoServiceBook::addCurData()
   const auto& serviceString
     {nmcu::getSrvcString(curProtocol, curSrcPort, curDstPort)};
   addData(serviceString);
-  curProtocol.clear();
   curSrcPort.clear();
   curDstPort.clear();
 }
@@ -271,12 +271,34 @@ CiscoServiceBook::addCurData()
 void
 CiscoServiceBook::finalizeCurBook()
 {
-  serviceBooks.emplace(curBook.getName(), curBook);
+  const auto& tgtBook {curBook.getName()};
+  if (0 == serviceBooks.count(tgtBook)) {
+    serviceBooks.emplace(curBook.getName(), curBook);
+  } else {
+    auto& existingBook {serviceBooks.at(tgtBook)};
+    for (auto& data : curBook.getData()) {
+      existingBook.addData(data);
+    }
+  }
   curBook = nmco::AcServiceBook();
 }
 
 
 // Object return
+ServiceBooks
+CiscoServiceBook::getFinalVersion()
+{
+  ServiceBooks zoneBooks;
+  zoneBooks.emplace(ZONE, serviceBooks);
+  for (const auto& [zone, books] : zoneBooks) {
+    for (const auto& [name, book] : books) {
+      nmcu::expanded(zoneBooks, zone, name, ZONE);
+    }
+  }
+
+  return zoneBooks;
+}
+
 ServiceBooks
 CiscoServiceBook::getData()
 {

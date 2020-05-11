@@ -29,6 +29,7 @@
 
 #include <netmeld/core/objects/AcServiceBook.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/utils/AcBookUtilities.hpp>
 
 #include "CommonRules.hpp"
 
@@ -42,8 +43,8 @@ namespace nmcu = netmeld::core::utils;
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
-typedef std::pair<std::string, ServiceBook> ServiceBooks;
+typedef std::map<std::string, nmco::AcServiceBook>  ServiceBook;
+typedef std::map<std::string, ServiceBook>          ServiceBooks;
 
 
 // =============================================================================
@@ -112,6 +113,8 @@ class CiscoServiceBook :
   // Methods
   // ===========================================================================
   public:
+    ServiceBooks getFinalVersion();
+
   protected:
   private: // Methods which should be hidden from API users
     void addData(const std::string&);

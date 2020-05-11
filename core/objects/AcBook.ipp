@@ -68,12 +68,13 @@ template<typename TData>
 void
 AcBook<TData>::addData(const TData& _key)
 {
-  auto val = data.emplace(_key);
+  data.emplace(_key);
+//  auto val = data.emplace(_key);
 
-  if (!std::get<1>(val)) {
-    LOG_DEBUG << "AcBook::addData: Insertion failed, duplicate key found: "
-             << _key << std::endl;
-  }
+//  if (!std::get<1>(val)) {
+//    LOG_DEBUG << "AcBook::addData: Insertion failed, duplicate key found: "
+//             << _key << std::endl;
+//  }
 }
 
 template<typename TData>

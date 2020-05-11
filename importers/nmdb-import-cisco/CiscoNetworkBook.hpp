@@ -44,8 +44,8 @@ namespace nmcu = netmeld::core::utils;
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, NetworkBook>         NetworkBooks;
+typedef std::map<std::string, nmco::AcNetworkBook>  NetworkBook;
+typedef std::map<std::string, NetworkBook>          NetworkBooks;
 
 
 // =============================================================================

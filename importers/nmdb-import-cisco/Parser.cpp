@@ -584,7 +584,7 @@ Parser::updateClassMap(const std::string& className, const std::string& bookName
 }
 
 void
-Parser::aclRuleBookAdd(const std::pair<std::string, RuleBook>& _pair)
+Parser::aclRuleBookAdd(std::pair<std::string, RuleBook>& _pair)
 {
   if (_pair.first.empty()) { return; }
 
@@ -595,7 +595,8 @@ Parser::aclRuleBookAdd(const std::pair<std::string, RuleBook>& _pair)
     auto* book = &(search->second);
     size_t count {book->size()};
     for (auto& [_, rule] : _pair.second) {
-      book->emplace(++count, rule);
+      rule.setRuleId(++count);
+      book->emplace(count, rule);
     }
   }
 }
@@ -606,7 +607,7 @@ void
 Parser::finalizeNamedBooks()
 {
   d.networkBooks = networkBooks.getFinalVersion();
-//  d.serviceBooks = serviceBooks.getFinalVersion();
+  d.serviceBooks = serviceBooks.getFinalVersion();
 }
 
 
@@ -656,15 +657,21 @@ Parser::getData()
       std::string zone;
       zone = rule.getSrcId();
       for (auto& strVal : rule.getSrcs()) {
-        d.networkBooks[zone][strVal].addData(strVal);
+        if (0 == d.networkBooks[zone].count(strVal)) {
+          d.networkBooks[zone][strVal].addData(strVal);
+        }
       }
       zone = rule.getDstId();
       for (auto& strVal : rule.getDsts()) {
-        d.networkBooks[zone][strVal].addData(strVal);
+        if (0 == d.networkBooks[zone].count(strVal)) {
+          d.networkBooks[zone][strVal].addData(strVal);
+        }
       }
       // TODO is this right?
       for (auto& strVal : rule.getServices()) {
-        d.serviceBooks[zone][strVal].addData(strVal);
+        if (0 == d.serviceBooks[zone].count(strVal)) {
+          d.serviceBooks[zone][strVal].addData(strVal);
+        }
       }
     }
   }

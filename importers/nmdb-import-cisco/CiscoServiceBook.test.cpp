@@ -126,7 +126,7 @@ service (  PROTOCOL
       {"service icmp 6 255\n", "icmp:6:255"},
       {"service icmp\n", "icmp::"},
       {"service icmpv6 255\n", "icmpv6:255:"},
-      {"service icmp echo-reply\n", "icmp:echo-reply:"},
+      {"service icmp echo-reply\n", "icmp::echo-reply"},
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank),
@@ -282,14 +282,13 @@ BOOST_AUTO_TEST_CASE(testCiscoServiceBookObjectGroupService)
       "  description some descript text\n"
       "  service-object object Service_Object\n" // +1
       "  service-object tcp-udp\n" // +1
-      "  service-object icmp 123 123\n" // +1
       "  group-object Group_Object\n" // +1
       "  port-object eq 123\n" // +1
     };
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
     const auto& temp = tcnb.getCurBook();
     BOOST_TEST("TEST" == temp.getName());
-    BOOST_TEST(5 == temp.getData().size());
+    BOOST_TEST(4 == temp.getData().size());
   }
 }
 

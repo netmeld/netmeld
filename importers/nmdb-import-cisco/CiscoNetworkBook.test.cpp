@@ -268,6 +268,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookObjectNetwork)
     // OK
     std::string fullText {
       "object network TEST\n"
+      "  \n"
       "  description some descript text\n"
       "  fqdn v4 some.00.domain.name\n" // +1
       "  fqdn v6 some.00.domain.name\n"
