@@ -8,7 +8,7 @@ on:
 
 
 jobs:
-  BuildCore:
+  Core:
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
     
@@ -28,8 +28,8 @@ jobs:
         ctest -L Test.netmeld-core
   
   
-  BuildCoreModules:
-    needs: [BuildCore]
+  CoreModules:
+    needs: [Core]
     
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
@@ -54,8 +54,8 @@ jobs:
         ctest -L Test.netmeld-${{ matrix.core-modules }}
   
   
-  BuildModules:
-    needs: [BuildCore, BuildCoreModules]
+  Modules:
+    needs: [Core, CoreModules]
     
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
@@ -65,6 +65,8 @@ jobs:
         modules: [core-bin, playbook, datalake, clw, exporters, fetchers, graphers, importers, inserters]
        
     steps:
+    - uses: actions/checkout@v2
+
     - name: Configure All
       run: cmake -S . -B build
 
