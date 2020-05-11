@@ -6,16 +6,12 @@ on:
   pull_request:
     branches: [ master ]
 
+
 jobs:
-  build:
+  Build Core:
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
-
-    strategy:
-      matrix:
-        core-modules: [playbook-core, datalake-core]
-        modules: [core-bin, playbook, datalake, clw, exporters, fetchers, graphers, importers, inserters]
-
+    
     steps:
     - uses: actions/checkout@v2
 
@@ -30,7 +26,22 @@ jobs:
         cmake --build build -j 2 --target Test.netmeld-core
         cd build
         ctest -L Test.netmeld
-        
+  
+  
+  Build Core Modules:
+    runs-on: ubuntu-latest
+    container: netmeld/netmeld-dev:latest
+
+    strategy:
+      matrix:
+        core-modules: [playbook-core, datalake-core]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure All
+      run: cmake -S . -B build
+
     - name: Build Core Modules
       run: cmake --build build -j 2 --target netmeld-${{ matrix.core-modules }}
 
@@ -39,7 +50,17 @@ jobs:
         cmake --build build -j 2 --target Test.netmeld-${{ matrix.core-modules }}
         cd build
         ctest -L Test.netmeld
+  
+  
+  Build Modules:
+    runs-on: ubuntu-latest
+    container: netmeld/netmeld-dev:latest
+
+    strategy:
+      matrix:
+        modules: [core-bin, playbook, datalake, clw, exporters, fetchers, graphers, importers, inserters]
     
+    steps:
     - name: Build Modules
       run: cmake --build build -j 2 --target netmeld-${{ matrix.modules }}
 
