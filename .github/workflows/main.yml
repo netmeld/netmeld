@@ -25,7 +25,7 @@ jobs:
       run: |
         cmake --build build -j 2 --target Test.netmeld-core
         cd build
-        ctest -L Test.netmeld
+        ctest -L Test.netmeld-core
   
   
   BuildCoreModules:
@@ -51,7 +51,7 @@ jobs:
       run: |
         cmake --build build -j 2 --target Test.netmeld-${{ matrix.core-modules }}
         cd build
-        ctest -L Test.netmeld
+        ctest -L Test.netmeld-${{ matrix.core-modules }}
   
   
   BuildModules:
@@ -72,4 +72,4 @@ jobs:
       run: |
         cmake --build build -j 2 --target Test.netmeld-${{ matrix.modules }}
         cd build
-        ctest -L Test.netmeld
+        ctest -L Test.netmeld-${{ matrix.modules }}
