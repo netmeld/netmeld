@@ -62,7 +62,7 @@ class CiscoServiceBook :
       start;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
-      config,
+      ciscoServiceBook,
       objectService,
         objectServiceLine,
         sourceDestinationArgument,

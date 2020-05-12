@@ -39,10 +39,10 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
   using nmdsic::indent;
 
   start =
-    config [qi::_val = pnx::bind(&CiscoAcls::getData, this)]
+    ciscoAcl [qi::_val = pnx::bind(&CiscoAcls::getData, this)]
     ;
 
-  config =
+  ciscoAcl =
     (  iosRule
      | nxosRule
      | asaRule
@@ -61,7 +61,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     // multi-liner - see iosStandard or iosExtended
     ;
   iosRemarkRuleLine =
-    qi::lit("remark ") > tokens > qi::eol
+    qi::lit("remark ") > remarkArgument > qi::eol
     ;
 
   iosStandard =
@@ -401,20 +401,25 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     ;
   logArgumentString =
     qi::string("log") >> -qi::string("-input")
-    >> -qi::hold[+qi::blank >>
-         (  qi::string("default")
-          | qi::string("disable")
-          | logInterval
-          | (+qi::digit >> -qi::hold[+qi::blank >> logInterval])
-         )
+    >> *qi::hold[+qi::blank
+      >> (!&(qi::lit("time-range") | qi::lit("inactive")))
+      >> token
     ]
+//    >> -qi::hold[+qi::blank >>
+//         (  qi::string("default")
+//          | qi::string("disable")
+//          | logInterval
+//          | (+qi::digit >> -qi::hold[+qi::blank >> logInterval])
+//          | ((!&(qi::lit("time-range") | qi::lit("inactive"))) >> token)
+//         )
+//    ]
     ;
   logInterval =
     qi::string("interval") > +qi::blank > +qi::digit
     ;
 
   timeRangeArgument =
-    qi::lit("time-range ") > token
+    qi::lit("time-range") > +qi::blank > token
     ;
 
 
@@ -435,6 +440,10 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
     qi::lit("inactive") [pnx::bind([&](){curRule.disable();})]
     ;
 
+  remarkArgument =
+    tokens [pnx::bind(&CiscoAcls::curRuleDescription, this) = qi::_1]
+    ;
+
   ignoredRuleLine =
     tokens [pnx::bind(&CiscoAcls::addIgnoredRuleData, this, qi::_1)]
     >> qi::eol
@@ -442,7 +451,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
 
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
-      (config)
+      (ciscoAcl)
       (iosRule)
         (iosRemark)   (iosRemarkRuleLine)
         (iosStandard) (iosStandardRuleLine)
@@ -478,6 +487,7 @@ CiscoAcls::CiscoAcls() : CiscoAcls::base_type(start)
         (ipNoPrefix)
       (anyTerm)
       (logArgument)
+      (remarkArgument)
       (ignoredRuleLine)
       //(token)(tokens)(indent)
       );
@@ -492,16 +502,16 @@ void
 CiscoAcls::initRuleBook(const std::string& name)
 {
   ruleBookName = name;
-  curRuleId = 0;
+  curRuleId = 1;
   ruleBook.clear();
 }
 
 void
 CiscoAcls::initCurRule()
 {
-  curRuleProtocol = "";
-  curRuleSrcPort = "";
-  curRuleDstPort = "";
+  curRuleProtocol.clear();
+  curRuleSrcPort.clear();
+  curRuleDstPort.clear();
 
   curRule = {};
 }
@@ -543,7 +553,11 @@ void
 CiscoAcls::curRuleFinalize()
 {
   curRule.setRuleId(curRuleId);
-  curRule.setRuleDescription(ruleBookName);
+  if (curRuleDescription.empty()) {
+    curRuleDescription = ruleBookName;
+  }
+  curRule.setRuleDescription(curRuleDescription);
+  curRuleDescription.clear();
 
   updateRuleService();
 

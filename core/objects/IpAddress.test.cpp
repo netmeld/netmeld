@@ -57,9 +57,6 @@ class TestIpAddress : public nmco::IpAddress {
 
     uint32_t getExtraWeight() const
     { return extraWeight; }
-
-    std::set<std::string> getAliases() const
-    { return aliases; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)

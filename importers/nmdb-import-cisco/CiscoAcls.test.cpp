@@ -220,11 +220,13 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"log 0 interval 1", "log 0 interval 1"},
       {"log interval 600", "log interval 600"},
       {"log 7", "log 7"},
+      {"log warning", "log warning"},
     };
     for (const auto& [test, format] : testsOk) {
       tpca.initCurRule();
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank),
+                 "parse: " << test);
       BOOST_TEST("" == out);
       nmco::AcRule temp = tpca.getCurRule();
       BOOST_TEST(format == temp.getActions().at(0));
@@ -1082,8 +1084,8 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
     BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
-      {" time-range RANGE_NAME"},
       {" inactive"},
+      {" time-range RANGE_NAME"},
       {" log 5 interval 10"},
       {" security-group name SGN2"},
       {" security-group name SGN1"},
@@ -1107,6 +1109,8 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
       {"1.2.3.4 0.0.0.255", "any"},
       {"range 123 456", "eq 123"},
       {"range 123 456", "eq 123"},
+      {"log 5 interval 10", "log warnings"},
+      {"log 5 interval 10", "log"},
     };
     std::string testRemoval = fullText;
     for (const auto& removal : removals) {

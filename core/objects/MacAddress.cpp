@@ -67,9 +67,14 @@ namespace netmeld::core::objects {
   }
 
   void
-  MacAddress::addIp(IpAddress& ipAddr)
+  //MacAddress::addIp(IpAddress& ipAddr)
+  MacAddress::addIp(IpAddress& _value)
   {
-    ipAddrs.insert(ipAddr);
+    auto* vec {&ipAddrs};
+    if (std::find(vec->begin(), vec->end(), _value) == vec->end()) {
+      vec->push_back(_value);
+    }
+//    ipAddrs.insert(ipAddr);
   }
 
   void

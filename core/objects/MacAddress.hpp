@@ -40,7 +40,8 @@ namespace netmeld::core::objects {
     private:
     protected:
       std::vector<uint8_t>  macAddr;
-      std::set<IpAddress>   ipAddrs;
+      //std::set<IpAddress>   ipAddrs;
+      std::vector<IpAddress>   ipAddrs;
       bool                  isResponding {false};
 
     public:

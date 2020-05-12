@@ -49,11 +49,9 @@ Parser::Parser() : Parser::base_type(start)
     *(  (qi::lit("no cdp") >> (qi::lit("run") | qi::lit("enable")) > qi::eol)
            [pnx::bind(&Parser::globalCdpEnabled, this) = false]
 
-        // TODO this goes away when ASA collapsed
-      | ((qi::string("PIX") | qi::string("ASA")) >>
-         qi::lit("Version") > *token > qi::eol)
-//           [pnx::bind(&Parser::unsup, this, "(global) " + qi::_1 + " Version"),
-           [pnx::bind(&Parser::globalCdpEnabled, this) = false]
+      | ((qi::string("PIX") | qi::string("ASA"))
+         >> qi::lit("Version") > *token > qi::eol)
+          [pnx::bind(&Parser::globalCdpEnabled, this) = false]
 
         // TODO does it make since to collapse with other calls?
       | (qi::lit("spanning-tree portfast") >>
@@ -148,7 +146,7 @@ Parser::Parser() : Parser::base_type(start)
 
   // TODO consider moving interface to own parser
   interface =
-    qi::lit("interface") >> // TODO can this be collapsed?
+    qi::no_skip[qi::lit("interface")] >>
     (  (token >> token > qi::eol)
           [pnx::bind(&Parser::ifaceInit, this, qi::_1 + " " + qi::_2)]
      | (token > qi::eol)
@@ -174,34 +172,31 @@ Parser::Parser() : Parser::base_type(start)
 
        | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("address") >>
           (  (ipAddr >> ipAddr)
-            [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-             pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
+                [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+                 pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                           pnx::bind(&Parser::tgtIface, this), qi::_1)]
            | (ipAddr)
-            [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
+              [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                         pnx::bind(&Parser::tgtIface, this), qi::_1)]
+           | (domainName >> ipAddr)
+                [pnx::bind([&](const std::string& _alias,
+                               const nmco::IpAddress& _mask)
+                           {
+                            nmco::IpAddress temp;
+                            temp.setMask(_mask);
+                            postIfaceIpAliasData.push_back(std::make_tuple(
+                                  tgtIface, _alias, temp
+                                  ));
+                           }, qi::_1, qi::_2)]
+           | (domainName)
+                [pnx::bind([&](const std::string& _alias)
+                           {nmco::IpAddress temp;
+                            postIfaceIpAliasData.push_back(std::make_tuple(
+                                  tgtIface, _alias, temp
+                                  ));
+                           }, qi::_1)]
           )
          )
-//       | qi::lit("ipv6 address") >>
-//         (  (ipAddr)
-//               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
-//          | (fqdn)
-//               [pnx::bind(&Parser::unsup, this, "ipv6 address DOMAIN-NAME")]
-//         )
-//       | qi::lit("ip address") >>
-//         (  (ipAddr >> ipAddr)
-//               [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-//                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
-//          | (fqdn >> ipAddr)
-//               [qi::_a = pnx::bind(&Parser::getIpFromAlias, this, qi::_1),
-//                pnx::bind(&nmco::IpAddress::setNetmask, &qi::_a, qi::_2),
-//                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//                          pnx::bind(&Parser::tgtIface, this), qi::_a)]
-//         )// [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-//          //  pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-//          //            pnx::bind(&Parser::tgtIface, this), qi::_1)]
 
          // TODO ip helper-address [vrf name | global] ip [redundancy vrg-name]
        | (qi::lit("ip helper-address") >> ipAddr)
@@ -210,13 +205,13 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind(&Parser::serviceAddDhcp, this, qi::_1)]
 
        | (qi::lit("ip access-group") >> token >> token)
-            [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
+            [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, "")]
        | (qi::lit("service-policy") >> token >> token)
             [pnx::bind(&Parser::createServicePolicy, this, qi::_1, qi::_2)]
 
-//       | (qi::lit("nameif") >> token)
-//            [pnx::bind([&](const std::string& val)
-//                       {ifaceAliases.emplace(val, *tgtIface);}, qi::_1)]
+       | (qi::lit("nameif") >> token)
+            [pnx::bind([&](const std::string& val)
+                       {ifaceAliases.emplace(val, tgtIface);}, qi::_1)]
 
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
@@ -239,7 +234,7 @@ Parser::Parser() : Parser::base_type(start)
        | spanningTree
 
        // Ignore all other settings
-       | (qi::omit[+token])
+       | (qi::omit[+token | &qi::eol])
       ) >> qi::eol
     )
     ;
@@ -366,8 +361,8 @@ Parser::Parser() : Parser::base_type(start)
        // access-group ac-list {in|out} interface ifaceName
      | (qi::lit("access-group") >> token >> token >>
         qi::lit("interface") >> token)
-          [pnx::bind(&Parser::ifaceInit, this, qi::_3),
-           pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2)]
+          [//pnx::bind(&Parser::ifaceInit, this, qi::_3),
+           pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3)]
     )
     ;
 
@@ -560,9 +555,15 @@ Parser::vlanAddIfaceData()
 
 // Policy Related
 void
-Parser::createAccessGroup(const std::string& bookName, const std::string& direction)
+Parser::createAccessGroup(const std::string& bookName,
+                          const std::string& direction,
+                          const std::string& ifaceName)
 {
-  appliedRuleSets[bookName] = {tgtIface->getName(), direction};
+  auto tgtName {ifaceName};
+  if (tgtName.empty()) {
+    tgtName = tgtIface->getName();
+  }
+  appliedRuleSets[bookName] = {tgtName, direction};
 }
 
 void
@@ -624,6 +625,17 @@ Parser::addObservation(const std::string& obs)
 }
 
 // Object return
+void
+Parser::setRuleTargetIface(nmco::AcRule& _rule, const std::string& _name,
+                           void (nmco::AcRule::*x)(const std::string&))
+{
+  if (0 == ifaceAliases.count(_name)) {
+    (_rule.*x)(_name);
+  } else {
+    (_rule.*x)(ifaceAliases[_name]->getName());
+  }
+}
+
 Result
 Parser::getData()
 {
@@ -651,7 +663,21 @@ Parser::getData()
     }
   }
 
-  // TODO is there a better way? probably have to do different with ASA...
+  if (0 != d.networkBooks.count(ZONE)) {
+    const auto& tgtBook {d.networkBooks.at(ZONE)};
+    for (auto& [iface, alias, ip] : postIfaceIpAliasData) {
+      if (0 == tgtBook.count(alias)) { continue; } // no alias-ip known
+      for (const auto& ipStr : tgtBook.at(alias).getData()) {
+        auto temp {ipStr};
+        temp.erase(temp.find("/"));
+        ip.setAddress(temp);
+        ip.addAlias(alias, "config");
+        iface->addIpAddress(ip);
+      }
+    }
+  }
+
+  // TODO is there a better way?
   for (auto& [name, book] : d.ruleBooks) {
     for (auto& [id, rule] : book) {
       std::string zone;
@@ -683,12 +709,12 @@ Parser::getData()
     for (auto& [id, rule] : d.ruleBooks[bookName]) {
       if ("in" == direction) {
         // in: filter traffic entering iface, regardless destination
-        rule.addSrcIface(ifaceName);
+        setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addSrcIface);
         rule.addDstIface("any");
       } else if ("out" == direction) {
         // out: filter traffic leaving iface, regardless origin
         rule.addSrcIface("any");
-        rule.addDstIface(ifaceName);
+        setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addDstIface);
       } else {
         LOG_ERROR << "(apply-groups) Unknown rule direction parsed: "
                   << direction << std::endl;
@@ -703,11 +729,11 @@ Parser::getData()
         for (const auto& bookName : classes[className]) {
           for (auto& [id, rule] : d.ruleBooks[bookName]) {
             if ("input" == direction) {
-              rule.addSrcIface(ifaceName);
+              setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addSrcIface);
               rule.addDstIface("any");
             } else if ("output" == direction) {
               rule.addSrcIface("any");
-              rule.addDstIface(ifaceName);
+              setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addDstIface);
             } else {
               LOG_ERROR << "(service-policy) Unknown rule direction parsed: "
                         << direction << std::endl;

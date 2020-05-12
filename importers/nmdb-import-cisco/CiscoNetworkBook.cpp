@@ -39,11 +39,11 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
   using nmdsic::indent;
 
   start =
-    config
+    ciscoNetworkBook
      [qi::_val = pnx::bind(&CiscoNetworkBook::getData, this)]
     ;
 
-  config =
+  ciscoNetworkBook =
     (  nameLine
      | objectNetwork
      | objectGroupNetwork
@@ -158,7 +158,7 @@ CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
 
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
-      (config)
+      (ciscoNetworkBook)
       (nameLine)
       (objectNetwork)
         (objectNetworkHostLine)

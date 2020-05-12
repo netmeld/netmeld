@@ -63,7 +63,7 @@ class CiscoNetworkBook :
       start;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
-      config,
+      ciscoNetworkBook,
       nameLine,
       objectNetwork,
         objectNetworkHostLine,

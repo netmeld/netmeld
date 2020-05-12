@@ -118,13 +118,13 @@ service (  PROTOCOL
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"service tcp\n", "tcp::"},
-      {" service 1 \n", "1::"},
+      {"service tcp\n", "tcp"},
+      {" service 1 \n", "1"},
       {"service udp source neq 67\n", "udp:!67:"},
       {"service sctp destination range 123 456\n", "sctp::123-456"},
       {"service tcp source gt 123 destination eq 456\n", "tcp:>123:456"},
       {"service icmp 6 255\n", "icmp:6:255"},
-      {"service icmp\n", "icmp::"},
+      {"service icmp\n", "icmp"},
       {"service icmpv6 255\n", "icmpv6:255:"},
       {"service icmp echo-reply\n", "icmp::echo-reply"},
     };
@@ -146,16 +146,17 @@ port-object ( eq PORT | range START END )
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"port-object eq telnet\n", ":telnet:telnet"},
-      {"port-object eq 10\n", ":10:10"},
-      {"port-object range 1 9999\n", ":1-9999:1-9999"},
+      {"port-object eq telnet\n", ""},
+      {"port-object eq 10\n", ""},
+      {"port-object range 1 9999\n", ""},
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank),
                  "parse: " << test);
       const auto& temp = tcnb.getCurBook();
-      BOOST_TEST(1 == temp.getData().count(format),
-                 "one of: " << format);
+      BOOST_TEST(0 == temp.getData().size());
+//      BOOST_TEST(1 == temp.getData().count(format),
+//                 "one of: " << format);
     }
     // BAD
   }
@@ -173,8 +174,8 @@ service-object (  PROTOCOL
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"service-object tcp\n", "tcp::"},
-      {" service-object 1 \n", "1::"},
+      {"service-object tcp\n", "tcp"},
+      {" service-object 1 \n", "1"},
       {"service-object udp source neq 67\n", "udp:!67:"},
       {"service-object sctp destination range 123 456\n", "sctp::123-456"},
       {"service-object tcp source lt 123 destination eq 456\n", "tcp:<123:456"},
@@ -201,8 +202,8 @@ protocol-object PROTOCOL
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"protocol-object icmp\n", "icmp::"},
-      {"protocol-object 138\n", "138::"},
+      {"protocol-object icmp\n", "icmp"},
+      {"protocol-object 138\n", "138"},
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank),

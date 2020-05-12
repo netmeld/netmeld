@@ -73,7 +73,7 @@ class CiscoAcls :
       start;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
-      config,
+      ciscoAcl,
       ipv46,
       iosRule,
         iosRemark,   iosRemarkRuleLine,
@@ -97,10 +97,9 @@ class CiscoAcls :
       precedenceArgument,
       tosArgument,
       logArgument,
-      timeRangeArgument,
       userArgument,
       securityGroupArgument,
-      inactiveArgument,
+      remarkArgument,
       ipAccessListExtended, ipAccessList;
 
     qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
@@ -121,6 +120,9 @@ class CiscoAcls :
       logArgumentString, logInterval,
       ignoredRuleLine;
 
+    qi::rule<nmcp::IstreamIter>
+      timeRangeArgument,
+      inactiveArgument;
 
   protected:
     // Supporting data structures
@@ -130,10 +132,12 @@ class CiscoAcls :
     std::string  ruleBookName {""};
     RuleBook     ruleBook;
 
-    size_t       curRuleId {0};
+    size_t       curRuleId       {0};
     std::string  curRuleProtocol {""};
-    std::string  curRuleSrcPort {""};
-    std::string  curRuleDstPort {""};
+    std::string  curRuleSrcPort  {""};
+    std::string  curRuleDstPort  {""};
+
+    std::string  curRuleDescription {""};
 
     std::set<std::string> ignoredRuleData;
 

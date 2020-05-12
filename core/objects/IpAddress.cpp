@@ -71,6 +71,12 @@ namespace netmeld::core::objects {
     reason = nmcu::toLower(_reason);
   }
 
+  std::set<std::string>
+  IpAddress::getAliases() const
+  {
+    return aliases;
+  }
+
   void
   IpAddress::setResponding(const bool _isUp)
   {

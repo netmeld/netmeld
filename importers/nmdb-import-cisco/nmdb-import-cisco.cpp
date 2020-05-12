@@ -169,8 +169,9 @@ class Tool : public nmct::AbstractImportTool<P,R>
           LOG_DEBUG << name << '\n';
           for (auto& [id, rule] : book) {
             if (!rule.isValid()) {
-              results.observations.addNotable("RuleBook "
-                  + name + " is defined but not applied to interface.");
+              results.observations.addNotable(
+                  "AcRuleBook (" + name + ") defined"
+                  " but may not be applied to an interface.");
             }
             rule.save(t, toolRunId, deviceId);
             LOG_DEBUG << rule.toDebugString() << '\n';

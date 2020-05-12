@@ -100,8 +100,7 @@ class Parser :
       route,
       vlanDef,
       interface, switchport, spanningTree,
-      accessPolicyRelated
-      ;
+      accessPolicyRelated;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
       policyMap, classMap;
@@ -127,6 +126,11 @@ class Parser :
     bool isNo {false};
 
     nmco::InterfaceNetwork* tgtIface;
+    std::map<std::string, nmco::InterfaceNetwork*> ifaceAliases;
+    std::vector<std::tuple<nmco::InterfaceNetwork*,
+                           std::string,
+                           nmco::IpAddress>>
+      postIfaceIpAliasData;
 
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
@@ -187,7 +191,8 @@ class Parser :
     void vlanAddIfaceData();
 
     // Policy Related
-    void createAccessGroup(const std::string&, const std::string&);
+    void createAccessGroup(const std::string&, const std::string&,
+                           const std::string& = "");
     void createServicePolicy(const std::string&, const std::string&);
     void updatePolicyMap(const std::string&, const std::string&);
     void updateClassMap(const std::string&, const std::string&);
@@ -201,6 +206,8 @@ class Parser :
     void addObservation(const std::string&);
 
     // Object return
+    void setRuleTargetIface(nmco::AcRule&, const std::string&,
+                            void (nmco::AcRule::*x)(const std::string&));
     Result getData();
 };
 #endif // PARSER_HPP

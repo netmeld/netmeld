@@ -39,12 +39,12 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
   using nmdsic::indent;
 
   start =
-    config
+    ciscoServiceBook
       [pnx::bind(&CiscoServiceBook::finalizeCurBook, this),
        qi::_val = pnx::bind(&CiscoServiceBook::getData, this)]
     ;
 
-  config =
+  ciscoServiceBook =
     (  objectService 
      | objectGroupService
      | objectGroupProtocol
@@ -197,8 +197,9 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
 
   unallocatedPort =
     portArgument
-      [pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1,
-       pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1]
+      [pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1]
+//      [pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1,
+//       pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1]
     ;
   portArgument =
     (  (qi::lit("eq ") > token) [qi::_val = qi::_1]
@@ -222,7 +223,7 @@ CiscoServiceBook::CiscoServiceBook() : CiscoServiceBook::base_type(start)
 
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
-      (config)
+      (ciscoServiceBook)
       (objectService)
         (objectServiceLine)
       (objectGroupService)
@@ -261,9 +262,15 @@ CiscoServiceBook::addData(const std::string& _data)
 void
 CiscoServiceBook::addCurData()
 {
-  const auto& serviceString
-    {nmcu::getSrvcString(curProtocol, curSrcPort, curDstPort)};
-  addData(serviceString);
+  if (curProtocol.empty()) { return; }
+
+  if (curSrcPort.empty() && curDstPort.empty()) {
+    addData(curProtocol);
+  } else {
+    const auto& serviceString
+      {nmcu::getSrvcString(curProtocol, curSrcPort, curDstPort)};
+    addData(serviceString);
+  }
   curSrcPort.clear();
   curDstPort.clear();
 }
@@ -281,6 +288,9 @@ CiscoServiceBook::finalizeCurBook()
     }
   }
   curBook = nmco::AcServiceBook();
+  curProtocol.clear();
+  curSrcPort.clear();
+  curDstPort.clear();
 }
 
 
