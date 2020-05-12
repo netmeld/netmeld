@@ -60,10 +60,10 @@ jobs:
         ctest -L ^Test.netmeld-${{ matrix.core-modules }}$
     
     - name: Package Core Modules
-      if: matrix.modules != 'datalake-core'
+      if: matrix.core-modules != 'datalake-core'
       run: |
         cd ./scripts
-        bash ./make_netmeld-${{ matrix.modules }}_deb.sh
+        bash ./make_netmeld-${{ matrix.core-modules }}_deb.sh
         ls -al
   
   
