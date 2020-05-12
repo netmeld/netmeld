@@ -84,3 +84,9 @@ jobs:
         cmake --build build -j 2 --target Test.netmeld-${{ matrix.modules }}
         cd build
         ctest -L ^Test.netmeld-${{ matrix.modules }}$
+    
+    - name: Package Modules
+      run: |
+        cd ./scripts
+        bash ./make_${{ matrix.modules }}_deb.sh
+        ls -al
