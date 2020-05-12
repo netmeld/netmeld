@@ -26,6 +26,12 @@ jobs:
         cmake --build build -j 2 --target Test.netmeld-core
         cd build
         ctest -L ^Test.netmeld-core$
+    
+    - name: Package Core
+      run: |
+        cd ./scripts
+        bash ./make_netmeld-core_deb.sh
+        ls -al
   
   
   CoreModules:
