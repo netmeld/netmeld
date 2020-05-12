@@ -88,5 +88,5 @@ jobs:
     - name: Package Modules
       run: |
         cd ./scripts
-        bash ./make_${{ matrix.modules }}_deb.sh
+        bash ./make_netmeld-${{ matrix.modules }}_deb.sh
         ls -al
