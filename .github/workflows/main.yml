@@ -58,6 +58,13 @@ jobs:
         cmake --build build -j 2 --target Test.netmeld-${{ matrix.core-modules }}
         cd build
         ctest -L ^Test.netmeld-${{ matrix.core-modules }}$
+    
+    - name: Package Modules
+      if: matrix.modules != 'datalake-core'
+      run: |
+        cd ./scripts
+        bash ./make_netmeld-${{ matrix.modules }}_deb.sh
+        ls -al
   
   
   Modules:
@@ -86,6 +93,7 @@ jobs:
         ctest -L ^Test.netmeld-${{ matrix.modules }}$
     
     - name: Package Modules
+      if: matrix.modules != 'datalake'
       run: |
         cd ./scripts
         bash ./make_netmeld-${{ matrix.modules }}_deb.sh
