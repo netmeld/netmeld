@@ -1,3 +1,4 @@
+![License](https://img.shields.io/github/license/cctechwiz-forks/netmeld)
 ![CI](https://github.com/cctechwiz-forks/netmeld/workflows/CI/badge.svg)
 ![DockerBuild](https://github.com/cctechwiz-forks/netmeld/workflows/DockerBuild/badge.svg)
 
