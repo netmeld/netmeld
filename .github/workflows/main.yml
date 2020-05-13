@@ -130,5 +130,16 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@v2
       
-      - name: Show Downloaded Artifacts
+      - name: Prepare For Packaging
+        run: |
+          mkdir artifacts
+          find . -iname "*.deb* -exec cp {} ./artifacts \;
+      
+      - name: Upload All Debs Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: all-debs
+          path: artifacts/
+      
+      - name: Show Artifacts # TODO: Delete this one after testing is finished
         run: ls -R
