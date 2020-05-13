@@ -31,7 +31,13 @@ jobs:
       run: |
         cd ./scripts
         bash ./make_netmeld-core_deb.sh
-        ls -al
+        cd ..
+    
+    - name: Upload Deb Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: netmeld-core-deb
+        path: scripts/*.deb
   
   
   CoreModules:
