@@ -29,12 +29,12 @@
 
 #include <set>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class ToolObservations : public AbstractObject {
+  class ToolObservations : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -64,15 +64,15 @@ namespace netmeld::core::objects {
                             const std::string&, const std::set<std::string>&);
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      // Inherited from AbstractObject at this scope
+      // Inherited from AbstractDatastoreObject at this scope
         // virtual void saveAsMetadata(pqxx::transaction_base&, const Uuid&);
-        // friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
+        // friend std::ostream& operator<<(std::ostream&, const AbstractDatastoreObject&);
 
       //void addObservation(const std::string&);
       void addNotable(const std::string&);
       void addUnsupportedFeature(const std::string&);
 
-      // Always overriden from AbstractObject
+      // Always overriden from AbstractDatastoreObject
       bool isValid() const override;
       void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
       void saveQuiet(pqxx::transaction_base&, const Uuid&, const std::string&);

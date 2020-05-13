@@ -188,35 +188,63 @@ namespace netmeld::core::objects {
     extraWeight = _extraWeight;
   }
 
-  void
-  IpNetwork::setNetmask(const IpNetwork& _mask)
+  template<size_t bits> bool
+  IpNetwork::setCidrFromMask(const IpNetwork& _mask,
+                             const size_t base,
+                             const char sep,
+                             bool flipIt)
   {
     size_t count {0};
-    size_t base;
-    char   sep;
-
-    if (_mask.isV4()) {
-      base = 10;
-      sep = '.';
-    } else {
-      base = 16;
-      sep = ':';
-    }
+    bool isContiguous {true};
+    bool seenZero {false};
 
     std::istringstream octets(_mask.address.to_string());
     for (std::string octet;
          std::getline(octets, octet, sep) && !octet.empty();
         ) {
       size_t end;
-      unsigned long val = std::stoul(octet, &end, base);
+      unsigned long val {std::stoul(octet, &end, base)};
+      std::bitset<bits> bVal(val);
+      if (flipIt) {bVal.flip();}
 
-      while (val != 0) {
-        if (val & 0x1) { count++; }
-        val >>= 1;
+      for (size_t i {1}; i <= bits; ++i) {
+        bool isOne {bVal.test(bits-i)};
+        if (isOne && seenZero) {
+          isContiguous = false;
+          count = ((address.is_v4()) ? 32 : 128);
+        } else if (isOne) {
+          ++count;
+        } else {
+          seenZero = true;
+        }
       }
     }
 
     cidr = count;
+
+    return isContiguous;
+  }
+
+  void
+  IpNetwork::setNetmask(const IpNetwork& _mask)
+  {
+    if (_mask.isV4()) {
+      setCidrFromMask<8>(_mask, 10, '.', false);
+    } else {
+      setCidrFromMask<16>(_mask, 16, ':', false);
+    }
+  }
+
+  bool
+  IpNetwork::setWildcardMask(const IpNetwork& _mask)
+  {
+    if (_mask.isV4()) {
+      return setCidrFromMask<8>(_mask, 10, '.', true);
+    } else {
+      LOG_ERROR << "IpNetwork::setWildcardMask was called with"
+                << " an IPv6 address\n";
+      return false;
+    }
   }
 
   void

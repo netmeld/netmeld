@@ -45,7 +45,7 @@
      rules (see other templates)
 */
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/tools/AbstractInsertTool.hpp>
 
 namespace nmco = netmeld::core::objects;
@@ -127,7 +127,7 @@ class Tool : public nmct::AbstractInsertTool
 
       // Object construction from command line args
       if (opts.exists("option-a")) {
-        nmco::AbstractObject ao;
+        nmco::AbstractDatastoreObject ao;
 
         // Alter object state based on command line args
 

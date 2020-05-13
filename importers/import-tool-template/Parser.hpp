@@ -43,7 +43,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/parsers/ParserHelper.hpp> // if parser not needed
 
 namespace nmco = netmeld::core::objects;
@@ -52,7 +52,7 @@ namespace nmcp = netmeld::core::parsers;
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef nmco::AbstractObject  Data;
+typedef nmco::AbstractDatastoreObject  Data;
 //struct Data { };
 typedef std::vector<Data>    Result;
 

@@ -3,17 +3,12 @@ command_value: "{{ item.invocation.module_args.commands[0] | regex_replace(' ', 
 item_value: "{{ item.stdout[0] }}"
 
 cmd_list:
-- show configuration
-- show configuration | display set
-- show configuration | display xml
-- show version detail
-- show arp no-resolve
-- show ethernet-switching table detail
-- show ethernet-switching table extensive
-- show chassis hardware
-- show chassis hardware detail
-- show chassis hardware extensive
-- show ldp neighbor detail
-- show ldp neighbor extensive
-- show system uptime
-- show ntp status no-resolve
+- show running-config full
+- show startup-config
+- show version
+- show cdp neighbor detail
+- show mac address-table
+- show inventory
+- show interfaces
+- show vlan
+- show spanning-tree

@@ -27,12 +27,12 @@
 #ifndef METASPLOIT_MODULE
 #define METASPLOIT_MODULE
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/Port.hpp>
 
 namespace nmco = netmeld::core::objects;
 
-class MetasploitModule : public nmco::AbstractObject
+class MetasploitModule : public nmco::AbstractDatastoreObject
 {
   public:
     nmco::Port    port;

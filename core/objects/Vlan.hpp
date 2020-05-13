@@ -27,13 +27,13 @@
 #ifndef VLAN_HPP
 #define VLAN_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpNetwork.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class Vlan : public AbstractObject {
+  class Vlan : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================

@@ -28,19 +28,26 @@
 
 #include "Parser.hpp"
 
-namespace nmo  = netmeld::core::objects;
-namespace tools = netmeld::core::tools;
-namespace utils = netmeld::core::utils;
+namespace nmco = netmeld::core::objects;
+namespace nmct = netmeld::core::tools;
 
 
 // =============================================================================
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public tools::AbstractImportTool<P,R>
+class Tool : public nmct::AbstractImportTool<P,R>
 {
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
   public:
-    Tool() : tools::AbstractImportTool<P,R>
+    Tool() : nmct::AbstractImportTool<P,R>
       (
        "show running-config",
        PROGRAM_NAME,
@@ -48,34 +55,41 @@ class Tool : public tools::AbstractImportTool<P,R>
       )
     {}
 
-    void
-    modifyToolOptions() override
-    {
-      this->opts.removeRequiredOption("device-id");
-      this->opts.removeAdvancedOption("tool-run-metadata");
-    }
-
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private: // Methods part of internal API
     void
     specificInserts(pqxx::transaction_base& t) override
     {
-      auto results   = this->tResults;
-      auto toolRunId = this->getToolRunId();
+      const auto& toolRunId        {this->getToolRunId()};
+      const auto& defaultDeviceId  {this->getDeviceId()};
 
-      for (auto& objects : results) {
-        LOG_DEBUG << "HARDWARE INFO:\n";
-        auto deviceId = objects.dhi.getDeviceId();
+      bool first {true};
 
-        auto dhi = objects.dhi;
-        if (this->opts.exists("device-type")) {
-          dhi.setDeviceType(this->opts.getValue("device-type"));
+      LOG_DEBUG << "Iterating over results\n";
+      for (auto& results : this->tResults) {
+        auto deviceId {defaultDeviceId};
+
+        LOG_DEBUG << "Adding device information\n";
+        auto& devInfo {results.devInfo};
+        if (!first && !devInfo.getDeviceId().empty()) {
+          deviceId = defaultDeviceId + ":" + devInfo.getDeviceId();
+        }
+        devInfo.setDeviceId(deviceId);
+        if (this->opts.exists("device-type") &&
+            devInfo.getDeviceType().empty())
+        {
+          devInfo.setDeviceType(this->opts.getValue("device-type"));
         }
         if (this->opts.exists("device-color")) {
-          dhi.setDeviceColor(this->opts.getValue("device-color"));
+          devInfo.setDeviceColor(this->opts.getValue("device-color"));
         }
-        dhi.save(t, toolRunId, deviceId);
-        LOG_DEBUG << dhi.toDebugString() << std::endl;
+        devInfo.save(t, toolRunId);
+        LOG_DEBUG << devInfo.toDebugString() << '\n';
 
-        for (auto& result : objects.aaas) {
+        LOG_DEBUG << "Iteration over AAAs\n";
+        for (auto& result : results.aaas) {
           // 04-03-2019 NOTE: Manually saving here because we do not have nor
           // do we want a netmeld core object for AAA entries at this time.
           t.exec_prepared("insert_raw_device_aaa",
@@ -86,37 +100,76 @@ class Tool : public tools::AbstractImportTool<P,R>
           LOG_DEBUG << result << std::endl;
         }
 
-        LOG_DEBUG << "OBSERVATIONS:\n";
-        LOG_DEBUG << objects.observations.toDebugString() << std::endl;
-        objects.observations.save(t, toolRunId, deviceId);
-
-        LOG_DEBUG << "SERVICE INFO:\n";
-        for (auto& result : objects.services) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
+        LOG_DEBUG << "Iterating over Services\n";
+        for (auto& result : results.services) {
           result.save(t, toolRunId, "");
+          LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
-        LOG_DEBUG << "ROUTE INFO:\n";
-        for (auto& result : objects.routes) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
+        LOG_DEBUG << "Iterating over routes\n";
+        for (auto& result : results.routes) {
           result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
-        LOG_DEBUG << "VLAN INFO:\n";
-        for (auto& result : objects.vlans) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
+        LOG_DEBUG << "Iterating over vlans\n";
+        for (auto& result : results.vlans) {
           result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
-        LOG_DEBUG << "INTERFACE INFO:\n";
-        for (auto& result : objects.ifaces) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
+        LOG_DEBUG << "Iterating over interfaces\n";
+        for (auto& [name, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
         }
+
+        LOG_DEBUG << "Iterating over networkBooks\n";
+        for (auto& [zone, nets] : results.networkBooks) {
+          for (auto& [name, book] : nets) {
+            book.setId(zone);
+            book.setName(name);
+            book.save(t, toolRunId, deviceId);
+            LOG_DEBUG << book.toDebugString() << '\n';
+          }
+        }
+
+        LOG_DEBUG << "Iterating over serviceBooks\n";
+        for (auto& [zone, apps] : results.serviceBooks) {
+          for (auto& [name, book] : apps) {
+            book.setId(zone);
+            book.setName(name);
+            book.save(t, toolRunId, deviceId);
+            LOG_DEBUG << book.toDebugString() << '\n';
+          }
+        }
+
+        LOG_DEBUG << "Iterating over ruleBooks\n";
+        for (auto& [name, book] : results.ruleBooks) {
+          LOG_DEBUG << name << '\n';
+          for (auto& [id, rule] : book) {
+            if (!rule.isValid()) {
+              results.observations.addNotable("RuleBook "
+                  + name + " is defined but not applied.");
+            }
+            rule.save(t, toolRunId, deviceId);
+            LOG_DEBUG << rule.toDebugString() << '\n';
+          }
+        }
+
+        LOG_DEBUG << "Iterating over Observations\n";
+        results.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.observations.toDebugString() << std::endl;
+
+        first = false;
       }
     }
 };
 
+
+// =============================================================================
+// Program entry point
+// =============================================================================
 int
 main(int argc, char** argv)
 {

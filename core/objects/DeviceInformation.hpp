@@ -27,12 +27,12 @@
 #ifndef DEVICE_INFORMATION_HPP
 #define DEVICE_INFORMATION_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class DeviceInformation : public AbstractObject {
+  class DeviceInformation : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -64,9 +64,9 @@ namespace netmeld::core::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      // Inherited from AbstractObject at this scope
+      // Inherited from AbstractDatastoreObject at this scope
         // virtual void saveAsMetadata(pqxx::transaction_base&, Uuid);
-        // friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
+        // friend std::ostream& operator<<(std::ostream&, const AbstractDatastoreObject&);
 
       void setDeviceId(const std::string&);
       void setDeviceColor(const std::string&);

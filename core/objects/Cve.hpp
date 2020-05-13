@@ -27,13 +27,13 @@
 #ifndef CVE_HPP
 #define CVE_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/Port.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class Cve : public AbstractObject {
+  class Cve : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================

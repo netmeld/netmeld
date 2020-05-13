@@ -29,13 +29,13 @@
 
 #include <set>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 
 
 namespace netmeld::core::objects {
 
   template<typename TData>
-  class AcBook : public AbstractObject {
+  class AcBook : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -68,11 +68,11 @@ namespace netmeld::core::objects {
       virtual void removeData(const TData&);
       virtual std::set<TData> getData() const;
 
-      // Inherited from AbstractObject at this scope
+      // Inherited from AbstractDatastoreObject at this scope
         // virtual void saveAsMetadata(pqxx::transaction_base&, Uuid);
-        // friend std::ostream& operator<<(std::ostream&, const AbstractObject&);
+        // friend std::ostream& operator<<(std::ostream&, const AbstractDatastoreObject&);
 
-      // Always overriden from AbstractObject
+      // Always overriden from AbstractDatastoreObject
       virtual bool isValid() const override;
       virtual void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
       std::string toDebugString() const override;

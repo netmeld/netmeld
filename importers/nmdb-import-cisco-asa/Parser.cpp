@@ -39,34 +39,26 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     (config)
-      [pnx::bind(&Parser::setVendor, this, "cisco"),
+      [pnx::bind([&](){d.devInfo.setVendor("cisco");}),
        qi::_val = pnx::bind(&Parser::getData, this)]
     ;
 
   config =
     *(
         (qi::lit("hostname") >> fqdn >> qi::eol)
-           [pnx::bind(&Parser::setDevId, this, qi::_1)]
+           [pnx::bind([&](const std::string& val)
+                      {d.devInfo.setDeviceId(val);}, qi::_1)]
       | (qi::lit("domain-name") >> fqdn >> qi::eol)
            [pnx::bind(&Parser::unsup, this, "domain-name")]
-      | (qi::lit("name") >> ipAddr >> fqdn >>
+      | (qi::lit("name") >> ipAddr >> fqdn
+           [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
          -(qi::lit("description") >> tokens) >> qi::eol)
-           [pnx::bind(&Parser::updateNetBookIp, this, qi::_2, qi::_1)]
+           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
       | (qi::lit("name") >> tokens >> qi::eol)
            [pnx::bind(&Parser::unsup, this, "name")]
-      | (qi::lit("interface") >> asaIface)
-           [pnx::bind(&Parser::addIface, this, qi::_1)]
-      | (qi::lit("object-group") >>
-         (  (qi::lit("service") >> objGrpSrv)
-          | (qi::lit("protocol") >> objGrpProto)
-          | (qi::lit("network") >> objGrpNet)
-         )
-        )
-      | (qi::lit("object") >>
-         (  (qi::lit("network") >> objNet)
-          | (qi::lit("service") >> objSrv)
-         )
-        )
+      | (asaIface)
+      | (qi::lit("object-group") > (objGrpNet | objGrpSrv | objGrpProto))
+      | (qi::lit("object") > (objNet | objSrv))
       | (qi::lit("access-list") >> policy)
       // access-group ac-list {in|out} interface ifaceName
       | (qi::lit("access-group") >> token >> token >>
@@ -77,111 +69,90 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   asaIface =
-    ((token >> qi::eol)
-       [pnx::bind(&nmco::InterfaceNetwork::setName, &qi::_val, qi::_1)] >>
+    (qi::lit("interface") >> token >> qi::eol)
+       [pnx::bind(&Parser::ifaceInit, this, qi::_1)] >>
     // Explicitly check to ensure still in interface scope
     *(qi::no_skip[+qi::char_(' ')] >>
       (
        // Capture general settings
          (qi::lit("description") >> tokens)
-           [pnx::bind(&nmco::InterfaceNetwork::setDescription, &qi::_val, qi::_1)]
+            [pnx::bind(&nmco::InterfaceNetwork::setDescription,
+                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("nameif") >> token)
-           [pnx::bind(&Parser::addIfaceAlias, this, qi::_val, qi::_1)]
-       | (qi::lit("ipv6 address") >> ipAddr)
-           [pnx::bind(&nmco::InterfaceNetwork::addIpAddress, &qi::_val, qi::_1)]
-       | (qi::lit("ipv6 address") >> fqdn)
-           [pnx::bind(&Parser::unsup, this, "ipv6 address DOMAIN-NAME")]
-       | (qi::lit("ip address") >> ipAddr >> ipAddr)
-           [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-            pnx::bind(&nmco::InterfaceNetwork::addIpAddress, &qi::_val, qi::_1)]
-       | (qi::lit("ip address") >> fqdn >> ipAddr)
-           [qi::_a = pnx::bind(&Parser::getIpFromAlias, this, qi::_1),
-            pnx::bind(&nmco::IpAddress::setNetmask, &qi::_a, qi::_2),
-            pnx::bind(&nmco::InterfaceNetwork::addIpAddress, &qi::_val, qi::_a)]
-
+            [pnx::bind([&](const std::string& val)
+                       {ifaceAliases.emplace(val, *tgtIface);}, qi::_1)]
+       | qi::lit("ipv6 address") >>
+         (  (ipAddr)
+               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
+          | (fqdn)
+               [pnx::bind(&Parser::unsup, this, "ipv6 address DOMAIN-NAME")]
+         )
+       | qi::lit("ip address") >>
+         (  (ipAddr >> ipAddr)
+               [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
+          | (fqdn >> ipAddr)
+               [qi::_a = pnx::bind(&Parser::getIpFromAlias, this, qi::_1),
+                pnx::bind(&nmco::IpAddress::setNetmask, &qi::_a, qi::_2),
+                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                          pnx::bind(&Parser::tgtIface, this), qi::_a)]
+         )// [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+          //  pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+          //            pnx::bind(&Parser::tgtIface, this), qi::_1)]
        // Ignore all other settings
        | (qi::omit[+token])
        | (&qi::eol) // space prefixed blank line
       ) >> qi::eol
-     )
     )
     ;
+
+
+  // object *
 
   // object network val_name
   //  { host val_ip | subnet val_ip val_mask | range val_ip val_ip }
   objNet =
-    ((token >> qi::eol)
-       [qi::_a = qi::_1] >>
+    (qi::lit("network") >> token >> qi::eol)
+      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
     // Explicitly check to ensure still in interface scope
     *(qi::no_skip[+qi::char_(' ')] >>
-      (
-       // Capture general settings
-         (qi::lit("subnet") >> ipAddr >> ipAddr)
+      (  (qi::lit("subnet") >> ipAddr >> ipAddr)
            [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-            pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1)]
+            pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
        | (qi::lit("subnet") >> ipAddr)
-           [pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1)]
+           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
        | (qi::lit("host") >> ipAddr)
-           [pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1)]
+           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
        | (qi::lit("range") >> token >> token)
-           [pnx::bind(&Parser::updateNetBookRange, this, qi::_a,
-                      qi::_1, qi::_2)]
+           [pnx::bind(&Parser::updateNetBookRange, this, qi::_1, qi::_2)]
 
        // Ignore all other settings
        | (qi::omit[+token])
        | (&qi::eol) // space prefixed blank line
       ) >> qi::eol
-     )
     )
-    ;
-
-  // object-group network val_name
-  //  network-object { object val_name | host val_ip | val_ip val_mask}
-  //  group-object val_name
-  objGrpNet =
-    (token >> qi::eol)
-      [qi::_a = qi::_1] >>
-    *(qi::no_skip[+qi::char_(' ')] >>
-      (
-         (qi::lit("network-object object") >> token)
-           [pnx::bind(&Parser::updateNetBookGroup, this, qi::_a, qi::_1)]
-       | (qi::lit("network-object host") >> ipAddr)
-           [pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1)]
-       | (qi::lit("network-object") >> ipAddr >> ipAddr)
-           [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-            pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1)]
-       | (qi::lit("network-object") >> token >> ipAddr)
-           [pnx::bind(&Parser::updateNetBookGroupMask, this,
-                      qi::_a, qi::_1, qi::_2)]
-       | (qi::lit("group-object") >> token)
-           [pnx::bind(&Parser::updateNetBookGroup, this, qi::_a, qi::_1)]
-
-       // Ignore all other settings
-       | (qi::omit[+token])
-       | (&qi::eol) // space prefixed blank line
-      ) >> qi::eol
-     )
     ;
 
   // object service val_name
   //  service { val_proto | icmp val_type | icmp6 val_type | { tcp | udp } [ source operator val_port ] [ destination operator val_port ]}
   // NOTE: operator = { eq | neq | lt | gt | range }
   objSrv =
-    ((token >> qi::eol)
-       [qi::_a = qi::_1] >>
+    (qi::lit("service") >> token >> qi::eol)
+      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
     // Explicitly check to ensure still in scope
     *(qi::no_skip[+qi::char_(' ')] >>
       (
        // Capture general settings
          (qi::lit("service") >> objSrvProto >> objSrvSrc >> objSrvDst)
            [pnx::bind(&Parser::updateSrvcBook, this,
-                      qi::_a, qi::_1+":"+qi::_2+":"+qi::_3)]
+                      qi::_1+":"+qi::_2+":"+qi::_3)]
 
        // Ignore all other settings
        | (qi::omit[+token])
        | (&qi::eol) // space prefixed blank line
       ) >> qi::eol
-     )
     )
     ;
 
@@ -215,80 +186,89 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+  srvRngVal =
+    (token >> token)
+      [qi::_val = qi::_1 + "-" + qi::_2]
+    ;
+
+  // object-group *
+
+  // object-group network val_name
+  //  network-object { object val_name | host val_ip | val_ip val_mask}
+  //  group-object val_name
+  objGrpNet =
+    (qi::lit("network") >> token >> qi::eol)
+      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
+    *(qi::no_skip[+qi::char_(' ')] >>
+      (  (qi::lit("network-object object") >> token)
+           [pnx::bind(&Parser::updateNetBookGroup, this, qi::_1)]
+       | (qi::lit("network-object host") >> ipAddr)
+           [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
+       | (qi::lit("network-object") >> ipAddr >> ipAddr)
+           [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+            pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
+       | (qi::lit("network-object") >> token >> ipAddr)
+           [pnx::bind(&Parser::updateNetBookGroupMask, this, qi::_1, qi::_2)]
+       | (qi::lit("group-object") >> token)
+           [pnx::bind(&Parser::updateNetBookGroup, this, qi::_1)]
+
+       // Ignore all other settings
+       | (qi::omit[+token])
+       | (&qi::eol) // space prefixed blank line
+      ) >> qi::eol
+    )
+    ;
+
+
   // object-group service val_name { tcp | udp | tcp-udp }
   //  port-object { eq val_port | range val_start val_end }
   //  group-object val_name
   //  service-object { val_proto | icmp val_type | icmp6 val_type | { tcp | udp } [ source operator val_port ] [ destination operator val_port ]}
   // NOTE: operator = { eq | neq | lt | gt | range }
   objGrpSrv =
-    ((token >> token >> qi::eol)
-        [qi::_a = qi::_1,
-         qi::_b = qi::_2] >>
-     // Explicitly check to ensure still in interface scope
-     *(qi::no_skip[+qi::char_(' ')] >>
-       (
-        // Capture general settings
-          (qi::lit("port-object") >> portArgument)
-            [pnx::bind(&Parser::updateSrvcBook, this,
-                       qi::_a, qi::_b+"::"+qi::_1)]
-        | (qi::lit("group-object") >> token)
-            [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_a, qi::_1)]
-
-        // Ignore all other settings
-        | (qi::omit[+token])
-        | (&qi::eol) // space prefixed blank line
-       ) >> qi::eol
-     )
-    )
-    |
-    ((token >> qi::eol)
-        [qi::_a = qi::_1] >>
-     // Explicitly check to ensure still in interface scope
-     *(qi::no_skip[+qi::char_(' ')] >>
-       (
-        // Capture general settings
-          (qi::lit("service-object object") >> token)
-            [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_a, qi::_1)]
-        | (qi::lit("service-object") >> objSrvProto >> objSrvSrc >> objSrvDst)
-            [pnx::bind(&Parser::updateSrvcBook, this,
-                       qi::_a, qi::_1+":"+qi::_2+":"+qi::_3)]
-        | (qi::lit("group-object") >> token)
-            [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_a, qi::_1)]
-
-        // Ignore all other settings
-        | (qi::omit[+token])
-        | (&qi::eol) // space prefixed blank line
-       ) >> qi::eol
-     )
+    (qi::lit("service") >>
+     token [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
+     -token [qi::_a = qi::_1] >>
+     qi::eol
+    ) >
+    // Explicitly check to ensure still in interface scope
+    *(qi::no_skip[+qi::char_(' ')] >>
+      (  (qi::lit("port-object") >> portArgument)
+           [pnx::bind(&Parser::updateSrvcBook, this, qi::_a+"::"+qi::_1)]
+       | (qi::lit("group-object") >> token)
+           [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
+       | (qi::lit("service-object object") >> token)
+           [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
+       | (qi::lit("service-object") >> objSrvProto >> objSrvSrc >> objSrvDst)
+           [pnx::bind(&Parser::updateSrvcBook, this,
+                      qi::_1+":"+qi::_2+":"+qi::_3)]
+ 
+       // Ignore all other settings
+       | (qi::omit[+token])
+       | (&qi::eol) // space prefixed blank line
+      ) >> qi::eol
     )
     ;
+
 
   // object-group protocol val_name
   //  protocol-object val_proto
   //  group-object val_name
   objGrpProto =
-    ((token >> qi::eol)
-       [qi::_a = qi::_1] >>
-     // Explicitly check to ensure still in interface scope
-     *(qi::no_skip[+qi::char_(' ')] >>
-       (
-        // Capture general settings
-          (qi::lit("protocol-object") >> token)
-            [pnx::bind(&Parser::updateSrvcBook, this, qi::_a, qi::_1)]
-        | (qi::lit("group-object") >> token)
-            [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_a, qi::_1)]
+    (qi::lit("protocol") >> token >> qi::eol)
+       [pnx::bind(&Parser::tgtBook, this) = qi::_1] >>
+    // Explicitly check to ensure still in interface scope
+    *(qi::no_skip[+qi::char_(' ')] >>
+      (  (qi::lit("protocol-object") >> token)
+           [pnx::bind(&Parser::updateSrvcBook, this, qi::_1)]
+       | (qi::lit("group-object") >> token)
+           [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
 
-        // Ignore all other settings
-        | (qi::omit[+token])
-        | (&qi::eol) // space prefixed blank line
-       ) >> qi::eol
-     )
+       // Ignore all other settings
+       | (qi::omit[+token])
+       | (&qi::eol) // space prefixed blank line
+      ) >> qi::eol
     )
-    ;
-
-  srvRngVal =
-    (token >> token)
-      [qi::_val = qi::_1 + "-" + qi::_2]
     ;
 
   policy =
@@ -416,33 +396,13 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-// Device related
-void
-Parser::setVendor(const std::string& _name)
-{
-  d.devInfo.setVendor(_name);
-}
-
-void
-Parser::setDevId(const std::string& _id)
-{
-  d.devInfo.setDeviceId(_id);
-}
-
-
 // Interface related
 void
-Parser::addIface(nmco::InterfaceNetwork& _iface)
+Parser::ifaceInit(const std::string& _name)
 {
-  _iface.setState(true);
-  d.ifaces.push_back(_iface);
-}
-
-void
-Parser::addIfaceAlias(const nmco::InterfaceNetwork& _iface,
-                         const std::string& _alias)
-{
-  ifaceAliases.emplace(_alias, _iface);
+  tgtIface = &d.ifaces[_name];
+  tgtIface->setName(_name);
+  tgtIface->setState(true);
 }
 
 nmco::IpAddress
@@ -466,39 +426,34 @@ Parser::getIpFromAlias(const std::string& _bookName)
 
 // AC related
 void
-Parser::updateNetBookIp(const std::string& _bookName,
-                        const nmco::IpAddress& _ip)
+Parser::updateNetBookIp(const nmco::IpAddress& _ip)
 {
-  d.networkBooks[ZONE][_bookName].addData(_ip.toString());
+  d.networkBooks[ZONE][tgtBook].addData(_ip.toString());
 }
 
 void
-Parser::updateNetBookRange(const std::string& _bookName,
-                           const std::string& _ip1,
-                           const std::string& _ip2)
+Parser::updateNetBookRange(const std::string& _ip1, const std::string& _ip2)
 {
   std::ostringstream oss;
   oss << _ip1 << "-" << _ip2;
-  d.networkBooks[ZONE][_bookName].addData(oss.str());
+  d.networkBooks[ZONE][tgtBook].addData(oss.str());
 }
 
 void
-Parser::updateNetBookGroup(const std::string& _bookName,
-                           const std::string& _bookOther)
+Parser::updateNetBookGroup(const std::string& _bookOther)
 {
   const auto& tgtData {d.networkBooks[ZONE][_bookOther].getData()};
   if (0 == tgtData.size()) {
     LOG_DEBUG << "Parser::updateNetBookGroup: set defined after use ["
-              << ZONE << "][" << _bookName << "]: " << _bookOther << "\n";
-    d.networkBooks[ZONE][_bookName].addData(_bookOther);
+              << ZONE << "][" << tgtBook << "]: " << _bookOther << "\n";
+    d.networkBooks[ZONE][tgtBook].addData(_bookOther);
   } else {
-    d.networkBooks[ZONE][_bookName].addData(tgtData);
+    d.networkBooks[ZONE][tgtBook].addData(tgtData);
   }
 }
 
 void
-Parser::updateNetBookGroupMask(const std::string& _bookName,
-                               const std::string& _bookOther,
+Parser::updateNetBookGroupMask(const std::string& _bookOther,
                                const nmco::IpAddress& _mask)
 {
   for (const auto& _ip : d.networkBooks[ZONE][_bookOther].getData()) {
@@ -510,28 +465,26 @@ Parser::updateNetBookGroupMask(const std::string& _bookName,
     }
     nmco::IpAddress ip {_ip};
     ip.setNetmask(_mask);
-    d.networkBooks[ZONE][_bookName].addData(ip.toString());
+    d.networkBooks[ZONE][tgtBook].addData(ip.toString());
   }
 }
 
 void
-Parser::updateSrvcBook(const std::string& _bookName,
-                       const std::string& _ports)
+Parser::updateSrvcBook(const std::string& _ports)
 {
-  d.serviceBooks[ZONE][_bookName].addData(_ports);
+  d.serviceBooks[ZONE][tgtBook].addData(_ports);
 }
 
 void
-Parser::updateSrvcBookGroup(const std::string& _bookName,
-                            const std::string& _bookOther)
+Parser::updateSrvcBookGroup(const std::string& _bookOther)
 {
   const auto& tgtData {d.serviceBooks[ZONE][_bookOther].getData()};
   if (0 == tgtData.size()) {
     LOG_DEBUG << "Parser::updateSrvcBookGroup: set defined after use ["
-              << ZONE << "][" << _bookName << "]: " << _bookOther << "\n";
-    d.networkBooks[ZONE][_bookName].addData(_bookOther);
+              << ZONE << "][" << tgtBook << "]: " << _bookOther << "\n";
+    d.networkBooks[ZONE][tgtBook].addData(_bookOther);
   } else {
-    d.serviceBooks[ZONE][_bookName].addData(tgtData);
+    d.serviceBooks[ZONE][tgtBook].addData(tgtData);
   }
 }
 

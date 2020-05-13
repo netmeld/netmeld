@@ -27,13 +27,13 @@
 #ifndef MAC_ADDRESS_HPP
 #define MAC_ADDRESS_HPP
 
-#include <netmeld/core/objects/AbstractObject.hpp>
+#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/core/objects/IpAddress.hpp>
 
 
 namespace netmeld::core::objects {
 
-  class MacAddress : public AbstractObject {
+  class MacAddress : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
