@@ -124,7 +124,6 @@ jobs:
     needs: [Core, CoreModules, Modules]
 
     runs-on: ubuntu-latest
-    #container: netmeld/netmeld-dev:latest # TODO: Probably don't need to run this in a container
     
     steps:
       - name: Download All Artifacts
