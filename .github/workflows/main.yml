@@ -132,14 +132,15 @@ jobs:
       
       - name: Prepare For Packaging
         run: |
-          mkdir artifacts
-          find . -iname "*.deb* -exec cp {} ./artifacts \;
+          find . -iname "*.deb" -print | zip artifacts -@
+      # mkdir artifacts
+      # find . -iname "*.deb" -exec cp {} ./artifacts \;
       
       - name: Upload All Debs Artifact
         uses: actions/upload-artifact@v2
         with:
           name: all-debs
-          path: artifacts/
+          path: artifacts.zip
       
       - name: Show Artifacts # TODO: Delete this one after testing is finished
         run: ls -R
