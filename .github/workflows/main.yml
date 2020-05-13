@@ -131,4 +131,4 @@ jobs:
         uses: actions/download-artifact@v2
       
       - name: Show Downloaded Artifacts
-        run: la -R
+        run: ls -R
