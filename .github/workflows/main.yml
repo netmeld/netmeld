@@ -132,6 +132,7 @@ jobs:
       
       - name: Prepare For Packaging
         run: |
+          echo ::set-env name=DATETIME::$(date +%Y%m%d.%H%M%S)
           find . -iname "*.deb" -print | zip --junk-paths artifacts -@
       
       - name: Upload All Debs Artifact
@@ -146,8 +147,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ env.DATETIME }}
+          release_name: CI build - ${{ env.DATETIME }}
           draft: false
           prerelease: false
       
