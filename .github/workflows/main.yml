@@ -70,7 +70,14 @@ jobs:
       run: |
         cd ./scripts
         bash ./make_netmeld-${{ matrix.core-modules }}_deb.sh
-        ls -al
+        cd ..
+    
+    - name: Upload Deb Artifact
+      if: matrix.core-modules != 'datalake-core'
+      uses: actions/upload-artifact@v2
+      with:
+        name: netmeld-${{ matrix.core-modules }}-deb
+        path: scripts/*.deb
   
   
   Modules:
@@ -103,4 +110,11 @@ jobs:
       run: |
         cd ./scripts
         bash ./make_netmeld-${{ matrix.modules }}_deb.sh
-        ls -al
+        cd ..
+    
+    - name: Upload Deb Artifact
+      if: matrix.core-modules != 'datalake'
+      uses: actions/upload-artifact@v2
+      with:
+        name: netmeld-${{ matrix.modules }}-deb
+        path: scripts/*.deb
