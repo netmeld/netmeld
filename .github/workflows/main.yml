@@ -132,7 +132,7 @@ jobs:
       
       - name: Prepare For Packaging
         run: |
-          find . -iname "*.deb" -print | zip artifacts -@
+          find . -iname "*.deb" -print | zip --junk-paths artifacts -@
       # mkdir artifacts
       # find . -iname "*.deb" -exec cp {} ./artifacts \;
       
