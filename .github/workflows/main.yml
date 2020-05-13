@@ -133,14 +133,31 @@ jobs:
       - name: Prepare For Packaging
         run: |
           find . -iname "*.deb" -print | zip --junk-paths artifacts -@
-      # mkdir artifacts
-      # find . -iname "*.deb" -exec cp {} ./artifacts \;
       
       - name: Upload All Debs Artifact
         uses: actions/upload-artifact@v2
         with:
           name: all-debs
           path: artifacts.zip
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
       
-      - name: Show Artifacts # TODO: Delete this one after testing is finished
-        run: ls -R
+      - name: Upload Release Asset
+        id: upload_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artivacts.zip
+          asset_name: all-debs
+          asset_content_type: application/zip
