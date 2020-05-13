@@ -113,8 +113,22 @@ jobs:
         cd ..
     
     - name: Upload Deb Artifact
-      if: matrix.core-modules != 'datalake'
+      if: matrix.modules != 'datalake'
       uses: actions/upload-artifact@v2
       with:
         name: netmeld-${{ matrix.modules }}-deb
         path: scripts/*.deb
+
+
+  PackageAll:
+    needs: [Core, CoreModules, Modules]
+
+    runs-on: ubuntu-latest
+    #container: netmeld/netmeld-dev:latest # TODO: Probably don't need to run this in a container
+    
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v2
+      
+      - name: Show Downloaded Artifacts
+        run: la -R
