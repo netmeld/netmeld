@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ master ]
 
-
 jobs:
   Core:
     runs-on: ubuntu-latest
@@ -159,5 +158,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts.zip
-          asset_name: all-debs.zip
+          asset_name: netmeld-${{ env.DATETIME }}-debs.zip
           asset_content_type: application/zip
