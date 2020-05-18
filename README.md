@@ -1,3 +1,7 @@
+![License](https://img.shields.io/github/license/netmeld/netmeld)
+![CI](https://github.com/netmeld/netmeld/workflows/CI/badge.svg)
+![DockerBuild](https://github.com/netmeld/netmeld/workflows/DockerBuild/badge.svg)
+
 NAME
 ====
 

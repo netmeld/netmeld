@@ -20,7 +20,13 @@ RUN apt update \
     libpugixml-dev \
     libpcap0.8-dev \
     python \
+    apt-transport-https \
+    ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
-  && groupadd -r netmeld && useradd -r -s /bin/false -g netmeld netmeld
+  && update-ca-certificates \
 
-USER netmeld
+# NOTE: The following are disable for auto-builds of docker images for use
+#       with the github CI workflow. Workflow containers must run as root.
+  #&& groupadd -r netmeld && useradd -r -s /bin/false -g netmeld netmeld
+#USER netmeld
+
