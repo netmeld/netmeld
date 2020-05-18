@@ -97,6 +97,7 @@ class Parser :
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
       domainData,
+      globalServices,
       route,
       vlanDef,
       interface,
@@ -184,7 +185,7 @@ class Parser :
     void serviceAddNtp(const nmco::IpAddress&);
     void serviceAddSnmp(const nmco::IpAddress&);
     void serviceAddRadius(const nmco::IpAddress&);
-    void serviceAddDns(const std::vector<nmco::IpAddress>&);
+    void serviceAddDns(const nmco::IpAddress&);
     void serviceAddSyslog(const nmco::IpAddress&);
 
     // Route related

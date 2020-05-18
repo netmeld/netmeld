@@ -53,7 +53,6 @@ Parser::Parser() : Parser::base_type(start)
          >> qi::lit("Version") > *token > qi::eol)
           [pnx::bind(&Parser::globalCdpEnabled, this) = false]
 
-        // TODO does it make since to collapse with other calls?
       | (qi::lit("spanning-tree portfast") >>
           (  qi::lit("bpduguard")
                [pnx::bind(&Parser::globalBpduGuardEnabled, this) = true]
@@ -64,24 +63,7 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("aaa ") >> tokens >> qi::eol)
             [pnx::bind(&Parser::deviceAaaAdd, this, qi::_1)]
 
-        // TODO These are more opportunistic right? Or guarenteed?
-        // TODO doesn't handle sntp, vrf, or alias
-        // TODO s?ntp server [vrf vrf-name] (ip|alias)
-      | (qi::lit("ntp server") >> ipAddr > qi::eol)
-           [pnx::bind(&Parser::serviceAddNtp, this, qi::_1)]
-        // TODO doesn't catch when alias
-      | (qi::lit("snmp-server host") >> ipAddr > -tokens > qi::eol)
-           [pnx::bind(&Parser::serviceAddSnmp, this, qi::_1)]
-        // TODO doesn't catch when it is a block
-        // TODO radius-server host source-interface iface
-      | (qi::lit("radius-server host") >> ipAddr > -qi::omit[+token] > qi::eol)
-           [pnx::bind(&Parser::serviceAddRadius, this, qi::_1)]
-        // TODO doesn't handle vrf
-        // TODO ip name-server [vrf vrf-name] ip1
-      | (qi::lit("ip name-server") > +ipAddr > qi::eol)
-           [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
-      | (qi::lit("logging server") > ipAddr > -qi::omit[+token] > qi::eol)
-           [pnx::bind(&Parser::serviceAddSyslog, this, qi::_1)]
+      | globalServices
 
       | domainData
       | (interface)
@@ -161,13 +143,9 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind(&nmco::InterfaceNetwork::setDescription,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("shutdown"))
-            [pnx::bind(&nmco::InterfaceNetwork::setState,
-                       pnx::bind(&Parser::tgtIface, this),
-                       pnx::bind(&Parser::isNo, this))]
+            [pnx::bind([&](){tgtIface->setState(isNo);})]
        | (qi::lit("cdp enable"))
-            [pnx::bind(&nmco::InterfaceNetwork::setDiscoveryProtocol,
-                       pnx::bind(&Parser::tgtIface, this),
-                       !pnx::bind(&Parser::isNo, this)),
+            [pnx::bind([&](){tgtIface->setDiscoveryProtocol(!isNo);}),
              pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificCdp)]
 
        | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("address") >>
@@ -239,6 +217,29 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+  globalServices =
+    // NOTE None handle when an alias is used instead of an IP
+    (  ((qi::lit("sntp") | qi::lit("ntp")) >> qi::lit("server")
+        > -(qi::lit("vrf") > token)
+        > (  ipAddr [pnx::bind(&Parser::serviceAddNtp, this, qi::_1)]
+           | token
+          ) > -tokens > qi::eol)
+      | (qi::lit("snmp-server host")
+         > ( ipAddr [pnx::bind(&Parser::serviceAddSnmp, this, qi::_1)]
+            | token
+           ) > -tokens > qi::eol)
+      | (qi::lit("radius-server host")
+         >> ipAddr [pnx::bind(&Parser::serviceAddRadius, this, qi::_1)]
+         > -tokens > qi::eol)
+      | (qi::lit("ip name-server") > -(qi::lit("vrf") > token)
+         > +ipAddr [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
+         > qi::eol)
+      | (qi::lit("logging server")
+         > ipAddr [pnx::bind(&Parser::serviceAddSyslog, this, qi::_1)]
+         > -tokens > qi::eol)
+    )
+    ;
+
   // TODO migrate
   switchport =
     qi::lit("switchport") >>
@@ -255,38 +256,31 @@ Parser::Parser() : Parser::base_type(start)
     (
        (qi::lit("mac-address ")
         > -qi::lit("sticky")
-            [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityStickyMac,
-                       pnx::bind(&Parser::tgtIface, this),
-                       !pnx::bind(&Parser::isNo, this))]
+            [pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);})]
         > -macAddr
             [pnx::bind(&nmco::InterfaceNetwork::addPortSecurityStickyMac,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        )
-     | (qi::lit("maximum") >> qi::ushort_ >> qi::lit("vlan") > qi::ushort_)
-          [pnx::bind(&Parser::unsup, this,
-            pnx::bind([&](size_t a, size_t b)
-              {return "port-security maximum " + std::to_string(a) +
-                      " vlan " + std::to_string(b);}, qi::_1, qi::_2))]
-     | (qi::lit("maximum") >> qi::ushort_)
+     | ((qi::lit("maximum") >> qi::ushort_)
           [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
+         > -(qi::lit("vlan") > qi::ushort_)
+          [pnx::bind(&Parser::unsup, this,
+                     "switchport port-security maximum COUNT vlan ID")]
+       )
      | (qi::lit("violation") >> token)
           [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityViolationAction,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
      | (&qi::eol)
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurity,
-                     pnx::bind(&Parser::tgtIface, this),
-                     !pnx::bind(&Parser::isNo, this))]
+          [pnx::bind([&](){tgtIface->setPortSecurity(!isNo);})]
     )
     ;
   switchportVlan =
-    (  qi::string("access ")
-     | qi::string("trunk ")
-     | qi::string("voice ")
-    ) >> ( qi::string("native ")
-         | qi::string("allowed ")
-         | qi::as_string[qi::attr(" ")]
-        )
+    (qi::string("access ") | qi::string("trunk ") | qi::string("voice "))
+    >> (  qi::string("native ")
+        | qi::string("allowed ")
+        | qi::as_string[qi::attr(" ")]
+       )
     >> qi::lit("vlan") > -qi::lit("add")
     > (  ((vlanRange | vlanId) % qi::lit(','))
        | (tokens)
@@ -311,9 +305,7 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("spanning-tree") >
       // TODO These have "default" values which require to know edge-port state
     (  (qi::lit("bpduguard")
-         [pnx::bind(&nmco::InterfaceNetwork::setBpduGuard,
-                    pnx::bind(&Parser::tgtIface, this),
-                    !pnx::bind(&Parser::isNo, this)),
+         [pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
           pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard)] >
         -(  qi::lit("enable")
              [pnx::bind([&](){tgtIface->setBpduGuard(true);})]
@@ -322,9 +314,7 @@ Parser::Parser() : Parser::base_type(start)
         )
        )
      | (qi::lit("bpdufilter")
-         [pnx::bind(&nmco::InterfaceNetwork::setBpduFilter,
-                    pnx::bind(&Parser::tgtIface, this),
-                    !pnx::bind(&Parser::isNo, this)),
+         [pnx::bind([&](){tgtIface->setBpduFilter(!isNo);}),
           pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduFilter)] >
         -(  qi::lit("enable")
              [pnx::bind([&](){tgtIface->setBpduFilter(true);})]
@@ -341,10 +331,7 @@ Parser::Parser() : Parser::base_type(start)
         )
        )
      | (qi::lit("portfast"))
-//          [pnx::bind([&](){tgtIface->setPortfast(!isNo);})]
-          [pnx::bind(&nmco::InterfaceNetwork::setPortfast,
-                     pnx::bind(&Parser::tgtIface, this),
-                     !pnx::bind(&Parser::isNo, this))]
+          [pnx::bind([&](){tgtIface->setPortfast(!isNo);})]
      | tokens
          [pnx::bind(&Parser::unsup, this, "spanning-tree " + qi::_1)]
     )
@@ -448,15 +435,13 @@ Parser::serviceAddRadius(const nmco::IpAddress& ip)
 }
 
 void
-Parser::serviceAddDns(const std::vector<nmco::IpAddress>& ips)
+Parser::serviceAddDns(const nmco::IpAddress& ip)
 {
-  for (auto& ip : ips) {
-    nmco::Service service {"dns", ip};
-    service.setProtocol("udp");
-    service.addDstPort("53");
-    service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
-    d.services.push_back(service);
-  }
+  nmco::Service service {"dns", ip};
+  service.setProtocol("udp");
+  service.addDstPort("53");
+  service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
+  d.services.push_back(service);
 }
 
 void
