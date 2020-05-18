@@ -242,73 +242,69 @@ Parser::Parser() : Parser::base_type(start)
   // TODO migrate
   switchport =
     qi::lit("switchport") >>
-    (  (qi::lit("mode") >> token)
+    (  ((qi::lit("mode") > token) | qi::string("nonegotiate"))
           [pnx::bind(&nmco::InterfaceNetwork::setSwitchportMode,
                      pnx::bind(&Parser::tgtIface, this), "L2 " + qi::_1)]
-     | (qi::lit("nonegotiate"))
-          [pnx::bind(&nmco::InterfaceNetwork::setSwitchportMode,
-                     pnx::bind(&Parser::tgtIface, this), "L2 nonegotiate")]
 
-        // TODO Doesn't this not set stick when a mac is present?
-     | (qi::lit("port-security mac-address") >> -qi::lit("sticky") >> macAddr)
-          [pnx::bind(&nmco::InterfaceNetwork::addPortSecurityStickyMac,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     | (qi::lit("port-security mac-address sticky"))
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityStickyMac,
-                     pnx::bind(&Parser::tgtIface, this),
-                     !pnx::bind(&Parser::isNo, this))]
-     | (qi::lit("port-security maximum") >> qi::ushort_ >>
-        qi::lit("vlan") > qi::ushort_)
+     | switchportPortSecurity
+     | switchportVlan
+    )
+    ;
+  switchportPortSecurity =
+    qi::lit("port-security ") >
+    (
+       (qi::lit("mac-address ")
+        > -qi::lit("sticky")
+            [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityStickyMac,
+                       pnx::bind(&Parser::tgtIface, this),
+                       !pnx::bind(&Parser::isNo, this))]
+        > -macAddr
+            [pnx::bind(&nmco::InterfaceNetwork::addPortSecurityStickyMac,
+                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
+       )
+     | (qi::lit("maximum") >> qi::ushort_ >> qi::lit("vlan") > qi::ushort_)
           [pnx::bind(&Parser::unsup, this,
             pnx::bind([&](size_t a, size_t b)
               {return "port-security maximum " + std::to_string(a) +
                       " vlan " + std::to_string(b);}, qi::_1, qi::_2))]
-     | (qi::lit("port-security maximum") >> qi::ushort_)
+     | (qi::lit("maximum") >> qi::ushort_)
           [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     | (qi::lit("port-security violation") >> token)
+     | (qi::lit("violation") >> token)
           [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityViolationAction,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
-       // TODO add non-consuming lookahead to ensure ends in eol
-     | (qi::lit("port-security"))
+     | (&qi::eol)
           [pnx::bind(&nmco::InterfaceNetwork::setPortSecurity,
                      pnx::bind(&Parser::tgtIface, this),
                      !pnx::bind(&Parser::isNo, this))]
-
-     | (qi::lit("access vlan") /* default, vlan 1 */ >> qi::ushort_)
-          [pnx::bind(&nmco::InterfaceNetwork::addVlan,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-
-     | (qi::lit("trunk native vlan") /* default, vlan 1 */ >> qi::ushort_)
-          [pnx::bind(&nmco::InterfaceNetwork::addVlan,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     // { VLAN-LIST | all | none | [add|except|remove] { VLAN-LIST } }
-     | (qi::lit("trunk allowed vlan") /* default is all */ >>
-        (  (-qi::lit("add") >>
-            ((  (qi::ushort_ >> qi::lit('-') >> qi::ushort_)
-                   [pnx::bind(&nmco::InterfaceNetwork::addVlanRange,
-                              pnx::bind(&Parser::tgtIface, this),
-                              qi::_1, qi::_2)]
-              | (qi::ushort_)
-                   [pnx::bind(&nmco::InterfaceNetwork::addVlan,
-                              pnx::bind(&Parser::tgtIface, this), qi::_1)]
-             ) % qi::lit(',')))
-         | (token >> token)
-              [pnx::bind(&Parser::addObservation, this,
-                         "VLAN trunk " + qi::_1)]
-        )
-       )
-     // { VLAN-ID | [dot1p|none|untagged] }
-     | (qi::lit("voice vlan") >>
-        (  qi::ushort_
-             [pnx::bind(&nmco::InterfaceNetwork::addVlan,
-                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
-         | token
-             [pnx::bind(&Parser::addObservation, this,
-                        "voice VLAN " + qi::_1)]
-        )
-       )
     )
+    ;
+  switchportVlan =
+    (  qi::string("access ")
+     | qi::string("trunk ")
+     | qi::string("voice ")
+    ) >> ( qi::string("native ")
+         | qi::string("allowed ")
+         | qi::as_string[qi::attr(" ")]
+        )
+    >> qi::lit("vlan") > -qi::lit("add")
+    > (  ((vlanRange | vlanId) % qi::lit(','))
+       | (tokens)
+            [pnx::bind(&Parser::unsup, this,
+                       "switchport " + qi::_a + qi::_b + "vlan " + qi::_1)]
+      )
+
+    ;
+  vlanRange =
+    (qi::ushort_ >> qi::lit('-') >> qi::ushort_)
+      [pnx::bind(&nmco::InterfaceNetwork::addVlanRange,
+                 pnx::bind(&Parser::tgtIface, this),
+                 qi::_1, qi::_2)]
+    ;
+  vlanId =
+    qi::ushort_
+      [pnx::bind(&nmco::InterfaceNetwork::addVlan,
+                 pnx::bind(&Parser::tgtIface, this), qi::_1)]
     ;
 
   spanningTree =

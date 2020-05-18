@@ -99,8 +99,18 @@ class Parser :
       domainData,
       route,
       vlanDef,
-      interface, switchport, spanningTree,
+      interface,
+      switchport,
+        switchportPortSecurity,
+        //switchportVlan,
+          vlanRange,
+          vlanId,
+      spanningTree,
       accessPolicyRelated;
+
+    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
+             qi::locals<std::string, std::string>>
+      switchportVlan;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
       policyMap, classMap;
