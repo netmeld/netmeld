@@ -32,7 +32,9 @@
 
 namespace netmeld::core::utils {
 
-  void cmdExec(const std::string&);
+  bool isCmdAvailable(const std::string&);
+  void cmdExecOrExit(const std::string&);
+  int cmdExec(const std::string&);
   std::string cmdExecOut(const std::string&);
 
 }

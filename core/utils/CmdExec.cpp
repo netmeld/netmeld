@@ -29,7 +29,21 @@
 
 namespace netmeld::core::utils {
 
+  bool
+  isCmdAvailable(const std::string& _cmd)
+  {
+    return (0 == cmdExec("type " + _cmd + " >/dev/null 2>/dev/null"));
+  }
+
   void
+  cmdExecOrExit(const std::string& _cmd)
+  {
+    if (-1 == cmdExec(_cmd)) {
+      std::exit(nmcu::Exit::FAILURE);
+    }
+  }
+
+  int
   cmdExec(const std::string& _cmd)
   {
     LOG_DEBUG << _cmd << '\n';
@@ -37,6 +51,8 @@ namespace netmeld::core::utils {
     auto exitStatus {std::system(_cmd.c_str())};
     if (-1 == exitStatus) { LOG_ERROR << "Failure: " << _cmd << '\n'; }
     if (0 != exitStatus)  { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
+
+    return exitStatus;
   }
 
   std::string
