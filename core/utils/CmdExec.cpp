@@ -26,6 +26,38 @@
 
 #include <netmeld/core/utils/CmdExec.hpp>
 
+
 namespace netmeld::core::utils {
+
+  void
+  cmdExec(const std::string& _cmd)
+  {
+    LOG_DEBUG << _cmd << '\n';
+
+    auto exitStatus {std::system(_cmd.c_str())};
+    if (-1 == exitStatus) { LOG_ERROR << "Failure: " << _cmd << '\n'; }
+    if (0 != exitStatus)  { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
+  }
+
+  std::string
+  cmdExecOut(const std::string& _cmd)
+  {
+    LOG_DEBUG << _cmd << '\n';
+
+    std::unique_ptr<FILE, decltype(&pclose)>
+        pipe(popen(_cmd.c_str(), "r"), pclose);
+    if (!pipe) {
+      LOG_ERROR << "Failure: " << _cmd << '\n';
+      return "";
+    }
+
+    std::array<char, 128> buffer;
+    std::ostringstream oss;
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+      oss << buffer.data();
+    }
+
+    return oss.str();
+  }
 
 }

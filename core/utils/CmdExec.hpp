@@ -27,7 +27,14 @@
 #ifndef CMD_EXEC_HPP
 #define CMD_EXEC_HPP
 
+#include <string>
+#include <netmeld/core/utils/LoggerSingleton.hpp>
+
 namespace netmeld::core::utils {
+
+  void cmdExec(const std::string&);
+  std::string cmdExecOut(const std::string&);
+
 }
 
 #endif  /* CMD_EXEC_HPP */

@@ -90,6 +90,7 @@ add_library(${PROJECT_NAME} SHARED
     ./tools/AbstractInsertTool.cpp
     ./tools/AbstractTool.cpp
 
+    ./utils/CmdExec.cpp
     ./utils/FileManager.cpp
     ./utils/ForkExec.cpp
     ./utils/Logger.cpp
