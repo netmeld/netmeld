@@ -35,95 +35,95 @@
 
 namespace netmeld::datastore::importers::cisco {
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmcu = netmeld::core::utils;
+  namespace nmco = netmeld::core::objects;
+  namespace nmcp = netmeld::core::parsers;
+  namespace nmcu = netmeld::core::utils;
 
-
-// =============================================================================
-// Data containers
-// =============================================================================
-typedef std::map<std::string, nmco::AcServiceBook>  ServiceBook;
-typedef std::map<std::string, ServiceBook>          ServiceBooks;
-
-
-// =============================================================================
-// Parser definition
-// =============================================================================
-class CiscoServiceBook :
-  public qi::grammar<nmcp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
-{
-  // ===========================================================================
-  // Variables
-  // ===========================================================================
-  public:
-    // Rules
-    qi::rule<nmcp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
-      start;
-
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
-      ciscoServiceBook,
-      objectService,
-        objectServiceLine,
-        sourceDestinationArgument,
-      objectGroupService,
-        portObjectArgumentLine,
-        serviceObjectLine,
-      objectGroupProtocol,
-        protocolObjectLine,
-        groupObjectLine,
-      bookName,
-      description,
-      protocolArgument,
-      sourcePort,
-      destinationPort,
-      unallocatedPort,
-      objectArgument,
-      dataString;
-
-    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
-      portArgument;
-
-    qi::rule<nmcp::IstreamIter>
-      icmpArgument,
-        icmpTypeCode,
-        icmpMessage;
-
-  protected:
-    // Supporting data structures
-    ServiceBook   serviceBooks;
-    nmco::AcServiceBook curBook;
-    const std::string ZONE  {"global"};
-
-    std::string curProtocol {""};
-    std::string curSrcPort  {""};
-    std::string curDstPort  {""};
-
-    std::set<std::string> ignoredRuleData;
-
-  private:
 
   // ===========================================================================
-  // Constructors
+  // Data containers
   // ===========================================================================
-  public: // Constructor is only default and must be public
-    CiscoServiceBook();
+  typedef std::map<std::string, nmco::AcServiceBook>  ServiceBook;
+  typedef std::map<std::string, ServiceBook>          ServiceBooks;
+
 
   // ===========================================================================
-  // Methods
+  // Parser definition
   // ===========================================================================
-  public:
-    ServiceBooks getFinalVersion();
+  class CiscoServiceBook :
+    public qi::grammar<nmcp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
+  {
+    // =========================================================================
+    // Variables
+    // =========================================================================
+    public:
+      // Rules
+      qi::rule<nmcp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
+        start;
 
-  protected:
-  private: // Methods which should be hidden from API users
-    void addData(const std::string&);
-    void addCurData();
+      qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+        ciscoServiceBook,
+        objectService,
+          objectServiceLine,
+          sourceDestinationArgument,
+        objectGroupService,
+          portObjectArgumentLine,
+          serviceObjectLine,
+        objectGroupProtocol,
+          protocolObjectLine,
+          groupObjectLine,
+        bookName,
+        description,
+        protocolArgument,
+        sourcePort,
+        destinationPort,
+        unallocatedPort,
+        objectArgument,
+        dataString;
 
-    void finalizeCurBook();
+      qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+        portArgument;
 
-    // Object return
-    ServiceBooks getData();
-};
+      qi::rule<nmcp::IstreamIter>
+        icmpArgument,
+          icmpTypeCode,
+          icmpMessage;
+
+    protected:
+      // Supporting data structures
+      ServiceBook   serviceBooks;
+      nmco::AcServiceBook curBook;
+      const std::string ZONE  {"global"};
+
+      std::string curProtocol {""};
+      std::string curSrcPort  {""};
+      std::string curDstPort  {""};
+
+      std::set<std::string> ignoredRuleData;
+
+    private:
+
+    // =========================================================================
+    // Constructors
+    // =========================================================================
+    public: // Constructor is only default and must be public
+      CiscoServiceBook();
+
+    // =========================================================================
+    // Methods
+    // =========================================================================
+    public:
+      ServiceBooks getFinalVersion();
+
+    protected:
+    private: // Methods which should be hidden from API users
+      void addData(const std::string&);
+      void addCurData();
+
+      void finalizeCurBook();
+
+      // Object return
+      ServiceBooks getData();
+  };
 }
 #endif // CISCO_SERVICE_BOOK_HPP

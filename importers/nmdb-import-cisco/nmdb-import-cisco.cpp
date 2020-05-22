@@ -65,9 +65,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
   public: // Constructors should generally be public
     Tool() : nmct::AbstractImportTool<P,R>
       (
-       // TODO Add for each OS supported?
-       "IOS|NXOS|ASA: show running-config all",  // command line tool imports data from
-       // WLC|WISM: "show run-config startup-commands"
+       // command line tool imports data from
+       "IOS|NXOS|ASA: show running-config all",
        PROGRAM_NAME,     // program name (set in CMakeLists.txt)
        PROGRAM_VERSION   // program version (set in CMakeLists.txt)
       )

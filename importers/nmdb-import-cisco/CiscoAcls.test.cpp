@@ -1210,6 +1210,7 @@ BOOST_AUTO_TEST_CASE(testAsaRemark)
     BOOST_TEST(0 == aclBook.size());
   }
 }
+
 // TODO add webtype and ethertype?
 #if false
 /* NOTE: Below is a one-liner wrapped for clarity

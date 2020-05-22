@@ -29,261 +29,258 @@
 namespace nmdsic = netmeld::datastore::importers::cisco;
 
 namespace netmeld::datastore::importers::cisco {
-// =============================================================================
-// Parser logic
-// =============================================================================
-CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
-{
-  using nmdsic::token;
-  using nmdsic::tokens;
-  using nmdsic::indent;
+  // ===========================================================================
+  // Parser logic
+  // ===========================================================================
+  CiscoNetworkBook::CiscoNetworkBook() : CiscoNetworkBook::base_type(start)
+  {
+    using nmdsic::token;
+    using nmdsic::tokens;
+    using nmdsic::indent;
 
-  start =
-    ciscoNetworkBook
-     [qi::_val = pnx::bind(&CiscoNetworkBook::getData, this)]
-    ;
+    start =
+      ciscoNetworkBook
+       [qi::_val = pnx::bind(&CiscoNetworkBook::getData, this)]
+      ;
 
-  ciscoNetworkBook =
-    (  nameLine
-     | objectNetwork
-     | objectGroupNetwork
-    ) [pnx::bind(&CiscoNetworkBook::finalizeCurBook, this)]
-    ;
+    ciscoNetworkBook =
+      (  nameLine
+       | objectNetwork
+       | objectGroupNetwork
+      ) [pnx::bind(&CiscoNetworkBook::finalizeCurBook, this)]
+      ;
 
-  nameLine =
-    qi::lit("name ") > dataIp > bookName > (description | qi::eol)
-    ;
+    nameLine =
+      qi::lit("name ") > dataIp > bookName > (description | qi::eol)
+      ;
 
-  objectNetwork =
-    qi::lit("object network ") > bookName > qi::eol
-    > *(indent
-        > (  objectNetworkHostLine
-           | objectNetworkSubnetLine
-           | objectNetworkRangeLine
-           | objectNetworkNatLine
-           | objectNetworkFqdnLine
-           | description
-           | (qi::eol) // space prefixed blank line
-          )
-       )
-    ;
-  objectNetworkHostLine =
-    hostArgument > qi::eol
-    ;
-  objectNetworkSubnetLine =
-    qi::lit("subnet ") > (dataIpMask | dataIpPrefix) > qi::eol
-    ;
-  objectNetworkRangeLine =
-    qi::lit("range ") > dataIpRange > qi::eol
-    ;
-  objectNetworkNatLine =
-    qi::lit("nat ") > tokens > qi::eol
-    ;
-  objectNetworkFqdnLine =
-    qi::lit("fqdn ") > -(qi::lit("v4 ") | qi::lit("v6 "))
-    > dataString > qi::eol
-    ;
+    objectNetwork =
+      qi::lit("object network ") > bookName > qi::eol
+      > *(indent
+          > (  objectNetworkHostLine
+             | objectNetworkSubnetLine
+             | objectNetworkRangeLine
+             | objectNetworkNatLine
+             | objectNetworkFqdnLine
+             | description
+             | (qi::eol) // space prefixed blank line
+            )
+         )
+      ;
+    objectNetworkHostLine =
+      hostArgument > qi::eol
+      ;
+    objectNetworkSubnetLine =
+      qi::lit("subnet ") > (dataIpMask | dataIpPrefix) > qi::eol
+      ;
+    objectNetworkRangeLine =
+      qi::lit("range ") > dataIpRange > qi::eol
+      ;
+    objectNetworkNatLine =
+      qi::lit("nat ") > tokens > qi::eol
+      ;
+    objectNetworkFqdnLine =
+      qi::lit("fqdn ") > -(qi::lit("v4 ") | qi::lit("v6 "))
+      > dataString > qi::eol
+      ;
 
-  objectGroupNetwork =
-    qi::lit("object-group network ") > bookName > qi::eol
-    > *(indent
-        > (  networkObjectLine
-           | groupObjectLine
-           | description
-           | (qi::eol) // space prefixed blank line
-          )
-       )
-    ;
-  networkObjectLine =
-    qi::lit("network-object ")
-    > (  objectArgument
-       | hostArgument
-       | dataNetworkObjectMask
-       | (dataIpMask | dataIpPrefix)
-    ) > qi::eol
-    ;
-  groupObjectLine =
-    qi::lit("group-object ") > dataString > qi::eol
-    ;
-
-
-  //========
-  // Helper piece-wise rules
-  //========
-  bookName =
-    token [pnx::bind([&](const std::string& _name)
-                     {curBook.setName(_name);}, qi::_1)]
-    ;
-
-  description =
-    qi::lit("description ") > tokens > qi::eol
-    ;
-
-  hostArgument =
-    qi::lit("host ") > (dataIp | dataString)
-    ;
-  ipNoPrefix =
-    (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
-    ;
-  dataIp =
-    (&ipNoPrefix > ipAddr)
-      [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
-    ;
-  dataIpPrefix =
-    (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
-      [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
-    ;
-  dataIpMask =
-    (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank] >> &ipNoPrefix >> ipAddr)
-      [pnx::bind(&CiscoNetworkBook::fromIpMask, this, qi::_1, qi::_2)]
-    ;
-  dataIpRange =
-    (ipAddr >> qi::omit[+qi::blank] >> ipAddr)
-      [pnx::bind(&CiscoNetworkBook::fromIpRange, this, qi::_1, qi::_2)]
-    ;
-  dataString =
-    token [pnx::bind(&CiscoNetworkBook::addData, this, qi::_1)]
-    ;
-
-  objectArgument =
-    qi::lit("object ") > dataString
-    ;
-  dataNetworkObjectMask =
-    (&(!ipAddr) >> token >> ipAddr)
-      [pnx::bind(&CiscoNetworkBook::fromNetworkObjectMask,
-                 this, qi::_1, qi::_2)]
-    ;
+    objectGroupNetwork =
+      qi::lit("object-group network ") > bookName > qi::eol
+      > *(indent
+          > (  networkObjectLine
+             | groupObjectLine
+             | description
+             | (qi::eol) // space prefixed blank line
+            )
+         )
+      ;
+    networkObjectLine =
+      qi::lit("network-object ")
+      > (  objectArgument
+         | hostArgument
+         | dataNetworkObjectMask
+         | (dataIpMask | dataIpPrefix)
+      ) > qi::eol
+      ;
+    groupObjectLine =
+      qi::lit("group-object ") > dataString > qi::eol
+      ;
 
 
+    //========
+    // Helper piece-wise rules
+    //========
+    bookName =
+      token [pnx::bind([&](const std::string& _name)
+                       {curBook.setName(_name);}, qi::_1)]
+      ;
 
-  BOOST_SPIRIT_DEBUG_NODES(
-      //(start)
-      (ciscoNetworkBook)
-      (nameLine)
-      (objectNetwork)
-        (objectNetworkHostLine)
-        (objectNetworkSubnetLine)
-        (objectNetworkRangeLine)
-        (objectNetworkNatLine)
-      (objectGroupNetwork)
-        (networkObjectLine)
-        (groupObjectLine)
-      (description)
-      (objectArgument)
-      (dataNetworkObjectMask)
-      (bookName)
-      (hostArgument)
-      (dataIp)
-      (dataIpPrefix)
-      (dataIpMask)
-      (dataIpRange)
-      (dataString)
-      (ipNoPrefix)
-      //(token)(tokens)(indent)
-      );
-}
+    description =
+      qi::lit("description ") > tokens > qi::eol
+      ;
 
-// =============================================================================
-// Parser helper methods
-// =============================================================================
+    hostArgument =
+      qi::lit("host ") > (dataIp | dataString)
+      ;
+    ipNoPrefix =
+      (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
+      ;
+    dataIp =
+      (&ipNoPrefix > ipAddr)
+        [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
+      ;
+    dataIpPrefix =
+      (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
+        [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
+      ;
+    dataIpMask =
+      (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank] >> &ipNoPrefix >> ipAddr)
+        [pnx::bind(&CiscoNetworkBook::fromIpMask, this, qi::_1, qi::_2)]
+      ;
+    dataIpRange =
+      (ipAddr >> qi::omit[+qi::blank] >> ipAddr)
+        [pnx::bind(&CiscoNetworkBook::fromIpRange, this, qi::_1, qi::_2)]
+      ;
+    dataString =
+      token [pnx::bind(&CiscoNetworkBook::addData, this, qi::_1)]
+      ;
 
-void
-CiscoNetworkBook::addData(const std::string& _data)
-{
-  const auto& data {nmcu::trim(_data)};
-  curBook.addData(data);
-}
+    objectArgument =
+      qi::lit("object ") > dataString
+      ;
+    dataNetworkObjectMask =
+      (&(!ipAddr) >> token >> ipAddr)
+        [pnx::bind(&CiscoNetworkBook::fromNetworkObjectMask,
+                   this, qi::_1, qi::_2)]
+      ;
 
-void
-CiscoNetworkBook::fromIp(const nmco::IpAddress& _ip)
-{
-  addData(_ip.toString());
-}
-void
-CiscoNetworkBook::fromIpMask(const nmco::IpAddress& _ip,
-                             const nmco::IpAddress& _mask)
-{
-  auto temp {_ip};
-  auto maskStr {_mask.toString()};
-  if ("0.0.0.0/32" == maskStr || "255.255.255.255/32" == maskStr) {
-    temp.setNetmask(_mask);
-    addData(temp.toString());
-  } else {
-    temp.setMask(_mask);
-    addData(temp.toString());
+
+
+    BOOST_SPIRIT_DEBUG_NODES(
+        //(start)
+        (ciscoNetworkBook)
+        (nameLine)
+        (objectNetwork)
+          (objectNetworkHostLine)
+          (objectNetworkSubnetLine)
+          (objectNetworkRangeLine)
+          (objectNetworkNatLine)
+        (objectGroupNetwork)
+          (networkObjectLine)
+          (groupObjectLine)
+        (description)
+        (objectArgument)
+        (dataNetworkObjectMask)
+        (bookName)
+        (hostArgument)
+        (dataIp)
+        (dataIpPrefix)
+        (dataIpMask)
+        (dataIpRange)
+        (dataString)
+        (ipNoPrefix)
+        //(token)(tokens)(indent)
+        );
   }
-}
-void
-CiscoNetworkBook::fromIpRange(const nmco::IpAddress& _start,
-                              const nmco::IpAddress& _end)
-{
-  std::ostringstream oss;
-  oss << _start.toString() << "-" << _end.toString();
-  addData(oss.str());
-}
 
-void
-CiscoNetworkBook::fromNetworkObjectMask(const std::string& _otherBook,
-                                        const nmco::IpAddress& _mask)
-{
-  if (0 == networkBooks.count(_otherBook)) {
-    LOG_WARN << "CiscoNetworkBook:"
-             << " Cannot apply mask (" << _mask << ")"
-             << " to undefined book (" << _otherBook << ")"
-             << '\n';
-    return;
+  // ===========================================================================
+  // Parser helper methods
+  // ===========================================================================
+
+  void
+  CiscoNetworkBook::addData(const std::string& _data)
+  {
+    const auto& data {nmcu::trim(_data)};
+    curBook.addData(data);
   }
-  for (const auto& ip : networkBooks[_otherBook].getData()) {
-    if (std::string::npos != ip.find('-')) {
+
+  void
+  CiscoNetworkBook::fromIp(const nmco::IpAddress& _ip)
+  {
+    addData(_ip.toString());
+  }
+  void
+  CiscoNetworkBook::fromIpMask(const nmco::IpAddress& _ip,
+                               const nmco::IpAddress& _mask)
+  {
+    auto temp {_ip};
+    auto maskStr {_mask.toString()};
+    if ("0.0.0.0/32" == maskStr || "255.255.255.255/32" == maskStr) {
+      temp.setNetmask(_mask);
+      addData(temp.toString());
+    } else {
+      temp.setMask(_mask);
+      addData(temp.toString());
+    }
+  }
+  void
+  CiscoNetworkBook::fromIpRange(const nmco::IpAddress& _start,
+                                const nmco::IpAddress& _end)
+  {
+    std::ostringstream oss;
+    oss << _start.toString() << "-" << _end.toString();
+    addData(oss.str());
+  }
+
+  void
+  CiscoNetworkBook::fromNetworkObjectMask(const std::string& _otherBook,
+                                          const nmco::IpAddress& _mask)
+  {
+    if (0 == networkBooks.count(_otherBook)) {
       LOG_WARN << "CiscoNetworkBook:"
                << " Cannot apply mask (" << _mask << ")"
-               << " to network range (" << ip << ")"
+               << " to undefined book (" << _otherBook << ")"
                << '\n';
-      continue;
+      return;
     }
-    nmco::IpAddress temp {ip};
-    temp.setMask(_mask);
-    addData(temp.toString());
-  }
-}
-
-void
-CiscoNetworkBook::finalizeCurBook()
-{
-  const auto& tgtBook {curBook.getName()};
-  if (0 == networkBooks.count(tgtBook)) {
-    networkBooks.emplace(curBook.getName(), curBook);
-  } else {
-    auto& existingBook {networkBooks.at(tgtBook)};
-    for (auto& data : curBook.getData()) {
-      existingBook.addData(data);
-    }
-  }
-  curBook = nmco::AcNetworkBook();
-}
-
-
-// Object return
-NetworkBooks
-CiscoNetworkBook::getFinalVersion()
-{
-  NetworkBooks zoneBooks;
-  zoneBooks.emplace(ZONE, networkBooks);
-  for (const auto& [zone, books] : zoneBooks) {
-    for (const auto& [name, book] : books) {
-      nmcu::expanded(zoneBooks, zone, name, ZONE);
+    for (const auto& ip : networkBooks[_otherBook].getData()) {
+      if (std::string::npos != ip.find('-')) {
+        LOG_WARN << "CiscoNetworkBook:"
+                 << " Cannot apply mask (" << _mask << ")"
+                 << " to network range (" << ip << ")"
+                 << '\n';
+        continue;
+      }
+      nmco::IpAddress temp {ip};
+      temp.setMask(_mask);
+      addData(temp.toString());
     }
   }
 
-  return zoneBooks;
-}
+  void
+  CiscoNetworkBook::finalizeCurBook()
+  {
+    const auto& tgtBook {curBook.getName()};
+    if (0 == networkBooks.count(tgtBook)) {
+      networkBooks.emplace(curBook.getName(), curBook);
+    } else {
+      auto& existingBook {networkBooks.at(tgtBook)};
+      for (auto& data : curBook.getData()) {
+        existingBook.addData(data);
+      }
+    }
+    curBook = nmco::AcNetworkBook();
+  }
 
-NetworkBooks
-CiscoNetworkBook::getData()
-{
-  //NetworkBooks r(ruleBookName, ruleBook);
-  //return r;
-  return NetworkBooks();
-}
 
+  // Object return
+  NetworkBooks
+  CiscoNetworkBook::getFinalVersion()
+  {
+    NetworkBooks zoneBooks;
+    zoneBooks.emplace(ZONE, networkBooks);
+    for (const auto& [zone, books] : zoneBooks) {
+      for (const auto& [name, book] : books) {
+        nmcu::expanded(zoneBooks, zone, name, ZONE);
+      }
+    }
+
+    return zoneBooks;
+  }
+
+  NetworkBooks
+  CiscoNetworkBook::getData()
+  {
+    return NetworkBooks();
+  }
 } // end of namespace

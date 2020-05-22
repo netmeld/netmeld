@@ -36,93 +36,93 @@
 
 namespace netmeld::datastore::importers::cisco {
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmcu = netmeld::core::utils;
+  namespace nmco = netmeld::core::objects;
+  namespace nmcp = netmeld::core::parsers;
+  namespace nmcu = netmeld::core::utils;
 
-
-// =============================================================================
-// Data containers
-// =============================================================================
-typedef std::map<std::string, nmco::AcNetworkBook>  NetworkBook;
-typedef std::map<std::string, NetworkBook>          NetworkBooks;
-
-
-// =============================================================================
-// Parser definition
-// =============================================================================
-class CiscoNetworkBook :
-  public qi::grammar<nmcp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
-{
-  // ===========================================================================
-  // Variables
-  // ===========================================================================
-  public:
-    // Rules
-    qi::rule<nmcp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
-      start;
-
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
-      ciscoNetworkBook,
-      nameLine,
-      objectNetwork,
-        objectNetworkHostLine,
-        objectNetworkSubnetLine,
-        objectNetworkRangeLine,
-        objectNetworkNatLine,
-        objectNetworkFqdnLine,
-      objectGroupNetwork,
-        networkObjectLine,
-        groupObjectLine,
-      description,
-      objectArgument,
-      dataNetworkObjectMask,
-      bookName,
-      hostArgument,
-      dataIp,
-      dataString;
-
-    qi::rule<nmcp::IstreamIter>
-      dataIpMask,
-      dataIpPrefix,
-      dataIpRange,
-      ipNoPrefix;
-
-    nmcp::ParserIpAddress   ipAddr;
-
-  protected:
-    // Supporting data structures
-    NetworkBook networkBooks;
-    nmco::AcNetworkBook curBook;
-    const std::string ZONE  {"global"};
-
-    std::set<std::string> ignoredRuleData;
-
-  private:
 
   // ===========================================================================
-  // Constructors
+  // Data containers
   // ===========================================================================
-  public: // Constructor is only default and must be public
-    CiscoNetworkBook();
+  typedef std::map<std::string, nmco::AcNetworkBook>  NetworkBook;
+  typedef std::map<std::string, NetworkBook>          NetworkBooks;
+
 
   // ===========================================================================
-  // Methods
+  // Parser definition
   // ===========================================================================
-  public:
-    NetworkBooks getFinalVersion();
+  class CiscoNetworkBook :
+    public qi::grammar<nmcp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
+  {
+    // =========================================================================
+    // Variables
+    // =========================================================================
+    public:
+      // Rules
+      qi::rule<nmcp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
+        start;
 
-  protected:
-  private: // Methods which should be hidden from API users
-    void addData(const std::string&);
-    void fromIp(const nmco::IpAddress&);
-    void fromIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
-    void fromIpRange(const nmco::IpAddress&, const nmco::IpAddress&);
-    void fromNetworkObjectMask(const std::string&, const nmco::IpAddress&);
-    void finalizeCurBook();
+      qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+        ciscoNetworkBook,
+        nameLine,
+        objectNetwork,
+          objectNetworkHostLine,
+          objectNetworkSubnetLine,
+          objectNetworkRangeLine,
+          objectNetworkNatLine,
+          objectNetworkFqdnLine,
+        objectGroupNetwork,
+          networkObjectLine,
+          groupObjectLine,
+        description,
+        objectArgument,
+        dataNetworkObjectMask,
+        bookName,
+        hostArgument,
+        dataIp,
+        dataString;
 
-    // Object return
-    NetworkBooks getData();
-};
+      qi::rule<nmcp::IstreamIter>
+        dataIpMask,
+        dataIpPrefix,
+        dataIpRange,
+        ipNoPrefix;
+
+      nmcp::ParserIpAddress   ipAddr;
+
+    protected:
+      // Supporting data structures
+      NetworkBook networkBooks;
+      nmco::AcNetworkBook curBook;
+      const std::string ZONE  {"global"};
+
+      std::set<std::string> ignoredRuleData;
+
+    private:
+
+    // =========================================================================
+    // Constructors
+    // =========================================================================
+    public: // Constructor is only default and must be public
+      CiscoNetworkBook();
+
+    // =========================================================================
+    // Methods
+    // =========================================================================
+    public:
+      NetworkBooks getFinalVersion();
+
+    protected:
+    private: // Methods which should be hidden from API users
+      void addData(const std::string&);
+      void fromIp(const nmco::IpAddress&);
+      void fromIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
+      void fromIpRange(const nmco::IpAddress&, const nmco::IpAddress&);
+      void fromNetworkObjectMask(const std::string&, const nmco::IpAddress&);
+      void finalizeCurBook();
+
+      // Object return
+      NetworkBooks getData();
+  };
 }
 #endif // CISO_NETWORK_BOOK_HPP

@@ -50,21 +50,12 @@ class TestCiscoServiceBook : public nmdsic::CiscoServiceBook {
     { return curBook; }
     const std::string& getZone()
     { return ZONE; }
-//    const std::string& getRuleBookName()
-//    { return ruleBookName; }
-//    const nmdsic::RuleBook& getRuleBook()
-//    { return ruleBook; }
-//    size_t getCurRuleId()
-//    { return curRuleId; }
     const std::string& getCurProtocol()
     { return curProtocol; }
     const std::string& getCurSrcPort()
     { return curSrcPort; }
     const std::string& getCurDstPort()
     { return curDstPort; }
-//    const std::set<std::string>& getIgnoredRuleData()
-//    { return ignoredRuleData; }
-
 };
 
 BOOST_AUTO_TEST_CASE(testCiscoServiceBookRules)
