@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "CommonRules.hpp"
+#include "RulesCommon.hpp"
 
 namespace netmeld::datastore::importers::cisco {
   qi::rule<nmcp::IstreamIter, std::string()>

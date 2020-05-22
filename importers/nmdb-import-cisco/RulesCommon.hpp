@@ -24,8 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef NMDICR_HPP
-#define NMDICR_HPP
+#ifndef DATASTORE_IMPORTERS_RULES_COMMON_HPP
+#define DATASTORE_IMPORTERS_RULES_COMMON_HPP
 
 #include <netmeld/core/parsers/ParserHelper.hpp>
 
@@ -34,8 +34,6 @@ namespace nmcp = netmeld::core::parsers;
 // =============================================================================
 // Parser definition
 // =============================================================================
-//struct CommonRules 
-//{
 namespace netmeld::datastore::importers::cisco {
   extern qi::rule<nmcp::IstreamIter, std::string()>
     token;
@@ -44,5 +42,4 @@ namespace netmeld::datastore::importers::cisco {
   extern qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
     indent;
 }
-//;
-#endif // NMDICR_HPP
+#endif // DATASTORE_IMPORTERS_RULES_COMMON_HPP

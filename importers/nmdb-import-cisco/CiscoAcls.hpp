@@ -42,7 +42,7 @@
 #include <netmeld/core/tools/AbstractImportTool.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
-#include "CommonRules.hpp"
+#include "RulesCommon.hpp"
 
 namespace netmeld::datastore::importers::cisco {
 

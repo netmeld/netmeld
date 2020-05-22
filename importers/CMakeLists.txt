@@ -46,8 +46,6 @@ function(create_test TEST_NAME)
       ${TEST_NAME}.test.cpp
       ${TEST_NAME}.hpp
       ${TEST_NAME}.cpp
-      CommonRules.cpp
-      CommonRules.hpp
     )
 
   target_link_libraries(Test.${TEST_NAME}
@@ -71,7 +69,6 @@ endfunction()
 foreach(TOOL_NAME
     nmdb-import-brocade
     nmdb-import-cisco
-    nmdb-import-cisco-asa
     nmdb-import-cisco-wireless
     nmdb-import-clw
     nmdb-import-hosts

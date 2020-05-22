@@ -27,9 +27,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/AcNetworkBook.hpp>
 #include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
 #include <netmeld/core/objects/DeviceInformation.hpp>
 #include <netmeld/core/objects/InterfaceNetwork.hpp>
 #include <netmeld/core/objects/Route.hpp>
@@ -40,16 +38,14 @@
 #include <netmeld/core/parsers/ParserIpAddress.hpp>
 #include <netmeld/core/parsers/ParserMacAddress.hpp>
 #include <netmeld/core/tools/AbstractImportTool.hpp>
-#include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "CiscoAcls.hpp"
 #include "CiscoNetworkBook.hpp"
 #include "CiscoServiceBook.hpp"
-#include "CommonRules.hpp"
+#include "RulesCommon.hpp"
 
 namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
-namespace nmcu = netmeld::core::utils;
 
 namespace nmdsic = netmeld::datastore::importers::cisco;
 

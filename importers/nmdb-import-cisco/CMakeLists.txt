@@ -36,8 +36,8 @@ add_executable(${TOOL_NAME}
     CiscoAcls.cpp
     CiscoNetworkBook.cpp
     CiscoServiceBook.cpp
-    CommonRules.cpp
     Parser.cpp
+    RulesCommon.cpp
     ${TOOL_NAME}.cpp
   )
 
@@ -54,6 +54,10 @@ foreach(TEST_NAME
   )
   
   create_test(${TEST_NAME})
+  target_sources(Test.${TEST_NAME} PRIVATE
+      RulesCommon.cpp
+      RulesCommon.hpp
+    )
 endforeach(TEST_NAME)
 
 create_man_from_help(${TOOL_NAME})

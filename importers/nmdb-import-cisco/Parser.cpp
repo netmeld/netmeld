@@ -27,7 +27,9 @@
 #include "Parser.hpp"
 
 #include <netmeld/core/utils/ServiceFactory.hpp>
+#include <netmeld/core/utils/StringUtilities.hpp>
 
+namespace nmcu = netmeld::core::utils;
 
 // =============================================================================
 // Parser logic

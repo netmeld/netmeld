@@ -31,7 +31,7 @@
 #include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/core/utils/AcBookUtilities.hpp>
 
-#include "CommonRules.hpp"
+#include "RulesCommon.hpp"
 
 namespace netmeld::datastore::importers::cisco {
 
