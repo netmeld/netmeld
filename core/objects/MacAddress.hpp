@@ -39,10 +39,9 @@ namespace netmeld::core::objects {
     // =========================================================================
     private:
     protected:
-      std::vector<uint8_t>  macAddr;
-      //std::set<IpAddress>   ipAddrs;
-      std::vector<IpAddress>   ipAddrs;
-      bool                  isResponding {false};
+      std::vector<uint8_t>    macAddr;
+      std::vector<IpAddress>  ipAddrs;
+      bool                    isResponding {false};
 
     public:
 
@@ -73,7 +72,8 @@ namespace netmeld::core::objects {
 
       std::vector<IpAddress> getIpAddrs() const;
 
-      void save(pqxx::transaction_base&, const Uuid&, const std::string&) override;
+      void save(pqxx::transaction_base&, const Uuid&,
+                const std::string&) override;
 
       std::string toString() const;
       std::string toDebugString() const override;

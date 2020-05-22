@@ -357,10 +357,23 @@ Parser::Parser() : Parser::base_type(start)
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (config)
-      (domainData)(route)(vlanDef)
-      (policyMap)(classMap)(addressArgument)(ports)
-      (interface)(switchport)(spanningTree)
+      (domainData)
+      (globalServices)
+      (route)
+      (vlanDef)
+      (interface)
+        (switchport)
+          (switchportPortSecurity)
+            (vlanRange)
+            (vlanId)
+        (spanningTree)
+      (accessPolicyRelated)
+      (switchportVlan)
+      (policyMap)(classMap)
+      (addressArgument)
+      (ports)
       (vlan)
+      (ipMask)
       (tokens)(token)
       );
 }
@@ -383,8 +396,6 @@ Parser::serviceAddDhcp(const nmco::IpAddress& ip)
   auto service = nmcu::ServiceFactory::makeDhcp();
   service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
-  //TODO technically wrong, but the object save does the right thing
-  service.setInterfaceName(tgtIface->getName());
   d.services.push_back(service);
 }
 

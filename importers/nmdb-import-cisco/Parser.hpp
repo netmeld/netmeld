@@ -101,7 +101,7 @@ class Parser :
         switchportPortSecurity,
           vlanRange,
           vlanId,
-      spanningTree,
+        spanningTree,
       accessPolicyRelated;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
