@@ -3,6 +3,9 @@ name: CI
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    types: [ assigned, synchronize, ready_for_review ]
 
 jobs:
   Core:
