@@ -47,11 +47,11 @@
 #include "CiscoServiceBook.hpp"
 #include "CommonRules.hpp"
 
-namespace nmdsic = netmeld::datastore::importers::cisco;
-
 namespace nmco = netmeld::core::objects;
 namespace nmcp = netmeld::core::parsers;
 namespace nmcu = netmeld::core::utils;
+
+namespace nmdsic = netmeld::datastore::importers::cisco;
 
 using nmdsic::RuleBook;
 using nmdsic::NetworkBook;
@@ -103,7 +103,6 @@ class Parser :
       interface,
       switchport,
         switchportPortSecurity,
-        //switchportVlan,
           vlanRange,
           vlanId,
       spanningTree,
@@ -123,6 +122,9 @@ class Parser :
     qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
       vlan;
 
+    qi::rule<nmcp::IstreamIter, nmco::IpAddress()>
+      ipMask;
+
     nmcp::ParserDomainName  domainName;
     nmcp::ParserIpAddress   ipAddr;
     nmcp::ParserMacAddress  macAddr;
@@ -141,7 +143,7 @@ class Parser :
     std::vector<std::tuple<nmco::InterfaceNetwork*,
                            std::string,
                            nmco::IpAddress>>
-      postIfaceIpAliasData;
+      postIfaceAliasIpData;
 
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
@@ -194,8 +196,8 @@ class Parser :
 
     // Interface related
     void ifaceInit(const std::string&);
-    void ifaceFinalize();
     void ifaceSetUpdate(std::set<std::string>* const);
+    void ifaceAddAlias(const std::string&, const nmco::IpAddress&);
 
     // Vlan related
     void vlanAdd(nmco::Vlan&);

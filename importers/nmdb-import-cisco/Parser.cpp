@@ -26,6 +26,8 @@
 
 #include "Parser.hpp"
 
+#include <netmeld/core/utils/ServiceFactory.hpp>
+
 
 // =============================================================================
 // Parser logic
@@ -98,14 +100,11 @@ Parser::Parser() : Parser::base_type(start)
   route = 
     (qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
        // ip_mask ip
-    (  (ipAddr >> ipAddr >> ipAddr)
-         [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-          pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_3)]
+    (  (ipMask >> ipAddr)
+         [pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2)]
        // ip_mask iface
-     | (ipAddr >> ipAddr >>
-        (!(qi::digit | qi::lit("permanent")) >> token))
-         [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-          pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_3)]
+     | (ipMask >> (!(qi::digit | qi::lit("permanent")) >> token))
+         [pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2)]
        // ip ip
      | (ipAddr >> ipAddr)
          [pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2)]
@@ -126,7 +125,6 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // TODO consider moving interface to own parser
   interface =
     qi::no_skip[qi::lit("interface")] >>
     (  (token >> token > qi::eol)
@@ -148,36 +146,25 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind([&](){tgtIface->setDiscoveryProtocol(!isNo);}),
              pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificCdp)]
 
-       | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("address") >>
-          (  (ipAddr >> ipAddr)
-                [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-                 pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-                           pnx::bind(&Parser::tgtIface, this), qi::_1)]
+       | ((qi::lit("ipv6") | qi::lit("ip")) >> -qi::lit("-")
+          >> qi::lit("address") >>
+          (  (ipMask)
+               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
            | (ipAddr)
-              [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
-                         pnx::bind(&Parser::tgtIface, this), qi::_1)]
+               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
            | (domainName >> ipAddr)
-                [pnx::bind([&](const std::string& _alias,
-                               const nmco::IpAddress& _mask)
-                           {
-                            nmco::IpAddress temp;
-                            temp.setMask(_mask);
-                            postIfaceIpAliasData.push_back(std::make_tuple(
-                                  tgtIface, _alias, temp
-                                  ));
-                           }, qi::_1, qi::_2)]
+               [pnx::bind(&Parser::ifaceAddAlias, this, qi::_1, qi::_2)]
            | (domainName)
-                [pnx::bind([&](const std::string& _alias)
-                           {nmco::IpAddress temp;
-                            postIfaceIpAliasData.push_back(std::make_tuple(
-                                  tgtIface, _alias, temp
-                                  ));
-                           }, qi::_1)]
+               [pnx::bind(&Parser::ifaceAddAlias, this,
+                          qi::_1, nmco::IpAddress())]
           )
          )
 
-         // TODO ip helper-address [vrf name | global] ip [redundancy vrg-name]
-       | (qi::lit("ip helper-address") >> ipAddr)
+       | (qi::lit("ip helper-address")
+          >> -((qi::lit("vrf") > qi::omit[token]) | qi::lit("global"))
+          >> ipAddr > -tokens)
             [pnx::bind(&Parser::serviceAddDhcp, this, qi::_1)]
        | (qi::lit("ip dhcp relay address") >> ipAddr)
             [pnx::bind(&Parser::serviceAddDhcp, this, qi::_1)]
@@ -193,18 +180,13 @@ Parser::Parser() : Parser::base_type(start)
 
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
-         // TODO standby [ group-number ] ip [ ip-address [ secondary ]]
-       | (qi::lit("standby") >> qi::int_ >> qi::lit("ip") >> ipAddr)
+       | (qi::lit("standby") >> qi::int_ >> qi::lit("ip")
+          >> ipAddr >> -qi::lit("secondary"))
             [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
                        pnx::bind(&Parser::tgtIface, this), qi::_2)]
        // Capture Cisco N1000V virtual switches
        | (qi::lit("vmware vm mac") >> macAddr)
             [pnx::bind(&nmco::InterfaceNetwork::addReachableMac,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
-       // Capture ADX configs
-         // TODO move with ip capture above?
-       | (qi::lit("ip-address") >> ipAddr)
-            [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        /* END: No examples of these, cannot verify */
 
@@ -240,7 +222,6 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // TODO migrate
   switchport =
     qi::lit("switchport") >>
     (  ((qi::lit("mode") > token) | qi::string("nonegotiate"))
@@ -303,7 +284,7 @@ Parser::Parser() : Parser::base_type(start)
 
   spanningTree =
     qi::lit("spanning-tree") >
-      // TODO These have "default" values which require to know edge-port state
+      // NOTE All have "default" values which require knowing edge-port state
     (  (qi::lit("bpduguard")
          [pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
           pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard)] >
@@ -344,8 +325,7 @@ Parser::Parser() : Parser::base_type(start)
        // access-group ac-list {in|out} interface ifaceName
      | (qi::lit("access-group") >> token >> token >>
         qi::lit("interface") >> token)
-          [//pnx::bind(&Parser::ifaceInit, this, qi::_3),
-           pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3)]
+          [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3)]
     )
     ;
 
@@ -363,6 +343,13 @@ Parser::Parser() : Parser::base_type(start)
           [pnx::bind(&Parser::updateClassMap, this, qi::_a, qi::_1)]
       | qi::omit[(+indent >> tokens >> qi::eol)]
     )
+    ;
+
+  // General Helper(s)
+  ipMask =
+    (ipAddr >> +qi::blank >> ipAddr)
+      [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_3),
+       qi::_val = qi::_1]
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
@@ -388,16 +375,13 @@ Parser::deviceAaaAdd(const std::string& aaa)
 }
 
 // Service related
-// TODO can we make these more statically generated?
 void
 Parser::serviceAddDhcp(const nmco::IpAddress& ip)
 {
-  nmco::Service service {"dhcps", ip}; // match nmap output
-  service.setProtocol("udp");
-  service.addDstPort("67"); // port server uses
-  service.addSrcPort("68"); // port client uses
+  auto service = nmcu::ServiceFactory::makeDhcp();
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
-  // TODO technically wrong...but the Service object does the right thing
+  //TODO technically wrong, but the object save does the right thing
   service.setInterfaceName(tgtIface->getName());
   d.services.push_back(service);
 }
@@ -405,10 +389,8 @@ Parser::serviceAddDhcp(const nmco::IpAddress& ip)
 void
 Parser::serviceAddNtp(const nmco::IpAddress& ip)
 {
-  nmco::Service service {"ntp", ip};
-  service.setProtocol("udp");
-  service.addDstPort("123"); // same port used by client and server
-  service.addSrcPort("123");
+  auto service = nmcu::ServiceFactory::makeNtp();
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
@@ -416,9 +398,8 @@ Parser::serviceAddNtp(const nmco::IpAddress& ip)
 void
 Parser::serviceAddSnmp(const nmco::IpAddress& ip)
 {
-  nmco::Service service {"snmp", ip};
-  service.setProtocol("udp");
-  service.addDstPort("162"); // port manager receives on
+  auto service = nmcu::ServiceFactory::makeSnmp();
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
@@ -426,10 +407,8 @@ Parser::serviceAddSnmp(const nmco::IpAddress& ip)
 void
 Parser::serviceAddRadius(const nmco::IpAddress& ip)
 {
-  nmco::Service service {"radius", ip};
-  service.setProtocol("udp");
-  service.addDstPort("1812"); // authentication and authorization
-  service.addDstPort("1813"); // accounting
+  auto service = nmcu::ServiceFactory::makeRadius();
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
@@ -437,9 +416,8 @@ Parser::serviceAddRadius(const nmco::IpAddress& ip)
 void
 Parser::serviceAddDns(const nmco::IpAddress& ip)
 {
-  nmco::Service service {"dns", ip};
-  service.setProtocol("udp");
-  service.addDstPort("53");
+  auto service = nmcu::ServiceFactory::makeDns();
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
@@ -447,16 +425,14 @@ Parser::serviceAddDns(const nmco::IpAddress& ip)
 void
 Parser::serviceAddSyslog(const nmco::IpAddress& ip)
 {
-  nmco::Service service {"syslog", ip};
-  service.setProtocol("udp");
-  service.addDstPort("514");
+  auto service = nmcu::ServiceFactory::makeSyslog();
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 
 
 // Route related
-// TODO These two are more correct than the third, but we can probably collapse logic
 void
 Parser::routeAddIp(const nmco::IpAddress& dstNet, const nmco::IpAddress& rtrIp)
 {
@@ -468,7 +444,8 @@ Parser::routeAddIp(const nmco::IpAddress& dstNet, const nmco::IpAddress& rtrIp)
 }
 
 void
-Parser::routeAddIface(const nmco::IpAddress& dstNet, const std::string& rtrIface)
+Parser::routeAddIface(const nmco::IpAddress& dstNet,
+                      const std::string& rtrIface)
 {
   nmco::Route route;
   route.setDstNet(dstNet);
@@ -476,20 +453,6 @@ Parser::routeAddIface(const nmco::IpAddress& dstNet, const std::string& rtrIface
 
   d.routes.push_back(route);
 }
-//void
-//Parser::routeAdd(const nmco::IpAddress& dstNet, const std::string& rtrIpStr)
-//{
-//  nmco::IpAddress rtrIp;
-//  if ("Null0" != rtrIpStr) {
-//    rtrIp = nmco::IpAddress {rtrIpStr};
-//  }
-//
-//  nmco::Route route;
-//  route.setDstNet(dstNet);
-//  route.setRtrIp(rtrIp);
-//
-//  d.routes.push_back(route);
-//}
 
 
 // Interface related
@@ -498,13 +461,22 @@ Parser::ifaceInit(const std::string& _name)
 {
   tgtIface = &d.ifaces[_name];
   tgtIface->setName(_name);
-//  tgtIface->setState(true);
 }
 
 void
 Parser::ifaceSetUpdate(std::set<std::string>* const set)
 {
   set->insert(tgtIface->getName());
+}
+
+void
+Parser::ifaceAddAlias(const std::string& _alias, const nmco::IpAddress& _mask)
+{
+  nmco::IpAddress ip;
+  if (_mask.isValid()) {
+    ip.setMask(_mask);
+  }
+  postIfaceAliasIpData.push_back(std::make_tuple(tgtIface, _alias, ip));
 }
 
 
@@ -548,19 +520,22 @@ Parser::createAccessGroup(const std::string& bookName,
 }
 
 void
-Parser::createServicePolicy(const std::string& direction, const std::string& policyName)
+Parser::createServicePolicy(const std::string& direction,
+                            const std::string& policyName)
 {
   servicePolicies[tgtIface->getName()].insert({policyName, direction});
 }
 
 void
-Parser::updatePolicyMap(const std::string& policyName, const std::string& className)
+Parser::updatePolicyMap(const std::string& policyName,
+                        const std::string& className)
 {
   policies[policyName].insert(className);
 }
 
 void
-Parser::updateClassMap(const std::string& className, const std::string& bookName)
+Parser::updateClassMap(const std::string& className,
+                       const std::string& bookName)
 {
   classes[className].insert(bookName);
 }
@@ -571,9 +546,9 @@ Parser::aclRuleBookAdd(std::pair<std::string, RuleBook>& _pair)
   if (_pair.first.empty()) { return; }
 
   auto search = d.ruleBooks.find(_pair.first);
-  if (search == d.ruleBooks.end()) {
+  if (search == d.ruleBooks.end()) { // add new
     d.ruleBooks.emplace(_pair);
-  } else {
+  } else { // update existing
     auto* book = &(search->second);
     size_t count {book->size()};
     for (auto& [_, rule] : _pair.second) {
@@ -604,6 +579,7 @@ Parser::addObservation(const std::string& obs)
 {
   d.observations.addNotable(nmcu::trim(obs));
 }
+
 
 // Object return
 void
@@ -644,9 +620,10 @@ Parser::getData()
     }
   }
 
+  // Resolve interface IP aliases (e.g., someName -> 1.2.3.4)
   if (0 != d.networkBooks.count(ZONE)) {
     const auto& tgtBook {d.networkBooks.at(ZONE)};
-    for (auto& [iface, alias, ip] : postIfaceIpAliasData) {
+    for (auto& [iface, alias, ip] : postIfaceAliasIpData) {
       if (0 == tgtBook.count(alias)) { continue; } // no alias-ip known
       for (const auto& ipStr : tgtBook.at(alias).getData()) {
         auto temp {ipStr};
@@ -658,7 +635,7 @@ Parser::getData()
     }
   }
 
-  // TODO is there a better way?
+  // Ensure AcRule src/dst/service are tracked in the named books
   for (auto& [name, book] : d.ruleBooks) {
     for (auto& [id, rule] : book) {
       std::string zone;
@@ -674,7 +651,6 @@ Parser::getData()
           d.networkBooks[zone][strVal].addData(strVal);
         }
       }
-      // TODO is this right?
       for (auto& strVal : rule.getServices()) {
         if (0 == d.serviceBooks[zone].count(strVal)) {
           d.serviceBooks[zone][strVal].addData(strVal);
