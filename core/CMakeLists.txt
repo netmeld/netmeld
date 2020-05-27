@@ -96,6 +96,7 @@ add_library(${PROJECT_NAME} SHARED
     ./utils/LoggerSingleton.cpp
     ./utils/ProgramOptions.cpp
     ./utils/QueriesCommon.cpp
+    ./utils/ServiceFactory.cpp
     ./utils/Severity.cpp
     ./utils/StreamUtilities.cpp
     ./utils/StringUtilities.cpp

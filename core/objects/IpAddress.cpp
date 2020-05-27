@@ -71,6 +71,12 @@ namespace netmeld::core::objects {
     reason = nmcu::toLower(_reason);
   }
 
+  std::set<std::string>
+  IpAddress::getAliases() const
+  {
+    return aliases;
+  }
+
   void
   IpAddress::setResponding(const bool _isUp)
   {
@@ -91,8 +97,8 @@ namespace netmeld::core::objects {
             || address.is_unspecified()
             )
         && (
-              (isV4() && 32  >= cidr)
-           || (isV6() && 128 >= cidr)
+              (isV4() && 32  >= prefix)
+           || (isV6() && 128 >= prefix)
            )
         ;
   }
@@ -137,7 +143,7 @@ namespace netmeld::core::objects {
   IpAddress::toString() const
   {
     std::ostringstream oss;
-    oss << address << '/' << static_cast<unsigned int>(cidr);
+    oss << address << '/' << static_cast<unsigned int>(prefix);
     return oss.str();
   }
 
@@ -170,7 +176,7 @@ namespace netmeld::core::objects {
   operator==(const IpAddress& first, const IpAddress& second)
   {
     return first.address == second.address
-        && first.cidr == second.cidr
+        && first.prefix == second.prefix
         && first.reason == second.reason
         && first.extraWeight == second.extraWeight
         && first.isResponding == second.isResponding

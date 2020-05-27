@@ -24,36 +24,41 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef MAC_ADDRESS_HPP
-#define MAC_ADDRESS_HPP
+#ifndef SERVICE_FACTORY_HPP
+#define SERVICE_FACTORY_HPP
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
+#include <netmeld/core/objects/Service.hpp>
+
+namespace nmco = netmeld::core::objects;
 
 
-namespace netmeld::core::objects {
+namespace netmeld::core::utils {
 
-  class MacAddress : public AbstractDatastoreObject {
+  class ServiceFactory {
     // =========================================================================
     // Variables
     // =========================================================================
     private:
     protected:
-      std::vector<uint8_t>    macAddr;
-      std::vector<IpAddress>  ipAddrs;
-      bool                    isResponding {false};
-
     public:
 
     // =========================================================================
     // Constructors
     // =========================================================================
     private:
+      ServiceFactory();
     protected:
     public:
-      MacAddress();
-      explicit MacAddress(const std::string&);
-      explicit MacAddress(const std::vector<uint8_t>&);
+      ServiceFactory(const ServiceFactory&) = delete;
+      void operator=(const ServiceFactory&) = delete;
+
+      static nmco::Service makeDhcp();
+      static nmco::Service makeDns();
+      static nmco::Service makeNtp();
+      static nmco::Service makeRadius();
+      static nmco::Service makeSnmp();
+      static nmco::Service makeSyslog();
+
 
     // =========================================================================
     // Methods
@@ -61,25 +66,6 @@ namespace netmeld::core::objects {
     private:
     protected:
     public:
-      void addIp(IpAddress&);
-
-      void setMac(const std::string&);
-      void setMac(const std::vector<uint8_t>&);
-      void setMac(const MacAddress&);
-      void setResponding(bool);
-
-      bool isValid() const override;
-
-      std::vector<IpAddress> getIpAddrs() const;
-
-      void save(pqxx::transaction_base&, const Uuid&,
-                const std::string&) override;
-
-      std::string toString() const;
-      std::string toDebugString() const override;
-
-      friend bool operator<(const MacAddress&, const MacAddress&);
-      friend bool operator==(const MacAddress&, const MacAddress&);
   };
 }
-#endif // MAC_ADDRESS_HPP
+#endif // SERVICE_FACTORY_HPP

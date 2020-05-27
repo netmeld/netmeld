@@ -62,19 +62,13 @@ namespace netmeld::core::objects {
   void
   AcRule::addSrc(const std::string& _value)
   {
-    srcs.push_back(_value);
+    smartVectorAdd(_value, &srcs);
   }
 
   void
   AcRule::addSrcIface(const std::string& _value)
   {
-    srcIfaces.push_back(_value);
-  }
-
-  void
-  AcRule::addDst(const std::string& _value)
-  {
-    dsts.push_back(_value);
+    smartVectorAdd(_value, &srcIfaces);
   }
 
   void
@@ -84,23 +78,36 @@ namespace netmeld::core::objects {
   }
 
   void
+  AcRule::addDst(const std::string& _value)
+  {
+    smartVectorAdd(_value, &dsts);
+  }
+
+  void
   AcRule::addDstIface(const std::string& _value)
   {
-    dstIfaces.push_back(_value);
+    smartVectorAdd(_value, &dstIfaces);
   }
 
   void
   AcRule::addAction(const std::string& _value)
   {
-    if (std::find(actions.begin(), actions.end(), _value) == actions.end()) {
-      actions.push_back(_value);
-    }
+    smartVectorAdd(_value, &actions);
   }
 
   void
   AcRule::addService(const std::string& _value)
   {
-    services.push_back(_value);
+    smartVectorAdd(_value, &services);
+  }
+
+  void
+  AcRule::smartVectorAdd(const std::string& _value,
+                         std::vector<std::string>* const vec)
+  {
+    if (std::find(vec->begin(), vec->end(), _value) == vec->end()) {
+      vec->push_back(_value);
+    }
   }
 
   void

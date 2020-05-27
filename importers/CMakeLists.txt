@@ -44,6 +44,8 @@ function(create_test TEST_NAME)
   add_executable(Test.${TEST_NAME}
       EXCLUDE_FROM_ALL
       ${TEST_NAME}.test.cpp
+      ${TEST_NAME}.hpp
+      ${TEST_NAME}.cpp
     )
 
   target_link_libraries(Test.${TEST_NAME}
@@ -67,8 +69,6 @@ endfunction()
 foreach(TOOL_NAME
     nmdb-import-brocade
     nmdb-import-cisco
-    nmdb-import-cisco-asa
-    nmdb-import-cisco-nxos
     nmdb-import-cisco-wireless
     nmdb-import-clw
     nmdb-import-hosts

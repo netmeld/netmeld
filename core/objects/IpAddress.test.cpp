@@ -46,8 +46,8 @@ class TestIpAddress : public nmco::IpAddress {
     IpAddr getAddress() const
     { return address; }
 
-    uint8_t getCidr() const
-    { return cidr; }
+    uint8_t getPrefix() const
+    { return prefix; }
 
     bool getIsResponding() const
     { return isResponding; }
@@ -57,9 +57,6 @@ class TestIpAddress : public nmco::IpAddress {
 
     uint32_t getExtraWeight() const
     { return extraWeight; }
-
-    std::set<std::string> getAliases() const
-    { return aliases; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -68,7 +65,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestIpAddress ipAddr;
 
     BOOST_TEST(IpAddr() == ipAddr.getAddress());
-    BOOST_TEST(UINT8_MAX == ipAddr.getCidr());
+    BOOST_TEST(UINT8_MAX == ipAddr.getPrefix());
     BOOST_TEST(false == ipAddr.getIsResponding());
     BOOST_TEST(ipAddr.getReason().empty());
     BOOST_TEST(0 == ipAddr.getExtraWeight());
@@ -79,7 +76,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestIpAddress ipAddr {"10.0.0.1/24", "Some Description"};
 
     BOOST_TEST(IpAddr::from_string("10.0.0.1") == ipAddr.getAddress());
-    BOOST_TEST(24 == ipAddr.getCidr());
+    BOOST_TEST(24 == ipAddr.getPrefix());
     BOOST_TEST(false == ipAddr.getIsResponding());
     BOOST_TEST("Some Description" == ipAddr.getReason());
     BOOST_TEST(0 == ipAddr.getExtraWeight());
@@ -142,13 +139,13 @@ BOOST_AUTO_TEST_CASE(testValidity)
     BOOST_TEST(!ipAddr.isValid());
     ipAddr.setAddress("1.2.3.4");
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(0);
+    ipAddr.setPrefix(0);
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(31);
+    ipAddr.setPrefix(31);
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(32);
+    ipAddr.setPrefix(32);
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(33);
+    ipAddr.setPrefix(33);
     BOOST_TEST(!ipAddr.isValid());
   }
 
@@ -158,13 +155,13 @@ BOOST_AUTO_TEST_CASE(testValidity)
     BOOST_TEST(!ipAddr.isValid());
     ipAddr.setAddress("1234::0123");
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(0);
+    ipAddr.setPrefix(0);
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(127);
+    ipAddr.setPrefix(127);
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(128);
+    ipAddr.setPrefix(128);
     BOOST_TEST(ipAddr.isValid());
-    ipAddr.setCidr(129);
+    ipAddr.setPrefix(129);
     BOOST_TEST(!ipAddr.isValid());
   }
 }

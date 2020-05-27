@@ -28,20 +28,37 @@ get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_NAME)
 get_git_timestamp(${TOOL_NAME}.cpp CODE_VERSION)
 
 add_definitions(
-  -DPROGRAM_NAME="${TOOL_NAME}"
-  -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
+    -DPROGRAM_NAME="${TOOL_NAME}"
+    -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
   )
 
 add_executable(${TOOL_NAME}
-  Parser.cpp
-  ${TOOL_NAME}.cpp
+    CiscoAcls.cpp
+    CiscoNetworkBook.cpp
+    CiscoServiceBook.cpp
+    Parser.cpp
+    RulesCommon.cpp
+    ${TOOL_NAME}.cpp
   )
 
 target_link_libraries(${TOOL_NAME}
-  netmeld-core
-  ${Boost_LIBRARIES}
-  pqxx
+    netmeld-core
+    ${Boost_LIBRARIES}
+    pqxx
   )
+
+foreach(TEST_NAME
+    CiscoAcls
+    CiscoNetworkBook
+    CiscoServiceBook
+  )
+  
+  create_test(${TEST_NAME})
+  target_sources(Test.${TEST_NAME} PRIVATE
+      RulesCommon.cpp
+      RulesCommon.hpp
+    )
+endforeach(TEST_NAME)
 
 create_man_from_help(${TOOL_NAME})
 

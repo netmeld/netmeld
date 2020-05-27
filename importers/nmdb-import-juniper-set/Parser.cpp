@@ -62,8 +62,8 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   // interface { ip|ipv6|mip|tag|zone }
-  //   ip {ip_addr/cidr|unnumbered interface interface}
-  //   ipv6 ip ip_addr/cidr
+  //   ip {ip_addr/prefix|unnumbered interface interface}
+  //   ipv6 ip ip_addr/prefix
   //   mip ip_addr host ip_addr [netmask mask] [vrouter vrouter]
   //   tag id_num zone zone
   //   zone zone
@@ -132,7 +132,7 @@ Parser::Parser() : Parser::base_type(start)
     -(qi::lit("id") >> qi::uint_) >> token >> -vrouter
     ;
 
-  // zone name {ip mask|ip/cidr|fqdn} [comment]
+  // zone name {ip mask|ip/prefix|fqdn} [comment]
   address =
     (token >> token >> ipAddrOrFqdn >> *token)
       [pnx::bind(&Parser::updateNetBook, this, qi::_1, qi::_2, qi::_3)]
@@ -182,7 +182,7 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // route ip/cidr interface ifaceName [gateway ip]
+  // route ip/prefix interface ifaceName [gateway ip]
   route =
     (ipAddr >> qi::lit("interface") >> token [qi::_a = qi::_1])
        [pnx::bind(&Parser::setIfaceRoute, this, qi::_a, qi::_1)] >>

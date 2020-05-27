@@ -67,9 +67,12 @@ namespace netmeld::core::objects {
   }
 
   void
-  MacAddress::addIp(IpAddress& ipAddr)
+  MacAddress::addIp(IpAddress& _ipAddr)
   {
-    ipAddrs.insert(ipAddr);
+    auto* vec {&ipAddrs};
+    if (std::find(vec->begin(), vec->end(), _ipAddr) == vec->end()) {
+      vec->push_back(_ipAddr);
+    }
   }
 
   void
@@ -150,7 +153,7 @@ namespace netmeld::core::objects {
     oss << "[";
     oss << toString() << ", ";
     for (const auto& ip : ipAddrs) { oss << ip.toDebugString() << ", "; }
-    oss << isResponding;
+    oss << "isResponding: " << std::boolalpha << isResponding;
     oss << "]";
 
     return oss.str();

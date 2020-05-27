@@ -27,45 +27,47 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/core/objects/AcRule.hpp>
+#include <netmeld/core/objects/DeviceInformation.hpp>
+#include <netmeld/core/objects/InterfaceNetwork.hpp>
+#include <netmeld/core/objects/Route.hpp>
+#include <netmeld/core/objects/Service.hpp>
+#include <netmeld/core/objects/ToolObservations.hpp>
+#include <netmeld/core/objects/Vlan.hpp>
 #include <netmeld/core/parsers/ParserDomainName.hpp>
 #include <netmeld/core/parsers/ParserIpAddress.hpp>
 #include <netmeld/core/parsers/ParserMacAddress.hpp>
+#include <netmeld/core/tools/AbstractImportTool.hpp>
 
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/objects/Service.hpp>
-#include <netmeld/core/objects/Vlan.hpp>
+#include "CiscoAcls.hpp"
+#include "CiscoNetworkBook.hpp"
+#include "CiscoServiceBook.hpp"
+#include "RulesCommon.hpp"
 
-#include <netmeld/core/utils/StringUtilities.hpp>
+namespace nmco = netmeld::core::objects;
+namespace nmcp = netmeld::core::parsers;
 
-namespace utils = netmeld::core::utils;
-namespace nmco  = netmeld::core::objects;
-namespace nmcp  = netmeld::core::parsers;
-namespace nmcu  = netmeld::core::utils;
+namespace nmdsic = netmeld::datastore::importers::cisco;
 
-typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
-typedef std::map<size_t, nmco::AcRule> RuleBook;
+using nmdsic::RuleBook;
+using nmdsic::NetworkBook;
+using nmdsic::ServiceBook;
 
 // =============================================================================
 // Data containers
 // =============================================================================
 struct Data
 {
+  std::string                          domainName;
   nmco::DeviceInformation              devInfo;
   std::vector<std::string>             aaas;
   nmco::ToolObservations               observations;
-  std::vector<nmco::Service>           services;
-  std::vector<nmco::Route>             routes;
-  std::vector<nmco::Vlan>              vlans;
 
   std::map<std::string, nmco::InterfaceNetwork>  ifaces;
+
+  std::vector<nmco::Route>             routes;
+  std::vector<nmco::Service>           services;
+  std::vector<nmco::Vlan>              vlans;
 
   std::map<std::string, NetworkBook>  networkBooks;
   std::map<std::string, ServiceBook>  serviceBooks;
@@ -90,8 +92,21 @@ class Parser :
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
       config,
-      policy, indent,
-      interface, switchport, spanningTree;
+      domainData,
+      globalServices,
+      route,
+      vlanDef,
+      interface,
+      switchport,
+        switchportPortSecurity,
+          vlanRange,
+          vlanId,
+        spanningTree,
+      accessPolicyRelated;
+
+    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
+             qi::locals<std::string, std::string>>
+      switchportVlan;
 
     qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
       policyMap, classMap;
@@ -103,34 +118,43 @@ class Parser :
     qi::rule<nmcp::IstreamIter, nmco::Vlan(), qi::ascii::blank_type>
       vlan;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
-      tokens,
-      token;
+    qi::rule<nmcp::IstreamIter, nmco::IpAddress()>
+      ipMask;
 
     nmcp::ParserDomainName  domainName;
     nmcp::ParserIpAddress   ipAddr;
     nmcp::ParserMacAddress  macAddr;
 
+    nmdsic::CiscoAcls         aclRuleBook;
+    nmdsic::CiscoNetworkBook  networkBooks;
+    nmdsic::CiscoServiceBook  serviceBooks;
+
     // Supporting data structures
     Data d;
 
-    nmco::InterfaceNetwork *tgtIface;
-
     bool isNo {false};
+
+    nmco::InterfaceNetwork* tgtIface;
+    std::map<std::string, nmco::InterfaceNetwork*> ifaceAliases;
+    std::vector<std::tuple<nmco::InterfaceNetwork*,
+                           std::string,
+                           nmco::IpAddress>>
+      postIfaceAliasIpData;
 
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
     bool globalBpduFilterEnabled  {false};
 
-    std::set<std::string>  ifacesCdpManuallySet;
-    std::set<std::string>  ifacesBpduGuardManuallySet;
-    std::set<std::string>  ifacesBpduFilterManuallySet;
+    std::set<std::string>  ifaceSpecificCdp;
+    std::set<std::string>  ifaceSpecificBpduGuard;
+    std::set<std::string>  ifaceSpecificBpduFilter;
 
     const std::string ZONE  {"global"};
 
     std::map<std::string, std::pair<std::string, std::string>> appliedRuleSets;
 
-    std::map<std::string, std::set<std::pair<std::string, std::string>>> servicePolicies;
+    std::map<std::string, std::set<std::pair<std::string, std::string>>>
+      servicePolicies;
     std::map<std::string, std::set<std::string>> policies;
     std::map<std::string, std::set<std::string>> classes;
 
@@ -151,56 +175,48 @@ class Parser :
   // Methods
   // ===========================================================================
   private: // Methods which should be hidden from API users
-    // Global Cdp/Bpdu related
-    void addManuallySetCdpIface();
-    void addManuallySetBpduGuardIface();
-    void addManuallySetBpduFilterIface();
-
     // Device related
-    void setVendor(const std::string&);
-    void setDevId(const std::string&);
-    void addAaa(const std::string&);
-    void addObservation(const std::string&);
+    void deviceAaaAdd(const std::string&);
 
     // Service related
-    void addDhcpService(const nmco::IpAddress&);
-    void addNtpService(const nmco::IpAddress&);
-    void addSnmpService(const nmco::IpAddress&);
+    void serviceAddDhcp(const nmco::IpAddress&);
+    void serviceAddNtp(const nmco::IpAddress&);
+    void serviceAddSnmp(const nmco::IpAddress&);
+    void serviceAddRadius(const nmco::IpAddress&);
+    void serviceAddDns(const nmco::IpAddress&);
+    void serviceAddSyslog(const nmco::IpAddress&);
 
     // Route related
-    void addRouteIp(const nmco::IpAddress&, const nmco::IpAddress&);
-    void addRouteIface(const nmco::IpAddress&, const std::string&);
+    void routeAddIp(const nmco::IpAddress&, const nmco::IpAddress&);
+    void routeAddIface(const nmco::IpAddress&, const std::string&);
 
     // Interface related
     void ifaceInit(const std::string&);
-    void ifaceFinalize();
+    void ifaceSetUpdate(std::set<std::string>* const);
+    void ifaceAddAlias(const std::string&, const nmco::IpAddress&);
 
     // Vlan related
-    void addVlan(nmco::Vlan&);
+    void vlanAdd(nmco::Vlan&);
+    void vlanAddIfaceData();
 
     // Policy Related
-    void createAccessGroup(const std::string&, const std::string&);
+    void createAccessGroup(const std::string&, const std::string&,
+                           const std::string& = "");
     void createServicePolicy(const std::string&, const std::string&);
     void updatePolicyMap(const std::string&, const std::string&);
     void updateClassMap(const std::string&, const std::string&);
+    void aclRuleBookAdd(std::pair<std::string, RuleBook>&);
 
-    void updateCurRuleBook(const std::string&);
-    void updateCurRule();
-
-    void setCurRuleAction(const std::string&);
-
-    void setCurRuleSrc(const std::string&);
-    void setCurRuleDst(const std::string&);
-
-    std::string setWildcardMask(nmco::IpAddress&, const nmco::IpAddress&);
-
-    void curRuleFinalize();
+    // Named Books Related
+    void finalizeNamedBooks();
 
     // Unsupported
     void unsup(const std::string&);
+    void addObservation(const std::string&);
 
     // Object return
+    void setRuleTargetIface(nmco::AcRule&, const std::string&,
+                            void (nmco::AcRule::*x)(const std::string&));
     Result getData();
 };
 #endif // PARSER_HPP
-

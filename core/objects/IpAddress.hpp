@@ -42,7 +42,7 @@ namespace netmeld::core::objects {
     protected:
       // Inherited from IpNetwork
       //   IpAddr       address;
-      //   uint8_t      cidr        {UINT8_MAX};
+      //   uint8_t      prefix      {UINT8_MAX};
       //   std::string  reason;
       //   uint32_t     extraWeight {0};
 
@@ -74,7 +74,7 @@ namespace netmeld::core::objects {
     public:
       // Inherited from IpNetwork
       //   void setAddress(const std::string&);
-      //   void setCidr(uint8_t);
+      //   void setPrefix(uint8_t);
       //   void setExtraWeight(uint32_t);
       //   void setNetmask(const IpNetwork&);
       //   void setWildcardMask(const IpNetwork&);
@@ -87,6 +87,7 @@ namespace netmeld::core::objects {
       static IpAddress getIpv6Default();
 
       void addAlias(const std::string&, const std::string&);
+      std::set<std::string> getAliases() const;
 
       void setResponding(const bool);
 
