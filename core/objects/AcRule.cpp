@@ -175,10 +175,10 @@ namespace netmeld::core::objects {
   {
     return !srcId.empty()
         && !srcs.empty()
-        && !srcIfaces.empty()
+//        && !srcIfaces.empty()
         && !dstId.empty()
         && !dsts.empty()
-        && !dstIfaces.empty()
+//        && !dstIfaces.empty()
         && !services.empty()
         && !actions.empty()
         ;
@@ -198,6 +198,8 @@ namespace netmeld::core::objects {
     if (actions.size() > 0) {
       actionStr = nmcu::toString(actions, ',');
     }
+    if (srcIfaces.empty()) { addSrcIface(""); }
+    if (dstIfaces.empty()) { addDstIface(""); }
 
     for (const auto& src : srcs) {
       for (const auto& srcIface : srcIfaces) {
