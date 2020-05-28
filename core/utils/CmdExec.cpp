@@ -35,12 +35,14 @@ namespace netmeld::core::utils {
     return (0 == cmdExec("type " + _cmd + " >/dev/null 2>/dev/null"));
   }
 
-  void
+  int
   cmdExecOrExit(const std::string& _cmd)
   {
-    if (-1 == cmdExec(_cmd)) {
+    auto exitStatus {cmdExec(_cmd)};
+    if (-1 == exitStatus) {
       std::exit(nmcu::Exit::FAILURE);
     }
+    return exitStatus;
   }
 
   int
