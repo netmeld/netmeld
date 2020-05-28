@@ -126,6 +126,7 @@ namespace netmeld::datastore::importers::cisco {
       std::string  curRuleSrcPort  {""};
       std::string  curRuleDstPort  {""};
 
+      std::string  curRuleOptions     {""};
       std::string  curRuleDescription {""};
 
       std::set<std::string> ignoredRuleData;
@@ -154,6 +155,7 @@ namespace netmeld::datastore::importers::cisco {
       void initRuleBook(const std::string&);
 
       void setCurRuleAction(const std::string&);
+      void addCurRuleOption(const std::string&);
 
       void setCurRuleSrc(const std::string&);
       void setCurRuleDst(const std::string&);

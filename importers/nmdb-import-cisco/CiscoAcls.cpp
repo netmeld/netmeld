@@ -349,7 +349,9 @@ namespace netmeld::datastore::importers::cisco {
       ;
 
     establishedArgument =
-      qi::string("established") | qi::string("tracked") /* arista equivalent */
+      (  qi::string("established")
+       | qi::string("tracked") /* arista equivalent */
+      ) [pnx::bind(&CiscoAcls::addCurRuleOption, this, qi::_1)]
       ;
 
     fragmentsArgument =
@@ -469,6 +471,7 @@ namespace netmeld::datastore::importers::cisco {
     curRuleProtocol.clear();
     curRuleSrcPort.clear();
     curRuleDstPort.clear();
+    curRuleOptions.clear();
 
     curRule = {};
   }
@@ -477,6 +480,18 @@ namespace netmeld::datastore::importers::cisco {
   CiscoAcls::setCurRuleAction(const std::string& action)
   {
     curRule.addAction(action);
+  }
+
+  void
+  CiscoAcls::addCurRuleOption(const std::string& option)
+  {
+    std::ostringstream oss(curRuleOptions, std::ios_base::ate);
+
+    if (!curRuleOptions.empty()) {
+      oss << ',';
+    }
+    oss << option;
+    curRuleOptions = oss.str();
   }
 
   void
@@ -526,14 +541,21 @@ namespace netmeld::datastore::importers::cisco {
   CiscoAcls::updateRuleService()
   {
     if (curRuleProtocol.empty()) { return; }
+    std::ostringstream oss;
 
     if (curRuleSrcPort.empty() && curRuleDstPort.empty()) {
-      curRule.addService(curRuleProtocol);
+      oss << curRuleProtocol;
     } else {
-      const std::string serviceString
-        {nmcu::getSrvcString(curRuleProtocol, curRuleSrcPort, curRuleDstPort)};
-      curRule.addService(serviceString);
+      oss << nmcu::getSrvcString(curRuleProtocol,
+                                 curRuleSrcPort,
+                                 curRuleDstPort);
     }
+
+    if (!curRuleOptions.empty()) {
+      oss << "--" << curRuleOptions;
+    }
+
+    curRule.addService(oss.str());
   }
 
   void
