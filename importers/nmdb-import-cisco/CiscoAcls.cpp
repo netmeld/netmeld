@@ -53,7 +53,7 @@ namespace netmeld::datastore::importers::cisco {
     // IOS
     //====
     iosRule =
-      (iosRemark | iosStandard | iosExtended)
+      (iosRemark | iosStandard | iosExtended | iosIpv6)
       ;
 
     iosRemark =
@@ -99,13 +99,18 @@ namespace netmeld::datastore::importers::cisco {
       >> -(destinationAddrIos >> -(destinationPort | icmpArgument))
         // Not exactly right, but we don't care about order
       >> *(  establishedArgument
-           | fragmentsArgument
-           | precedenceArgument
-           | tosArgument
            | logArgument
-           | timeRangeArgument
+           | untrackedArguments
           )
       >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
+      ;
+
+    iosIpv6 =
+      qi::lit("ipv6 access-list") > bookName > qi::eol
+      >> *( indent > (  iosRemarkRuleLine
+                      | iosExtendedRuleLine
+                      | ignoredRuleLine
+                     ))
       ;
 
 
@@ -177,12 +182,9 @@ namespace netmeld::datastore::importers::cisco {
       >> -(destinationAddrIos >> -(destinationPort | icmpArgument))
         // Not exactly right, but we don't care about order
       >> *(  establishedArgument
-           | fragmentsArgument
-           | precedenceArgument
-           | tosArgument
            | logArgument
-           | timeRangeArgument
            | inactiveArgument
+           | untrackedArguments
           )
       >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
       ;
@@ -197,7 +199,6 @@ namespace netmeld::datastore::importers::cisco {
   //      // Not exactly right, but we don't care about order
   //    >> *(
   //         | logArgument
-  //         | timeRangeArgument
   //         | inactive
   //        )
   //    >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
@@ -348,22 +349,27 @@ namespace netmeld::datastore::importers::cisco {
       ) [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
       ;
 
+    untrackedArguments =
+      (  (qi::lit("dest-option-type") > +qi::blank > token)
+       | (qi::lit("dscp") > +qi::blank > token)
+       | (qi::lit("flow-label") > +qi::blank > token)
+       | (qi::lit("fragments") >> &(qi::blank | qi::eol))
+       | (qi::lit("mobility") >> &(qi::blank | qi::eol))
+       | (qi::lit("mobility-type") > +qi::blank > token)
+       | (qi::lit("precedence") > +qi::blank > token)
+       | (qi::lit("routing") >> &(qi::blank | qi::eol))
+       | (qi::lit("routing-type") > +qi::blank > token)
+       | (qi::lit("sequence") > +qi::blank > token)
+       | (qi::lit("time-range") > +qi::blank > token)
+       | (qi::lit("tos") > +qi::blank > token)
+       | (qi::lit("undetermined-transport") >> &(qi::blank | qi::eol))
+      )
+      ;
+
     establishedArgument =
       (  qi::string("established")
        | qi::string("tracked") /* arista equivalent */
       ) [pnx::bind(&CiscoAcls::addCurRuleOption, this, qi::_1)]
-      ;
-
-    fragmentsArgument =
-      qi::string("fragments")
-      ;
-
-    precedenceArgument =
-      qi::lit("precedence") > token
-      ;
-
-    tosArgument =
-      qi::lit("tos") > token
       ;
 
     logArgument =
@@ -376,11 +382,6 @@ namespace netmeld::datastore::importers::cisco {
         >> token
       ]
       ;
-
-    timeRangeArgument =
-      qi::lit("time-range") > +qi::blank > token
-      ;
-
 
     userArgument =
       (  (qi::lit("object-group-user ") > token)
@@ -429,10 +430,7 @@ namespace netmeld::datastore::importers::cisco {
         (icmpArgument)
           (icmpTypeCode) (icmpMessage)
         (establishedArgument)
-        (fragmentsArgument)
-        (precedenceArgument)
-        (tosArgument)
-        (timeRangeArgument)
+        (untrackedArguments)
         (userArgument)
         (securityGroupArgument)
         (inactiveArgument)
