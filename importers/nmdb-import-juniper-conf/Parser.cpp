@@ -280,6 +280,8 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind(&Parser::updateRule, this, "action", qi::_1)]
        | logBlock
            [pnx::bind(&Parser::updateRule, this, "action", qi::_1)]
+       | (+token > startBlock > +ignoredBlock > stopBlock)
+            [pnx::bind(&Parser::updateRule, this, "action", qi::_1)]
        | (ignoredBlock)
       ) >> -qi::eol
      ) >> stopBlock
