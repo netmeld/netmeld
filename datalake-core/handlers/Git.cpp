@@ -26,6 +26,7 @@
 
 #include <regex>
 
+#include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include <netmeld/datalake/handlers/Git.hpp>
@@ -44,37 +45,6 @@ namespace netmeld::datalake::handlers {
   // ===========================================================================
   // Methods
   // ===========================================================================
-  void
-  Git::cmdExec(const std::string& _cmd)
-  {
-    LOG_DEBUG << _cmd << '\n';
-
-    auto exitStatus {std::system(_cmd.c_str())};
-    if (-1 == exitStatus) { LOG_ERROR << "Failure: " << _cmd << '\n'; }
-    if (0 != exitStatus)  { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
-  }
-
-  std::string
-  Git::cmdExecOut(const std::string& _cmd)
-  {
-    LOG_DEBUG << _cmd << '\n';
-
-    std::unique_ptr<FILE, decltype(&pclose)>
-        pipe(popen(_cmd.c_str(), "r"), pclose);
-    if (!pipe) {
-      LOG_ERROR << "Failure: " << _cmd << '\n';
-      return "";
-    }
-
-    std::array<char, 128> buffer;
-    std::ostringstream oss;
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-      oss << buffer.data();
-    }
-
-    return oss.str();
-  }
-
   bool
   Git::changeDirToRepo()
   {
@@ -97,7 +67,7 @@ namespace netmeld::datalake::handlers {
     std::ostringstream oss;
     oss << "echo -n `git rev-list -n 1 --first-parent"
         << " --before=\"" << _dts << "\" master`" ;
-    auto result {nmcu::trim(cmdExecOut(oss.str()))};
+    auto result {nmcu::trim(nmcu::cmdExecOut(oss.str()))};
     LOG_DEBUG << "Target SHA: " << result << '\n';
 
     oss.str("");
@@ -105,7 +75,7 @@ namespace netmeld::datalake::handlers {
       oss << "git log --reverse --date='format-local:%FT%T'"
             << " --format=\"format:%cd\""
           ;
-      auto const& validDates {cmdExecOut(oss.str())};
+      auto const& validDates {nmcu::cmdExecOut(oss.str())};
       LOG_ERROR << "Invalid repository date: " << _dts << '\n'
                 << "Valid dates:"
                 << '\n' << validDates
@@ -114,7 +84,7 @@ namespace netmeld::datalake::handlers {
     } else {
       oss << "git checkout -q "
           << ("infinity" == _dts.toString() ? "master" : result);
-      cmdExec(oss.str());
+      nmcu::cmdExec(oss.str());
     }
 
     return true;
@@ -126,7 +96,7 @@ namespace netmeld::datalake::handlers {
     std::ostringstream oss;
     oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path;
 
-    std::istringstream iss(cmdExecOut(oss.str()));
+    std::istringstream iss(nmcu::cmdExecOut(oss.str()));
 
     std::regex toolRegex('^' + INGEST_TOOL_PREFIX + "(.*)$");
     std::regex argsRegex('^' + TOOL_ARGS_PREFIX + "(.*)$");
@@ -155,7 +125,7 @@ namespace netmeld::datalake::handlers {
     sfs::current_path(tgtPath);
     std::ostringstream oss;
     oss << "git init";
-    cmdExec(oss.str());
+    nmcu::cmdExec(oss.str());
 
   }
 
@@ -181,7 +151,7 @@ namespace netmeld::datalake::handlers {
           << '\n' << INGEST_TOOL_PREFIX << _de.getIngestTool()
           << '\n' << TOOL_ARGS_PREFIX << _de.getToolArgs()
         << "\n'";
-    cmdExec(oss.str());
+    nmcu::cmdExec(oss.str());
   }
 
   std::vector<nmdlo::DataEntry>
@@ -240,7 +210,7 @@ namespace netmeld::datalake::handlers {
     oss << "git rm --ignore-unmatch -r " << tgtRelPath
         << " &&  git commit -m 'nmdl-remove: " << tgtRelPath << "'";
 
-    cmdExec(oss.str());
+    nmcu::cmdExec(oss.str());
   }
 
   void
@@ -263,7 +233,7 @@ namespace netmeld::datalake::handlers {
           << " | xargs -n 1 git update-ref -d 2>/dev/null"
         << " && git reflog expire --expire=now --all"
         << "&& git gc --prune=now --aggressive";
-    cmdExec(oss.str());
+    nmcu::cmdExec(oss.str());
   }
 
   // ===========================================================================
