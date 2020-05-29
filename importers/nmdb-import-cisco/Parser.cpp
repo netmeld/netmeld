@@ -681,7 +681,6 @@ Parser::getData()
           "Interface ("+ifaceName+")"
           " applies undefined or unknown access list ("+bookName+")"
           );
-      continue;
     }
 
     for (auto& [id, rule] : d.ruleBooks[bookName]) {
