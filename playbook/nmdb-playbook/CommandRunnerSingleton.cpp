@@ -27,6 +27,7 @@
 #include <chrono>
 #include <thread>
 
+#include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/core/utils/ForkExec.hpp>
 #include <netmeld/core/utils/LoggerSingleton.hpp>
 
@@ -34,7 +35,7 @@
 
 namespace nmcu = netmeld::core::utils;
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   // ===========================================================================
   // Constructors
@@ -81,16 +82,7 @@ namespace netmeld { namespace playbook {
     if (isEnabled(++commandIdNumber)) {
       LOG_INFO << commandIdNumber << ": " << command << std::endl;
       if (execute) {
-        auto exitStatus {std::system(command.c_str())};
-        if (-1 == exitStatus) {
-          LOG_ERROR << "Child process creation/statusing error for: "
-                    << command << std::endl;
-          std::exit(nmcu::Exit::FAILURE);
-        } else if (0 != exitStatus) {
-          LOG_WARN << "Command returned with non-zero (" << exitStatus
-                   << ") exit status: " << command << std::endl;
-          return false;
-        }
+        return nmcu::cmdExecOrExit(command);
       }
     }
 
@@ -159,4 +151,4 @@ namespace netmeld { namespace playbook {
   // ===========================================================================
   // Friends
   // ===========================================================================
-}}
+}
