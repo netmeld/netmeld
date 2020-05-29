@@ -109,6 +109,7 @@ namespace netmeld::datastore::importers::cisco {
       qi::lit("ipv6 access-list") > bookName > qi::eol
       >> *( indent > (  iosRemarkRuleLine
                       | iosExtendedRuleLine
+                      | nxosExtendedRuleLine
                       | ignoredRuleLine
                      ))
       ;
