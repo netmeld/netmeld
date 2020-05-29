@@ -138,19 +138,20 @@ BOOST_AUTO_TEST_CASE(testValidity)
     BOOST_TEST(!tar.isValid());
     tar.addSrc(val);
     BOOST_TEST(!tar.isValid());
-    tar.addSrcIface(val);
-    BOOST_TEST(!tar.isValid());
     tar.setDstId(val);
     BOOST_TEST(!tar.isValid());
     tar.addDst(val);
     BOOST_TEST(!tar.isValid());
-    tar.addDstIface(val);
-    BOOST_TEST(!tar.isValid());
     tar.addAction(val);
-    BOOST_TEST(!tar.isValid());
+
+    BOOST_TEST(tar.isValid());
+    tar.addSrcIface(val);
+    BOOST_TEST(tar.isValid());
+    tar.addDstIface(val);
+    BOOST_TEST(tar.isValid());
     tar.addService(val);
     BOOST_TEST(tar.isValid());
-    
+
     tar.setRuleDescription(val);
     BOOST_TEST(tar.isValid());
   }
