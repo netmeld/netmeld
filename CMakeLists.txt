@@ -29,7 +29,10 @@
 # ----------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.0)
-project(Netmeld)
+#cmake_minimum_required(VERSION 3.13)
+set(TOOL_SUITE "netmeld")
+set(MODULE_NAME "netmeld")
+project(${TOOL_SUITE})
 
 enable_testing()
 
@@ -125,17 +128,152 @@ function(set_pie_flags)
   endif()
 endfunction()
 
-function(add_project project_dir)
-  set(full_path "${CMAKE_CURRENT_SOURCE_DIR}/${project_dir}")
+
+if(CMAKE_COMPILER_IS_GNUCC)  # GNU C compiler (gcc)
+  foreach(LINE ${PROJECT_GNU_ASM_FLAGS})
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${LINE}")
+  endforeach(LINE)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)  # GNU C/C++
+  set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS_INIT} -fPIE -fPIC")
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCC)  # GNU C compiler (gcc)
+  foreach(LINE ${PROJECT_GNU_MACHINE_FLAGS})
+    # Without checking, add each machine flag to CMAKE_C_FLAGS.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LINE}")
+  endforeach(LINE)
+  foreach(LINE ${PROJECT_GNU_COMMON_FLAGS} ${PROJECT_GNU_C_FLAGS})
+    # Check whether each requested flag is supported by this gcc.
+    encode_compiler_flag_as_token("${LINE}" FLAG)
+    check_c_compiler_flag("-Werror ${LINE}" GNUCC_SUPPORTS_FLAG_${FLAG})
+    if(GNUCC_SUPPORTS_FLAG_${FLAG})
+      # Add each supported flag to CMAKE_C_FLAGS.
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LINE}")
+    endif()
+  endforeach(LINE)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX)  # GNU C++ compiler (g++)
+  foreach(LINE ${PROJECT_GNU_MACHINE_FLAGS})
+    # Without checking, add each machine flag to CMAKE_CXX_FLAGS.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LINE}")
+  endforeach(LINE)
+  foreach(LINE ${PROJECT_GNU_COMMON_FLAGS} ${PROJECT_GNU_CXX_FLAGS})
+    # Check whether each requested flag is supported by this g++.
+    encode_compiler_flag_as_token("${LINE}" FLAG)
+    check_cxx_compiler_flag("-Werror ${LINE}" GNUCXX_SUPPORTS_FLAG_${FLAG})
+    if(GNUCXX_SUPPORTS_FLAG_${FLAG})
+      # Add each supported flag to CMAKE_CXX_FLAGS.
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LINE}")
+    endif()
+  endforeach(LINE)
+endif()
+
+# Print the compiler and linker flags for verification purposes.
+message("CMAKE_C_FLAGS   = ${CMAKE_C_FLAGS}")
+message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
+
+message("CMAKE_EXE_LINKER_FLAGS = ${CMAKE_EXE_LINKER_FLAGS}")
+message("CMAKE_C_COMPILE_OPTIONS_PIE = ${CMAKE_C_COMPILE_OPTIONS_PIE}")
+message("CMAKE_CXX_COMPILE_OPTIONS_PIE = ${CMAKE_CXX_COMPILE_OPTIONS_PIE}")
+
+
+# ----------------------------------------------------------------------
+# Helper Functions
+# ----------------------------------------------------------------------
+
+find_program(HELP2MAN help2man)
+if (NOT HELP2MAN)
+  message(WARNING "help2man not found, docs will not generate.")
+endif()
+
+find_program(PANDOC pandoc)
+if (NOT PANDOC)
+  message(WARNING "pandoc not found, docs will not fully generate.")
+endif()
+
+find_program(SED sed)
+if (NOT SED)
+  message(WARNING "sed not found, docs will not fully generate.")
+endif()
+
+find_program(GZIP gzip)
+if (NOT GZIP)
+  message(WARNING "gzip not found, docs will not generate.")
+endif()
+
+find_program(GIT git)
+if (NOT GIT)
+  message(WARNING "git not found, versioning will be wrong.")
+endif()
+
+find_program(DATE date)
+if (NOT DATE)
+  message(WARNING "date not found, versioning will be wrong.")
+endif()
+
+
+function(nm_add_generic target test_name)
+  set(full_path "${CMAKE_CURRENT_SOURCE_DIR}/${target}")
   if(EXISTS "${full_path}" AND EXISTS "${full_path}/CMakeLists.txt")
-    add_subdirectory("${project_dir}")
-    add_dependencies(Test.${TEST_ALL}
-        Test.${TEST_ALL}-${project_dir}
-      )
+    add_subdirectory("${target}")
   endif()
 endfunction()
+function(target_as_module target)
+  if(NOT TGT_MODULE)
+    set(prior_tgt_module "${TOOL_SUITE}")
+    set(TGT_MODULE "${target}")
+    set(prior_tgt_module_test "${TEST_ALL}")
+    set(TGT_MODULE_TEST "Test.${target}")
+  else()
+    set(prior_tgt_module "${TGT_MODULE}")
+    set(TGT_MODULE "${TGT_MODULE}-${target}")
+    set(prior_tgt_module_test "${TGT_MODULE_TEST}")
+    set(TGT_MODULE_TEST "${TGT_MODULE_TEST}.${target}")
+  endif()
+  add_custom_target("${TGT_MODULE}" DEPENDS ${prior_tgt_module})
+  add_custom_target("${TGT_MODULE_TEST}" DEPENDS ${TGT_MODULE})
+  add_dependencies(${prior_tgt_module_test} ${TGT_MODULE_TEST})
+  nm_add_generic("${target}" "${TGT_MODULE_TEST}")
+endfunction()
+function(target_as_tool target)
+  set(TGT_TOOL "${target}")
+  set(TGT_TOOL_TEST "${TGT_MODULE_TEST}.${target}")
+  get_timestamp(${target} TGT_VERSION)
+  add_dependencies("${TGT_MODULE}" "${TGT_TOOL}")
+  nm_add_generic("${target}" "${TGT_TOOL_TEST}")
+endfunction()
+function(target_as_library target)
+  set(TGT_LIBRARY "${TOOL_SUITE}-${TGT_MODULE}")
+  set(TGT_LIBRARY_TEST "${TGT_MODULE_TEST}")
+  #  add_dependencies("${TGT_MODULE}" "${TGT_LIBRARY}")
+  nm_add_generic("${target}" "${TGT_LIBRARY_TEST}")
+endfunction()
 
-function(get_tool_name cwd_var result_var)
+# TODO figure out how to add tool/library value
+function(nm_add_test target)
+  set(test_target "${TGT_MODULE_TEST}.${target}")
+  set(TGT_TEST "${test_target}" PARENT_SCOPE)
+  #set(test_target "Test.${target}")
+  add_executable(${test_target}
+      EXCLUDE_FROM_ALL
+      ${target}.test.cpp
+    )
+  target_link_libraries(${test_target}
+      ${Boost_LIBRARIES}
+    )
+  set(test_name "${test_target}")
+  add_test(${test_name} ${test_target})
+  set_tests_properties(${test_name}
+      PROPERTIES LABELS "${TGT_MODULE_TEST}"
+    )
+  add_dependencies(${TGT_MODULE_TEST} ${test_target})
+endfunction()
+
+
+function(get_basename cwd_var result_var)
   execute_process(
       COMMAND
         basename "${cwd_var}"
@@ -146,7 +284,7 @@ function(get_tool_name cwd_var result_var)
   set(${result_var} ${RESULT_STRIPPED} PARENT_SCOPE)
 endfunction()
 
-function(get_git_timestamp target_file result_var)
+function(get_timestamp target_file result_var)
   execute_process(
       COMMAND
           date +%Y%m%d
@@ -228,91 +366,62 @@ function(add_tool_suite_man target_comp)
   endif()
 endfunction()
 
-function(install_lib target_file component)
-  install(
-    TARGETS ${target_file}
-    OPTIONAL
-    COMPONENT ${component}
-    DESTINATION lib
-  )
-endfunction()
 
-function(install_bin target_file component)
+function(nm_install_bin target_file)
+  target_compile_definitions(${target_file}
+    PUBLIC
+      -DPROGRAM_NAME="${target_file}"
+      -DPROGRAM_VERSION="${MODULE_VERSION}.${TGT_VERSION}"
+    )
   install(
     TARGETS ${target_file}
     OPTIONAL
-    COMPONENT ${component}
+    COMPONENT ${TGT_MODULE}
     DESTINATION bin
   )
+  create_man_from_help(${target_file})
+  nm_install_man(${target_file})
 endfunction()
-
-function(install_man target_file component)
+function(nm_install_lib target_file)
+  install(
+    TARGETS ${target_file}
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION lib
+  )
+  set_target_properties(${target_file}
+      PROPERTIES VERSION "${MODULE_VERSION}.${TGT_VERSION}"
+    )
+endfunction()
+function(nm_install_include target_dir target_path)
+  install(
+    DIRECTORY
+      ${target_dir}
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION include/netmeld/${target_path}
+    FILES_MATCHING PATTERN "*.[hi]pp"
+  )
+  add_subdirectory(${target_dir})
+endfunction()
+function(nm_install_man target_file)
   install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/${target_file}.1.gz"
     OPTIONAL
-    COMPONENT ${component}
+    COMPONENT ${TGT_MODULE}
     DESTINATION share/man/man1
   )
 endfunction()
+function(nm_install_conf target_file target_path)
+  install(
+      FILES
+        ${target_file}
+      OPTIONAL
+      COMPONENT ${TGT_MODULE}
+      DESTINATION ${NETMELD_CONF_DIR}/${target_path}
+    )
+endfunction()
 
-if(CMAKE_COMPILER_IS_GNUCC)  # GNU C compiler (gcc)
-  foreach(LINE ${PROJECT_GNU_ASM_FLAGS})
-    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${LINE}")
-  endforeach(LINE)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)  # GNU C/C++
-  set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS_INIT} -fPIE -fPIC")
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCC)  # GNU C compiler (gcc)
-  foreach(LINE ${PROJECT_GNU_MACHINE_FLAGS})
-    # Without checking, add each machine flag to CMAKE_C_FLAGS.
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LINE}")
-  endforeach(LINE)
-  foreach(LINE ${PROJECT_GNU_COMMON_FLAGS} ${PROJECT_GNU_C_FLAGS})
-    # Check whether each requested flag is supported by this gcc.
-    encode_compiler_flag_as_token("${LINE}" FLAG)
-    check_c_compiler_flag("-Werror ${LINE}" GNUCC_SUPPORTS_FLAG_${FLAG})
-    if(GNUCC_SUPPORTS_FLAG_${FLAG})
-      # Add each supported flag to CMAKE_C_FLAGS.
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LINE}")
-    endif()
-  endforeach(LINE)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX)  # GNU C++ compiler (g++)
-  foreach(LINE ${PROJECT_GNU_MACHINE_FLAGS})
-    # Without checking, add each machine flag to CMAKE_CXX_FLAGS.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LINE}")
-  endforeach(LINE)
-  foreach(LINE ${PROJECT_GNU_COMMON_FLAGS} ${PROJECT_GNU_CXX_FLAGS})
-    # Check whether each requested flag is supported by this g++.
-    encode_compiler_flag_as_token("${LINE}" FLAG)
-    check_cxx_compiler_flag("-Werror ${LINE}" GNUCXX_SUPPORTS_FLAG_${FLAG})
-    if(GNUCXX_SUPPORTS_FLAG_${FLAG})
-      # Add each supported flag to CMAKE_CXX_FLAGS.
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LINE}")
-    endif()
-  endforeach(LINE)
-endif()
-
-# Print the compiler and linker flags for verification purposes.
-message("CMAKE_C_FLAGS   = ${CMAKE_C_FLAGS}")
-message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
-
-message("CMAKE_EXE_LINKER_FLAGS = ${CMAKE_EXE_LINKER_FLAGS}")
-message("CMAKE_C_COMPILE_OPTIONS_PIE = ${CMAKE_C_COMPILE_OPTIONS_PIE}")
-message("CMAKE_CXX_COMPILE_OPTIONS_PIE = ${CMAKE_CXX_COMPILE_OPTIONS_PIE}")
-
-# ----------------------------------------------------------------------
-
-set(NETMELD_CONF_DIR "etc/netmeld")
-
-add_definitions(
-  -DNETMELD_CONF_DIR="${CMAKE_INSTALL_PREFIX}/${NETMELD_CONF_DIR}"
-  -DDEFAULT_DB_NAME="site"
-  )
 
 # ----------------------------------------------------------------------
 # Libraries that many things need to link against for various reasons
@@ -329,90 +438,80 @@ find_package(Boost REQUIRED
 # Appears to not be linked by default
 link_libraries(stdc++fs)
 
-find_program(HELP2MAN help2man)
-if (NOT HELP2MAN)
-  message(WARNING "help2man not found, docs will not generate.")
-endif()
-
-find_program(PANDOC pandoc)
-if (NOT PANDOC)
-  message(WARNING "pandoc not found, docs will not fully generate.")
-endif()
-
-find_program(SED sed)
-if (NOT SED)
-  message(WARNING "sed not found, docs will not fully generate.")
-endif()
-
-find_program(GZIP gzip)
-if (NOT GZIP)
-  message(WARNING "gzip not found, docs will not generate.")
-endif()
-
-find_program(GIT git)
-if (NOT GIT)
-  message(WARNING "git not found, versioning will be wrong.")
-endif()
-find_program(DATE date)
-if (NOT DATE)
-  message(WARNING "date not found, versioning will be wrong.")
-endif()
 
 # ----------------------------------------------------------------------
+# Netmeld Configuration
+# ----------------------------------------------------------------------
+set(NETMELD_CONF_DIR "etc/netmeld")
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_SUITE)
-set(TEST_ALL ${TOOL_SUITE})
-add_custom_target(Test.${TEST_ALL})
+add_definitions(
+  -DNETMELD_CONF_DIR="${CMAKE_INSTALL_PREFIX}/${NETMELD_CONF_DIR}"
+  -DDEFAULT_DB_NAME="site"
+  )
+
+set(TOOL_SUITE "netmeld")
+add_custom_target(${TOOL_SUITE})
+set(TEST_ALL "Test.${TOOL_SUITE}")
+add_custom_target(${TEST_ALL})
 
 #create_man_from_readme(${TOOL_SUITE})
 #install_man(${TOOL_SUITE} ${TOOL_SUITE})
 
 set(NETMELD_SOURCE_VERSION "2.0")
 
-set(NETMELD_CORE_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_CORE_VERSION})
-add_project(core)
+foreach(ITEM
+    core
+    datalake
+    datastore
+  )
+  target_as_module(${ITEM})
+endforeach()
 
-set(NETMELD_CORE_BIN_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_CORE_VERSION})
-add_project(core-bin)
 
-set(NETMELD_INSERTERS_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_INSERTERS_VERSION})
-add_project(inserters)
+#set(NETMELD_CORE_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_CORE_VERSION})
+#add_project(core)
 
-set(NETMELD_EXPORTERS_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_EXPORTERS_VERSION})
-add_project(exporters)
+#set(NETMELD_CORE_BIN_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_CORE_VERSION})
+#add_project(core-bin)
+#
+#set(NETMELD_INSERTERS_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_INSERTERS_VERSION})
+#add_project(inserters)
+#
+#set(NETMELD_EXPORTERS_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_EXPORTERS_VERSION})
+#add_project(exporters)
+#
+#set(NETMELD_IMPORTERS_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_IMPORTERS_VERSION})
+#add_project(importers)
+#
+#set(NETMELD_GRAPHERS_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_GRAPHERS_VERSION})
+#add_project(graphers)
+#
+#set(NETMELD_FETCHERS_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_FETCHERS_VERSION})
+#add_project(fetchers)
+#
+#set(NETMELD_CLW_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_CLW_VERSION})
+#add_project(clw)
+#
+#set(NETMELD_PLAYBOOK_CORE_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_PLAYBOOK_CORE_VERSION})
+#add_project(playbook-core)
+#
+#set(NETMELD_PLAYBOOK_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_PLAYBOOK_VERSION})
+#add_project(playbook)
+#
+#set(NETMELD_DATALAKE_CORE_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_DATALAKE_CORE_VERSION})
+#add_project(datalake-core)
 
-set(NETMELD_IMPORTERS_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_IMPORTERS_VERSION})
-add_project(importers)
-
-set(NETMELD_GRAPHERS_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_GRAPHERS_VERSION})
-add_project(graphers)
-
-set(NETMELD_FETCHERS_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_FETCHERS_VERSION})
-add_project(fetchers)
-
-set(NETMELD_CLW_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_CLW_VERSION})
-add_project(clw)
-
-set(NETMELD_PLAYBOOK_CORE_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_PLAYBOOK_CORE_VERSION})
-add_project(playbook-core)
-
-set(NETMELD_PLAYBOOK_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_PLAYBOOK_VERSION})
-add_project(playbook)
-
-set(NETMELD_DATALAKE_CORE_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_DATALAKE_CORE_VERSION})
-add_project(datalake-core)
-
-set(NETMELD_DATALAKE_VERSION "2.0")
-set(TOOL_VERSION ${NETMELD_DATALAKE_VERSION})
-add_project(datalake)
+#set(NETMELD_DATALAKE_VERSION "2.0")
+#set(TOOL_VERSION ${NETMELD_DATALAKE_VERSION})
+#add_project(datalake)
