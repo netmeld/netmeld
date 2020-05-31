@@ -49,6 +49,7 @@ add_library(${TGT_LIBRARY} SHARED
     ./tools/AbstractInsertTool.cpp
     
     ./utils/QueriesCommon.cpp
+    ./utils/ServiceFactory.cpp
   )
 target_include_directories(${TGT_LIBRARY}
   PUBLIC

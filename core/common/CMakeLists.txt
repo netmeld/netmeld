@@ -31,6 +31,7 @@ add_library(${TGT_LIBRARY} SHARED
 
     ./tools/AbstractTool.cpp
 
+    ./utils/CmdExec.cpp
     ./utils/FileManager.cpp
     ./utils/ForkExec.cpp
     ./utils/Logger.cpp
