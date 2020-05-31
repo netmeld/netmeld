@@ -24,12 +24,13 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/utils/AcBookUtilities.hpp>
+#include <netmeld/datastore/utils/AcBookUtilities.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "Parser.hpp"
 
 namespace nmcu = netmeld::core::utils;
+namespace nmdu = netmeld::datastore::utils;
 
 
 // =============================================================================
@@ -76,30 +77,30 @@ Parser::Parser() : Parser::base_type(start)
       (
        // Capture general settings
          (qi::lit("description") >> tokens)
-            [pnx::bind(&nmco::InterfaceNetwork::setDescription,
+            [pnx::bind(&nmdo::InterfaceNetwork::setDescription,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("nameif") >> token)
             [pnx::bind([&](const std::string& val)
                        {ifaceAliases.emplace(val, *tgtIface);}, qi::_1)]
        | qi::lit("ipv6 address") >>
          (  (ipAddr)
-               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+               [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                           pnx::bind(&Parser::tgtIface, this), qi::_1)]
           | (fqdn)
                [pnx::bind(&Parser::unsup, this, "ipv6 address DOMAIN-NAME")]
          )
        | qi::lit("ip address") >>
          (  (ipAddr >> ipAddr)
-               [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+               [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
+                pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                           pnx::bind(&Parser::tgtIface, this), qi::_1)]
           | (fqdn >> ipAddr)
                [qi::_a = pnx::bind(&Parser::getIpFromAlias, this, qi::_1),
-                pnx::bind(&nmco::IpAddress::setNetmask, &qi::_a, qi::_2),
-                pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_a, qi::_2),
+                pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                           pnx::bind(&Parser::tgtIface, this), qi::_a)]
-         )// [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-          //  pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+         )// [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
+          //  pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
           //            pnx::bind(&Parser::tgtIface, this), qi::_1)]
        // Ignore all other settings
        | (qi::omit[+token])
@@ -119,7 +120,7 @@ Parser::Parser() : Parser::base_type(start)
     // Explicitly check to ensure still in interface scope
     *(qi::no_skip[+qi::char_(' ')] >>
       (  (qi::lit("subnet") >> ipAddr >> ipAddr)
-           [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+           [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
             pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
        | (qi::lit("subnet") >> ipAddr)
            [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
@@ -205,7 +206,7 @@ Parser::Parser() : Parser::base_type(start)
        | (qi::lit("network-object host") >> ipAddr)
            [pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
        | (qi::lit("network-object") >> ipAddr >> ipAddr)
-           [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
+           [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
             pnx::bind(&Parser::updateNetBookIp, this, qi::_1)]
        | (qi::lit("network-object") >> token >> ipAddr)
            [pnx::bind(&Parser::updateNetBookGroupMask, this, qi::_1, qi::_2)]
@@ -360,10 +361,10 @@ Parser::Parser() : Parser::base_type(start)
 
   ipAddrStr =
     (  (ipAddr >> ipAddr)
-         [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-          qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+         [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
+          qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
      | (ipAddr)
-         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+         [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
     )
     ;
 
@@ -405,14 +406,14 @@ Parser::ifaceInit(const std::string& _name)
   tgtIface->setState(true);
 }
 
-nmco::IpAddress
+nmdo::IpAddress
 Parser::getIpFromAlias(const std::string& _bookName)
 {
   if (!d.networkBooks[ZONE].count(_bookName)) {
     // NOTE: not found is a major logic problem
     LOG_ERROR << "Parser::getIpFromAlias: Alias not defined: "
               << _bookName << std::endl;
-    return nmco::IpAddress();
+    return nmdo::IpAddress();
   }
 
   const auto& book {d.networkBooks[ZONE][_bookName].getData()};
@@ -420,13 +421,13 @@ Parser::getIpFromAlias(const std::string& _bookName)
     LOG_WARN << "Parser::getIpFromAlias: More than one alias known for: "
              << _bookName << std::endl;
   }
-  return nmco::IpAddress(*(book.begin()));
+  return nmdo::IpAddress(*(book.begin()));
 }
 
 
 // AC related
 void
-Parser::updateNetBookIp(const nmco::IpAddress& _ip)
+Parser::updateNetBookIp(const nmdo::IpAddress& _ip)
 {
   d.networkBooks[ZONE][tgtBook].addData(_ip.toString());
 }
@@ -454,7 +455,7 @@ Parser::updateNetBookGroup(const std::string& _bookOther)
 
 void
 Parser::updateNetBookGroupMask(const std::string& _bookOther,
-                               const nmco::IpAddress& _mask)
+                               const nmdo::IpAddress& _mask)
 {
   for (const auto& _ip : d.networkBooks[ZONE][_bookOther].getData()) {
     if (std::string::npos != _ip.find('-')) {
@@ -463,7 +464,7 @@ Parser::updateNetBookGroupMask(const std::string& _bookOther,
                 << "\n";
       continue;
     }
-    nmco::IpAddress ip {_ip};
+    nmdo::IpAddress ip {_ip};
     ip.setNetmask(_mask);
     d.networkBooks[ZONE][tgtBook].addData(ip.toString());
   }
@@ -625,12 +626,12 @@ Parser::getData()
 {
   for (const auto& [nsi, nsb] : d.networkBooks) {
     for (const auto& [ns, nsd] : nsb) {
-      nmcu::expanded(d.networkBooks, nsi, ns, ZONE);
+      nmdu::expanded(d.networkBooks, nsi, ns, ZONE);
     }
   }
   for (const auto& [nsi, nsb] : d.serviceBooks) {
     for (const auto& [ns, nsd] : nsb) {
-      nmcu::expanded(d.serviceBooks, nsi, ns, ZONE);
+      nmdu::expanded(d.serviceBooks, nsi, ns, ZONE);
     }
   }
 

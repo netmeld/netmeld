@@ -24,19 +24,19 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "Parser.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdt = netmeld::datastore::tools;
 
 
 // =============================================================================
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -47,7 +47,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
   // Constructors
   // ===========================================================================
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       (
        "show running-config",
        PROGRAM_NAME,
@@ -91,7 +91,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
         LOG_DEBUG << "Iteration over AAAs\n";
         for (auto& result : results.aaas) {
           // 04-03-2019 NOTE: Manually saving here because we do not have nor
-          // do we want a netmeld core object for AAA entries at this time.
+          // do we want a netmeld datastore object for AAA entries at this time.
           t.exec_prepared("insert_raw_device_aaa",
               toolRunId,
               deviceId,

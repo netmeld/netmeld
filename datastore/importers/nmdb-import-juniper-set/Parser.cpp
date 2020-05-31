@@ -24,12 +24,13 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/utils/AcBookUtilities.hpp>
+#include <netmeld/datastore/utils/AcBookUtilities.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "Parser.hpp"
 
 namespace nmcu = netmeld::core::utils;
+namespace nmdu = netmeld::datastore::utils;
 
 
 // =============================================================================
@@ -140,10 +141,10 @@ Parser::Parser() : Parser::base_type(start)
 
   ipAddrOrFqdn =
     (  (ipAddr >> ipAddr)
-         [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-          qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+         [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
+          qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
      | (ipAddr)
-         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+         [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
      | (fqdn)
          [qi::_val = qi::_1]
     )
@@ -225,13 +226,13 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
 void
-Parser::setIfaceRoute(const std::string& _iface, nmco::IpAddress& _ip)
+Parser::setIfaceRoute(const std::string& _iface, nmdo::IpAddress& _ip)
 {
   d.routes[_iface].setDstNet(_ip);
 }
 
 void
-Parser::setIfaceGateway(const std::string& _iface, nmco::IpAddress& _ip)
+Parser::setIfaceGateway(const std::string& _iface, nmdo::IpAddress& _ip)
 {
   d.routes[_iface].setRtrIp(_ip);
 }
@@ -255,7 +256,7 @@ Parser::disableIface()
 }
 
 void
-Parser::updateIfaceIp(nmco::IpAddress& _ip)
+Parser::updateIfaceIp(nmdo::IpAddress& _ip)
 {
   d.ifaces[tgtIface].addIpAddress(_ip);
 }
@@ -368,12 +369,12 @@ Parser::getData()
 {
   for (const auto& [nsi, nsb] : d.networkBooks) {
     for (const auto& [ns, nsd] : nsb) {
-      nmcu::expanded(d.networkBooks, nsi, ns, DEFAULT_ZONE);
+      nmdu::expanded(d.networkBooks, nsi, ns, DEFAULT_ZONE);
     }
   }
   for (const auto& [nsi, nsb] : d.serviceBooks) {
     for (const auto& [ns, nsd] : nsb) {
-      nmcu::expanded(d.serviceBooks, nsi, ns, DEFAULT_ZONE);
+      nmdu::expanded(d.serviceBooks, nsi, ns, DEFAULT_ZONE);
     }
   }
 

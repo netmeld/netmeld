@@ -95,31 +95,31 @@ Parser::Parser() : Parser::base_type(start)
         [pnx::bind(&Parser::isNo, this) = qi::_1] >>
       (
          (qi::lit("description") >> tokens)
-            [pnx::bind(&nmco::InterfaceNetwork::setDescription,
+            [pnx::bind(&nmdo::InterfaceNetwork::setDescription,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("shutdown"))
-            [pnx::bind(&nmco::InterfaceNetwork::setState,
+            [pnx::bind(&nmdo::InterfaceNetwork::setState,
                        pnx::bind(&Parser::tgtIface, this),
                        pnx::bind(&Parser::isNo, this))]
        | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("address") >>
           (  (ipAddr >> ipAddr)
-                [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_2),
-                 pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
+                 pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                            pnx::bind(&Parser::tgtIface, this), qi::_1)]
            | (ipAddr)
-                [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+                [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                            pnx::bind(&Parser::tgtIface, this), qi::_1)]
           )
          )
        | (qi::lit("inherit port-profile"))
             [pnx::bind(&Parser::unsup, this, "port-profile")]
        | (qi::lit("cdp enable"))
-            [pnx::bind(&nmco::InterfaceNetwork::setDiscoveryProtocol,
+            [pnx::bind(&nmdo::InterfaceNetwork::setDiscoveryProtocol,
                        pnx::bind(&Parser::tgtIface, this),
                        !pnx::bind(&Parser::isNo, this)),
              pnx::bind(&Parser::ifaceSetUpdate, this, &ifacesCdpManuallySet)]
 //      | (qi::lit("ip helper-address") >> ipAddr)
-//           [pnx::bind(&nmco::InterfaceNetwork::addAddress,
+//           [pnx::bind(&nmdo::InterfaceNetwork::addAddress,
 //                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("ip dhcp relay address") >> ipAddr)
             [pnx::bind(&Parser::serviceAddDhcp, this, qi::_1)]
@@ -135,10 +135,10 @@ Parser::Parser() : Parser::base_type(start)
   switchport =
     qi::lit("switchport") >>
     (  (qi::lit("mode") >> token)
-          [pnx::bind(&nmco::InterfaceNetwork::setSwitchportMode,
+          [pnx::bind(&nmdo::InterfaceNetwork::setSwitchportMode,
             pnx::bind(&Parser::tgtIface, this), "L2 " + qi::_1)]
      | (qi::lit("nonegotiate"))
-          [pnx::bind(&nmco::InterfaceNetwork::setSwitchportMode,
+          [pnx::bind(&nmdo::InterfaceNetwork::setSwitchportMode,
             pnx::bind(&Parser::tgtIface, this), "L2 nonegotiate")]
      | (qi::lit("port-security maximum") >> qi::ushort_ >>
         qi::lit("vlan") > qi::ushort_)
@@ -147,37 +147,37 @@ Parser::Parser() : Parser::base_type(start)
               {return "port-security maximum " + std::to_string(a) +
                       " vlan " + std::to_string(b);}, qi::_1, qi::_2))]
      | (qi::lit("port-security maximum") >> qi::ushort_)
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityMaxMacAddrs,
+          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
      | (qi::lit("port-security violation") >> token)
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityViolationAction,
+          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
      | (qi::lit("port-security mac-address") >> -qi::lit("sticky") >>
         macAddr)
-          [pnx::bind(&nmco::InterfaceNetwork::addPortSecurityStickyMac,
+          [pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
      | (qi::lit("port-security mac-address sticky"))
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityStickyMac,
+          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityStickyMac,
                      pnx::bind(&Parser::tgtIface, this),
                      !pnx::bind(&Parser::isNo, this))]
      | (qi::lit("port-security"))
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurity,
+          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurity,
                      pnx::bind(&Parser::tgtIface, this),
                      !pnx::bind(&Parser::isNo, this))]
      | (qi::lit("access vlan") /* default, vlan 1 */ >> qi::ushort_)
-          [pnx::bind(&nmco::InterfaceNetwork::addVlan,
+          [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
      | (qi::lit("trunk native vlan") /* default, vlan 1 */ >> qi::ushort_)
-          [pnx::bind(&nmco::InterfaceNetwork::addVlan,
+          [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
      // { VLAN-LIST | all | none | [add|except|remove] { VLAN-LIST } }
      | (qi::lit("trunk allowed vlan") /* default is all */ >>
         (  (-qi::lit("add") >>
             ((  (qi::ushort_ >> qi::lit('-') >> qi::ushort_)
-                   [pnx::bind(&nmco::InterfaceNetwork::addVlanRange,
+                   [pnx::bind(&nmdo::InterfaceNetwork::addVlanRange,
                      pnx::bind(&Parser::tgtIface, this), qi::_1, qi::_2)]
               | (qi::ushort_)
-                   [pnx::bind(&nmco::InterfaceNetwork::addVlan,
+                   [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
             ) % qi::lit(',')))
          | (token >> token)
@@ -188,7 +188,7 @@ Parser::Parser() : Parser::base_type(start)
      // { VLAN-ID | [dot1p|none|untagged] }
      | (qi::lit("voice vlan") >> 
         (  qi::ushort_
-             [pnx::bind(&nmco::InterfaceNetwork::addVlan,
+             [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
                         pnx::bind(&Parser::tgtIface, this), qi::_1)]
          | token
              [pnx::bind(&Parser::addObservation, this,
@@ -270,9 +270,9 @@ Parser::ifaceSetUpdate(std::set<std::string>* const set)
 
 // Services related
 void
-Parser::serviceAddNtp(const nmco::IpAddress& ip)
+Parser::serviceAddNtp(const nmdo::IpAddress& ip)
 {
-  nmco::Service service {"ntp", ip};
+  nmdo::Service service {"ntp", ip};
   service.setProtocol("udp");
   service.addDstPort("123"); // same port used by client and server
   service.addSrcPort("123");
@@ -281,9 +281,9 @@ Parser::serviceAddNtp(const nmco::IpAddress& ip)
 }
 
 void
-Parser::serviceAddDhcp(const nmco::IpAddress& ip)
+Parser::serviceAddDhcp(const nmdo::IpAddress& ip)
 {
-  nmco::Service service {"dhcps", ip}; // match nmap output
+  nmdo::Service service {"dhcps", ip}; // match nmap output
   service.setProtocol("udp");
   service.addDstPort("67"); // port server uses
   service.addSrcPort("68"); // port client uses
@@ -292,9 +292,9 @@ Parser::serviceAddDhcp(const nmco::IpAddress& ip)
 }
 
 void
-Parser::serviceAddSnmp(const nmco::IpAddress& ip)
+Parser::serviceAddSnmp(const nmdo::IpAddress& ip)
 {
-  nmco::Service service {"snmp", ip};
+  nmdo::Service service {"snmp", ip};
   service.setProtocol("udp");
   service.addDstPort("162"); // port manager receives on
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
@@ -302,9 +302,9 @@ Parser::serviceAddSnmp(const nmco::IpAddress& ip)
 }
 
 void
-Parser::serviceAddRadius(const nmco::IpAddress& ip)
+Parser::serviceAddRadius(const nmdo::IpAddress& ip)
 {
-  nmco::Service service {"radius", ip};
+  nmdo::Service service {"radius", ip};
   service.setProtocol("udp");
   service.addDstPort("1812"); // authentication and authorization
   service.addDstPort("1813"); // accounting
@@ -313,10 +313,10 @@ Parser::serviceAddRadius(const nmco::IpAddress& ip)
 }
 
 void
-Parser::serviceAddDns(const std::vector<nmco::IpAddress>& ips)
+Parser::serviceAddDns(const std::vector<nmdo::IpAddress>& ips)
 {
   for (auto& ip : ips) {
-    nmco::Service service {"dns", ip};
+    nmdo::Service service {"dns", ip};
     service.setProtocol("udp");
     service.addDstPort("53");
     service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
@@ -325,9 +325,9 @@ Parser::serviceAddDns(const std::vector<nmco::IpAddress>& ips)
 }
 
 void
-Parser::serviceAddSyslog(const nmco::IpAddress& ip)
+Parser::serviceAddSyslog(const nmdo::IpAddress& ip)
 {
-  nmco::Service service {"syslog", ip};
+  nmdo::Service service {"syslog", ip};
   service.setProtocol("udp");
   service.addDstPort("514");
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
@@ -337,14 +337,14 @@ Parser::serviceAddSyslog(const nmco::IpAddress& ip)
 
 // Route related
 void
-Parser::routeAdd(const nmco::IpAddress& dstNet, const std::string& rtrIpStr)
+Parser::routeAdd(const nmdo::IpAddress& dstNet, const std::string& rtrIpStr)
 {
-  nmco::IpAddress rtrIp;
+  nmdo::IpAddress rtrIp;
   if ("Null0" != rtrIpStr) {
-    rtrIp = nmco::IpAddress {rtrIpStr};
+    rtrIp = nmdo::IpAddress {rtrIpStr};
   }
 
-  nmco::Route route;
+  nmdo::Route route;
   route.setDstNet(dstNet);
   route.setRtrIp(rtrIp);
 
@@ -356,7 +356,7 @@ Parser::routeAdd(const nmco::IpAddress& dstNet, const std::string& rtrIpStr)
 void
 Parser::vlanAdd(unsigned short id, const std::string& description)
 {
-  nmco::Vlan vlan {id, description};
+  nmdo::Vlan vlan {id, description};
   d.vlans.push_back(vlan);
 }
 
@@ -371,7 +371,7 @@ Parser::vlanAddIfaceData()
     unsigned short id;
     iss >> id;
     for (auto& ipAddr : tgtIface->getIpAddresses()) {
-      nmco::Vlan vlan {id};
+      nmdo::Vlan vlan {id};
       vlan.setIpNet(ipAddr);
       d.vlans.push_back(vlan);
     }

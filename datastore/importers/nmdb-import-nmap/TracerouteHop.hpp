@@ -27,20 +27,21 @@
 #ifndef TRACEROUTE_HOP
 #define TRACEROUTE_HOP
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
-class TracerouteHop : public nmco::AbstractDatastoreObject
+class TracerouteHop : public nmdo::AbstractDatastoreObject
 {
   public :
-    nmco::IpAddress  rtrIpAddr;
-    nmco::IpAddress  dstIpAddr;
+    nmdo::IpAddress  rtrIpAddr;
+    nmdo::IpAddress  dstIpAddr;
     int              hopCount {-1};
 
     bool isValid() const override;
-    void save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&) override;
+    void save(pqxx::transaction_base&,
+              const nmco::Uuid&, const std::string&) override;
     std::string toString() const;
 };
 

@@ -26,19 +26,19 @@
 
 #include <regex>
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
 
-typedef nmco::DeviceInformation  DevInfo;
+typedef nmdo::DeviceInformation  DevInfo;
 typedef std::vector<DevInfo>     Result;
 
 
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   private:
     std::string VENDOR = "Cisco";
@@ -78,21 +78,21 @@ class Parser :
           );
     }
 
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, DevInfo, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, DevInfo, qi::ascii::blank_type>
       deviceInfo;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       token;
 };
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("show inventory", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 

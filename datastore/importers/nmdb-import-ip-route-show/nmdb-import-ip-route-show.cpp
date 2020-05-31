@@ -24,20 +24,20 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
 
-typedef std::vector<nmco::Route>  Result;
+typedef std::vector<nmdo::Route>  Result;
 
 
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   public:
     Parser() : Parser::base_type(start)
@@ -48,24 +48,24 @@ class Parser :
 
       defaultRoute =
         dstIpNet
-          [pnx::bind(&nmco::Route::setDstNet, &qi::_val, qi::_1)] >>
+          [pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1)] >>
         qi::lit("via") >>
         ipAddr
-          [pnx::bind(&nmco::Route::setRtrIp, &qi::_val, qi::_1)] >>
+          [pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1)] >>
         ifaceName
-          [pnx::bind(&nmco::Route::setIfaceName, &qi::_val, qi::_1)] >>
+          [pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1)] >>
         qi::omit[*token] >> qi::eol
         ;
 
       route =
         dstIpNet
-          [pnx::bind(&nmco::Route::setDstNet, &qi::_val, qi::_1)] >>
+          [pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1)] >>
         ifaceName
-          [pnx::bind(&nmco::Route::setIfaceName, &qi::_val, qi::_1)] >>
+          [pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1)] >>
         // IPv6 doesn't seem to do this, so needs to be optional
         -(qi::lit("proto kernel scope link src") >>
           ipAddr
-            [pnx::bind(&nmco::Route::setRtrIp, &qi::_val, qi::_1)]
+            [pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1)]
          ) >>
         qi::omit[*token] >> qi::eol
         ;
@@ -76,7 +76,7 @@ class Parser :
 
       dstIpNet =
         (qi::lit("default") | ipAddr [qi::_val = qi::_1])
-          [pnx::bind(&nmco::IpAddress::setReason, &qi::_val, "ip route show")]
+          [pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, "ip route show")]
         ;
 
       ifaceName =
@@ -96,34 +96,34 @@ class Parser :
           );
     }
 
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, nmco::Route(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, nmdo::Route(), qi::ascii::blank_type>
       defaultRoute, route;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       unreachable;
 
-    qi::rule<nmcp::IstreamIter, nmco::IpAddress(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
       dstIpNet, rtrIpAddr;
 
-    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       ifaceName;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       token;
 
-    nmcp::ParserIpAddress
+    nmdp::ParserIpAddress
       ipAddr;
 };
 
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("ip route show", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 

@@ -26,7 +26,7 @@
 set(MODULE_VERSION "2.0")
 
 foreach(ITEM
-    import-tool-template
+    #import-tool-template
     nmdb-import-brocade
     nmdb-import-cisco
     nmdb-import-cisco-asa

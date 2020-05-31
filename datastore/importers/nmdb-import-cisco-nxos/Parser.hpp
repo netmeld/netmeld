@@ -27,19 +27,19 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/objects/Service.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
-#include <netmeld/core/objects/Vlan.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 
 // =============================================================================
@@ -48,14 +48,14 @@ namespace nmcp = netmeld::core::parsers;
 struct Data
 {
   std::string                          domainName;
-  nmco::DeviceInformation              devInfo;
+  nmdo::DeviceInformation              devInfo;
 
-  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
-  std::vector<nmco::Route>             routes;
-  std::vector<nmco::Service>           services;
-  std::vector<nmco::Vlan>              vlans;
+  std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
+  std::vector<nmdo::Route>             routes;
+  std::vector<nmdo::Service>           services;
+  std::vector<nmdo::Vlan>              vlans;
 
-  nmco::ToolObservations               observations;
+  nmdo::ToolObservations               observations;
 };
 typedef std::vector<Data> Result;
 
@@ -64,36 +64,36 @@ typedef std::vector<Data> Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private:
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       vlanDef,
       config,
       interface, switchport, spanningTree
       ;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       tokens,
       token;
 
-    nmcp::ParserDomainName  domainName;
-    nmcp::ParserIpAddress   ipAddr;
-    nmcp::ParserMacAddress  macAddr;
+    nmdp::ParserDomainName  domainName;
+    nmdp::ParserIpAddress   ipAddr;
+    nmdp::ParserMacAddress  macAddr;
 
     // Supporting data structures
     Data d;
 
     bool isNo {false};
 
-    nmco::InterfaceNetwork* tgtIface;
+    nmdo::InterfaceNetwork* tgtIface;
 
     bool globalCdpEnabled         {true};
     bool globalBpduGuardEnabled   {false};
@@ -115,14 +115,14 @@ class Parser :
     void ifaceInit(const std::string&);
     void ifaceSetUpdate(std::set<std::string>* const);
 
-    void routeAdd(const nmco::IpAddress&, const std::string&);
+    void routeAdd(const nmdo::IpAddress&, const std::string&);
 
-    void serviceAddNtp(const nmco::IpAddress&);
-    void serviceAddDhcp(const nmco::IpAddress&);
-    void serviceAddSnmp(const nmco::IpAddress&);
-    void serviceAddRadius(const nmco::IpAddress&);
-    void serviceAddDns(const std::vector<nmco::IpAddress>&);
-    void serviceAddSyslog(const nmco::IpAddress&);
+    void serviceAddNtp(const nmdo::IpAddress&);
+    void serviceAddDhcp(const nmdo::IpAddress&);
+    void serviceAddSnmp(const nmdo::IpAddress&);
+    void serviceAddRadius(const nmdo::IpAddress&);
+    void serviceAddDns(const std::vector<nmdo::IpAddress>&);
+    void serviceAddSyslog(const nmdo::IpAddress&);
 
     void vlanAdd(unsigned short, const std::string&);
     void vlanAddIfaceData();

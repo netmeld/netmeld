@@ -26,33 +26,32 @@
 
 #include <pugixml.hpp>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/MacAddress.hpp>
-#include <netmeld/core/objects/OperatingSystem.hpp>
-#include <netmeld/core/objects/Port.hpp>
-#include <netmeld/core/objects/Service.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/objects/OperatingSystem.hpp>
+#include <netmeld/datastore/objects/Port.hpp>
+#include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "NseResult.hpp"
 #include "SshAlgorithm.hpp"
 #include "SshPublicKey.hpp"
 #include "TracerouteHop.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdu = netmeld::datastore::utils;
 
 struct Data
 {
-  std::vector<nmco::MacAddress>       macAddrs;
-  std::vector<nmco::IpAddress>        ipAddrs;
-  std::vector<nmco::OperatingSystem>  oses;
+  std::vector<nmdo::MacAddress>       macAddrs;
+  std::vector<nmdo::IpAddress>        ipAddrs;
+  std::vector<nmdo::OperatingSystem>  oses;
   std::vector<TracerouteHop>          tracerouteHops;
-  std::vector<nmco::Port>             ports;
-  std::vector<nmco::Service>          services;
+  std::vector<nmdo::Port>             ports;
+  std::vector<nmdo::Service>          services;
   std::vector<NseResult>              nseResults;
   std::vector<SshPublicKey>           sshKeys;
   std::vector<SshAlgorithm>           sshAlgorithms;
@@ -61,10 +60,10 @@ typedef std::vector<Data>  Results;
 
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("Nmap's XML output (.xml files)", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -155,7 +154,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
         for (auto& result : results.services) {
           if (this->opts.exists("scan-origin-ip")) {
             result.setSrcAddress(
-              this->opts.template getValueAs<nmco::IpAddress>("scan-origin-ip")
+              this->opts.template getValueAs<nmdo::IpAddress>("scan-origin-ip")
             );
           }
           LOG_DEBUG << result.toDebugString() << std::endl;
@@ -230,7 +229,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
       return isResponding;
     }
 
-    nmco::MacAddress
+    nmdo::MacAddress
     extractHostMacAddr(pugi::xml_node const& nodeHost) const
     {
       pugi::xml_node const nodeMacAddr = nodeHost
@@ -240,20 +239,20 @@ class Tool : public nmct::AbstractImportTool<P,R>
       std::string macString = nodeMacAddr.attribute("addr").as_string();
 
       if (macString.empty()) {
-        return nmco::MacAddress();
+        return nmdo::MacAddress();
       }
 
-      return nmco::MacAddress(macString);
+      return nmdo::MacAddress(macString);
     }
 
-    nmco::IpAddress
+    nmdo::IpAddress
     extractHostIpAddr(pugi::xml_node const& nodeHost) const
     {
       pugi::xml_node const nodeIpAddr = nodeHost
         .select_node("address[@addrtype='ipv4' or @addrtype='ipv6']")
         .node();
 
-      nmco::IpAddress ipAddr;
+      nmdo::IpAddress ipAddr;
 
       std::string ipString = nodeIpAddr.attribute("addr").as_string();
       if (!ipString.empty()) {
@@ -276,7 +275,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 
         bool const isResponding = extractHostIsResponding(nodeHost);
 
-        nmco::MacAddress macAddr = extractHostMacAddr(nodeHost);
+        nmdo::MacAddress macAddr = extractHostMacAddr(nodeHost);
         macAddr.setResponding(isResponding);
         auto ipAddr {extractHostIpAddr(nodeHost)};
         macAddr.addIp(ipAddr);
@@ -293,7 +292,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
         pugi::xml_node nodeHostname = xHostname.node();
         pugi::xml_node nodeHost = nodeHostname.parent().parent();
 
-        nmco::IpAddress ipAddr = extractHostIpAddr(nodeHost);
+        nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
 
         ipAddr.addAlias(nodeHostname.attribute("name").as_string(),
                         nodeHostname.attribute("type").as_string());
@@ -310,8 +309,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
         pugi::xml_node nodeOs = xOsclass.node();
         pugi::xml_node nodeHost = nodeOs.parent().parent().parent();
 
-        nmco::IpAddress ipAddr(extractHostIpAddr(nodeHost));
-        nmco::OperatingSystem os(ipAddr);
+        nmdo::IpAddress ipAddr(extractHostIpAddr(nodeHost));
+        nmdo::OperatingSystem os(ipAddr);
         os.setVendorName(nodeOs.attribute("vendor").as_string());
         os.setProductName(nodeOs.attribute("osfamily").as_string());
         os.setProductVersion(nodeOs.attribute("osgen").as_string());
@@ -333,7 +332,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
         TracerouteHop hop;
         hop.hopCount = nodeHop.attribute("ttl").as_int();
 
-        hop.rtrIpAddr = nmco::IpAddress(nodeHop.attribute("ipaddr").as_string());
+        hop.rtrIpAddr = nmdo::IpAddress(nodeHop.attribute("ipaddr").as_string());
         hop.rtrIpAddr.setResponding(true);
 
         hop.dstIpAddr = extractHostIpAddr(nodeHop.parent().parent());
@@ -351,8 +350,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
         pugi::xml_node nodeExtraports = nodeExtrareasons.parent();
         pugi::xml_node nodeHost = nodeExtraports.parent().parent();
 
-        nmco::IpAddress ipAddr = extractHostIpAddr(nodeHost);
-        nmco::Port port(ipAddr);
+        nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
+        nmdo::Port port(ipAddr);
         port.setPort(-1);
         port.setState(nodeExtraports.attribute("state").as_string());
 
@@ -398,8 +397,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
         pugi::xml_node nodePortState = nodePort.child("state");
         pugi::xml_node nodeHost = nodePort.parent().parent();
 
-        nmco::IpAddress ipAddr = extractHostIpAddr(nodeHost);
-        nmco::Port port(ipAddr);
+        nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
+        nmdo::Port port(ipAddr);
 
         std::string protocol = nodePort.attribute("protocol").as_string();
         port.setProtocol(protocol);
@@ -414,7 +413,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 
         pugi::xml_node nodeService = nodePort.child("service");
         if (nodeService) {
-          nmco::Service service(nodeService.attribute("name").as_string(),
+          nmdo::Service service(nodeService.attribute("name").as_string(),
                                ipAddr);
           service.setProtocol(protocol);
 
@@ -439,10 +438,10 @@ class Tool : public nmct::AbstractImportTool<P,R>
         pugi::xml_node nodePort = nodeScript.parent();
         pugi::xml_node nodeHost = nodePort.parent().parent();
 
-        nmco::IpAddress ipAddr(extractHostIpAddr(nodeHost));
+        nmdo::IpAddress ipAddr(extractHostIpAddr(nodeHost));
 
         NseResult nse;
-        nse.port = nmco::Port(ipAddr);
+        nse.port = nmdo::Port(ipAddr);
         nse.port.setProtocol(nodePort.attribute("protocol").as_string());
         nse.port.setPort(nodePort.attribute("portid").as_int());
         nse.scriptId = nodeScript.attribute("id").as_string();
@@ -497,7 +496,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<nmcp::DummyParser, Results> tool;
+  Tool<nmdp::DummyParser, Results> tool;
   return tool.start(argc, argv);
 }
 

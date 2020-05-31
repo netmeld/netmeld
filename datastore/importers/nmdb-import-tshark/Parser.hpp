@@ -29,16 +29,14 @@
 
 #include <any>
 
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 
 #include "DataContainerSingleton.hpp" // needed for Result
 
-
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmcu = netmeld::core::utils;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 // =============================================================================
 // Data containers

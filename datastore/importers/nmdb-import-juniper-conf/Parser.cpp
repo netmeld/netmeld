@@ -26,12 +26,13 @@
 
 #include <regex>
 
-#include <netmeld/core/utils/AcBookUtilities.hpp>
+#include <netmeld/datastore/utils/AcBookUtilities.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "Parser.hpp"
 
 namespace nmcu = netmeld::core::utils;
+namespace nmdu = netmeld::datastore::utils;
 
 
 // =============================================================================
@@ -214,12 +215,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
   route =
     qi::lit("route") >> ipAddr
-      [pnx::bind(&nmco::Route::setDstNet, &qi::_val, qi::_1)] >>
+      [pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1)] >>
     qi::lit("next-hop") >>
     (  (ipAddr >> semicolon)
-         [pnx::bind(&nmco::Route::setRtrIp, &qi::_val, qi::_1)]
+         [pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1)]
      | token
-         [pnx::bind(&nmco::Route::setIfaceName, &qi::_val, qi::_1)]
+         [pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1)]
     ) >> qi::eol
     ;
   // END OF: routing-options {...}
@@ -581,7 +582,7 @@ Parser::resetDevice()
 }
 
 void
-Parser::addRoute(nmco::Route& _route)
+Parser::addRoute(nmdo::Route& _route)
 {
   d->routes.push_back(_route);
 }
@@ -636,7 +637,7 @@ Parser::updateIfaceUnit(const size_t _unit)
 }
 
 void
-Parser::addIfaceIpAddr(nmco::IpAddress& ipAddr)
+Parser::addIfaceIpAddr(nmdo::IpAddress& ipAddr)
 {
   d->ifaces[tgtIfaceName].addIpAddress(ipAddr);
 }
@@ -777,7 +778,7 @@ Parser::updateSrvcBookGroup(const std::string& _bookOther)
 
 void
 Parser::updateNetBookIp(const std::string& _bookName,
-                        const nmco::IpAddress& _ip)
+                        const nmdo::IpAddress& _ip)
 {
   d->networkBooks[tgtZone][_bookName].addData(_ip.toString());
 }
@@ -852,12 +853,12 @@ Parser::getData()
   for (auto& device : devices) {
     for (const auto& [nsi, nsb] : device.networkBooks) {
       for (const auto& [ns, nsd] : nsb) {
-        nmcu::expanded(device.networkBooks, nsi, ns, DEFAULT_ZONE);
+        nmdu::expanded(device.networkBooks, nsi, ns, DEFAULT_ZONE);
       }
     }
     for (const auto& [nsi, nsb] : device.serviceBooks) {
       for (const auto& [ns, nsd] : nsb) {
-        nmcu::expanded(device.serviceBooks, nsi, ns, DEFAULT_ZONE);
+        nmdu::expanded(device.serviceBooks, nsi, ns, DEFAULT_ZONE);
       }
     }
 

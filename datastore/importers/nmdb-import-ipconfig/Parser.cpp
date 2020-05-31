@@ -93,7 +93,7 @@ Parser::Parser() : Parser::base_type(start)
     ("IP" >> -("v" > qi::char_("46"))) >> "Address" >> dots > getIp
       [qi::_val = qi::_1] >>
     -(qi::eol >> "Subnet Mask" >> dots > getIp)
-      [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_val, qi::_1)]
+      [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_val, qi::_1)]
     ;
 
   getIp =
@@ -125,7 +125,7 @@ Parser::Parser() : Parser::base_type(start)
 void
 Parser::addDevInfo(const std::string& _hostname)
 {
-  nmco::DeviceInformation devInfo;
+  nmdo::DeviceInformation devInfo;
   devInfo.setDeviceId(_hostname);
 
   curHostname = devInfo.getDeviceId();
@@ -135,7 +135,7 @@ Parser::addDevInfo(const std::string& _hostname)
 void
 Parser::addIface(const std::string& _name, const std::string& _type)
 {
-  nmco::Interface iface;
+  nmdo::Interface iface;
   iface.setName(_name);
   iface.setMediaType(_type);
   iface.setUp();
@@ -145,14 +145,14 @@ Parser::addIface(const std::string& _name, const std::string& _type)
 }
 
 void
-Parser::addIfaceMac(nmco::MacAddress& _macAddr)
+Parser::addIfaceMac(nmdo::MacAddress& _macAddr)
 {
   auto& iface {d.ifaces[curIfaceName]};
   iface.setMacAddress(_macAddr);
 }
 
 void
-Parser::addIfaceIp(nmco::IpAddress& _ipAddr)
+Parser::addIfaceIp(nmdo::IpAddress& _ipAddr)
 {
   auto& iface {d.ifaces[curIfaceName]};
   if (dnsSuffix.count(curIfaceName)) {
@@ -176,18 +176,18 @@ Parser::setIfaceDnsSuffix(const std::string& _suffix)
 }
 
 void
-Parser::addRoute(const nmco::IpAddress& _ipAddr)
+Parser::addRoute(const nmdo::IpAddress& _ipAddr)
 {
   for (auto& ipAddr : d.ifaces[curIfaceName].getIpAddresses()) {
     if (ipAddr.isV4() && _ipAddr.isV4()) {
-      nmco::Route route;
+      nmdo::Route route;
       route.setIfaceName(curIfaceName);
       route.setRtrIp(_ipAddr);
       route.setDstNet(ipAddr);
       d.routes.push_back(route);
     }
     if (ipAddr.isV6() && _ipAddr.isV6()) {
-      nmco::Route route;
+      nmdo::Route route;
       route.setIfaceName(curIfaceName);
       route.setRtrIp(_ipAddr);
       route.setDstNet(ipAddr);
@@ -197,9 +197,9 @@ Parser::addRoute(const nmco::IpAddress& _ipAddr)
 }
 
 void
-Parser::addService(const std::string& _name, const nmco::IpAddress& _ipAddr)
+Parser::addService(const std::string& _name, const nmdo::IpAddress& _ipAddr)
 {
-  nmco::Service service;
+  nmdo::Service service;
   service.setServiceName(_name);
   service.setDstAddress(_ipAddr);
   service.setInterfaceName(curIfaceName);

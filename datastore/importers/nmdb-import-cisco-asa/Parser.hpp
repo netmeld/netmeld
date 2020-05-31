@@ -27,24 +27,24 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/AcNetworkBook.hpp>
+#include <netmeld/datastore/objects/AcRule.hpp>
+#include <netmeld/datastore/objects/AcServiceBook.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
-typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
-typedef std::map<size_t, nmco::AcRule> RuleBook;
+typedef std::map<std::string, nmdo::AcNetworkBook> NetworkBook;
+typedef std::map<std::string, nmdo::AcServiceBook> ServiceBook;
+typedef std::map<size_t, nmdo::AcRule> RuleBook;
 
 
 // =============================================================================
@@ -52,14 +52,14 @@ typedef std::map<size_t, nmco::AcRule> RuleBook;
 // =============================================================================
 struct Data
 {
-  nmco::DeviceInformation              devInfo;
-  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
+  nmdo::DeviceInformation              devInfo;
+  std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
 
   std::map<std::string, NetworkBook>  networkBooks;
   std::map<std::string, ServiceBook>  serviceBooks;
   std::map<std::string, RuleBook>     ruleBooks;
 
-  nmco::ToolObservations observations;
+  nmdo::ToolObservations observations;
 };
 typedef std::vector<Data> Result;
 
@@ -68,39 +68,39 @@ typedef std::vector<Data> Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private:
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       ignoredLine,
       config,
       objNet, objGrpNet;
 
-    qi::rule<nmcp::IstreamIter, nmco::InterfaceNetwork(), qi::ascii::blank_type,
-             qi::locals<nmco::IpAddress>>
+    qi::rule<nmdp::IstreamIter, nmdo::InterfaceNetwork(), qi::ascii::blank_type,
+             qi::locals<nmdo::IpAddress>>
       asaIface;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
              qi::locals<std::string, std::string>>
       objSrv,
       objGrpSrv,
       objGrpProto;
 
-    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       ipAddrStr;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
              qi::locals<std::string>>
       policy;
 
-    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       addressArgument,
       portArgument,
       srvRngVal,
@@ -108,21 +108,21 @@ class Parser :
       objSrvSrc,
       objSrvDst;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       logVal,
       tokens,
       token;
 
-    nmcp::ParserDomainName  fqdn;
-    nmcp::ParserIpAddress   ipAddr;
-    nmcp::ParserMacAddress  macAddr;
+    nmdp::ParserDomainName  fqdn;
+    nmdp::ParserIpAddress   ipAddr;
+    nmdp::ParserMacAddress  macAddr;
 
     // Supporting data structures
     Data d;
 
-    nmco::InterfaceNetwork *tgtIface;
+    nmdo::InterfaceNetwork *tgtIface;
 
-    std::map<std::string, nmco::InterfaceNetwork>  ifaceAliases;
+    std::map<std::string, nmdo::InterfaceNetwork>  ifaceAliases;
 
     const std::string ZONE  {"global"};
     std::string tgtBook;
@@ -147,14 +147,14 @@ class Parser :
   private:
     // Interface related
     void ifaceInit(const std::string&);
-    void addIface(nmco::InterfaceNetwork&);
-    nmco::IpAddress getIpFromAlias(const std::string&);
+    void addIface(nmdo::InterfaceNetwork&);
+    nmdo::IpAddress getIpFromAlias(const std::string&);
 
     // AC related
-    void updateNetBookIp(const nmco::IpAddress&);
+    void updateNetBookIp(const nmdo::IpAddress&);
     void updateNetBookRange(const std::string&, const std::string&);
     void updateNetBookGroup(const std::string&);
-    void updateNetBookGroupMask(const std::string&, const nmco::IpAddress&);
+    void updateNetBookGroupMask(const std::string&, const nmdo::IpAddress&);
 
     void updateSrvcBook(const std::string&);
     void updateSrvcBookGroup(const std::string&);

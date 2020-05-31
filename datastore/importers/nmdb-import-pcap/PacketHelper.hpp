@@ -27,11 +27,11 @@
 #ifndef PACKET_HELPER
 #define PACKET_HELPER
 
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/MacAddress.hpp>
-#include <netmeld/core/objects/Vlan.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
 
 //---------------------------------------------------------------------------
@@ -178,26 +178,26 @@ class PacketHelper {
   public: // Methods part of public API
     // Ethernet
     uint16_t getPayloadProtocol(const EthernetHeader*);
-    nmco::MacAddress getSrcMacAddr(const EthernetHeader*);
-    nmco::MacAddress getDstMacAddr(const EthernetHeader*);
+    nmdo::MacAddress getSrcMacAddr(const EthernetHeader*);
+    nmdo::MacAddress getDstMacAddr(const EthernetHeader*);
 
     // LinuxCooked
     uint16_t getPayloadProtocol(const LinuxCookedHeader*);
-    nmco::MacAddress getSrcMacAddr(const LinuxCookedHeader*);
+    nmdo::MacAddress getSrcMacAddr(const LinuxCookedHeader*);
 
     // VLAN
     uint16_t getPayloadProtocol(const VlanHeader*);
-    nmco::Vlan getVlan(const VlanHeader*);
+    nmdo::Vlan getVlan(const VlanHeader*);
 
     // ARP
-    nmco::MacAddress getSrcMacAddr(const ArpHeader*);
-    nmco::IpAddress getSrcIpAddr(const ArpHeader*);
+    nmdo::MacAddress getSrcMacAddr(const ArpHeader*);
+    nmdo::IpAddress getSrcIpAddr(const ArpHeader*);
 
     // IP
     uint8_t getPayloadProtocol(const Ipv4Header*);
-    nmco::IpAddress getSrcIpAddr(const Ipv4Header*);
+    nmdo::IpAddress getSrcIpAddr(const Ipv4Header*);
     uint8_t getPayloadProtocol(const Ipv6Header*);
-    nmco::IpAddress getSrcIpAddr(const Ipv6Header*);
+    nmdo::IpAddress getSrcIpAddr(const Ipv6Header*);
 
     // UDP
     uint16_t getSrcPort(const UdpHeader*);

@@ -27,22 +27,23 @@
 #ifndef SSH_PUBLIC_KEY
 #define SSH_PUBLIC_KEY
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/Port.hpp>
+#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/objects/Port.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
-class SshPublicKey : public nmco::AbstractDatastoreObject
+class SshPublicKey : public nmdo::AbstractDatastoreObject
 {
   public:
-    nmco::Port   port;
+    nmdo::Port   port;
     std::string  type;
     int          bits {-1};
     std::string  fingerprint;
     std::string  key;
 
     bool isValid() const override;
-    void save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&) override;
+    void save(pqxx::transaction_base&,
+              const nmco::Uuid&, const std::string&) override;
     std::string toString() const;
 };
 

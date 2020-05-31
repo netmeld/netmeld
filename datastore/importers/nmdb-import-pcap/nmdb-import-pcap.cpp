@@ -24,21 +24,21 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 #include "Parser.hpp"
 
 namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
 
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("pcap file", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -91,6 +91,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<nmcp::DummyParser, Result> tool;
+  Tool<nmdp::DummyParser, Result> tool;
   return tool.start(argc, argv);
 }

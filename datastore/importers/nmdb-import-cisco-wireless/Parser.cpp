@@ -100,9 +100,9 @@ Parser::setDevId(const std::string& id)
 }
 
 void
-Parser::addNtpService(const nmco::IpAddress& ip)
+Parser::addNtpService(const nmdo::IpAddress& ip)
 {
-  nmco::Service service {"ntp", ip};
+  nmdo::Service service {"ntp", ip};
   service.setProtocol("udp");
   service.addDstPort("123"); // same port used by client and server
   service.addSrcPort("123");
@@ -112,19 +112,21 @@ Parser::addNtpService(const nmco::IpAddress& ip)
 
 // Interface related
 void
-Parser::addIface1(const std::string& name, nmco::IpAddress& ip, const nmco::IpAddress& mask)
+Parser::addIface1(const std::string& name,
+                  nmdo::IpAddress& ip, const nmdo::IpAddress& mask)
 {
-  nmco::IpAddress temp;
+  nmdo::IpAddress temp;
   addIface2(name, ip, mask, temp);
 }
 
 void
 Parser::addIface2(const std::string& name,
-    nmco::IpAddress& ip, const nmco::IpAddress& mask, const nmco::IpAddress& rtr)
+                  nmdo::IpAddress& ip, const nmdo::IpAddress& mask,
+                  const nmdo::IpAddress& rtr)
 {
   ip.setNetmask(mask);
 
-  nmco::InterfaceNetwork iface;
+  nmdo::InterfaceNetwork iface;
   iface.setName(name);
   iface.addIpAddress(ip);
   iface.setDiscoveryProtocol(isCdpEnabled);
@@ -132,7 +134,7 @@ Parser::addIface2(const std::string& name,
   d.ifaces.push_back(iface);
 
   if (rtr.isValid()){
-    nmco::Route route;
+    nmdo::Route route;
     route.setIfaceName(name);
     route.setDstNet(ip); // saves as both addr and net
     route.setRtrIp(rtr);

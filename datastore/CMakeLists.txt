@@ -38,8 +38,8 @@ endforeach()
 foreach(ITEM
     exporters
     graphers
-    #importers
-    #inserters
+    importers
+    inserters
   )
   target_as_module(${ITEM})
 endforeach()

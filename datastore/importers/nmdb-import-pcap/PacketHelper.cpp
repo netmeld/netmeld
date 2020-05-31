@@ -49,19 +49,19 @@ PacketHelper::getPayloadProtocol(const EthernetHeader* ph)
 {
   return ntohs(ph->payloadProtocol);
 }
-nmco::MacAddress
+nmdo::MacAddress
 PacketHelper::getSrcMacAddr(const EthernetHeader* ph)
 {
   std::vector<uint8_t> macAddr(std::begin(ph->srcMacAddr),
                                std::end(ph->srcMacAddr));
-  return nmco::MacAddress(macAddr);
+  return nmdo::MacAddress(macAddr);
 }
-nmco::MacAddress
+nmdo::MacAddress
 PacketHelper::getDstMacAddr(const EthernetHeader* ph)
 {
   std::vector<uint8_t> macAddr(std::begin(ph->dstMacAddr),
                                std::end(ph->dstMacAddr));
-  return nmco::MacAddress(macAddr);
+  return nmdo::MacAddress(macAddr);
 }
 
 
@@ -71,13 +71,13 @@ PacketHelper::getPayloadProtocol(const LinuxCookedHeader* ph)
 {
   return ntohs(ph->payloadProtocol);
 }
-nmco::MacAddress
+nmdo::MacAddress
 PacketHelper::getSrcMacAddr(const LinuxCookedHeader* ph)
 {
   std::vector<uint8_t> macAddr(std::begin(ph->srcMacAddr),
                                std::end(ph->srcMacAddr));
   macAddr.resize(ntohs(ph->llAddrLength));
-  return nmco::MacAddress(macAddr);
+  return nmdo::MacAddress(macAddr);
 }
 
 
@@ -87,28 +87,28 @@ PacketHelper::getPayloadProtocol(const VlanHeader* ph)
 {
   return ntohs(ph->payloadProtocol);
 }
-nmco::Vlan
+nmdo::Vlan
 PacketHelper::getVlan(const VlanHeader* ph)
 {
   auto vlanId = ntohs(ph->tagControl) & 0x0FFF;
-  return nmco::Vlan(vlanId);
+  return nmdo::Vlan(vlanId);
 }
 
 
 // ARP
-nmco::MacAddress
+nmdo::MacAddress
 PacketHelper::getSrcMacAddr(const ArpHeader* ph)
 {
   std::vector<uint8_t> macAddr(std::begin(ph->srcMacAddr),
                                std::end(ph->srcMacAddr));
-  return nmco::MacAddress(macAddr);
+  return nmdo::MacAddress(macAddr);
 }
-nmco::IpAddress
+nmdo::IpAddress
 PacketHelper::getSrcIpAddr(const ArpHeader* ph)
 {
   std::vector<uint8_t> ipAddr(std::begin(ph->srcIpAddr),
                               std::end(ph->srcIpAddr));
-  return nmco::IpAddress(ipAddr);
+  return nmdo::IpAddress(ipAddr);
 }
 
 
@@ -123,20 +123,20 @@ PacketHelper::getPayloadProtocol(const Ipv6Header* ph)
 {
   return (ntohs(ph->payloadProtocol) >> 8);
 }
-nmco::IpAddress
+nmdo::IpAddress
 PacketHelper::getSrcIpAddr(const Ipv4Header* ph)
 {
   std::vector<uint8_t> ipAddr(std::begin(ph->srcIpAddr),
                               std::end(ph->srcIpAddr));
-  return nmco::IpAddress(ipAddr);
+  return nmdo::IpAddress(ipAddr);
 }
 
-nmco::IpAddress
+nmdo::IpAddress
 PacketHelper::getSrcIpAddr(const Ipv6Header* ph)
 {
   std::vector<uint8_t> ipAddr(std::begin(ph->srcIpAddr),
                               std::end(ph->srcIpAddr));
-  return nmco::IpAddress(ipAddr);
+  return nmdo::IpAddress(ipAddr);
 }
 
 

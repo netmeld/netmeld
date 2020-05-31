@@ -24,7 +24,6 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "Parser.hpp"
@@ -92,13 +91,13 @@ Parser::Parser() : Parser::base_type(start)
   interface =
     (token > token)
       [pnx::bind(&Parser::ifaceInit, this, qi::_2),
-       pnx::bind(&nmco::InterfaceNetwork::setMediaType,
+       pnx::bind(&nmdo::InterfaceNetwork::setMediaType,
                  pnx::bind(&Parser::tgtIface, this),
                  qi::_1)] >
     startBlock >
     *(  (qi::lit("address") >
          (  ipAddr
-              [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+              [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                          pnx::bind(&Parser::tgtIface, this),
                          qi::_1)]
           | token
@@ -106,7 +105,7 @@ Parser::Parser() : Parser::base_type(start)
          )
         )
       | (qi::lit("description") > token)
-          [pnx::bind(&nmco::InterfaceNetwork::setDescription,
+          [pnx::bind(&nmdo::InterfaceNetwork::setDescription,
                      pnx::bind(&Parser::tgtIface, this),
                      qi::_1)]
       | ifaceFirewall
@@ -169,10 +168,10 @@ Parser::Parser() : Parser::base_type(start)
       [pnx::bind(&Parser::ruleInit, this, qi::_1)] >
     startBlock >
     *(  (qi::lit("action") > token)
-          [pnx::bind(&nmco::AcRule::addAction,
+          [pnx::bind(&nmdo::AcRule::addAction,
                      pnx::bind(&Parser::tgtRule, this), qi::_1)]
       | (qi::lit("description") > token)
-          [pnx::bind(&nmco::AcRule::setRuleDescription,
+          [pnx::bind(&nmdo::AcRule::setRuleDescription,
                      pnx::bind(&Parser::tgtRule, this), qi::_1)]
       | (qi::lit("state") > startBlock > +(token > qi::lit("enable") > qi::eol) 
           [pnx::bind([&](std::string val){states.push_back(val);},
@@ -183,7 +182,7 @@ Parser::Parser() : Parser::base_type(start)
       | source
       | (qi::lit("log") > token)
       | (qi::lit("disable"))
-          [pnx::bind(&nmco::AcRule::disable,
+          [pnx::bind(&nmdo::AcRule::disable,
                      pnx::bind(&Parser::tgtRule, this))]
       | ignoredBlock
     ) > stopBlock
@@ -196,11 +195,11 @@ Parser::Parser() : Parser::base_type(start)
           [pnx::bind(&Parser::dstPort, this) = qi::_1]
       | (qi::lit("group") > startBlock >
          qi::lit("address-group") > token
-          [pnx::bind(&nmco::AcRule::addDst,
+          [pnx::bind(&nmdo::AcRule::addDst,
                      pnx::bind(&Parser::tgtRule, this), qi::_1)] >
          qi::eol > stopBlock)
       | (qi::lit("address") > token)
-          [pnx::bind(&nmco::AcRule::addDst,
+          [pnx::bind(&nmdo::AcRule::addDst,
                      pnx::bind(&Parser::tgtRule, this), qi::_1)]
       | ignoredBlock
     ) > stopBlock
@@ -212,11 +211,11 @@ Parser::Parser() : Parser::base_type(start)
           [pnx::bind(&Parser::srcPort, this) = qi::_1]
       | (qi::lit("group") > startBlock >
          qi::lit("address-group") > token
-          [pnx::bind(&nmco::AcRule::addSrc,
+          [pnx::bind(&nmdo::AcRule::addSrc,
                      pnx::bind(&Parser::tgtRule, this), qi::_1)] >
          qi::eol > stopBlock)
       | (qi::lit("address") > token)
-          [pnx::bind(&nmco::AcRule::addSrc,
+          [pnx::bind(&nmdo::AcRule::addSrc,
                      pnx::bind(&Parser::tgtRule, this), qi::_1)]
       | ignoredBlock
     ) > stopBlock
@@ -272,9 +271,9 @@ Parser::ifaceInit(const std::string& _name)
 
 
 void
-Parser::serviceAddDns(const nmco::IpAddress& _ipAddr)
+Parser::serviceAddDns(const nmdo::IpAddress& _ipAddr)
 {
-  nmco::Service service {"DNS", _ipAddr};
+  nmdo::Service service {"DNS", _ipAddr};
   service.addDstPort("53");
   service.setProtocol("udp");
   service.setServiceReason("VyOS device config");
@@ -283,7 +282,7 @@ Parser::serviceAddDns(const nmco::IpAddress& _ipAddr)
 
 
 void
-Parser::netBookAddAddr(const nmco::IpAddress& _ipAddr)
+Parser::netBookAddAddr(const nmdo::IpAddress& _ipAddr)
 {
   d.networkBooks[tgtZone][tgtBook].addData(_ipAddr.toString());
 }

@@ -24,19 +24,18 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "Parser.hpp"
 
-namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
+namespace nmdt = netmeld::datastore::tools;
 
 
 // =============================================================================
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -47,7 +46,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
   // Constructors
   // ===========================================================================
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       (
        "Cisco NX-OS show running-config",
        PROGRAM_NAME,

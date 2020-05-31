@@ -30,16 +30,15 @@
 #include <memory>
 #include <pcap/pcap.h>
 
-#include <netmeld/core/objects/AbstractObject.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/MacAddress.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
-#include <netmeld/core/objects/Vlan.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 #include "PacketHelper.hpp"
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
 // The following map is using the same type of object for the keys and values
 // This is an optimization due to how this data is extracted from packets, it
@@ -50,12 +49,12 @@ namespace nmco = netmeld::core::objects;
 // use the object being modifed (e.g. in a set) as the key because our compare
 // operator does a deep compare and would not work with the raw objects.
 struct Data {
-  std::map<nmco::Vlan, nmco::Vlan>              vlans;
+  std::map<nmdo::Vlan, nmdo::Vlan>              vlans;
 
-  std::map<nmco::MacAddress, nmco::MacAddress>  macAddrs;
-  std::map<std::string, nmco::IpAddress>    ipAddrs;
+  std::map<nmdo::MacAddress, nmdo::MacAddress>  macAddrs;
+  std::map<std::string, nmdo::IpAddress>    ipAddrs;
 
-  nmco::ToolObservations observations;
+  nmdo::ToolObservations observations;
 };
 
 typedef std::vector<Data>  Result;
@@ -106,7 +105,7 @@ class Parser
       size_t size {sizeof(T)};
       return isOffsetOk(size);
     }
-    nmco::IpAddress& getIpAddrLoc(const nmco::IpAddress&);
+    nmdo::IpAddress& getIpAddrLoc(const nmdo::IpAddress&);
 
     bool processEthernetHeader(const EthernetHeader*);
     void processDiscProtoPacket(const EthernetHeader*);

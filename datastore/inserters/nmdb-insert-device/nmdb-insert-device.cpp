@@ -24,18 +24,17 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/Interface.hpp>
-#include <netmeld/core/tools/AbstractInsertTool.hpp>
+#include <netmeld/datastore/objects/Interface.hpp>
+#include <netmeld/datastore/tools/AbstractInsertTool.hpp>
 
-namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdt = netmeld::datastore::tools;
 
 
-class Tool : public nmct::AbstractInsertTool
+class Tool : public nmdt::AbstractInsertTool
 {
   public:
-    Tool() : nmct::AbstractInsertTool
+    Tool() : nmdt::AbstractInsertTool
       ("device", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -88,7 +87,7 @@ class Tool : public nmct::AbstractInsertTool
       const auto& deviceId  {getDeviceId()};
 
       if (opts.exists("vm-host-device-id")) {
-        nmco::DeviceInformation hostDevInfo;
+        nmdo::DeviceInformation hostDevInfo;
         hostDevInfo.setDeviceId(opts.getValue("vm-host-device-id"));
         hostDevInfo.save(t, toolRunId);
 
@@ -105,18 +104,18 @@ class Tool : public nmct::AbstractInsertTool
             M_PI); // Not arbitrary, but probably high enough
       }
 
-      nmco::IpAddress ipAddr;
+      nmdo::IpAddress ipAddr;
       if (opts.exists("ip-addr")) {
-        ipAddr = nmco::IpAddress(opts.getValue("ip-addr"));
+        ipAddr = nmdo::IpAddress(opts.getValue("ip-addr"));
         ipAddr.setResponding(opts.exists("responding"));
 
         ipAddr.save(t, toolRunId, deviceId);
         LOG_DEBUG << ipAddr.toDebugString() << std::endl;
       }
 
-      nmco::MacAddress macAddr;
+      nmdo::MacAddress macAddr;
       if (opts.exists("mac-addr")) {
-        macAddr = nmco::MacAddress(opts.getValue("mac-addr"));
+        macAddr = nmdo::MacAddress(opts.getValue("mac-addr"));
         macAddr.addIp(ipAddr);
         macAddr.setResponding(opts.exists("responding"));
 
@@ -125,7 +124,7 @@ class Tool : public nmct::AbstractInsertTool
       }
 
       if (opts.exists("interface")) {
-        nmco::Interface iface(opts.getValue("interface"));
+        nmdo::Interface iface(opts.getValue("interface"));
         iface.setMediaType("ethernet");
         iface.setMacAddress(macAddr);
         iface.addIpAddress(ipAddr);

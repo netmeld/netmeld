@@ -27,22 +27,22 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 // =============================================================================
 // Data containers
 // =============================================================================
 struct Data {
-  nmco::DeviceInformation                        devInfo;
-  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
-  std::map<std::string, nmco::Route>             routes;
+  nmdo::DeviceInformation                        devInfo;
+  std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
+  std::map<std::string, nmdo::Route>             routes;
 };
 typedef std::vector<Data>    Result;
 
@@ -51,26 +51,26 @@ typedef std::vector<Data>    Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables are always private
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
       hostname,
       interface, typeSlot,
       ignoredLine;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       token;
 
-    nmcp::ParserIpAddress ipAddr;
+    nmdp::ParserIpAddress ipAddr;
 
     // Helpers
     Data d;
@@ -93,8 +93,8 @@ class Parser :
 
     // interface related
     void updateIfaceTypeSlot(const std::string&, const std::string&);
-    void addIfaceIp(nmco::IpAddress&, const nmco::IpAddress&);
-    void setIfaceGateway(nmco::IpAddress&);
+    void addIfaceIp(nmdo::IpAddress&, const nmdo::IpAddress&);
+    void setIfaceGateway(nmdo::IpAddress&);
     void updateIfaceSwitchportMode(const std::string&);
     void disableIface();
 

@@ -27,28 +27,28 @@
 #ifndef DATA_CONTAINER_SINGLETON_HPP
 #define DATA_CONTAINER_SINGLETON_HPP
 
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/MacAddress.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
-#include <netmeld/core/objects/Service.hpp>
-#include <netmeld/core/objects/Vlan.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
 
 #include <netmeld/core/utils/ThreadSafeQueue.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 namespace nmcu = netmeld::core::utils;
 
 
 struct Data {
-  std::map<std::string, nmco::IpAddress>         ipAddrs;
-  std::map<std::string, nmco::MacAddress>        macAddrs;
-  std::map<std::string, nmco::Vlan>              vlans;
-  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
+  std::map<std::string, nmdo::IpAddress>         ipAddrs;
+  std::map<std::string, nmdo::MacAddress>        macAddrs;
+  std::map<std::string, nmdo::Vlan>              vlans;
+  std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
 
-  nmco::ToolObservations observations;
+  nmdo::ToolObservations observations;
 
-  std::set<nmco::Service> services;
+  std::set<nmdo::Service> services;
 };
 typedef std::vector<Data> Result;
 

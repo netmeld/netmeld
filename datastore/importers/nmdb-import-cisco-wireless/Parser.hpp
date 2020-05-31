@@ -27,19 +27,18 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/objects/Service.hpp>
 
-
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 
 // =============================================================================
@@ -48,10 +47,10 @@ namespace nmcp = netmeld::core::parsers;
 struct Data
 {
   std::string                         domainName;
-  nmco::DeviceInformation              devInfo;
-  std::vector<nmco::InterfaceNetwork>  ifaces;
-  std::vector<nmco::Route>             routes;
-  std::vector<nmco::Service>           services;
+  nmdo::DeviceInformation              devInfo;
+  std::vector<nmdo::InterfaceNetwork>  ifaces;
+  std::vector<nmdo::Route>             routes;
+  std::vector<nmdo::Service>           services;
 };
 typedef std::vector<Data> Result;
 
@@ -60,7 +59,7 @@ typedef std::vector<Data> Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
@@ -70,21 +69,21 @@ class Parser :
     bool isCdpEnabled {true};
 
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       ignoredLine,
       phyIface,
       config;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       tokens,
       token;
 
-    nmcp::ParserDomainName  domainName;
-    nmcp::ParserIpAddress   ipAddr;
-    nmcp::ParserMacAddress  macAddr;
+    nmdp::ParserDomainName  domainName;
+    nmdp::ParserIpAddress   ipAddr;
+    nmdp::ParserMacAddress  macAddr;
 
   // ===========================================================================
   // Constructors
@@ -97,13 +96,16 @@ class Parser :
   // ===========================================================================
   private:
     // Device related
-    void addNtpService(const nmco::IpAddress&);
+    void addNtpService(const nmdo::IpAddress&);
     void setDevId(const std::string&);
     void setVendor(const std::string&);
 
     // Interface related
-    void addIface1(const std::string&, nmco::IpAddress&, const nmco::IpAddress&);
-    void addIface2(const std::string&, nmco::IpAddress&, const nmco::IpAddress&, const nmco::IpAddress&);
+    void addIface1(const std::string&,
+                   nmdo::IpAddress&, const nmdo::IpAddress&);
+    void addIface2(const std::string&,
+                   nmdo::IpAddress&, const nmdo::IpAddress&,
+                   const nmdo::IpAddress&);
 
     // Unsupported
     void unsup(const std::string&);

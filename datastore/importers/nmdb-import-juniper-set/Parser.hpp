@@ -27,22 +27,22 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/AcRule.hpp>
+#include <netmeld/datastore/objects/AcNetworkBook.hpp>
+#include <netmeld/datastore/objects/AcServiceBook.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
 
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
-typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
-typedef std::map<size_t, nmco::AcRule> RuleBook;
+typedef std::map<std::string, nmdo::AcNetworkBook> NetworkBook;
+typedef std::map<std::string, nmdo::AcServiceBook> ServiceBook;
+typedef std::map<size_t, nmdo::AcRule> RuleBook;
 
 
 // =============================================================================
@@ -50,15 +50,15 @@ typedef std::map<size_t, nmco::AcRule> RuleBook;
 // =============================================================================
 struct Data
 {
-  std::map<std::string, nmco::Route>  routes;
+  std::map<std::string, nmdo::Route>  routes;
 
-  std::map<std::string, nmco::InterfaceNetwork>  ifaces;
+  std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
 
   std::map<std::string, NetworkBook> networkBooks;
   std::map<std::string, ServiceBook> serviceBooks;
   std::map<std::string, RuleBook>    ruleBooks;
 
-  nmco::ToolObservations observations;
+  nmdo::ToolObservations observations;
 };
 typedef std::vector<Data>  Result;
 
@@ -67,39 +67,39 @@ typedef std::vector<Data>  Result;
 // Parser definition
 // =============================================================================
 class Parser:
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private:
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
       interface, service, zone, address, group, policy,
       interfaces, routes;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
       route;
 
-    qi::rule<nmcp::IstreamIter, std::vector<std::string>()>
+    qi::rule<nmdp::IstreamIter, std::vector<std::string>()>
       ifaceTypeName;
 
-    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       ipAddrOrFqdn,
       srvcSrcPort, srvcDstPort,
       vrouter;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       token;
 
-    nmcp::ParserIpAddress
+    nmdp::ParserIpAddress
       ipAddr;
 
-    nmcp::ParserDomainName
+    nmdp::ParserDomainName
       fqdn;
 
     Data d;
@@ -127,13 +127,13 @@ class Parser:
   // ===========================================================================
   private:
     // Route related
-    void setIfaceRoute(const std::string&, nmco::IpAddress&);
-    void setIfaceGateway(const std::string&, nmco::IpAddress&);
+    void setIfaceRoute(const std::string&, nmdo::IpAddress&);
+    void setIfaceGateway(const std::string&, nmdo::IpAddress&);
 
     // Interface related
     void initIface(const std::string&, const std::string&);
     void disableIface();
-    void updateIfaceIp(nmco::IpAddress&);
+    void updateIfaceIp(nmdo::IpAddress&);
     void updateZoneIfaceBook(const std::string&);
 
     // Access control related

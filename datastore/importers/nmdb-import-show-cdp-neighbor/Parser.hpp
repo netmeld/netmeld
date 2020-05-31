@@ -27,24 +27,24 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 
 // =============================================================================
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmco::IpAddress>         ipAddrs;
-  std::vector<nmco::DeviceInformation> devInfos;
+  std::vector<nmdo::IpAddress>         ipAddrs;
+  std::vector<nmdo::DeviceInformation> devInfos;
 
-  std::vector<std::pair<nmco::InterfaceNetwork, std::string>> interfaces;
+  std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
 };
 typedef std::vector<Data>  Result;
 
@@ -53,7 +53,7 @@ typedef std::vector<Data>  Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
@@ -62,19 +62,19 @@ class Parser :
     Data d;
 
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
       header,
       devIdAddr;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       token;
 
-    nmcp::ParserIpAddress   ipAddr;
-    nmcp::ParserDomainName  hostname;
+    nmdp::ParserIpAddress   ipAddr;
+    nmdp::ParserDomainName  hostname;
 
   // ===========================================================================
   // Constructors
@@ -87,9 +87,9 @@ class Parser :
   // ===========================================================================
   private:
     std::string getDevice(const std::string&);
-    void addIp(const std::string&, const nmco::IpAddress&);
+    void addIp(const std::string&, const nmdo::IpAddress&);
     void addHwInfo(const std::string&, const std::string&, std::string&);
-    void addCon(const std::string&, const std::string&, const nmco::IpAddress&);
+    void addCon(const std::string&, const std::string&, const nmdo::IpAddress&);
 
     // Object return
     Result getData();

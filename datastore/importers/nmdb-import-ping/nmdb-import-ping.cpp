@@ -24,19 +24,19 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
 
 
-typedef std::vector<nmco::IpAddress>       Result;
+typedef std::vector<nmdo::IpAddress>       Result;
 
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   public:
     Parser() : Parser::base_type(start)
@@ -95,31 +95,31 @@ class Parser :
           );
     }
 
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start,
       pingResponses;
 
-    qi::rule<nmcp::IstreamIter, nmco::IpAddress(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
       pingResponse;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       pingResponsesHeader,
       pingStatisticsHeader,
       pingStatistics;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       ifaceName,
       token;
 
-    nmcp::ParserIpAddress
+    nmdp::ParserIpAddress
       ipAddr;
 };
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P, R>
+class Tool : public nmdt::AbstractImportTool<P, R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P, R>
+    Tool() : nmdt::AbstractImportTool<P, R>
       ("ping", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 

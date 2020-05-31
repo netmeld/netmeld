@@ -24,19 +24,19 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/parsers/ParserHelper.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 #include <netmeld/core/utils/ForkExec.hpp>
 
 typedef std::vector<std::string>  Results;
 
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
 namespace nmcu = netmeld::core::utils;
 
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   private:
     std::string
@@ -51,7 +51,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
     }
 
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("clw", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -169,6 +169,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<nmcp::DummyParser, Results> tool;
+  Tool<nmdp::DummyParser, Results> tool;
   return tool.start(argc, argv);
 }

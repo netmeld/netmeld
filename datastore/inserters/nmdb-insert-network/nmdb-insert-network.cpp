@@ -24,18 +24,18 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/IpNetwork.hpp>
-#include <netmeld/core/objects/Vlan.hpp>
-#include <netmeld/core/tools/AbstractInsertTool.hpp>
+#include <netmeld/datastore/objects/IpNetwork.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
+#include <netmeld/datastore/tools/AbstractInsertTool.hpp>
 
-namespace nmct = netmeld::core::tools;
-namespace nmco = netmeld::core::objects;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdo = netmeld::datastore::objects;
 
 
-class Tool : public nmct::AbstractInsertTool
+class Tool : public nmdt::AbstractInsertTool
 {
   public:
-    Tool() : nmct::AbstractInsertTool
+    Tool() : nmdt::AbstractInsertTool
       ("VLAN and/or IP network", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -77,9 +77,9 @@ class Tool : public nmct::AbstractInsertTool
       }
 
       // IP net logic
-      nmco::IpNetwork ipNetwork;
+      nmdo::IpNetwork ipNetwork;
       if (opts.exists("ip-net")) {
-        nmco::IpNetwork ipNet {opts.getValue("ip-net")};
+        nmdo::IpNetwork ipNet {opts.getValue("ip-net")};
         ipNet.setReason(description);
         if (opts.exists("low-graph-priority")) {
           ipNet.setExtraWeight(M_PI); // Not arbitrary, but probably high enough
@@ -93,7 +93,7 @@ class Tool : public nmct::AbstractInsertTool
 
       // VLAN logic
       if (opts.exists("vlan")) {
-        nmco::Vlan vlan;
+        nmdo::Vlan vlan;
 
         vlan.setId(opts.getValueAs<uint16_t>("vlan"));
         vlan.setDescription(description);

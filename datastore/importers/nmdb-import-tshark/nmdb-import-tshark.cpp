@@ -27,16 +27,16 @@
 #include <csignal>
 #include <future>
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 #include "Parser.hpp"
 #include "DataContainerSingleton.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdp = netmeld::datastore::parsers;
 
 
 // Signal handler, just restore default handler after called once
@@ -47,7 +47,7 @@ void sigIntHandler(int) { std::signal(SIGINT, SIG_DFL); }
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -56,17 +56,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
     std::future<void> parser;
 
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
-    // Inhertied from AbstractImportTool at this scope
-      // TResults                 tResults;
-      // nmco::Uuid               toolRunId;
-      // nmco::Time               executionStart;
-      // nmco::Time               executionStop;
-      // nmco::DeviceInformation  devInfo;
   public: // Variables should rarely appear at this scope
 
 
@@ -76,7 +65,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       (
        "tshark -V -T json",  // command line tool imports data from
        PROGRAM_NAME,         // program name (set in CMakeLists.txt)
@@ -123,7 +112,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
             std::launch::async,
             [&dataPath]()
             {
-              nmcp::fromFilePathMM<Parser<nmcp::ConstIter>,R>(dataPath);
+              nmdp::fromFilePathMM<Parser<nmdp::ConstIter>,R>(dataPath);
             }
             );
         parser.get();
@@ -134,7 +123,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
             []()
             {
               try {
-                nmcp::fromStdIn<Parser<nmcp::IstreamIter>,R>();
+                nmdp::fromStdIn<Parser<nmdp::IstreamIter>,R>();
               } catch (...) {
                 LOG_WARN << "Partial save, data stream ended abruptly\n";
               }
@@ -161,7 +150,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
       const auto& dbName  {this->opts.getValue("db-name")};
       const auto& dbArgs  {this->opts.getValue("db-args")};
       pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs };
-      nmcu::dbPrepareCommon(db);
+      nmdu::dbPrepareCommon(db);
 
       LOG_DEBUG << "Iterating over results\n";
       size_t toolPacketCount {0};
@@ -194,7 +183,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 
             LOG_DEBUG << "Iterating over Interfaces\n";
             for (auto& [id, result] : results.ifaces) {
-              nmco::DeviceInformation devInfo;
+              nmdo::DeviceInformation devInfo;
               devInfo.setDeviceId(id);
               devInfo.save(pt,toolRunId);
               const auto& deviceInfoId {devInfo.getDeviceId()};
@@ -242,20 +231,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printVersion() const;
-    // Inherited from AbstractImportTool at this scope
-      // fs::path    const getDataPath() const;
-      // std::string const getDeviceId() const;
-      // nmco::Uuid   const getToolRunId() const;
-      // virtual void printHelp() const;
-      // virtual int  runTool();
-      // virtual void setToolRunId();
-      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 
@@ -263,6 +239,6 @@ class Tool : public nmct::AbstractImportTool<P,R>
 // Program entry point
 // =============================================================================
 int main(int argc, char** argv) {
-  Tool<nmcp::DummyParser, Result> tool;  // We'll specify parsing directly
+  Tool<nmdp::DummyParser, Result> tool;  // We'll specify parsing directly
   return tool.start(argc, argv);
 }

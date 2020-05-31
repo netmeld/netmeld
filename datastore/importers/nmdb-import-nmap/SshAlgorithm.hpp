@@ -27,20 +27,21 @@
 #ifndef SSH_ALGORITHM
 #define SSH_ALGORITHM
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/Port.hpp>
+#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/objects/Port.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
-class SshAlgorithm : public nmco::AbstractDatastoreObject
+class SshAlgorithm : public nmdo::AbstractDatastoreObject
 {
   public:
-    nmco::Port   port;
+    nmdo::Port   port;
     std::string  type;
     std::string  name;
 
     bool isValid() const override;
-    void save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&) override;
+    void save(pqxx::transaction_base&,
+              const nmco::Uuid&, const std::string&) override;
     std::string toString() const;
 };
 

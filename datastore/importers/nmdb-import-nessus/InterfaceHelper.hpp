@@ -27,16 +27,16 @@
 #ifndef INTERFACE_HELPER
 #define INTERFACE_HELPER
 
-#include <netmeld/core/objects/Interface.hpp>
+#include <netmeld/datastore/objects/Interface.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
 struct InterfaceWrapper
 {
-  nmco::Interface interface;
+  nmdo::Interface interface;
   std::string deviceId;
 
-  InterfaceWrapper(nmco::Interface& iface, const std::string& id) :
+  InterfaceWrapper(nmdo::Interface& iface, const std::string& id) :
     interface(iface), deviceId(id)
   {}
 };
@@ -46,7 +46,7 @@ struct InterfaceHelper
   // ifaceName to Interface mapping
   std::map<std::string, InterfaceWrapper> interfaces;
 
-  void add(nmco::Interface&, const std::string&);
+  void add(nmdo::Interface&, const std::string&);
 };
 
 #endif //INTERFACE_HELPER

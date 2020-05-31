@@ -28,18 +28,18 @@
 #define PARSER_NESSUS_INTERFACE_HPP
 
 
-#include <netmeld/core/objects/Interface.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
+#include <netmeld/datastore/objects/Interface.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
-typedef std::vector<nmco::Interface>       ResultPni;
+typedef std::vector<nmdo::Interface>       ResultPni;
 
 
-namespace netmeld::core::parsers {
+namespace netmeld::datastore::parsers {
 
   class ParserNessusInterface :
     public qi::grammar<IstreamIter, ResultPni()>
@@ -57,11 +57,11 @@ namespace netmeld::core::parsers {
         // TODO Why do none of these use the space skipper?
         macAddrLine =
           qi::lit("  - ") >> // two spaces before -
-          macAddr [pnx::bind(&nmco::Interface::setMacAddress, &qi::_val, qi::_1)] >>
+          macAddr [pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1)] >>
           (  (qi::lit(" (interface ") >> ifaceName
-                [pnx::bind(&nmco::Interface::setName, &qi::_val, qi::_1)])
+                [pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1)])
            | (qi::lit(" (interfaces ") >> token
-                [pnx::bind(&nmco::Interface::setName, &qi::_val, qi::_1)] >>
+                [pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1)] >>
               -qi::omit[+(qi::blank >> token)] >> qi::eol
              )
           )
@@ -69,9 +69,9 @@ namespace netmeld::core::parsers {
 
         ipAddrLine =
           qi::lit(" - ") >> // one space before -
-          ipAddr [pnx::bind(&nmco::Interface::addIpAddress, &qi::_val, qi::_1)] >>
+          ipAddr [pnx::bind(&nmdo::Interface::addIpAddress, &qi::_val, qi::_1)] >>
           qi::lit(" (on interface ") >>
-          ifaceName [pnx::bind(&nmco::Interface::setName, &qi::_val, qi::_1)]
+          ifaceName [pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1)]
           ;
 
         ifaceName =
@@ -95,7 +95,7 @@ namespace netmeld::core::parsers {
       qi::rule<IstreamIter, ResultPni()>
         start;
 
-      qi::rule<IstreamIter, nmco::Interface()>
+      qi::rule<IstreamIter, nmdo::Interface()>
         macAddrLine,
         ipAddrLine;
 
@@ -103,10 +103,10 @@ namespace netmeld::core::parsers {
         ifaceName,
         token;
 
-      nmcp::ParserIpAddress
+      nmdp::ParserIpAddress
         ipAddr;
 
-      nmcp::ParserMacAddress
+      nmdp::ParserMacAddress
         macAddr;
   };
 }

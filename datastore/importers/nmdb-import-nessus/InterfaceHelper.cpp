@@ -27,7 +27,7 @@
 #include "InterfaceHelper.hpp"
 
 void
-InterfaceHelper::add(nmco::Interface& iface, const std::string& deviceId)
+InterfaceHelper::add(nmdo::Interface& iface, const std::string& deviceId)
 {
   const auto& ifaceName {iface.getName()};
 

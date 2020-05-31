@@ -120,7 +120,7 @@ Parser::updateIfaceTypeSlot(const std::string& _type, const std::string& _slot)
 }
 
 void
-Parser::addIfaceIp(nmco::IpAddress& _ip, const nmco::IpAddress& _mask)
+Parser::addIfaceIp(nmdo::IpAddress& _ip, const nmdo::IpAddress& _mask)
 {
   _ip.setNetmask(_mask);
   auto& iface {d.ifaces[tgtIfaceName]};
@@ -128,7 +128,7 @@ Parser::addIfaceIp(nmco::IpAddress& _ip, const nmco::IpAddress& _mask)
 }
 
 void
-Parser::setIfaceGateway(nmco::IpAddress& _ip)
+Parser::setIfaceGateway(nmdo::IpAddress& _ip)
 {
   auto& iface {d.ifaces[tgtIfaceName]};
   for (auto& ip : iface.getIpAddresses()) { // should only be one ip/route

@@ -45,17 +45,17 @@
      rules (see other templates)
 */
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/tools/AbstractInsertTool.hpp>
+#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/tools/AbstractInsertTool.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdt = netmeld::datastore::tools;
 
 
 // =============================================================================
 // Insert tool definition
 // =============================================================================
-class Tool : public nmct::AbstractInsertTool
+class Tool : public nmdt::AbstractInsertTool
 {
   // ===========================================================================
   // Variables
@@ -78,7 +78,7 @@ class Tool : public nmct::AbstractInsertTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractInsertTool
+    Tool() : nmdt::AbstractInsertTool
       (
        "help blurb",    // help message, prefixed with:
                         //   "Insert a manually specified "
@@ -127,7 +127,7 @@ class Tool : public nmct::AbstractInsertTool
 
       // Object construction from command line args
       if (opts.exists("option-a")) {
-        nmco::AbstractDatastoreObject ao;
+        nmdo::AbstractDatastoreObject ao;
 
         // Alter object state based on command line args
 

@@ -47,24 +47,24 @@ Parser::Parser() : Parser::base_type(start)
 
   iface =
     qi::omit[qi::ushort_] >> qi::lit(':') >>
-    ifaceName [qi::_val = pnx::construct<nmco::Interface>(qi::_1)] >>
+    ifaceName [qi::_val = pnx::construct<nmdo::Interface>(qi::_1)] >>
     qi::lit(':') >>
-    token [pnx::bind(&nmco::Interface::setFlags, &qi::_val, qi::_1)] >>
+    token [pnx::bind(&nmdo::Interface::setFlags, &qi::_val, qi::_1)] >>
     qi::lit("mtu") >>
-    qi::uint_ [pnx::bind(&nmco::Interface::setMtu, &qi::_val, qi::_1)] >>
+    qi::uint_ [pnx::bind(&nmdo::Interface::setMtu, &qi::_val, qi::_1)] >>
     qi::omit[*token] >> qi::eol >>
 
     qi::lit("link/") >>
     token
-    [pnx::bind(&nmco::Interface::setMediaType, &qi::_val, qi::_1)] >>
+    [pnx::bind(&nmdo::Interface::setMediaType, &qi::_val, qi::_1)] >>
     -macAddr
-      [pnx::bind(&nmco::Interface::setMacAddress, &qi::_val, qi::_1)] >>
+      [pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1)] >>
       -(qi::lit("brd") >> qi::omit[macAddr] >>
           -((+token)[pnx::bind(&Parser::addObservation, this, qi::_1, qi::_val)])) >>
         qi::eol >>
 
         *(inetLine
-            [pnx::bind(&nmco::Interface::addIpAddress, &qi::_val, qi::_1)])
+            [pnx::bind(&nmdo::Interface::addIpAddress, &qi::_val, qi::_1)])
         ;
 
   ifaceName =
@@ -103,7 +103,7 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
 void
 Parser::addObservation(const std::vector<std::string>& observations,
-                       const nmco::Interface& iface)
+                       const nmdo::Interface& iface)
 {
   std::ostringstream oss;
   oss << "Extra link data for " << iface.getName() << ":";
@@ -114,7 +114,7 @@ Parser::addObservation(const std::vector<std::string>& observations,
 }
 
 void
-Parser::addIface(const nmco::Interface& iface)
+Parser::addIface(const nmdo::Interface& iface)
 {
   d.ifaces.push_back(iface);
 }

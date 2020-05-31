@@ -29,23 +29,23 @@
 
 #include <map>
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/Interface.hpp>
-#include <netmeld/core/objects/Route.hpp>
-#include <netmeld/core/objects/Service.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/Interface.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 struct Data {
-  std::map<std::string, nmco::DeviceInformation>  devInfos;
-  std::map<std::string, nmco::Interface>          ifaces;
+  std::map<std::string, nmdo::DeviceInformation>  devInfos;
+  std::map<std::string, nmdo::Interface>          ifaces;
 
-  std::vector<nmco::Route>    routes;
-  std::vector<nmco::Service>  services;
+  std::vector<nmdo::Route>    routes;
+  std::vector<nmdo::Service>  services;
 };
 typedef std::vector<Data>  Result;
 
@@ -54,37 +54,37 @@ typedef std::vector<Data>  Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private:
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       compartmentHeader;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       adapter, ifaceTypeName,
       servers;
 
-    qi::rule<nmcp::IstreamIter, nmco::IpAddress(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
       ipLine,
       getIp;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       token;
 
-    qi::rule<nmcp::IstreamIter>
+    qi::rule<nmdp::IstreamIter>
       dots,
       ignoredLine;
 
-    nmcp::ParserDomainName  fqdn;
-    nmcp::ParserIpAddress   ipAddr;
-    nmcp::ParserMacAddress  macAddr;
+    nmdp::ParserDomainName  fqdn;
+    nmdp::ParserIpAddress   ipAddr;
+    nmdp::ParserMacAddress  macAddr;
 
     // Helpers
     Data d;
@@ -107,14 +107,14 @@ class Parser :
     void addDevInfo(const std::string&);
 
     void addIface(const std::string&, const std::string&);
-    void addIfaceMac(nmco::MacAddress&);
-    void addIfaceIp(nmco::IpAddress&);
+    void addIfaceMac(nmdo::MacAddress&);
+    void addIfaceIp(nmdo::IpAddress&);
     void setIfaceDown();
     void setIfaceDnsSuffix(const std::string&);
 
-    void addRoute(const nmco::IpAddress&);
+    void addRoute(const nmdo::IpAddress&);
 
-    void addService(const std::string&, const nmco::IpAddress&);
+    void addService(const std::string&, const nmdo::IpAddress&);
 
     Result getData();
 };

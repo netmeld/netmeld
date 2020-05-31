@@ -27,17 +27,16 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-//#include <netmeld/core/objects/Vlan.hpp>
-#include <netmeld/core/parsers/ParserMacAddress.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef nmco::InterfaceNetwork  Data;
+typedef nmdo::InterfaceNetwork  Data;
 //struct Data { };
 typedef std::vector<Data>    Result;
 
@@ -46,29 +45,27 @@ typedef std::vector<Data>    Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    //Data d;
-
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, Data(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Data(), qi::ascii::blank_type>
       link;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       type,
       token;
 
-    qi::rule<nmcp::IstreamIter>
+    qi::rule<nmdp::IstreamIter>
       garbage;
 
-    nmcp::ParserMacAddress
+    nmdp::ParserMacAddress
       macAddr;
 
 

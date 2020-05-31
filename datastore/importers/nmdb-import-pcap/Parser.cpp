@@ -27,7 +27,7 @@
 #include <memory>
 #include <pcap/pcap.h>
 
-#include <netmeld/core/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/core/utils/Exit.hpp>
 
 #include "Parser.hpp"
@@ -191,8 +191,8 @@ Parser::isOffsetOk(size_t _size)
     return false;
   }
 }
-nmco::IpAddress&
-Parser::getIpAddrLoc(const nmco::IpAddress& _ipAddr)
+nmdo::IpAddress&
+Parser::getIpAddrLoc(const nmdo::IpAddress& _ipAddr)
 {
   const auto& ipAddrStr {_ipAddr.toString()};
   if (!d.ipAddrs.count(ipAddrStr)) {
@@ -399,7 +399,7 @@ Parser::processDnsHeader(const DnsHeader* _dh)
   // process answers
   auto ips {ph.getDnsARecords(dnsPacketStart, _dh, offset)};
   for (auto& ip : ips) {
-    nmco::IpAddress ipAddr(std::get<0>(ip));
+    nmdo::IpAddress ipAddr(std::get<0>(ip));
     auto ipAddrStr {ipAddr.toString()};
     if (!d.ipAddrs.count(ipAddrStr)) {
       d.ipAddrs[ipAddrStr] = ipAddr;

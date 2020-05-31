@@ -24,35 +24,25 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "Parser.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdt = netmeld::datastore::tools;
 
 
 // =============================================================================
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
-    // Inhertied from AbstractImportTool at this scope
-      // TResults               tResults;
-      // nmco::Uuid              toolRunId;
-      // nmco::Time              executionStart;
-      // nmco::Time              executionStop;
   public: // Variables should rarely appear at this scope
 
 
@@ -62,7 +52,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       (
        "configshow -all",  // command line tool imports data from
        PROGRAM_NAME,       // program name (set in CMakeLists.txt)
@@ -121,21 +111,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printVersion() const;
-    // Inherited from AbstractImportTool at this scope
-      // sfs::path    const getDataPath() const;
-      // std::string const getDeviceId() const;
-      // nmco::Uuid   const getToolRunId() const;
-      // virtual void parseData();
-      // virtual void printHelp() const;
-      // virtual int  runTool();
-      // virtual void setToolRunId();
-      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 

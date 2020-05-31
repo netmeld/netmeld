@@ -27,20 +27,21 @@
 #ifndef NSE_RESULT
 #define NSE_RESULT
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/Port.hpp>
+#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/objects/Port.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
-class NseResult : public nmco::AbstractDatastoreObject
+class NseResult : public nmdo::AbstractDatastoreObject
 {
   public:
-    nmco::Port       port;
+    nmdo::Port       port;
     std::string     scriptId;
     std::string     scriptOutput;
 
     bool isValid() const override;
-    void save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&) override;
+    void save(pqxx::transaction_base&,
+              const nmco::Uuid&, const std::string&) override;
     std::string toString() const;
 };
 

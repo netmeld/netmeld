@@ -27,18 +27,18 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/objects/AcRule.hpp>
+#include <netmeld/datastore/objects/AcNetworkBook.hpp>
+#include <netmeld/datastore/objects/AcServiceBook.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
 
-typedef std::map<std::string, nmco::AcNetworkBook> NetworkBook;
-typedef std::map<std::string, nmco::AcServiceBook> ServiceBook;
-typedef std::map<size_t, nmco::AcRule> RuleBook;
+typedef std::map<std::string, nmdo::AcNetworkBook> NetworkBook;
+typedef std::map<std::string, nmdo::AcServiceBook> ServiceBook;
+typedef std::map<size_t, nmdo::AcRule> RuleBook;
 
 // =============================================================================
 // Data containers
@@ -55,7 +55,7 @@ typedef std::vector<Data>  Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
@@ -63,24 +63,24 @@ class Parser :
   private:
     Data d;
 
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type,
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
              qi::locals<std::string>>
       table, chain, rule;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       optionValue;
 
-    qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       sportModule, dportModule, icmpModule;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       counts,
       commentLine;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       optionSwitch,
       token;
 

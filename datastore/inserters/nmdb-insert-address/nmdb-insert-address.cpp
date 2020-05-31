@@ -24,18 +24,18 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/MacAddress.hpp>
-#include <netmeld/core/tools/AbstractInsertTool.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/tools/AbstractInsertTool.hpp>
 
-namespace nmct = netmeld::core::tools;
-namespace nmco = netmeld::core::objects;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdo = netmeld::datastore::objects;
 
 
-class Tool : public nmct::AbstractInsertTool
+class Tool : public nmdt::AbstractInsertTool
 {
   public:
-    Tool() : nmct::AbstractInsertTool
+    Tool() : nmdt::AbstractInsertTool
       ("ip and/or mac address", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -84,14 +84,14 @@ class Tool : public nmct::AbstractInsertTool
       const auto& deviceId  {getDeviceId()};
       auto isResponding     {opts.getValueAs<bool>("responding")};
 
-      nmco::MacAddress macAddr;
+      nmdo::MacAddress macAddr;
       if (opts.exists("mac-addr")) {
-        macAddr = nmco::MacAddress(opts.getValue("mac-addr"));
+        macAddr = nmdo::MacAddress(opts.getValue("mac-addr"));
       }
 
-      nmco::IpAddress ipAddr;
+      nmdo::IpAddress ipAddr;
       if (opts.exists("ip-addr")) {
-        ipAddr = nmco::IpAddress(opts.getValue("ip-addr"));
+        ipAddr = nmdo::IpAddress(opts.getValue("ip-addr"));
       }
 
       macAddr.setResponding(isResponding);

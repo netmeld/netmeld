@@ -24,8 +24,6 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/utils/StreamUtilities.hpp>
-
 #include "DataContainerSingleton.hpp"
 
 // =============================================================================
@@ -293,7 +291,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
     const auto& ipAddrStr {s1(arpSrcProtoIpv4)};
     auto& macAddr {d.macAddrs[macAddrStr]};
     macAddr.setMac(macAddrStr);
-    nmco::IpAddress ipAddr {ipAddrStr, TSHARK_REASON};
+    nmdo::IpAddress ipAddr {ipAddrStr, TSHARK_REASON};
     ipAddr.setResponding(true);
     macAddr.addIp(ipAddr);
     macAddr.setResponding(true);
@@ -306,9 +304,9 @@ Parser<Iter>::processPacket(PacketData& _pd)
   //  for (const auto& v : v2(dnsNs)) {
   //    const auto& name {std::get<0>(v)};
   //    const auto& ipStr {std::get<1>(v)};
-  //    nmco::Service serv;
+  //    nmdo::Service serv;
   //    serv.addDstPort("53");
-  //    serv.setDstAddress(nmco::IpAddress(ipStr, TSHARK_REASON));
+  //    serv.setDstAddress(nmdo::IpAddress(ipStr, TSHARK_REASON));
   //    serv.setServiceName("dns");
   //    serv.setServiceDescription(name);
   //    serv.setServiceReason(TSHARK_REASON);
@@ -348,7 +346,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
     if ("0.0.0.0" != ipYour) {
       auto& ipAddr {d.ipAddrs[ipYour]};
       ipAddr.setAddress(ipYour);
-      ipAddr.setNetmask(nmco::IpNetwork(subnetMask));
+      ipAddr.setNetmask(nmdo::IpNetwork(subnetMask));
       ipAddr.setReason(TSHARK_REASON);
       ipAddr.setResponding(true);
       if (_pd.count(bootpOptionHostname)) {
@@ -359,9 +357,9 @@ Parser<Iter>::processPacket(PacketData& _pd)
   }
   if (_pd.count(bootpOptionDomainNameServer)) {
     for (const auto& v : v1(bootpOptionDomainNameServer)) {
-      nmco::Service serv;
+      nmdo::Service serv;
       serv.addDstPort("53");
-      serv.setDstAddress(nmco::IpAddress(v, TSHARK_REASON));
+      serv.setDstAddress(nmdo::IpAddress(v, TSHARK_REASON));
       serv.setServiceName("dns");
       serv.setServiceReason(TSHARK_REASON);
       serv.setProtocol("udp");
@@ -371,9 +369,9 @@ Parser<Iter>::processPacket(PacketData& _pd)
   }
   if (_pd.count(bootpOptionTftpServerAddress)) {
     for (const auto& v : v1(bootpOptionTftpServerAddress)) {
-      nmco::Service serv;
+      nmdo::Service serv;
       serv.addDstPort("69");
-      serv.setDstAddress(nmco::IpAddress(v, TSHARK_REASON));
+      serv.setDstAddress(nmdo::IpAddress(v, TSHARK_REASON));
       serv.setServiceName("tftp");
       serv.setServiceReason(TSHARK_REASON);
       serv.setProtocol("udp");
@@ -387,7 +385,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
     macAddr.setMac(macAddrStr);
     if (_pd.count(bootpOptionDhcpServerId)) {
       const auto& ipAddrStr {s1(bootpOptionDhcpServerId)};
-      nmco::IpAddress ipAddr {ipAddrStr, TSHARK_REASON};
+      nmdo::IpAddress ipAddr {ipAddrStr, TSHARK_REASON};
       ipAddr.setResponding(true);
       macAddr.addIp(ipAddr);
     }
@@ -406,9 +404,9 @@ Parser<Iter>::processPacket(PacketData& _pd)
 
     // ignore not you ips
     if (!(127 == o1 && 127 == o2 && 127 == o3 && (127 == o4 || 128 == o4))) {
-      nmco::Service serv;
+      nmdo::Service serv;
       serv.addDstPort("123");
-      serv.setDstAddress(nmco::IpAddress(oss.str(), TSHARK_REASON));
+      serv.setDstAddress(nmdo::IpAddress(oss.str(), TSHARK_REASON));
       serv.setServiceName("ntp");
       serv.setServiceReason(TSHARK_REASON);
       serv.setProtocol("udp");
@@ -426,9 +424,9 @@ Parser<Iter>::processPacket(PacketData& _pd)
     iface.setDescription(
         s1(cdpPlatform) + " -- " + s1(cdpSoftwareVersion)
         );
-    nmco::MacAddress macAddr {s1(ethSrc)};
+    nmdo::MacAddress macAddr {s1(ethSrc)};
     iface.setMacAddress(macAddr);
-    nmco::IpAddress ipAddr {s1(cdpNrgyzIpAddress), TSHARK_REASON};
+    nmdo::IpAddress ipAddr {s1(cdpNrgyzIpAddress), TSHARK_REASON};
     iface.addIpAddress(ipAddr);
     iface.setName(s1(cdpPortid));
     iface.setMediaType(s1(cdpPortid));
@@ -440,7 +438,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
   if (_pd.count(vlanId)) {
     for (const auto& vId : std::any_cast<VecStrType>(_pd[vlanId])) {
       auto val {static_cast<uint16_t>(std::stoi(vId))};
-      d.vlans[vId] = nmco::Vlan(val, TSHARK_REASON);
+      d.vlans[vId] = nmdo::Vlan(val, TSHARK_REASON);
     }
   }
 
@@ -455,12 +453,12 @@ Parser<Iter>::processPacket(PacketData& _pd)
 // NOTE: Below is wrong as ethSrc may be the router not the end point.
 //    // ===== IPv4 =====
 //    if (_pd.count(ipSrc)) {
-//      nmco::IpAddress ipAddr {s1(ipSrc), TSHARK_REASON};
+//      nmdo::IpAddress ipAddr {s1(ipSrc), TSHARK_REASON};
 //      macAddr.addIp(ipAddr);
 //    }
 //    // ===== IPv6 =====
 //    if (_pd.count(ipv6Src)) {
-//      nmco::IpAddress ipAddr {s1(ipv6Src), TSHARK_REASON};
+//      nmdo::IpAddress ipAddr {s1(ipv6Src), TSHARK_REASON};
 //      macAddr.addIp(ipAddr);
 //    }
   }

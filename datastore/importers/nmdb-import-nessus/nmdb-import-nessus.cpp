@@ -26,45 +26,45 @@
 
 #include <pugixml.hpp>
 
-#include <netmeld/core/objects/Cve.hpp>
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/Interface.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/objects/MacAddress.hpp>
-#include <netmeld/core/objects/OperatingSystem.hpp>
-#include <netmeld/core/objects/Port.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/objects/Cve.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/Interface.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/objects/OperatingSystem.hpp>
+#include <netmeld/datastore/objects/Port.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "InterfaceHelper.hpp"
 #include "MetasploitModule.hpp"
 #include "NessusResult.hpp"
 #include "ParserNessusInterface.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdu = netmeld::datastore::utils;
 
 struct Data
 {
-  std::vector<nmco::MacAddress>        macAddrs;
-  std::vector<nmco::IpAddress>         ipAddrs;
-  std::vector<nmco::OperatingSystem>   oses;
-  std::vector<nmco::Port>              ports;
+  std::vector<nmdo::MacAddress>        macAddrs;
+  std::vector<nmdo::IpAddress>         ipAddrs;
+  std::vector<nmdo::OperatingSystem>   oses;
+  std::vector<nmdo::Port>              ports;
   std::vector<NessusResult>           nessusResults;
-  std::vector<nmco::Cve>               cves;
+  std::vector<nmdo::Cve>               cves;
   std::vector<MetasploitModule>       metasploitModules;
-  std::map<nmco::IpAddress, InterfaceHelper>     interfaces;
+  std::map<nmdo::IpAddress, InterfaceHelper>     interfaces;
 };
 typedef std::vector<Data>             Results;
 
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("Nessus's XML output (.nessus file)", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -151,7 +151,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 
         for (auto& helper : results.interfaces) {
           for (auto& wrapMap : std::get<1>(helper).interfaces) {
-            nmco::DeviceInformation devInfo;
+            nmdo::DeviceInformation devInfo;
             devInfo.setDeviceId(std::get<1>(wrapMap).deviceId);
             auto& result = std::get<1>(wrapMap).interface;
 
@@ -230,8 +230,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
       }
       this->executionStop = executeTimeUpper;
 
-      LOG_DEBUG << "[nmco] Start: " << this->executionStart << std::endl;
-      LOG_DEBUG << "[nmco] Stop : " << this->executionStop << std::endl;
+      LOG_DEBUG << "[nmdo] Start: " << this->executionStart << std::endl;
+      LOG_DEBUG << "[nmdo] Stop : " << this->executionStop << std::endl;
     }
 
 
@@ -239,7 +239,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
     // XML Parsing Functions
     // =========================================================================
     void
-    parseReportItem(pugi::xml_node const& reportItemNode, nmco::IpAddress ipAddr,
+    parseReportItem(pugi::xml_node const& reportItemNode, nmdo::IpAddress ipAddr,
                     std::string hostname, Data& data)
     {
       // Extact Port and Nessus results
@@ -270,7 +270,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
       std::string   solution =
         reportItemNode.select_node("solution").node().text().as_string();
 
-      nmco::Port port(ipAddr);
+      nmdo::Port port(ipAddr);
       port.setProtocol(protocol);
       port.setPort(portNum);
       port.setState(portState);
@@ -295,7 +295,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
       for (const auto& cveItem : reportItemNode.select_nodes("cve")) {
         pugi::xml_node cveNode = cveItem.node();
 
-        nmco::Cve cve(cveNode.text().as_string());
+        nmdo::Cve cve(cveNode.text().as_string());
         cve.setPort(port);
         cve.setPluginId(pluginId);
         data.cves.push_back(cve);
@@ -318,8 +318,8 @@ class Tool : public nmct::AbstractImportTool<P,R>
       // Extract Interface mappings from 3 different plugins
       enum pluginIds { IPv6 = 25202, IPv4 = 25203, Mac = 33276 };
       if (pluginId == IPv6 || pluginId == IPv4 || pluginId == Mac) {
-        auto parsedInterfaces = nmcp::fromString<nmcp::ParserNessusInterface,
-                                                std::vector<nmco::Interface>>
+        auto parsedInterfaces = nmdp::fromString<nmdp::ParserNessusInterface,
+                                                std::vector<nmdo::Interface>>
                                                (pluginOutput);
 
         auto it = data.interfaces.find(ipAddr);
@@ -343,7 +343,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
       bool const isResponding = true;
 
       // Extract Ip Address
-      nmco::IpAddress ipAddr;
+      nmdo::IpAddress ipAddr;
       auto tags = reportHostNode.select_nodes
         ("HostProperties/tag[@name='host-ip' or @name='container-host']");
 
@@ -369,7 +369,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
           ipAddr.addAlias(hostTag.node().text().as_string(), "nessus scan");
         }
 
-        ipAddr = nmco::IpAddress(ipAddrStr);
+        ipAddr = nmdo::IpAddress(ipAddrStr);
         ipAddr.setResponding(isResponding);
         data.ipAddrs.push_back(ipAddr);
       }
@@ -391,7 +391,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 
           size_t macCount {0};
           for (auto it = tokens.begin(); it != tokens.end(); ++it, ++macCount) {
-            nmco::MacAddress macAddr(*it);
+            nmdo::MacAddress macAddr(*it);
             macAddr.setResponding(isResponding);
             data.macAddrs.push_back(macAddr);
           }
@@ -413,7 +413,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 
         std::string prefix {"cpe:/o:"};
         if (0 == cpe.compare(0, prefix.size(), prefix)) {
-          nmco::OperatingSystem os(ipAddr);
+          nmdo::OperatingSystem os(ipAddr);
           os.setCpe(cpe);
           os.setAccuracy(1.0);
 
@@ -437,7 +437,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<nmcp::DummyParser, Results> tool;
+  Tool<nmdp::DummyParser, Results> tool;
   return tool.start(argc, argv);
 }
 

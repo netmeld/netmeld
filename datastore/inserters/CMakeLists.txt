@@ -26,7 +26,7 @@
 set(MODULE_VERSION "2.0")
 
 foreach(ITEM
-    insert-tool-template
+    #insert-tool-template
     nmdb-insert-ac
     nmdb-insert-address
     nmdb-insert-device-hardware

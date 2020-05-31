@@ -27,15 +27,15 @@
 #ifndef NESSUS_RESULT
 #define NESSUS_RESULT
 
-#include <netmeld/core/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/core/objects/Port.hpp>
+#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/objects/Port.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
-class NessusResult : public nmco::AbstractDatastoreObject
+class NessusResult : public nmdo::AbstractDatastoreObject
 {
   public:
-    nmco::Port    port;
+    nmdo::Port    port;
     unsigned int  pluginId;
     std::string   pluginName;
     std::string   pluginFamily;
@@ -47,7 +47,8 @@ class NessusResult : public nmco::AbstractDatastoreObject
 
   public:
     bool isValid() const override;
-    void save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&) override;
+    void save(pqxx::transaction_base&,
+              const nmco::Uuid&, const std::string&) override;
     std::string toString() const;
 };
 

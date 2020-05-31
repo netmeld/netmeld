@@ -27,39 +27,38 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/objects/InterfaceNetwork.hpp>
-#include <netmeld/core/objects/Service.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/AcNetworkBook.hpp>
+#include <netmeld/datastore/objects/AcRule.hpp>
+#include <netmeld/datastore/objects/AcServiceBook.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-
-typedef std::map<std::string, nmco::AcNetworkBook>  NetworkBook;
-//typedef std::map<std::string, nmco::AcServiceBook>  ServiceBook;
-typedef std::map<size_t, nmco::AcRule>              RuleBook;
+typedef std::map<std::string, nmdo::AcNetworkBook>  NetworkBook;
+//typedef std::map<std::string, nmdo::AcServiceBook>  ServiceBook;
+typedef std::map<size_t, nmdo::AcRule>              RuleBook;
 
 // =============================================================================
 // Data containers
 // =============================================================================
 struct Data {
-  nmco::DeviceInformation devInfo {"VyOS"};
+  nmdo::DeviceInformation devInfo {"VyOS"};
 
-  std::map<std::string, nmco::InterfaceNetwork> ifaces;
+  std::map<std::string, nmdo::InterfaceNetwork> ifaces;
 
-  std::vector<nmco::Service> services;
+  std::vector<nmdo::Service> services;
 
   std::map<std::string, NetworkBook>  networkBooks;
 //  std::map<std::string, ServiceBook>  serviceBooks;
   std::map<std::string, RuleBook>     ruleBooks;
 
-  nmco::ToolObservations observations;
+  nmdo::ToolObservations observations;
 };
 typedef std::vector<Data>    Result;
 
@@ -68,36 +67,36 @@ typedef std::vector<Data>    Result;
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables are always private
     // Rules
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
       system,login,user,
       interfaces, interface, ifaceFirewall,
       firewall, group, addressGroup, ruleSets, rule, destination, source,
       startBlock, stopBlock, ignoredBlock;
 
-    qi::rule<nmcp::IstreamIter, std::string()>
+    qi::rule<nmdp::IstreamIter, std::string()>
       token;
 
-    qi::rule<nmcp::IstreamIter>
+    qi::rule<nmdp::IstreamIter>
       comment;
 
-    nmcp::ParserIpAddress  ipAddr;
-    nmcp::ParserDomainName fqdn;
+    nmdp::ParserIpAddress  ipAddr;
+    nmdp::ParserDomainName fqdn;
 
     // Supporting data structures
     Data d;
 
-    nmco::InterfaceNetwork*  tgtIface;
+    nmdo::InterfaceNetwork*  tgtIface;
     std::string              tgtIfaceName;
 
     const std::string DEFAULT_ZONE {"global"};
@@ -106,7 +105,7 @@ class Parser :
     std::string tgtBook;
 
     size_t         curRuleId  {0};
-    nmco::AcRule*  tgtRule;
+    nmdo::AcRule*  tgtRule;
     std::string    proto;
     std::string    srcPort;
     std::string    dstPort;
@@ -128,9 +127,9 @@ class Parser :
   private:
     void ifaceInit(const std::string&);
 
-    void serviceAddDns(const nmco::IpAddress&);
+    void serviceAddDns(const nmdo::IpAddress&);
 
-    void netBookAddAddr(const nmco::IpAddress&);
+    void netBookAddAddr(const nmdo::IpAddress&);
 
     void ruleInit(size_t);
     void ruleAddDstIface(const std::string&);

@@ -24,11 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/utils/StringUtilities.hpp>
-
 #include "Parser.hpp"
 
-namespace nmcu = netmeld::core::utils;
 
 // =============================================================================
 // Parser logic
@@ -62,12 +59,12 @@ Parser::Parser() : Parser::base_type(start)
   bootIface =
     *(!qi::lit("[") >>
       (  (qi::lit("boot.ipa:") >> ipAddr)
-            [pnx::bind(&nmco::InterfaceNetwork::addIpAddress, &qi::_val, qi::_1)]
+            [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress, &qi::_val, qi::_1)]
        | (qi::lit("boot.mac:10:00:") >> macAddr) // macaddr8...great
-            [pnx::bind(&nmco::InterfaceNetwork::setMacAddress, &qi::_val, qi::_1)]
+            [pnx::bind(&nmdo::InterfaceNetwork::setMacAddress, &qi::_val, qi::_1)]
        | (qi::lit("boot.device:") >> token)
             [qi::_a = qi::_1,
-             pnx::bind(&nmco::InterfaceNetwork::setName, &qi::_val, qi::_1)]
+             pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_1)]
        | (qi::lit("boot.gateway.ipa:") >> ipAddr)
             [pnx::bind(&Parser::addIfaceRoute, this, qi::_1, qi::_a)]
        | (qi::omit[+token])
@@ -114,9 +111,9 @@ Parser::setDevId(const std::string& id)
 }
 
 void
-Parser::addNtpService(const nmco::IpAddress& ip)
+Parser::addNtpService(const nmdo::IpAddress& ip)
 {
-  nmco::Service service {"ntp", ip};
+  nmdo::Service service {"ntp", ip};
   service.setProtocol("udp");
   service.addDstPort("123"); // same port used by client and server
   service.addSrcPort("123");
@@ -138,15 +135,16 @@ Parser::updateProduct(const std::string& product)
 
 // InterfaceNetwork related
 void
-Parser::addIface(nmco::InterfaceNetwork& iface)
+Parser::addIface(nmdo::InterfaceNetwork& iface)
 {
   d.ifaces.push_back(iface);
 }
 
 void
-Parser::addIfaceRoute(const nmco::IpAddress& rtrIp, const std::string& ifaceName)
+Parser::addIfaceRoute(const nmdo::IpAddress& rtrIp,
+                      const std::string& ifaceName)
 {
-  nmco::Route route;
+  nmdo::Route route;
   route.setRtrIp(rtrIp);
   route.setIfaceName(ifaceName);
 

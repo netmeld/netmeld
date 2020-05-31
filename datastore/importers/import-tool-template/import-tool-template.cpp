@@ -44,21 +44,21 @@
    - Parser logic should be separate
 */
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
-#include <netmeld/core/parsers/ParserHelper.hpp> // if parser not needed
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
 #include "Parser.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
 
 
 // =============================================================================
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -85,7 +85,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       (
        "some-command --flag",  // command line tool imports data from
        PROGRAM_NAME,           // program name (set in CMakeLists.txt)
@@ -153,7 +153,7 @@ class Tool : public nmct::AbstractImportTool<P,R>
 // Program entry point
 // =============================================================================
 int main(int argc, char** argv) {
-  Tool<nmcp::DummyParser, Result> tool; // if parser not needed
+  Tool<nmdp::DummyParser, Result> tool; // if parser not needed
   //Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
 }

@@ -24,20 +24,20 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/parsers/ParserDomainName.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdt = netmeld::datastore::tools;
 
-typedef std::vector<nmco::IpAddress>      Result;
+typedef std::vector<nmdo::IpAddress>      Result;
 
 
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   public:
     Parser() : Parser::base_type(start)
@@ -50,7 +50,7 @@ class Parser :
         (ipAddr
            [qi::_val = qi::_1] >>
          +hostname
-           [pnx::bind(&nmco::IpAddress::addAlias,
+           [pnx::bind(&nmdo::IpAddress::addAlias,
                       &qi::_val, qi::_1, "hosts file")] >>
          -comment >> qi::eol
         )
@@ -69,27 +69,27 @@ class Parser :
           );
     }
 
-    qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmcp::IstreamIter, nmco::IpAddress(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
       line;
 
-    qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       comment;
 
-    nmcp::ParserIpAddress
+    nmdp::ParserIpAddress
       ipAddr;
 
-    nmcp::ParserDomainName
+    nmdp::ParserDomainName
       hostname;
 };
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("/etc/hosts", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 

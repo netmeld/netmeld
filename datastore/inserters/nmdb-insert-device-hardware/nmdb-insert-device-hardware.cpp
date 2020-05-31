@@ -24,17 +24,17 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/DeviceInformation.hpp>
-#include <netmeld/core/tools/AbstractInsertTool.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/tools/AbstractInsertTool.hpp>
 
-namespace nmct = netmeld::core::tools;
-namespace nmco = netmeld::core::objects;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdo = netmeld::datastore::objects;
 
 
-class Tool : public nmct::AbstractInsertTool
+class Tool : public nmdt::AbstractInsertTool
 {
   public:
-    Tool() : nmct::AbstractInsertTool
+    Tool() : nmdt::AbstractInsertTool
       ("device hardware", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 

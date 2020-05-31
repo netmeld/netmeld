@@ -91,9 +91,9 @@ Parser::getDevice(const std::string& hostname)
 }
 
 void
-Parser::addIp(const std::string& hostname, const nmco::IpAddress& _ip)
+Parser::addIp(const std::string& hostname, const nmdo::IpAddress& _ip)
 {
-  nmco::IpAddress ip = _ip;
+  nmdo::IpAddress ip = _ip;
   ip.addAlias(hostname, "cdp");
 
   d.ipAddrs.push_back(ip);
@@ -103,7 +103,7 @@ void
 Parser::addHwInfo(const std::string& hostname, const std::string& vendor,
                   std::string& model)
 {
-  nmco::DeviceInformation devInfo;
+  nmdo::DeviceInformation devInfo;
 
   devInfo.setDeviceId(getDevice(hostname));
   devInfo.setVendor(vendor);
@@ -117,14 +117,14 @@ Parser::addHwInfo(const std::string& hostname, const std::string& vendor,
 
 void
 Parser::addCon(const std::string& hostname,
-               const std::string& toIface, const nmco::IpAddress& _ip)
+               const std::string& toIface, const nmdo::IpAddress& _ip)
 {
-  nmco::InterfaceNetwork iface {toIface};
+  nmdo::InterfaceNetwork iface {toIface};
   iface.setPartial(true);
 
-  nmco::IpAddress ip = _ip; // copy to ensure we don't alter original
+  nmdo::IpAddress ip = _ip; // copy to ensure we don't alter original
 
-  nmco::DeviceInformation devInfo;
+  nmdo::DeviceInformation devInfo;
   const auto& did {getDevice(hostname)};
   devInfo.setDeviceId(did);
   d.devInfos.push_back(devInfo);

@@ -24,32 +24,26 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/tools/AbstractInsertTool.hpp>
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/objects/AcServiceBook.hpp>
+#include <netmeld/datastore/tools/AbstractInsertTool.hpp>
+#include <netmeld/datastore/objects/AcRule.hpp>
+#include <netmeld/datastore/objects/AcNetworkBook.hpp>
+#include <netmeld/datastore/objects/AcServiceBook.hpp>
 
 namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdt = netmeld::datastore::tools;
 
 
 // =============================================================================
 // Insert tool definition
 // =============================================================================
-class Tool : public nmct::AbstractInsertTool
+class Tool : public nmdt::AbstractInsertTool
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
-    // Inhertied from AbstractInsertTool at this scope
-      // nmco::Uuid              toolRunId;
   public: // Variables should rarely appear at this scope
 
 
@@ -59,7 +53,7 @@ class Tool : public nmct::AbstractInsertTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractInsertTool
+    Tool() : nmdt::AbstractInsertTool
       (
        "access control rule or data book",    // help message, prefixed with:
                         //   "Insert a manually specified "
@@ -73,7 +67,6 @@ class Tool : public nmct::AbstractInsertTool
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractInsertTool
     void
     modifyToolOptions() override
     {
@@ -189,7 +182,7 @@ class Tool : public nmct::AbstractInsertTool
       bool status {false};
 
       if (opts.exists("src") && opts.exists("dst")) {
-        nmco::AcRule acr;
+        nmdo::AcRule acr;
         acr.setRuleId(opts.getValueAs<size_t>("id"));
         acr.setSrcId(opts.getValue("src-id"));
         acr.addSrc(opts.getValue("src"));
@@ -220,7 +213,7 @@ class Tool : public nmct::AbstractInsertTool
       bool status {false};
 
       if (opts.exists("nb-name") && opts.exists("nb-data")) {
-        nmco::AcNetworkBook acnb;
+        nmdo::AcNetworkBook acnb;
 
         acnb.setId(opts.getValue("nb-id"));
         acnb.setName(opts.getValue("nb-name"));
@@ -245,7 +238,7 @@ class Tool : public nmct::AbstractInsertTool
       bool status {false};
 
       if (opts.exists("sb-name") && opts.exists("sb-data")) {
-        nmco::AcServiceBook acsb;
+        nmdo::AcServiceBook acsb;
 
         acsb.setName(opts.getValue("sb-name"));
         acsb.addData(opts.getValue("sb-data"));
@@ -263,18 +256,7 @@ class Tool : public nmct::AbstractInsertTool
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printVersion() const;
-    // Inherited from AbstractInsertTool at this scope
-      // std::string const getDeviceId() const;
-      // nmco::Uuid   const getToolRunId() const;
-      // virtual void printHelp() const;
-      // virtual int  runTool();
-      // virtual void setToolRunId();
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 

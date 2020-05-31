@@ -24,18 +24,18 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "Parser.hpp"
 
-namespace nmct = netmeld::core::tools;
+namespace nmdt = netmeld::datastore::tools;
 
 
 template<typename P, typename R>
-class Tool : public nmct::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
-    Tool() : nmct::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("ipconfig /all /allcompartment", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
