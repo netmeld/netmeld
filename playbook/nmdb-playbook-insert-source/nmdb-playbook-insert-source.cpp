@@ -143,7 +143,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      nmpbcu::dbPreparePlaybook(db);
+      nmpbu::dbPreparePlaybook(db);
       pqxx::work t{db};
 
       nmco::Uuid const pbSourceId;

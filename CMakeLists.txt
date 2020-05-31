@@ -466,7 +466,6 @@ add_custom_target(${TEST_ALL})
 set(NETMELD_SOURCE_VERSION "2.0")
 
 foreach(ITEM
-    #clw
     core
     datalake
     datastore
@@ -474,4 +473,16 @@ foreach(ITEM
     playbook
   )
   target_as_module(${ITEM})
+endforeach()
+
+
+set(TGT_MODULE "fake-module")
+add_custom_target("${TGT_MODULE}" DEPENDS "${TOOL_SUITE}")
+foreach(ITEM
+    clw
+  )
+  set(TGT_MODULE_TEST "Test.${ITEM}")
+  add_custom_target("${TGT_MODULE_TEST}" DEPENDS ${TGT_MODULE})
+  add_dependencies("${TEST_ALL}" ${TGT_MODULE_TEST})
+  target_as_tool(${ITEM})
 endforeach()

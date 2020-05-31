@@ -28,8 +28,9 @@
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 #include <netmeld/playbook/utils/QueriesPlaybook.hpp>
 
+namespace nmdo  = netmeld::datastore::objects;
+namespace nmdt  = netmeld::datastore::tools;
 namespace nmpbu = netmeld::playbook::utils;
-
 
 class Tool : public nmdt::AbstractDatastoreTool
 {
@@ -82,7 +83,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      nmpbcu::dbPreparePlaybook(db);
+      nmpbu::dbPreparePlaybook(db);
 
       nmdo::IpAddress ipAddr {opts.getValue("ip-addr")};
 

@@ -24,6 +24,8 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
+set(MODULE_VERSION "2.0")
+
 add_executable(${TGT_TOOL}
     AugmentArgs.cpp
     ${TGT_TOOL}.cpp
@@ -32,21 +34,5 @@ add_executable(${TGT_TOOL}
 target_link_libraries(${TGT_TOOL}
     netmeld-core
   )
-
-# START
-# Since added as a tool
-set(MODULE_VERSION "2.0")
-set(prior_tgt_module "${TOOL_SUITE}")
-set(TGT_MODULE "${target}")
-set(prior_tgt_module_test "${TEST_ALL}")
-set(TGT_MODULE_TEST "Test.${target}")
-add_dependencies("${TGT_MODULE}" ${prior_tgt_module})
-add_dependencies(${TGT_MODULE_TEST} ${TGT_MODULE})
-add_dependencies(${prior_tgt_module_test} ${TGT_MODULE_TEST})
-
-set(TGT_TOOL_TEST "${TGT_MODULE_TEST}")
-#add_dependencies("${TGT_MODULE}" "${TGT_TOOL}")
-# END
-
 
 nm_install_bin(${TGT_TOOL})

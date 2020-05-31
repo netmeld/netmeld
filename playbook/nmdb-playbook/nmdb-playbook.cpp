@@ -25,7 +25,7 @@
 // =============================================================================
 
 #include <netmeld/core/objects/Uuid.hpp>
-#include <netmeld/datastore/tools/AbstractTool.hpp>
+#include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 #include <netmeld/core/utils/Exit.hpp>
 #include <netmeld/datastore/utils/QueriesCommon.hpp>
 
@@ -85,7 +85,7 @@ enum class PlaybookScope { UNKNOWN, INTRA_NETWORK, INTER_NETWORK };
 
 
 
-class Tool : public nmdt::AbstractTool
+class Tool : public nmdt::AbstractDatastoreTool
 {
   // ===========================================================================
   // Variables
@@ -127,11 +127,6 @@ class Tool : public nmdt::AbstractTool
       nmpb::CommandRunnerSingleton::getInstance();
 
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
   public: // Variables should rarely appear at this scope
 
 
@@ -141,7 +136,7 @@ class Tool : public nmdt::AbstractTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractTool
+    Tool() : nmdt::AbstractDatastoreTool
       (
        "Playbook tool",  // unused unless printHelp() is overridden
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -154,7 +149,6 @@ class Tool : public nmdt::AbstractTool
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractTool
     void
     addToolBaseOptions() override // Pre-subclass operations
     {
@@ -293,7 +287,6 @@ class Tool : public nmdt::AbstractTool
         );
       }
 
-    // Overriden from AbstractTool
     void
     modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
@@ -1363,15 +1356,7 @@ class Tool : public nmdt::AbstractTool
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printHelp() const;
-      // virtual void printVersion() const;
-      // virtual void runTool();
-
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 
