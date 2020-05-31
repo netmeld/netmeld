@@ -25,6 +25,7 @@
 // =============================================================================
 
 #include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/core/utils/ForkExec.hpp>
 #include <netmeld/core/objects/Time.hpp>
 #include <netmeld/core/objects/Uuid.hpp>
@@ -143,20 +144,20 @@ class Tool : public nmct::AbstractTool
       std::string dir {d.string() + '/'};
 
       // Environment variables
-      if (isCommandAvailable("/usr/bin/env")) {
-        systemExec("/usr/bin/env >> " + dir + "env.txt");
-      } else if (isCommandAvailable("env")) {
-        systemExec("env >> " + dir + "env.txt");
+      if (nmcu::isCmdAvailable("/usr/bin/env")) {
+        nmcu::cmdExecOrExit("/usr/bin/env >> " + dir + "env.txt");
+      } else if (nmcu::isCmdAvailable("env")) {
+        nmcu::cmdExecOrExit("env >> " + dir + "env.txt");
       } else {
         LOG_WARN << "env not found, no environment information collected"
                  << std::endl;
       }
 
       // Kernel parameters
-      if (isCommandAvailable("/sbin/sysctl")) {
-        systemExec("/sbin/sysctl -a >> " + dir + "sysctl.txt");
-      } else if (isCommandAvailable("sysctl")) {
-        systemExec("sysctl -a >> " + dir + "sysctl.txt");
+      if (nmcu::isCmdAvailable("/sbin/sysctl")) {
+        nmcu::cmdExecOrExit("/sbin/sysctl -a >> " + dir + "sysctl.txt");
+      } else if (nmcu::isCmdAvailable("sysctl")) {
+        nmcu::cmdExecOrExit("sysctl -a >> " + dir + "sysctl.txt");
       } else {
         LOG_WARN << "sysctl not found, no kernel parameters collected"
                  << std::endl;
@@ -186,14 +187,14 @@ class Tool : public nmct::AbstractTool
       bool limitedNetworkCommands {false};
 
       // Network interfaces (interface names, MAC addrs, and IP addrs, etc)
-      if (isCommandAvailable("/bin/ip")) {
-        systemExec("/bin/ip addr show >> " + dir + "ip_addr_show.txt");
-      } else if (isCommandAvailable("ip")) {
-        systemExec("ip addr show >> " + dir + "ip_addr_show.txt");
-      } else if (isCommandAvailable("/sbin/ifconfig")) {
-        systemExec("/sbin/ifconfig -a >> "  + dir + "ifconfig.txt");
-      } else if (isCommandAvailable("ifconfig")) {
-        systemExec("ifconfig -a >> "  + dir + "ifconfig.txt");
+      if (nmcu::isCmdAvailable("/bin/ip")) {
+        nmcu::cmdExecOrExit("/bin/ip addr show >> " + dir + "ip_addr_show.txt");
+      } else if (nmcu::isCmdAvailable("ip")) {
+        nmcu::cmdExecOrExit("ip addr show >> " + dir + "ip_addr_show.txt");
+      } else if (nmcu::isCmdAvailable("/sbin/ifconfig")) {
+        nmcu::cmdExecOrExit("/sbin/ifconfig -a >> "  + dir + "ifconfig.txt");
+      } else if (nmcu::isCmdAvailable("ifconfig")) {
+        nmcu::cmdExecOrExit("ifconfig -a >> "  + dir + "ifconfig.txt");
       } else {
         LOG_WARN << "ip or ifconfig not found, attempting limited"
                  << " network interface information collection from /proc\n";
@@ -201,16 +202,16 @@ class Tool : public nmct::AbstractTool
       }
 
       // Network routes
-      if (isCommandAvailable("/bin/ip")) {
-        systemExec("/bin/ip -4 route show >> " + dir + "ip4_route_show.txt");
-        systemExec("/bin/ip -6 route show >> " + dir + "ip6_route_show.txt");
-      } else if (isCommandAvailable("ip")) {
-        systemExec("ip -4 route show >> " + dir + "ip4_route_show.txt");
-        systemExec("ip -6 route show >> " + dir + "ip6_route_show.txt");
-      } else if (isCommandAvailable("/bin/netstat")) {
-        systemExec("/bin/netstat -nr >> " + dir + "netstat-nr.txt");
-      } else if (isCommandAvailable("netstat")) {
-        systemExec("netstat -nr >> " + dir + "netstat-nr.txt");
+      if (nmcu::isCmdAvailable("/bin/ip")) {
+        nmcu::cmdExecOrExit("/bin/ip -4 route show >> " + dir + "ip4_route_show.txt");
+        nmcu::cmdExecOrExit("/bin/ip -6 route show >> " + dir + "ip6_route_show.txt");
+      } else if (nmcu::isCmdAvailable("ip")) {
+        nmcu::cmdExecOrExit("ip -4 route show >> " + dir + "ip4_route_show.txt");
+        nmcu::cmdExecOrExit("ip -6 route show >> " + dir + "ip6_route_show.txt");
+      } else if (nmcu::isCmdAvailable("/bin/netstat")) {
+        nmcu::cmdExecOrExit("/bin/netstat -nr >> " + dir + "netstat-nr.txt");
+      } else if (nmcu::isCmdAvailable("netstat")) {
+        nmcu::cmdExecOrExit("netstat -nr >> " + dir + "netstat-nr.txt");
       } else {
         LOG_WARN << "ip or netstat not found, attempting limited"
                  << " network route information collection from /proc\n";
@@ -237,42 +238,21 @@ class Tool : public nmct::AbstractTool
       }
 
       // Firewall rules
-      if (isCommandAvailable("/sbin/iptables")) {
-        systemExec("/sbin/iptables-save --counters >> " + dir
+      if (nmcu::isCmdAvailable("/sbin/iptables")) {
+        nmcu::cmdExecOrExit("/sbin/iptables-save --counters >> " + dir
                    + "ip4_tables_save.txt");
-        systemExec("/sbin/ip6tables-save --counters >> " + dir
+        nmcu::cmdExecOrExit("/sbin/ip6tables-save --counters >> " + dir
                   + "ip6_tables_save.txt");
-      } else if (isCommandAvailable("iptables")) {
-        systemExec("iptables-save --counters >> " + dir
+      } else if (nmcu::isCmdAvailable("iptables")) {
+        nmcu::cmdExecOrExit("iptables-save --counters >> " + dir
                    + "ip4_tables_save.txt");
-        systemExec("ip6tables-save --counters >> " + dir
+        nmcu::cmdExecOrExit("ip6tables-save --counters >> " + dir
                   + "ip6_tables_save.txt");
       } else {
         // warn the following message instead
         LOG_WARN << "iptables not found, no firewall information collected"
                  << std::endl;
       }
-    }
-
-    bool
-    isCommandAvailable(const std::string& command)
-    {
-      return (0 == systemExec("type " + command + " >/dev/null 2>/dev/null"));
-    }
-
-    int
-    systemExec(const std::string& command)
-    {
-      int exitCode;
-
-      exitCode = system(command.c_str());
-      if (-1 == exitCode) {
-        LOG_ERROR << "Execution failure (" << exitCode << ") for: " << command
-                  << std::endl;
-        std::exit(nmcu::Exit::FAILURE);
-      }
-
-      return exitCode;
     }
 
   protected: // Methods part of subclass API
@@ -511,7 +491,7 @@ class Tool : public nmct::AbstractTool
                      << std::endl;
 
             // Import toolRunResults into the default database.
-            if (isCommandAvailable("nmdb-import-clw")) {
+            if (nmcu::isCmdAvailable("nmdb-import-clw")) {
               std::vector<std::string> importCmd {
                 "nmdb-import-clw",
                 toolRunResults.string()

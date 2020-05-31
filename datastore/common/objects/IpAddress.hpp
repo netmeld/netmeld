@@ -66,6 +66,7 @@ namespace netmeld::datastore::objects {
       static IpAddress getIpv6Default();
 
       void addAlias(const std::string&, const std::string&);
+      std::set<std::string> getAliases() const;
 
       void setResponding(const bool);
 

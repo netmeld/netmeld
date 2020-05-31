@@ -71,6 +71,8 @@ namespace netmeld::datastore::objects {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
+      void smartVectorAdd(const std::string&, std::vector<std::string>* const);
+
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setRuleId(const size_t);

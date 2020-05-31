@@ -39,9 +39,9 @@ namespace netmeld::datastore::objects {
     // =========================================================================
     private:
     protected:
-      std::vector<uint8_t>  macAddr;
-      std::set<IpAddress>   ipAddrs;
-      bool                  isResponding {false};
+      std::vector<uint8_t>    macAddr;
+      std::vector<IpAddress>  ipAddrs;
+      bool                    isResponding {false};
 
     public:
 

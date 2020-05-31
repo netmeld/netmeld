@@ -35,7 +35,7 @@
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 
-BOOST_AUTO_TEST_CASE(testWellformedWithCidr)
+BOOST_AUTO_TEST_CASE(testWellformedWithPrefix)
 {
   std::vector<std::string> ips =
   {
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(testWellformedWithCidr)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testWellformedNoCidrV4)
+BOOST_AUTO_TEST_CASE(testWellformedNoPrefixV4)
 {
   std::vector<std::string> ips =
   {
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(testWellformedNoCidrV4)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testWellformedNoCidrV6)
+BOOST_AUTO_TEST_CASE(testWellformedNoPrefixV6)
 {
   std::vector<std::string> ips =
   {

@@ -46,7 +46,7 @@ namespace netmeld::datastore::objects {
   {
     IpNetwork temp = nmdp::fromString<nmdp::ParserIpAddress, IpAddress>(_addr);
     address        = temp.address;
-    cidr           = temp.cidr;
+    prefix           = temp.prefix;
   }
 
   IpNetwork::IpNetwork(const std::vector<uint8_t>& _addr)
@@ -81,13 +81,13 @@ namespace netmeld::datastore::objects {
   template<size_t n> std::string
   IpNetwork::convert() const
   {
-    if (cidr == n) { // Short circuit trivial case
+    if (prefix == n) { // Short circuit trivial case
       return address.to_string();
     }
 
-    // Convert cidr to bitset
+    // Convert prefix to bitset
     std::bitset<n> maskBits;
-    for (size_t i {n}; i > n-cidr; i--) {
+    for (size_t i {n}; i > n-prefix; i--) {
       maskBits.set(i-1);
     }
 
@@ -130,13 +130,13 @@ namespace netmeld::datastore::objects {
     if (isDefault()) {
       return address.to_string();
     } else if (isV4()) {
-      if (32 < cidr) {
+      if (32 < prefix) {
         LOG_ERROR << "IPv4 network with invalid CIDR" << std::endl;
         return "";
       }
       return convert<32>();
     } else if (isV6()) {
-      if (128 < cidr) {
+      if (128 < prefix) {
         LOG_ERROR << "IPv6 network with invalid CIDR" << std::endl;
         return "";
       }
@@ -165,7 +165,7 @@ namespace netmeld::datastore::objects {
   {
     try {
       address = IpAddr::from_string(_addr);
-      setCidr(cidr);
+      setPrefix(prefix);
     } catch (std::exception& e) {
       LOG_ERROR << "IP address malformed for parser: " << _addr << std::endl;
       std::exit(nmcu::Exit::FAILURE);
@@ -173,12 +173,12 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  IpNetwork::setCidr(uint8_t _cidr)
+  IpNetwork::setPrefix(uint8_t _prefix)
   {
-    if (UINT8_MAX == _cidr) {
-      cidr = (address.is_v4()) ? 32 : 128;
+    if (UINT8_MAX == _prefix) {
+      prefix = (address.is_v4()) ? 32 : 128;
     } else {
-      cidr = _cidr;
+      prefix = _prefix;
     }
   }
 
@@ -189,49 +189,38 @@ namespace netmeld::datastore::objects {
   }
 
   template<size_t bits> bool
-  IpNetwork::setCidrFromMask(const IpNetwork& _mask,
-                             const size_t base,
-                             const char sep,
-                             bool flipIt)
+  IpNetwork::setPrefixFromMask(const IpNetwork& _mask, bool flipIt)
   {
     size_t count {0};
     bool isContiguous {true};
     bool seenZero {false};
 
-    std::istringstream octets(_mask.address.to_string());
-    for (std::string octet;
-         std::getline(octets, octet, sep) && !octet.empty();
-        ) {
-      size_t end;
-      unsigned long val {std::stoul(octet, &end, base)};
-      std::bitset<bits> bVal(val);
-      if (flipIt) {bVal.flip();}
-
-      for (size_t i {1}; i <= bits; ++i) {
-        bool isOne {bVal.test(bits-i)};
-        if (isOne && seenZero) {
-          isContiguous = false;
-          count = ((address.is_v4()) ? 32 : 128);
-        } else if (isOne) {
-          ++count;
-        } else {
-          seenZero = true;
-        }
+    std::bitset<bits> bVal = _mask.asBitset<bits>();
+    if (flipIt) {bVal.flip();}
+    for (size_t i {1}; i <= bits; ++i) {
+      bool isOne {bVal.test(bits-i)};
+      if (isOne && seenZero) {
+        isContiguous = false;
+        count = bits;
+      } else if (isOne) {
+        ++count;
+      } else {
+        seenZero = true;
       }
     }
 
-    cidr = count;
+    prefix = count;
 
     return isContiguous;
   }
 
-  void
+  bool
   IpNetwork::setNetmask(const IpNetwork& _mask)
   {
     if (_mask.isV4()) {
-      setCidrFromMask<8>(_mask, 10, '.', false);
+      return setPrefixFromMask<32>(_mask, false);
     } else {
-      setCidrFromMask<16>(_mask, 16, ':', false);
+      return setPrefixFromMask<128>(_mask, false);
     }
   }
 
@@ -239,11 +228,48 @@ namespace netmeld::datastore::objects {
   IpNetwork::setWildcardMask(const IpNetwork& _mask)
   {
     if (_mask.isV4()) {
-      return setCidrFromMask<8>(_mask, 10, '.', true);
+      return setPrefixFromMask<32>(_mask, true);
     } else {
-      LOG_ERROR << "IpNetwork::setWildcardMask was called with"
-                << " an IPv6 address\n";
-      return false;
+      return setPrefixFromMask<128>(_mask, true);
+    }
+  }
+
+  template<size_t n> std::bitset<n>
+  IpNetwork::asBitset() const
+  {
+    std::bitset<n> addrBits;
+    if (isV4()) {
+      for (auto byte : address.to_v4().to_bytes()) {
+        addrBits <<= 8;
+        addrBits |= byte;
+      }
+    } else {
+      for (auto byte : address.to_v6().to_bytes()) {
+        addrBits <<= 8;
+        addrBits |= byte;
+      }
+    }
+
+    return addrBits;
+  }
+
+  bool
+  IpNetwork::setMask(const IpNetwork& _mask)
+  {
+    if (_mask.isV4()) {
+      const auto& bVal {_mask.asBitset<32>()};
+      if (bVal.test(0)) {
+        return setWildcardMask(_mask);
+      } else {
+        return setNetmask(_mask);
+      }
+    } else {
+      const auto& bVal {_mask.asBitset<128>()};
+      if (bVal.test(0)) {
+        return setWildcardMask(_mask);
+      } else {
+        return setNetmask(_mask);
+      }
     }
   }
 
@@ -256,7 +282,7 @@ namespace netmeld::datastore::objects {
   bool
   IpNetwork::isDefault() const
   {
-    return UINT8_MAX == cidr;
+    return UINT8_MAX == prefix;
   }
 
   bool
@@ -275,8 +301,8 @@ namespace netmeld::datastore::objects {
             || address.is_unspecified()
             )
         && (
-              (isV4() && 32  > cidr)
-           || (isV6() && 128 > cidr)
+              (isV4() && 32  > prefix)
+           || (isV6() && 128 > prefix)
            )
         ;
   }
@@ -323,7 +349,7 @@ namespace netmeld::datastore::objects {
   IpNetwork::toString() const
   {
     std::ostringstream oss;
-    oss << getNetwork() << '/' << static_cast<unsigned int>(cidr);
+    oss << getNetwork() << '/' << static_cast<unsigned int>(prefix);
     return oss.str();
   }
 
@@ -354,7 +380,7 @@ namespace netmeld::datastore::objects {
   operator==(const IpNetwork& first, const IpNetwork& second)
   {
     return first.address == second.address
-        && first.cidr == second.cidr
+        && first.prefix == second.prefix
         && first.reason == second.reason
         && first.extraWeight == second.extraWeight
         ;

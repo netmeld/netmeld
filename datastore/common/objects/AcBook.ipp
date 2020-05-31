@@ -25,17 +25,31 @@
 // =============================================================================
 
 
-// ===========================================================================
+// =============================================================================
 // Constructors
-// ===========================================================================
+// =============================================================================
 template<typename TData>
 AcBook<TData>::AcBook()
 {}
 
 
-// ===========================================================================
+// =============================================================================
 // Methods
-// ===========================================================================
+// =============================================================================
+template<typename TData>
+const std::string&
+AcBook<TData>::getName() const
+{
+  return name;
+}
+
+template<typename TData>
+std::set<TData>
+AcBook<TData>::getData() const
+{
+  return data;
+}
+
 template<typename TData>
 void
 AcBook<TData>::setId(const std::string& _id)
@@ -54,12 +68,7 @@ template<typename TData>
 void
 AcBook<TData>::addData(const TData& _key)
 {
-  auto val = data.emplace(_key);
-
-  if (!std::get<1>(val)) {
-    LOG_DEBUG << "AcBook::addData: Insertion failed, duplicate key found: "
-             << _key << std::endl;
-  }
+  data.emplace(_key);
 }
 
 template<typename TData>
@@ -78,14 +87,6 @@ AcBook<TData>::removeData(const TData& _key)
              << _key << std::endl;
   }
 }
-
-template<typename TData>
-std::set<TData>
-AcBook<TData>::getData() const
-{
-  return data;
-}
-
 
 template<typename TData>
 bool
@@ -108,7 +109,6 @@ AcBook<TData>::save(pqxx::transaction_base&,
 }
 
 template<typename TData>
-// Utilized for full object data dump, for debug purposes
 std::string
 AcBook<TData>::toDebugString() const
 {
@@ -127,6 +127,6 @@ AcBook<TData>::toDebugString() const
   return oss.str();
 }
 
-// ===========================================================================
+// =============================================================================
 // Friends
-// ===========================================================================
+// =============================================================================

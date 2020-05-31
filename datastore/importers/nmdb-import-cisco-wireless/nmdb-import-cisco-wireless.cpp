@@ -103,15 +103,15 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           LOG_DEBUG << result << '\n';
         }
 
-        LOG_DEBUG << "Iterating over routes\n";
-        for (auto& result : results.routes) {
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result << '\n';
-        }
-
         LOG_DEBUG << "Iterating over Services\n";
         for (auto& result : results.services) {
           result.save(t, toolRunId, "");
+          LOG_DEBUG << result << '\n';
+        }
+
+        LOG_DEBUG << "Iterating over routes\n";
+        for (auto& result : results.routes) {
+          result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result << '\n';
         }
       }

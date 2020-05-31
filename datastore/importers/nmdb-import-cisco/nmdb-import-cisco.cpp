@@ -28,8 +28,14 @@
 
 #include "Parser.hpp"
 
+<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/nmdb-import-cisco.cpp
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
+=======
+namespace nmco = netmeld::core::objects;
+namespace nmct = netmeld::core::tools;
+namespace nmcu = netmeld::core::utils;
+>>>>>>> master:importers/nmdb-import-cisco/nmdb-import-cisco.cpp
 
 
 // =============================================================================
@@ -41,24 +47,47 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // ===========================================================================
   // Variables
   // ===========================================================================
+  private: // Variables should generally be private
+  protected: // Variables intended for internal/subclass API
+    // Inhertied from AbstractTool at this scope
+      // std::string            helpBlurb;
+      // std::string            programName;
+      // std::string            version;
+      // ProgramOptions         opts;
+    // Inhertied from AbstractImportTool at this scope
+      // TResults               tResults;
+      // nmco::Uuid              toolRunId;
+      // nmco::Time              executionStart;
+      // nmco::Time              executionStop;
+  public: // Variables should rarely appear at this scope
 
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
+<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/nmdb-import-cisco.cpp
   public:
     Tool() : nmdt::AbstractImportTool<P,R>
+=======
+  private: // Constructors should rarely appear at this scope
+  protected: // Constructors intended for internal/subclass API
+  public: // Constructors should generally be public
+    Tool() : nmct::AbstractImportTool<P,R>
+>>>>>>> master:importers/nmdb-import-cisco/nmdb-import-cisco.cpp
       (
-       "show running-config",
-       PROGRAM_NAME,
-       PROGRAM_VERSION
+       // command line tool imports data from
+       "IOS|NXOS|ASA: show running-config all",
+       PROGRAM_NAME,     // program name (set in CMakeLists.txt)
+       PROGRAM_VERSION   // program version (set in CMakeLists.txt)
       )
     {}
+
 
   // ===========================================================================
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
+    // Overriden from AbstractImportTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -97,31 +126,31 @@ class Tool : public nmdt::AbstractImportTool<P,R>
               deviceId,
               result);
 
-          LOG_DEBUG << result << std::endl;
+          LOG_DEBUG << result << '\n';
         }
 
         LOG_DEBUG << "Iterating over Services\n";
         for (auto& result : results.services) {
           result.save(t, toolRunId, "");
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over routes\n";
         for (auto& result : results.routes) {
           result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over vlans\n";
         for (auto& result : results.vlans) {
           result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over interfaces\n";
         for (auto& [name, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over networkBooks\n";
@@ -149,8 +178,9 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           LOG_DEBUG << name << '\n';
           for (auto& [id, rule] : book) {
             if (!rule.isValid()) {
-              results.observations.addNotable("RuleBook "
-                  + name + " is defined but not applied.");
+              results.observations.addNotable(
+                  "AcRuleBook (" + name + ") defined"
+                  " but may not be applied to an interface.");
             }
             rule.save(t, toolRunId, deviceId);
             LOG_DEBUG << rule.toDebugString() << '\n';
@@ -159,11 +189,28 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
         LOG_DEBUG << "Iterating over Observations\n";
         results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << std::endl;
+        LOG_DEBUG << results.observations.toDebugString() << '\n';
 
         first = false;
       }
     }
+
+  protected: // Methods part of subclass API
+    // Inherited from AbstractTool at this scope
+      // std::string const getDbName() const;
+      // virtual void printVersion() const;
+    // Inherited from AbstractImportTool at this scope
+      // fs::path    const getDataPath() const;
+      // std::string const getDeviceId() const;
+      // nmco::Uuid   const getToolRunId() const;
+      // virtual void parseData();
+      // virtual void printHelp() const;
+      // virtual int  runTool();
+      // virtual void setToolRunId();
+      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
+  public: // Methods part of public API
+    // Inherited from AbstractTool, don't override as primary tool entry point
+      // int start(int, char**) noexcept;
 };
 
 
@@ -173,6 +220,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<Parser, Result> tool;
+  Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
 }

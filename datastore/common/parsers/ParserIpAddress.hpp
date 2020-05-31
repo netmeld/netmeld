@@ -46,8 +46,8 @@ namespace netmeld::datastore::parsers {
           ( (qi::as_string[ipv4 | ipv6])
             [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
             >>
-            -(qi::lit('/') >> cidr)
-            [pnx::bind(&nmdo::IpAddress::setCidr, &qi::_val, qi::_1)]
+            -(qi::lit('/') >> prefix)
+            [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
           )
           ;
 
@@ -84,11 +84,11 @@ namespace netmeld::datastore::parsers {
           (qi::repeat(1,4)[qi::ascii::xdigit])
           ;
 
-        cidr %=
+        prefix %=
           qi::uint_ >> qi::eps[qi::_pass = (qi::_val >= 0 && qi::_val <= 128)]
           ;
 
-        BOOST_SPIRIT_DEBUG_NODES((start)(ipv4)(ipv6)(cidr)(octet)(h16));
+        BOOST_SPIRIT_DEBUG_NODES((start)(ipv4)(ipv6)(prefix)(octet)(h16));
       }
 
       qi::rule<IstreamIter, nmdo::IpAddress()>
@@ -99,7 +99,7 @@ namespace netmeld::datastore::parsers {
         octet, h16;
 
       qi::rule<IstreamIter, unsigned int>
-        cidr;
+        prefix;
   };
 }
 #endif // PARSER_IP_ADDRESS_HPP

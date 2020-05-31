@@ -24,91 +24,48 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef IP_NETWORK_HPP
-#define IP_NETWORK_HPP
+#ifndef SERVICE_FACTORY_HPP
+#define SERVICE_FACTORY_HPP
 
-#include <boost/asio/ip/address.hpp>
+#include <netmeld/core/objects/Service.hpp>
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-
-using IpAddr = boost::asio::ip::address;
+namespace nmco = netmeld::core::objects;
 
 
-namespace netmeld::datastore::objects {
+namespace netmeld::core::utils {
 
-  class IpNetwork : public AbstractDatastoreObject {
+  class ServiceFactory {
     // =========================================================================
     // Variables
     // =========================================================================
     private:
     protected:
-      IpAddr       address;
-      uint8_t      prefix      {UINT8_MAX};
-      std::string  reason;
-      uint32_t     extraWeight {0};
-
     public:
 
     // =========================================================================
     // Constructors
     // =========================================================================
     private:
+      ServiceFactory();
     protected:
     public:
-      IpNetwork();
-      explicit IpNetwork(const std::string&, const std::string& x="");
-      explicit IpNetwork(const std::vector<uint8_t>&);
+      ServiceFactory(const ServiceFactory&) = delete;
+      void operator=(const ServiceFactory&) = delete;
+
+      static nmco::Service makeDhcp();
+      static nmco::Service makeDns();
+      static nmco::Service makeNtp();
+      static nmco::Service makeRadius();
+      static nmco::Service makeSnmp();
+      static nmco::Service makeSyslog();
+
 
     // =========================================================================
     // Methods
     // =========================================================================
     private:
     protected:
-      template<size_t n>
-        bool setPrefixFromMask(const IpNetwork&, bool);
-      template<size_t n>
-        std::string convert() const;
-
-      std::string getNetwork() const;
-
-      template<size_t n>
-        std::bitset<n> asBitset() const;
-
     public:
-      static IpNetwork getIpv4Default();
-      static IpNetwork getIpv6Default();
-
-      void setAddress(const std::string&);
-      void setPrefix(uint8_t);
-      void setExtraWeight(const uint32_t);
-      bool setNetmask(const IpNetwork&);
-      bool setWildcardMask(const IpNetwork&);
-      void setReason(const std::string&);
-
-      bool isDefault() const;
-      bool isValid() const override;
-      bool isV4() const;
-      bool isV6() const;
-
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-
-      std::string toString() const;
-      std::string toDebugString() const override;
-
-      /* CAUTION: Use at your own risk
-         This attempts to guess the type of mask between a
-         wildcard or netmask.  To do this, it examines the
-         most significant bit.  If it is a one then assume a
-         wildcard mask, otherwise assume netmask.  So this
-         means '0.0.0.0' and '255.255.255.255' will always
-         result in a '/0' prefix.  It returns true if
-         applied and false if not applied.
-      */
-      bool setMask(const IpNetwork&);
-
-      friend bool operator<(const IpNetwork&, const IpNetwork&);
-      friend bool operator==(const IpNetwork&, const IpNetwork&);
   };
 }
-#endif // IP_NETWORK_HPP
+#endif // SERVICE_FACTORY_HPP

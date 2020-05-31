@@ -61,12 +61,14 @@ namespace netmeld::datastore::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
+      virtual const std::string& getName() const;
+      virtual std::set<TData> getData() const;
+
       virtual void setId(const std::string&);
       virtual void setName(const std::string&);
       virtual void addData(const TData&);
       virtual void addData(const std::set<TData>&);
       virtual void removeData(const TData&);
-      virtual std::set<TData> getData() const;
 
       virtual bool isValid() const override;
       virtual void save(pqxx::transaction_base&,
