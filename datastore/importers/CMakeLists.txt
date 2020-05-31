@@ -29,8 +29,6 @@ foreach(ITEM
     #import-tool-template
     nmdb-import-brocade
     nmdb-import-cisco
-    nmdb-import-cisco-asa
-    nmdb-import-cisco-nxos
     nmdb-import-cisco-wireless
     nmdb-import-clw
     nmdb-import-hosts

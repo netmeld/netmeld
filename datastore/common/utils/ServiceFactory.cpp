@@ -24,16 +24,16 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/utils/ServiceFactory.hpp>
+#include <netmeld/datastore/utils/ServiceFactory.hpp>
 
-namespace nmcu = netmeld::core::utils;
+namespace nmdu = netmeld::datastore::utils;
 
-namespace netmeld::core::utils {
+namespace netmeld::datastore::utils {
 
-  nmco::Service
+  nmdo::Service
   ServiceFactory::makeDhcp()
   {
-    nmco::Service service;
+    nmdo::Service service;
     service.setServiceName("dhcps"); // match nmap output
     service.setProtocol("udp");
     service.addDstPort("67"); // port server uses
@@ -41,20 +41,20 @@ namespace netmeld::core::utils {
     return service;
   }
 
-  nmco::Service
+  nmdo::Service
   ServiceFactory::makeDns()
   {
-    nmco::Service service;
+    nmdo::Service service;
     service.setServiceName("dns");
     service.setProtocol("udp");
     service.addDstPort("53");
     return service;
   }
 
-  nmco::Service
+  nmdo::Service
   ServiceFactory::makeNtp()
   {
-    nmco::Service service;
+    nmdo::Service service;
     service.setServiceName("ntp");
     service.setProtocol("udp");
     service.addDstPort("123"); // same port used by client and server
@@ -62,10 +62,10 @@ namespace netmeld::core::utils {
     return service;
   }
 
-  nmco::Service
+  nmdo::Service
   ServiceFactory::makeRadius()
   {
-    nmco::Service service;
+    nmdo::Service service;
     service.setServiceName("radius");
     service.setProtocol("udp");
     service.addDstPort("1812"); // authentication and authorization
@@ -73,30 +73,30 @@ namespace netmeld::core::utils {
     return service;
   }
 
-  nmco::Service
+  nmdo::Service
   ServiceFactory::makeSnmp()
   {
-    nmco::Service service;
+    nmdo::Service service;
     service.setServiceName("snmp");
     service.setProtocol("udp");
     service.addDstPort("162"); // port manager receives on
     return service;
   }
 
-  nmco::Service
+  nmdo::Service
   ServiceFactory::makeSyslog()
   {
-    nmco::Service service;
+    nmdo::Service service;
     service.setServiceName("syslog");
     service.setProtocol("udp");
     service.addDstPort("514");
     return service;
   }
 
-  //nmco::Service
+  //nmdo::Service
   //ServiceFactory::make()
   //{
-  //  nmco::Service service;
+  //  nmdo::Service service;
   //  service.setServiceName("");
   //  return service;
   //}

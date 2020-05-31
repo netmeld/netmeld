@@ -28,12 +28,12 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/core/parsers/ParserTestHelper.hpp>
+#include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 
 #include "CiscoAcls.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 namespace nmdsic = netmeld::datastore::importers::cisco;
 
 using qi::ascii::blank;
@@ -43,7 +43,7 @@ class TestCiscoAcls : public nmdsic::CiscoAcls {
     using nmdsic::CiscoAcls::initCurRule;
 
   public:
-    const nmco::AcRule& getCurRule()
+    const nmdo::AcRule& getCurRule()
     { return curRule; }
     const std::string& getZone()
     { return ZONE; }
@@ -78,13 +78,13 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& [test, format] : testsOk) {
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       const auto& temp = tpca.getCurRule();
       BOOST_TEST("" == out);
       BOOST_TEST(format == temp.getActions().at(0));
     }
     // BAD
-    BOOST_TEST(!nmcp::test("other", parserRule, blank));
+    BOOST_TEST(!nmdp::test("other", parserRule, blank));
   }
 
   {
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       {"object-group PGI_SGI", "PGI_SGI"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       BOOST_TEST(format == tpca.getCurRuleProtocol());
     }
     // BAD
@@ -132,11 +132,11 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& [test, format] : testsOk) {
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST(format == out);
       out.clear();
       const auto& testSpace = ' ' + test + ' ';
-      BOOST_TEST(nmcp::testAttr(testSpace.c_str(),
+      BOOST_TEST(nmdp::testAttr(testSpace.c_str(),
                  parserRule, out, blank, false));
       BOOST_TEST(format == out);
     }
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& test : testsBad) {
       std::string out;
-      BOOST_TEST(!nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(!nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST("" == out);
     }
   }
@@ -171,14 +171,14 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& [test, format] : testsOk) {
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST(format == out);
     }
     // BAD
-    BOOST_TEST(!nmcp::test("1.2.3.4/24", parserRule));
-    BOOST_TEST(!nmcp::test("1.2.3.4/", parserRule));
-    BOOST_TEST(!nmcp::test("1234::aBcD/112", parserRule));
-    BOOST_TEST(!nmcp::test("1234::aBcD/", parserRule));
+    BOOST_TEST(!nmdp::test("1.2.3.4/24", parserRule));
+    BOOST_TEST(!nmdp::test("1.2.3.4/", parserRule));
+    BOOST_TEST(!nmdp::test("1234::aBcD/112", parserRule));
+    BOOST_TEST(!nmdp::test("1234::aBcD/", parserRule));
   }
 
   {
@@ -199,11 +199,11 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& [test, format] : testsOk) {
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST(format == out);
     }
     // BAD
-    BOOST_TEST(!nmcp::test("qe 123", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("qe 123", parserRule, blank, false));
     // -- The parser is 'keyword > token', so limited checkable bad cases
   }
 
@@ -225,14 +225,14 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     for (const auto& [test, format] : testsOk) {
       tpca.initCurRule();
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank),
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
                  "parse: " << test);
       BOOST_TEST("" == out);
-      nmco::AcRule temp = tpca.getCurRule();
+      nmdo::AcRule temp = tpca.getCurRule();
       BOOST_TEST(format == temp.getActions().at(0));
     }
     // BAD
-    BOOST_TEST(!nmcp::test("gol", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("gol", parserRule, blank, false));
   }
 
   {
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& test : testsOk) {
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST("" == out);
     }
   }
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& test : testsOk) {
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST("" == out);
     }
   }
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& test : testsOk) {
       std::string out;
-      BOOST_TEST(nmcp::testAttr(test.c_str(), parserRule, out, blank));
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST("" == out);
     }
   }
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
     const std::string fullText {
       "permit 1.2.3.4 0.0.0.255 log\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::tuple<std::string, std::string>> replaces {
       {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
       if (locReplace == testReplace.npos) { continue; }
       testReplace =
         testReplace.replace(locReplace, toReplace.size(), replace);
-      BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
     }
   }
 }
@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
       "access-list TEST permit any\n"
     };
 
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
   }
   {
     const std::string fullText {
@@ -376,10 +376,10 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
       " deny   any\n"
     };
 
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
+    BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
       " deny   any\n"
     };
 
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
   }
 }
 
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       " established precedence 7 tos 15"
       " log time-range RANGE_NAME\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
       {" established"},
@@ -473,14 +473,14 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       auto locRemoval {testRemoval.find(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.find(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
     testRemoval = fullText;
@@ -488,14 +488,14 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       auto locRemoval {testRemoval.rfind(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.rfind(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
   }
@@ -507,7 +507,7 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       " established precedence 7 tos 15"
       " log time-range RANGE_NAME\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
       {" established"},
@@ -525,14 +525,14 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       auto locRemoval {testRemoval.find(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.find(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
     testRemoval = fullText;
@@ -540,14 +540,14 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       auto locRemoval {testRemoval.rfind(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.rfind(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
   }
@@ -560,7 +560,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
     const std::string fullText {
       "access-list TEST dynamic NAME timeout 5 permit ip any any\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
       {" timeout 5"},
@@ -571,7 +571,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
       auto locRemoval {testRemoval.find(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
     }
   }
   {
@@ -589,11 +589,11 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
     std::string test = fullText;
     for (const auto& removal : removals) {
       test = test.erase(test.find(removal), removal.size());
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
     }
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
+    BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -620,7 +620,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
       " remark crazy rule\n"
       " deny   ip any any\n"
     };
-    BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
   }
 }
 
@@ -637,13 +637,13 @@ BOOST_AUTO_TEST_CASE(testIosRemarkRuleLine)
   const auto& parserRule = tpca.iosRemarkRuleLine;
   {
     // OK
-    BOOST_TEST(nmcp::test("remark some\n", parserRule, blank));
-    BOOST_TEST(nmcp::test("remark s r t\n", parserRule, blank));
+    BOOST_TEST(nmdp::test("remark some\n", parserRule, blank));
+    BOOST_TEST(nmdp::test("remark s r t\n", parserRule, blank));
     //// BAD
-    BOOST_TEST(!nmcp::test("remark \n", parserRule, blank, false));
-    BOOST_TEST(!nmcp::test("remark\n", parserRule, blank, false));
-    BOOST_TEST(!nmcp::test("\n", parserRule, blank, false));
-    BOOST_TEST(!nmcp::test("", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("remark \n", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("remark\n", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("\n", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("", parserRule, blank, false));
   }
 }
 BOOST_AUTO_TEST_CASE(testIosRemark)
@@ -654,7 +654,7 @@ BOOST_AUTO_TEST_CASE(testIosRemark)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(full, TestCiscoAcls(), result, blank));
+    BOOST_TEST(nmdp::testAttr(full, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -721,7 +721,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandardRuleLine)
       "permit any\n"
     };
 
-    BOOST_TEST(!nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
 }
 BOOST_AUTO_TEST_CASE(testNxosStandard)
@@ -734,7 +734,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandard)
       "access-list TEST permit any\n"
     };
 
-    BOOST_TEST(!nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
   {
     const std::string fullText {
@@ -745,7 +745,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandard)
       " 40 deny   any\n"
     };
 
-    BOOST_TEST(!nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
   {
     const std::string fullText {
@@ -756,7 +756,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandard)
       " 40 deny   any\n"
     };
 
-    BOOST_TEST(!nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
 }
 /* NOTE: Below is a one-liner, wrapped for clarity
@@ -783,7 +783,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
       " established fragments precedence 7 tos 15"
       " log time-range RANGE_NAME\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
       {" established"},
@@ -809,14 +809,14 @@ BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
       auto locRemoval {testRemoval.find(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.find(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
     testRemoval = fullText;
@@ -824,14 +824,14 @@ BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
       auto locRemoval {testRemoval.rfind(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.rfind(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
   }
@@ -855,11 +855,11 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     std::string test = fullText;
     for (const auto& removal : removals) {
       test = test.erase(test.find(removal), removal.size());
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
     }
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
+    BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -893,7 +893,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, tpca, result, blank));
+    BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -925,7 +925,7 @@ BOOST_AUTO_TEST_CASE(testNxosRemarkRuleLine)
       {"100 remark s r t\n"},
     };
     for (const auto& test : tests) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
     }
   }
   {
@@ -934,7 +934,7 @@ BOOST_AUTO_TEST_CASE(testNxosRemarkRuleLine)
       {"10 remark\n"},
     };
     for (const auto& test : tests) {
-      BOOST_TEST(!nmcp::test(test.c_str(), parserRule, blank, false));
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank, false));
     }
   }
   {
@@ -944,7 +944,7 @@ BOOST_AUTO_TEST_CASE(testNxosRemarkRuleLine)
       {""},
     };
     for (const auto& test : tests) {
-      BOOST_TEST(!nmcp::test(test.c_str(), parserRule, blank, false));
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank, false));
     }
   }
 }
@@ -1010,7 +1010,7 @@ BOOST_AUTO_TEST_CASE(testAsaStandardRuleLine)
     const std::string fullText {
       "permit 1.2.3.4 0.0.0.255\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::tuple<std::string, std::string>> replaces {
       {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
@@ -1026,13 +1026,13 @@ BOOST_AUTO_TEST_CASE(testAsaStandardRuleLine)
       if (locReplace == testReplace.npos) { continue; }
       testReplace =
         testReplace.replace(locReplace, toReplace.size(), replace);
-      BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
     }
   }
 }
 BOOST_AUTO_TEST_CASE(testAsaStandard)
 {
-//  nmcu::LoggerSingleton::getInstance().setLevel(nmcu::Severity::ALL);
+//  nmdu::LoggerSingleton::getInstance().setLevel(nmdu::Severity::ALL);
 
   TestCiscoAcls tpca;
   const auto& parserRule = tpca.asaStandard;
@@ -1041,10 +1041,10 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
       "access-list TEST standard permit any\n"
       "access-list TEST standard deny any\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank, false));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank, false));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
+    BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -1081,7 +1081,7 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
       " security-group name SGN2 1.2.3.4 0.0.0.255 range 123 456"
       " log 5 interval 10 time-range RANGE_NAME inactive\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
       {" inactive"},
@@ -1117,14 +1117,14 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
       auto locRemoval {testRemoval.find(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.find(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
     testRemoval = fullText;
@@ -1132,14 +1132,14 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
       auto locRemoval {testRemoval.rfind(removal)};
       BOOST_TEST(locRemoval != testRemoval.npos);
       testRemoval = testRemoval.erase(locRemoval, removal.size());
-      BOOST_TEST(nmcp::test(testRemoval.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(testRemoval.c_str(), parserRule, blank));
       std::string testReplace = testRemoval;
       for (const auto& [toReplace, replace] : replaces) {
         auto locReplace {testReplace.rfind(toReplace)};
         if (locReplace == testReplace.npos) { continue; }
         testReplace =
           testReplace.replace(locReplace, toReplace.size(), replace);
-        BOOST_TEST(nmcp::test(testReplace.c_str(), parserRule, blank));
+        BOOST_TEST(nmdp::test(testReplace.c_str(), parserRule, blank));
       }
     }
   }
@@ -1153,10 +1153,10 @@ BOOST_AUTO_TEST_CASE(testAsaExtended)
       "access-list TEST extended permit ip user any any any\n"
       "access-list TEST extended deny ip any any\n"
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank, false));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank, false));
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
+    BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -1184,13 +1184,13 @@ BOOST_AUTO_TEST_CASE(testAsaRemarkRuleLine)
   const auto& parserRule = tpca.asaRemarkRuleLine;
   {
     // OK
-    BOOST_TEST(nmcp::test("remark some\n", parserRule, blank));
-    BOOST_TEST(nmcp::test("remark s r t\n", parserRule, blank));
+    BOOST_TEST(nmdp::test("remark some\n", parserRule, blank));
+    BOOST_TEST(nmdp::test("remark s r t\n", parserRule, blank));
     //// BAD
-    BOOST_TEST(!nmcp::test("remark \n", parserRule, blank, false));
-    BOOST_TEST(!nmcp::test("remark\n", parserRule, blank, false));
-    BOOST_TEST(!nmcp::test("\n", parserRule, blank, false));
-    BOOST_TEST(!nmcp::test("", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("remark \n", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("remark\n", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("\n", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("", parserRule, blank, false));
   }
 }
 BOOST_AUTO_TEST_CASE(testAsaRemark)
@@ -1201,7 +1201,7 @@ BOOST_AUTO_TEST_CASE(testAsaRemark)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(full, TestCiscoAcls(), result, blank));
+    BOOST_TEST(nmdp::testAttr(full, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
@@ -1245,22 +1245,22 @@ BOOST_AUTO_TEST_CASE(testAsaEthertype)
   {
     const auto& parserRule = tpca.asaEther;
     // OK
-    BOOST_TEST(nmcp::test("ethertype permit any", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype deny any", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit any", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype deny any", parserRule, blank));
     // Cisco note: no longer matches as intended, use dsap instead
-    BOOST_TEST(nmcp::test("ethertype permit bpdu", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit dsap 0x42", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit dsap 0x01", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit dsap 0xff", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit ipx", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit isis", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit mpls-multicast", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit mpls-unicast", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit 0x600", parserRule, blank));
-    BOOST_TEST(nmcp::test("ethertype permit 0xffff", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit bpdu", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit dsap 0x42", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit dsap 0x01", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit dsap 0xff", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit ipx", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit isis", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit mpls-multicast", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit mpls-unicast", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit 0x600", parserRule, blank));
+    BOOST_TEST(nmdp::test("ethertype permit 0xffff", parserRule, blank));
     // BAD
-    BOOST_TEST(!nmcp::test("ethertype permit", parserRule, blank));
-    BOOST_TEST(!nmcp::test("ethertype permit asdf", parserRule, blank));
+    BOOST_TEST(!nmdp::test("ethertype permit", parserRule, blank));
+    BOOST_TEST(!nmdp::test("ethertype permit asdf", parserRule, blank));
   }
 
   // Full trip
@@ -1271,7 +1271,7 @@ BOOST_AUTO_TEST_CASE(testAsaEthertype)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, TestCiscoAcls(), result, blank));
+    BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("" == aclBookName);

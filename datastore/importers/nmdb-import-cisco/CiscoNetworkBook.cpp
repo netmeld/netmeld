@@ -195,13 +195,13 @@ namespace netmeld::datastore::importers::cisco {
   }
 
   void
-  CiscoNetworkBook::fromIp(const nmco::IpAddress& _ip)
+  CiscoNetworkBook::fromIp(const nmdo::IpAddress& _ip)
   {
     addData(_ip.toString());
   }
   void
-  CiscoNetworkBook::fromIpMask(const nmco::IpAddress& _ip,
-                               const nmco::IpAddress& _mask)
+  CiscoNetworkBook::fromIpMask(const nmdo::IpAddress& _ip,
+                               const nmdo::IpAddress& _mask)
   {
     auto temp {_ip};
     auto maskStr {_mask.toString()};
@@ -214,8 +214,8 @@ namespace netmeld::datastore::importers::cisco {
     }
   }
   void
-  CiscoNetworkBook::fromIpRange(const nmco::IpAddress& _start,
-                                const nmco::IpAddress& _end)
+  CiscoNetworkBook::fromIpRange(const nmdo::IpAddress& _start,
+                                const nmdo::IpAddress& _end)
   {
     std::ostringstream oss;
     oss << _start.toString() << "-" << _end.toString();
@@ -224,7 +224,7 @@ namespace netmeld::datastore::importers::cisco {
 
   void
   CiscoNetworkBook::fromNetworkObjectMask(const std::string& _otherBook,
-                                          const nmco::IpAddress& _mask)
+                                          const nmdo::IpAddress& _mask)
   {
     if (0 == networkBooks.count(_otherBook)) {
       LOG_WARN << "CiscoNetworkBook:"
@@ -241,7 +241,7 @@ namespace netmeld::datastore::importers::cisco {
                  << '\n';
         continue;
       }
-      nmco::IpAddress temp {ip};
+      nmdo::IpAddress temp {ip};
       temp.setMask(_mask);
       addData(temp.toString());
     }
@@ -259,7 +259,7 @@ namespace netmeld::datastore::importers::cisco {
         existingBook.addData(data);
       }
     }
-    curBook = nmco::AcNetworkBook();
+    curBook = nmdo::AcNetworkBook();
   }
 
 
@@ -271,7 +271,7 @@ namespace netmeld::datastore::importers::cisco {
     zoneBooks.emplace(ZONE, networkBooks);
     for (const auto& [zone, books] : zoneBooks) {
       for (const auto& [name, book] : books) {
-        nmcu::expanded(zoneBooks, zone, name, ZONE);
+        nmdu::expanded(zoneBooks, zone, name, ZONE);
       }
     }
 

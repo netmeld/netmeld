@@ -27,23 +27,23 @@
 #ifndef CISCO_SERVICE_BOOK_HPP
 #define CISCO_SERVICE_BOOK_HPP
 
-#include <netmeld/core/objects/AcServiceBook.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
-#include <netmeld/core/utils/AcBookUtilities.hpp>
+#include <netmeld/datastore/objects/AcServiceBook.hpp>
+#include <netmeld/datastore/utils/AcBookUtilities.hpp>
 
 #include "RulesCommon.hpp"
 
 namespace netmeld::datastore::importers::cisco {
 
-  namespace nmco = netmeld::core::objects;
-  namespace nmcp = netmeld::core::parsers;
-  namespace nmcu = netmeld::core::utils;
+  namespace nmdo = netmeld::datastore::objects;
+  namespace nmdp = netmeld::datastore::parsers;
+  namespace nmdu = netmeld::datastore::utils;
 
 
   // ===========================================================================
   // Data containers
   // ===========================================================================
-  typedef std::map<std::string, nmco::AcServiceBook>  ServiceBook;
+  typedef std::map<std::string, nmdo::AcServiceBook>  ServiceBook;
   typedef std::map<std::string, ServiceBook>          ServiceBooks;
 
 
@@ -51,17 +51,17 @@ namespace netmeld::datastore::importers::cisco {
   // Parser definition
   // ===========================================================================
   class CiscoServiceBook :
-    public qi::grammar<nmcp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
+    public qi::grammar<nmdp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
   {
     // =========================================================================
     // Variables
     // =========================================================================
     public:
       // Rules
-      qi::rule<nmcp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, ServiceBooks(), qi::ascii::blank_type>
         start;
 
-      qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         ciscoServiceBook,
         objectService,
           objectServiceLine,
@@ -81,10 +81,10 @@ namespace netmeld::datastore::importers::cisco {
         objectArgument,
         dataString;
 
-      qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
         portArgument;
 
-      qi::rule<nmcp::IstreamIter>
+      qi::rule<nmdp::IstreamIter>
         icmpArgument,
           icmpTypeCode,
           icmpMessage;
@@ -92,7 +92,7 @@ namespace netmeld::datastore::importers::cisco {
     protected:
       // Supporting data structures
       ServiceBook   serviceBooks;
-      nmco::AcServiceBook curBook;
+      nmdo::AcServiceBook curBook;
       const std::string ZONE  {"global"};
 
       std::string curProtocol {""};

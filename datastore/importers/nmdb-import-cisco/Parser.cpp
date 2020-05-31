@@ -26,10 +26,10 @@
 
 #include "Parser.hpp"
 
-#include <netmeld/core/utils/ServiceFactory.hpp>
+#include <netmeld/datastore/utils/ServiceFactory.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
-namespace nmcu = netmeld::core::utils;
+namespace nmdu = netmeld::datastore::utils;
 
 // =============================================================================
 // Parser logic
@@ -64,29 +64,6 @@ Parser::Parser() : Parser::base_type(start)
                [pnx::bind(&Parser::globalBpduFilterEnabled, this) = true]
           ) > *token > qi::eol)
 
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-      | (interface)
-          [pnx::bind(&Parser::ifaceFinalize, this)]
-
-      | (qi::lit("policy-map") >> policyMap)
-
-      | (qi::lit("class-map") >> classMap)
-
-      | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
-         (   (ipAddr >> ipAddr >> ipAddr)
-               [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
-                pnx::bind(&Parser::addRouteIp, this, qi::_1, qi::_3)]
-           | (ipAddr >> ipAddr >> token)
-               [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
-                pnx::bind(&Parser::addRouteIface, this, qi::_1, qi::_3)]
-           | (ipAddr >> ipAddr)
-               [pnx::bind(&Parser::addRouteIp, this, qi::_1, qi::_2)]
-           | (ipAddr >> token)
-               [pnx::bind(&Parser::addRouteIface, this, qi::_1, qi::_2)]
-         ) >> -token >> qi::eol)
-
-=======
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
       | (qi::lit("aaa ") >> tokens >> qi::eol)
             [pnx::bind(&Parser::deviceAaaAdd, this, qi::_1)]
 
@@ -108,20 +85,6 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-  vlan =
-    ((qi::lit("vlan") >> qi::ushort_ >> qi::eol)
-        [pnx::bind(&nmdo::Vlan::setId, &qi::_val, qi::_1)] >>
-     *(indent >>
-       (
-        (qi::lit("name") >> token)
-           [pnx::bind(&nmdo::Vlan::setDescription, &qi::_val, qi::_1)]
-
-        // Ignore all other settings
-        | (qi::omit[+token])
-       ) >> qi::eol
-      )
-=======
   domainData =
     ( ((qi::lit("switchname") | qi::lit("hostname")) > domainName > qi::eol)
           [pnx::bind([&](const std::string& val)
@@ -130,7 +93,6 @@ Parser::Parser() : Parser::base_type(start)
           [pnx::bind(&Parser::unsup, this, "ip domain-name")]
      | (qi::lit("domain-name") >> domainName >> qi::eol)
           [pnx::bind(&Parser::unsup, this, "domain-name")]
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
     )
     ;
 
@@ -156,10 +118,10 @@ Parser::Parser() : Parser::base_type(start)
 
   vlan =
     (qi::lit("vlan") >> qi::ushort_ >> qi::eol)
-       [pnx::bind(&nmco::Vlan::setId, &qi::_val, qi::_1)] >>
+       [pnx::bind(&nmdo::Vlan::setId, &qi::_val, qi::_1)] >>
     *(indent >>
       (  (qi::lit("name") >> token)
-            [pnx::bind(&nmco::Vlan::setDescription, &qi::_val, qi::_1)]
+            [pnx::bind(&nmdo::Vlan::setDescription, &qi::_val, qi::_1)]
        | (qi::omit[+token]) // Ignore all other settings
       ) >> qi::eol
     )
@@ -181,25 +143,6 @@ Parser::Parser() : Parser::base_type(start)
             [pnx::bind(&nmdo::InterfaceNetwork::setDescription,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        | (qi::lit("shutdown"))
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-            [pnx::bind(&nmdo::InterfaceNetwork::setState,
-                       pnx::bind(&Parser::tgtIface, this),
-                       pnx::bind(&Parser::isNo, this))]
-       | (qi::lit("cdp enable"))
-            [pnx::bind(&nmdo::InterfaceNetwork::setDiscoveryProtocol,
-                       pnx::bind(&Parser::tgtIface, this),
-                       !pnx::bind(&Parser::isNo, this)),
-             pnx::bind(&Parser::addManuallySetCdpIface, this)]
-
-       | ((qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("address") >>
-          (  (ipAddr >> ipAddr)
-            [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
-             pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
-           | (ipAddr)
-            [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
-=======
             [pnx::bind([&](){tgtIface->setState(isNo);})]
        | (qi::lit("cdp enable"))
             [pnx::bind([&](){tgtIface->setDiscoveryProtocol(!isNo);}),
@@ -208,17 +151,16 @@ Parser::Parser() : Parser::base_type(start)
        | ((qi::lit("ipv6") | qi::lit("ip")) >> -qi::lit("-")
           >> qi::lit("address") >>
           (  (ipMask)
-               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+               [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                           pnx::bind(&Parser::tgtIface, this), qi::_1)]
            | (ipAddr)
-               [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
+               [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                           pnx::bind(&Parser::tgtIface, this), qi::_1)]
            | (domainName >> ipAddr)
                [pnx::bind(&Parser::ifaceAddAlias, this, qi::_1, qi::_2)]
            | (domainName)
                [pnx::bind(&Parser::ifaceAddAlias, this,
-                          qi::_1, nmco::IpAddress())]
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
+                          qi::_1, nmdo::IpAddress())]
           )
          )
 
@@ -240,26 +182,14 @@ Parser::Parser() : Parser::base_type(start)
 
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-       | (qi::lit("standby")>> qi::int_ >> qi::lit("ip") >> ipAddr)
-            [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-=======
        | (qi::lit("standby") >> qi::int_ >> qi::lit("ip")
           >> ipAddr >> -qi::lit("secondary"))
-            [pnx::bind(&nmco::InterfaceNetwork::addIpAddress,
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
+            [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                        pnx::bind(&Parser::tgtIface, this), qi::_2)]
        // Capture Cisco N1000V virtual switches
        | (qi::lit("vmware vm mac") >> macAddr)
             [pnx::bind(&nmdo::InterfaceNetwork::addReachableMac,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-       // Capture ADX configs
-       | (qi::lit("ip-address") >> ipAddr)
-            [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
-=======
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
        /* END: No examples of these, cannot verify */
 
        | switchport
@@ -296,150 +226,8 @@ Parser::Parser() : Parser::base_type(start)
 
   switchport =
     qi::lit("switchport") >>
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-    (  (qi::lit("mode") >> token)
-          [pnx::bind(&nmdo::InterfaceNetwork::setSwitchportMode,
-                     pnx::bind(&Parser::tgtIface, this), "L2 " + qi::_1)]
-     | (qi::lit("nonegotiate"))
-          [pnx::bind(&nmdo::InterfaceNetwork::setSwitchportMode,
-                     pnx::bind(&Parser::tgtIface, this), "L2 nonegotiate")]
-
-     | (qi::lit("port-security mac-address") >> -qi::lit("sticky") >> macAddr)
-          [pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     | (qi::lit("port-security mac-address sticky"))
-          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityStickyMac,
-                     pnx::bind(&Parser::tgtIface, this),
-                     !pnx::bind(&Parser::isNo, this))]
-     | (qi::lit("port-security maximum") >> qi::ushort_)
-          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     | (qi::lit("port-security violation") >> token)
-          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     | (qi::lit("port-security"))
-          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurity,
-                     pnx::bind(&Parser::tgtIface, this),
-                     !pnx::bind(&Parser::isNo, this))]
-
-     | (qi::lit("access vlan") /* default, vlan 1 */ >> qi::ushort_)
-          [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-
-     | (qi::lit("trunk native vlan") /* default, vlan 1 */ >> qi::ushort_)
-          [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
-     // { VLAN-LIST | all | none | [add|except|remove] { VLAN-LIST } }
-     | (qi::lit("trunk allowed vlan") /* default is all */ >>
-        (  (-qi::lit("add") >>
-            ((  (qi::ushort_ >> qi::lit('-') >> qi::ushort_)
-                   [pnx::bind(&nmdo::InterfaceNetwork::addVlanRange,
-                              pnx::bind(&Parser::tgtIface, this),
-                              qi::_1, qi::_2)]
-              | (qi::ushort_)
-                   [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
-                              pnx::bind(&Parser::tgtIface, this), qi::_1)]
-             ) % qi::lit(',')))
-         | (token >> token)
-              [pnx::bind(&Parser::addObservation, this,
-                         "VLAN trunk " + qi::_1)]
-        )
-       )
-     // { VLAN-ID | [dot1p|none|untagged] }
-     | (qi::lit("voice vlan") >>
-        (  qi::ushort_
-             [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
-                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
-         | token
-             [pnx::bind(&Parser::addObservation, this,
-                        "voice VLAN " + qi::_1)]
-        )
-       )
-    )
-    ;
-
-  spanningTree =
-    qi::lit("spanning-tree") >
-    (  qi::lit("bpduguard")
-         [pnx::bind(&nmdo::InterfaceNetwork::setBpduGuard,
-                    pnx::bind(&Parser::tgtIface, this),
-                    !pnx::bind(&Parser::isNo, this)),
-          pnx::bind(&Parser::addManuallySetBpduGuardIface, this)]
-     | qi::lit("bpdufilter")
-         [pnx::bind(&nmdo::InterfaceNetwork::setBpduFilter,
-                    pnx::bind(&Parser::tgtIface, this),
-                    !pnx::bind(&Parser::isNo, this)),
-          pnx::bind(&Parser::addManuallySetBpduFilterIface, this)]
-     | (qi::lit("portfast"))
-          [pnx::bind(&nmdo::InterfaceNetwork::setPortfast,
-                     pnx::bind(&Parser::tgtIface, this),
-                     !pnx::bind(&Parser::isNo, this))]
-     | qi::omit[+token]
-    )
-    ;
-
-  policy =
-    ( // "ip access-list standard" NAME
-      (qi::lit("standard") >> token >> qi::eol)
-        [pnx::bind(&Parser::unsup, this, "ip access-list standard " + qi::_1)]
-     |
-       // "ip access-list extended" NAME
-       //    ACTION PROTOCOL SOURCE [PORTS] [ DEST [PORTS] ] ["log"]
-       //   ---
-       //    ACTION ( "permit" | "deny" )
-       //    PROTOCOL ( name )
-       //    SOURCE ( IpAddr *mask | "host" IpAddr | "any" )
-       //      - Note: *mask (wildcard mask) takes bit representation of mask and
-       //              compares with bits of IpAddr. (1=wild, 0=must match IpAddr)
-       //    DEST ( IpAddr *mask | "host" IpAddr | "any" | "object-group" name )
-       //    PORTS ( "eq" port | "range" startPort endPort )
-       //    "log" (Couldn't find anything about options to this in this context)
-      (qi::lit("extended") >> token >> qi::eol) // NAME
-        [pnx::bind(&Parser::updateCurRuleBook, this, qi::_1)] >>
-      *(indent
-         [pnx::bind(&Parser::updateCurRule, this)] >>
-        token // ACTION
-          [pnx::bind(&Parser::setCurRuleAction, this, qi::_1)] >>
-        token // PROTOCOL
-          [pnx::bind(&Parser::curRuleProtocol, this) = qi::_1] >>
-        addressArgument // SOURCE
-          [pnx::bind(&Parser::setCurRuleSrc, this, qi::_1)] >>
-        -(ports // SOURCE PORTS
-          [pnx::bind(&Parser::curRuleSrcPort, this) = qi::_1]) >>
-        -(addressArgument // DESTINATION
-            [pnx::bind(&Parser::setCurRuleDst, this, qi::_1)] >>
-          -(ports // DESTINATION PORTS
-             [pnx::bind(&Parser::curRuleDstPort, this) = qi::_1])) >>
-        -qi::lit("log") >>
-        qi::eol
-       ) [pnx::bind(&Parser::curRuleFinalize, this)]
-     )
-    ;
-
-  addressArgument =
-    ( (ipAddr >> ipAddr)
-        [qi::_val = pnx::bind(&Parser::setWildcardMask, this, qi::_1, qi::_2)]
-     |
-      (qi::lit("host") >> ipAddr)
-         [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
-     |
-      (qi::lit("object-group") >> token)
-        [qi::_val = qi::_1]
-     |
-      (qi::string("any"))
-        [qi::_val = qi::_1]
-    )
-    ;
-
-  ports =
-    ( (qi::lit("eq") >> token)
-        [qi::_val = qi::_1]
-     |
-      (qi::lit("range") >> token >> token)
-        [qi::_val = (qi::_1 + "-" + qi::_2)]
-=======
     (  ((qi::lit("mode") > token) | qi::string("nonegotiate"))
-          [pnx::bind(&nmco::InterfaceNetwork::setSwitchportMode,
+          [pnx::bind(&nmdo::InterfaceNetwork::setSwitchportMode,
                      pnx::bind(&Parser::tgtIface, this), "L2 " + qi::_1)]
 
      | switchportPortSecurity
@@ -453,18 +241,18 @@ Parser::Parser() : Parser::base_type(start)
         > -qi::lit("sticky")
             [pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);})]
         > -macAddr
-            [pnx::bind(&nmco::InterfaceNetwork::addPortSecurityStickyMac,
+            [pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
                        pnx::bind(&Parser::tgtIface, this), qi::_1)]
        )
      | ((qi::lit("maximum") >> qi::ushort_)
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityMaxMacAddrs,
+          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
          > -(qi::lit("vlan") > qi::ushort_)
           [pnx::bind(&Parser::unsup, this,
                      "switchport port-security maximum COUNT vlan ID")]
        )
      | (qi::lit("violation") >> token)
-          [pnx::bind(&nmco::InterfaceNetwork::setPortSecurityViolationAction,
+          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
                      pnx::bind(&Parser::tgtIface, this), qi::_1)]
      | (&qi::eol)
           [pnx::bind([&](){tgtIface->setPortSecurity(!isNo);})]
@@ -486,13 +274,13 @@ Parser::Parser() : Parser::base_type(start)
     ;
   vlanRange =
     (qi::ushort_ >> qi::lit('-') >> qi::ushort_)
-      [pnx::bind(&nmco::InterfaceNetwork::addVlanRange,
+      [pnx::bind(&nmdo::InterfaceNetwork::addVlanRange,
                  pnx::bind(&Parser::tgtIface, this),
                  qi::_1, qi::_2)]
     ;
   vlanId =
     qi::ushort_
-      [pnx::bind(&nmco::InterfaceNetwork::addVlan,
+      [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
                  pnx::bind(&Parser::tgtIface, this), qi::_1)]
     ;
 
@@ -540,7 +328,6 @@ Parser::Parser() : Parser::base_type(start)
      | (qi::lit("access-group") >> token >> token >>
         qi::lit("interface") >> token)
           [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3)]
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
     )
     ;
 
@@ -563,7 +350,7 @@ Parser::Parser() : Parser::base_type(start)
   // General Helper(s)
   ipMask =
     (ipAddr >> +qi::blank >> ipAddr)
-      [pnx::bind(&nmco::IpAddress::setNetmask, &qi::_1, qi::_3),
+      [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_3),
        qi::_val = qi::_1]
     ;
 
@@ -604,81 +391,55 @@ Parser::deviceAaaAdd(const std::string& aaa)
 
 // Service related
 void
-Parser::serviceAddDhcp(const nmco::IpAddress& ip)
+Parser::serviceAddDhcp(const nmdo::IpAddress& ip)
 {
-  auto service = nmcu::ServiceFactory::makeDhcp();
+  auto service = nmdu::ServiceFactory::makeDhcp();
   service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 
 void
-Parser::serviceAddNtp(const nmco::IpAddress& ip)
+Parser::serviceAddNtp(const nmdo::IpAddress& ip)
 {
-  auto service = nmcu::ServiceFactory::makeNtp();
+  auto service = nmdu::ServiceFactory::makeNtp();
   service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 
 void
-Parser::serviceAddSnmp(const nmco::IpAddress& ip)
+Parser::serviceAddSnmp(const nmdo::IpAddress& ip)
 {
-  auto service = nmcu::ServiceFactory::makeSnmp();
+  auto service = nmdu::ServiceFactory::makeSnmp();
   service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 
 void
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-Parser::addDhcpService(const nmdo::IpAddress& ip)
+Parser::serviceAddRadius(const nmdo::IpAddress& ip)
 {
-  nmdo::Service service {"dhcps", ip}; // match nmap output
-  service.setProtocol("udp");
-  service.addDstPort("67"); // port server uses
-  service.addSrcPort("68"); // port client uses
-=======
-Parser::serviceAddRadius(const nmco::IpAddress& ip)
-{
-  auto service = nmcu::ServiceFactory::makeRadius();
+  auto service = nmdu::ServiceFactory::makeRadius();
   service.setDstAddress(ip);
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 
 void
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-Parser::addNtpService(const nmdo::IpAddress& ip)
+Parser::serviceAddDns(const nmdo::IpAddress& ip)
 {
-  nmdo::Service service {"ntp", ip};
-  service.setProtocol("udp");
-  service.addDstPort("123"); // same port used by client and server
-  service.addSrcPort("123");
-=======
-Parser::serviceAddDns(const nmco::IpAddress& ip)
-{
-  auto service = nmcu::ServiceFactory::makeDns();
+  auto service = nmdu::ServiceFactory::makeDns();
   service.setDstAddress(ip);
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
 
 void
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-Parser::addSnmpService(const nmdo::IpAddress& ip)
+Parser::serviceAddSyslog(const nmdo::IpAddress& ip)
 {
-  nmdo::Service service {"snmp", ip};
-  service.setProtocol("udp");
-  service.addDstPort("162"); // port manager receives on
-=======
-Parser::serviceAddSyslog(const nmco::IpAddress& ip)
-{
-  auto service = nmcu::ServiceFactory::makeSyslog();
+  auto service = nmdu::ServiceFactory::makeSyslog();
   service.setDstAddress(ip);
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
@@ -686,11 +447,7 @@ Parser::serviceAddSyslog(const nmco::IpAddress& ip)
 
 // Route related
 void
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-Parser::addRouteIp(const nmdo::IpAddress& dstNet, const nmdo::IpAddress& rtrIp)
-=======
-Parser::routeAddIp(const nmco::IpAddress& dstNet, const nmco::IpAddress& rtrIp)
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
+Parser::routeAddIp(const nmdo::IpAddress& dstNet, const nmdo::IpAddress& rtrIp)
 {
   nmdo::Route route;
   route.setDstNet(dstNet);
@@ -700,12 +457,8 @@ Parser::routeAddIp(const nmco::IpAddress& dstNet, const nmco::IpAddress& rtrIp)
 }
 
 void
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-Parser::addRouteIface(const nmdo::IpAddress& dstNet, const std::string& rtrIface)
-=======
-Parser::routeAddIface(const nmco::IpAddress& dstNet,
+Parser::routeAddIface(const nmdo::IpAddress& dstNet,
                       const std::string& rtrIface)
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
 {
   nmdo::Route route;
   route.setDstNet(dstNet);
@@ -730,9 +483,9 @@ Parser::ifaceSetUpdate(std::set<std::string>* const set)
 }
 
 void
-Parser::ifaceAddAlias(const std::string& _alias, const nmco::IpAddress& _mask)
+Parser::ifaceAddAlias(const std::string& _alias, const nmdo::IpAddress& _mask)
 {
-  nmco::IpAddress ip;
+  nmdo::IpAddress ip;
   if (_mask.isValid()) {
     ip.setMask(_mask);
   }
@@ -742,7 +495,7 @@ Parser::ifaceAddAlias(const std::string& _alias, const nmco::IpAddress& _mask)
 
 // Vlan related
 void
-Parser::vlanAdd(nmco::Vlan& vlan)
+Parser::vlanAdd(nmdo::Vlan& vlan)
 {
   d.vlans.push_back(vlan);
 }
@@ -765,16 +518,6 @@ Parser::vlanAddIfaceData()
   }
 }
 
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-// Vlan related
-void
-Parser::addVlan(nmdo::Vlan& vlan)
-{
-  d.vlans.push_back(vlan);
-}
-
-=======
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
 
 // Policy Related
 void
@@ -840,19 +583,7 @@ Parser::finalizeNamedBooks()
 
 // Unsupported
 void
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/Parser.cpp
-Parser::setCurRuleDst(const std::string& addr)
-{
-  curRule->setDstId(ZONE);
-  curRule->addDst(addr);
-  d.networkBooks[ZONE][addr].addData(addr);
-}
-
-std::string
-Parser::setWildcardMask(nmdo::IpAddress& ipAddr, const nmdo::IpAddress& mask)
-=======
 Parser::unsup(const std::string& val)
->>>>>>> master:importers/nmdb-import-cisco/Parser.cpp
 {
   d.observations.addUnsupportedFeature(nmcu::trim(val));
 }
@@ -865,8 +596,8 @@ Parser::addObservation(const std::string& obs)
 
 // Object return
 void
-Parser::setRuleTargetIface(nmco::AcRule& _rule, const std::string& _name,
-                           void (nmco::AcRule::*x)(const std::string&))
+Parser::setRuleTargetIface(nmdo::AcRule& _rule, const std::string& _name,
+                           void (nmdo::AcRule::*x)(const std::string&))
 {
   if (0 == ifaceAliases.count(_name)) {
     (_rule.*x)(_name);
@@ -948,12 +679,12 @@ Parser::getData()
     for (auto& [id, rule] : d.ruleBooks[bookName]) {
       if ("in" == direction) {
         // in: filter traffic entering iface, regardless destination
-        setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addSrcIface);
+        setRuleTargetIface(rule, ifaceName, &nmdo::AcRule::addSrcIface);
         rule.addDstIface("any");
       } else if ("out" == direction) {
         // out: filter traffic leaving iface, regardless origin
         rule.addSrcIface("any");
-        setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addDstIface);
+        setRuleTargetIface(rule, ifaceName, &nmdo::AcRule::addDstIface);
       } else {
         LOG_ERROR << "(apply-groups) Unknown rule direction parsed: "
                   << direction << std::endl;
@@ -968,11 +699,11 @@ Parser::getData()
         for (const auto& bookName : classes[className]) {
           for (auto& [id, rule] : d.ruleBooks[bookName]) {
             if ("input" == direction) {
-              setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addSrcIface);
+              setRuleTargetIface(rule, ifaceName, &nmdo::AcRule::addSrcIface);
               rule.addDstIface("any");
             } else if ("output" == direction) {
               rule.addSrcIface("any");
-              setRuleTargetIface(rule, ifaceName, &nmco::AcRule::addDstIface);
+              setRuleTargetIface(rule, ifaceName, &nmdo::AcRule::addDstIface);
             } else {
               LOG_ERROR << "(service-policy) Unknown rule direction parsed: "
                         << direction << std::endl;

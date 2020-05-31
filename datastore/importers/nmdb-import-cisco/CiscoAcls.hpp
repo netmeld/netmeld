@@ -27,23 +27,23 @@
 #ifndef CISCO_GRAMMAR_ACLS_HPP
 #define CISCO_GRAMMAR_ACLS_HPP
 
-#include <netmeld/core/objects/AcRule.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/objects/AcRule.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "RulesCommon.hpp"
 
 namespace netmeld::datastore::importers::cisco {
 
-  namespace nmco = netmeld::core::objects;
-  namespace nmcp = netmeld::core::parsers;
+  namespace nmdo = netmeld::datastore::objects;
+  namespace nmdp = netmeld::datastore::parsers;
   namespace nmcu = netmeld::core::utils;
 
 
   // ===========================================================================
   // Data containers
   // ===========================================================================
-  typedef std::map<size_t, nmco::AcRule> RuleBook;
+  typedef std::map<size_t, nmdo::AcRule> RuleBook;
   typedef std::pair<std::string, RuleBook> Result;
 
 
@@ -51,17 +51,17 @@ namespace netmeld::datastore::importers::cisco {
   // Parser definition
   // ===========================================================================
   class CiscoAcls :
-    public qi::grammar<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+    public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
   {
     // =========================================================================
     // Variables
     // =========================================================================
     public:
       // Rules
-      qi::rule<nmcp::IstreamIter, Result(), qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
         start;
 
-      qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         ciscoAcl,
         ipv46,
         iosRule,
@@ -91,7 +91,7 @@ namespace netmeld::datastore::importers::cisco {
         remarkArgument,
         ipAccessListExtended, ipAccessList;
 
-      qi::rule<nmcp::IstreamIter, std::string(), qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
         bookName,
         action,
         protocolArgument,
@@ -100,22 +100,22 @@ namespace netmeld::datastore::importers::cisco {
           mask,
         portArgument;
 
-      nmcp::ParserIpAddress   ipAddr;
+      nmdp::ParserIpAddress   ipAddr;
 
-      qi::rule<nmcp::IstreamIter, std::string()>
+      qi::rule<nmdp::IstreamIter, std::string()>
         addrIpOnly, addrIpMask, addrIpPrefix,
           ipNoPrefix,
         anyTerm,
         logArgumentString,
         ignoredRuleLine;
 
-      qi::rule<nmcp::IstreamIter>
+      qi::rule<nmdp::IstreamIter>
         timeRangeArgument,
         inactiveArgument;
 
     protected:
       // Supporting data structures
-      nmco::AcRule curRule;
+      nmdo::AcRule curRule;
       const std::string ZONE  {"global"};
 
       std::string  ruleBookName {""};
@@ -158,7 +158,7 @@ namespace netmeld::datastore::importers::cisco {
       void setCurRuleSrc(const std::string&);
       void setCurRuleDst(const std::string&);
 
-      std::string setMask(nmco::IpAddress&, const nmco::IpAddress&);
+      std::string setMask(nmdo::IpAddress&, const nmdo::IpAddress&);
 
       void curRuleFinalize();
       void updateRuleService();

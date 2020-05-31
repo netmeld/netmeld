@@ -28,14 +28,8 @@
 
 #include "Parser.hpp"
 
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/nmdb-import-cisco.cpp
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
-=======
-namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
->>>>>>> master:importers/nmdb-import-cisco/nmdb-import-cisco.cpp
 
 
 // =============================================================================
@@ -49,31 +43,16 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // ===========================================================================
   private: // Variables should generally be private
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
-    // Inhertied from AbstractImportTool at this scope
-      // TResults               tResults;
-      // nmco::Uuid              toolRunId;
-      // nmco::Time              executionStart;
-      // nmco::Time              executionStop;
   public: // Variables should rarely appear at this scope
 
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-<<<<<<< HEAD:datastore/importers/nmdb-import-cisco/nmdb-import-cisco.cpp
-  public:
-    Tool() : nmdt::AbstractImportTool<P,R>
-=======
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractImportTool<P,R>
->>>>>>> master:importers/nmdb-import-cisco/nmdb-import-cisco.cpp
+    Tool() : nmdt::AbstractImportTool<P,R>
       (
        // command line tool imports data from
        "IOS|NXOS|ASA: show running-config all",
@@ -196,21 +175,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printVersion() const;
-    // Inherited from AbstractImportTool at this scope
-      // fs::path    const getDataPath() const;
-      // std::string const getDeviceId() const;
-      // nmco::Uuid   const getToolRunId() const;
-      // virtual void parseData();
-      // virtual void printHelp() const;
-      // virtual int  runTool();
-      // virtual void setToolRunId();
-      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 

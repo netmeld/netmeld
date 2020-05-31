@@ -28,12 +28,12 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/core/parsers/ParserTestHelper.hpp>
+#include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 
 #include "CiscoNetworkBook.hpp"
 
-namespace nmco = netmeld::core::objects;
-namespace nmcp = netmeld::core::parsers;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 namespace nmdsic = netmeld::datastore::importers::cisco;
 
 using qi::ascii::blank;
@@ -46,7 +46,7 @@ class TestCiscoNetworkBook : public nmdsic::CiscoNetworkBook {
   public:
     const NetworkBook& getNetworkBooks()
     { return networkBooks; }
-    const nmco::AcNetworkBook& getCurBook()
+    const nmdo::AcNetworkBook& getCurBook()
     { return curBook; }
     const std::string& getZone()
     { return ZONE; }
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {" Other_Name ", "Other_Name"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST(format == temp.getName());
     }
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {" description some \n"},
     };
     for (const auto& test : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
     }
     // BAD
     // -- The parser is a 'tokens', so no checkable bad case?
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {" host some.fqdn \n", "some.fqdn"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST(1 == temp.getData().count(format));
     }
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {" subnet 1.2.3.4/31 \n", "1.2.3.4/31"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST(1 == temp.getData().count(format));
     }
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {"range 1.2.3.4 4.3.2.1\n", "1.2.3.4/32-4.3.2.1/32"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST(1 == temp.getData().count(format));
     }
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {"nat (not,yet) dynamic valid\n"},
     };
     for (const auto& test : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
     }
     // BAD
   }
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {"fqdn v6 some.v6.domain\n", "some.v6.domain"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST(1 == temp.getData().count(format));
     }
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {"network-object 1.2.3.4/31\n", "1.2.3.4/31"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST(1 == temp.getData().count(format));
     }
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
       {" group-object Some_Object \n", "Some_Object"},
     };
     for (const auto& [test, format] : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST(1 == temp.getData().count(format));
     }
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookName)
       {"name 1.2.3.4 SomeName\n"},
     };
     for (const auto& test : testsOk) {
-      BOOST_TEST(nmcp::test(test.c_str(), parserRule, blank));
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       const auto& temp = tcnb.getCurBook();
       BOOST_TEST("SomeName" == temp.getName());
       const auto& data = temp.getData();
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookObjectNetwork)
       "  subnet 1.2.3.4 0.0.0.255\n" // +1
       "  subnet 1.2.3.4/31\n" // +1
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
     const auto& temp = tcnb.getCurBook();
     BOOST_TEST("TEST" == temp.getName());
     BOOST_TEST(6 == temp.getData().size());
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookObjectGroupNetwork)
       "  network-object 1.2.3.4 0.0.0.255\n" // +1
       "  network-object 1.2.3.4/31\n" // +1
     };
-    BOOST_TEST(nmcp::test(fullText.c_str(), parserRule, blank));
+    BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
     const auto& temp = tcnb.getCurBook();
     BOOST_TEST("TEST" == temp.getName());
     BOOST_TEST(5 == temp.getData().size());

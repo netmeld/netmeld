@@ -253,14 +253,14 @@ namespace netmeld::datastore::importers::cisco {
       ;
     addrIpOnly =
       (&ipNoPrefix > ipAddr)
-        [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+        [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
       ;
     ipNoPrefix =
       (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
       ;
     addrIpPrefix =
        (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
-         [qi::_val = pnx::bind(&nmco::IpAddress::toString, &qi::_1)]
+         [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
       ;
     addrIpMask =
        (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank]
@@ -494,7 +494,7 @@ namespace netmeld::datastore::importers::cisco {
   }
 
   std::string
-  CiscoAcls::setMask(nmco::IpAddress& ipAddr, const nmco::IpAddress& mask)
+  CiscoAcls::setMask(nmdo::IpAddress& ipAddr, const nmdo::IpAddress& mask)
   {
     bool isContiguous {ipAddr.setMask(mask)};
     if (!isContiguous) {

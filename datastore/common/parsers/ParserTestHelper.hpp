@@ -27,9 +27,9 @@
 #ifndef PARSER_TEST_HELPER_HPP
 #define PARSER_TEST_HELPER_HPP
 
-#include <netmeld/core/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
-namespace netmeld::core::parsers {
+namespace netmeld::datastore::parsers {
 
   template<typename Data, typename Parser>
   bool test(const Data* in, const Parser& p,

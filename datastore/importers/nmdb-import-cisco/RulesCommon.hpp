@@ -27,19 +27,19 @@
 #ifndef DATASTORE_IMPORTERS_RULES_COMMON_HPP
 #define DATASTORE_IMPORTERS_RULES_COMMON_HPP
 
-#include <netmeld/core/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
-namespace nmcp = netmeld::core::parsers;
+namespace nmdp = netmeld::datastore::parsers;
 
 // =============================================================================
 // Parser definition
 // =============================================================================
 namespace netmeld::datastore::importers::cisco {
-  extern qi::rule<nmcp::IstreamIter, std::string()>
+  extern qi::rule<nmdp::IstreamIter, std::string()>
     token;
-  extern qi::rule<nmcp::IstreamIter, std::string()>
+  extern qi::rule<nmdp::IstreamIter, std::string()>
     tokens;
-  extern qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+  extern qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
     indent;
 }
 #endif // DATASTORE_IMPORTERS_RULES_COMMON_HPP

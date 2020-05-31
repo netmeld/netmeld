@@ -285,7 +285,7 @@ namespace netmeld::datastore::importers::cisco {
         existingBook.addData(data);
       }
     }
-    curBook = nmco::AcServiceBook();
+    curBook = nmdo::AcServiceBook();
     curProtocol.clear();
     curSrcPort.clear();
     curDstPort.clear();
@@ -300,7 +300,7 @@ namespace netmeld::datastore::importers::cisco {
     zoneBooks.emplace(ZONE, serviceBooks);
     for (const auto& [zone, books] : zoneBooks) {
       for (const auto& [name, book] : books) {
-        nmcu::expanded(zoneBooks, zone, name, ZONE);
+        nmdu::expanded(zoneBooks, zone, name, ZONE);
       }
     }
 

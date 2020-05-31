@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(testSettersMask)
     };
 
     for (const auto& [prefix, mask] : masks) {
-      ipNet.setNetmask(nmco::IpNetwork(mask));
+      ipNet.setNetmask(nmdo::IpNetwork(mask));
       BOOST_TEST(prefix == ipNet.getPrefix());
     }
   }

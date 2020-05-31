@@ -27,24 +27,24 @@
 #ifndef CISO_NETWORK_BOOK_HPP
 #define CISO_NETWORK_BOOK_HPP
 
-#include <netmeld/core/objects/AcNetworkBook.hpp>
-#include <netmeld/core/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/utils/AcBookUtilities.hpp>
+#include <netmeld/datastore/objects/AcNetworkBook.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/utils/AcBookUtilities.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "RulesCommon.hpp"
 
 namespace netmeld::datastore::importers::cisco {
 
-  namespace nmco = netmeld::core::objects;
-  namespace nmcp = netmeld::core::parsers;
-  namespace nmcu = netmeld::core::utils;
+  namespace nmdo = netmeld::datastore::objects;
+  namespace nmdp = netmeld::datastore::parsers;
+  namespace nmdu = netmeld::datastore::utils;
 
 
   // ===========================================================================
   // Data containers
   // ===========================================================================
-  typedef std::map<std::string, nmco::AcNetworkBook>  NetworkBook;
+  typedef std::map<std::string, nmdo::AcNetworkBook>  NetworkBook;
   typedef std::map<std::string, NetworkBook>          NetworkBooks;
 
 
@@ -52,17 +52,17 @@ namespace netmeld::datastore::importers::cisco {
   // Parser definition
   // ===========================================================================
   class CiscoNetworkBook :
-    public qi::grammar<nmcp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
+    public qi::grammar<nmdp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
   {
     // =========================================================================
     // Variables
     // =========================================================================
     public:
       // Rules
-      qi::rule<nmcp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, NetworkBooks(), qi::ascii::blank_type>
         start;
 
-      qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+      qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         ciscoNetworkBook,
         nameLine,
         objectNetwork,
@@ -82,18 +82,18 @@ namespace netmeld::datastore::importers::cisco {
         dataIp,
         dataString;
 
-      qi::rule<nmcp::IstreamIter>
+      qi::rule<nmdp::IstreamIter>
         dataIpMask,
         dataIpPrefix,
         dataIpRange,
         ipNoPrefix;
 
-      nmcp::ParserIpAddress   ipAddr;
+      nmdp::ParserIpAddress   ipAddr;
 
     protected:
       // Supporting data structures
       NetworkBook networkBooks;
-      nmco::AcNetworkBook curBook;
+      nmdo::AcNetworkBook curBook;
       const std::string ZONE  {"global"};
 
       std::set<std::string> ignoredRuleData;
@@ -115,10 +115,10 @@ namespace netmeld::datastore::importers::cisco {
     protected:
     private: // Methods which should be hidden from API users
       void addData(const std::string&);
-      void fromIp(const nmco::IpAddress&);
-      void fromIpMask(const nmco::IpAddress&, const nmco::IpAddress&);
-      void fromIpRange(const nmco::IpAddress&, const nmco::IpAddress&);
-      void fromNetworkObjectMask(const std::string&, const nmco::IpAddress&);
+      void fromIp(const nmdo::IpAddress&);
+      void fromIpMask(const nmdo::IpAddress&, const nmdo::IpAddress&);
+      void fromIpRange(const nmdo::IpAddress&, const nmdo::IpAddress&);
+      void fromNetworkObjectMask(const std::string&, const nmdo::IpAddress&);
       void finalizeCurBook();
 
       // Object return

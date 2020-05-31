@@ -27,12 +27,12 @@
 #ifndef SERVICE_FACTORY_HPP
 #define SERVICE_FACTORY_HPP
 
-#include <netmeld/core/objects/Service.hpp>
+#include <netmeld/datastore/objects/Service.hpp>
 
-namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
 
-namespace netmeld::core::utils {
+namespace netmeld::datastore::utils {
 
   class ServiceFactory {
     // =========================================================================
@@ -52,12 +52,12 @@ namespace netmeld::core::utils {
       ServiceFactory(const ServiceFactory&) = delete;
       void operator=(const ServiceFactory&) = delete;
 
-      static nmco::Service makeDhcp();
-      static nmco::Service makeDns();
-      static nmco::Service makeNtp();
-      static nmco::Service makeRadius();
-      static nmco::Service makeSnmp();
-      static nmco::Service makeSyslog();
+      static nmdo::Service makeDhcp();
+      static nmdo::Service makeDns();
+      static nmdo::Service makeNtp();
+      static nmdo::Service makeRadius();
+      static nmdo::Service makeSnmp();
+      static nmdo::Service makeSyslog();
 
 
     // =========================================================================

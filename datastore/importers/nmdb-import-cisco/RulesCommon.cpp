@@ -27,17 +27,17 @@
 #include "RulesCommon.hpp"
 
 namespace netmeld::datastore::importers::cisco {
-  qi::rule<nmcp::IstreamIter, std::string()>
+  qi::rule<nmdp::IstreamIter, std::string()>
   token =
     +(qi::ascii::graph)
     ;
 
-  qi::rule<nmcp::IstreamIter, std::string()>
+  qi::rule<nmdp::IstreamIter, std::string()>
   tokens =
     qi::as_string[+(token >> *qi::blank)]
     ;
 
-  qi::rule<nmcp::IstreamIter, qi::ascii::blank_type>
+  qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
   indent =
     qi::no_skip[+qi::char_(' ')]
     ;

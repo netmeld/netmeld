@@ -25,8 +25,12 @@
 # =============================================================================
 
 add_executable(${TGT_TOOL}
-    Parser.cpp
     ${TGT_TOOL}.cpp
+    CiscoAcls.cpp
+    CiscoNetworkBook.cpp
+    CiscoServiceBook.cpp
+    Parser.cpp
+    RulesCommon.cpp
   )
 
 target_link_libraries(${TGT_TOOL}
@@ -34,3 +38,21 @@ target_link_libraries(${TGT_TOOL}
   )
 
 nm_install_bin(${TGT_TOOL})
+
+foreach(ITEM
+    CiscoAcls
+    CiscoNetworkBook
+    CiscoServiceBook
+  )
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      RulesCommon.cpp
+      RulesCommon.hpp
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+    )
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
+endforeach()
