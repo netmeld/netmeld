@@ -26,7 +26,7 @@
 
 #include "RaiiIpAddr.hpp"
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   RaiiIpAddr::RaiiIpAddr(std::string const& _ifaceName,
                          std::string const& _ipAddr) :
@@ -84,4 +84,4 @@ namespace netmeld { namespace playbook {
       cmdRunner.scheduleSleep(500);
     }
   }
-}}
+}

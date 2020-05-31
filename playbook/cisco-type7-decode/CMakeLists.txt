@@ -24,24 +24,12 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_NAME)
-get_git_timestamp(${TOOL_NAME}.cpp CODE_VERSION)
-
-add_definitions(
-    -DPROGRAM_NAME="${TOOL_NAME}"
-    -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
+add_executable(${TGT_TOOL}
+    ${TGT_TOOL}.cpp
   )
 
-add_executable(${TOOL_NAME}
-    ${TOOL_NAME}.cpp
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
   )
 
-target_link_libraries(${TOOL_NAME}
-    netmeld-core
-    ${Boost_LIBRARIES}
-  )
-
-create_man_from_help(${TOOL_NAME})
-
-install_bin(${TOOL_NAME} ${PROJECT_NAME})
-install_man(${TOOL_NAME} ${PROJECT_NAME})
+nm_install_bin(${TGT_TOOL})

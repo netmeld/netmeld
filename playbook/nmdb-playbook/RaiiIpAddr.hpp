@@ -30,7 +30,7 @@
 #include "RaiiCommon.hpp"
 
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   class RaiiIpAddr
   {
@@ -52,5 +52,5 @@ namespace netmeld { namespace playbook {
       virtual ~RaiiIpAddr();
       explicit RaiiIpAddr(std::string const&, std::string const&);
   };
-}}
+}
 #endif // RAII_IP_ADDR_HPP

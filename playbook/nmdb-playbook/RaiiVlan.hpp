@@ -30,7 +30,7 @@
 #include "RaiiCommon.hpp"
 
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   class RaiiVlan
   {
@@ -64,5 +64,5 @@ namespace netmeld { namespace playbook {
 
     static_assert(RESERVED < NONE, "VlanId::RESERVED >= VlanId::NONE");
   };
-}}
+}
 #endif // RAII_VLAN_HPP

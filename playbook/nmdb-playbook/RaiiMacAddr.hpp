@@ -30,7 +30,7 @@
 #include "RaiiCommon.hpp"
 
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   class RaiiMacAddr
   {
@@ -50,5 +50,5 @@ namespace netmeld { namespace playbook {
       virtual ~RaiiMacAddr();
       explicit RaiiMacAddr(std::string const&, std::string const&);
   };
-}}
+}
 #endif // RAII_MAC_ADDR_HPP

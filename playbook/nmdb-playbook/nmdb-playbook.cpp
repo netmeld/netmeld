@@ -25,11 +25,11 @@
 // =============================================================================
 
 #include <netmeld/core/objects/Uuid.hpp>
-#include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/datastore/tools/AbstractTool.hpp>
 #include <netmeld/core/utils/Exit.hpp>
-#include <netmeld/core/utils/QueriesCommon.hpp>
+#include <netmeld/datastore/utils/QueriesCommon.hpp>
 
-#include <netmeld/playbook/core/utils/QueriesPlaybook.hpp>
+#include <netmeld/playbook/utils/QueriesPlaybook.hpp>
 
 #include "CommandRunnerSingleton.hpp"
 #include "RaiiIpAddr.hpp"
@@ -39,10 +39,11 @@
 #include "RaiiVlan.hpp"
 
 namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
 namespace nmcu = netmeld::core::utils;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdu = netmeld::datastore::utils;
 namespace nmpb = netmeld::playbook;
-namespace nmpbcu = netmeld::playbook::core::utils;
+namespace nmpbu = netmeld::playbook::utils;
 
 // Start of OLD PLAYBOOK DATA
 
@@ -84,7 +85,7 @@ enum class PlaybookScope { UNKNOWN, INTRA_NETWORK, INTER_NETWORK };
 
 
 
-class Tool : public nmct::AbstractTool
+class Tool : public nmdt::AbstractTool
 {
   // ===========================================================================
   // Variables
@@ -140,7 +141,7 @@ class Tool : public nmct::AbstractTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractTool
+    Tool() : nmdt::AbstractTool
       (
        "Playbook tool",  // unused unless printHelp() is overridden
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -365,7 +366,7 @@ class Tool : public nmct::AbstractTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs};
-      nmpbcu::dbPreparePlaybook(db);
+      nmpbu::dbPreparePlaybook(db);
 
       if (true) {
         pqxx::read_transaction t {db};
@@ -1191,7 +1192,7 @@ class Tool : public nmct::AbstractTool
           nmpb::RaiiIpAddr raiiIpAddr {linkName, srcIpAddr};
 
           pqxx::connection db {dbConnectString};
-          nmpbcu::dbPreparePlaybook(db);
+          nmpbu::dbPreparePlaybook(db);
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:

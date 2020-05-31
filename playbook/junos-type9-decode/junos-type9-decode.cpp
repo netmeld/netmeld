@@ -26,19 +26,19 @@
 
 #include <numeric>
 
-#include <netmeld/core/parsers/ParserHelper.hpp>
 #include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 
 namespace nmct = netmeld::core::tools;
-namespace nmcp = netmeld::core::parsers;
 namespace nmcu = netmeld::core::utils;
+namespace nmdp = netmeld::datastore::parsers;
 
 
 typedef std::string  Result;
 
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result()>
+  public qi::grammar<nmdp::IstreamIter, Result()>
 {
   public:
     Parser() : Parser::base_type(start)
@@ -49,7 +49,7 @@ class Parser :
         ;
     }
 
-    qi::rule<nmcp::IstreamIter, Result()>
+    qi::rule<nmdp::IstreamIter, Result()>
       start;
 };
 
@@ -237,7 +237,7 @@ class Tool : public nmct::AbstractTool
         genLookup();
       } else {
         Result encoded {
-          nmcp::fromString<Parser, Result>(opts.getValue("password"))
+          nmdp::fromString<Parser, Result>(opts.getValue("password"))
         };
         auto decoded {decode(encoded)};
 

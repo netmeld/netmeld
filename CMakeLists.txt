@@ -215,7 +215,7 @@ if (NOT DATE)
 endif()
 
 
-function(nm_add_generic target test_name)
+function(nm_add_generic target)
   set(full_path "${CMAKE_CURRENT_SOURCE_DIR}/${target}")
   if(EXISTS "${full_path}" AND EXISTS "${full_path}/CMakeLists.txt")
     add_subdirectory("${target}")
@@ -236,27 +236,25 @@ function(target_as_module target)
   add_custom_target("${TGT_MODULE}" DEPENDS ${prior_tgt_module})
   add_custom_target("${TGT_MODULE_TEST}" DEPENDS ${TGT_MODULE})
   add_dependencies(${prior_tgt_module_test} ${TGT_MODULE_TEST})
-  nm_add_generic("${target}" "${TGT_MODULE_TEST}")
+  nm_add_generic("${target}")
 endfunction()
 function(target_as_tool target)
   set(TGT_TOOL "${target}")
   set(TGT_TOOL_TEST "${TGT_MODULE_TEST}.${target}")
   get_timestamp(${target} TGT_VERSION)
   add_dependencies("${TGT_MODULE}" "${TGT_TOOL}")
-  nm_add_generic("${target}" "${TGT_TOOL_TEST}")
+  nm_add_generic("${target}")
 endfunction()
 function(target_as_library target)
   set(TGT_LIBRARY "${TOOL_SUITE}-${TGT_MODULE}")
   set(TGT_LIBRARY_TEST "${TGT_MODULE_TEST}")
-  #  add_dependencies("${TGT_MODULE}" "${TGT_LIBRARY}")
-  nm_add_generic("${target}" "${TGT_LIBRARY_TEST}")
+  nm_add_generic("${target}")
 endfunction()
 
 # TODO figure out how to add tool/library value
 function(nm_add_test target)
   set(test_target "${TGT_MODULE_TEST}.${target}")
   set(TGT_TEST "${test_target}" PARENT_SCOPE)
-  #set(test_target "Test.${target}")
   add_executable(${test_target}
       EXCLUDE_FROM_ALL
       ${target}.test.cpp
@@ -382,6 +380,16 @@ function(nm_install_bin target_file)
   create_man_from_help(${target_file})
   nm_install_man(${target_file})
 endfunction()
+function(nm_install_program target_file)
+  install(
+    PROGRAMS ${target_file}
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION bin
+  )
+  create_man_from_help(${target_file})
+  nm_install_man(${target_file})
+endfunction()
 function(nm_install_lib target_file)
   install(
     TARGETS ${target_file}
@@ -395,8 +403,7 @@ function(nm_install_lib target_file)
 endfunction()
 function(nm_install_include target_dir target_path)
   install(
-    DIRECTORY
-      ${target_dir}
+    DIRECTORY ${target_dir}
     OPTIONAL
     COMPONENT ${TGT_MODULE}
     DESTINATION include/netmeld/${target_path}
@@ -414,8 +421,7 @@ function(nm_install_man target_file)
 endfunction()
 function(nm_install_conf target_file target_path)
   install(
-      FILES
-        ${target_file}
+      FILES ${target_file}
       OPTIONAL
       COMPONENT ${TGT_MODULE}
       DESTINATION ${NETMELD_CONF_DIR}/${target_path}
@@ -460,58 +466,12 @@ add_custom_target(${TEST_ALL})
 set(NETMELD_SOURCE_VERSION "2.0")
 
 foreach(ITEM
+    #clw
     core
     datalake
     datastore
+    fetchers
+    playbook
   )
   target_as_module(${ITEM})
 endforeach()
-
-
-#set(NETMELD_CORE_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_CORE_VERSION})
-#add_project(core)
-
-#set(NETMELD_CORE_BIN_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_CORE_VERSION})
-#add_project(core-bin)
-#
-#set(NETMELD_INSERTERS_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_INSERTERS_VERSION})
-#add_project(inserters)
-#
-#set(NETMELD_EXPORTERS_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_EXPORTERS_VERSION})
-#add_project(exporters)
-#
-#set(NETMELD_IMPORTERS_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_IMPORTERS_VERSION})
-#add_project(importers)
-#
-#set(NETMELD_GRAPHERS_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_GRAPHERS_VERSION})
-#add_project(graphers)
-#
-#set(NETMELD_FETCHERS_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_FETCHERS_VERSION})
-#add_project(fetchers)
-#
-#set(NETMELD_CLW_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_CLW_VERSION})
-#add_project(clw)
-#
-#set(NETMELD_PLAYBOOK_CORE_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_PLAYBOOK_CORE_VERSION})
-#add_project(playbook-core)
-#
-#set(NETMELD_PLAYBOOK_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_PLAYBOOK_VERSION})
-#add_project(playbook)
-#
-#set(NETMELD_DATALAKE_CORE_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_DATALAKE_CORE_VERSION})
-#add_project(datalake-core)
-
-#set(NETMELD_DATALAKE_VERSION "2.0")
-#set(TOOL_VERSION ${NETMELD_DATALAKE_VERSION})
-#add_project(datalake)

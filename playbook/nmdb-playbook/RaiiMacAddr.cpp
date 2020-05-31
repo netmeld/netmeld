@@ -26,7 +26,7 @@
 
 #include "RaiiMacAddr.hpp"
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   RaiiMacAddr::RaiiMacAddr(std::string const& _ifaceName,
                            std::string const& _macAddr) :
@@ -75,4 +75,4 @@ namespace netmeld { namespace playbook {
       cmdRunner.scheduleSleep(500);
     }
   }
-}}
+}

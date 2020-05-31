@@ -24,9 +24,9 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/playbook/core/utils/QueriesPlaybook.hpp>
+#include <netmeld/playbook/utils/QueriesPlaybook.hpp>
 
-namespace netmeld::playbook::core::utils {
+namespace netmeld::playbook::utils {
 
   void
   dbPreparePlaybook(pqxx::connection& db)

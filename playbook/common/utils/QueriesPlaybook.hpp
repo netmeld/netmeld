@@ -30,7 +30,7 @@
 #include <pqxx/pqxx>
 
 
-namespace netmeld::playbook::core::utils {
+namespace netmeld::playbook::utils {
 
   void dbPreparePlaybook(pqxx::connection&);
 }

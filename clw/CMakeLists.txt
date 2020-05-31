@@ -1,4 +1,4 @@
-# =============================================================================
+#=============================================================================
 # Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
@@ -24,62 +24,29 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_NAME)
-get_git_timestamp(${TOOL_NAME}.cpp CODE_VERSION)
-set(PROJECT_NAME ${TOOL_SUITE}-${TOOL_NAME})
-add_custom_target(${PROJECT_NAME})
-
-
-###############################################################################
-# Add binary data
-###############################################################################
-add_custom_target(Test.${PROJECT_NAME}
-    DEPENDS ${PROJECT_NAME}
-  )
-function(create_test TEST_NAME)
-  add_executable(Test.${TEST_NAME}
-      EXCLUDE_FROM_ALL
-      ${TEST_NAME}.test.cpp
-    )
-
-  target_link_libraries(Test.${TEST_NAME}
-      netmeld-core
-      ${Boost_LIBRARIES}
-    )
-
-  add_test(${TEST_NAME}
-      Test.${TEST_NAME}
-    )
-
-  set_tests_properties(${TEST_NAME}
-      PROPERTIES LABELS "Test.${PROJECT_NAME}"
-    )
-
-  add_dependencies(Test.${PROJECT_NAME}
-      Test.${TEST_NAME}
-    )
-endfunction()
-
-add_definitions(
-    -DPROGRAM_NAME="${TOOL_NAME}"
-    -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
-  )
-
-add_executable(${TOOL_NAME}
+add_executable(${TGT_TOOL}
     AugmentArgs.cpp
-    ${TOOL_NAME}.cpp
+    ${TGT_TOOL}.cpp
   )
 
-target_link_libraries(${TOOL_NAME}
+target_link_libraries(${TGT_TOOL}
     netmeld-core
-    ${Boost_LIBRARIES}
   )
 
-add_dependencies(${PROJECT_NAME}
-    ${TOOL_NAME}
-  )
+# START
+# Since added as a tool
+set(MODULE_VERSION "2.0")
+set(prior_tgt_module "${TOOL_SUITE}")
+set(TGT_MODULE "${target}")
+set(prior_tgt_module_test "${TEST_ALL}")
+set(TGT_MODULE_TEST "Test.${target}")
+add_dependencies("${TGT_MODULE}" ${prior_tgt_module})
+add_dependencies(${TGT_MODULE_TEST} ${TGT_MODULE})
+add_dependencies(${prior_tgt_module_test} ${TGT_MODULE_TEST})
 
-create_man_from_help(${TOOL_NAME})
+set(TGT_TOOL_TEST "${TGT_MODULE_TEST}")
+#add_dependencies("${TGT_MODULE}" "${TGT_TOOL}")
+# END
 
-install_bin(${TOOL_NAME} ${PROJECT_NAME})
-install_man(${TOOL_NAME} ${PROJECT_NAME})
+
+nm_install_bin(${TGT_TOOL})

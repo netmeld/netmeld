@@ -30,7 +30,7 @@
 #include "RaiiCommon.hpp"
 
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   class RaiiIpRoute
   {
@@ -50,5 +50,5 @@ namespace netmeld { namespace playbook {
       virtual ~RaiiIpRoute();
       explicit RaiiIpRoute(std::string const&, std::string const&);
   };
-}}
+}
 #endif // RAII_IP_ROUTE_HPP

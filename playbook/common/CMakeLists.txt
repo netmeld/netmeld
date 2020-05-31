@@ -24,74 +24,26 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} PROJECT_NAME_SUFFIX)
-set(PROJECT_NAME ${TOOL_SUITE}-${PROJECT_NAME_SUFFIX})
-#add_custom_target(${PROJECT_NAME})
-
-
-###############################################################################
-# Test hooks
-###############################################################################
-add_custom_target(Test.${PROJECT_NAME}
-    DEPENDS ${PROJECT_NAME}
-  )
-function(create_test TEST_NAME)
-  add_executable(Test.${TEST_NAME}
-      EXCLUDE_FROM_ALL
-      ${TEST_NAME}.test.cpp
-    )
-
-  target_link_libraries(Test.${TEST_NAME}
-      netmeld-core
-      ${Boost_LIBRARIES}
-    )
-
-  add_test(${TEST_NAME}
-      Test.${TEST_NAME}
-    )
-
-  set_tests_properties(${TEST_NAME}
-      PROPERTIES LABELS "Test.${PROJECT_NAME}"
-    )
-
-  add_dependencies(Test.${PROJECT_NAME}
-      Test.${TEST_NAME}
-    )
-endfunction()
-
-
-###############################################################################
-# Add library data
-###############################################################################
-add_library(${PROJECT_NAME} SHARED
+add_library(${TGT_LIBRARY} SHARED
     ./utils/QueriesPlaybook.cpp
   )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_include_directories(${TGT_LIBRARY}
+  PUBLIC
     ${Boost_INCLUDE_DIRS}
     include
   )
 
-set_target_properties(${PROJECT_NAME}
-    PROPERTIES VERSION ${TOOL_VERSION}
+target_link_libraries(${TGT_LIBRARY}
+  PUBLIC
+    netmeld-datastore
   )
 
-target_link_libraries(${PROJECT_NAME}
-    netmeld-core
-    ${Boost_LIBRARIES}
-    pqxx
+nm_install_lib(${TGT_LIBRARY})
+
+foreach(ITEM
+    utils
+    schemas
   )
-
-install_lib(${PROJECT_NAME} ${PROJECT_NAME})
-
-install (
-    DIRECTORY
-      utils
-    OPTIONAL
-    COMPONENT ${PROJECT_NAME}
-    DESTINATION include/netmeld/playbook-core
-    FILES_MATCHING PATTERN "*.[hi]pp"
-  )
-
-add_subdirectory(schemas)
-add_subdirectory(utils)
+  nm_install_include("${ITEM}" "playbook")
+endforeach()

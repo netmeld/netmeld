@@ -55,9 +55,9 @@ target_link_libraries(${TGT_LIBRARY}
 nm_install_lib(${TGT_LIBRARY})
 
 foreach(ITEM
-      objects
-      tools
-      utils
-    )
+    objects
+    tools
+    utils
+  )
   nm_install_include(${ITEM} "core")
 endforeach()
