@@ -438,6 +438,47 @@ SELECT DISTINCT
     action          AS action,
     description     AS description
 FROM raw_device_ac_rules
+ORDER BY device_id, src_iface, dst_iface,
+         description, ac_id,
+         src_net_set, dst_net_set
+;
+
+CREATE VIEW device_ac_rules_known_applied AS
+SELECT DISTINCT
+    device_id       AS device_id,
+    enabled         AS enabled,
+    ac_id           AS ac_id,
+    src_net_set_id  AS src_net_set_id,
+    src_net_set     AS src_net_set,
+    src_iface       AS src_iface,
+    dst_net_set_id  AS dst_net_set_id,
+    dst_net_set     AS dst_net_set,
+    dst_iface       AS dst_iface,
+    service_set     AS service_set,
+    action          AS action,
+    description     AS description
+FROM raw_device_ac_rules
+WHERE src_iface IS NOT NULL AND dst_iface IS NOT NULL
+ORDER BY device_id, src_iface, dst_iface, description, ac_id
+;
+
+CREATE VIEW device_ac_rules_unknown_applied AS
+SELECT DISTINCT
+    device_id       AS device_id,
+    enabled         AS enabled,
+    ac_id           AS ac_id,
+    src_net_set_id  AS src_net_set_id,
+    src_net_set     AS src_net_set,
+    src_iface       AS src_iface,
+    dst_net_set_id  AS dst_net_set_id,
+    dst_net_set     AS dst_net_set,
+    dst_iface       AS dst_iface,
+    service_set     AS service_set,
+    action          AS action,
+    description     AS description
+FROM raw_device_ac_rules
+WHERE src_iface IS NULL OR dst_iface IS NULL
+ORDER BY device_id, description, ac_id, src_net_set, dst_net_set
 ;
 
 

@@ -68,6 +68,7 @@ namespace netmeld::datastore::importers::cisco {
           iosRemark,   iosRemarkRuleLine,
           iosStandard, iosStandardRuleLine,
           iosExtended, iosExtendedRuleLine,
+          iosIpv6,
         nxosRule,
           nxosRemark,   nxosRemarkRuleLine,
           nxosStandard, nxosStandardRuleLine,
@@ -82,9 +83,6 @@ namespace netmeld::datastore::importers::cisco {
         icmpArgument,
           icmpTypeCode, icmpMessage,
         establishedArgument,
-        fragmentsArgument,
-        precedenceArgument,
-        tosArgument,
         logArgument,
         userArgument,
         securityGroupArgument,
@@ -110,7 +108,7 @@ namespace netmeld::datastore::importers::cisco {
         ignoredRuleLine;
 
       qi::rule<nmcp::IstreamIter>
-        timeRangeArgument,
+        untrackedArguments,
         inactiveArgument;
 
     protected:
@@ -126,6 +124,7 @@ namespace netmeld::datastore::importers::cisco {
       std::string  curRuleSrcPort  {""};
       std::string  curRuleDstPort  {""};
 
+      std::string  curRuleOptions     {""};
       std::string  curRuleDescription {""};
 
       std::set<std::string> ignoredRuleData;
@@ -154,6 +153,7 @@ namespace netmeld::datastore::importers::cisco {
       void initRuleBook(const std::string&);
 
       void setCurRuleAction(const std::string&);
+      void addCurRuleOption(const std::string&);
 
       void setCurRuleSrc(const std::string&);
       void setCurRuleDst(const std::string&);

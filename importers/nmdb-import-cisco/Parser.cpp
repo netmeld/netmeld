@@ -676,6 +676,13 @@ Parser::getData()
   for (auto& [bookName, dataPair] : appliedRuleSets) {
     auto& [ifaceName, direction] = dataPair;
 
+    if (0 == d.ruleBooks.count(bookName)) {
+      d.observations.addNotable(
+          "Interface ("+ifaceName+")"
+          " applies undefined or unknown access list ("+bookName+")"
+          );
+    }
+
     for (auto& [id, rule] : d.ruleBooks[bookName]) {
       if ("in" == direction) {
         // in: filter traffic entering iface, regardless destination
