@@ -838,9 +838,9 @@ BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
 }
 BOOST_AUTO_TEST_CASE(testNxosExtended)
 {
-  TestCiscoAcls tpca;
-  const auto& parserRule = tpca.nxosExtended;
   {
+    TestCiscoAcls tpca;
+    const auto& parserRule = tpca.nxosExtended;
     const std::string fullText {
       "ip access-list TEST dynamic NAME timeout 5\n"
       " 10 remark crazy rule\n"
@@ -879,6 +879,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     }
   }
   {
+    TestCiscoAcls tpca;
     const std::string fullText {
       "ip access-list TEST\n"
       " 10 remark ignored rules\n"
@@ -903,6 +904,25 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     BOOST_TEST("deny" == aclBook.at(1).getActions().at(0));
     const auto& ignoredRules = tpca.getIgnoredRuleData();
     BOOST_TEST(5 == ignoredRules.size());
+  }
+  {
+    TestCiscoAcls tpca;
+    const std::string fullText {
+      "ipv6 access-list TEST\n"
+      " 10 permit ipv6 any 1234:1234:1234:123::/59\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmcp::testAttr(fullText, tpca, result, blank));
+
+    auto& aclBookName  {result.first};
+    BOOST_TEST("TEST" == aclBookName);
+
+    auto& aclBook  {result.second};
+    BOOST_TEST(1 == aclBook.size());
+    BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
+    const auto& ignoredRules = tpca.getIgnoredRuleData();
+    BOOST_TEST(0 == ignoredRules.size());
   }
 }
 /* NOTE: Below is a one-liner, wrapped for clarity
