@@ -88,6 +88,12 @@ class Tool : public nmdt::AbstractGraphTool
             po::value<std::string>()->required(),
             "Name of device")
           );
+
+      opts.addOptionalOption("all", std::make_tuple(
+            "all",
+            NULL_SEMANTIC,
+            "Display all rules, regardless of known application state")
+          );
     }
 
     // Overriden from AbstractGraphTool
@@ -99,6 +105,11 @@ class Tool : public nmdt::AbstractGraphTool
       pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs};
       nmdu::dbPrepareCommon(db);
 
+      std::string rulesTarget {"device_ac_rules_known_applied"};
+      if (opts.exists("all")) {
+        rulesTarget = "device_ac_rules";
+      }
+
       db.prepare
         ("select_device_ac_sets",
          "SELECT DISTINCT *"
@@ -107,14 +118,14 @@ class Tool : public nmdt::AbstractGraphTool
          "     src_net_set_id  AS id,"
          "     src_net_set     AS name,"
          "     src_iface       AS iface"
-         "    FROM device_ac_rules"
+         "    FROM " + rulesTarget +
          "    WHERE ($1 = device_id)"
          "   UNION"
          "   SELECT"
          "     dst_net_set_id  AS id,"
          "     dst_net_set     AS name,"
          "     dst_iface       AS iface"
-         "    FROM device_ac_rules"
+         "    FROM " + rulesTarget +
          "    WHERE ($1 = device_id)"
          " ) AS data"
          " ORDER BY 1,3,2"
@@ -144,7 +155,7 @@ class Tool : public nmdt::AbstractGraphTool
          "    COALESCE(das.service_set_data,dar.service_set),"
          "    ',' ORDER BY das.service_set_data"
          "    )              AS services"
-         " FROM device_ac_rules AS dar"
+         " FROM " + rulesTarget + " AS dar"
          " FULL JOIN device_ac_services as das"
          "   ON (dar.device_id = das.device_id)"
          "  AND (dar.service_set = das.service_set)"

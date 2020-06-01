@@ -26,6 +26,7 @@
 
 #include <netmeld/datastore/objects/AcRule.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/objects/ToolObservations.hpp>
 
 namespace nmcu = netmeld::core::utils;
 
@@ -175,11 +176,11 @@ namespace netmeld::datastore::objects {
   {
     return !srcId.empty()
         && !srcs.empty()
-        && !srcIfaces.empty()
-        && !dstId.empty()
-        && !dsts.empty()
-        && !dstIfaces.empty()
-        && !services.empty()
+//        && !srcIfaces.empty()
+//        && !dstId.empty()
+//        && !dsts.empty()
+//        && !dstIfaces.empty()
+//        && !services.empty()
         && !actions.empty()
         ;
   }
@@ -198,6 +199,19 @@ namespace netmeld::datastore::objects {
     if (actions.size() > 0) {
       actionStr = nmcu::toString(actions, ',');
     }
+
+    if (srcIfaces.empty() || dstIfaces.empty()) {
+      ToolObservations to;
+      to.addNotable(
+          "AcRule (" + description +
+          ") defined but may not be applied to an interface.");
+      to.saveQuiet(t, toolRunId, deviceId);
+    }
+
+    if (srcIfaces.empty()) { addSrcIface(""); }
+    if (dstIfaces.empty()) { addDstIface(""); }
+    if (dsts.empty())      { addDst("");      }
+    if (services.empty())  { addService("");  }
 
     for (const auto& src : srcs) {
       for (const auto& srcIface : srcIfaces) {

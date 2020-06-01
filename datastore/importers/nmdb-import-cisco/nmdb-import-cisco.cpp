@@ -156,11 +156,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         for (auto& [name, book] : results.ruleBooks) {
           LOG_DEBUG << name << '\n';
           for (auto& [id, rule] : book) {
-            if (!rule.isValid()) {
-              results.observations.addNotable(
-                  "AcRuleBook (" + name + ") defined"
-                  " but may not be applied to an interface.");
-            }
             rule.save(t, toolRunId, deviceId);
             LOG_DEBUG << rule.toDebugString() << '\n';
           }
