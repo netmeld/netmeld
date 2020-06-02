@@ -237,6 +237,7 @@ function(target_as_module target)
   add_custom_target("${TGT_MODULE_TEST}" DEPENDS ${TGT_MODULE})
   add_dependencies(${prior_tgt_module_test} ${TGT_MODULE_TEST})
   nm_add_generic("${target}")
+  #cpack_add_component(${TGT_MODULE})
 endfunction()
 function(target_as_tool target)
   set(TGT_TOOL "${target}")
@@ -398,7 +399,8 @@ function(nm_install_lib target_file)
     DESTINATION lib
   )
   set_target_properties(${target_file}
-      PROPERTIES VERSION "${MODULE_VERSION}.${TGT_VERSION}"
+      PROPERTIES
+        VERSION "${MODULE_VERSION}.${TGT_VERSION}"
     )
 endfunction()
 function(nm_install_include target_dir target_path)
@@ -486,3 +488,23 @@ foreach(ITEM
   add_dependencies("${TEST_ALL}" ${TGT_MODULE_TEST})
   target_as_tool(${ITEM})
 endforeach()
+
+
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(CPACK_GENERATOR "DEB")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Netmeld@sandia.gov")
+
+set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS ON)
+set(CPACK_DEB_COMPONENT_INSTALL ON)
+
+set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "something")
+set(CPACK_DEBIAN_DATALAKE_PACKAGE_DEPENDS "something2")
+set(CPACK_COMPONENT_DATALAKE_DEPENDS "core")
+set(CPACK_DEBIAN_DATASTORE_PACKAGE_DEPENDS "something3")
+set(CPACK_DEBIAN_FETCHERS_PACKAGE_DEPENDS "something4")
+set(CPACK_DEBIAN_PLAYBOOK_PACKAGE_DEPENDS "something5")
+
+#set(CPACK_DEBIAN_PACKAGE_DEPENDS "something")
+include(CPack)
