@@ -913,7 +913,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     };
 
     nmdsic::Result result;
-    BOOST_TEST(nmcp::testAttr(fullText, tpca, result, blank));
+    BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
 
     auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);

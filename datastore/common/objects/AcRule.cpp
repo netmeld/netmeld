@@ -24,9 +24,9 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/AcRule.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
-#include <netmeld/core/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/AcRule.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
 
 namespace nmcu = netmeld::core::utils;
 
