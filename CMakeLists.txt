@@ -271,6 +271,12 @@ function(nm_add_test target)
   add_dependencies(${TGT_MODULE_TEST} ${test_target})
 endfunction()
 
+function(nm_add_deb_description text)
+  string(TOUPPER ${TGT_MODULE} component)
+  set(cpack_val CPACK_DEBIAN_${component}_DESCRIPTION)
+  set(${cpack_val} ${text} CACHE INTERNAL ${cpack_val})
+endfunction()
+
 
 function(get_basename cwd_var result_var)
   execute_process(
@@ -495,16 +501,35 @@ endforeach()
 # ----------------------------------------------------------------------
 set(CPACK_GENERATOR "DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Netmeld@sandia.gov")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/netmeld/netmeld")
+set(CPACK_DEBIAN_PACKAGE_SOURCE ${TOOL_SUITE})
+set(CPACK_DEBIAN_PACKAGE_SECTION "utilities")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Netmeld Tool Suite")
+set(CPACK_PACKAGE_VERSION_MAJOR "2")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
+string(TIMESTAMP CPACK_PACKAGE_VERSION_PATCH %Y%m%d%H%M%SZ UTC)
+#set(CPACK_PACKAGE_VERSION_PATCH "3")
+#set(CPACK_DEBIAN_PACKAGE_VERSION "4")
+#set(CPACK_DEBIAN_PACKAGE_RELEASE "5")
+#set(CPACK_DEBIAN_PACKAGE_EPOCH "6")
 
-set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS ON)
+#set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
+#set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS ON)
 set(CPACK_DEB_COMPONENT_INSTALL ON)
+set(CPACK_STRIP_FILES ON)
 
-set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "something")
-set(CPACK_DEBIAN_DATALAKE_PACKAGE_DEPENDS "something2")
-set(CPACK_COMPONENT_DATALAKE_DEPENDS "core")
-set(CPACK_DEBIAN_DATASTORE_PACKAGE_DEPENDS "something3")
-set(CPACK_DEBIAN_FETCHERS_PACKAGE_DEPENDS "something4")
-set(CPACK_DEBIAN_PLAYBOOK_PACKAGE_DEPENDS "something5")
+get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
+list(REMOVE_ITEM CPACK_COMPONENTS_ALL "fake-module" "Unspecified")
 
-#set(CPACK_DEBIAN_PACKAGE_DEPENDS "something")
+
+foreach(ITEM
+    ${CPACK_COMPONENTS_ALL}
+  )
+  message("comp:" ${ITEM})
+  set(tgtFile "${CMAKE_BINARY_DIR}/CPackProperties.${ITEM}.cmake")
+  if(EXISTS "${tgtFile}")
+    include(${tgtFile})
+  endif()
+endforeach()
+
 include(CPack)

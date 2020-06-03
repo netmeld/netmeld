@@ -26,3 +26,15 @@
 set(MODULE_VERSION "2.0")
 
 target_as_library(common)
+
+
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package contains the Core library and headers \
+necessary to run the Netmeld tool suite or expand capabilities \
+through tool development.")
+nm_add_deb_description(${desc})
+set(CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS ON
+    CACHE INTERNAL CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS
+   )
