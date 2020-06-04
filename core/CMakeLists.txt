@@ -35,6 +35,8 @@ set(desc "This package contains the Core library and headers \
 necessary to run the Netmeld tool suite or expand capabilities \
 through tool development.")
 nm_add_deb_description(${desc})
-set(CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS ON
-    CACHE INTERNAL CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS
-   )
+#set(CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS ON
+#    CACHE INTERNAL CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS
+#   )
+set(deps "libboost-date-time1.67.0, libboost-program-options1.67.0, libc6 (>= 2.25), libgcc-s1 (>= 3.0), libstdc++6 (>= 9)")
+nm_add_deb_depends(${deps})

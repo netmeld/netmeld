@@ -35,3 +35,15 @@ foreach(ITEM
   )
   target_as_tool(${ITEM})
 endforeach()
+
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package provides the Datastore Inserters module for the \
+Netmeld tool suite.  Included are the library and headers necessary to \
+run or expand capabilities through tool development, as well as the \
+binaries necessary to insert targeted data into the Netmeld Datastore.")
+nm_add_deb_description(${desc})
+set(deps "netmeld-core, netmeld-datastore, \
+libboost-system1.67.0")
+nm_add_deb_depends(${deps})

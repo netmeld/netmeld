@@ -46,11 +46,5 @@ or expand capabilities through tool development, as well as the \
 binaries necessary to instantiate and manage a data lake compatible \
 with the Netmeld tool suite.")
 nm_add_deb_description(${desc})
-set(deps
-  "netmeld-core, libboost-program-options1.67.0 "
-  )
-#nm_add_deb_depends(${deps})
-#set(CPACK_DEBIAN_DATALAKE_PACKAGE_DEPENDS
-#    "netmeld-core (>= 2.1)"
-#    CACHE INTERNAL CPACK_DEBIAN_DATALAKE_PACKAGE_DEPENDS
-#   )
+set(deps "netmeld-core, git")
+nm_add_deb_depends(${deps})

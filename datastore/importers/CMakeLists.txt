@@ -51,3 +51,16 @@ foreach(ITEM
   )
   target_as_tool(${ITEM})
 endforeach()
+
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package provides the Datastore Importers module for the \
+Netmeld tool suite.  Included are the library and headers necessary to \
+run or expand capabilities through tool development, as well as the \
+binaries necessary to import structured data into the Netmeld Datastore.")
+nm_add_deb_description(${desc})
+set(deps "netmeld-core, netmeld-datastore, \
+libboost-iostreams1.67.0, libboost-system1.67.0, \
+libpcap0.8 (>= 0.9.8), libpugixml1v5 (>= 1.7)")
+nm_add_deb_depends(${deps})

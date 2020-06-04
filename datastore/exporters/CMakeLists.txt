@@ -32,3 +32,16 @@ foreach(ITEM
   )
   target_as_tool(${ITEM})
 endforeach()
+
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package provides the Datastore Exporters module for the \
+Netmeld tool suite.  Included are the library and headers necessary to \
+run or expand capabilities through tool development, as well as the \
+binaries necessary to export data from the Netmeld Datastore.")
+nm_add_deb_description(${desc})
+set(deps "netmeld-core, netmeld-datastore")
+nm_add_deb_depends(${deps})
+set(deps "nmap, context")
+nm_add_deb_recommends(${deps})

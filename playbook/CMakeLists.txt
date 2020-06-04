@@ -39,3 +39,19 @@ foreach(ITEM
   )
   target_as_tool(${ITEM})
 endforeach()
+
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package provides the Playbook module for the \
+Netmeld tool suite.  Included are the library and headers necessary to \
+run or expand capabilities through tool development, as well as the \
+binaries necessary to orchestrate network scanning activities and \
+collect data in a standardized way for futher processing with the \
+Netmeld tool suite.")
+nm_add_deb_description(${desc})
+set(deps "netmeld-core, netmeld-datastore, \
+arping, nmap, macchanger, wireshark-common")
+nm_add_deb_depends(${deps})
+set(deps "context")
+nm_add_deb_suggests(${deps})
