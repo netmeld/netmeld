@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  BuildTestPackage:
+    runs-on: ubuntu-latest
+    container: netmeld/netmeld-dev:latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure
+      run: cmake -S . -B build
+
+    - name: Build Source
+      run: cmake --build build -j 2
+
+    - name: Build Tests
+      run: cmake --build build -j 2 --target Test.netmeld
+
+    - name: Test
+      run: |
+        cd build
+        ctest
+
+    - name: Create Deb Artifacts
+      run: |
+        cd build
+        cpack
+
+    - name: Prepare For Packaging
+      run: |
+        echo ::set-env name=DATETIME::$(date +%Y%m%d.%H%M%S)
+        find . -iname "*.deb" -print | zip --junk-paths artifacts -@
+    
+    - name: Upload All Debs Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: all-debs
+        path: artifacts.zip
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.DATETIME }}
+        release_name: CI build - ${{ env.DATETIME }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      id: upload_release_asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts.zip
+        asset_name: netmeld-${{ env.DATETIME }}-debs.zip
+        asset_content_type: application/zip
