@@ -214,7 +214,7 @@ if (NOT DATE)
   message(WARNING "date not found, versioning will be wrong.")
 endif()
 
-
+# Target related helpers
 function(nm_add_generic target)
   set(full_path "${CMAKE_CURRENT_SOURCE_DIR}/${target}")
   if(EXISTS "${full_path}" AND EXISTS "${full_path}/CMakeLists.txt")
@@ -252,7 +252,7 @@ function(target_as_library target)
   nm_add_generic("${target}")
 endfunction()
 
-# TODO figure out how to add tool/library value
+# Testing related helpers
 function(nm_add_test target)
   set(test_target "${TGT_MODULE_TEST}.${target}")
   set(TGT_TEST "${test_target}" PARENT_SCOPE)
@@ -271,27 +271,100 @@ function(nm_add_test target)
   add_dependencies(${TGT_MODULE_TEST} ${test_target})
 endfunction()
 
+# Install related helpers
+function(nm_install_bin target_file)
+  target_compile_definitions(${target_file}
+    PUBLIC
+      -DPROGRAM_NAME="${target_file}"
+      -DPROGRAM_VERSION="${MODULE_VERSION}.${TGT_VERSION}"
+    )
+  install(
+    TARGETS ${target_file}
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION bin
+  )
+  create_man_from_help(${target_file})
+  nm_install_man(${target_file})
+endfunction()
+function(nm_install_program target_file)
+  install(
+    PROGRAMS ${target_file}
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION bin
+  )
+  create_man_from_help(${target_file})
+  nm_install_man(${target_file})
+endfunction()
+function(nm_install_lib target_file)
+  install(
+    TARGETS ${target_file}
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION lib
+  )
+  set_target_properties(${target_file}
+      PROPERTIES
+        VERSION "${MODULE_VERSION}.${TGT_VERSION}"
+    )
+endfunction()
+function(nm_install_include target_dir target_path)
+  install(
+    DIRECTORY ${target_dir}
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION include/netmeld/${target_path}
+    FILES_MATCHING PATTERN "*.[hi]pp"
+  )
+  add_subdirectory(${target_dir})
+endfunction()
+function(nm_install_man target_file)
+  install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/${target_file}.1.gz"
+    OPTIONAL
+    COMPONENT ${TGT_MODULE}
+    DESTINATION share/man/man1
+  )
+endfunction()
+function(nm_install_conf target_file target_path)
+  install(
+      FILES ${target_file}
+      OPTIONAL
+      COMPONENT ${TGT_MODULE}
+      DESTINATION ${NETMELD_CONF_DIR}/${target_path}
+    )
+endfunction()
+
+# Packaging related helpers
 function(nm_add_deb_generic cpack_target cpack_value)
   set(${cpack_target} ${cpack_value} CACHE INTERNAL ${cpack_target})
 endfunction()
 function(nm_add_deb_description tgt_value)
-  string(TOUPPER ${TGT_MODULE} component)
-  nm_add_deb_generic(CPACK_DEBIAN_${component}_DESCRIPTION ${tgt_value})
+  string(TOUPPER CPACK_DEBIAN_${TGT_MODULE}_DESCRIPTION tgt_var)
+  nm_add_deb_generic(${tgt_var} ${tgt_value})
 endfunction()
 function(nm_add_deb_depends tgt_value)
-  string(TOUPPER ${TGT_MODULE} component)
-  nm_add_deb_generic(CPACK_DEBIAN_${component}_PACKAGE_DEPENDS ${tgt_value})
+  string(TOUPPER CPACK_DEBIAN_${TGT_MODULE}_PACKAGE_DEPENDS tgt_var)
+  nm_add_deb_generic(${tgt_var} ${tgt_value})
 endfunction()
 function(nm_add_deb_recommends tgt_value)
-  string(TOUPPER ${TGT_MODULE} component)
-  nm_add_deb_generic(CPACK_DEBIAN_${component}_PACKAGE_RECOMMENDS ${tgt_value})
+  string(TOUPPER CPACK_DEBIAN_${TGT_MODULE}_PACKAGE_RECOMMENDS tgt_var)
+  nm_add_deb_generic(${tgt_var} ${tgt_value})
 endfunction()
 function(nm_add_deb_suggests tgt_value)
-  string(TOUPPER ${TGT_MODULE} component)
-  nm_add_deb_generic(CPACK_DEBIAN_${component}_PACKAGE_SUGGESTS ${tgt_value})
+  string(TOUPPER CPACK_DEBIAN_${TGT_MODULE}_PACKAGE_SUGGESTS tgt_var)
+  nm_add_deb_generic(${tgt_var} ${tgt_value})
+endfunction()
+function(nm_add_deb_control_data tgt_dir)
+  file(GLOB tgt_files CONFIGURE_DEPENDS
+       "${CMAKE_CURRENT_SOURCE_DIR}/${tgt_dir}/*")
+  string(TOUPPER CPACK_DEBIAN_${TGT_MODULE}_PACKAGE_CONTROL_EXTRA tgt_var)
+  nm_add_deb_generic(${tgt_var} "${tgt_files}")
+  nm_add_deb_generic(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION ON)
 endfunction()
 
-
+# General purpose helpers
 function(get_basename cwd_var result_var)
   execute_process(
       COMMAND
@@ -386,71 +459,6 @@ function(add_tool_suite_man target_comp)
 endfunction()
 
 
-function(nm_install_bin target_file)
-  target_compile_definitions(${target_file}
-    PUBLIC
-      -DPROGRAM_NAME="${target_file}"
-      -DPROGRAM_VERSION="${MODULE_VERSION}.${TGT_VERSION}"
-    )
-  install(
-    TARGETS ${target_file}
-    OPTIONAL
-    COMPONENT ${TGT_MODULE}
-    DESTINATION bin
-  )
-  create_man_from_help(${target_file})
-  nm_install_man(${target_file})
-endfunction()
-function(nm_install_program target_file)
-  install(
-    PROGRAMS ${target_file}
-    OPTIONAL
-    COMPONENT ${TGT_MODULE}
-    DESTINATION bin
-  )
-  create_man_from_help(${target_file})
-  nm_install_man(${target_file})
-endfunction()
-function(nm_install_lib target_file)
-  install(
-    TARGETS ${target_file}
-    OPTIONAL
-    COMPONENT ${TGT_MODULE}
-    DESTINATION lib
-  )
-  set_target_properties(${target_file}
-      PROPERTIES
-        VERSION "${MODULE_VERSION}.${TGT_VERSION}"
-    )
-endfunction()
-function(nm_install_include target_dir target_path)
-  install(
-    DIRECTORY ${target_dir}
-    OPTIONAL
-    COMPONENT ${TGT_MODULE}
-    DESTINATION include/netmeld/${target_path}
-    FILES_MATCHING PATTERN "*.[hi]pp"
-  )
-  add_subdirectory(${target_dir})
-endfunction()
-function(nm_install_man target_file)
-  install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/${target_file}.1.gz"
-    OPTIONAL
-    COMPONENT ${TGT_MODULE}
-    DESTINATION share/man/man1
-  )
-endfunction()
-function(nm_install_conf target_file target_path)
-  install(
-      FILES ${target_file}
-      OPTIONAL
-      COMPONENT ${TGT_MODULE}
-      DESTINATION ${NETMELD_CONF_DIR}/${target_path}
-    )
-endfunction()
-
-
 # ----------------------------------------------------------------------
 # Libraries that many things need to link against for various reasons
 # ----------------------------------------------------------------------
@@ -493,21 +501,22 @@ foreach(ITEM
     datastore
     fetchers
     playbook
+    tool-clw
   )
   target_as_module(${ITEM})
 endforeach()
 
 
-set(TGT_MODULE "fake-module")
-add_custom_target("${TGT_MODULE}" DEPENDS "${TOOL_SUITE}")
-foreach(ITEM
-    clw
-  )
-  set(TGT_MODULE_TEST "Test.${ITEM}")
-  add_custom_target("${TGT_MODULE_TEST}" DEPENDS ${TGT_MODULE})
-  add_dependencies("${TEST_ALL}" ${TGT_MODULE_TEST})
-  target_as_tool(${ITEM})
-endforeach()
+#set(TGT_MODULE "fake-module")
+#add_custom_target("${TGT_MODULE}" DEPENDS "${TOOL_SUITE}")
+#foreach(ITEM
+#    clw
+#  )
+#  set(TGT_MODULE_TEST "Test.${ITEM}")
+#  add_custom_target("${TGT_MODULE_TEST}" DEPENDS ${TGT_MODULE})
+#  add_dependencies("${TEST_ALL}" ${TGT_MODULE_TEST})
+#  target_as_tool(${ITEM})
+#endforeach()
 
 
 # ----------------------------------------------------------------------
@@ -522,25 +531,11 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Netmeld Tool Suite")
 set(CPACK_PACKAGE_VERSION_MAJOR "2")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 string(TIMESTAMP CPACK_PACKAGE_VERSION_PATCH %Y%m%d%H%M%SZ UTC)
-#set(CPACK_PACKAGE_VERSION_PATCH "3")
-#set(CPACK_DEBIAN_PACKAGE_VERSION "4")
-#set(CPACK_DEBIAN_PACKAGE_RELEASE "5")
-#set(CPACK_DEBIAN_PACKAGE_EPOCH "6")
 
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_STRIP_FILES ON)
 
 get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
 list(REMOVE_ITEM CPACK_COMPONENTS_ALL "fake-module" "Unspecified")
-
-
-foreach(ITEM
-    ${CPACK_COMPONENTS_ALL}
-  )
-  SET(TgtFile "${CMAKE_BINARY_DIR}/CPackProperties.${ITEM}.cmake")
-  if(EXISTS "${tgtFile}")
-    include(${tgtFile})
-  endif()
-endforeach()
 
 include(CPack)

@@ -1,6 +1,4 @@
-#!/bin/bash --
-
-# =============================================================================
+#=============================================================================
 # Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
@@ -26,60 +24,22 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-. make_common-functions;
-configure_vars;
+set(MODULE_VERSION "2.0")
 
-# Create package dir
-mkdir -p "${debFolderName}";
-(
-  cd "$debFolderName";
+foreach(ITEM
+    clw
+  )
+  target_as_tool(${ITEM})
+endforeach()
 
-  # Create deb control files
-  (
-    mkdir -m 0755 -p DEBIAN;
-    cd DEBIAN;
 
-    # Create control file
-    (
-     cat > control <<EOF
-Source: ${toolName}
-Section: utilities
-Priority: optional
-Maintainer: Netmeld@sandia.gov
-Standards-Version: 3.9.4
-Package: ${toolName}
-Version: $debVersion
-Architecture: amd64
-Depends: debconf, \
-  netmeld-playbook-core, \
-  arping, nmap, macchanger, wireshark-common
-Description: Netmeld tools
- The playbook tool to be used with the Netmeld tool suite.
-
-EOF
-    );
-
-    # Create templates file
-
-    # Create config script
-  );
-
-  # Do work
-  (build_test_install "${toolName}");
-
-  # Install related scripts
-  (
-    cd DEBIAN;
-
-    # Create preinst script
-
-    # Create postinst script
-
-    # Create prerm script
-
-    # Create postrm script
-  );
-);
-
-# Build the deb package
-dpkg-deb --build $debFolderName;
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package provides the Command Line Wrapper (clw) tool \
+for the Netmeld tool suite.  Included is the binary necessary to \
+capture command execution and system environment data for record and \
+post analysis efforts.")
+nm_add_deb_description(${desc})
+set(deps "netmeld-core, git")
+nm_add_deb_depends(${deps})

@@ -1,6 +1,4 @@
-#!/bin/bash --
-
-# =============================================================================
+#=============================================================================
 # Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
@@ -26,59 +24,13 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-. make_common-functions;
-configure_vars;
+add_executable(${TGT_TOOL}
+    AugmentArgs.cpp
+    ${TGT_TOOL}.cpp
+  )
 
-# Create package dir
-mkdir -p "${debFolderName}";
-(
-  cd "$debFolderName";
+target_link_libraries(${TGT_TOOL}
+    netmeld-core
+  )
 
-  # Create deb control files
-  (
-    mkdir -m 0755 -p DEBIAN;
-    cd DEBIAN;
-
-    # Create control file
-    (
-     cat > control <<EOF
-Source: ${toolName}
-Section: utilities
-Priority: optional
-Maintainer: Netmeld@sandia.gov
-Standards-Version: 3.9.4
-Package: ${toolName}
-Version: $debVersion
-Architecture: amd64
-Depends: debconf, \
-  netmeld-core-bin
-Description: Netmeld tools
- The core grapher tools included with the Netmeld tool suite.
-
-EOF
-    );
-
-    # Create templates file
-
-    # Create config script
-  );
-
-  # Do work
-  (build_test_install "${toolName}");
-
-  # Install related scripts
-  (
-    cd DEBIAN;
-
-    # Create preinst script
-
-    # Create postinst script
-
-    # Create prerm script
-
-    # Create postrm script
-  );
-);
-
-# Build the deb package
-dpkg-deb --build $debFolderName;
+nm_install_bin(${TGT_TOOL})

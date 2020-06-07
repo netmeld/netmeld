@@ -1,0 +1,48 @@
+#!/bin/sh
+
+if [ "$1" = "configure" ]; then
+  ldconfig;
+
+  # Source debconf library
+  . /usr/share/debconf/confmodule;
+
+  # Configure default DB, based on answer
+  db_get nmds/config_db;
+  (
+    if [ "false" = "$RET" ]; then
+      return 0;
+    fi;
+
+    # Ensure DB starts on system start
+    /usr/bin/systemctl enable postgresql;
+    /usr/bin/systemctl restart postgresql;
+
+    # Needed for if no systemctl available
+    hardStart=false;
+    if [ ! -z "$(pg_isready | grep 'no response')" ]; then
+      /etc/init.d/postgresql start;
+      hardStart=true;
+    fi;
+
+    # Add users to DB
+    for user in root netmeld; do
+      su -c "/usr/bin/dropuser --if-exists ${user} >/dev/null 2>&1;" \\
+        -s /bin/sh postgres;
+      su -c "/usr/bin/createuser -s ${user} >/dev/null 2>&1;" \\
+        -s /bin/sh postgres;
+    done;
+
+    # Add DB
+    dbName="site";
+    su -c "/usr/bin/dropdb --if-exists ${dbName} > /dev/null 2>&1;" \\
+      -s /bin/sh postgres;
+    su -c "/usr/bin/createdb ${dbName} > /dev/null 2>&1;" \\
+      -s /bin/sh postgres;
+
+    yes | /usr/local/bin/nmdb-initialize;
+
+    if [ true = "$hardStart" ]; then
+      /etc/init.d/postgresql stop;
+    fi;
+  ) > /dev/null 2>&1;
+fi;

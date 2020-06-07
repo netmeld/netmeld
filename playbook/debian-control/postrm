@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ]; then
+  ldconfig;
+fi;
+
+if [ "$1" = "purge" -a -e /usr/share/debconf/confmodule ]; then
+  ldconfig;
+
+  # Source debconf library
+  . /usr/share/debconf/confmodule;
+
+  # Remove changes
+  db_purge;
+fi;

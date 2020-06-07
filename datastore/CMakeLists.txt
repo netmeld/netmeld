@@ -23,6 +23,7 @@
 # =============================================================================
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
+
 set(MODULE_VERSION "2.0")
 
 target_as_library(common)
@@ -59,3 +60,4 @@ libc6 (>= 2.4), libgcc-s1 (>= 3.0), libpqxx-6.4 (>= 6.4), libstdc++6 (>= 9)")
 nm_add_deb_depends(${deps})
 set(deps "postgresql-contrib (>= 11), postgresql-autodoc (>= 11)")
 nm_add_deb_suggests(${deps})
+nm_add_deb_control_data(debian-control)
