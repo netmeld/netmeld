@@ -48,6 +48,7 @@ namespace netmeld::datalake::tools {
         // std::string            programName;
         // std::string            version;
         // ProgramOptions         opts;
+      std::string dataLakePath;
     public: // Variables should rarely appear at this scope
 
 

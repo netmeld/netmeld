@@ -28,6 +28,7 @@
 #include <regex>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/utils/LoggerSingleton.hpp>
 
 #include <netmeld/datalake/objects/DataEntry.hpp>
 
@@ -106,7 +107,7 @@ namespace netmeld::datalake::objects {
   void
   DataEntry::setDataPath(const std::string& _dataPath)
   {
-    dataPath = _dataPath;
+    dataPath = sfs::absolute(_dataPath);
   }
 
   void

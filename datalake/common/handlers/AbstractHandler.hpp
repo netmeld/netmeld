@@ -51,8 +51,9 @@ namespace netmeld::datalake::handlers {
     // Constructors
     // =========================================================================
     private: // Constructors which should be hidden from API users
-    protected: // Constructors part of subclass API
       AbstractHandler();
+    protected: // Constructors part of subclass API
+      AbstractHandler(const std::string&);
     public: // Constructors part of public API
 
     // =========================================================================
