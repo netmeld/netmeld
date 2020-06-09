@@ -30,7 +30,7 @@
 
 #include "RaiiCommon.hpp"
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   std::string
   toSysctlName(const std::string& _ifaceName)
@@ -42,4 +42,4 @@ namespace netmeld { namespace playbook {
 
     return result;
   }
-}}
+}

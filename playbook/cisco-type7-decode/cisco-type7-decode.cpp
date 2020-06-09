@@ -26,19 +26,18 @@
 
 #include <regex>
 
-#include <netmeld/core/parsers/ParserHelper.hpp>
-#include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 
 
-namespace nmct = netmeld::core::tools;
-namespace nmcp = netmeld::core::parsers;
-namespace nmcu = netmeld::core::utils;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdp = netmeld::datastore::parsers;
 
 typedef std::vector<uint8_t>  Result;
 
 
 class Parser :
-  public qi::grammar<nmcp::IstreamIter, Result()>
+  public qi::grammar<nmdp::IstreamIter, Result()>
 {
   public:
     Parser() : Parser::base_type(start)
@@ -48,7 +47,7 @@ class Parser :
         ;
     }
     
-    qi::rule<nmcp::IstreamIter, Result()>
+    qi::rule<nmdp::IstreamIter, Result()>
       start;
 
     qi::uint_parser<uint8_t, 10, 2, 2> decByte;
@@ -56,7 +55,7 @@ class Parser :
 };
 
 
-class Tool : public nmct::AbstractTool
+class Tool : public nmdt::AbstractDatastoreTool
 {
   // ===========================================================================
   // Variables
@@ -66,11 +65,6 @@ class Tool : public nmct::AbstractTool
       {"dsfd;kfoA,.iyewrkldJKDHSUBsgvca69834ncxv9873254k;fg87"};
 
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
   public: // Variables should rarely appear at this scope
 
 
@@ -80,7 +74,7 @@ class Tool : public nmct::AbstractTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractTool
+    Tool() : nmdt::AbstractDatastoreTool
       (
        "Cisco type 7 decoder",  // unused unless printHelp() is overridden
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -93,7 +87,7 @@ class Tool : public nmct::AbstractTool
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractTool
+    // Overriden from AbstractDatastoreTool
     void
     addToolBaseOptions() override // Pre-subclass operations
     {
@@ -110,24 +104,18 @@ class Tool : public nmct::AbstractTool
       opts.removeAdvancedOption("tool-run-metadata");
     }
 
-    // Overriden from AbstractTool
+    // Overriden from AbstractDatastoreTool
     void
     modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printHelp() const;
-      // virtual void printVersion() const;
-      // virtual int  runTool();
-
     int
     runTool() override
     {
       std::ostringstream oss;
       std::string encPass {opts.getValue("password")};
 
-      Result r {nmcp::fromString<Parser,Result>(encPass)};
+      Result r {nmdp::fromString<Parser,Result>(encPass)};
 
       std::vector<uint8_t>::const_iterator
         i = r.cbegin(),
@@ -154,8 +142,6 @@ class Tool : public nmct::AbstractTool
     }
 
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 

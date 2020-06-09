@@ -24,27 +24,10 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_NAME)
-get_git_timestamp(${TOOL_NAME}.cpp CODE_VERSION)
-
-add_definitions(
-    -DPROGRAM_NAME="${TOOL_NAME}"
-    -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
-  )
-
-add_custom_target(${TOOL_NAME}
+add_custom_target(${TGT_TOOL}
   COMMAND
     cp -f
-      ${CMAKE_CURRENT_SOURCE_DIR}/${TOOL_NAME}
-      ${CMAKE_CURRENT_BINARY_DIR}/${TOOL_NAME}
+      ${CMAKE_CURRENT_SOURCE_DIR}/${TGT_TOOL}
+      ${CMAKE_CURRENT_BINARY_DIR}/${TGT_TOOL}
   )
-
-create_man_from_help(${TOOL_NAME})
-
-install(
-  PROGRAMS ${TOOL_NAME}
-  OPTIONAL
-  COMPONENT ${PROJECT_NAME}
-  DESTINATION bin
-  )
-install_man(${TOOL_NAME} ${PROJECT_NAME})
+nm_install_program(${TGT_TOOL})

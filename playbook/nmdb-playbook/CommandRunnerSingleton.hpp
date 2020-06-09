@@ -33,7 +33,7 @@
 #include <tuple>
 #include <vector>
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   class CommandRunnerSingleton {
     // =========================================================================
@@ -81,5 +81,5 @@ namespace netmeld { namespace playbook {
 
       void operator=(CommandRunnerSingleton const&) = delete;
   };
-}}
+}
 #endif // COMMAND_RUNNER_SINGLETON_HPP

@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+# Source debconf library
+. /usr/share/debconf/confmodule;
+
+# Ask question(s)
+db_input medium nmds/config_db || true;
+
+# Show interface
+db_go || true;

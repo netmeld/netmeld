@@ -29,7 +29,7 @@
 
 #include "RaiiCommon.hpp"
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   class RaiiIpLink
   {
@@ -50,6 +50,6 @@ namespace netmeld { namespace playbook {
       virtual ~RaiiIpLink();
       explicit RaiiIpLink(std::string const&);
   };
-}}
+}
 
 #endif // RAII_IP_LINK_HPP

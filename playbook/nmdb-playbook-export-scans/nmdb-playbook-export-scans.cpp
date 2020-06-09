@@ -27,18 +27,18 @@
 #include <ostream>
 #include <regex>
 
-#include <netmeld/core/tools/AbstractExportTool.hpp>
+#include <netmeld/datastore/tools/AbstractExportTool.hpp>
 
 #include "WriterContext.hpp"
 
-namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdu = netmeld::datastore::utils;
 
 
 // =============================================================================
 // Export tool definition
 // =============================================================================
-class Tool : public nmct::AbstractExportTool
+class Tool : public nmdt::AbstractExportTool
 {
   // ===========================================================================
   // Variables
@@ -59,7 +59,7 @@ class Tool : public nmct::AbstractExportTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractExportTool
+    Tool() : nmdt::AbstractExportTool
       ("predefined ConTeXt formatted scan results",
        PROGRAM_NAME,
        PROGRAM_VERSION)
@@ -656,15 +656,7 @@ class Tool : public nmct::AbstractExportTool
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printVersion() const;
-    // Inherited from AbstractExportTool at this scope
-      // virtual void printHelp() const;
-
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 

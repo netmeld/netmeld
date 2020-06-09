@@ -24,15 +24,7 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} TOOL_NAME)
-get_git_timestamp(${TOOL_NAME}.cpp CODE_VERSION)
-
-add_definitions(
-    -DPROGRAM_NAME="${TOOL_NAME}"
-    -DPROGRAM_VERSION="${TOOL_VERSION}.${CODE_VERSION}"
-  )
-
-add_executable(${TOOL_NAME}
+add_executable(${TGT_TOOL}
     CommandRunnerSingleton.cpp
     RaiiCommon.cpp
     RaiiIpAddr.cpp
@@ -40,35 +32,18 @@ add_executable(${TOOL_NAME}
     RaiiIpRoute.cpp
     RaiiMacAddr.cpp
     RaiiVlan.cpp
-    ${TOOL_NAME}.cpp
+    ${TGT_TOOL}.cpp
   )
 
-target_link_libraries(${TOOL_NAME}
-    netmeld-core
-    netmeld-playbook-core
-    ${Boost_LIBRARIES}
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+    netmeld-playbook
     pthread
-    pqxx
   )
 
-create_man_from_help(${TOOL_NAME})
-
-install_bin(${TOOL_NAME} ${PROJECT_NAME})
-install_man(${TOOL_NAME} ${PROJECT_NAME})
-
-install(
-    FILES nmdb-playbook.conf
-    OPTIONAL
-    COMPONENT ${PROJECT_NAME}
-    DESTINATION ${NETMELD_CONF_DIR}
-  )
-
-install(
-    FILES sysctl.d/40-nmdb-playbook.conf
-    OPTIONAL
-    COMPONENT ${PROJECT_NAME}
-    DESTINATION ${NETMELD_CONF_DIR}/sysctl.d/
-  )
+nm_install_bin(${TGT_TOOL})
+nm_install_conf(nmdb-playbook.conf "")
+nm_install_conf("sysctl.d/40-nmdb-playbook.conf" "sysctl.d")
 
 install(
     CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \

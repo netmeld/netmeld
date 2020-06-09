@@ -1,0 +1,29 @@
+#!/bin/sh
+
+if [ "$1" = "configure" ]; then
+  ldconfig;
+
+  # Source debconf library
+  . /usr/share/debconf/confmodule;
+
+  # Configure default DB, based on answer
+  db_get nmpb/config_db;
+  (
+    if [ "false" = "$RET" ]; then
+      return 0;
+    fi;
+
+    # Needed for if no systemctl available
+    hardStart=false;
+    if [ ! -z "$(pg_isready | grep 'no response')" ]; then
+      /etc/init.d/postgresql start;
+      hardStart=true;
+    fi;
+
+    yes | /usr/local/bin/nmdb-initialize;
+
+    if [ true = "$hardStart" ]; then
+      /etc/init.d/postgresql stop;
+    fi;
+  ) > /dev/null 2>&1;
+fi;

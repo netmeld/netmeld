@@ -1,0 +1,7 @@
+Template: nmds/config_db
+Type: boolean
+Default: true
+Description: Configure the default superuser and database with Netmeld schemas?
+  Creates the default users, root and netmeld, in the PSQL database as a
+  superuser and installs the Netmeld schemas to the default, site, database.
+  Note: This will remove any existing default information.

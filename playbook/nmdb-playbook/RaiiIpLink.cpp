@@ -27,7 +27,7 @@
 #include "RaiiIpLink.hpp"
 
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   RaiiIpLink::RaiiIpLink(std::string const& _ifaceName) :
     ifaceName(_ifaceName)
@@ -75,4 +75,4 @@ namespace netmeld { namespace playbook {
       cmdRunner.scheduleSleep(500);
     }
   }
-}}
+}

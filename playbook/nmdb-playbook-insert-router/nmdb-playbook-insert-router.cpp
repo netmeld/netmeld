@@ -24,31 +24,21 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/objects/IpAddress.hpp>
-#include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
+#include <netmeld/playbook/utils/QueriesPlaybook.hpp>
 
-#include <netmeld/playbook/core/utils/QueriesPlaybook.hpp>
+namespace nmdo  = netmeld::datastore::objects;
+namespace nmdt  = netmeld::datastore::tools;
+namespace nmpbu = netmeld::playbook::utils;
 
-namespace nmco = netmeld::core::objects;
-namespace nmct = netmeld::core::tools;
-namespace nmcu = netmeld::core::utils;
-namespace nmpbcu = netmeld::playbook::core::utils;
-
-
-class Tool : public nmct::AbstractTool
+class Tool : public nmdt::AbstractDatastoreTool
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
-
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // nmco::ProgramOptions   opts;
-
   public: // Variables should rarely appear at this scope
 
 
@@ -56,11 +46,9 @@ class Tool : public nmct::AbstractTool
   // Constructors
   // ===========================================================================
   private: // Constructors should rarely appear at this scope
-
   protected: // Constructors intended for internal/subclass API
-
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractTool
+    Tool() : nmdt::AbstractDatastoreTool
       (
        "playbook tool", // unused unless printHelp() is overridden
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -73,7 +61,6 @@ class Tool : public nmct::AbstractTool
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractTool
     void
     addToolBaseOptions() override // Pre-subclass operations
     {
@@ -87,7 +74,6 @@ class Tool : public nmct::AbstractTool
       opts.removeAdvancedOption("tool-run-metadata");
     }
 
-    // Overriden from AbstractTool
     void
     modifyToolOptions() override {}
 
@@ -97,9 +83,9 @@ class Tool : public nmct::AbstractTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      nmpbcu::dbPreparePlaybook(db);
+      nmpbu::dbPreparePlaybook(db);
 
-      nmco::IpAddress ipAddr {opts.getValue("ip-addr")};
+      nmdo::IpAddress ipAddr {opts.getValue("ip-addr")};
 
       if (ipAddr.isValid()) {
         pqxx::work t{db};
@@ -109,22 +95,15 @@ class Tool : public nmct::AbstractTool
 
         t.commit();
       } else {
-        LOG_WARN << "Invalid router IP address provided, nothing done" << std::endl;
+        LOG_WARN << "Invalid router IP address provided, nothing done"
+                 << std::endl;
       }
 
       return nmcu::Exit::SUCCESS;
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printHelp() const;
-      // virtual void printVersion() const;
-      // virtual void runTool();
-
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 

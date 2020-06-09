@@ -24,56 +24,28 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-get_tool_name(${CMAKE_CURRENT_SOURCE_DIR} PROJECT_NAME_SUFFIX)
-set(PROJECT_NAME ${TOOL_SUITE}-${PROJECT_NAME_SUFFIX})
-add_custom_target(${PROJECT_NAME})
+set(MODULE_VERSION "2.0")
 
+target_as_library(common)
 
-###############################################################################
-# Test hooks
-###############################################################################
-add_custom_target(Test.${PROJECT_NAME}
-    DEPENDS ${PROJECT_NAME}
-  )
-function(create_test TEST_NAME)
-  add_executable(Test.${TEST_NAME}
-      EXCLUDE_FROM_ALL
-      ${TEST_NAME}.test.cpp
-    )
-
-  target_link_libraries(Test.${TEST_NAME}
-      netmeld-core
-      netmeld-datalake-core
-      ${Boost_LIBRARIES}
-    )
-
-  add_test(${TEST_NAME}
-      Test.${TEST_NAME}
-    )
-
-  set_tests_properties(${TEST_NAME}
-      PROPERTIES LABELS "Test.${PROJECT_NAME}"
-    )
-
-  add_dependencies(Test.${PROJECT_NAME}
-      Test.${TEST_NAME}
-    )
-endfunction()
-
-
-###############################################################################
-# Add binary data
-###############################################################################
-foreach(TOOL_NAME
+foreach(ITEM
     nmdl-initialize
     nmdl-insert
     nmdl-list
     nmdl-remove
   )
+  target_as_tool(${ITEM})
+endforeach()
 
-  add_subdirectory(${TOOL_NAME})
 
-  add_dependencies(${PROJECT_NAME}
-      ${TOOL_NAME}
-    )
-endforeach(TOOL_NAME)
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package provides the Datalake module for the Netmeld \
+tool suite.  Included are the library and headers necessary to run \
+or expand capabilities through tool development, as well as the \
+binaries necessary to instantiate and manage a data lake compatible \
+with the Netmeld tool suite.")
+nm_add_deb_description(${desc})
+set(deps "netmeld-core, git")
+nm_add_deb_depends(${deps})

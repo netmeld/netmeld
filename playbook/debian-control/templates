@@ -1,0 +1,6 @@
+Template: nmpb/config_db
+Type: boolean
+Default: true
+Description: Update the Netmeld database with the playbook schemas?
+ Installs the Netmeld Playbook schemas to the default, site, database.
+ Note: This will remove any existing default information.

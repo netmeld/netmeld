@@ -24,36 +24,25 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/tools/AbstractTool.hpp>
-#include <netmeld/core/objects/IpAddress.hpp>
+#include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/core/objects/Uuid.hpp>
 
-#include <netmeld/playbook/core/utils/QueriesPlaybook.hpp>
+#include <netmeld/playbook/utils/QueriesPlaybook.hpp>
 
-namespace nmct = netmeld::core::tools;
-namespace nmco = netmeld::core::objects;
+namespace nmdt = netmeld::datastore::tools;
+namespace nmdo = netmeld::datastore::objects;
 namespace nmcu = netmeld::core::utils;
-namespace nmpbcu = netmeld::playbook::core::utils;
+namespace nmpbu = netmeld::playbook::utils;
 
 
-class Tool : public nmct::AbstractTool
+class Tool : public nmdt::AbstractDatastoreTool
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
-
   protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
-      // nmcu::Logger           error{3, std::cerr, ""};
-      // nmcu::Logger           warn {4, std::cerr, ""};
-      // nmcu::Logger           info {5, std::cout, ""};
-      // nmcu::Logger           debug{6, std::cout, "~"};
-
   public: // Variables should rarely appear at this scope
 
 
@@ -61,11 +50,9 @@ class Tool : public nmct::AbstractTool
   // Constructors
   // ===========================================================================
   private: // Constructors should rarely appear at this scope
-
   protected: // Constructors intended for internal/subclass API
-
   public: // Constructors should generally be public
-    Tool() : nmct::AbstractTool
+    Tool() : nmdt::AbstractDatastoreTool
       (
        "Playbook tool",  // unused unless printHelp() is overridden
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -78,7 +65,6 @@ class Tool : public nmct::AbstractTool
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractTool
     void
     addToolBaseOptions() override // Pre-subclass operations
     {
@@ -143,7 +129,6 @@ class Tool : public nmct::AbstractTool
           );
     }
 
-    // Overriden from AbstractTool
     void
     modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
@@ -158,7 +143,7 @@ class Tool : public nmct::AbstractTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      nmpbcu::dbPreparePlaybook(db);
+      nmpbu::dbPreparePlaybook(db);
       pqxx::work t{db};
 
       nmco::Uuid const pbSourceId;
@@ -171,7 +156,7 @@ class Tool : public nmct::AbstractTool
 
       std::string const macAddr = opts.getValue("mac-addr");
 
-      nmco::IpAddress ipAddr   {opts.getValue("ip-addr")};
+      nmdo::IpAddress ipAddr   {opts.getValue("ip-addr")};
       if (!ipAddr.isValid()) {
         LOG_ERROR << "Aborting: Supplied IP address is invalid for usage"
               << std::endl;
@@ -180,7 +165,7 @@ class Tool : public nmct::AbstractTool
 
       std::string ptpRtrIpString = opts.getValue("ptp-rtr-ip-addr");
       if (!ptpRtrIpString.empty()) {
-        nmco::IpAddress ptpRtrIp {ptpRtrIpString};
+        nmdo::IpAddress ptpRtrIp {ptpRtrIpString};
         if (!ptpRtrIp.isValid()) {
           LOG_ERROR << "Aborting: Supplied point-to-point router IP"
                 << " is invalid for usage"
@@ -221,14 +206,7 @@ class Tool : public nmct::AbstractTool
     }
 
   protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printHelp() const;
-      // virtual void printVersion() const;
-
   public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
 };
 
 

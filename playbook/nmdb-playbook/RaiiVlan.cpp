@@ -27,7 +27,7 @@
 #include "RaiiVlan.hpp"
 
 
-namespace netmeld { namespace playbook {
+namespace netmeld::playbook {
 
   RaiiVlan::RaiiVlan(std::string const& _ifaceName, uint16_t const _vlan) :
     ifaceName(_ifaceName),
@@ -97,4 +97,4 @@ namespace netmeld { namespace playbook {
     }
     return oss.str();
   }
-}}
+}
