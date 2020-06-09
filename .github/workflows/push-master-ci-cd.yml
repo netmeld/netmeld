@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  BuildTestPackage:
+  BuildTest:
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
     
@@ -30,7 +30,22 @@ jobs:
       run: |
         cd build
         cpack
-
+        
+    - name: Upload Deb Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: netmeld-debs
+        path: build/*.deb
+        
+  Package:
+    needs: [BuildTest]
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v2
+      
     - name: Prepare For Packaging
       run: |
         echo ::set-env name=DATETIME::$(date +%Y%m%d.%H%M%S)
