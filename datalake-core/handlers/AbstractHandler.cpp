@@ -35,12 +35,9 @@ namespace netmeld::datalake::handlers {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  AbstractHandler::AbstractHandler()
-  {
-    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
-
-    dataLakePath = {nmfm.getSavePath()/"datalake"};
-  }
+  AbstractHandler::AbstractHandler(const std::string& _path) :
+    dataLakePath(_path)
+  {}
 
 
   // ===========================================================================

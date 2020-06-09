@@ -39,7 +39,8 @@ namespace netmeld::datalake::handlers {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  Git::Git()
+  Git::Git(const std::string& _path) :
+    AbstractHandler(_path)
   {}
 
   // ===========================================================================
@@ -140,8 +141,10 @@ namespace netmeld::datalake::handlers {
 
     // Copy file to store, properly named
     const sfs::path dstPath {devicePath/_de.getSaveName()};
-    const std::string dstRelPath {sfs::relative(dstPath).string()};
-    sfs::copy(_de.getDataPath(), dstRelPath, sfs::copy_options::overwrite_existing);
+    const sfs::path srcPath {_de.getDataPath()};
+    const std::string dstRelPath {sfs::relative(dstPath)};
+    const std::string srcRelPath {sfs::relative(srcPath)};
+    sfs::copy(srcRelPath, dstRelPath, sfs::copy_options::overwrite_existing);
 
     // Store data
     std::ostringstream oss;

@@ -60,6 +60,14 @@ namespace netmeld::datalake::tools {
           po::value<std::string>()->required()->default_value("git"),
           "Data lake type.")
         );
+
+    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+    dataLakePath = {nmfm.getSavePath()/"datalake"};
+    opts.addRequiredOption("lake-path", std::make_tuple(
+          "lake-path",
+          po::value<std::string>()->required()->default_value(dataLakePath),
+          "Data lake target path.")
+        );
   }
 
   void
@@ -92,9 +100,11 @@ namespace netmeld::datalake::tools {
   AbstractDatalakeTool::getDatalakeHandler()
   {
     const auto& lakeType {opts.getValue("lake-type")};
+    dataLakePath = {opts.getValue("lake-path")};
+
 
     if ("git" == lakeType) {
-      return std::make_unique<nmdlh::Git>();
+      return std::make_unique<nmdlh::Git>(dataLakePath);
     } else {
       LOG_ERROR << "Unsupported data lake type: " << lakeType << '\n';
       std::exit(nmcu::Exit::FAILURE);

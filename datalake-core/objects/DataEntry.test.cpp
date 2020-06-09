@@ -28,6 +28,8 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
+#include <filesystem>
+
 #include <netmeld/datalake/objects/DataEntry.hpp>
 
 namespace nmdlo = netmeld::datalake::objects;
@@ -59,7 +61,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string path {"../maybe_some/non-existant/path"};
     tde.setDataPath(path);
 
-    BOOST_CHECK_EQUAL(path, tde.getDataPath());
+    BOOST_CHECK_EQUAL(std::filesystem::absolute(path), tde.getDataPath());
     BOOST_CHECK_EQUAL("path", tde.getSaveName());
 
     BOOST_CHECK(tde.getDeviceId().empty());
@@ -129,7 +131,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string name {"something"};
     tde.setNewName(name);
 
-    BOOST_CHECK_EQUAL(path, tde.getDataPath());
+    BOOST_CHECK_EQUAL(std::filesystem::absolute(path), tde.getDataPath());
     BOOST_CHECK_EQUAL(name, tde.getNewName());
     BOOST_CHECK_EQUAL(name, tde.getSaveName());
 
