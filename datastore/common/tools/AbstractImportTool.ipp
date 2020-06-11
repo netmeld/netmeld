@@ -136,8 +136,10 @@ namespace netmeld::datastore::tools {
   void
   AbstractImportTool<P,R>::addModuleOptions()
   {
-//    AbstractImportTool::addModuleOptions();
+    AbstractDatastoreTool::addModuleOptions();
+
     addRequiredDeviceId();
+
     opts.addRequiredOption("data-path", std::make_tuple(
           "data-path",
           po::value<std::string>()->required(),

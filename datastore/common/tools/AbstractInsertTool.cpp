@@ -97,6 +97,8 @@ namespace netmeld::datastore::tools {
   void
   AbstractInsertTool::addModuleOptions()
   {
+    AbstractDatastoreTool::addModuleOptions();
+
     opts.addAdvancedOption("tool-run-id", std::make_tuple(
           "tool-run-id",
           po::value<std::string>(),

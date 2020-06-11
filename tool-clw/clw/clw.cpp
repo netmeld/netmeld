@@ -92,10 +92,9 @@ class Tool : public nmct::AbstractTool
     addToolOptions() override
     {
       // Remove all standard options, no short opts wanted
-      opts.removeRequiredOption("db-name");
-      opts.removeOptionalOption("zzzzzzzzzzhelp");
-      opts.removeOptionalOption("zzzzzzzzzzversion");
-      opts.removeAdvancedOption("zzzzzzzzzzverbosity");
+      opts.removeOptionalOption("zzzhelp");
+      opts.removeOptionalOption("zzzversion");
+      opts.removeAdvancedOption("zzzverbosity");
 
       // Re-add select standard options, no short opts
       opts.addOptionalOption("zzzzzzzzzzhelp", std::make_tuple(

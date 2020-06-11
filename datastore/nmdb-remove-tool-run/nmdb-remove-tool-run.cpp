@@ -26,17 +26,18 @@
 
 #include <pqxx/pqxx>
 
-#include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 
-namespace nmct = netmeld::core::tools;
+namespace nmdt = netmeld::datastore::tools;
 namespace nmcu = netmeld::core::utils;
 
 
-class Tool : public nmct::AbstractTool
+class Tool : public nmdt::AbstractDatastoreTool
 {
   public:
-    Tool() : nmct::AbstractTool
-      ("Remove tool run and all accosiated data", PROGRAM_NAME, PROGRAM_VERSION)
+    Tool() : nmdt::AbstractDatastoreTool
+      ("Remove tool run and all accosiated data",
+       PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
     void
