@@ -62,13 +62,13 @@ namespace netmeld::datastore::tools {
     private:
       // Performs default inserts into the DB
       void generalInserts(pqxx::transaction_base&);
-      void addToolBaseOptions() override;
 
     protected:
+      void addModuleOptions() override;
+
       const nmco::Uuid getToolRunId() const;
       const std::string getDeviceId() const;
 
-      virtual void modifyToolOptions() override;
       virtual void printHelp() const override;
       virtual int  runTool() override;
       virtual void setToolRunId();

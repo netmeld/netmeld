@@ -134,14 +134,39 @@ namespace netmeld::datastore::tools {
 
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::addToolBaseOptions()
+  AbstractImportTool<P,R>::addModuleOptions()
   {
-    opts.addImportOptions();
+//    AbstractImportTool::addModuleOptions();
+    addRequiredDeviceId();
+    opts.addRequiredOption("data-path", std::make_tuple(
+          "data-path",
+          po::value<std::string>()->required(),
+          "Data to parse. Either --data-path param or implicit last argument.")
+        );
+
+    opts.addOptionalOption("pipe", std::make_tuple(
+          "pipe",
+          NULL_SEMANTIC,
+          "Read input from STDIN; Save a copy to DATA_PATH for parsing.")
+        );
+
+    opts.addAdvancedOption("tool-run-id", std::make_tuple(
+          "tool-run-id",
+          po::value<std::string>(),
+          "UUID for this run of the tool.")
+        );
+    opts.addAdvancedOption("tool-run-metadata", std::make_tuple(
+          "tool-run-metadata",
+          NULL_SEMANTIC,
+          "Insert data into tool_run tables instead of device tables.")
+        );
+
+    opts.addPositionalOption("data-path", -1);
   }
 
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::modifyToolOptions()
+  AbstractImportTool<P,R>::addToolOptions()
   {}
 
 

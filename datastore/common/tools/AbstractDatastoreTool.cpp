@@ -47,11 +47,46 @@ namespace netmeld::datastore::tools {
   // ===========================================================================
   // Tool Entry Points (execution order)
   // ===========================================================================
+  void
+  AbstractDatastoreTool::addModuleOptions()
+  {
+    opts.addRequiredOption("db-name", std::make_tuple(
+          "db-name",
+          po::value<std::string>()->required()->default_value(DEFAULT_DB_NAME),
+          "Database to connect to.")
+        );
+    opts.addAdvancedOption("db-args", std::make_tuple(
+          "db-args",
+          po::value<std::string>()->default_value(""),
+          "Additional database connection args."
+          " Space separated `key=value` libpqxx connection string parameters.")
+        );
+  }
 
 
   // ===========================================================================
   // General Functions (alphabetical)
   // ===========================================================================
+  void
+  AbstractDatastoreTool::addRequiredDeviceId()
+  {
+    opts.addRequiredOption("device-id", std::make_tuple(
+          "device-id",
+          po::value<std::string>()->required(),
+          "Name of device.")
+        );
+    opts.addOptionalOption("device-type", std::make_tuple(
+          "device-type",
+          po::value<std::string>(),
+          "Type of device, determines graph icon.")
+        );
+    opts.addOptionalOption("device-color", std::make_tuple(
+          "device-color",
+          po::value<std::string>(),
+          "Graph color of device.")
+        );
+  }
+
   std::string const
   AbstractDatastoreTool::getDbName() const
   {

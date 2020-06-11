@@ -150,7 +150,7 @@ class Tool : public nmdt::AbstractDatastoreTool
   // ===========================================================================
   private: // Methods part of internal API
     void
-    addToolBaseOptions() override // Pre-subclass operations
+    addToolOptions() override
     {
       opts.removeOptionalOption("pipe");
       opts.removeAdvancedOption("tool-run-metadata");
@@ -286,9 +286,6 @@ class Tool : public nmdt::AbstractDatastoreTool
           "")
         );
       }
-
-    void
-    modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
     int
     runTool() override

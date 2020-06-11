@@ -81,7 +81,7 @@ class Tool : public nmdt::AbstractExportTool
     {}
 
   private:
-    void modifyToolOptions() override
+    void addToolOptions() override
     {
       opts.addOptionalOption("tcp", std::make_tuple(
             "tcp,t",

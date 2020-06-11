@@ -81,7 +81,7 @@ class Tool : public nmdt::AbstractGraphTool
   // ===========================================================================
   private: // Methods part of internal API
     // Overriden from AbstractGraphTool
-    void modifyToolOptions() override
+    void addToolOptions() override
     {
       opts.addRequiredOption("device-id", std::make_tuple(
             "device-id",

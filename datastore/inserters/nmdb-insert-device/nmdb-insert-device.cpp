@@ -39,9 +39,9 @@ class Tool : public nmdt::AbstractInsertTool
     {}
 
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
-      opts.addRequiredDeviceId();
+      addRequiredDeviceId();
 
       opts.addOptionalOption("vm-host-device-id", std::make_tuple(
             "vm-host-device-id",

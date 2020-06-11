@@ -50,7 +50,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     {}
 
     void
-    addToolBaseOptions() override
+    addToolOptions() override
     {
       opts.addRequiredOption("schema-dir", std::make_tuple(
             "schema-dir",

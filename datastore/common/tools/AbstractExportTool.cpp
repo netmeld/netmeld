@@ -53,16 +53,6 @@ namespace netmeld::datastore::tools {
   }
 
   void
-  AbstractExportTool::addToolBaseOptions()
-  {
-    opts.addExportOptions();
-  }
-
-  void
-  AbstractExportTool::modifyToolOptions()
-  {}
-
-  void
   AbstractExportTool::printHelp() const
   {
     LOG_NOTICE << "Generate " << helpBlurb

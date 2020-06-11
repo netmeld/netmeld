@@ -40,7 +40,7 @@ class Tool : public nmdt::AbstractInsertTool
     {}
 
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       //opts.addRequiredDeviceId();
       opts.addOptionalOption("device-id", std::make_tuple(

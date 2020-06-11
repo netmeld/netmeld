@@ -89,7 +89,7 @@ class Tool : public nmdt::AbstractDatastoreTool
   private: // Methods part of internal API
     // Overriden from AbstractDatastoreTool
     void
-    addToolBaseOptions() override // Pre-subclass operations
+    addToolOptions() override
     {
       opts.addRequiredOption("password", std::make_tuple(
             "password",
@@ -103,10 +103,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       opts.removeOptionalOption("pipe");
       opts.removeAdvancedOption("tool-run-metadata");
     }
-
-    // Overriden from AbstractDatastoreTool
-    void
-    modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
   protected: // Methods part of subclass API
     int

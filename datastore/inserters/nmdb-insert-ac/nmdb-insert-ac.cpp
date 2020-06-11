@@ -68,7 +68,7 @@ class Tool : public nmdt::AbstractInsertTool
   // ===========================================================================
   private: // Methods part of internal API
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       opts.addRequiredOption("device-id", std::make_tuple(
             "device-id",

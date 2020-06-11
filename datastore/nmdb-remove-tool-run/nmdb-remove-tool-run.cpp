@@ -40,7 +40,7 @@ class Tool : public nmct::AbstractTool
     {}
 
     void
-    addToolBaseOptions() override
+    addToolOptions() override
     {
       opts.addRequiredOption("tool-run-id", std::make_tuple(
           "tool-run-id",

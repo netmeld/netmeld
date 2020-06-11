@@ -97,19 +97,22 @@ namespace netmeld::core::tools {
     // =========================================================================
     // Methods
     // =========================================================================
+    private:
+      void addCoreOptions();
+
     protected:
-      /* The following two functions work in tandem.  Both allow modification of
-         a tool's program options.
-         - addToolBaseOptions() is for a subclass of AbstractTool which is going
-            to be subclassed itself (1st teir)
-         - modifyToolOptions() is for a subclass of the subclass of AbstractTool
-            (2nd teir)
-         The addToolBaseOptions() is called before modifyToolOptions().  Scope
+      /* The following two functions work in tandem.  Both allow modification
+         of a tool's program options.
+         - addModuleOptions() is for a subclass of AbstractTool which is going
+            to be subclassed itself (1st tier)
+         - addToolOptions() is for a subclass of the subclass of AbstractTool
+            (2nd tier)
+         The addModuleOptions() is called before addToolOptions().  Scope
          appropriately to intended usage of tool as they are early entry points
          and allow potential modification of overall tool behaviour.
       */
-      virtual void addToolBaseOptions();
-      virtual void modifyToolOptions();
+      virtual void addModuleOptions();
+      virtual void addToolOptions();
 
       virtual void printHelp() const;
       virtual void printVersion() const;

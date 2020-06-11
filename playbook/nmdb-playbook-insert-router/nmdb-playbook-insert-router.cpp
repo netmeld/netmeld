@@ -62,7 +62,7 @@ class Tool : public nmdt::AbstractDatastoreTool
   // ===========================================================================
   private: // Methods part of internal API
     void
-    addToolBaseOptions() override // Pre-subclass operations
+    addToolOptions() override
     {
       opts.addRequiredOption("ip-addr", std::make_tuple(
             "ip-addr",
@@ -73,9 +73,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       opts.removeOptionalOption("pipe");
       opts.removeAdvancedOption("tool-run-metadata");
     }
-
-    void
-    modifyToolOptions() override {}
 
     int
     runTool() override

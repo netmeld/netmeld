@@ -67,7 +67,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Methods part of internal API
     // Overriden from AbstractImportTool
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       this->opts.removeRequiredOption("device-id");
       this->opts.removeAdvancedOption("tool-run-metadata");

@@ -67,7 +67,7 @@ class Tool : public nmdlt::AbstractDatalakeTool
   private: // Methods part of internal API
     // Overriden from AbstractTool
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       opts.addRequiredOption("device-id", std::make_tuple(
             "device-id",

@@ -81,10 +81,9 @@ namespace netmeld::datalake::tools {
       // Inherited from nmct::AbstractTool, don't override as primary tool entry point
       // int start(int, char**) noexcept;
     private:
-      void addToolBaseOptions() override;
-
     protected:
-      virtual void modifyToolOptions() override;
+      void addModuleOptions() override;
+
       virtual void printHelp() const override;
       // Tool specific behavior entry point
       virtual int  runTool() override;

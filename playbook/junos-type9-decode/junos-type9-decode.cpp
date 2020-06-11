@@ -130,7 +130,7 @@ class Tool : public nmct::AbstractTool
   private: // Methods part of internal API
     // Overriden from AbstractTool
     void
-    addToolBaseOptions() override // Pre-subclass operations
+    addToolOptions() override
     {
       opts.removeRequiredOption("db-name");
       opts.removeOptionalOption("pipe");
@@ -149,10 +149,6 @@ class Tool : public nmct::AbstractTool
             "Generate lookup table instead of decode")
           );
     }
-
-    // Overriden from AbstractTool
-    void
-    modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
     void
     genLookup()

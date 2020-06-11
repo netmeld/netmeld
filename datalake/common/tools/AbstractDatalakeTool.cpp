@@ -50,7 +50,7 @@ namespace netmeld::datalake::tools {
   // Tool Entry Points (execution order)
   // ===========================================================================
   void
-  AbstractDatalakeTool::addToolBaseOptions()
+  AbstractDatalakeTool::addModuleOptions()
   {
     opts.removeRequiredOption("db-name");
     opts.removeAdvancedOption("db-args");
@@ -69,10 +69,6 @@ namespace netmeld::datalake::tools {
           "Data lake target path.")
         );
   }
-
-  void
-  AbstractDatalakeTool::modifyToolOptions()
-  {}
 
   void
   AbstractDatalakeTool::printHelp() const
