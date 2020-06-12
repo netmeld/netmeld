@@ -72,9 +72,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     addToolOptions() override
     {
       this->opts.removeRequiredOption("device-id");
+      this->opts.addOptionalOption("device-id", std::make_tuple(
+            "device-id",
+            po::value<std::string>(),
+            "(Not used) Name of device.")
+          );
 
       this->opts.removeOptionalOption("device-type");
-      this->opts.removeOptionalOption("device-color");
     }
 
     void
@@ -153,15 +157,17 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           for (auto& wrapMap : std::get<1>(helper).interfaces) {
             nmdo::DeviceInformation devInfo;
             devInfo.setDeviceId(std::get<1>(wrapMap).deviceId);
+            if (this->opts.exists("device-color")) {
+              devInfo.setDeviceColor(this->opts.getValue("device-color"));
+            }
             auto& result = std::get<1>(wrapMap).interface;
 
-            // Because no deviceId was specified on the command line, you must
-            // save the raw_device here before an Interface can be saved.
+            // save the raw_device here so an Interface can be saved.
             if (devInfo.isValid()) {
               devInfo.save(t, toolRunId);
               const auto& deviceId {devInfo.getDeviceId()};
+              // check validity to prevent verbose warnings
               if (result.getMacAddress().isValid()) {
-                // Don't try saving localhost addrs to prevent too many warnings
                 result.save(t, toolRunId, deviceId);
               }
               LOG_DEBUG << result.toDebugString() << std::endl;

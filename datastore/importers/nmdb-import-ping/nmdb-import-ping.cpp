@@ -127,7 +127,7 @@ class Tool : public nmdt::AbstractImportTool<P, R>
     addToolOptions() override
     {
       this->opts.removeRequiredOption("device-id");
-      this->opts.addOptionalOption("a-device-id", std::make_tuple(
+      this->opts.addOptionalOption("device-id", std::make_tuple(
           "device-id",
           po::value<std::string>(),
           "Name of device.")

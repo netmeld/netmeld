@@ -102,6 +102,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
 
+      LOG_DEBUG << "Iterating over results\n";
       for (auto& result : this->tResults) {
         result.setDeviceId(deviceId);
 

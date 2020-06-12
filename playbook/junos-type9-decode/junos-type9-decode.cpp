@@ -132,10 +132,6 @@ class Tool : public nmct::AbstractTool
     void
     addToolOptions() override
     {
-      opts.removeRequiredOption("db-name");
-      opts.removeOptionalOption("pipe");
-      opts.removeAdvancedOption("tool-run-metadata");
-
       opts.addRequiredOption("password", std::make_tuple(
             "password",
             po::value<std::string>()->required(),//->default_value(std::string()),
