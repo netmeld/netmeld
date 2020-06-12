@@ -83,7 +83,7 @@ namespace netmeld::datastore::tools {
     opts.addOptionalOption("device-color", std::make_tuple(
           "device-color",
           po::value<std::string>(),
-          "Graph color of device.")
+          "Graph color of device(s).")
         );
   }
 
