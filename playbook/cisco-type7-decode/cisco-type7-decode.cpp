@@ -26,11 +26,11 @@
 
 #include <regex>
 
+#include <netmeld/core/tools/AbstractTool.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 
 
-namespace nmdt = netmeld::datastore::tools;
+namespace nmct = netmeld::core::tools;
 namespace nmdp = netmeld::datastore::parsers;
 
 typedef std::vector<uint8_t>  Result;
@@ -55,7 +55,7 @@ class Parser :
 };
 
 
-class Tool : public nmdt::AbstractDatastoreTool
+class Tool : public nmct::AbstractTool
 {
   // ===========================================================================
   // Variables
@@ -74,7 +74,7 @@ class Tool : public nmdt::AbstractDatastoreTool
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractDatastoreTool
+    Tool() : nmct::AbstractTool
       (
        "Cisco type 7 decoder",  // unused unless printHelp() is overridden
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
@@ -87,7 +87,7 @@ class Tool : public nmdt::AbstractDatastoreTool
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractDatastoreTool
+    // Overriden from AbstractTool
     void
     addToolOptions() override
     {
@@ -98,10 +98,6 @@ class Tool : public nmdt::AbstractDatastoreTool
           );
 
       opts.addPositionalOption("password", -1);
-
-      opts.removeRequiredOption("db-name");
-      opts.removeOptionalOption("pipe");
-      opts.removeAdvancedOption("tool-run-metadata");
     }
 
   protected: // Methods part of subclass API

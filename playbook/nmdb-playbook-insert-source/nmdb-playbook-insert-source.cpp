@@ -68,9 +68,6 @@ class Tool : public nmdt::AbstractDatastoreTool
     void
     addToolOptions() override
     {
-      opts.removeOptionalOption("pipe");
-      opts.removeAdvancedOption("tool-run-metadata");
-
       // TODO 28JUN18 Does this hack work with folks?
       opts.addRequiredOption("1", std::make_tuple(
             "[intra-network|inter-network]",

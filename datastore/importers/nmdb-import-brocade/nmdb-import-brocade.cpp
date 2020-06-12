@@ -67,13 +67,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Methods part of internal API
     // Overriden from AbstractImportTool
     void
-    addToolOptions() override
-    {
-      this->opts.removeAdvancedOption("tool-run-metadata");
-    }
-
-    // Overriden from AbstractImportTool
-    void
     specificInserts(pqxx::transaction_base& t) override
     {
       const auto& toolRunId {this->getToolRunId()};

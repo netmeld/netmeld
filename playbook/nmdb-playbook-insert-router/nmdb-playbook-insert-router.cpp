@@ -69,9 +69,6 @@ class Tool : public nmdt::AbstractDatastoreTool
             po::value<std::string>()->required(),
             "IP address of router to use")
           );
-
-      opts.removeOptionalOption("pipe");
-      opts.removeAdvancedOption("tool-run-metadata");
     }
 
     int

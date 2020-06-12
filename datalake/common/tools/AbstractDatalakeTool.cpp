@@ -52,9 +52,6 @@ namespace netmeld::datalake::tools {
   void
   AbstractDatalakeTool::addModuleOptions()
   {
-    opts.removeRequiredOption("db-name");
-    opts.removeAdvancedOption("db-args");
-
     opts.addRequiredOption("lake-type", std::make_tuple(
           "lake-type",
           po::value<std::string>()->required()->default_value("git"),
