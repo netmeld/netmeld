@@ -55,9 +55,9 @@ namespace netmeld::core::tools {
   AbstractTool::start(int argc, char** argv) noexcept
   {
     try {
-      opts.addBaseOptions();
-      addToolBaseOptions();
-      modifyToolOptions();
+      addCoreOptions();
+      addModuleOptions();
+      addToolOptions();
       switch(opts.validateOptions(argc, argv)) {
         case nmcu::ProgramOptions::HELP :
           printHelp();
@@ -84,11 +84,35 @@ namespace netmeld::core::tools {
   }
 
   void
-  AbstractTool::addToolBaseOptions()
+  AbstractTool::addCoreOptions()
+  {
+    // Add on prefix to attempt to push to bottom
+    opts.addOptionalOption("zzzhelp", std::make_tuple(
+          "help,h",
+          NULL_SEMANTIC,
+          "Show this help message, then exit.")
+        );
+    opts.addOptionalOption("zzzversion", std::make_tuple(
+          "version,V",
+          NULL_SEMANTIC,
+          "Show version information, then exit.")
+        );
+
+    opts.addAdvancedOption("zzzverbosity", std::make_tuple(
+          "verbosity,v",
+          po::value<nmcu::Severity>()->default_value(
+            nmcu::LoggerSingleton::getInstance().getLevel()),
+          "Alter verbosity level of tool.  See `man syslog` for levels."
+          )
+        );
+  }
+
+  void
+  AbstractTool::addModuleOptions()
   {}
 
   void
-  AbstractTool::modifyToolOptions()
+  AbstractTool::addToolOptions()
   {}
 
   void

@@ -89,13 +89,12 @@ class Tool : public nmct::AbstractTool
   private: // Methods part of internal API
     // Overriden from AbstractTool
     void
-    addToolBaseOptions() override // Pre-subclass operations
+    addToolOptions() override
     {
       // Remove all standard options, no short opts wanted
-      opts.removeRequiredOption("db-name");
-      opts.removeOptionalOption("zzzzzzzzzzhelp");
-      opts.removeOptionalOption("zzzzzzzzzzversion");
-      opts.removeAdvancedOption("zzzzzzzzzzverbosity");
+      opts.removeOptionalOption("zzzhelp");
+      opts.removeOptionalOption("zzzversion");
+      opts.removeAdvancedOption("zzzverbosity");
 
       // Re-add select standard options, no short opts
       opts.addOptionalOption("zzzzzzzzzzhelp", std::make_tuple(
@@ -124,10 +123,6 @@ class Tool : public nmct::AbstractTool
           );
       opts.addPositionalOption("command", -1);
     }
-
-    // Overriden from AbstractTool
-    void
-    modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
     template<typename Data>
     void

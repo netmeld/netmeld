@@ -177,7 +177,7 @@ class Tool : public nmdt::AbstractGraphTool
        PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
-    void modifyToolOptions() override
+    void addToolOptions() override
     {
       opts.addRequiredOption("layer", std::make_tuple(
             "layer,L",

@@ -72,7 +72,7 @@ class Tool : public nmdt::AbstractExportTool
   private: // Methods part of internal API
     // Overriden from AbstractExportTool
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       opts.addOptionalOption("intra-network", std::make_tuple(
             "intra-network",

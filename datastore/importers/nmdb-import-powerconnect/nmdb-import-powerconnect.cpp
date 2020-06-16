@@ -67,29 +67,33 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Methods part of internal API
     // Overriden from AbstractImportTool
     void
-    modifyToolOptions() override
-    {
-      this->opts.removeRequiredOption("device-id");
-    }
-
-    // Overriden from AbstractImportTool
-    void
     specificInserts(pqxx::transaction_base& t) override
     {
       const auto& toolRunId {this->getToolRunId()};
+      const auto& defaultDeviceId  {this->getDeviceId()};
 
+      bool first {true};
+
+      LOG_DEBUG << "Iterating over results\n";
       for (auto results : this->tResults) {
-        LOG_DEBUG << "Iterating over results\n";
+        auto deviceId {defaultDeviceId};
 
-        LOG_DEBUG << "Iterating over device information\n";
+        LOG_DEBUG << "Adding device information\n";
         auto& devInfo {results.devInfo};
+        if (!first && !devInfo.getDeviceId().empty()) {
+          deviceId = defaultDeviceId + ":" + devInfo.getDeviceId();
+        }
+        devInfo.setDeviceId(deviceId);
+        if (this->opts.exists("device-type") &&
+            devInfo.getDeviceType().empty())
+        {
+          devInfo.setDeviceType(this->opts.getValue("device-type"));
+        }
         if (this->opts.exists("device-color")) {
           devInfo.setDeviceColor(this->opts.getValue("device-color"));
         }
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
-
-        const auto& deviceId {devInfo.getDeviceId()};
 
         LOG_DEBUG << "Iterating over ifaces\n";
         for (auto& [name, result] : results.ifaces) {

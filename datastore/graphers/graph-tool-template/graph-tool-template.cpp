@@ -94,7 +94,7 @@ class Tool : public nmdt::AbstractGraphTool
   private: // Methods part of internal API
     // Overriden from AbstractGraphTool
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       opts.addOptionalOption("tool-option", std::make_tuple(
             "tool-option",

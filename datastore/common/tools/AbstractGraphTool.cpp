@@ -52,16 +52,6 @@ namespace netmeld::datastore::tools {
   }
 
   void
-  AbstractGraphTool::addToolBaseOptions()
-  {
-    opts.addGraphOptions();
-  }
-
-  void
-  AbstractGraphTool::modifyToolOptions()
-  {}
-
-  void
   AbstractGraphTool::printHelp() const
   {
     LOG_NOTICE << "Create dot formatted graph of " << helpBlurb

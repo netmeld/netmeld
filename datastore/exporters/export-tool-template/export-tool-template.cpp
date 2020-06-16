@@ -94,7 +94,7 @@ class Tool : public nmdt::AbstractExportTool
   private: // Methods part of internal API
     // Overriden from AbstractExportTool
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       // This method probably needs customization
 

@@ -66,11 +66,8 @@ class Tool : public nmdt::AbstractDatastoreTool
   // ===========================================================================
   private: // Methods part of internal API
     void
-    addToolBaseOptions() override // Pre-subclass operations
+    addToolOptions() override
     {
-      opts.removeOptionalOption("pipe");
-      opts.removeAdvancedOption("tool-run-metadata");
-
       // TODO 28JUN18 Does this hack work with folks?
       opts.addRequiredOption("1", std::make_tuple(
             "[intra-network|inter-network]",
@@ -128,9 +125,6 @@ class Tool : public nmdt::AbstractDatastoreTool
             "MAC address to assign to network interface")
           );
     }
-
-    void
-    modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
     int
     runTool() override

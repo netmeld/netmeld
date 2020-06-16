@@ -65,7 +65,7 @@ class Tool : public nmdlt::AbstractDatalakeTool
   private: // Methods part of internal API
     // Overriden from AbstractTool
     void
-    modifyToolOptions() override
+    addToolOptions() override
     { }
 
   protected: // Methods part of subclass API

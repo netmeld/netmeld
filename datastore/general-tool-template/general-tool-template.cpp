@@ -90,7 +90,12 @@ class Tool : public nmct::AbstractTool
   private: // Methods part of internal API
     // Overriden from AbstractTool
     void
-    addToolBaseOptions() override // Pre-subclass operations
+    addModuleOptions() override
+    {} // Private means no intention of allowing a subclass
+
+    // Overriden from AbstractTool
+    void
+    addToolOptions() override
     {
       opts.addRequiredOption("tool-option", std::make_tuple(
             "tool-option",
@@ -101,10 +106,6 @@ class Tool : public nmct::AbstractTool
       opts.removeOptionalOption("pipe");
       opts.removeAdvancedOption("tool-run-metadata");
     }
-
-    // Overriden from AbstractTool
-    void
-    modifyToolOptions() override { } // Private means no intention of allowing a subclass
 
   protected: // Methods part of subclass API
     // Inherited from AbstractTool at this scope

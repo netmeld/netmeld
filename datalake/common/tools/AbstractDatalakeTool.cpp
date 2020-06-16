@@ -50,11 +50,8 @@ namespace netmeld::datalake::tools {
   // Tool Entry Points (execution order)
   // ===========================================================================
   void
-  AbstractDatalakeTool::addToolBaseOptions()
+  AbstractDatalakeTool::addModuleOptions()
   {
-    opts.removeRequiredOption("db-name");
-    opts.removeAdvancedOption("db-args");
-
     opts.addRequiredOption("lake-type", std::make_tuple(
           "lake-type",
           po::value<std::string>()->required()->default_value("git"),
@@ -69,10 +66,6 @@ namespace netmeld::datalake::tools {
           "Data lake target path.")
         );
   }
-
-  void
-  AbstractDatalakeTool::modifyToolOptions()
-  {}
 
   void
   AbstractDatalakeTool::printHelp() const

@@ -97,26 +97,6 @@ namespace netmeld::core::utils {
   }
 
   void
-  ProgramOptions::addRequiredDeviceId()
-  {
-    addRequiredOption("device-id", std::make_tuple(
-          "device-id",
-          po::value<std::string>()->required(),
-          "Name of device.")
-        );
-    addOptionalOption("device-type", std::make_tuple(
-          "device-type",
-          po::value<std::string>(),
-          "Type of device, determines graph icon.")
-        );
-    addOptionalOption("device-color", std::make_tuple(
-          "device-color",
-          po::value<std::string>(),
-          "Graph color of device.")
-        );
-  }
-
-  void
   ProgramOptions::addOptionalOption(const std::string& key,
                                     const OptionsValue& value)
   {
@@ -349,89 +329,5 @@ namespace netmeld::core::utils {
     }
 
     return NONE;
-  }
-
-  void
-  ProgramOptions::addBaseOptions()
-  {
-    addRequiredOption("db-name", std::make_tuple(
-          "db-name",
-          po::value<std::string>()->required()->default_value(DEFAULT_DB_NAME),
-          "Database to connect to.")
-        );
-    addAdvancedOption("db-args", std::make_tuple(
-          "db-args",
-          po::value<std::string>()->default_value(""),
-          "Additional database connection args."
-          " Space separated `key=value` libpqxx connection string parameters.")
-        );
-
-    // Add on prefix to attempt to push to bottom
-    addOptionalOption("zzzzzzzzzzhelp", std::make_tuple(
-          "help,h",
-          NULL_SEMANTIC,
-          "Show this help message, then exit.")
-        );
-    addOptionalOption("zzzzzzzzzzversion", std::make_tuple(
-          "version,V",
-          NULL_SEMANTIC,
-          "Show version information, then exit.")
-        );
-
-    addAdvancedOption("zzzzzzzzzzverbosity", std::make_tuple(
-          "verbosity,v",
-          po::value<Severity>()->default_value(
-            LoggerSingleton::getInstance().getLevel()),
-          "Alter verbosity level of tool.  See `man syslog` for levels."
-          )
-        );
-  }
-
-  void
-  ProgramOptions::addExportOptions()
-  {}
-
-  void
-  ProgramOptions::addGraphOptions()
-  {}
-
-  void
-  ProgramOptions::addImportOptions()
-  {
-    addRequiredDeviceId();
-    addRequiredOption("data-path", std::make_tuple(
-          "data-path",
-          po::value<std::string>()->required(),
-          "Data to parse. Either --data-path param or implicit last argument.")
-        );
-
-    addOptionalOption("pipe", std::make_tuple(
-          "pipe",
-          NULL_SEMANTIC,
-          "Read input from STDIN; Save a copy to DATA_PATH for parsing.")
-        );
-
-    addAdvancedOption("tool-run-id", std::make_tuple(
-          "tool-run-id",
-          po::value<std::string>(),
-          "UUID for this run of the tool.")
-        );
-    addAdvancedOption("tool-run-metadata", std::make_tuple(
-          "tool-run-metadata",
-          NULL_SEMANTIC,
-          "Insert data into tool_run tables instead of device tables.")
-        );
-
-    addPositionalOption("data-path", -1);
-  }
-
-  void
-  ProgramOptions::addInsertOptions()
-  {
-    addAdvancedOption("tool-run-id", std::make_tuple(
-          "tool-run-id",
-          po::value<std::string>(),
-          "UUID for this run of the tool.")
-        );
   }
 }

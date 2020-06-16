@@ -56,10 +56,7 @@ namespace netmeld::datastore::tools {
     // Methods
     // =========================================================================
     private:
-      void addToolBaseOptions() override;
-
     protected:
-      virtual void modifyToolOptions() override;
       virtual void printHelp() const override;
       // Tool specific behavior entry point
       virtual int  runTool() override;

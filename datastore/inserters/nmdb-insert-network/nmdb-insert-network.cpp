@@ -40,7 +40,7 @@ class Tool : public nmdt::AbstractInsertTool
     {}
 
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       opts.addOptionalOption("vlan", std::make_tuple(
           "vlan",

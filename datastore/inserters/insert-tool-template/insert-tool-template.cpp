@@ -94,7 +94,7 @@ class Tool : public nmdt::AbstractInsertTool
   private: // Methods part of internal API
     // Overriden from AbstractInsertTool
     void
-    modifyToolOptions() override
+    addToolOptions() override
     {
       // This method is typically heavily customized/populated
 

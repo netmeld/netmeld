@@ -89,11 +89,6 @@ namespace netmeld::core::utils {
 
     public:
       void createCustomOptionsMap(const std::string&);
-      void addBaseOptions();
-      void addExportOptions();
-      void addGraphOptions();
-      void addImportOptions();
-      void addInsertOptions();
 
       void addOption(const std::string&, const std::string&,
                      const OptionsValue&);
@@ -102,8 +97,6 @@ namespace netmeld::core::utils {
       void addAdvancedOption(const std::string&, const OptionsValue&);
       void addConfFileOption(const std::string&, const OptionsValue&);
       void addPositionalOption(const std::string&, int loc);
-
-      void addRequiredDeviceId();
 
       void removeOption(const std::string&, const std::string&);
       void removeRequiredOption(const std::string&);

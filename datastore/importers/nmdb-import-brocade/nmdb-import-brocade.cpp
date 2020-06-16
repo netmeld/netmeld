@@ -67,43 +67,46 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Methods part of internal API
     // Overriden from AbstractImportTool
     void
-    modifyToolOptions() override
-    {
-      this->opts.removeRequiredOption("device-id");
-      this->opts.removeAdvancedOption("tool-run-metadata");
-    }
-
-    // Overriden from AbstractImportTool
-    void
     specificInserts(pqxx::transaction_base& t) override
     {
       const auto& toolRunId {this->getToolRunId()};
-      auto& results         {this->tResults};
+      const auto& defaultDeviceId  {this->getDeviceId()};
 
-      for (auto& objects : results) {
-        auto& devInfo {objects.devInfo};
+      bool first {true};
+
+      LOG_DEBUG << "Iterating over results\n";
+      for (auto& results : this->tResults) {
+        auto deviceId {defaultDeviceId};
+
+        LOG_DEBUG << "Adding device information\n";
+        auto& devInfo {results.devInfo};
+        if (!first && !devInfo.getDeviceId().empty()) {
+          deviceId = defaultDeviceId + ":" + devInfo.getDeviceId();
+        }
+        devInfo.setDeviceId(deviceId);
+        if (this->opts.exists("device-type") &&
+            devInfo.getDeviceType().empty())
+        {
+          devInfo.setDeviceType(this->opts.getValue("device-type"));
+        }
         if (this->opts.exists("device-color")) {
           devInfo.setDeviceColor(this->opts.getValue("device-color"));
-        }
-        if (this->opts.exists("device-type")) {
-          devInfo.setDeviceType(this->opts.getValue("device-type"));
         }
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
 
-        const auto& deviceId {devInfo.getDeviceId()};
         // Process the rest of the results
-        for (auto& result : objects.ifaces) {
+        for (auto& result : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result << '\n';
         }
 
-        for (auto& result : objects.routes) {
+        for (auto& result : results.routes) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result << '\n';
         }
 
-        for (auto& result : objects.services) {
+        for (auto& result : results.services) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result << '\n';
         }

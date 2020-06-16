@@ -61,6 +61,10 @@ namespace netmeld::datastore::tools {
     // =========================================================================
     private:
     protected:
+      void addModuleOptions() override;
+
+      void addRequiredDeviceId();
+
       std::string const getDbName() const;
 
     public:

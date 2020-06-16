@@ -95,14 +95,16 @@ namespace netmeld::datastore::tools {
   {}
 
   void
-  AbstractInsertTool::addToolBaseOptions()
+  AbstractInsertTool::addModuleOptions()
   {
-    opts.addInsertOptions();
-  }
+    AbstractDatastoreTool::addModuleOptions();
 
-  void
-  AbstractInsertTool::modifyToolOptions()
-  {}
+    opts.addAdvancedOption("tool-run-id", std::make_tuple(
+          "tool-run-id",
+          po::value<std::string>(),
+          "UUID for this run of the tool.")
+        );
+  }
 
 
   // ===========================================================================
