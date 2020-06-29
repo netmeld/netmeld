@@ -36,52 +36,60 @@ Parser::Parser() : Parser::base_type(start)
   start =
     *(!link >> -qi::omit[+token] >> qi::eol) >>
     *link >>
-    garbage
+    ignoredLine
     ;
 
   link =
+    qi::attr("") [tgtData = {}] >>
     -qi::ascii::char_("GRO*+") >>
-    qi::ushort_ // vlan
-      [pnx::bind(&Data::addVlan, &qi::_val, qi::_1)] >>
-    macAddr
-      [pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1)] >>
-    type >>
-    token // interface
-      [pnx::bind(&Data::setName, &qi::_val, qi::_1)] >>
-    qi::omit[*token] >> qi::eol
-      [pnx::bind(&Data::setPartial, &qi::_val, true),
-       pnx::bind(&Data::setState, &qi::_val, true)
+    vlanValue >> macAddrValue >>
+    ((typeValue >> portValue) | (portValue >> typeValue)) >>
+    qi::omit[*token] > qi::eol
+      [pnx::bind(&Data::setPartial, &tgtData, true),
+       pnx::bind(&Data::setState, &tgtData, true)
       ]
     ;
 
-  type =
+  vlanValue =
+    qi::ushort_ [pnx::bind(&Data::addVlan, &tgtData, qi::_1)]
+    ;
+
+  macAddrValue =
+    macAddr [pnx::bind(&Data::addReachableMac, &tgtData, qi::_1)]
+    ;
+
+  typeValue =
     +qi::ascii::char_("a-zA-Z") >>
-    qi::omit[+qi::blank >>
-    -(
-    // age >> secure >> ntfy
+    +qi::blank >>
+    -( // age >> secure >> ntfy
        (+qi::ascii::char_("-0-9") >> +qi::blank >>
         qi::ascii::char_("TFC~") >> +qi::blank >>
         qi::ascii::char_("TFC~"))
-    // learn >> age
+       // learn >> age
      | ((qi::lit("Yes") | qi::lit("No")) >> +qi::blank >>
         +qi::ascii::char_("-0-9"))
-    // protocol | pv
+       // protocol | pv
      | (+qi::ascii::char_("a-z,"))
-    )]
+    )
+    ;
+
+  portValue = // interface
+    token [pnx::bind(&Data::setName, &tgtData, qi::_1)]
     ;
 
   token =
     +qi::ascii::graph
     ;
 
-  garbage =
-    *(qi::omit[qi::char_] - qi::eol) % qi::eol
+  ignoredLine =
+    +(qi::char_ - qi::eol) > qi::eol
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      (link) (type)
-      //(token) (garbage)
+      (link)
+      (vlanValue)(macAddrValue)(typeValue)(portValue)
+      //(token) (ignoredLine)
       );
 }
 

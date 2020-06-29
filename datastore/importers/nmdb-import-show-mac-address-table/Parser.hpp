@@ -37,7 +37,6 @@ namespace nmdp = netmeld::datastore::parsers;
 // Data containers
 // =============================================================================
 typedef nmdo::InterfaceNetwork  Data;
-//struct Data { };
 typedef std::vector<Data>    Result;
 
 
@@ -59,14 +58,20 @@ class Parser :
       link;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      type,
       token;
 
     qi::rule<nmdp::IstreamIter>
-      garbage;
+      vlanValue,
+      macAddrValue,
+      typeValue,
+      portValue,
+      ignoredLine;
 
     nmdp::ParserMacAddress
       macAddr;
+
+    // Supporting data structures
+    Data tgtData;
 
 
   // ===========================================================================
