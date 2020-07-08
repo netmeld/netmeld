@@ -54,8 +54,7 @@ namespace netmeld::playbook {
   }
 
   void
-  CommandRunnerSingleton::disableCommands(
-      std::set<uint32_t> const& _disabledCommands)
+  CommandRunnerSingleton::disableCommands(std::set<size_t> const& _disabledCommands)
   {
     disabledCommands = _disabledCommands;
   }
@@ -67,7 +66,7 @@ namespace netmeld::playbook {
   }
 
   bool
-  CommandRunnerSingleton::isEnabled(uint32_t const commandId) const
+  CommandRunnerSingleton::isEnabled(size_t const commandId) const
   {
     if (!disabledCommands.empty() && disabledCommands.count(commandId)) {
       return false;
@@ -117,7 +116,7 @@ namespace netmeld::playbook {
   CommandRunnerSingleton::scheduleSleep(uint64_t const _ms)
   {
     if (isEnabled(++commandIdNumber)) {
-      double seconds {_ms/1000.0};
+      double seconds {static_cast<double>(_ms)/1000.0};
       LOG_INFO << commandIdNumber << ": " << "sleep " << seconds << "s"
                << std::endl;
       if (execute) {

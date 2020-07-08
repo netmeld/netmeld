@@ -202,12 +202,12 @@ class PacketHelper {
     // UDP
     uint16_t getSrcPort(const UdpHeader*);
     uint16_t getDstPort(const UdpHeader*);
-    uint16_t getLength(const UdpHeader*);
+    size_t getLength(const UdpHeader*);
 
     // TCP
     uint16_t getSrcPort(const TcpHeader*);
     uint16_t getDstPort(const TcpHeader*);
-    uint8_t getLength(const TcpHeader*);
+    size_t getLength(const TcpHeader*);
 
     // DNS
     bool isResponse(const DnsHeader*);
