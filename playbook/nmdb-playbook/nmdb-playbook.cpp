@@ -99,6 +99,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     std::string dbConnectString;
 
     bool execute {false};
+    bool headless {false};
 
     int                 family {4};
     std::string         familyStr;
@@ -195,6 +196,11 @@ class Tool : public nmdt::AbstractDatastoreTool
             "execute",
             NULL_SEMANTIC,
             "Execute playbook (default: only display playbook)")
+          );
+      opts.addOptionalOption("headless", std::make_tuple(
+            "headless",
+            NULL_SEMANTIC,
+            "Execute playbook in headless mode (default: run in GUI xterm)")
           );
       opts.addOptionalOption("no-prompt", std::make_tuple(
             "no-prompt",
@@ -345,6 +351,10 @@ class Tool : public nmdt::AbstractDatastoreTool
       // Execute, or not
       execute = opts.exists("execute");
       cmdRunner.setExecute(execute);
+
+      // Headless, or not
+      headless = opts.exists("headless");
+      cmdRunner.setHeadless(headless);
 
       // Create directory for meta-data about and results from this tool run
       sfs::path const saveDir {nmfm.getSavePath()/"playbook"};
@@ -779,7 +789,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           cmdRunner.systemExec(scriptPath.string());
         } else if (!opts.exists("no-prompt")) {
           // behave normally
-          cmdRunner.threadXtermExec(commands);
+          cmdRunner.threadExec(commands);
         } else if (opts.exists("no-prompt")) {
           // skip prompt
           // NOTE 15NOV18 Making this skip the number may require reworking
@@ -845,7 +855,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         for (const auto& cmd : commands) {
           std::vector<std::tuple<std::string, std::string>> cmds;
           cmds.emplace_back(cmd);
-          cmdRunner.threadXtermExec(cmds);
+          cmdRunner.threadExec(cmds);
         }
         commands.clear();
       }
@@ -888,7 +898,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl
                  << "## Host Discovery and IP Protocol Scans" << std::endl;
-        cmdRunner.threadXtermExec(commands);
+        cmdRunner.threadExec(commands);
         commands.clear();
       }
     }
@@ -929,7 +939,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl
                  << "## Port Scans (plus basic info gathering)" << std::endl;
-        cmdRunner.threadXtermExec(commands);
+        cmdRunner.threadExec(commands);
         commands.clear();
       }
 
@@ -950,7 +960,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl
                  << "## Service Scans (most scripts enabled)" << std::endl;
-        cmdRunner.threadXtermExec(commands);
+        cmdRunner.threadExec(commands);
         commands.clear();
       }
 
@@ -1012,7 +1022,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl
                  << "## Host Discovery and IP Protocol Scans" << std::endl;
-        cmdRunner.threadXtermExec(commands);
+        cmdRunner.threadExec(commands);
         commands.clear();
       }
     }
@@ -1053,7 +1063,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl
                  << "## Port Scans (plus basic info gathering)" << std::endl;
-        cmdRunner.threadXtermExec(commands);
+        cmdRunner.threadExec(commands);
         commands.clear();
       }
     }

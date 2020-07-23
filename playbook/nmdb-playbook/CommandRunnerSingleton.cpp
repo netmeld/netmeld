@@ -66,6 +66,12 @@ namespace netmeld::playbook {
     execute = state;
   }
 
+  void
+  CommandRunnerSingleton::setHeadless(bool const state)
+  {
+    headless = state;
+  }
+
   bool
   CommandRunnerSingleton::isEnabled(uint32_t const commandId) const
   {
@@ -90,7 +96,7 @@ namespace netmeld::playbook {
   }
 
   void
-  CommandRunnerSingleton::threadXtermExec(
+  CommandRunnerSingleton::threadExec(
       std::vector<std::tuple<std::string, std::string>> const& commands)
   {
     std::vector<std::thread> threadVector;
@@ -101,9 +107,15 @@ namespace netmeld::playbook {
         LOG_INFO << commandIdNumber << ": " << command << std::endl;
 
         if (execute) {
-          threadVector.emplace_back(
-              &CommandRunnerSingleton::xtermThreadActions, this,
-                commandTitle, command);
+          if(headless) {
+            threadVector.emplace_back(
+                &CommandRunnerSingleton::tmuxThreadActions, this,
+                  commandTitle, command);
+          } else {
+            threadVector.emplace_back(
+                &CommandRunnerSingleton::xtermThreadActions, this,
+                  commandTitle, command);
+          }
         }
       }
     }
@@ -141,11 +153,31 @@ namespace netmeld::playbook {
     };
 
     nmcu::forkExecWait(xtermArgs);
+  }
 
-    // TODO 21NOV18 Need to add non-X version, tmux maybe? Sample code:
-    //   tmux new-session -d -n test1;
-    //   tmux new-window -n test2 'htop';
-    //   tmux set-window-option -t test2 window-style "bg=black,fg=red";
+  void
+  CommandRunnerSingleton::tmuxThreadActions(std::string const& title,
+      std::string const& command) const
+  {
+    std::vector<std::string> tmuxCommandArgs = {
+      "tmux",
+      "new-session", "-d",
+      "-s", title + "-session",
+      "-n", title + "-window",
+      command
+    };
+
+    nmcu::forkExecWait(tmuxCommandArgs);
+
+
+    std::vector<std::string> tmuxStyleArgs = {
+      "tmux",
+      "set-window",
+      "-t", title + "-window",
+      "window-style", "bg=black,fg=red"
+    };
+
+    nmcu::forkExecWait(tmuxStyleArgs);
   }
 
   // ===========================================================================
