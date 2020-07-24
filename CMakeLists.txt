@@ -63,6 +63,7 @@ set(NETMELD_CONF_DIR "etc/netmeld")
 add_definitions(
   -DNETMELD_CONF_DIR="${CMAKE_INSTALL_PREFIX}/${NETMELD_CONF_DIR}"
   -DDEFAULT_DB_NAME="site"
+  -DDEFAULT_SCHEMA_FOLDER="schemas"
   )
 
 set(TOOL_SUITE "netmeld")
