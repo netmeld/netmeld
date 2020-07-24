@@ -365,7 +365,8 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs};
+      dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
+      pqxx::connection db {dbConnectString};
       nmpbu::dbPreparePlaybook(db);
 
       if (true) {
