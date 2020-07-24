@@ -25,7 +25,7 @@
 // =============================================================================
 
 #include <sstream>
-#include <regex>
+//#include <regex>
 
 #include "WriterContext.hpp"
 
@@ -162,23 +162,24 @@ WriterContext::write() const
       << "\\stopmode\n"
       << "\\stopxtablefoot\n";
 
-  // setup regex
-  std::regex bs {"\\\\"};
-  std::regex escape {"#|_|\\$|\\|"};
-  std::regex gt {"&gt;"};
+  //// setup regex
+  //std::regex bs {"\\\\"};
+  //std::regex escape {"#|_|\\$|\\|"};
+  //std::regex gt {"&gt;"};
 
   // add table rows
   oss << "\\startxtablebody\n";
   for (const auto& row : rows) {
     oss << "\\startxrow\n";
     for (const auto& cell : row) {
-      auto cleanCell {std::regex_replace(cell, bs, "{\\backslash}")};
-      cleanCell = std::regex_replace(cleanCell, escape, "\\$&");
-      cleanCell = std::regex_replace(cleanCell, gt, ">");
+      //auto cleanCell {std::regex_replace(cell, bs, "{\\backslash}")};
+      //cleanCell = std::regex_replace(cleanCell, escape, "\\$&");
+      //cleanCell = std::regex_replace(cleanCell, gt, ">");
       oss << "\\startxcell\n"
-          << "\\type{"
-            << cleanCell
-            << "}\n"
+          << "\\starttyping\n"
+            << cell
+            //<< cleanCell
+            << "\n\\stoptyping\n"
           << "\\stopxcell\n";
     }
     oss << "\\stopxrow\n";
