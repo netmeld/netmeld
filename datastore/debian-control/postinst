@@ -26,18 +26,14 @@ if [ "$1" = "configure" ]; then
 
     # Add users to DB
     for user in root netmeld; do
-      su -c "/usr/bin/dropuser --if-exists ${user} >/dev/null 2>&1;" \\
-        -s /bin/sh postgres;
-      su -c "/usr/bin/createuser -s ${user} >/dev/null 2>&1;" \\
-        -s /bin/sh postgres;
+      su -c "/usr/bin/dropuser --if-exists ${user} >/dev/null 2>&1;" -s /bin/sh postgres;
+      su -c "/usr/bin/createuser -s ${user} >/dev/null 2>&1;" -s /bin/sh postgres;
     done;
 
     # Add DB
     dbName="site";
-    su -c "/usr/bin/dropdb --if-exists ${dbName} > /dev/null 2>&1;" \\
-      -s /bin/sh postgres;
-    su -c "/usr/bin/createdb ${dbName} > /dev/null 2>&1;" \\
-      -s /bin/sh postgres;
+    su -c "/usr/bin/dropdb --if-exists ${dbName} > /dev/null 2>&1;" -s /bin/sh postgres;
+    su -c "/usr/bin/createdb ${dbName} > /dev/null 2>&1;" -s /bin/sh postgres;
 
     yes | /usr/local/bin/nmdb-initialize;
 
