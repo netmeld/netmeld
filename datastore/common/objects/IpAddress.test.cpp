@@ -55,7 +55,7 @@ class TestIpAddress : public nmdo::IpAddress {
     std::string getReason() const
     { return reason; }
 
-    uint32_t getExtraWeight() const
+    double getExtraWeight() const
     { return extraWeight; }
 };
 
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     BOOST_TEST(UINT8_MAX == ipAddr.getPrefix());
     BOOST_TEST(false == ipAddr.getIsResponding());
     BOOST_TEST(ipAddr.getReason().empty());
-    BOOST_TEST(0 == ipAddr.getExtraWeight());
+    BOOST_TEST(0.0 == ipAddr.getExtraWeight());
     BOOST_TEST(ipAddr.getAliases().empty());
   }
 
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     BOOST_TEST(24 == ipAddr.getPrefix());
     BOOST_TEST(false == ipAddr.getIsResponding());
     BOOST_TEST("Some Description" == ipAddr.getReason());
-    BOOST_TEST(0 == ipAddr.getExtraWeight());
+    BOOST_TEST(0.0 == ipAddr.getExtraWeight());
     BOOST_TEST(ipAddr.getAliases().empty());
   }
 }

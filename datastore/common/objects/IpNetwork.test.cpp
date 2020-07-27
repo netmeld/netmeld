@@ -52,7 +52,7 @@ class TestIpNetwork : public nmdo::IpNetwork {
     std::string getReason() const
     { return reason; }
 
-    size_t getExtraWeight() const
+    double getExtraWeight() const
     { return extraWeight; }
 
     template<size_t n>
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     BOOST_TEST(IpAddr() == ipNet.getAddress());
     BOOST_TEST(UINT8_MAX == ipNet.getPrefix());
     BOOST_TEST(ipNet.getReason().empty());
-    BOOST_TEST(0 == ipNet.getExtraWeight());
+    BOOST_TEST(0.0 == ipNet.getExtraWeight());
   }
 
   {
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     BOOST_TEST(IpAddr::from_string("10.0.0.1") == ipNet.getAddress());
     BOOST_TEST(24 == ipNet.getPrefix());
     BOOST_TEST("Some Description" == ipNet.getReason());
-    BOOST_TEST(0 == ipNet.getExtraWeight());
+    BOOST_TEST(0.0 == ipNet.getExtraWeight());
   }
 }
 
@@ -109,8 +109,8 @@ BOOST_AUTO_TEST_CASE(testSettersSimple)
   {
     TestIpNetwork ipNet;
 
-    ipNet.setExtraWeight(999);
-    BOOST_TEST(999 == ipNet.getExtraWeight());
+    ipNet.setExtraWeight(999.0);
+    BOOST_TEST(999.0 == ipNet.getExtraWeight());
   }
 
   {
