@@ -181,7 +181,7 @@ namespace netmeld::datastore::utils {
        "         nullif($5, ''), nullif($6, ''),"
        "         nullif($7, ''), nullif($8, ''))"
        " ON CONFLICT"
-       // TODO [#114]: If a PRIMARY KEY is added to table, add those fields here.
+       // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -234,7 +234,7 @@ namespace netmeld::datastore::utils {
        " VALUES ($1, $2, nullif($3, ''),"
        "         network(($4)::INET), host((nullif($5, '0.0.0.0/0'))::INET)::INET)"
        " ON CONFLICT"
-       // TODO: If a PRIMARY KEY is added to table, add those fields here.
+       // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -331,7 +331,7 @@ namespace netmeld::datastore::utils {
        "         nullif($3, ''), nullif($4, ''), nullif($5, ''),"
        "         nullif($6, ''), $7)"
        " ON CONFLICT"
-       // TODO: If a PRIMARY KEY is added to table, add those fields here.
+       // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -616,16 +616,16 @@ namespace netmeld::datastore::utils {
        " (tool_run_id, device_id, net_set_id, net_set, net_set_data)"
        " VALUES ($1, $2, $3, $4, $5)"
        " ON CONFLICT"
-       // TODO: If a PRIMARY KEY is added to table, add those fields here.
+       // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_ac_service",
        "INSERT INTO raw_device_ac_services"
-       "  (tool_run_id, device_id, service_set, service_set_data)"
+       " (tool_run_id, device_id, service_set, service_set_data)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       // TODO: If a PRIMARY KEY is added to table, add those fields here.
+       // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -644,7 +644,7 @@ namespace netmeld::datastore::utils {
        "         $8, $9, nullif($10, ''),"
        "         nullif($11, ''), $12, nullif($13, ''))"
        " ON CONFLICT"
-       // TODO: If a PRIMARY KEY is added to table, add those fields here.
+       // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
