@@ -48,5 +48,15 @@ CREATE TYPE CVE AS (
 
 
 -- ----------------------------------------------------------------------
+-- Constrained-value types
+-- ----------------------------------------------------------------------
+
+CREATE DOMAIN PortNumber AS INT
+CHECK (VALUE BETWEEN 0 AND 65535);
+
+CREATE DOMAIN VlanNumber AS INT
+CHECK (VALUE BETWEEN 0 AND 4095);
+
+-- ----------------------------------------------------------------------
 
 COMMIT TRANSACTION;

@@ -152,14 +152,13 @@ ON raw_hostnames(ip_addr, hostname, reason);
 
 CREATE TABLE raw_vlans (
     tool_run_id                 UUID            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     description                 TEXT            NULL,
     PRIMARY KEY (tool_run_id, vlan),
     FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (vlan BETWEEN 0 and 4095)
+        ON UPDATE CASCADE
 );
 
 CREATE INDEX raw_vlans_idx_tool_run_id
@@ -202,7 +201,7 @@ CREATE TABLE ip_nets_extra_weights (
 
 CREATE TABLE raw_vlans_ip_nets (
     tool_run_id                 UUID            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     ip_net                      CIDR            NOT NULL,
     PRIMARY KEY (tool_run_id, vlan, ip_net),
     FOREIGN KEY (tool_run_id, vlan)
@@ -273,15 +272,14 @@ CREATE TABLE raw_ports (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL, -- '-1' = 'other'
+    port                        PortNumber      NOT NULL, -- '-1' = 'other'
     port_state                  TEXT            NULL,
     port_reason                 TEXT            NULL,
     PRIMARY KEY (tool_run_id, ip_addr, protocol, port),
     FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (port BETWEEN -1 AND 65535)
+        ON UPDATE CASCADE
 );
 
 CREATE INDEX raw_ports_idx_tool_run_id
@@ -314,7 +312,7 @@ CREATE TABLE raw_network_services (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL,
+    port                        PortNumber      NOT NULL,
     service_name                TEXT            NULL,
     service_description         TEXT            NULL,
     service_reason              TEXT            NULL,
@@ -323,8 +321,7 @@ CREATE TABLE raw_network_services (
     FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (port BETWEEN 0 AND 65535)
+        ON UPDATE CASCADE
 );
 
 CREATE INDEX raw_network_services_idx_tool_run_id
@@ -366,7 +363,7 @@ CREATE TABLE raw_nessus_results (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL,
+    port                        PortNumber      NOT NULL,
     plugin_id                   INT             NOT NULL,
     plugin_name                 TEXT            NULL,
     plugin_family               TEXT            NULL,
@@ -380,7 +377,6 @@ CREATE TABLE raw_nessus_results (
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    CHECK (port BETWEEN 0 AND 65535),
     CHECK (severity BETWEEN 0 AND 4)
 );
 
@@ -435,7 +431,7 @@ CREATE TABLE raw_nessus_results_cves (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL,
+    port                        PortNumber      NOT NULL,
     plugin_id                   INT             NOT NULL,
     cve_id                      CVE             NOT NULL,
     PRIMARY KEY (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id),
@@ -476,7 +472,7 @@ CREATE TABLE raw_nessus_results_metasploit_modules (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL,
+    port                        PortNumber      NOT NULL,
     plugin_id                   INT             NOT NULL,
     metasploit_name             TEXT            NOT NULL,
     PRIMARY KEY (tool_run_id, ip_addr, protocol, port, plugin_id,
@@ -521,15 +517,14 @@ CREATE TABLE raw_nse_results (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL,
+    port                        PortNumber      NOT NULL,
     script_id                   TEXT            NOT NULL,
     script_output               TEXT            NULL,
     PRIMARY KEY (tool_run_id, ip_addr, protocol, port, script_id),
     FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (port BETWEEN 0 AND 65535)
+        ON UPDATE CASCADE
 );
 
 CREATE INDEX raw_nse_results_idx_tool_run_id
@@ -565,7 +560,7 @@ CREATE TABLE raw_ssh_host_public_keys (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL,
+    port                        PortNumber      NOT NULL,
     ssh_key_type                TEXT            NOT NULL,
     ssh_key_bits                INT             NOT NULL,
     ssh_key_fingerprint         TEXT            NOT NULL,
@@ -575,8 +570,7 @@ CREATE TABLE raw_ssh_host_public_keys (
     FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (port BETWEEN 0 AND 65535)
+        ON UPDATE CASCADE
 );
 
 CREATE INDEX raw_ssh_host_public_keys_idx_tool_run_id
@@ -612,7 +606,7 @@ CREATE TABLE raw_ssh_host_algorithms (
     tool_run_id                 UUID            NOT NULL,
     ip_addr                     INET            NOT NULL,
     protocol                    TEXT            NOT NULL,
-    port                        INT             NOT NULL,
+    port                        PortNumber      NOT NULL,
     ssh_algo_type               TEXT            NOT NULL,
     ssh_algo_name               TEXT            NOT NULL,
     PRIMARY KEY (tool_run_id, ip_addr, protocol, port,
@@ -620,8 +614,7 @@ CREATE TABLE raw_ssh_host_algorithms (
     FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (port BETWEEN 0 AND 65535)
+        ON UPDATE CASCADE
 );
 
 CREATE INDEX raw_ssh_host_algorithms_idx_tool_run_id

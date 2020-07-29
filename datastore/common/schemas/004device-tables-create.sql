@@ -383,7 +383,7 @@ CREATE TABLE raw_device_ip_servers (
     interface_name              TEXT            NOT NULL,
     service_name                TEXT            NOT NULL,
     server_ip_addr              INET            NOT NULL,
-    port                        INT             NULL,
+    port                        PortNumber      NULL,
     local_service               BOOLEAN         NOT NULL,
     description                 TEXT            NULL,
     PRIMARY KEY (tool_run_id, device_id, interface_name, service_name,
@@ -950,14 +950,13 @@ WHERE (src_iface IS NOT NULL) AND (dst_iface IS NOT NULL) AND
 CREATE TABLE raw_device_vlans (
     tool_run_id                 UUID            NOT NULL,
     device_id                   TEXT            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     description                 TEXT            NULL,
     PRIMARY KEY (tool_run_id, device_id, vlan),
     FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (vlan BETWEEN 0 and 4095)
+        ON UPDATE CASCADE
 );
 CREATE INDEX raw_device_vlans_idx_tool_run_id
 ON raw_device_vlans(tool_run_id);
@@ -974,7 +973,7 @@ ON raw_device_vlans(device_id, vlan);
 CREATE TABLE raw_device_vlans_ip_nets (
     tool_run_id                 UUID            NOT NULL,
     device_id                   TEXT            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     ip_net                      CIDR            NOT NULL,
     PRIMARY KEY (tool_run_id, device_id, vlan, ip_net),
     FOREIGN KEY (tool_run_id, device_id, vlan)
@@ -1004,7 +1003,7 @@ CREATE TABLE raw_device_interfaces_vlans (
     tool_run_id                 UUID            NOT NULL,
     device_id                   TEXT            NOT NULL,
     interface_name              TEXT            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     PRIMARY KEY (tool_run_id, device_id, interface_name, vlan),
     FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces

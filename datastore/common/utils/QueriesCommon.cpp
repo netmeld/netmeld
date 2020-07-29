@@ -260,7 +260,7 @@ namespace netmeld::datastore::utils {
        " (tool_run_id, device_id, interface_name, service_name,"
        "  server_ip_addr, port, local_service, description)"
        " VALUES ($1, $2, $3, $4, host(($5)::INET)::INET,"
-       "         $6, $7, nullif($8, ''))"
+       "         ($6)::PortNumber, $7, nullif($8, ''))"
        " ON CONFLICT"
        " (tool_run_id, device_id, interface_name, service_name,"
        "  server_ip_addr)"
@@ -342,7 +342,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_vlan",
        "INSERT INTO raw_vlans"
        " (tool_run_id, vlan, description)"
-       " VALUES ($1, $2, nullif($3, ''))"
+       " VALUES ($1, ($2)::VlanNumber, nullif($3, ''))"
        " ON CONFLICT"
        " (tool_run_id, vlan)"
        " DO NOTHING");
@@ -351,7 +351,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_device_vlan",
        "INSERT INTO raw_device_vlans"
        " (tool_run_id, device_id, vlan, description)"
-       " VALUES ($1, $2, $3, nullif($4, ''))"
+       " VALUES ($1, $2, ($3)::VlanNumber, nullif($4, ''))"
        " ON CONFLICT"
        " (tool_run_id, device_id, vlan)"
        " DO NOTHING");
@@ -360,7 +360,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_vlan_ip_net",
        "INSERT INTO raw_vlans_ip_nets"
        " (tool_run_id, vlan, ip_net)"
-       " VALUES ($1, $2, network(($3)::INET))"
+       " VALUES ($1, ($2)::VlanNumber, network(($3)::INET))"
        " ON CONFLICT"
        " (tool_run_id, vlan, ip_net)"
        " DO NOTHING");
@@ -369,7 +369,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_device_vlan_ip_net",
        "INSERT INTO raw_device_vlans_ip_nets"
        " (tool_run_id, device_id, vlan, ip_net)"
-       " VALUES ($1, $2, $3, network(($4)::INET))"
+       " VALUES ($1, $2, ($3)::VlanNumber, network(($4)::INET))"
        " ON CONFLICT"
        " (tool_run_id, device_id, vlan, ip_net)"
        " DO NOTHING");
@@ -428,7 +428,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_port",
        "INSERT INTO raw_ports"
        " (tool_run_id, ip_addr, protocol, port, port_state, port_reason)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4,"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber,"
        "         nullif($5, ''), nullif($6, ''))"
        " ON CONFLICT"
        " (tool_run_id, ip_addr, protocol, port)"
@@ -443,7 +443,7 @@ namespace netmeld::datastore::utils {
        "INSERT INTO raw_network_services"
        " (tool_run_id, ip_addr, protocol, port,"
        "  service_name, service_description, service_reason, observer_ip_addr)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4,"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber,"
        "         nullif($5, ''), nullif($6, ''), nullif($7, ''),"
        "         (nullif($8, '0.0.0.0/0'))::INET)"
        " ON CONFLICT"
@@ -460,7 +460,7 @@ namespace netmeld::datastore::utils {
        " (tool_run_id, ip_addr, protocol, port,"
        "  plugin_id, plugin_name, plugin_family, plugin_type, plugin_output,"
        "  severity, description, solution)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4, $5,"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5,"
        "         nullif($6, ''), nullif($7, ''), nullif($8, ''), nullif($9, ''),"
        "         $10, nullif($11, ''), nullif($12, ''))"
        " ON CONFLICT"
@@ -475,7 +475,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_nessus_result_cve",
        "INSERT INTO raw_nessus_results_cves"
        " (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4, $5, ($6)::CVE)"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, ($6)::CVE)"
        " ON CONFLICT"
        " (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id)"
        " DO NOTHING");
@@ -488,7 +488,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_nessus_result_metasploit_module",
        "INSERT INTO raw_nessus_results_metasploit_modules"
        " (tool_run_id, ip_addr, protocol, port, plugin_id, metasploit_name)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4, $5, $6)"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, $6)"
        " ON CONFLICT"
        " (tool_run_id, ip_addr, protocol, port, plugin_id, metasploit_name)"
        " DO NOTHING");
@@ -501,7 +501,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_nse_result",
        "INSERT INTO raw_nse_results"
        " (tool_run_id, ip_addr, protocol, port, script_id, script_output)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4, $5,"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5,"
        "         nullif($6, ''))"
        " ON CONFLICT"
        " (tool_run_id, ip_addr, protocol, port, script_id)"
@@ -516,7 +516,7 @@ namespace netmeld::datastore::utils {
        "INSERT INTO raw_ssh_host_public_keys"
        " (tool_run_id, ip_addr, protocol, port,"
        "  ssh_key_type, ssh_key_bits, ssh_key_fingerprint, ssh_key_public)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4, $5, $6, $7, $8)"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, $6, $7, $8)"
        " ON CONFLICT"
        " (tool_run_id, ip_addr, protocol, port,"
        "  ssh_key_type, ssh_key_bits, ssh_key_fingerprint)"
@@ -531,7 +531,7 @@ namespace netmeld::datastore::utils {
        "INSERT INTO raw_ssh_host_algorithms"
        " (tool_run_id, ip_addr, protocol, port,"
        "  ssh_algo_type, ssh_algo_name)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, $4, $5, $6)"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, $6)"
        " ON CONFLICT"
        " (tool_run_id, ip_addr, protocol, port,"
        "  ssh_algo_type, ssh_algo_name)"
@@ -601,7 +601,7 @@ namespace netmeld::datastore::utils {
       ("insert_raw_device_interfaces_vlan",
        "INSERT INTO raw_device_interfaces_vlans"
        " (tool_run_id, device_id, interface_name, vlan)"
-       " VALUES ($1, $2, $3, $4)"
+       " VALUES ($1, $2, $3, ($4)::VlanNumber)"
        " ON CONFLICT"
        " (tool_run_id, device_id, interface_name, vlan)"
        " DO NOTHING");
