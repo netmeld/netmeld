@@ -51,11 +51,19 @@ CREATE TYPE CVE AS (
 -- Constrained-value types
 -- ----------------------------------------------------------------------
 
+-- TCP, UDP, and SCTP port numbers are unsigned 16-bit fields: 0-65535.
 CREATE DOMAIN PortNumber AS INT
 CHECK (VALUE BETWEEN 0 AND 65535);
 
-CREATE DOMAIN VlanNumber AS INT
+-- IEEE 802.1Q VLAN Identifier (VID) is an unsigned 12-bit field: 0-4095.
+-- There are two reserved values:
+-- * 0x000: Indicates that the frame does not carry a VLAN ID.
+-- * 0xFFF: Reserved for implementation use; must not be configured or
+--   transmitted. Can be used for wildcard matching or filtering.
+-- The Netmeld database must be able to store all 4096 possible values.
+CREATE DOMAIN VlanNumber AS SMALLINT
 CHECK (VALUE BETWEEN 0 AND 4095);
+
 
 -- ----------------------------------------------------------------------
 
