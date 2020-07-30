@@ -159,25 +159,47 @@ namespace netmeld::playbook {
   CommandRunnerSingleton::tmuxThreadActions(std::string const& title,
       std::string const& command) const
   {
+    std::string tmuxSafeTitle {title};
+    size_t pos {0};
+    while ((pos = tmuxSafeTitle.find(".")) != std::string::npos) {
+      tmuxSafeTitle.replace(pos, 1, "-");
+    }
+    pos = 0;
+    while ((pos = tmuxSafeTitle.find(":")) != std::string::npos) {
+      tmuxSafeTitle.replace(pos, 1, "");
+    }
+
     std::vector<std::string> tmuxCommandArgs = {
       "tmux",
       "new-session", "-d",
-      "-s", title + "-session",
-      "-n", title + "-window",
+      "-s", tmuxSafeTitle + "-session",
+      //"-n", tmuxSafeTitle + "-window",
+      "-n", "playbook-window",
       command
     };
-
     nmcu::forkExecWait(tmuxCommandArgs);
 
 
+    //TODO 30072020: How critical is it that we set the window colors?
+    //  It seems like this only works some times? Timing issue maybe???
+    //  Usually shows 'no such window:' error while launching
+    //   nmap TCP and UDP scans back to back.
     std::vector<std::string> tmuxStyleArgs = {
       "tmux",
       "set-window",
-      "-t", title + "-window",
+      //"-t", tmuxSafeTitle + "-window",
+      "-t", "playbook-window",
       "window-style", "bg=black,fg=red"
     };
-
     nmcu::forkExecWait(tmuxStyleArgs);
+
+
+    std::vector<std::string> tmuxWaitArgs = {
+      "tmux",
+      "wait",
+      tmuxSafeTitle + "-session"
+    };
+    nmcu::forkExecWait(tmuxWaitArgs);
   }
 
   // ===========================================================================
