@@ -34,7 +34,6 @@ target_link_libraries(${TGT_TOOL}
 
 nm_install_bin(${TGT_TOOL})
 
-set(image_dir "images")
 foreach(ITEM
     cisco.svg
     desktop.svg
@@ -48,5 +47,5 @@ foreach(ITEM
     unknown.svg
     vm.svg
   )
-  nm_install_conf("${image_dir}/${ITEM}" "${image_dir}")
+  nm_install_conf("${image_dir}/${ITEM}" "${NETMELD_IMAGE_DIR}")
 endforeach()

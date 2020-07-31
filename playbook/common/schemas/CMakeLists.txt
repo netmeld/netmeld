@@ -28,5 +28,5 @@ foreach(ITEM
     100playbook-tables-create.sql
     101playbook-views-create.sql
   )
-  nm_install_conf(${ITEM} "schemas")
+  nm_install_conf(${ITEM} "${NETMELD_SCHEMA_DIR}")
 endforeach()
