@@ -47,5 +47,5 @@ foreach(ITEM
     unknown.svg
     vm.svg
   )
-  nm_install_conf("${image_dir}/${ITEM}" "${NETMELD_IMAGE_DIR}")
+  nm_install_conf("images/${ITEM}" "${NETMELD_IMAGE_DIR}")
 endforeach()
