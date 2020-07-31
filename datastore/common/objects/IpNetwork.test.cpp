@@ -30,6 +30,7 @@
 #include <typeinfo>
 
 #include <boost/test/unit_test.hpp>
+#include <boost/math/special_functions/next.hpp>
 
 #include <netmeld/datastore/objects/IpNetwork.hpp>
 
@@ -111,6 +112,12 @@ BOOST_AUTO_TEST_CASE(testSettersSimple)
 
     ipNet.setExtraWeight(999.0);
     BOOST_TEST(999.0 == ipNet.getExtraWeight());
+
+    ipNet.setExtraWeight(boost::math::float_prior(999.0));
+    BOOST_TEST(999.0 != ipNet.getExtraWeight());
+
+    ipNet.setExtraWeight(boost::math::float_next(999.0));
+    BOOST_TEST(999.0 != ipNet.getExtraWeight());
   }
 
   {
@@ -461,4 +468,28 @@ BOOST_AUTO_TEST_CASE(testValidity)
     ipNet.setPrefix(129);
     BOOST_TEST(!ipNet.isValid());
   }
+}
+
+BOOST_AUTO_TEST_CASE(testOperatorEquality)
+{
+  nmdo::IpNetwork ipNet1;
+  nmdo::IpNetwork ipNet2;
+
+  ipNet1.setAddress("192.168.1.20");
+  ipNet1.setExtraWeight(1.0);
+  ipNet2.setAddress("192.168.1.20");
+  ipNet2.setExtraWeight(1.0);
+  BOOST_TEST(ipNet1 == ipNet2);
+
+  // Very small (epsilon) differences in extraWeight are treated as still equal.
+  ipNet2.setExtraWeight(1.0 - (std::numeric_limits<double>::epsilon() * 128));
+  BOOST_TEST(ipNet1 == ipNet2);
+  ipNet2.setExtraWeight(1.0 + (std::numeric_limits<double>::epsilon() * 128));
+  BOOST_TEST(ipNet1 == ipNet2);
+
+  // Larger (but still small) differences in extraWeight are treated as not equal.
+  ipNet2.setExtraWeight(0.999999999);
+  BOOST_TEST(!(ipNet1 == ipNet2));
+  ipNet2.setExtraWeight(1.000000001);
+  BOOST_TEST(!(ipNet1 == ipNet2));
 }
