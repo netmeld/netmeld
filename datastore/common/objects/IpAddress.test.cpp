@@ -165,3 +165,27 @@ BOOST_AUTO_TEST_CASE(testValidity)
     BOOST_TEST(!ipAddr.isValid());
   }
 }
+
+BOOST_AUTO_TEST_CASE(testOperatorEquality)
+{
+  nmdo::IpAddress ipAddr1;
+  nmdo::IpAddress ipAddr2;
+
+  ipAddr1.setAddress("192.168.1.20");
+  ipAddr1.setExtraWeight(1.0);
+  ipAddr2.setAddress("192.168.1.20");
+  ipAddr2.setExtraWeight(1.0);
+  BOOST_TEST(ipAddr1 == ipAddr2);
+
+  // Very small (epsilon) differences in extraWeight are treated as still equal.
+  ipAddr2.setExtraWeight(1.0 - (std::numeric_limits<double>::epsilon() * 128));
+  BOOST_TEST(ipAddr1 == ipAddr2);
+  ipAddr2.setExtraWeight(1.0 + (std::numeric_limits<double>::epsilon() * 128));
+  BOOST_TEST(ipAddr1 == ipAddr2);
+
+  // Larger (but still small) differences in extraWeight are treated as not equal.
+  ipAddr2.setExtraWeight(0.999999999);
+  BOOST_TEST(!(ipAddr1 == ipAddr2));
+  ipAddr2.setExtraWeight(1.000000001);
+  BOOST_TEST(!(ipAddr1 == ipAddr2));
+}
