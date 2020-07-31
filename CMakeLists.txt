@@ -59,10 +59,15 @@ link_libraries(stdc++fs)
 # Netmeld Configuration
 # ----------------------------------------------------------------------
 set(NETMELD_CONF_DIR "etc/netmeld")
+set(NETMELD_DB_NAME "site")
+set(NETMELD_SCHEMA_DIR "schemas")
+set(NETMELD_IMAGE_DIR "images")
 
-add_definitions(
-  -DNETMELD_CONF_DIR="${CMAKE_INSTALL_PREFIX}/${NETMELD_CONF_DIR}"
-  -DDEFAULT_DB_NAME="site"
+add_compile_definitions(
+  NETMELD_CONF_DIR="${CMAKE_INSTALL_PREFIX}/${NETMELD_CONF_DIR}"
+  NETMELD_DB_NAME="${NETMELD_DB_NAME}"
+  NETMELD_SCHEMA_DIR="${NETMELD_SCHEMA_DIR}"
+  NETMELD_IMAGE_DIR="${NETMELD_IMAGE_DIR}"
   )
 
 set(TOOL_SUITE "netmeld")

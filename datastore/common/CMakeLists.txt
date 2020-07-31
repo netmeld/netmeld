@@ -69,6 +69,7 @@ foreach(ITEM
       parsers
       tools
       utils
+      schemas
     )
   nm_install_include(${ITEM} "datastore")
 endforeach()
