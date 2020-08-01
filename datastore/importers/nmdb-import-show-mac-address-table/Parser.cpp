@@ -34,47 +34,44 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    *(!link >> -qi::omit[+token] >> qi::eol) >>
-    *link >>
-    ignoredLine
+    *(!link >> -qi::omit[+token] >> qi::eol)
+    >> *link
+    >> ignoredLine
     ;
 
   link =
-    qi::attr("") [tgtData = {}] >>
-    -qi::ascii::char_("GRO*+") >>
-    vlanValue >> macAddrValue >>
-    ((typeValue >> portValue) | (portValue >> typeValue)) >>
-    qi::omit[*token] > qi::eol
-      [pnx::bind(&Data::setPartial, &tgtData, true),
-       pnx::bind(&Data::setState, &tgtData, true)
-      ]
+    -qi::ascii::char_("GRO*+")
+    >> vlanId [pnx::bind(&Data::addVlan, &qi::_val, qi::_1)]
+    >> macAddr [pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1)]
+    >> portName [pnx::bind(&Data::setName, &qi::_val, qi::_1)]
+    >> qi::omit[*token]
+    >  qi::eol [pnx::bind(&Data::setPartial, &qi::_val, true),
+                pnx::bind(&Data::setState, &qi::_val, true)]
     ;
 
-  vlanValue =
-    qi::ushort_ [pnx::bind(&Data::addVlan, &tgtData, qi::_1)]
+  vlanId =
+    (qi::ushort_ > !qi::digit)
     ;
 
-  macAddrValue =
-    macAddr [pnx::bind(&Data::addReachableMac, &tgtData, qi::_1)]
+  portName =
+    -qi::hold[typeValue > -(+qi::blank)]
+    > token [qi::_val = qi::_1]
     ;
 
   typeValue =
-    +qi::ascii::char_("a-zA-Z") >>
-    +qi::blank >>
-    -( // age >> secure >> ntfy
-       (+qi::ascii::char_("-0-9") >> +qi::blank >>
-        qi::ascii::char_("TFC~") >> +qi::blank >>
-        qi::ascii::char_("TFC~"))
-       // learn >> age
-     | ((qi::lit("Yes") | qi::lit("No")) >> +qi::blank >>
-        +qi::ascii::char_("-0-9"))
-       // protocol | pv
-     | (+qi::ascii::char_("a-z,"))
-    )
-    ;
-
-  portValue = // interface
-    token [pnx::bind(&Data::setName, &tgtData, qi::_1)]
+    +qi::ascii::char_("a-zA-Z") >> +qi::blank
+    > -( // age >> secure >> ntfy
+         (+qi::ascii::char_("-0-9") > +qi::blank
+          > qi::ascii::char_("TFC~") > +qi::blank
+          > qi::ascii::char_("TFC~")
+         )
+         // learn >> age
+       | ((qi::lit("Yes") | qi::lit("No")) > +qi::blank
+          > +qi::ascii::char_("-0-9")
+         )
+         // protocol | pv
+       | (+qi::ascii::char_("a-z,") >> !qi::digit)
+      )
     ;
 
   token =

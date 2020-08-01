@@ -45,25 +45,84 @@ BOOST_AUTO_TEST_CASE(testLinkLine)
   TestParser tp;
 
   {
-    const auto& parserRule = tp.link;
-    std::vector<std::string> testOK {
-      // vlan mac port type
-      "     1         00:87:31:f0:17:81       0         self",
-      "    106        00:03:ac:08:8a:d6      gi10     dynamic",
-      // vlan mac type port
-      " All    ffff.ffff.ffff    STATIC      CPU",
-      " 101    3c97.0e14.f257    DYNAMIC     Fa1/0/16",
-      // vlan mac type protocols port
-      "   4      0000.5e00.0104   dynamic ip,ipx,assigned,other Port-channel10",
-      "   4      0005.5a02.cf17   dynamic ip                    Port-channel10",
-      " 104      a4ad.b82b.1ec7   dynamic ip,ipx,assigned,other GigabitEthernet4/44",
+    const auto& parserRule = tp.vlanId;
+    std::vector<std::tuple<std::string, unsigned short>> testsOk {
+      {"0", 0},
+      {"101", 101},
+      {"65535", USHRT_MAX},
     };
     for (const auto& test : testsOk) {
-      nmco::InterfaceNetwork out;
-      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
-      out.getVlans();
-      out.getReachableMacs();
-      out.
+      unsigned short out;
+      BOOST_TEST(nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out));
+      BOOST_TEST(std::get<1>(test) == out);
+    }
+    std::vector<std::tuple<std::string, unsigned short>> testsBad {
+      {" 0", 0},
+      {"101 ", 101},
+      {"65536", 6553},
+    };
+    for (const auto& test : testsBad) {
+      unsigned short out;
+      BOOST_TEST(!nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out));
+      BOOST_TEST(std::get<1>(test) == out);
+    }
+  }
+
+  {
+    const auto& parserRule = tp.portName;
+    std::vector<std::tuple<std::string, std::string>> testsOk {
+      {"0", "0"},
+      {"gi10", "gi10"},
+      {"GigaEther1/2/3", "GigaEther1/2/3"},
+      {"dynamic gi10", "gi10"},
+      {"dynamic ip gi10", "gi10"},
+    };
+    for (const auto& test : testsOk) {
+      std::string out;
+      BOOST_TEST(nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out));
+      BOOST_TEST(std::get<1>(test) == out);
+    }
+    std::vector<std::tuple<std::string, std::string>> testsOkNotFull {
+      {"0 dynamic", "0"},
+      {"gi10 dynamic ip", "gi10"},
+    };
+    for (const auto& test : testsOkNotFull) {
+      std::string out;
+      BOOST_TEST(nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out, false));
+      BOOST_TEST(std::get<1>(test) == out);
+    }
+  }
+
+  {
+    const auto& parserRule = tp.link;
+    std::vector<std::string> testsOk {
+      // vlan mac port type
+      "1         00:87:31:f0:17:81       0         self\n",
+      " 106        00:03:ac:08:8a:d6      gi10     dynamic\n",
+      // vlan mac type port
+      "101    3c97.0e14.f257    DYNAMIC     Fa1/0/16\n",
+      // vlan mac type protocols port
+      "  4   0000.5e00.0104   dynamic ip,ipx,assigned,other Port-channel10\n",
+      "  4   0005.5a02.cf17   dynamic ip                    Port-channel10\n",
+      "104   a4ad.b82b.1ec7   dynamic ip,ipx,assigned,other GigabitEthernet4/44\n",
+      // TODO add others
+    };
+    for (const auto& test : testsOk) {
+      nmdo::InterfaceNetwork out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                 "Failed parse for 'link': " << test << '\n');
+    }
+    std::vector<std::string> testsBad {
+      "A 1 01:23:45:67:89:ab gi1 self\n"
+      "All 01:23:45:67:89:ab gi1 self\n"
+      "1 g1:23:45:67:89:ab gi1 self\n"
+      "1 01:23:45:67:89:ab noport self\n"
+      "1 01:23:45:67:89:ab noport noport self\n"
+    };
+    for (const auto& test : testsBad) {
+      nmdo::InterfaceNetwork out;
+      BOOST_TEST(!nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                 "Failed parse for 'link': " << test << '\n');
     }
   }
 }

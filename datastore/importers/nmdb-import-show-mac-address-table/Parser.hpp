@@ -50,6 +50,8 @@ class Parser :
   // Variables
   // ===========================================================================
   private: // Variables are always private
+  protected:
+  public:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -58,7 +60,11 @@ class Parser :
       link;
 
     qi::rule<nmdp::IstreamIter, std::string()>
+      portName,
       token;
+
+    qi::rule<nmdp::IstreamIter, unsigned short>
+      vlanId;
 
     qi::rule<nmdp::IstreamIter>
       vlanValue,
