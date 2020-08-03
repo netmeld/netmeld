@@ -34,7 +34,7 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    *((!link) > ignoredLine)//-qi::omit[+token] > qi::eol)
+    *((!link) > ignoredLine)
     > *link
     > *ignoredLine
     ;
