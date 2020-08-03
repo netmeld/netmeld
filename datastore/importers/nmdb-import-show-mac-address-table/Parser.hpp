@@ -67,17 +67,11 @@ class Parser :
       vlanId;
 
     qi::rule<nmdp::IstreamIter>
-      vlanValue,
-      macAddrValue,
       typeValue,
-      portValue,
       ignoredLine;
 
     nmdp::ParserMacAddress
       macAddr;
-
-    // Supporting data structures
-    Data tgtData;
 
 
   // ===========================================================================

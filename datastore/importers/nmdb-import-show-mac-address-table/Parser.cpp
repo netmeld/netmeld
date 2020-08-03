@@ -34,9 +34,9 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    *(!link >> -qi::omit[+token] >> qi::eol)
-    >> *link
-    >> ignoredLine
+    *((!link) > ignoredLine)//-qi::omit[+token] > qi::eol)
+    > *link
+    > *ignoredLine
     ;
 
   link =
@@ -45,8 +45,8 @@ Parser::Parser() : Parser::base_type(start)
     >> macAddr [pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1)]
     >> portName [pnx::bind(&Data::setName, &qi::_val, qi::_1)]
     >> qi::omit[*token]
-    >  qi::eol [pnx::bind(&Data::setPartial, &qi::_val, true),
-                pnx::bind(&Data::setState, &qi::_val, true)]
+    >  -qi::eol [pnx::bind(&Data::setPartial, &qi::_val, true),
+                 pnx::bind(&Data::setState, &qi::_val, true)]
     ;
 
   vlanId =
@@ -79,13 +79,15 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   ignoredLine =
-    +(qi::char_ - qi::eol) > qi::eol
+    (  (+(qi::char_ - qi::eol) > -qi::eol)
+     | (qi::eol)
+    )
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
       (link)
-      (vlanValue)(macAddrValue)(typeValue)(portValue)
+      (portName)(vlanId)(typeValue)
       //(token) (ignoredLine)
       );
 }
