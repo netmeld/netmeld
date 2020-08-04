@@ -45,31 +45,32 @@ BOOST_AUTO_TEST_CASE(testParts)
   TestParser tp;
 
   {
-    const auto& parserRule = tp.vlanId;
+    const auto& parserRule {tp.vlanId};
     std::vector<std::tuple<std::string, unsigned short>> testsOk {
       {"0", 0},
       {"101", 101},
       {"65535", USHRT_MAX},
     };
-    for (const auto& test : testsOk) {
-      unsigned short out;
-      BOOST_TEST(nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out));
-      BOOST_TEST(std::get<1>(test) == out);
+    for (const auto& [test, shouldBe] : testsOk) {
+      unsigned short out {9};
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out),
+                 "Failed parse for 'vlanId': " << test << '\n');
+      BOOST_TEST(shouldBe == out);
     }
-    std::vector<std::tuple<std::string, unsigned short>> testsBad {
-      {" 0", 0},
-      {"101 ", 101},
-      {"65536", 6553},
+    std::vector<std::string> testsBad {
+      " 0",
+      "101 ",
+      "65536",
     };
     for (const auto& test : testsBad) {
       unsigned short out;
-      BOOST_TEST(!nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out));
-      BOOST_TEST(std::get<1>(test) == out);
+      BOOST_TEST(!nmdp::testAttr(test.c_str(), parserRule, out),
+                 "Successful parse for 'vlanId': " << test << '\n');
     }
   }
 
   {
-    const auto& parserRule = tp.portName;
+    const auto& parserRule {tp.portName};
     std::vector<std::tuple<std::string, std::string>> testsOk {
       {"0", "0"},
       {"gi10", "gi10"},
@@ -77,24 +78,26 @@ BOOST_AUTO_TEST_CASE(testParts)
       {"dynamic gi10", "gi10"},
       {"dynamic ip gi10", "gi10"},
     };
-    for (const auto& test : testsOk) {
+    for (const auto& [test, shouldBe] : testsOk) {
       std::string out;
-      BOOST_TEST(nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out));
-      BOOST_TEST(std::get<1>(test) == out);
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out),
+                 "Failed parse for 'portName': " << test << '\n');
+      BOOST_TEST(shouldBe == out);
     }
     std::vector<std::tuple<std::string, std::string>> testsOkNotFull {
       {"0 dynamic", "0"},
       {"gi10 dynamic ip", "gi10"},
     };
-    for (const auto& test : testsOkNotFull) {
+    for (const auto& [test, shouldBe] : testsOkNotFull) {
       std::string out;
-      BOOST_TEST(nmdp::testAttr(std::get<0>(test).c_str(), parserRule, out, false));
-      BOOST_TEST(std::get<1>(test) == out);
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, false),
+                 "Failed parse for 'portName': " << test << '\n');
+      BOOST_TEST(shouldBe == out);
     }
   }
 
   {
-    const auto& parserRule = tp.link;
+    const auto& parserRule {tp.link};
     std::vector<std::string> testsOk {
       // vlan mac port type
       "1      12:34:12:34:12:34  port1  type\n",
@@ -122,7 +125,6 @@ BOOST_AUTO_TEST_CASE(testParts)
       nmdo::InterfaceNetwork out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
                  "Failed parse for 'link': " << test << '\n');
-      //LOG_INFO << "value: " << out << '\n';
     }
     std::vector<std::string> testsBad {
       "A 1 01:23:45:67:89:ab gi1 self\n",
@@ -133,7 +135,7 @@ BOOST_AUTO_TEST_CASE(testParts)
     for (const auto& test : testsBad) {
       nmdo::InterfaceNetwork out;
       BOOST_TEST(!nmdp::testAttr(test.c_str(), parserRule, out, blank),
-                 "Failed parse for 'link': " << test << '\n');
+                 "Successful parse for 'link': " << test << '\n');
     }
   }
 }
@@ -144,7 +146,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
   TestParser tp;
 
   {
-    const auto& parserRule = tp;
+    const auto& parserRule {tp};
     std::vector<std::string> testsOk {
       R"STR(
       1      00:11:22:33:44:55  port1 type
@@ -167,7 +169,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Failed parse for 'link': " << test << '\n');
+                 "Failed parse for 'start': " << test << '\n');
 
     }
   }
