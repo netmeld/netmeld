@@ -51,7 +51,6 @@ class Parser :
   // ===========================================================================
   private: // Variables are always private
   protected:
-  public:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;

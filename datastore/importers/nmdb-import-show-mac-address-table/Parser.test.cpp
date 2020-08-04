@@ -38,6 +38,9 @@ using qi::ascii::blank;
 
 class TestParser : public Parser {
   public:
+    using Parser::vlanId;
+    using Parser::portName;
+    using Parser::link;
 };
 
 BOOST_AUTO_TEST_CASE(testParts)
