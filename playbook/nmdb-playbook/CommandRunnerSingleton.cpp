@@ -173,22 +173,16 @@ namespace netmeld::playbook {
       "tmux",
       "new-session", "-d",
       "-s", tmuxSafeTitle + "-session",
-      //"-n", tmuxSafeTitle + "-window",
-      "-n", "playbook-window",
+      "-n", "playbook-window" + commandIdNumber,
       command
     };
     nmcu::forkExecWait(tmuxCommandArgs);
 
 
-    //TODO 30072020: How critical is it that we set the window colors?
-    //  It seems like this only works some times? Timing issue maybe???
-    //  Usually shows 'no such window:' error while launching
-    //   nmap TCP and UDP scans back to back.
     std::vector<std::string> tmuxStyleArgs = {
       "tmux",
       "set-window",
-      //"-t", tmuxSafeTitle + "-window",
-      "-t", "playbook-window",
+      "-t", "playbook-window" + commandIdNumber,
       "window-style", "bg=black,fg=red"
     };
     nmcu::forkExecWait(tmuxStyleArgs);
