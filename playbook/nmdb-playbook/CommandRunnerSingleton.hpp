@@ -42,6 +42,7 @@ namespace netmeld::playbook {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       bool                execute {false};
+      bool                headless {false};
 
       uint32_t            commandIdNumber {0};
       std::set<uint32_t>  disabledCommands;
@@ -64,18 +65,19 @@ namespace netmeld::playbook {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
       void xtermThreadActions(std::string const&, std::string const&) const;
+      void tmuxThreadActions(std::string const&, std::string const&) const;
 
     public: // Methods part of public API
       static CommandRunnerSingleton& getInstance();
 
       void disableCommands(std::set<uint32_t> const&);
       void setExecute(bool const);
+      void setHeadless(bool const);
 
       bool isEnabled(uint32_t const) const;
 
       bool systemExec(std::string const&);
-      void threadXtermExec(
-          std::vector<std::tuple<std::string, std::string>> const&);
+      void threadExec(std::vector<std::tuple<std::string, std::string>> const&);
 
       void scheduleSleep(uint64_t const);
 
