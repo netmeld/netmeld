@@ -38,38 +38,77 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   config =
-    *(qi::eol) >>
-    *(header >>
-      devIdAddr >>
-      *(!header >> -qi::omit[+token] >> qi::eol)
+    *(qi::eol)
+    >> *(header >> deviceData
+      //devIdAddr >>
+     >> *((!header) >> -qi::omit[+token] >> qi::eol)
     )
     ;
 
   header =
-    +qi::ascii::char_("-") >> qi::eol
+    +qi::ascii::char_("-") > qi::eol
     ;
 
-  devIdAddr =
-    (qi::lit("Device ID:") >>
-      hostname >> qi::eol >>
-     qi::lit("Entry address(es):") >> qi::eol >>
-     qi::lit("IP address:") >>
-      ipAddr >> qi::eol >>
-     qi::lit("Platform:") >>
-      token >>
-      token >> qi::omit[+token] >> qi::eol >>
-     qi::lit("Interface:") >>
-      token >> qi::lit("Port ID (outgoing port):") >>
-      token >> qi::eol
-    ) [
-       pnx::bind(&Parser::addIp, this, qi::_1, qi::_2),
-       pnx::bind(&Parser::addHwInfo, this, qi::_1, qi::_3, qi::_4),
-       pnx::bind(&Parser::addCon, this, qi::_1, qi::_6, qi::_2)
-      ]
+	deviceData =
+    +( hostnameValue
+     | ipAddressValue 
+     | platformValue
+     | interfaceValue
+     | ((!header) > ignoredLine)
+    )
+		;
+
+	hostnameValue =
+    (  (qi::lit("Device") > (qi::space | qi::lit('-')) > qi::lit("ID:"))
+     | (qi::lit("SysName:"))
+    ) > -qi::space > token > qi::eol
+		;
+
+  ipAddressValue =
+    qi::lit("IP") > -(qi::lit("v") > qi::char_("46")) > qi::space
+    > -qi::lit("address: ") > ipAddr
+    > *(qi::blank > token)
+    > qi::eol
     ;
+
+  platformValue =
+    qi::lit("Platform: ") > token
+    > qi::space > token
+    > +(qi::blank > token)
+    > qi::eol
+    ;
+
+  interfaceValue =
+    qi::lit("Interface: ") > token
+    > qi::lit(" Port ID (outgoing port): ") > token
+    > qi::eol
+    ;
+
+//  devIdAddr =
+//    (qi::lit("Device ID:") >>
+//      hostname >> qi::eol >>
+//     qi::lit("Entry address(es):") >> qi::eol >>
+//     qi::lit("IP address:") >>
+//      ipAddr >> qi::eol >>
+//     qi::lit("Platform:") >>
+//      token >>
+//      token >> qi::omit[+token] >> qi::eol >>
+//     qi::lit("Interface:") >>
+//      token >> qi::lit("Port ID (outgoing port):") >>
+//      token >> qi::eol
+//    ) [
+//       pnx::bind(&Parser::addIp, this, qi::_1, qi::_2),
+//       pnx::bind(&Parser::addHwInfo, this, qi::_1, qi::_3, qi::_4),
+//       pnx::bind(&Parser::addCon, this, qi::_1, qi::_6, qi::_2)
+//      ]
+//    ;
 
   token =
     +qi::ascii::graph
+    ;
+
+  ignoredLine =
+    +token > qi::eol
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(

@@ -59,6 +59,7 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+  protected:
     Data d;
 
     // Rules
@@ -68,7 +69,15 @@ class Parser :
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
       header,
+      deviceData,
+      ignoredLine,
       devIdAddr;
+
+    qi::rule<nmdp::IstreamIter>
+      hostnameValue,
+      ipAddressValue,
+      platformValue,
+      interfaceValue;
 
     qi::rule<nmdp::IstreamIter, std::string()>
       token;
