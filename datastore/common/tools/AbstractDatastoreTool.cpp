@@ -52,7 +52,7 @@ namespace netmeld::datastore::tools {
   {
     opts.addRequiredOption("db-name", std::make_tuple(
           "db-name",
-          po::value<std::string>()->required()->default_value(DEFAULT_DB_NAME),
+          po::value<std::string>()->required()->default_value(NETMELD_DB_NAME),
           "Database to connect to.")
         );
     opts.addAdvancedOption("db-args", std::make_tuple(

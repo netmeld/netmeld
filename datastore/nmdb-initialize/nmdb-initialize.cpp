@@ -41,7 +41,8 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     const std::string POSTGRES_DB_NAME {"postgres"};
     const std::string MAC_PREFIX_FILE  {"/usr/share/nmap/nmap-mac-prefixes"};
-    const std::string SCHEMA_PATH {nmfm.getConfPath().string() + "/schema"};
+    const std::string SCHEMA_PATH      {nmfm.getConfPath().string()
+                                       + '/' + NETMELD_SCHEMA_DIR};
 
   public:
     Tool() : nmdt::AbstractDatastoreTool
