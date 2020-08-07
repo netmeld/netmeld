@@ -26,6 +26,7 @@
 
 #include <chrono>
 #include <thread>
+#include <regex>
 
 #include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/core/utils/ForkExec.hpp>
@@ -107,15 +108,11 @@ namespace netmeld::playbook {
         LOG_INFO << commandIdNumber << ": " << command << std::endl;
 
         if (execute) {
+          auto threadActions = &CommandRunnerSingleton::xtermThreadActions;
           if(headless) {
-            threadVector.emplace_back(
-                &CommandRunnerSingleton::tmuxThreadActions, this,
-                  commandTitle, command);
-          } else {
-            threadVector.emplace_back(
-                &CommandRunnerSingleton::xtermThreadActions, this,
-                  commandTitle, command);
+            threadActions = &CommandRunnerSingleton::tmuxThreadActions;
           }
+          threadVector.emplace_back(threadActions, this, commandTitle, command);
         }
       }
     }
@@ -160,13 +157,12 @@ namespace netmeld::playbook {
       std::string const& command) const
   {
     std::string tmuxSafeTitle {title};
-    size_t pos {0};
-    while ((pos = tmuxSafeTitle.find(".")) != std::string::npos) {
-      tmuxSafeTitle.replace(pos, 1, "-");
-    }
-    pos = 0;
-    while ((pos = tmuxSafeTitle.find(":")) != std::string::npos) {
-      tmuxSafeTitle.replace(pos, 1, "");
+    std::vector<std::tuple<std::regex, std::string>> substitutions {
+      {std::regex("\\."), "-"},
+      {std::regex(":"), ""},
+    };
+    for (const auto& [find, replace] : substitutions) {
+      tmuxSafeTitle = std::regex_replace(tmuxSafeTitle, find, replace);
     }
 
     std::vector<std::string> tmuxCommandArgs = {
