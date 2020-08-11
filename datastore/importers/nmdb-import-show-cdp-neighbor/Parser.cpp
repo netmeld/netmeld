@@ -38,11 +38,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   config =
-    *(qi::eol)
-    >> *(header >> deviceData
-      //devIdAddr >>
-     >> *((!header) >> -qi::omit[+token] >> qi::eol)
-    )
+    *(qi::eol) >> *(header >> deviceData)
     ;
 
   header =
@@ -51,30 +47,34 @@ Parser::Parser() : Parser::base_type(start)
 
 	deviceData =
     +( hostnameValue
-     | ipAddressValue 
+     | ipAddressValue
      | platformValue
      | interfaceValue
-     | ((!header) > ignoredLine)
+     | ((!header) >> ignoredLine)
     )
 		;
 
 	hostnameValue =
     (  (qi::lit("Device") > (qi::space | qi::lit('-')) > qi::lit("ID:"))
      | (qi::lit("SysName:"))
-    ) > -qi::space > token > qi::eol
+    ) > -qi::space
+    > token// [pnx::bind(&Parser::hostname, this) = qi::_1]
+    > qi::eol
 		;
 
   ipAddressValue =
     qi::lit("IP") > -(qi::lit("v") > qi::char_("46")) > qi::space
-    > -qi::lit("address: ") > ipAddr
+    > -qi::lit("address: ")
+    > ipAddr// [pnx::bind(&Parser::addIp, this, qi::_1)]
     > *(qi::blank > token)
     > qi::eol
     ;
 
   platformValue =
-    qi::lit("Platform: ") > token
-    > qi::space > token
-    > +(qi::blank > token)
+    qi::lit("Platform: ")
+    // TODO update, could be just model, no vendor
+    > token > qi::space > token
+    > *(qi::blank > token)
     > qi::eol
     ;
 

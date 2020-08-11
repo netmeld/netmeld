@@ -40,6 +40,8 @@ class TestParser : public Parser {
   public:
     using Parser::hostnameValue;
     using Parser::ipAddressValue;
+    using Parser::platformValue;
+    using Parser::interfaceValue;
 };
 BOOST_AUTO_TEST_CASE(testParts)
 {
@@ -83,8 +85,119 @@ BOOST_AUTO_TEST_CASE(testParts)
                 "Parse rule 'ipAddressValue': " << test);
     }
   }
+
+  {
+    const auto& parserRule {tp.platformValue};
+    std::vector<std::string> testsOk {
+      "Platform: Cisco 1234 (PID:1234-1234)-ABC\n",
+      "Platform: cisco 1234-1234\n",
+      "Platform: N5K-1234, Capabilities: Abc abc Abc-abc\n",
+      "Platform: cisco 1234, Capabilities:\n",
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'platformValue': " << test);
+    }
+  }
+
+  {
+    const auto& parserRule {tp.interfaceValue};
+    std::vector<std::string> testsOk {
+      "Interface: gi1, Port ID (outgoing port): gi10\n",
+      "Interface: GigEth0/0, Port ID (outgoing port): GigEth10/10\n",
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'platformValue': " << test);
+    }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(testWhole)
 {
+  TestParser tp;
+
+  {
+    const auto& parserRule {tp};
+    std::vector<std::string> testsOk {
+      R"STR(
+---------------------------------------------
+Device-ID: a1234b4321
+Advertisement version: 2
+Platform: Cisco 1234-1234A (PID:A1234-1234A-A1234)-A
+Capabilities: Router Switch IGMP
+Interface: gi1, Port ID (outgoing port): gi10
+Holdtime: 100
+Version: 1.2.3.4
+Duplex: full
+Native VLAN: 1234
+SysName: ABC-1234-4312
+SysObjectID: 0.0
+Addresses:
+          IP 1.2.3.4
+      )STR",
+    };
+    for (const auto& test : testsOk) {
+      Result out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                "Parse rule 'testWhole': " << test);
+      BOOST_TEST(1 == out.size());
+    }
+  }
+
+  {
+    const auto& parserRule {tp};
+    std::vector<std::string> testsOk {
+      R"STR(
+---------------------------------------------
+Device-ID: a1234b4321
+Advertisement version: 2
+Platform: Cisco 1234-1234A (PID:A1234-1234A-A1234)-A
+Capabilities: Router Switch IGMP
+Interface: gi1, Port ID (outgoing port): gi10
+Holdtime: 100
+Version: 1.2.3.4
+Duplex: full
+Native VLAN: 1234
+SysName: ABC-1234-4312
+SysObjectID: 0.0
+Addresses:
+          IP 1.2.3.4
+---------------------------------------------
+Device-ID: a1234b4321
+Advertisement version: 2
+Platform: Cisco 1234-1234A (PID:A1234-1234A-A1234)-A
+Capabilities: Router Switch IGMP
+Interface: gi1, Port ID (outgoing port): gi10
+Holdtime: 100
+Version: 1.2.3.4
+Duplex: full
+Native VLAN: 1234
+SysName: ABC-1234-4312
+SysObjectID: 0.0
+Addresses:
+          IP 1.2.3.4
+---------------------------------------------
+Device-ID: a1234b4321
+Advertisement version: 2
+Platform: Cisco 1234-1234A (PID:A1234-1234A-A1234)-A
+Capabilities: Router Switch IGMP
+Interface: gi1, Port ID (outgoing port): gi10
+Holdtime: 100
+Version: 1.2.3.4
+Duplex: full
+Native VLAN: 1234
+SysName: ABC-1234-4312
+SysObjectID: 0.0
+Addresses:
+          IP 1.2.3.4
+      )STR",
+    };
+    for (const auto& test : testsOk) {
+      Result out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                "Parse rule 'testWhole': " << test);
+      BOOST_TEST(3 == out.size());
+    }
+  }
 }
