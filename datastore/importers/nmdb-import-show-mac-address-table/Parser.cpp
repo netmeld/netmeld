@@ -34,54 +34,61 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    *(!link >> -qi::omit[+token] >> qi::eol) >>
-    *link >>
-    garbage
+    *((!link) > ignoredLine)
+    > *link
+    > *ignoredLine
     ;
 
   link =
-    -qi::ascii::char_("GRO*+") >>
-    qi::ushort_ // vlan
-      [pnx::bind(&Data::addVlan, &qi::_val, qi::_1)] >>
-    macAddr
-      [pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1)] >>
-    type >>
-    token // interface
-      [pnx::bind(&Data::setName, &qi::_val, qi::_1)] >>
-    qi::omit[*token] >> qi::eol
-      [pnx::bind(&Data::setPartial, &qi::_val, true),
-       pnx::bind(&Data::setState, &qi::_val, true)
-      ]
+    -qi::ascii::char_("GRO*+")
+    >> vlanId [pnx::bind(&Data::addVlan, &qi::_val, qi::_1)]
+    >> macAddr [pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1)]
+    >> portName [pnx::bind(&Data::setName, &qi::_val, qi::_1)]
+    >> qi::omit[*token]
+    >  -qi::eol [pnx::bind(&Data::setPartial, &qi::_val, true),
+                 pnx::bind(&Data::setState, &qi::_val, true)]
     ;
 
-  type =
-    +qi::ascii::char_("a-zA-Z") >>
-    qi::omit[+qi::blank >>
-    -(
-    // age >> secure >> ntfy
-       (+qi::ascii::char_("-0-9") >> +qi::blank >>
-        qi::ascii::char_("TFC~") >> +qi::blank >>
-        qi::ascii::char_("TFC~"))
-    // learn >> age
-     | ((qi::lit("Yes") | qi::lit("No")) >> +qi::blank >>
-        +qi::ascii::char_("-0-9"))
-    // protocol | pv
-     | (+qi::ascii::char_("a-z,"))
-    )]
+  vlanId =
+    (qi::ushort_ > !qi::digit)
+    ;
+
+  portName =
+    -qi::hold[typeValue > -(+qi::blank)]
+    > token [qi::_val = qi::_1]
+    ;
+
+  typeValue =
+    +qi::ascii::char_("a-zA-Z") >> +qi::blank
+    > -( // age >> secure >> ntfy
+         (+qi::ascii::char_("-0-9") > +qi::blank
+          > qi::ascii::char_("TFC~") > +qi::blank
+          > qi::ascii::char_("TFC~")
+         )
+         // learn >> age
+       | ((qi::lit("Yes") | qi::lit("No")) > +qi::blank
+          > +qi::ascii::char_("-0-9")
+         )
+         // protocol | pv
+       | (+qi::ascii::char_("a-z,") >> !qi::digit)
+      )
     ;
 
   token =
     +qi::ascii::graph
     ;
 
-  garbage =
-    *(qi::omit[qi::char_] - qi::eol) % qi::eol
+  ignoredLine =
+    (  (+(qi::char_ - qi::eol) > -qi::eol)
+     | (qi::eol)
+    )
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      (link) (type)
-      //(token) (garbage)
+      (link)
+      (portName)(vlanId)(typeValue)
+      //(token) (ignoredLine)
       );
 }
 

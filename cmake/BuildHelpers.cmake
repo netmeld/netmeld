@@ -95,7 +95,13 @@ endfunction()
 
 # Testing related helpers
 function(nm_add_test target)
-  set(test_target "${TGT_MODULE_TEST}.${target}")
+  if(TGT_TOOL_TEST)
+    set(test_target "${TGT_TOOL_TEST}.${target}")
+  elseif(TGT_LIBRARY_TEST)
+    set(test_target "${TGT_LIBRARY_TEST}.${target}")
+  else()
+    set(test_target "${TGT_MODULE_TEST}.${target}")
+  endif()
   set(TGT_TEST "${test_target}" PARENT_SCOPE)
   add_executable(${test_target}
       EXCLUDE_FROM_ALL
