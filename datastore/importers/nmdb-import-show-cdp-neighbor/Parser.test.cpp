@@ -93,6 +93,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       "Platform: cisco 1234-1234\n",
       "Platform: N5K-1234, Capabilities: Abc abc Abc-abc\n",
       "Platform: cisco 1234, Capabilities:\n",
+      "Platform: AIR-1234, Capabilities:\n",
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -115,10 +116,8 @@ BOOST_AUTO_TEST_CASE(testParts)
 
 BOOST_AUTO_TEST_CASE(testWhole)
 {
-  TestParser tp;
-
   {
-    const auto& parserRule {tp};
+    const auto& parserRule {TestParser()};
     std::vector<std::string> testsOk {
       R"STR(
 ---------------------------------------------
@@ -146,7 +145,7 @@ Addresses:
   }
 
   {
-    const auto& parserRule {tp};
+    const auto& parserRule {TestParser()};
     std::vector<std::string> testsOk {
       R"STR(
 ---------------------------------------------
@@ -164,7 +163,7 @@ SysObjectID: 0.0
 Addresses:
           IP 1.2.3.4
 ---------------------------------------------
-Device-ID: a1234b4321
+Device-ID: ABC-1234-4312
 Advertisement version: 2
 Platform: Cisco 1234-1234A (PID:A1234-1234A-A1234)-A
 Capabilities: Router Switch IGMP
@@ -173,10 +172,9 @@ Holdtime: 100
 Version: 1.2.3.4
 Duplex: full
 Native VLAN: 1234
-SysName: ABC-1234-4312
 SysObjectID: 0.0
 Addresses:
-          IP 1.2.3.4
+          IPv6 1234::1234
 ---------------------------------------------
 Device-ID: a1234b4321
 Advertisement version: 2
@@ -187,17 +185,54 @@ Holdtime: 100
 Version: 1.2.3.4
 Duplex: full
 Native VLAN: 1234
-SysName: ABC-1234-4312
+SysName: ABC-1234-4312.Something.Other
 SysObjectID: 0.0
 Addresses:
           IP 1.2.3.4
+          IPv6 1234::1234
       )STR",
     };
     for (const auto& test : testsOk) {
       Result out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
                 "Parse rule 'testWhole': " << test);
-      BOOST_TEST(3 == out.size());
+//      BOOST_TEST(3 == out.size());
+      const auto& data {out[0]};
+      BOOST_TEST(4 == data.ipAddrs.size());
+
+      auto ipAddr {data.ipAddrs[0]};
+      auto aliases {ipAddr.getAliases()};
+      BOOST_TEST("1.2.3.4/32" == ipAddr.toString());
+      BOOST_TEST(1 == aliases.size());
+      BOOST_TEST("abc-1234-4312" == *aliases.cbegin());
+
+      ipAddr = data.ipAddrs[1];
+      aliases = ipAddr.getAliases();
+      BOOST_TEST("1234::1234/128" == ipAddr.toString());
+      BOOST_TEST(1 == aliases.size());
+      BOOST_TEST("abc-1234-4312" == *aliases.cbegin());
+
+      ipAddr = data.ipAddrs[2];
+      aliases = ipAddr.getAliases();
+      BOOST_TEST("1.2.3.4/32" == ipAddr.toString());
+      BOOST_TEST(1 == aliases.size());
+      BOOST_TEST("abc-1234-4312.something.other" == *aliases.cbegin());
+
+      ipAddr = data.ipAddrs[3];
+      aliases = ipAddr.getAliases();
+      BOOST_TEST("1234::1234/128" == ipAddr.toString());
+      BOOST_TEST(1 == aliases.size());
+      BOOST_TEST("abc-1234-4312.something.other" == *aliases.cbegin());
+
+      BOOST_TEST(3 == data.devInfos.size());
+      for (const auto& devInfo : data.devInfos) {
+        BOOST_TEST("abc-1234-4312" == devInfo.getDeviceId());
+      }
+
+      BOOST_TEST(3 == data.interfaces.size());
+      for (const auto& [iface, name] : data.interfaces) {
+        BOOST_TEST("gi10" == iface.getName());
+      }
     }
   }
 }

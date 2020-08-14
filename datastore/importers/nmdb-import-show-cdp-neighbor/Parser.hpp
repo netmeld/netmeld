@@ -48,6 +48,14 @@ struct Data {
 };
 typedef std::vector<Data>  Result;
 
+struct NeighborData {
+  std::string curHostname   {""};
+  std::string curIfaceName  {""};
+  std::string curVendor     {""};
+  std::string curModel      {""};
+  std::vector<nmdo::IpAddress>  ipAddrs;
+};
+
 
 // =============================================================================
 // Parser definition
@@ -59,9 +67,10 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
-  protected:
     Data d;
+    NeighborData nd;
 
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -70,8 +79,7 @@ class Parser :
       config,
       header,
       deviceData,
-      ignoredLine,
-      devIdAddr;
+      ignoredLine;
 
     qi::rule<nmdp::IstreamIter>
       hostnameValue,
@@ -83,7 +91,6 @@ class Parser :
       token;
 
     nmdp::ParserIpAddress   ipAddr;
-    nmdp::ParserDomainName  hostname;
 
   // ===========================================================================
   // Constructors
@@ -99,6 +106,11 @@ class Parser :
     void addIp(const std::string&, const nmdo::IpAddress&);
     void addHwInfo(const std::string&, const std::string&, std::string&);
     void addCon(const std::string&, const std::string&, const nmdo::IpAddress&);
+
+    void updateIpAddrs();
+    void updateInterfaces();
+    void updateDeviceInformation();
+    void finalizeData();
 
     // Object return
     Result getData();
