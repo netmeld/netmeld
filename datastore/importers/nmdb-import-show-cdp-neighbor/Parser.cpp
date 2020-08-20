@@ -49,23 +49,23 @@ Parser::Parser() : Parser::base_type(start)
     +qi::ascii::char_("-") > qi::eol
     ;
 
-	deviceData =
+  deviceData =
     +( hostnameValue
      | ipAddressValue
      | platformValue
      | interfaceValue
      | ((!header) >> ignoredLine)
     )
-		;
+    ;
 
-	hostnameValue =
+  hostnameValue =
     (  (qi::lit("Device") > (qi::space | qi::lit('-')) > qi::lit("ID:"))
      | (qi::lit("SysName:"))
     ) > -qi::space
     > token [pnx::bind(&NeighborData::curHostname, &nd)
              = pnx::bind(&nmcu::toLower, qi::_1)]
     > qi::eol
-		;
+    ;
 
   ipAddressValue =
     qi::lit("IP") > -(qi::lit("v") > qi::char_("46")) > qi::space
