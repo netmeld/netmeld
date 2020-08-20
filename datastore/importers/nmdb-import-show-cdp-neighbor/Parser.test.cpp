@@ -53,6 +53,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       "Device-ID: hostname\n",
       "Device ID: hostname\n",
       "SysName: hostname\n",
+      "Device-ID: HOSTNAME\n",
       "Device ID: hostname(hostname)\n",
       "Device ID: hostname-hostname-hostname\n",
       "Device ID: hostname.hostname-hostname\n",

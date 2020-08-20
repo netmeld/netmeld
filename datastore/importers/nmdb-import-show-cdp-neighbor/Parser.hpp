@@ -103,9 +103,6 @@ class Parser :
   // ===========================================================================
   private:
     std::string getDevice(const std::string&);
-    void addIp(const std::string&, const nmdo::IpAddress&);
-    void addHwInfo(const std::string&, const std::string&, std::string&);
-    void addCon(const std::string&, const std::string&, const nmdo::IpAddress&);
 
     void updateIpAddrs();
     void updateInterfaces();

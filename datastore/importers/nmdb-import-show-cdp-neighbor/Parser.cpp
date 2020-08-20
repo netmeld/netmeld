@@ -24,8 +24,11 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/core/utils/StringUtilities.hpp>
+
 #include "Parser.hpp"
 
+namespace nmcu = netmeld::core::utils;
 
 // =============================================================================
 // Parser logic
@@ -59,7 +62,8 @@ Parser::Parser() : Parser::base_type(start)
     (  (qi::lit("Device") > (qi::space | qi::lit('-')) > qi::lit("ID:"))
      | (qi::lit("SysName:"))
     ) > -qi::space
-    > token [pnx::bind(&NeighborData::curHostname, &nd) = qi::_1]
+    > token [pnx::bind(&NeighborData::curHostname, &nd)
+             = pnx::bind(&nmcu::toLower, qi::_1)]
     > qi::eol
 		;
 
@@ -120,7 +124,8 @@ Parser::getDevice(const std::string& hostname)
 void
 Parser::updateIpAddrs()
 {
-  for (auto& ip : nd.ipAddrs) {
+  // NOTE: want a copy, else interface propagates wrong (alias, reason)
+  for (auto ip : nd.ipAddrs) {
     ip.addAlias(nd.curHostname, "cdp import");
     d.ipAddrs.push_back(ip);
   }
