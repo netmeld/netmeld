@@ -25,11 +25,12 @@
 # =============================================================================
 
 add_executable(${TGT_TOOL}
+    ${TGT_TOOL}.cpp
+    NmapXmlParser.cpp
     NseResult.cpp
     SshAlgorithm.cpp
     SshPublicKey.cpp
     TracerouteHop.cpp
-    ${TGT_TOOL}.cpp
   )
 
 target_link_libraries(${TGT_TOOL}
