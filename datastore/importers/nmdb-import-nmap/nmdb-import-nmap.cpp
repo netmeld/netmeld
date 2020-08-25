@@ -24,6 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <regex>
+
 #include <pugixml.hpp>
 
 #include <netmeld/datastore/objects/IpAddress.hpp>
@@ -301,6 +303,39 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
         ipAddr.addAlias(nodeHostname.attribute("name").as_string(),
                         nodeHostname.attribute("type").as_string());
+
+        data.ipAddrs.push_back(ipAddr);
+      }
+
+      std::string target {"host/hostscript/script"};
+      LOG_INFO << "Looking for: " << target << '\n';
+      for (const auto& xHostname : nmapNode.select_nodes(target.c_str())) {
+        pugi::xml_node nodeHost = xHostname.node().parent().parent();
+        nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
+
+        pugi::xml_node xNode = xHostname.node();
+
+        std::string idValue {xNode.attribute("id").value()};
+        if (std::string("nbstat") == idValue) {
+          std::string line  {xNode.attribute("output").value()};
+          std::regex  regex {"(NetBIOS name): ([^,]+),"};
+          std::smatch match;
+          while (std::regex_search(line, match, regex)) {
+            LOG_INFO << match[1] << ": " << match[2] << '\n';
+            ipAddr.addAlias(std::string(match[2]), "nmap nbstat");
+            line = match.suffix();
+          }
+        }
+        if (std::string("smb-os-discovery") == idValue) {
+          std::string line  {xNode.attribute("output").value()};
+          std::regex  regex {"(Computer name|FQDN): (.+?)\n"};
+          std::smatch match;
+          while (std::regex_search(line, match, regex)) {
+            LOG_INFO << match[1] << ": " << match[2] << '\n';
+            ipAddr.addAlias(std::string(match[2]), "nmap smb-os-discovery");
+            line = match.suffix();
+          }
+        }
 
         data.ipAddrs.push_back(ipAddr);
       }
