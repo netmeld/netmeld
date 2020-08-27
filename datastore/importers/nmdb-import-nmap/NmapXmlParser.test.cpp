@@ -41,7 +41,112 @@ class TestNmapXmlParser : public NmapXmlParser
     using NmapXmlParser::extractHostMacAddr;
     using NmapXmlParser::extractHostIpAddr;
 };
-// For reference, the XML schema is: https://nmap.org/book/nmap-dtd.html
+/*
+  For reference, the XML schema is:
+  - https://nmap.org/book/nmap-dtd.html
+  - /usr/share/nmap/nmap.dtd
+*/
+
+BOOST_AUTO_TEST_CASE(testExtractHostIsResponding)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    std::vector<std::string> testsOk {
+      R"STR(
+      <host> <status state="up" reason="host-response" /> </host>
+      )STR",
+      R"STR(
+      <host> <status state="up" reason="user-set" />
+      <ports> <port>
+      <state state="open" />
+      </port> </ports> </host>
+      )STR",
+      R"STR(
+      <host> <status state="up" reason="user-set" />
+      <ports> <port>
+      <state state="closed" />
+      </port> </ports> </host>
+      )STR",
+    };
+
+    pugi::xml_document doc;
+
+    for (const auto& test : testsOk) {
+      doc.load_string(test.c_str());
+      const pugi::xml_node testNode {doc.document_element()};
+
+      BOOST_TEST(tnxp.extractHostIsResponding(testNode));
+    }
+  }
+  {
+    std::vector<std::string> testsBad {
+      R"STR(
+      <host> <status state="up" reason="user-set" />
+      <ports> <port>
+      <state state="other" reason="syn-ack" />
+      </port> </ports> </host>
+      )STR",
+    };
+
+    pugi::xml_document doc;
+
+    for (const auto& test : testsBad) {
+      doc.load_string(test.c_str());
+      const pugi::xml_node testNode {doc.document_element()};
+
+      BOOST_TEST(!tnxp.extractHostIsResponding(testNode));
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testExtractHostMacAddr)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <address addr="00:11:22:33:44:55" addrtype="mac" vendor="NO-ONE"/>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    auto ipa {tnxp.extractHostMacAddr(testNode)};
+
+    BOOST_TEST("00:11:22:33:44:55" == ipa.toString());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testExtractHostIpAddr)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <address addr="1.2.3.4" addrtype="ipv4"/>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    auto ipa {tnxp.extractHostIpAddr(testNode)};
+
+    BOOST_TEST("1.2.3.4/32" == ipa.toString());
+  }
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <address addr="1::2" addrtype="ipv6"/>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    auto ipa {tnxp.extractHostIpAddr(testNode)};
+
+    BOOST_TEST("1::2/128" == ipa.toString());
+  }
+}
 
 BOOST_AUTO_TEST_CASE(testExtractHostnames)
 {
@@ -49,20 +154,17 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
 
   {
     pugi::xml_document doc;
-
-    Data d;
     doc.load_string(
       R"STR(
-      <host starttime="1234567890" endtime="1234567899">
-      <address addr="1.2.3.4" addrtype="ipv4"/>
-      <address addr="00:11:22:33:44:55" addrtype="mac" vendor="NO-ONE"/>
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <hostnames>                                                                     
       <hostname name="some_host" type="user"/>                                           
       <hostname name="some_host" type="PTR"/>                                            
-      </hostnames> 
-      </host>
+      </hostnames> </host>
       )STR");
     const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
     tnxp.extractHostnames(testNode, d);
 
     BOOST_TEST(2 == d.ipAddrs.size());
@@ -80,19 +182,16 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
 
   {
     pugi::xml_document doc;
-
-    Data d;
     doc.load_string(
       R"STR(
-      <host starttime="1234567890" endtime="1234567899">
-      <address addr="1.2.3.4" addrtype="ipv4"/>
-      <address addr="00:11:22:33:44:55" addrtype="mac" vendor="NO-ONE"/>
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <hostscript>
       <script id="nbstat" output="NetBIOS name: some_host, NetBIOS user: &lt;unknown&gt;, NetBIOS MAC: 00:11:22:33:44:55 (NO-ONE)"/>
-      </hostscript>
-      </host>
+      </hostscript> </host>
       )STR");
     const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
     tnxp.extractHostnames(testNode, d);
 
     BOOST_TEST(1 == d.ipAddrs.size());
@@ -111,9 +210,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     Data d;
     doc.load_string(
       R"STR(
-      <host starttime="1234567890" endtime="1234567899">
-      <address addr="1.2.3.4" addrtype="ipv4"/>
-      <address addr="00:11:22:33:44:55" addrtype="mac" vendor="NO-ONE"/>
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <hostscript>
       <script id="smb-os-discovery" output="&#xa;  OS: Some OS (SomeOsFlavor 1.2.3)&#xa;  OS CPE: cpe:/o:some_vendor:some_os:::&#xa;  Computer name: some_host&#xa;  NetBIOS computer name: SOME_HOST\x00&#xa;  Domain name: some_domain.some_forest&#xa;  Forest name: some_forest&#xa;  FQDN: some_host.some_domain.some_forest&#xa;  System time: 2000-01-01T00:00:01+00:00&#xa;">
       <elem key="os">Some OS</elem>
@@ -125,8 +222,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       <elem key="forest_dns">some_forest</elem>
       <elem key="workgroup">SOME_WORKGROUP\x00</elem>
       <elem key="cpe">cpe:/o:::::</elem>
-      </hostscript>
-      </host>
+      </hostscript> </host>
       )STR");
     const pugi::xml_node testNode {doc.document_element().root()};
     tnxp.extractHostnames(testNode, d);
