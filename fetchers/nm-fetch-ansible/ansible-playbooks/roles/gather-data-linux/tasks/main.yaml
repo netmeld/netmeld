@@ -1,6 +1,6 @@
 ---
 - name: Gather data from Linux type targets
-  command: "{{ item }}"
+  command: "{{ item.cmd }}"
   args:
     warn: false
   register: cmd

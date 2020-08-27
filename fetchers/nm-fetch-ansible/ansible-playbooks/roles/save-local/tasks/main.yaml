@@ -18,3 +18,23 @@
     label: "{{ item.item }}"
   when: item is success
   ignore_errors: yes
+
+- name: "Gather local package facts"
+  local_action:
+    module: package_facts
+    manager: auto
+
+- name: "Check for Netmeld Datalake Module"
+  debug:
+    msg: "{{ ansible_facts.packages['netmeld-datalake'] | length }} versions of netmeld-datalake installed"
+  when: "'netmeld-datalake' in ansible_facts.packages"
+  register: use_nmdl_tools
+
+- name: "Put in Netmeld Datalake"
+  local_action: command nmdl-insert --device-id "{{ inventory_hostname }}" {{ tool_value }} "{{ data_path.path }}/{{ command_value }}"
+  #no_log: True
+  loop: "{{ cmd.results | flatten(1) }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item is success and use_nmdl_tools
+  ignore_errors: yes
