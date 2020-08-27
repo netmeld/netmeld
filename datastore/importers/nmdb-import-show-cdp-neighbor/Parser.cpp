@@ -24,8 +24,11 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/core/utils/StringUtilities.hpp>
+
 #include "Parser.hpp"
 
+namespace nmcu = netmeld::core::utils;
 
 // =============================================================================
 // Parser logic
@@ -38,46 +41,74 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   config =
-    *(qi::eol) >>
-    *(header >>
-      devIdAddr >>
-      *(!header >> -qi::omit[+token] >> qi::eol)
-    )
+    *(qi::eol)
+    >> *(header >> deviceData) [pnx::bind(&Parser::finalizeData, this)]
     ;
 
   header =
-    +qi::ascii::char_("-") >> qi::eol
+    +qi::ascii::char_("-") > qi::eol
     ;
 
-  devIdAddr =
-    (qi::lit("Device ID:") >>
-      hostname >> qi::eol >>
-     qi::lit("Entry address(es):") >> qi::eol >>
-     qi::lit("IP address:") >>
-      ipAddr >> qi::eol >>
-     qi::lit("Platform:") >>
-      token >>
-      token >> qi::omit[+token] >> qi::eol >>
-     qi::lit("Interface:") >>
-      token >> qi::lit("Port ID (outgoing port):") >>
-      token >> qi::eol
-    ) [
-       pnx::bind(&Parser::addIp, this, qi::_1, qi::_2),
-       pnx::bind(&Parser::addHwInfo, this, qi::_1, qi::_3, qi::_4),
-       pnx::bind(&Parser::addCon, this, qi::_1, qi::_6, qi::_2)
-      ]
+  deviceData =
+    +( hostnameValue
+     | ipAddressValue
+     | platformValue
+     | interfaceValue
+     | ((!header) >> ignoredLine)
+    )
+    ;
+
+  hostnameValue =
+    (  (qi::lit("Device") > (qi::space | qi::lit('-')) > qi::lit("ID:"))
+     | (qi::lit("SysName:"))
+    ) > -qi::space
+    > token [pnx::bind(&NeighborData::curHostname, &nd)
+             = pnx::bind(&nmcu::toLower, qi::_1)]
+    > qi::eol
+    ;
+
+  ipAddressValue =
+    qi::lit("IP") > -(qi::lit("v") > qi::char_("46")) > qi::space
+    > -qi::lit("address: ")
+    > ipAddr
+      [pnx::bind([&](nmdo::IpAddress val){nd.ipAddrs.push_back(val);}, qi::_1)]
+    > *(qi::blank > token)
+    > qi::eol
+    ;
+
+  platformValue =
+    qi::lit("Platform: ")
+    > token [pnx::bind(&NeighborData::curVendor, &nd) = qi::_1]
+    > qi::space
+    > token [pnx::bind(&NeighborData::curModel, &nd) = qi::_1]
+    > *(qi::blank > token)
+    > qi::eol
+    ;
+
+  interfaceValue =
+    qi::lit("Interface: ") > token
+    > qi::lit(" Port ID (outgoing port): ")
+    > token [pnx::bind(&NeighborData::curIfaceName, &nd) = qi::_1]
+    > qi::eol
     ;
 
   token =
     +qi::ascii::graph
     ;
 
+  ignoredLine =
+    +token > qi::eol
+    ;
+
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (config)
-      (header)
-      (devIdAddr)
-      (token)
+      (header) (deviceData)
+      (hostnameValue)
+      (ipAddressValue)
+      (platformValue)
+      (interfaceValue)
+      //(ignoredLine) (token)
       );
 }
 
@@ -91,48 +122,61 @@ Parser::getDevice(const std::string& hostname)
 }
 
 void
-Parser::addIp(const std::string& hostname, const nmdo::IpAddress& _ip)
+Parser::updateIpAddrs()
 {
-  nmdo::IpAddress ip = _ip;
-  ip.addAlias(hostname, "cdp");
-
-  d.ipAddrs.push_back(ip);
-}
-
-void
-Parser::addHwInfo(const std::string& hostname, const std::string& vendor,
-                  std::string& model)
-{
-  nmdo::DeviceInformation devInfo;
-
-  devInfo.setDeviceId(getDevice(hostname));
-  devInfo.setVendor(vendor);
-  if (model.back() == ',') {
-    model.pop_back();
+  // NOTE: want a copy, else interface propagates wrong (alias, reason)
+  for (auto ip : nd.ipAddrs) {
+    ip.addAlias(nd.curHostname, "cdp import");
+    d.ipAddrs.push_back(ip);
   }
-  devInfo.setModel(model);
-
-  d.devInfos.push_back(devInfo);
 }
 
 void
-Parser::addCon(const std::string& hostname,
-               const std::string& toIface, const nmdo::IpAddress& _ip)
+Parser::updateInterfaces()
 {
-  nmdo::InterfaceNetwork iface {toIface};
+  nmdo::InterfaceNetwork iface {nd.curIfaceName};
   iface.setPartial(true);
 
-  nmdo::IpAddress ip = _ip; // copy to ensure we don't alter original
+  for (auto& ip : nd.ipAddrs) {
+    iface.addIpAddress(ip);
+  }
 
+  d.interfaces.emplace_back(iface, getDevice(nd.curHostname));
+}
+
+void
+Parser::updateDeviceInformation()
+{
   nmdo::DeviceInformation devInfo;
-  const auto& did {getDevice(hostname)};
-  devInfo.setDeviceId(did);
+
+  devInfo.setDeviceId(getDevice(nd.curHostname));
+
+  if (',' == nd.curVendor.back()) {
+    nd.curVendor.pop_back();
+  } else if (nd.curModel.back() == ',') {
+    nd.curModel.pop_back();
+  }
+
+  if (nd.curModel.empty()) {
+    devInfo.setModel(nd.curVendor);
+  } else {
+    devInfo.setVendor(nd.curVendor);
+    devInfo.setModel(nd.curModel);
+  }
+
   d.devInfos.push_back(devInfo);
+}
 
-  ip.addAlias(hostname, "cdp");
-  iface.addIpAddress(ip);
+void
+Parser::finalizeData()
+{
+  if (!nd.curHostname.empty()) {
+    updateIpAddrs();
+    updateInterfaces();
+    updateDeviceInformation();
+  }
 
-  d.interfaces.emplace_back(iface, did);
+  nd = NeighborData();
 }
 
 // Object return
