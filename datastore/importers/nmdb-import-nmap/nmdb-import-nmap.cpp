@@ -29,10 +29,6 @@
 #include <pugixml.hpp>
 
 #include <netmeld/datastore/objects/IpAddress.hpp>
-//#include <netmeld/datastore/objects/MacAddress.hpp>
-//#include <netmeld/datastore/objects/OperatingSystem.hpp>
-//#include <netmeld/datastore/objects/Port.hpp>
-//#include <netmeld/datastore/objects/Service.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
