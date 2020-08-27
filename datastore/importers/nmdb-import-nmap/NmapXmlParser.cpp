@@ -134,9 +134,10 @@ NmapXmlParser::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
     pugi::xml_node nodeHost = nodeHostname.parent().parent();
 
     nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
-
-    ipAddr.addAlias(nodeHostname.attribute("name").as_string(),
-                    nodeHostname.attribute("type").as_string());
+    
+    std::string reason {"nmap "};
+    reason.append(nodeHostname.attribute("type").as_string());
+    ipAddr.addAlias(nodeHostname.attribute("name").as_string(), reason);
 
     data.ipAddrs.push_back(ipAddr);
   }
