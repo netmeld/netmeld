@@ -1,0 +1,22 @@
+---
+- name: "Ensuring Datalake is initialized (non-destructively)"
+  local_action:
+    module: command
+    cmd: echo 'n' | nmdl-initialize
+
+- name: "Saving data"
+  local_action:
+    module: shell
+    cmd: >
+      echo "{{ item_value }}" |
+      ~/projects/dev/netmeld/build/datalake/nmdl-insert/nmdl-insert
+      --device-id "{{ inventory_hostname }}"
+      {{ tool_value }}
+      {{ tool_args_value }}
+      --pipe --rename "{{ command_value }}"
+  #no_log: True
+  loop: "{{ cmd.results | flatten(1) }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item is success
+  ignore_errors: yes

@@ -1,8 +1,21 @@
 ---
-- name: Gather data from Linux type targets
+- name: "Enabling Linux privilleged commands"
+  set_fact:
+    cmd_list: "{{ cmd_list + [ item | combine({'become':'yes'}) ] }}"
+  register:
+  loop: "{{ pcmd_list | flatten(1) }}"
+  when: lookup('config', 'DEFAULT_BECOME_ASK_PASS')
+
+#- name: "Debugging data collection values"
+#  debug:
+#    msg: "{{ item }}"
+#  loop: "{{ cmd_list | flatten(1) }}"
+
+- name: "Gather data from Linux type targets"
   command: "{{ item.cmd }}"
   args:
     warn: false
   register: cmd
   loop: "{{ cmd_list | flatten(1) }}"
   ignore_errors: yes
+  become: "{{ item.become | default('no') }}"

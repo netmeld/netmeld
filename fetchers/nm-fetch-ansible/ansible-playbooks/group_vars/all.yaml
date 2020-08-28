@@ -1,4 +1,10 @@
 ---
 dts: "{{ '%Y%m%d%H%M%S' | strftime }}"
 uuid: "{{ 999999999999 | random | string + dts | to_uuid() }}"
+
+# To use Netmeld Fetcher Module
+save_logic: "fetcher"
 save_root: "~/.netmeld/fetch-ansible"
+
+# To use Netmeld Datalake Module
+#save_logic: "datalake"

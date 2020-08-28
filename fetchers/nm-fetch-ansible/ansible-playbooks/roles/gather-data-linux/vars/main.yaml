@@ -2,10 +2,19 @@
 # NOTE: \u2215, math symbol division slash, is different from / to the OS
 command_value: "{{ item.cmd | join('_') | regex_replace('/', '\u2215') }}"
 item_value: "{{ item.stdout }}"
-tool_value: --tool "{{ item.item.tool | default('') }}"
 
+### START OF DATALAKE MODULE OPTIONS
+# Add `tool:` to a command
+tool_value: --tool "{{ item.item.tool | default('') }}"
+# Add `tool_args:` to a command
+tool_args_value: --tool-args "{{ item.item.tool_args | default('') }}"
+### END OF DATALAKE MODULE OPTIONS
+
+# Standard commands
 cmd_list:
 - cmd: hostname -A
+- cmd: cat /etc/hosts
+  tool: nmdb-import-hosts
 # IP address and route information
 - cmd: ip addr show
   tool: nmdb-import-ip-addr-show
@@ -16,9 +25,16 @@ cmd_list:
 - cmd: ip -6 route show
   tool: nmdb-import-ip-route-show
 # Get packages and/or services
-- cmd: netstat -auntpl
-- cmd: ss -auntpl
+- cmd: netstat -auntp
+- cmd: ss -auntp
 - cmd: ps -ef
 - cmd: ls -lah /etc
 - cmd: rpm -qa --queryformat="%-50{NAME}%10{VERSION}-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n"
 - cmd: dpkg --list
+
+# Privilleged commands
+pcmd_list:
+- cmd: iptables-save -c
+  tool: nmdb-import-iptables-save
+- cmd: netstat -auntpl
+- cmd: ss -auntpl
