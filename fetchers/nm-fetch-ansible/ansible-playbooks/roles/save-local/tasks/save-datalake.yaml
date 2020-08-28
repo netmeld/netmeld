@@ -9,7 +9,7 @@
     module: shell
     cmd: >
       echo "{{ item_value }}" |
-      ~/projects/dev/netmeld/build/datalake/nmdl-insert/nmdl-insert
+      nmdl-insert
       --device-id "{{ inventory_hostname }}"
       {{ tool_value }}
       {{ tool_args_value }}
