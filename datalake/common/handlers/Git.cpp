@@ -118,6 +118,17 @@ namespace netmeld::datalake::handlers {
   {
     const auto& tgtPath {this->dataLakePath};
 
+    if (sfs::exists(tgtPath)) {
+      LOG_INFO << "Datalake " << tgtPath << " already exists.\n"
+               << "Re-initialzie the datalake [y/n]?";
+      char response;
+      std::cin >> response;
+      if ('y' != response && 'Y' != response) {
+        LOG_INFO << "Datalake NOT re-initialized by user\n";
+        std::exit(nmcu::Exit::SUCCESS); // User aborted
+      }
+    }
+
     LOG_DEBUG << "Removing existing: " << tgtPath << '\n';
     sfs::remove_all(tgtPath);
     LOG_DEBUG << "Creating new: " << tgtPath << '\n';
@@ -127,7 +138,6 @@ namespace netmeld::datalake::handlers {
     std::ostringstream oss;
     oss << "git init";
     nmcu::cmdExec(oss.str());
-
   }
 
   void
