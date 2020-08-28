@@ -37,6 +37,8 @@ class Tool : public nmdlt::AbstractDatalakeTool
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
+    std::FILE* tmpf;
+
   protected: // Variables intended for internal/subclass API
     // Inhertied from AbstractTool at this scope
       // std::string            helpBlurb;
@@ -58,7 +60,9 @@ class Tool : public nmdlt::AbstractDatalakeTool
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)
       )
-    {}
+    {
+      tmpf = std::tmpfile();
+    }
 
 
   // ===========================================================================
@@ -69,17 +73,35 @@ class Tool : public nmdlt::AbstractDatalakeTool
     void
     addToolOptions() override
     {
+      opts.addRequiredOption("001", std::make_tuple(
+            "[data-path|pipe]",
+            NULL_SEMANTIC,
+            "One required for data storage."
+            "  See 'Optional Options' descriptions.")
+          );
+
       opts.addRequiredOption("device-id", std::make_tuple(
             "device-id",
             po::value<std::string>()->required(),
             "Device for which to associate data.")
           );
 
-      opts.addRequiredOption("data-path", std::make_tuple(
+      std::string tmpFile {
+        sfs::read_symlink(
+              sfs::path("/proc/self/fd") / std::to_string(fileno(tmpf))
+            ).string()
+      };
+      opts.addOptionalOption("data-path", std::make_tuple(
             "data-path",
-            po::value<std::string>()->required(),
+            po::value<std::string>()->default_value(tmpFile),
             "Data on file system to store; a path."
             " Either --data-path param or implicit last argument.")
+          );
+      opts.addOptionalOption("pipe", std::make_tuple(
+            "pipe",
+            NULL_SEMANTIC,
+            "Read input from STDIN."
+            "  Save a copy to the datalake with `--rename` value (required).")
           );
 
       opts.addOptionalOption("tool", std::make_tuple(
@@ -97,7 +119,7 @@ class Tool : public nmdlt::AbstractDatalakeTool
             "rename",
             po::value<std::string>(),
             "Data file name to use instead when data path file is stored;"
-            " not a path.")
+            " not a path.  Required when `--pipe` used.")
           );
     }
 
@@ -115,7 +137,11 @@ class Tool : public nmdlt::AbstractDatalakeTool
       const auto& deviceId {opts.getValue("device-id")};
       de.setDeviceId(deviceId);
 
-      const auto& dataPath {opts.getValue("data-path")};
+      auto dataPath {opts.getValue("data-path")};
+      if (opts.exists("pipe") && !opts.exists("rename")) {
+        LOG_ERROR << "Required option --rename when --pipe used\n";
+        std::exit(nmcu::Exit::FAILURE);
+      }
       de.setDataPath(dataPath);
 
       if (opts.exists("tool")) {
