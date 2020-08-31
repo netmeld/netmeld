@@ -1,6 +1,26 @@
 ---
-- name: "Loading save logic to use"
-#  debug:
-#    msg: "Using {{ save_logic }} module logic..."
+- name: "Determining save logic to use"
+  when: save_logic is undefined
+  block:
+    - name: "Finding available save tooling"
+      local_action:
+        module: shell
+        cmd: "{{ item }}"
+      register: save_tooling
+      ignore_errors: yes
+      changed_when: false
+      when: save_tooling is undefined or save_tooling.rc != 0
+      loop:
+      - "if which nmdl-initialize >/dev/null 2>&1; then echo datalake; fi"
+      - "echo fetcher"
+
+    - set_fact:
+        save_logic: "{{ item.stdout }}"
+      when: "'rc' in item and item.rc == 0"
+      loop: "{{ save_tooling.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+- name: "Loading {{ save_logic | upper }} save logic to use"
   include: "save-{{ save_logic | lower }}.yaml"
   when: save_logic is defined

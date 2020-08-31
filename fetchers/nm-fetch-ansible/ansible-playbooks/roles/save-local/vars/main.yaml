@@ -1,0 +1,6 @@
+---
+save_root: "~/.netmeld/fetch-ansible"
+datalake_save_cmd: >-
+  nmdl-insert --device-id "{{ inventory_hostname }}"
+  {{ tool_value }} {{ tool_args_value }}
+  --pipe --rename "{{ command_value }}"

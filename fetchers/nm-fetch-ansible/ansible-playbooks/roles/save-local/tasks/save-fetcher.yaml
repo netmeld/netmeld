@@ -1,5 +1,5 @@
 ---
-- name: "Create data directory under {{ save_root }}"
+- name: "Ensuring Fetcher save directory is available under {{ save_root }}"
   local_action:
     module: file
     path: "{{ save_root }}/{{ inventory_hostname }}/{{ dts }}-{{ uuid }}"
@@ -7,7 +7,7 @@
     mode: 0755
   register: data_path
 
-- name: "Save data locally"
+- name: "Saving data to: {{ data_path.path }}"
   local_action:
     module: copy
     content: "{{ item_value }}"
