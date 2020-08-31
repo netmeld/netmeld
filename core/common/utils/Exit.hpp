@@ -31,7 +31,8 @@ namespace netmeld::core::utils {
 
   enum Exit {
     SUCCESS = 0,
-    FAILURE
+    FAILURE,
+    USER_ABORTED = 80,
   };
 }
 #endif // EXIT_HPP

@@ -125,7 +125,7 @@ namespace netmeld::datalake::handlers {
       std::cin >> response;
       if ('y' != response && 'Y' != response) {
         LOG_INFO << "Datalake NOT re-initialized by user\n";
-        std::exit(nmcu::Exit::SUCCESS); // User aborted
+        std::exit(nmcu::Exit::USER_ABORTED);
       }
     }
 
