@@ -3,5 +3,5 @@ dts: "{{ '%Y%m%d%H%M%S' | strftime }}"
 uuid: "{{ 999999999999 | random | string + dts | to_uuid() }}"
 
 # Override for tooling logic
-save_logic: "fetcher"
+#save_logic: "fetcher"
 #save_logic: "datalake"
