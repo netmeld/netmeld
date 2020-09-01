@@ -37,8 +37,6 @@ class Tool : public nmdlt::AbstractDatalakeTool
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
-    std::FILE* tmpf;
-
   protected: // Variables intended for internal/subclass API
     // Inhertied from AbstractTool at this scope
       // std::string            helpBlurb;
@@ -60,10 +58,7 @@ class Tool : public nmdlt::AbstractDatalakeTool
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)
       )
-    {
-      tmpf = std::tmpfile();
-    }
-
+    {}
 
   // ===========================================================================
   // Methods
@@ -86,17 +81,14 @@ class Tool : public nmdlt::AbstractDatalakeTool
             "Device for which to associate data.")
           );
 
-      std::string tmpFile {
-        sfs::read_symlink(
-              sfs::path("/proc/self/fd") / std::to_string(fileno(tmpf))
-            ).string()
-      };
-      opts.addOptionalOption("data-path", std::make_tuple(
+      opts.addOptionalOption("data-path1", std::make_tuple(
             "data-path",
-            po::value<std::string>()->default_value(tmpFile),
+            po::value<std::string>(),
             "Data on file system to store; a path."
             " Either --data-path param or implicit last argument.")
           );
+      opts.addPositionalOption("data-path1", -1);
+
       opts.addOptionalOption("pipe", std::make_tuple(
             "pipe",
             NULL_SEMANTIC,
@@ -131,18 +123,30 @@ class Tool : public nmdlt::AbstractDatalakeTool
     int
     runTool() override
     {
+      // Option second check
+      if (   ( opts.exists("data-path") &&  opts.exists("pipe"))
+          || (!opts.exists("data-path") && !opts.exists("pipe"))
+         )
+      {
+        throw po::required_option("data-path or pipe");
+      }
+      if (opts.exists("pipe") && !opts.exists("rename")) {
+        throw po::required_option("pipe requires rename to be provided");
+      }
+
+      // Process data
       auto const& dataLake {getDatalakeHandler()};
       nmdlo::DataEntry de;
 
       const auto& deviceId {opts.getValue("device-id")};
       de.setDeviceId(deviceId);
 
-      auto dataPath {opts.getValue("data-path")};
-      if (opts.exists("pipe") && !opts.exists("rename")) {
-        LOG_ERROR << "Required option --rename when --pipe used\n";
-        std::exit(nmcu::Exit::FAILURE);
+      if (opts.exists("data-path")) {
+        auto dataPath {opts.getValue("data-path")};
+        de.setDataPath(dataPath);
+      } else if (opts.exists("pipe")) {
+        de.setDataPath("");
       }
-      de.setDataPath(dataPath);
 
       if (opts.exists("tool")) {
         const auto& ingestTool {opts.getValue("tool")};

@@ -40,11 +40,13 @@ namespace netmeld::datalake::objects {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string deviceId;
-      std::string dataPath;
-      std::string ingestTool;
-      std::string toolArgs;
-      std::string newName;
+      bool pipedData {false};
+
+      std::string deviceId   {""};
+      std::string dataPath   {""};
+      std::string ingestTool {""};
+      std::string toolArgs   {""};
+      std::string newName    {""};
 
     public: // Variables should rarely appear at this scope
 
@@ -62,6 +64,8 @@ namespace netmeld::datalake::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
+      bool isPipedData() const;
+
       std::string getDataPath() const;
       std::string getDeviceId() const;
       std::string getIngestCmd() const;

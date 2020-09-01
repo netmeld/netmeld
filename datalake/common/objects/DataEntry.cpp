@@ -47,6 +47,10 @@ namespace netmeld::datalake::objects {
   // ===========================================================================
   // Methods
   // ===========================================================================
+  bool
+  DataEntry::isPipedData() const
+  { return pipedData; }
+
   std::string
   DataEntry::getDataPath() const
   { return dataPath; }
@@ -107,7 +111,11 @@ namespace netmeld::datalake::objects {
   void
   DataEntry::setDataPath(const std::string& _dataPath)
   {
-    dataPath = sfs::absolute(_dataPath);
+    if (_dataPath.empty()) {
+      pipedData = true;
+    } else {
+      dataPath = sfs::absolute(_dataPath);
+    }
   }
 
   void

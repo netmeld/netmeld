@@ -202,23 +202,6 @@ namespace netmeld::core::utils {
   }
 
   void
-  ProgramOptions::pipedInputFile(sfs::path const& inputFilePath)
-  {
-    if (sfs::exists(inputFilePath)) {
-      LOG_ERROR << "File already exists: "
-                << inputFilePath.string()
-                << std::endl;
-      std::exit(Exit::FAILURE);
-    }
-
-    std::ofstream f{inputFilePath.string()};
-    for (std::string line; std::getline(std::cin, line); ) {
-      f << line << std::endl;
-    }
-    f.close();
-  }
-
-  void
   ProgramOptions::removeOption(const std::string& map, const std::string& key)
   {
     if (optionsMaps.count(map)) {
@@ -318,12 +301,11 @@ namespace netmeld::core::utils {
     if (varMap.count("data-path")) {
       sfs::path const dataFile = varMap.at("data-path").as<std::string>();
       if (varMap.count("pipe")) {
-        pipedInputFile(dataFile);
+        nmfm.pipedInputFile(dataFile);
       }
       if (!sfs::exists(dataFile)) {
       LOG_ERROR << "Specified DATA_PATH does not exist: "
-                << dataFile.string()
-                << std::endl;
+                << dataFile.string() << '\n';
       std::exit(Exit::FAILURE);
       }
     }

@@ -30,6 +30,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include <netmeld/core/utils/LoggerSingleton.hpp>
+
 namespace sfs = std::filesystem;
 
 namespace netmeld::core::utils {
@@ -42,6 +44,7 @@ namespace netmeld::core::utils {
     protected: // Variables intended for internal/subclass API
       sfs::path confPath;
       sfs::path savePath;
+      sfs::path tempPath;
 
     public: // Variables should rarely appear at this scope
 
@@ -50,6 +53,8 @@ namespace netmeld::core::utils {
     // =========================================================================
     private: // Constructors which should be hidden from API users
       FileManager();
+      ~FileManager();
+
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
 
@@ -66,9 +71,12 @@ namespace netmeld::core::utils {
 
       const sfs::path& getConfPath() const;
       const sfs::path& getSavePath() const;
+      const sfs::path& getTempPath() const;
 
       void removeWrite(const sfs::path&, bool=false) const;
 
+      void pipedInputFile(const sfs::path&) const;
+      void pipedInputFileOverwrite(const sfs::path&) const;
   };
 }
 #endif // FILE_MANAGER_HPP

@@ -26,6 +26,8 @@
 
 #include <netmeld/core/utils/FileManager.hpp>
 
+#include <iostream>
+
 
 namespace netmeld::core::utils {
 
@@ -50,6 +52,15 @@ namespace netmeld::core::utils {
     savePath = oss.str();
 
     sfs::create_directories(savePath);
+
+    oss << "/.tmp";
+    tempPath = oss.str();
+    sfs::create_directories(tempPath);
+  }
+
+  FileManager::~FileManager()
+  {
+    sfs::remove_all(tempPath);
   }
 
   // ===========================================================================
@@ -74,6 +85,12 @@ namespace netmeld::core::utils {
     return savePath;
   }
 
+  const sfs::path&
+  FileManager::getTempPath() const
+  {
+    return tempPath;
+  }
+
   void
   FileManager::removeWrite(const sfs::path& path, bool recursive) const
   {
@@ -92,6 +109,33 @@ namespace netmeld::core::utils {
         sfs::permissions(p, writeOnly, sfs::perm_options::remove);
       }
     }
+  }
+
+  void
+  FileManager::pipedInputFile(sfs::path const& inputFilePath) const
+  {
+    if (sfs::exists(inputFilePath)) {
+      LOG_ERROR << "File already exists: " << inputFilePath.string() << '\n';
+      std::exit(Exit::FAILURE);
+    }
+
+    std::ofstream f{inputFilePath.string()};
+    for (std::string line; std::getline(std::cin, line); ) {
+      f << line << std::endl;
+    }
+    f.close();
+  }
+
+
+  void
+  FileManager::pipedInputFileOverwrite(const sfs::path& path) const
+  {
+    std::ofstream f {path.string(),
+                     std::ios::out | std::ios::binary | std::ios::trunc};
+    for (std::string line; std::getline(std::cin, line); ) {
+      f << line << std::endl;
+    }
+    f.close();
   }
 
   // ===========================================================================
