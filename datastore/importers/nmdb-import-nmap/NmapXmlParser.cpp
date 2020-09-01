@@ -150,24 +150,20 @@ NmapXmlParser::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
     nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
 
     std::string idValue {nodeScript.attribute("id").value()};
+    std::string reason  {"nmap " + idValue};
+    std::string line    {nodeScript.attribute("output").value()};
+    std::regex  regex;
+    std::smatch match;
+
     if (std::string("nbstat") == idValue) {
-      std::string reason  {"nmap nbstat"};
-      std::string line    {nodeScript.attribute("output").value()};
-      std::regex  regex   {"(NetBIOS name): ([^,]+),"};
-      std::smatch match;
-      while (std::regex_search(line, match, regex)) {
-        ipAddr.addAlias(std::string(match[2]), reason);
-        line = match.suffix();
-      }
+      regex = "(NetBIOS name): ([^,]+),";
     } else if (std::string("smb-os-discovery") == idValue) {
-      std::string reason  {"nmap smb-os-discovery"};
-      std::string line    {nodeScript.attribute("output").value()};
-      std::regex  regex   {"(Computer name|FQDN): (.+?)\n"};
-      std::smatch match;
-      while (std::regex_search(line, match, regex)) {
-        ipAddr.addAlias(std::string(match[2]), reason);
-        line = match.suffix();
-      }
+      regex = "(Computer name|FQDN): (.+?)\n";
+    }
+
+    while (std::regex_search(line, match, regex)) {
+      ipAddr.addAlias(std::string(match[2]), reason);
+      line = match.suffix();
     }
 
     data.ipAddrs.push_back(ipAddr);
