@@ -47,6 +47,32 @@ class TestNmapXmlParser : public NmapXmlParser
   - /usr/share/nmap/nmap.dtd
 */
 
+BOOST_AUTO_TEST_CASE(testExtractExecutionTiming)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <nmaprun start="1598302716">
+      <runstats>
+      <finished time="1598303089">
+      </runstats>
+      </nmaprun>
+      )STR");
+    const pugi::xml_node nmapNode = doc.select_node("/nmaprun").node();
+
+    const auto timing = tnxp.extractExecutionTiming(nmapNode);
+
+    const auto start = std::get<0>(timing);
+    BOOST_TEST("1598302716" == start);
+
+    const auto stop = std::get<1>(timing);
+    BOOST_TEST("1598303089" == stop);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(testExtractHostIsResponding)
 {
   TestNmapXmlParser tnxp;
@@ -148,6 +174,51 @@ BOOST_AUTO_TEST_CASE(testExtractHostIpAddr)
   }
 }
 
+BOOST_AUTO_TEST_CASE(testExtractMacAndIpAddrs)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host>
+      <address addr="00:11:22:33:44:55" addrtype="mac" vendor="NO-ONE"/>
+      <address addr="1.2.3.4" addrtype="ipv4"/>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractMacAndIpAddrs(testNode, d);
+
+    const auto mac {d.macAddrs[0]};
+    BOOST_TEST("00:11:22:33:44:55" == mac.toString());
+    const auto ip {mac.getIpAddrs()[0]};
+    BOOST_TEST("1.2.3.4/32" == ip.toString());
+  }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host>
+      <address addr="00:11:22:33:44:55" addrtype="mac" vendor="NO-ONE"/>
+      <address addr="1::2" addrtype="ipv6"/>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractMacAndIpAddrs(testNode, d);
+
+    const auto mac {d.macAddrs[0]};
+    BOOST_TEST("00:11:22:33:44:55" == mac.toString());
+    const auto ip {mac.getIpAddrs()[0]};
+    BOOST_TEST("1::2/128" == ip.toString());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(testExtractHostnames)
 {
   TestNmapXmlParser tnxp;
@@ -237,4 +308,181 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     BOOST_TEST("[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_host, some_host.some_domain.some_forest], ]"
                == ipa.toDebugString());
   }
+}
+
+BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <os>
+      <osmatch>
+      <osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="2.6.X" accuracy="85"><cpe>cpe:/o:linux:linux_kernel:2.6.38</cpe></osclass>
+      </osmatch>
+      </os>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractOperatingSystems(testNode, d);
+
+    const auto os {d.oses[0]};
+    BOOST_TEST("[[1.2.3.4/32, 0, , 0, [], ], linux, linux, 2.6.x, cpe:/o:linux:linux_kernel:2.6.38, 0.85]" == os.toDebugString());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <trace>
+      <hop ttl="1" ipaddr="4.3.2.1", rtt="20.49"/>
+      </trace>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractTraceRoutes(testNode, d);
+
+    const auto hop {d.tracerouteHops[0]};
+    BOOST_TEST("[[4.3.2.1/32, 1, , 0, [], ], [1.2.3.4/32, 0, , 0, [], ], 1]" == hop.toString());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
+{
+  TestNmapXmlParser tnxp;
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <scaninfo protocol="tcp"/>
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports>
+      <extraports state="filtered">
+      <extrareasons reason="no-responses"/>
+      </extraports>
+      </ports>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractPortsAndServices(testNode, d);
+
+    const auto port = d.ports[0];
+    BOOST_TEST("[-1, tcp, [1.2.3.4/32, 0, , 0, [], ], filtered, no-responses]" == port.toDebugString());
+  }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports>
+      <extraports state="filtered">
+      <extrareasons reason="udp-responses"/>
+      </extraports>
+      </ports>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractPortsAndServices(testNode, d);
+
+    const auto port = d.ports[0];
+    BOOST_TEST("[-1, udp, [1.2.3.4/32, 0, , 0, [], ], filtered, udp-responses]" == port.toDebugString());
+  }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports>
+      <port protocol="tcp" portid="22">
+      <state state="open" reason="syn-ack"/>
+      </port>
+      </ports>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractPortsAndServices(testNode, d);
+
+    const auto port = d.ports[0];
+    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]" == port.toDebugString());
+  }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports>
+      <port protocol="tcp" portid="22">
+      <state state="open" reason="syn-ack"/>
+      <service name="ssh" product="OpenSSH" method="probed">
+      </service>
+      </port>
+      </ports>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractPortsAndServices(testNode, d);
+
+    const auto port = d.ports[0];
+    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]" == port.toDebugString());
+
+    const auto service = d.services[0];
+    BOOST_TEST("[[1.2.3.4/32, 0, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0, -, , ssh, openssh, probed, tcp, [22], [], ]" == service.toDebugString());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
+{
+  TestNmapXmlParser tnxp;
+
+  /*
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports>
+      <port protocol="tcp" portid="22">
+      <script id="ssh-hostkey" output="&#xa;  2048 fb:e8:ee:33:cd:a7:11:02:3f:e7:b1:23:99:ad:85:e3 (RSA)&#xa;  256 e7:2d:10:9c:06:77:52:02:78:6c:81:34:90:59:ec:9e (ECDSA)">
+      </script>
+      </port>
+      </ports>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractNseAndSsh(testNode, d);
+
+    const auto sshKey = d.sshKeys[0];
+    BOOST_TEST("[192.168.1.1/32, tcp, 22, ssh-hostkey, \
+  2048 fb:e8:ee:33:cd:a7:11:02:3f:e7:b1:23:99:ad:85:e3 (RSA)\
+  256 e7:2d:10:9c:06:77:52:02:78:6c:81:34:90:59:ec:9e (ECDSA)]" == sshKey.toString());
+
+  }
+  */
 }
