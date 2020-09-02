@@ -135,7 +135,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         LOG_DEBUG << "Iterating over tracerouteHops\n";
         for (auto& result : results.tracerouteHops) {
           result.save(t, toolRunId, "");
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toString() << std::endl;
         }
 
         LOG_DEBUG << "Iterating over ports\n";
@@ -158,19 +158,19 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         LOG_DEBUG << "Iterating over nseResults\n";
         for (auto& result : results.nseResults) {
           result.save(t, toolRunId, "");
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toString() << std::endl;
         }
 
         LOG_DEBUG << "Iterating over sshKeys\n";
         for (auto& result : results.sshKeys) {
           result.save(t, toolRunId, "");
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toString() << std::endl;
         }
 
         LOG_DEBUG << "Iterating over sshAlgorithms\n";
         for (auto& result : results.sshAlgorithms) {
           result.save(t, toolRunId, "");
-          LOG_DEBUG << result.toDebugString() << std::endl;
+          LOG_DEBUG << result.toString() << std::endl;
         }
       }
     }
