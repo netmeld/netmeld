@@ -1,7 +1,8 @@
 ---
-- name: Gather data from VyOS type targets
+- name: "Gather data from VyOS type targets"
   vyos_command:
     commands: "{{ item.cmd }}"
   register: cmd
   loop: "{{ cmd_list | flatten(1) }}"
   ignore_errors: yes
+  become: "{{ item.become | default('no') }}"
