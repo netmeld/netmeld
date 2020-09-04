@@ -24,14 +24,14 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "NmapXmlParser.hpp"
+#include "ParserNmapXml.hpp"
 #include <regex>
 
-NmapXmlParser::NmapXmlParser()
+ParserNmapXml::ParserNmapXml()
 {}
 
 std::tuple<std::string, std::string>
-NmapXmlParser::extractExecutionTiming(pugi::xml_node const& nmapNode)
+ParserNmapXml::extractExecutionTiming(pugi::xml_node const& nmapNode)
 {
   std::string start = nmapNode.attribute("start").as_string();
   std::string stop  = nmapNode.select_node("runstats/finished")
@@ -44,7 +44,7 @@ NmapXmlParser::extractExecutionTiming(pugi::xml_node const& nmapNode)
 }
 
 bool
-NmapXmlParser::extractHostIsResponding(const pugi::xml_node& nodeHost) const
+ParserNmapXml::extractHostIsResponding(const pugi::xml_node& nodeHost) const
 {
   bool isResponding = false;
 
@@ -71,7 +71,7 @@ NmapXmlParser::extractHostIsResponding(const pugi::xml_node& nodeHost) const
 }
 
 nmdo::MacAddress
-NmapXmlParser::extractHostMacAddr(const pugi::xml_node& nodeHost) const
+ParserNmapXml::extractHostMacAddr(const pugi::xml_node& nodeHost) const
 {
   pugi::xml_node const nodeMacAddr = nodeHost
     .select_node("address[@addrtype='mac']")
@@ -87,7 +87,7 @@ NmapXmlParser::extractHostMacAddr(const pugi::xml_node& nodeHost) const
 }
 
 nmdo::IpAddress
-NmapXmlParser::extractHostIpAddr(const pugi::xml_node& nodeHost) const
+ParserNmapXml::extractHostIpAddr(const pugi::xml_node& nodeHost) const
 {
   pugi::xml_node const nodeIpAddr = nodeHost
     .select_node("address[@addrtype='ipv4' or @addrtype='ipv6']")
@@ -108,7 +108,7 @@ NmapXmlParser::extractHostIpAddr(const pugi::xml_node& nodeHost) const
 // XML Parsing Functions
 // =========================================================================
 void
-NmapXmlParser::extractMacAndIpAddrs(const pugi::xml_node& nmapNode, Data& data)
+ParserNmapXml::extractMacAndIpAddrs(const pugi::xml_node& nmapNode, Data& data)
 { // This code block ensures that all of the ip_addrs and mac_addrs
   // from the scan are present for the other table's foreign keys.
   for (const auto& xHost : nmapNode.select_nodes("host")) {
@@ -126,7 +126,7 @@ NmapXmlParser::extractMacAndIpAddrs(const pugi::xml_node& nmapNode, Data& data)
 }
 
 void
-NmapXmlParser::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
+ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
 {
   for (const auto& xHostname :
         nmapNode.select_nodes("host/hostnames/hostname")) {
@@ -171,7 +171,7 @@ NmapXmlParser::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
 }
 
 void
-NmapXmlParser::extractOperatingSystems(const pugi::xml_node& nmapNode, Data& data)
+ParserNmapXml::extractOperatingSystems(const pugi::xml_node& nmapNode, Data& data)
 {
   for (const auto& xOsclass :
          nmapNode.select_nodes("host/os/osmatch/osclass")) {
@@ -191,7 +191,7 @@ NmapXmlParser::extractOperatingSystems(const pugi::xml_node& nmapNode, Data& dat
 }
 
 void
-NmapXmlParser::extractTraceRoutes(const pugi::xml_node& nmapNode, Data& data)
+ParserNmapXml::extractTraceRoutes(const pugi::xml_node& nmapNode, Data& data)
 { // This code block identifies ip_addrs of routers along a route.
   // The routers may or may not be in the target address space,
   // so might need to be inserted into the ip_addrs table.
@@ -211,7 +211,7 @@ NmapXmlParser::extractTraceRoutes(const pugi::xml_node& nmapNode, Data& data)
 }
 
 void
-NmapXmlParser::extractPortsAndServices(const pugi::xml_node& nmapNode, Data& data)
+ParserNmapXml::extractPortsAndServices(const pugi::xml_node& nmapNode, Data& data)
 {
   for (const auto& xExtrareasons :
          nmapNode.select_nodes("host/ports/extraports/extrareasons")) {
@@ -299,7 +299,7 @@ NmapXmlParser::extractPortsAndServices(const pugi::xml_node& nmapNode, Data& dat
 }
 
 void
-NmapXmlParser::extractNseAndSsh(const pugi::xml_node& nmapNode, Data& data)
+ParserNmapXml::extractNseAndSsh(const pugi::xml_node& nmapNode, Data& data)
 {
   for (const auto& xScript :
          nmapNode.select_nodes("host/ports/port/script")) {
