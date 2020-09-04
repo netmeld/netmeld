@@ -32,14 +32,14 @@
 
 #include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 
-#include "NmapXmlParser.hpp"
+#include "ParserNmapXml.hpp"
 
-class TestNmapXmlParser : public NmapXmlParser
+class TestParserNmapXml : public ParserNmapXml
 {
   public:
-    using NmapXmlParser::extractHostIsResponding;
-    using NmapXmlParser::extractHostMacAddr;
-    using NmapXmlParser::extractHostIpAddr;
+    using ParserNmapXml::extractHostIsResponding;
+    using ParserNmapXml::extractHostMacAddr;
+    using ParserNmapXml::extractHostIpAddr;
 };
 /*
   For reference, the XML schema is:
@@ -49,7 +49,7 @@ class TestNmapXmlParser : public NmapXmlParser
 
 BOOST_AUTO_TEST_CASE(testExtractExecutionTiming)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(testExtractExecutionTiming)
 
 BOOST_AUTO_TEST_CASE(testExtractHostIsResponding)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     std::vector<std::string> testsOk {
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostIsResponding)
 
 BOOST_AUTO_TEST_CASE(testExtractHostMacAddr)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostMacAddr)
 
 BOOST_AUTO_TEST_CASE(testExtractHostIpAddr)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostIpAddr)
 
 BOOST_AUTO_TEST_CASE(testExtractMacAndIpAddrs)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(testExtractMacAndIpAddrs)
 
 BOOST_AUTO_TEST_CASE(testExtractHostnames)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
 
 BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
 
 BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
 
 BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;
@@ -457,7 +457,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
 BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 {
-  TestNmapXmlParser tnxp;
+  TestParserNmapXml tnxp;
 
   {
     pugi::xml_document doc;

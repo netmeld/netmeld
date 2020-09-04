@@ -32,7 +32,7 @@
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-#include "NmapXmlParser.hpp"
+#include "ParserNmapXml.hpp"
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
@@ -86,7 +86,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         std::exit(nmcu::Exit::FAILURE);
       }
 
-      NmapXmlParser nxp;
+      ParserNmapXml nxp;
 
       auto t {nxp.extractExecutionTiming(nmapNode)};
 
