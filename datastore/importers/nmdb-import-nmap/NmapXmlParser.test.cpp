@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
       <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <ports>
       <port protocol="tcp" portid="22">
-      <script id="ssh-hostkey" output="nse script output">
+      <script id="ssh-hostkey" output="2048 aa:bb::cc::dd (RSA)">
       </script>
       </port>
       </ports>
@@ -480,6 +480,38 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     const auto nseResult = d.nseResults[0];
     BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]" == nseResult.port.toDebugString());
     BOOST_TEST("ssh-hostkey" == nseResult.scriptId);
-    BOOST_TEST("nse script output" == nseResult.scriptOutput);
+    BOOST_TEST("2048 aa:bb::cc::dd (RSA)" == nseResult.scriptOutput);
+  }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports>
+      <port protocol="tcp" portid="22">
+      <script id="ssh-hostkey" output="2048 aa:bb::cc::dd (RSA)">
+      <table>
+      <elem key="type">ssh-rsa</elem>
+      <elem key="bits">2048</elem>
+      <elem key="fingerprint">abc789</elem>
+      <elem key="key">AAABBBCCC</elem>
+      </table>
+      </script>
+      </port>
+      </ports>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractNseAndSsh(testNode, d);
+
+    const auto sshKey = d.sshKeys[0];
+    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]" == sshKey.port.toDebugString());
+    BOOST_TEST("ssh-rsa" == sshKey.type);
+    BOOST_TEST(2048 == sshKey.bits);
+    BOOST_TEST("abc789" == sshKey.fingerprint);
+    BOOST_TEST("AAABBBCCC" == sshKey.key);
   }
 }
