@@ -2,9 +2,6 @@
 command_value: "{{ item.invocation.module_args.commands[0] | regex_replace(' ', '_')}}"
 item_value: "{{ item.stdout[0] }}"
 
-tool_value: --tool "{{ item.item.tool | default('') }}"
-tool_args_value: --tool-args "{{ item.item.tool_args | default('') }}"
-
 cmd_list:
 - cmd: terminal length 0
 - cmd: show host name
