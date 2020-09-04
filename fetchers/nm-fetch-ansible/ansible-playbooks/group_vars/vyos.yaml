@@ -2,3 +2,5 @@
 #ansible_user: root
 ansible_connection: network_cli
 ansible_network_os: vyos
+
+gather_facts: no

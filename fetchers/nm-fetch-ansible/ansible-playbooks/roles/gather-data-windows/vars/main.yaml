@@ -4,17 +4,18 @@ command_value: "{{ item.cmd | join('_') | regex_replace('/', '\u2215') }}"
 item_value: "{{ item.stdout }}"
 
 cmd_list:
-- whoami /all
-- systeminfo
+- cmd: whoami /all
+- cmd: systeminfo
 # IP address and route information
-- ipconfig /allcompartments /all
-- netstat -nr
-- netstat -ano
-- get-netipconfiguration -all -allcompartments -detailed
-- get-netipinterface -includeallcompartments
-- get-netneighbor -includeallcompartments
-- get-netroute -includeallcompartments
+- cmd: ipconfig /allcompartments /all
+  tool: nmdb-import-ipconfig
+- cmd: netstat -nr
+- cmd: netstat -ano
+- cmd: get-netipconfiguration -all -allcompartments -detailed
+- cmd: get-netipinterface -includeallcompartments
+- cmd: get-netneighbor -includeallcompartments
+- cmd: get-netroute -includeallcompartments
 # Get packages and/or services
-- ps
-- get-process
-- get-process -includeusername
+- cmd: ps
+- cmd: get-process
+- cmd: get-process -includeusername

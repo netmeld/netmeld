@@ -2,8 +2,7 @@
 - hosts:
   - junos
 
-  gather_facts: false
-
   roles:
+  - enable-privilleged-commands
   - gather-data-junos
   - save-local

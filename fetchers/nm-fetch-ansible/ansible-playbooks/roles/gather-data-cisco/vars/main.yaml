@@ -3,12 +3,16 @@ command_value: "{{ item.invocation.module_args.commands[0] | regex_replace(' ', 
 item_value: "{{ item.stdout[0] }}"
 
 cmd_list:
-- show running-config full
-- show startup-config
-- show version
-- show cdp neighbor detail
-- show mac address-table
-- show inventory
-- show interfaces
-- show vlan
-- show spanning-tree
+- cmd: show running-config full
+  tool: nmdb-import-cisco
+- cmd: show startup-config
+- cmd: show version
+- cmd: show cdp neighbor detail
+  tool: nmdb-import-show-cdp-neighbor
+- cmd: show mac address-table
+  tool: nmdb-import-show-mac-address-table
+- cmd: show inventory
+  tool: nmdb-import-show-inventory
+- cmd: show interfaces
+- cmd: show vlan
+- cmd: show spanning-tree

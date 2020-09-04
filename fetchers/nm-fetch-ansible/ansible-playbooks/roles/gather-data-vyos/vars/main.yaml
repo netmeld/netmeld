@@ -7,8 +7,8 @@ tool_args_value: --tool-args "{{ item.item.tool_args | default('') }}"
 
 cmd_list:
 - cmd: terminal length 0
-- cmd: show configuration
-  tool: nmdb-import-vyos
+- cmd: show host name
+- cmd: show host os
 - cmd: show version all
 - cmd: show arp
 - cmd: show lldp neighbors detail
@@ -16,6 +16,10 @@ cmd_list:
 - cmd: show system uptime
 - cmd: show ntp
 - cmd: show dhcp client leases
+
+pcmd_list:
+- cmd: show configuration
+  tool: nmdb-import-vyos
 - cmd: show dhcp leases
 - cmd: show dhcpv6 client leases
 - cmd: show dhcpv6 server leases

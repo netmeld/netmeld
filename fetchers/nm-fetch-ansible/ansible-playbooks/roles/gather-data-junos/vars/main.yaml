@@ -3,17 +3,19 @@ command_value: "{{ item.invocation.module_args.commands[0] | regex_replace(' ', 
 item_value: "{{ item.stdout[0] }}"
 
 cmd_list:
-- show configuration
-- show configuration | display set
-- show configuration | display xml
-- show version detail
-- show arp no-resolve
-- show ethernet-switching table detail
-- show ethernet-switching table extensive
-- show chassis hardware
-- show chassis hardware detail
-- show chassis hardware extensive
-- show ldp neighbor detail
-- show ldp neighbor extensive
-- show system uptime
-- show ntp status no-resolve
+- cmd: show configuration
+  tool: nmdb-import-juniper-conf
+- cmd: show configuration | display set
+  tool: nmdb-import-juniper-set
+- cmd: show configuration | display xml
+- cmd: show version detail
+- cmd: show arp no-resolve
+- cmd: show ethernet-switching table detail
+- cmd: show ethernet-switching table extensive
+- cmd: show chassis hardware
+- cmd: show chassis hardware detail
+- cmd: show chassis hardware extensive
+- cmd: show ldp neighbor detail
+- cmd: show ldp neighbor extensive
+- cmd: show system uptime
+- cmd: show ntp status no-resolve

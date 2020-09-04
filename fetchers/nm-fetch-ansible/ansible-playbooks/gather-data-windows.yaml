@@ -3,5 +3,6 @@
   - windows
   
   roles:
+  - enable-privilleged-commands
   - gather-data-windows
   - save-local

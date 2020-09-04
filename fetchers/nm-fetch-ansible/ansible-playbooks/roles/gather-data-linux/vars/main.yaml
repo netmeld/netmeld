@@ -3,13 +3,6 @@
 command_value: "{{ item.cmd | join('_') | regex_replace('/', '\u2215') }}"
 item_value: "{{ item.stdout }}"
 
-### START OF DATALAKE MODULE OPTIONS
-# Add `tool:` to a command
-tool_value: --tool "{{ item.item.tool | default('') }}"
-# Add `tool_args:` to a command
-tool_args_value: --tool-args "{{ item.item.tool_args | default('') }}"
-### END OF DATALAKE MODULE OPTIONS
-
 # Standard commands
 cmd_list:
 - cmd: hostname -A
