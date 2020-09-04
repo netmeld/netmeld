@@ -2,6 +2,8 @@
 - hosts:
   - junos
 
+  gather_facts: no
+
   roles:
   - enable-privilleged-commands
   - gather-data-junos

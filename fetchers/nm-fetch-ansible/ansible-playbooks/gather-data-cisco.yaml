@@ -2,6 +2,8 @@
 - hosts:
   - cisco
 
+  gather_facts: no
+
   roles:
   - enable-privilleged-commands
   - gather-data-cisco
