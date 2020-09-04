@@ -26,7 +26,7 @@
 
 add_executable(${TGT_TOOL}
     ${TGT_TOOL}.cpp
-    NmapXmlParser.cpp
+    ParserNmapXml.cpp
     NseResult.cpp
     SshAlgorithm.cpp
     SshPublicKey.cpp
@@ -41,7 +41,7 @@ target_link_libraries(${TGT_TOOL}
 nm_install_bin(${TGT_TOOL})
 
 foreach(ITEM
-    NmapXmlParser
+    ParserNmapXml
   )
   nm_add_test(${ITEM})
   target_sources(${TGT_TEST}

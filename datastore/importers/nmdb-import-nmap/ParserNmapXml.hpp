@@ -68,7 +68,7 @@ typedef std::vector<Data>  Result;
 // =============================================================================
 // Parser definition
 // =============================================================================
-class NmapXmlParser
+class ParserNmapXml
 {
   // ===========================================================================
   // Variables
@@ -83,7 +83,7 @@ class NmapXmlParser
   private:
   protected:
   public:
-    NmapXmlParser();
+    ParserNmapXml();
 
   // ===========================================================================
   // Methods
