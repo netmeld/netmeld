@@ -26,13 +26,19 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-DB_NAME=site
+DB_NAME="site";
+#DB_ARGS="host=localhost port=5432";
+
+if [ -z "${DB_ARGS}" ];
+then PSQL_ARGS="${DB_NAME}";
+else PSQL_ARGS="${DB_ARGS} dbname=${DB_NAME}";
+fi;
 
 # Clean DB
-psql ${DB_NAME} -c "delete from playbook_roe_ip_nets";
-psql ${DB_NAME} -c "delete from playbook_intra_network_sources";
-psql ${DB_NAME} -c "delete from playbook_inter_network_sources";
-psql ${DB_NAME} -c "delete from playbook_ip_routers";
+psql "${PSQL_ARGS}" -c "delete from playbook_roe_ip_nets";
+psql "${PSQL_ARGS}" -c "delete from playbook_intra_network_sources";
+psql "${PSQL_ARGS}" -c "delete from playbook_inter_network_sources";
+psql "${PSQL_ARGS}" -c "delete from playbook_ip_routers";
 
 
 ###
@@ -51,14 +57,14 @@ function loadRoe()
 {
   for ip in $roeOutScope; do
     psql \
-      "${DB_NAME}" \
+      "${PSQL_ARGS}" \
       -c "INSERT INTO playbook_roe_ip_nets VALUES ('${ip}', false)" \
       ;
   done;
 
   for ip in $roeInScope; do
     psql \
-      "${DB_NAME}" \
+      "${PSQL_ARGS}" \
       -c "INSERT INTO playbook_roe_ip_nets VALUES ('${ip}', true)" \
       ;
   done;
@@ -103,6 +109,7 @@ function loadSources()
     # NOTE: Do not quote ${optionString} (space has to be interpreted as such)
     nmdb-playbook-insert-source \
       --db-name "${DB_NAME}" \
+      --db-args "${DB_ARGS}" \
       --inter-network \
       --intra-network \
       ${optionString} \
@@ -125,6 +132,7 @@ function loadRouters()
   for ip in $routes; do
     nmdb-playbook-insert-router \
       --db-name "${DB_NAME}" \
+      --db-args "${DB_ARGS}" \
       --ip-addr $ip \
       ;
   done;
