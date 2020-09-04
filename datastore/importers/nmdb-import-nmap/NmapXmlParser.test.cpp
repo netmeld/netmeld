@@ -459,7 +459,6 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 {
   TestNmapXmlParser tnxp;
 
-  /*
   {
     pugi::xml_document doc;
     doc.load_string(
@@ -467,7 +466,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
       <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <ports>
       <port protocol="tcp" portid="22">
-      <script id="ssh-hostkey" output="&#xa;  2048 fb:e8:ee:33:cd:a7:11:02:3f:e7:b1:23:99:ad:85:e3 (RSA)&#xa;  256 e7:2d:10:9c:06:77:52:02:78:6c:81:34:90:59:ec:9e (ECDSA)">
+      <script id="ssh-hostkey" output="nse script output">
       </script>
       </port>
       </ports>
@@ -478,11 +477,9 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     Data d;
     tnxp.extractNseAndSsh(testNode, d);
 
-    const auto sshKey = d.sshKeys[0];
-    BOOST_TEST("[192.168.1.1/32, tcp, 22, ssh-hostkey, \
-  2048 fb:e8:ee:33:cd:a7:11:02:3f:e7:b1:23:99:ad:85:e3 (RSA)\
-  256 e7:2d:10:9c:06:77:52:02:78:6c:81:34:90:59:ec:9e (ECDSA)]" == sshKey.toString());
-
+    const auto nseResult = d.nseResults[0];
+    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]" == nseResult.port.toDebugString());
+    BOOST_TEST("ssh-hostkey" == nseResult.scriptId);
+    BOOST_TEST("nse script output" == nseResult.scriptOutput);
   }
-  */
 }
