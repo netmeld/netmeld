@@ -1,7 +1,7 @@
 ---
 - hosts:
   - linux
-  
+
   roles:
   - enable-privilleged-commands
   - gather-data-linux

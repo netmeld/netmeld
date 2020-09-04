@@ -3,9 +3,8 @@
   when: save_logic is undefined
   block:
     - name: "Finding available save tooling"
-      local_action:
-        module: shell
-        cmd: "{{ item }}"
+      delegate_to: localhost
+      shell: "{{ item }}"
       register: save_tooling
       ignore_errors: yes
       changed_when: false
@@ -14,7 +13,8 @@
       - "if which nmdl-initialize >/dev/null 2>&1; then echo datalake; fi"
       - "echo fetcher"
 
-    - set_fact:
+    - name: "Setting save logic"
+      set_fact:
         save_logic: "{{ item.stdout }}"
       when: "'rc' in item and item.rc == 0"
       loop: "{{ save_tooling.results }}"
