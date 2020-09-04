@@ -26,8 +26,6 @@
 
 #include <netmeld/core/utils/FileManager.hpp>
 
-#include <iostream>
-
 
 namespace netmeld::core::utils {
 
@@ -52,15 +50,6 @@ namespace netmeld::core::utils {
     savePath = oss.str();
 
     sfs::create_directories(savePath);
-
-    oss << "/.tmp";
-    tempPath = oss.str();
-    sfs::create_directories(tempPath);
-  }
-
-  FileManager::~FileManager()
-  {
-    sfs::remove_all(tempPath);
   }
 
   // ===========================================================================
@@ -83,12 +72,6 @@ namespace netmeld::core::utils {
   FileManager::getSavePath() const
   {
     return savePath;
-  }
-
-  const sfs::path&
-  FileManager::getTempPath() const
-  {
-    return tempPath;
   }
 
   void
