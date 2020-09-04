@@ -514,4 +514,31 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     BOOST_TEST("abc789" == sshKey.fingerprint);
     BOOST_TEST("AAABBBCCC" == sshKey.key);
   }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports>
+      <port protocol="tcp" portid="22">
+      <script id="ssh2-enum-algos" output="2048 aa:bb::cc::dd (RSA)">
+      <table key="ssh-rsa">
+      <elem>AAABBBCCC</elem>
+      </table>
+      </script>
+      </port>
+      </ports>
+      </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractNseAndSsh(testNode, d);
+
+    const auto sshAlgo = d.sshAlgorithms[0];
+    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]" == sshAlgo.port.toDebugString());
+    BOOST_TEST("ssh-rsa" == sshAlgo.type);
+    BOOST_TEST("AAABBBCCC" == sshAlgo.name);
+  }
 }
