@@ -13,7 +13,7 @@
 - name: "Saving data"
   delegate_to: localhost
   shell: >
-      echo "{{ item_value }}" | {{ datalake_save_cmd }}
+      echo -n "{{ item_value }}" | {{ datalake_save_cmd }}
   #no_log: True
   loop: "{{ cmd.results | flatten(1) }}"
   loop_control:
