@@ -298,15 +298,15 @@ namespace netmeld::core::utils {
 
     po::notify(varMap);
 
-    if (varMap.count("data-path")) {
-      sfs::path const dataFile = varMap.at("data-path").as<std::string>();
+    if (varMap.count("data-path") && optionsMaps[REQUIRED].count("data-path")) {
+      sfs::path const dataFile {varMap.at("data-path").as<std::string>()};
       if (varMap.count("pipe")) {
         nmfm.pipedInputFile(dataFile);
       }
       if (!sfs::exists(dataFile)) {
-      LOG_ERROR << "Specified DATA_PATH does not exist: "
-                << dataFile.string() << '\n';
-      std::exit(Exit::FAILURE);
+        LOG_ERROR << "Specified DATA_PATH does not exist: "
+                  << dataFile.string() << '\n';
+        std::exit(Exit::FAILURE);
       }
     }
 

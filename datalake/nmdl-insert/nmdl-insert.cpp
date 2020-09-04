@@ -81,13 +81,13 @@ class Tool : public nmdlt::AbstractDatalakeTool
             "Device for which to associate data.")
           );
 
-      opts.addOptionalOption("data-path1", std::make_tuple(
+      opts.addOptionalOption("data-path", std::make_tuple(
             "data-path",
             po::value<std::string>(),
             "Data on file system to store; a path."
             " Either --data-path param or implicit last argument.")
           );
-      opts.addPositionalOption("data-path1", -1);
+      opts.addPositionalOption("data-path", -1);
 
       opts.addOptionalOption("pipe", std::make_tuple(
             "pipe",
