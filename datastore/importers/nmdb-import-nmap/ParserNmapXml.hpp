@@ -34,6 +34,7 @@
 #include <netmeld/datastore/objects/OperatingSystem.hpp>
 #include <netmeld/datastore/objects/Port.hpp>
 #include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
@@ -61,6 +62,8 @@ struct Data
   std::vector<NseResult>              nseResults;
   std::vector<SshPublicKey>           sshKeys;
   std::vector<SshAlgorithm>           sshAlgorithms;
+
+  nmdo::ToolObservations              observations;
 };
 typedef std::vector<Data>  Result;
 

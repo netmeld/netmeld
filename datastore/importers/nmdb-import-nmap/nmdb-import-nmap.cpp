@@ -145,11 +145,14 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over services\n";
+        const auto& scanOriginIp {
+          this->opts.exists("scan-origin-ip")
+            ? this->opts.template getValueAs<nmdo::IpAddress>("scan-origin-ip")
+            : nmdo::IpAddress::getIpv4Default()
+        };
         for (auto& result : results.services) {
-          if (this->opts.exists("scan-origin-ip")) {
-            result.setSrcAddress(
-              this->opts.template getValueAs<nmdo::IpAddress>("scan-origin-ip")
-            );
+          if (scanOriginIp.isValid()) {
+            result.setSrcAddress(scanOriginIp);
           }
           LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, "");
@@ -172,6 +175,10 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toString() << std::endl;
         }
+
+        LOG_DEBUG << "Iterating over Observations\n";
+        results.observations.save(t, toolRunId, "");
+        LOG_DEBUG << results.observations.toDebugString() << '\n';
       }
     }
 
