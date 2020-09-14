@@ -56,7 +56,7 @@ namespace netmeld::datalake::handlers {
       Git();
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      Git(const std::string&);
+      explicit Git(const std::string&);
 
     // =========================================================================
     // Methods

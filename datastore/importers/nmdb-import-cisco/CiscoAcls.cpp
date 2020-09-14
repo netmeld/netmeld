@@ -67,6 +67,7 @@ namespace netmeld::datastore::importers::cisco {
     iosStandard =
       (  (ipv46 >> qi::lit("access-list standard ")
           > bookName > qi::eol
+          // cppcheck-suppress compareBoolExpressionWithInt
           > *(indent > (  iosRemarkRuleLine
                         | iosStandardRuleLine
                         | ignoredRuleLine
@@ -261,7 +262,7 @@ namespace netmeld::datastore::importers::cisco {
       (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
       ;
     addrIpPrefix =
-       (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
+       (&((ipNoPrefix >> qi::eol) | (!ipNoPrefix)) >> ipAddr)
          [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
       ;
     addrIpMask =
@@ -561,12 +562,6 @@ namespace netmeld::datastore::importers::cisco {
   CiscoAcls::addIgnoredRuleData(const std::string& _data)
   {
     ignoredRuleData.emplace(_data);
-  }
-
-  std::set<std::string>
-  CiscoAcls::getIgnoredRuleData()
-  {
-    return ignoredRuleData;
   }
 
   // Object return

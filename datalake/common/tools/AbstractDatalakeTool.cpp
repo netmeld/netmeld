@@ -58,7 +58,7 @@ namespace netmeld::datalake::tools {
           "Data lake type.")
         );
 
-    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+    const nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     dataLakePath = {nmfm.getSavePath()/"datalake"};
     opts.addRequiredOption("lake-path", std::make_tuple(
           "lake-path",

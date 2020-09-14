@@ -64,7 +64,7 @@ namespace netmeld::datastore::parsers {
   }
 
   template<typename Data, typename Parser, typename Attr>
-  bool testAttr(const Data* in, const Parser& p, Attr& a,
+  bool testAttr(const Data& in, const Parser& p, Attr& a,
                 bool fullMatch = true)
   {
     try {
@@ -80,7 +80,7 @@ namespace netmeld::datastore::parsers {
   }
 
   template<typename Data, typename Parser, typename Attr, typename Skipper>
-  bool testAttr(const Data in, const Parser& p, Attr& a, const Skipper& s,
+  bool testAttr(const Data& in, const Parser& p, Attr& a, const Skipper& s,
                 bool fullMatch = true)
   {
     try {

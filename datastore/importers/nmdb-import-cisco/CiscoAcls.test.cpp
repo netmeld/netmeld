@@ -41,27 +41,9 @@ using qi::ascii::blank;
 class TestCiscoAcls : public nmdsic::CiscoAcls {
   public:
     using nmdsic::CiscoAcls::initCurRule;
-
-  public:
-    const nmdo::AcRule& getCurRule()
-    { return curRule; }
-    const std::string& getZone()
-    { return ZONE; }
-    const std::string& getRuleBookName()
-    { return ruleBookName; }
-    const nmdsic::RuleBook& getRuleBook()
-    { return ruleBook; }
-    size_t getCurRuleId()
-    { return curRuleId; }
-    const std::string& getCurRuleProtocol()
-    { return curRuleProtocol; }
-    const std::string& getCurRuleSrcPort()
-    { return curRuleSrcPort; }
-    const std::string& getCurRuleDstPort()
-    { return curRuleDstPort; }
-    const std::set<std::string>& getIgnoredRuleData()
-    { return ignoredRuleData; }
-
+    using nmdsic::CiscoAcls::curRule;
+    using nmdsic::CiscoAcls::curRuleProtocol;
+    using nmdsic::CiscoAcls::ignoredRuleData;
 };
 
 BOOST_AUTO_TEST_CASE(testAclRules)
@@ -79,7 +61,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     for (const auto& [test, format] : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
-      const auto& temp = tpca.getCurRule();
+      const auto& temp = tpca.curRule;
       BOOST_TEST("" == out);
       BOOST_TEST(format == temp.getActions().at(0));
     }
@@ -102,7 +84,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      BOOST_TEST(format == tpca.getCurRuleProtocol());
+      BOOST_TEST(format == tpca.curRuleProtocol);
     }
     // BAD
     // -- The parser is a 'token', so no checkable bad case?
@@ -228,7 +210,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
                  "parse: " << test);
       BOOST_TEST("" == out);
-      nmdo::AcRule temp = tpca.getCurRule();
+      nmdo::AcRule temp = tpca.curRule;
       BOOST_TEST(format == temp.getActions().at(0));
     }
     // BAD
@@ -381,10 +363,10 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(2 == aclBook.size());
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
     BOOST_TEST("deny" == aclBook.at(2).getActions().at(0));
@@ -595,10 +577,10 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(2 == aclBook.size());
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
     BOOST_TEST("deny" == aclBook.at(2).getActions().at(0));
@@ -656,10 +638,10 @@ BOOST_AUTO_TEST_CASE(testIosRemark)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(full, TestCiscoAcls(), result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(0 == aclBook.size());
   }
 }
@@ -861,10 +843,10 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(2 == aclBook.size());
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
     BOOST_TEST("deny" == aclBook.at(2).getActions().at(0));
@@ -896,13 +878,13 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook {result.second};
     BOOST_TEST(1 == aclBook.size());
     BOOST_TEST("deny" == aclBook.at(1).getActions().at(0));
-    const auto& ignoredRules = tpca.getIgnoredRuleData();
+    const auto& ignoredRules = tpca.ignoredRuleData;
     BOOST_TEST(5 == ignoredRules.size());
   }
   {
@@ -915,13 +897,13 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(1 == aclBook.size());
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
-    const auto& ignoredRules = tpca.getIgnoredRuleData();
+    const auto& ignoredRules = tpca.ignoredRuleData;
     BOOST_TEST(0 == ignoredRules.size());
   }
 }
@@ -1066,10 +1048,10 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(1 == aclBook.size());
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
     size_t count {1};
@@ -1178,10 +1160,10 @@ BOOST_AUTO_TEST_CASE(testAsaExtended)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank, false));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(1 == aclBook.size());
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
     size_t count {1};
@@ -1223,10 +1205,10 @@ BOOST_AUTO_TEST_CASE(testAsaRemark)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(full, TestCiscoAcls(), result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("TEST" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(0 == aclBook.size());
   }
 }
@@ -1293,10 +1275,10 @@ BOOST_AUTO_TEST_CASE(testAsaEthertype)
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));
 
-    auto& aclBookName  {result.first};
+    const auto& aclBookName  {result.first};
     BOOST_TEST("" == aclBookName);
 
-    auto& aclBook  {result.second};
+    const auto& aclBook  {result.second};
     BOOST_TEST(0 == aclBook.size());
   }
 }

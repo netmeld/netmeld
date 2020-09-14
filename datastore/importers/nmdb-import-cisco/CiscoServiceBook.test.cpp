@@ -42,20 +42,7 @@ using nmdsic::ServiceBook;
 class TestCiscoServiceBook : public nmdsic::CiscoServiceBook {
 
   public:
-
-  public:
-    const ServiceBook& getServiceBooks()
-    { return serviceBooks; }
-    const nmdo::AcServiceBook& getCurBook()
-    { return curBook; }
-    const std::string& getZone()
-    { return ZONE; }
-    const std::string& getCurProtocol()
-    { return curProtocol; }
-    const std::string& getCurSrcPort()
-    { return curSrcPort; }
-    const std::string& getCurDstPort()
-    { return curDstPort; }
+    using nmdsic::CiscoServiceBook::curBook;
 };
 
 BOOST_AUTO_TEST_CASE(testCiscoServiceBookRules)
@@ -71,7 +58,7 @@ BOOST_AUTO_TEST_CASE(testCiscoServiceBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(format == temp.getName());
     }
     // BAD
@@ -122,7 +109,7 @@ service (  PROTOCOL
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "parse: " << test);
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format),
                  "one of: " << format);
     }
@@ -144,7 +131,7 @@ port-object ( eq PORT | range START END )
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "parse: " << test);
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(0 == temp.getData().size());
 //      BOOST_TEST(1 == temp.getData().count(format),
 //                 "one of: " << format);
@@ -177,7 +164,7 @@ service-object (  PROTOCOL
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "parse: " << test);
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format),
                  "one of: " << format);
     }
@@ -199,7 +186,7 @@ protocol-object PROTOCOL
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "parse: " << test);
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format),
                  "one of: " << format);
     }
@@ -221,7 +208,7 @@ group-object LIST
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "parse: " << test);
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format),
                  "one of: " << format);
     }
@@ -248,7 +235,7 @@ BOOST_AUTO_TEST_CASE(testCiscoServiceBookObjectService)
       "  service tcp source eq www destination eq ssh\n" // +1
     };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
-    const auto& temp = tcnb.getCurBook();
+    const auto& temp = tcnb.curBook;
     BOOST_TEST("TEST" == temp.getName());
     BOOST_TEST(1 == temp.getData().size());
   }
@@ -278,7 +265,7 @@ BOOST_AUTO_TEST_CASE(testCiscoServiceBookObjectGroupService)
       "  port-object eq 123\n" // +1
     };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
-    const auto& temp = tcnb.getCurBook();
+    const auto& temp = tcnb.curBook;
     BOOST_TEST("TEST" == temp.getName());
     BOOST_TEST(4 == temp.getData().size());
   }
@@ -306,7 +293,7 @@ BOOST_AUTO_TEST_CASE(testCiscoServiceBookObjectGroupProtocol)
       "  group-object Group_Object\n" // +1
     };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
-    const auto& temp = tcnb.getCurBook();
+    const auto& temp = tcnb.curBook;
     BOOST_TEST("TEST" == temp.getName());
     BOOST_TEST(3 == temp.getData().size());
   }
