@@ -1,20 +1,26 @@
 ---
-- name: "Create data directory under {{ save_root }}"
-  local_action:
-    module: file
-    path: "{{ save_root }}/{{ inventory_hostname }}/{{ dts }}-{{ uuid }}"
-    state: directory
-    mode: 0755
-  register: data_path
+- name: "Determining save logic to use"
+  when: save_logic is undefined
+  block:
+    - name: "Finding available save tooling"
+      delegate_to: localhost
+      shell: "{{ item }}"
+      register: save_tooling
+      ignore_errors: yes
+      changed_when: false
+      when: save_tooling is undefined or save_tooling.rc != 0
+      loop:
+      - "if which nmdl-initialize >/dev/null 2>&1; then echo datalake; fi"
+      - "echo fetcher"
 
-- name: "Save data locally"
-  local_action:
-    module: copy
-    content: "{{ item_value }}"
-    dest: "{{ data_path.path }}/{{ command_value }}"
-  #no_log: True
-  loop: "{{ cmd.results | flatten(1) }}"
-  loop_control:
-    label: "{{ item.item }}"
-  when: item is success
-  ignore_errors: yes
+    - name: "Setting save logic"
+      set_fact:
+        save_logic: "{{ item.stdout }}"
+      when: "'rc' in item and item.rc == 0"
+      loop: "{{ save_tooling.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+- name: "Loading {{ save_logic | upper }} save logic to use"
+  include: "save-{{ save_logic | lower }}.yaml"
+  when: save_logic is defined

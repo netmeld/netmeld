@@ -1,0 +1,11 @@
+---
+save_root: "~/.netmeld/fetch-ansible"
+
+# Datalake related
+datalake_save_cmd: >-
+  nmdl-insert --device-id "{{ inventory_hostname }}"
+  {{ tool_value }} {{ tool_args_value }}
+  --pipe --rename "{{ command_value }}"
+
+tool_value: --tool "{{ item.item.tool | default('') }}"
+tool_args_value: --tool-args "{{ item.item.tool_args | default('') }}"

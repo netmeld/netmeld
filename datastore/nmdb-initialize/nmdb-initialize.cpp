@@ -121,7 +121,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::cin >> response;
         if (response != 'y' && response != 'Y') {
           LOG_INFO << "Database NOT re-initialized by user\n";
-          std::exit(nmcu::Exit::SUCCESS); // User aborted
+          std::exit(nmcu::Exit::USER_ABORTED);
         }
 
         if (shouldDelete) {

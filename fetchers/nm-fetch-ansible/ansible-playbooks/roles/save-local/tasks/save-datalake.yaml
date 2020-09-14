@@ -1,0 +1,23 @@
+---
+- name: "Ensuring Datalake is initialized (non-destructively)"
+  delegate_to: localhost
+  shell: echo 'n' | nmdl-initialize
+  register: datalake_initialized
+  changed_when:
+    - datalake_initialized.rc == 0
+  failed_when:
+    - datalake_initialized.rc != 0
+    - datalake_initialized.rc != 80
+
+
+- name: "Saving data"
+  delegate_to: localhost
+  shell: >
+      echo -n "{{ item_value }}" | {{ datalake_save_cmd }}
+  #no_log: True
+  loop: "{{ cmd.results | flatten(1) }}"
+  loop_control:
+    label: >-
+      "{{ item.item.cmd }}" | {{ datalake_save_cmd }}
+  when: item is success
+  ignore_errors: yes

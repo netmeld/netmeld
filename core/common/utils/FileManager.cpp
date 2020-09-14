@@ -94,6 +94,33 @@ namespace netmeld::core::utils {
     }
   }
 
+  void
+  FileManager::pipedInputFile(sfs::path const& inputFilePath) const
+  {
+    if (sfs::exists(inputFilePath)) {
+      LOG_ERROR << "File already exists: " << inputFilePath.string() << '\n';
+      std::exit(Exit::FAILURE);
+    }
+
+    std::ofstream f{inputFilePath.string()};
+    for (std::string line; std::getline(std::cin, line); ) {
+      f << line << std::endl;
+    }
+    f.close();
+  }
+
+
+  void
+  FileManager::pipedInputFileOverwrite(const sfs::path& path) const
+  {
+    std::ofstream f {path.string(),
+                     std::ios::out | std::ios::binary | std::ios::trunc};
+    for (std::string line; std::getline(std::cin, line); ) {
+      f << line << std::endl;
+    }
+    f.close();
+  }
+
   // ===========================================================================
   // Friends
   // ===========================================================================

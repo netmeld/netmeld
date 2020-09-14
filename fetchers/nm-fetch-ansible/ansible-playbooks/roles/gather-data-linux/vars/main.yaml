@@ -3,17 +3,31 @@
 command_value: "{{ item.cmd | join('_') | regex_replace('/', '\u2215') }}"
 item_value: "{{ item.stdout }}"
 
+# Standard commands
 cmd_list:
-- hostname -A
+- cmd: hostname -A
+- cmd: cat /etc/hosts
+  tool: nmdb-import-hosts
 # IP address and route information
-- ip addr show
-- ip -6 addr show
-- ip route show
-- ip -6 route show
+- cmd: ip addr show
+  tool: nmdb-import-ip-addr-show
+- cmd: ip -6 addr show
+  tool: nmdb-import-ip-addr-show
+- cmd: ip route show
+  tool: nmdb-import-ip-route-show
+- cmd: ip -6 route show
+  tool: nmdb-import-ip-route-show
 # Get packages and/or services
-- netstat -auntpl
-- ss -auntpl
-- ps -ef
-- ls -lah /etc
-- rpm -qa --queryformat="%-50{NAME}%10{VERSION}-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n"
-- dpkg --list
+- cmd: netstat -auntp
+- cmd: ss -auntp
+- cmd: ps -ef
+- cmd: ls -lah /etc
+- cmd: rpm -qa --queryformat="%-50{NAME}%10{VERSION}-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n"
+- cmd: dpkg --list
+
+# Privilleged commands
+pcmd_list:
+- cmd: iptables-save -c
+  tool: nmdb-import-iptables-save
+- cmd: netstat -auntpl
+- cmd: ss -auntpl

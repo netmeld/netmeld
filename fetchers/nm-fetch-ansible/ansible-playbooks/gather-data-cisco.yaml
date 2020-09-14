@@ -2,8 +2,9 @@
 - hosts:
   - cisco
 
-  gather_facts: false
+  gather_facts: no
 
   roles:
+  - enable-privilleged-commands
   - gather-data-cisco
   - save-local

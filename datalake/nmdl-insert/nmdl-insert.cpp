@@ -60,7 +60,6 @@ class Tool : public nmdlt::AbstractDatalakeTool
       )
     {}
 
-
   // ===========================================================================
   // Methods
   // ===========================================================================
@@ -69,17 +68,32 @@ class Tool : public nmdlt::AbstractDatalakeTool
     void
     addToolOptions() override
     {
+      opts.addRequiredOption("001", std::make_tuple(
+            "[data-path|pipe]",
+            NULL_SEMANTIC,
+            "One required for data storage."
+            "  See 'Optional Options' descriptions.")
+          );
+
       opts.addRequiredOption("device-id", std::make_tuple(
             "device-id",
             po::value<std::string>()->required(),
             "Device for which to associate data.")
           );
 
-      opts.addRequiredOption("data-path", std::make_tuple(
+      opts.addOptionalOption("data-path", std::make_tuple(
             "data-path",
-            po::value<std::string>()->required(),
+            po::value<std::string>(),
             "Data on file system to store; a path."
             " Either --data-path param or implicit last argument.")
+          );
+      opts.addPositionalOption("data-path", -1);
+
+      opts.addOptionalOption("pipe", std::make_tuple(
+            "pipe",
+            NULL_SEMANTIC,
+            "Read input from STDIN."
+            "  Save a copy to the datalake with `--rename` value (required).")
           );
 
       opts.addOptionalOption("tool", std::make_tuple(
@@ -97,7 +111,7 @@ class Tool : public nmdlt::AbstractDatalakeTool
             "rename",
             po::value<std::string>(),
             "Data file name to use instead when data path file is stored;"
-            " not a path.")
+            " not a path.  Required when `--pipe` used.")
           );
     }
 
@@ -109,14 +123,30 @@ class Tool : public nmdlt::AbstractDatalakeTool
     int
     runTool() override
     {
+      // Option second check
+      if (   ( opts.exists("data-path") &&  opts.exists("pipe"))
+          || (!opts.exists("data-path") && !opts.exists("pipe"))
+         )
+      {
+        throw po::required_option("data-path or pipe");
+      }
+      if (opts.exists("pipe") && !opts.exists("rename")) {
+        throw po::required_option("pipe requires rename to be provided");
+      }
+
+      // Process data
       auto const& dataLake {getDatalakeHandler()};
       nmdlo::DataEntry de;
 
       const auto& deviceId {opts.getValue("device-id")};
       de.setDeviceId(deviceId);
 
-      const auto& dataPath {opts.getValue("data-path")};
-      de.setDataPath(dataPath);
+      if (opts.exists("data-path")) {
+        auto dataPath {opts.getValue("data-path")};
+        de.setDataPath(dataPath);
+      } else if (opts.exists("pipe")) {
+        de.setDataPath("");
+      }
 
       if (opts.exists("tool")) {
         const auto& ingestTool {opts.getValue("tool")};

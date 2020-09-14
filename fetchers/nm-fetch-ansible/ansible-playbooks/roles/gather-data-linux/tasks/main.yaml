@@ -1,8 +1,9 @@
 ---
-- name: Gather data from Linux type targets
-  command: "{{ item }}"
+- name: "Gather data from Linux type targets"
+  command: "{{ item.cmd }}"
   args:
     warn: false
   register: cmd
   loop: "{{ cmd_list | flatten(1) }}"
   ignore_errors: yes
+  become: "{{ item.become | default('no') }}"

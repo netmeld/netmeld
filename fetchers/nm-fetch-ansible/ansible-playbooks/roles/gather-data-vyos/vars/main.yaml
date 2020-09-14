@@ -3,15 +3,20 @@ command_value: "{{ item.invocation.module_args.commands[0] | regex_replace(' ', 
 item_value: "{{ item.stdout[0] }}"
 
 cmd_list:
-- terminal length 0
-- show configuration
-- show version all
-- show arp
-- show lldp neighbors detail
-- show system connections
-- show system uptime
-- show ntp
-- show dhcp client leases
-- show dhcp leases
-- show dhcpv6 client leases
-- show dhcpv6 server leases
+- cmd: terminal length 0
+- cmd: show host name
+- cmd: show host os
+- cmd: show version all
+- cmd: show arp
+- cmd: show lldp neighbors detail
+- cmd: show system connections
+- cmd: show system uptime
+- cmd: show ntp
+- cmd: show dhcp client leases
+
+pcmd_list:
+- cmd: show configuration
+  tool: nmdb-import-vyos
+- cmd: show dhcp leases
+- cmd: show dhcpv6 client leases
+- cmd: show dhcpv6 server leases

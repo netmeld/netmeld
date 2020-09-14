@@ -51,6 +51,8 @@ namespace netmeld::core::utils {
     // Variables
     // =========================================================================
     private:
+      FileManager& nmfm {FileManager::getInstance()};
+
       po::options_description             cmdLineOptions;
       po::options_description             confFileOptions;
       po::positional_options_description  positionalOptionsLocation;
@@ -85,7 +87,6 @@ namespace netmeld::core::utils {
     private:
       po::options_description getMappedOptions(const std::string&,
                                                const OptionsMap&) const;
-      void pipedInputFile(const sfs::path&);
 
     public:
       void createCustomOptionsMap(const std::string&);
@@ -129,6 +130,4 @@ namespace netmeld::core::utils {
       }
   };
 }
-
 #endif // PROGRAM_OPTIONS_HPP
-

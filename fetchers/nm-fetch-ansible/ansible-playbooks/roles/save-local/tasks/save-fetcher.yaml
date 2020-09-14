@@ -1,0 +1,20 @@
+---
+- name: "Ensuring Fetcher save directory is available under {{ save_root }}"
+  delegate_to: localhost
+  file:
+    path: "{{ save_root }}/{{ inventory_hostname }}/{{ dts }}-{{ uuid }}"
+    state: directory
+    mode: 0755
+  register: data_path
+
+- name: "Saving data to: {{ data_path.path }}"
+  delegate_to: localhost
+  copy:
+    content: "{{ item_value }}"
+    dest: "{{ data_path.path }}/{{ command_value }}"
+  #no_log: True
+  loop: "{{ cmd.results | flatten(1) }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item is success
+  ignore_errors: yes

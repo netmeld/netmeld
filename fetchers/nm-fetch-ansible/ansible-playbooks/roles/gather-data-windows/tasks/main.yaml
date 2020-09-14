@@ -1,8 +1,9 @@
 ---
-- name: Gather data from Windows type targets
-  win_shell: "{{ item }}"
+- name: "Gather data from Windows type targets"
+  win_shell: "{{ item.cmd }}"
   args:
     warn: false
   register: cmd
   loop: "{{ cmd_list | flatten(1) }}"
   ignore_errors: yes
+  become: "{{ item.become | default('no') }}"

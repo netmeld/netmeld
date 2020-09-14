@@ -2,8 +2,9 @@
 - hosts:
   - vyos
 
-  gather_facts: false
+  gather_facts: no
 
   roles:
+  - enable-privilleged-commands
   - gather-data-vyos
   - save-local
