@@ -64,7 +64,7 @@ set(PROJECT_GNU_COMMON_FLAGS
   )
 
 set(PROJECT_GNU_C_FLAGS
-  "-std=c99"
+  "-std=c17"
   "-Wbad-function-cast"
   "-Wc++-compat"
   "-Wmissing-prototypes"
