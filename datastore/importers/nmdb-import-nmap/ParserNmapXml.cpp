@@ -143,7 +143,7 @@ ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
   }
 
 
-  auto slambda = [&](const auto& nodeScript, auto& ipAddr){
+  auto scriptHostnameLambda = [&](const auto& nodeScript, auto& ipAddr){
     std::string idValue {nodeScript.attribute("id").value()};
     std::string reason  {"nmap " + idValue};
     std::string line    {nodeScript.attribute("output").value()};
@@ -178,7 +178,7 @@ ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
 
     nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
 
-    slambda(nodeScript, ipAddr);
+    scriptHostnameLambda(nodeScript, ipAddr);
   }
   for (const auto& xScript :
         nmapNode.select_nodes("host/ports/port/script")) {
@@ -187,7 +187,7 @@ ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
 
     nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
 
-    slambda(nodeScript, ipAddr);
+    scriptHostnameLambda(nodeScript, ipAddr);
   }
 
   for (const auto& xScript :
