@@ -141,7 +141,8 @@ namespace netmeld::core::objects {
     pt::time_input_facet facet;
     facet.set_iso_extended_format();
     is.imbue(std::locale(is.getloc(), &facet));
-    return is >> t1.time;
+    is >> t1.time;
+    return is;
   }
 }
 

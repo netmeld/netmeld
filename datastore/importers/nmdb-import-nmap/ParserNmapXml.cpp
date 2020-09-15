@@ -33,9 +33,9 @@ ParserNmapXml::ParserNmapXml()
 std::tuple<std::string, std::string>
 ParserNmapXml::extractExecutionTiming(pugi::xml_node const& nmapNode)
 {
-  std::string start = nmapNode.attribute("start").as_string();
-  std::string stop  = nmapNode.select_node("runstats/finished")
-                      .node().attribute("time").as_string();
+  std::string start {nmapNode.attribute("start").as_string()};
+  std::string stop  {nmapNode.select_node("runstats/finished")
+                     .node().attribute("time").as_string()};
 
   LOG_DEBUG << "[str] Start: " << start << std::endl;
   LOG_DEBUG << "[str] Stop : " << stop << std::endl;
@@ -46,9 +46,9 @@ ParserNmapXml::extractExecutionTiming(pugi::xml_node const& nmapNode)
 bool
 ParserNmapXml::extractHostIsResponding(const pugi::xml_node& nodeHost) const
 {
-  bool isResponding = false;
+  bool isResponding {false};
 
-  pugi::xml_node const nodeStatus = nodeHost.child("status");
+  pugi::xml_node const nodeStatus {nodeHost.child("status")};
 
   if (std::string("up") == nodeStatus.attribute("state").as_string()) {
     if (std::string("user-set") !=
@@ -73,11 +73,11 @@ ParserNmapXml::extractHostIsResponding(const pugi::xml_node& nodeHost) const
 nmdo::MacAddress
 ParserNmapXml::extractHostMacAddr(const pugi::xml_node& nodeHost) const
 {
-  pugi::xml_node const nodeMacAddr = nodeHost
-    .select_node("address[@addrtype='mac']")
-    .node();
+  pugi::xml_node const nodeMacAddr {
+    nodeHost.select_node("address[@addrtype='mac']").node()
+  };
 
-  std::string macString = nodeMacAddr.attribute("addr").as_string();
+  std::string macString {nodeMacAddr.attribute("addr").as_string()};
 
   if (macString.empty()) {
     return nmdo::MacAddress();
@@ -89,13 +89,13 @@ ParserNmapXml::extractHostMacAddr(const pugi::xml_node& nodeHost) const
 nmdo::IpAddress
 ParserNmapXml::extractHostIpAddr(const pugi::xml_node& nodeHost) const
 {
-  pugi::xml_node const nodeIpAddr = nodeHost
-    .select_node("address[@addrtype='ipv4' or @addrtype='ipv6']")
-    .node();
+  pugi::xml_node const nodeIpAddr {
+    nodeHost.select_node("address[@addrtype='ipv4' or @addrtype='ipv6']").node()
+  };
 
   nmdo::IpAddress ipAddr;
 
-  std::string ipString = nodeIpAddr.attribute("addr").as_string();
+  std::string ipString {nodeIpAddr.attribute("addr").as_string()};
   if (!ipString.empty()) {
     ipAddr.setAddress(ipString);
   }
@@ -112,11 +112,11 @@ ParserNmapXml::extractMacAndIpAddrs(const pugi::xml_node& nmapNode, Data& data)
 { // This code block ensures that all of the ip_addrs and mac_addrs
   // from the scan are present for the other table's foreign keys.
   for (const auto& xHost : nmapNode.select_nodes("host")) {
-    pugi::xml_node nodeHost = xHost.node();
+    pugi::xml_node nodeHost {xHost.node()};
 
-    bool const isResponding = extractHostIsResponding(nodeHost);
+    bool const isResponding {extractHostIsResponding(nodeHost)};
 
-    nmdo::MacAddress macAddr = extractHostMacAddr(nodeHost);
+    nmdo::MacAddress macAddr {extractHostMacAddr(nodeHost)};
     macAddr.setResponding(isResponding);
     auto ipAddr {extractHostIpAddr(nodeHost)};
     macAddr.addIp(ipAddr);
@@ -130,11 +130,11 @@ ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
 {
   for (const auto& xHostname :
         nmapNode.select_nodes("host/hostnames/hostname")) {
-    pugi::xml_node nodeHostname = xHostname.node();
-    pugi::xml_node nodeHost = nodeHostname.parent().parent();
+    pugi::xml_node nodeHostname {xHostname.node()};
+    pugi::xml_node nodeHost     {nodeHostname.parent().parent()};
 
-    nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
-    
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
+
     std::string reason {"nmap "};
     reason.append(nodeHostname.attribute("type").as_string());
     ipAddr.addAlias(nodeHostname.attribute("name").as_string(), reason);
@@ -142,13 +142,8 @@ ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
     data.ipAddrs.push_back(ipAddr);
   }
 
-  for (const auto& xScript :
-        nmapNode.select_nodes("host/hostscript/script")) {
-    pugi::xml_node nodeScript = xScript.node();
-    pugi::xml_node nodeHost   = nodeScript.parent().parent();
 
-    nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
-
+  auto scriptHostnameLambda = [&](const auto& nodeScript, auto& ipAddr){
     std::string idValue {nodeScript.attribute("id").value()};
     std::string reason  {"nmap " + idValue};
     std::string line    {nodeScript.attribute("output").value()};
@@ -159,14 +154,68 @@ ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
       regex = "(NetBIOS name): ([^,]+),";
     } else if (std::string("smb-os-discovery") == idValue) {
       regex = "(Computer name|FQDN): (.+?)\n";
+    } else if (std::string("rdp-ntlm-info") == idValue) {
+      regex = "(NetBIOS_Computer|DNS_Computer)_Name: (.+?)\n";
+    } else if (std::string("ms-sql-ntlm-info") == idValue) {
+      regex = "(Target|NetBIOS_Computer|DNS_Computer)_Name: (.+?)\n";
     }
 
+    bool foundMatch {false};
     while (std::regex_search(line, match, regex)) {
       ipAddr.addAlias(std::string(match[2]), reason);
       line = match.suffix();
+      foundMatch = true;
     }
+    if (foundMatch) {
+      data.ipAddrs.push_back(ipAddr);
+    }
+  };
 
-    data.ipAddrs.push_back(ipAddr);
+  for (const auto& xScript :
+        nmapNode.select_nodes("host/hostscript/script")) {
+    pugi::xml_node nodeScript {xScript.node()};
+    pugi::xml_node nodeHost   {nodeScript.parent().parent()};
+
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
+
+    scriptHostnameLambda(nodeScript, ipAddr);
+  }
+  for (const auto& xScript :
+        nmapNode.select_nodes("host/ports/port/script")) {
+    pugi::xml_node nodeScript {xScript.node()};
+    pugi::xml_node nodeHost   {nodeScript.parent().parent().parent()};
+
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
+
+    scriptHostnameLambda(nodeScript, ipAddr);
+  }
+
+  for (const auto& xScript :
+        nmapNode.select_nodes("host/ports/port/service")) {
+    pugi::xml_node nodeService {xScript.node()};
+    pugi::xml_node nodeHost    {nodeService.parent().parent().parent()};
+
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
+
+    std::string idValue  {nodeService.attribute("name").value()};
+    std::string reason   {"nmap " + idValue};
+    std::string hostname {nodeService.attribute("hostname").value()};
+
+    if (!hostname.empty()) {
+      std::set<std::string> validatedServices {
+        "microsoft-ds",
+      };
+      if (validatedServices.count(idValue)) {
+        ipAddr.addAlias(hostname, reason);
+        data.ipAddrs.push_back(ipAddr);
+      } else {
+        std::string note {
+          "Nmap service scan: " + idValue
+          + "\n  Potential hostname: " + hostname
+        };
+        data.observations.addNotable(note);
+      }
+    }
   }
 }
 
@@ -175,10 +224,10 @@ ParserNmapXml::extractOperatingSystems(const pugi::xml_node& nmapNode, Data& dat
 {
   for (const auto& xOsclass :
          nmapNode.select_nodes("host/os/osmatch/osclass")) {
-    pugi::xml_node nodeOs = xOsclass.node();
-    pugi::xml_node nodeHost = nodeOs.parent().parent().parent();
+    pugi::xml_node nodeOs   {xOsclass.node()};
+    pugi::xml_node nodeHost {nodeOs.parent().parent().parent()};
 
-    nmdo::IpAddress ipAddr(extractHostIpAddr(nodeHost));
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
     nmdo::OperatingSystem os(ipAddr);
     os.setVendorName(nodeOs.attribute("vendor").as_string());
     os.setProductName(nodeOs.attribute("osfamily").as_string());
@@ -196,7 +245,7 @@ ParserNmapXml::extractTraceRoutes(const pugi::xml_node& nmapNode, Data& data)
   // The routers may or may not be in the target address space,
   // so might need to be inserted into the ip_addrs table.
   for (const auto& xHop : nmapNode.select_nodes("host/trace/hop")) {
-    pugi::xml_node nodeHop = xHop.node();
+    pugi::xml_node nodeHop {xHop.node()};
 
     TracerouteHop hop;
     hop.hopCount = nodeHop.attribute("ttl").as_int();
@@ -215,17 +264,16 @@ ParserNmapXml::extractPortsAndServices(const pugi::xml_node& nmapNode, Data& dat
 {
   for (const auto& xExtrareasons :
          nmapNode.select_nodes("host/ports/extraports/extrareasons")) {
-    pugi::xml_node nodeExtrareasons = xExtrareasons.node();
-    pugi::xml_node nodeExtraports = nodeExtrareasons.parent();
-    pugi::xml_node nodeHost = nodeExtraports.parent().parent();
+    pugi::xml_node nodeExtrareasons {xExtrareasons.node()};
+    pugi::xml_node nodeExtraports   {nodeExtrareasons.parent()};
+    pugi::xml_node nodeHost         {nodeExtraports.parent().parent()};
 
-    nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
     nmdo::Port port(ipAddr);
     port.setPort(-1);
     port.setState(nodeExtraports.attribute("state").as_string());
 
-    std::string portReason =
-      nodeExtrareasons.attribute("reason").as_string();
+    std::string portReason {nodeExtrareasons.attribute("reason").as_string()};
     port.setReason(portReason);
 
     std::string protocol;
@@ -262,17 +310,17 @@ ParserNmapXml::extractPortsAndServices(const pugi::xml_node& nmapNode, Data& dat
   }
 
   for (const auto& xPort : nmapNode.select_nodes("host/ports/port")) {
-    pugi::xml_node nodePort = xPort.node();
-    pugi::xml_node nodePortState = nodePort.child("state");
-    pugi::xml_node nodeHost = nodePort.parent().parent();
+    pugi::xml_node nodePort      {xPort.node()};
+    pugi::xml_node nodePortState {nodePort.child("state")};
+    pugi::xml_node nodeHost      {nodePort.parent().parent()};
 
-    nmdo::IpAddress ipAddr = extractHostIpAddr(nodeHost);
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
     nmdo::Port port(ipAddr);
 
-    std::string protocol = nodePort.attribute("protocol").as_string();
+    std::string protocol {nodePort.attribute("protocol").as_string()};
     port.setProtocol(protocol);
 
-    int portNum = nodePort.attribute("portid").as_int();
+    int portNum {nodePort.attribute("portid").as_int()};
     port.setPort(portNum);
 
     port.setState(nodePortState.attribute("state").as_string());
@@ -280,13 +328,14 @@ ParserNmapXml::extractPortsAndServices(const pugi::xml_node& nmapNode, Data& dat
 
     data.ports.push_back(port);
 
-    pugi::xml_node nodeService = nodePort.child("service");
+    pugi::xml_node nodeService {nodePort.child("service")};
     if (nodeService) {
-      nmdo::Service service(nodeService.attribute("name").as_string(),
-                           ipAddr);
+      std::string serviceName {nodeService.attribute("name").as_string()};
+
+      nmdo::Service service(serviceName, ipAddr);
       service.setProtocol(protocol);
 
-      std::string portStr = std::to_string(portNum);
+      std::string portStr {std::to_string(portNum)};
       service.addDstPort(portStr);
 
       service.setServiceDescription(
@@ -303,11 +352,11 @@ ParserNmapXml::extractNseAndSsh(const pugi::xml_node& nmapNode, Data& data)
 {
   for (const auto& xScript :
          nmapNode.select_nodes("host/ports/port/script")) {
-    pugi::xml_node nodeScript = xScript.node();
-    pugi::xml_node nodePort = nodeScript.parent();
-    pugi::xml_node nodeHost = nodePort.parent().parent();
+    pugi::xml_node nodeScript {xScript.node()};
+    pugi::xml_node nodePort   {nodeScript.parent()};
+    pugi::xml_node nodeHost   {nodePort.parent().parent()};
 
-    nmdo::IpAddress ipAddr(extractHostIpAddr(nodeHost));
+    nmdo::IpAddress ipAddr {extractHostIpAddr(nodeHost)};
 
     NseResult nse;
     nse.port = nmdo::Port(ipAddr);
@@ -320,7 +369,7 @@ ParserNmapXml::extractNseAndSsh(const pugi::xml_node& nmapNode, Data& data)
 
     if (nse.scriptId == "ssh-hostkey") {
       for (const auto& xTable : nodeScript.select_nodes("table")) {
-        pugi::xml_node nodeTable = xTable.node();
+        pugi::xml_node nodeTable {xTable.node()};
 
         SshPublicKey key;
         key.port = nse.port;
@@ -343,10 +392,10 @@ ParserNmapXml::extractNseAndSsh(const pugi::xml_node& nmapNode, Data& data)
     }
     else if (nse.scriptId == "ssh2-enum-algos") {
       for (const auto& xTable : nodeScript.select_nodes("table")) {
-        pugi::xml_node nodeTable = xTable.node();
+        pugi::xml_node nodeTable {xTable.node()};
 
         for (const auto& xElem : nodeTable.select_nodes("elem")) {
-          pugi::xml_node nodeElem = xElem.node();
+          pugi::xml_node nodeElem {xElem.node()};
 
           SshAlgorithm algo;
           algo.port = nse.port;

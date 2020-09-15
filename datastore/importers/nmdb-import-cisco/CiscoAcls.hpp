@@ -141,8 +141,6 @@ namespace netmeld::datastore::importers::cisco {
     // Methods
     // =========================================================================
     public:
-      std::set<std::string> getIgnoredRuleData();
-
     protected:
       void initCurRule();
 

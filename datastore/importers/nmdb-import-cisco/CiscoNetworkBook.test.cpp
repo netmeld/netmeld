@@ -40,16 +40,8 @@ using qi::ascii::blank;
 using nmdsic::NetworkBook;
 
 class TestCiscoNetworkBook : public nmdsic::CiscoNetworkBook {
-
   public:
-
-  public:
-    const NetworkBook& getNetworkBooks()
-    { return networkBooks; }
-    const nmdo::AcNetworkBook& getCurBook()
-    { return curBook; }
-    const std::string& getZone()
-    { return ZONE; }
+    using nmdsic::CiscoNetworkBook::curBook;
 };
 
 BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
@@ -65,7 +57,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(format == temp.getName());
     }
     // BAD
@@ -99,7 +91,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format));
     }
     // BAD
@@ -116,7 +108,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format));
     }
     // BAD
@@ -132,7 +124,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format));
     }
     // BAD
@@ -164,7 +156,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format));
     }
     // BAD
@@ -184,7 +176,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format));
     }
     // BAD
@@ -201,7 +193,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookRules)
     };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST(1 == temp.getData().count(format));
     }
     // BAD
@@ -230,7 +222,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookName)
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
-      const auto& temp = tcnb.getCurBook();
+      const auto& temp = tcnb.curBook;
       BOOST_TEST("SomeName" == temp.getName());
       const auto& data = temp.getData();
       BOOST_TEST(1 == data.size());
@@ -280,7 +272,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookObjectNetwork)
       "  subnet 1.2.3.4/31\n" // +1
     };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
-    const auto& temp = tcnb.getCurBook();
+    const auto& temp = tcnb.curBook;
     BOOST_TEST("TEST" == temp.getName());
     BOOST_TEST(6 == temp.getData().size());
   }
@@ -304,7 +296,7 @@ BOOST_AUTO_TEST_CASE(testCiscoNetworkBookObjectGroupNetwork)
       "  network-object 1.2.3.4/31\n" // +1
     };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
-    const auto& temp = tcnb.getCurBook();
+    const auto& temp = tcnb.curBook;
     BOOST_TEST("TEST" == temp.getName());
     BOOST_TEST(5 == temp.getData().size());
   }

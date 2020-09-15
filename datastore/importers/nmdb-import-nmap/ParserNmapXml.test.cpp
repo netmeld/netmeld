@@ -228,9 +228,9 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     doc.load_string(
       R"STR(
       <host> <address addr="1.2.3.4" addrtype="ipv4"/>
-      <hostnames>                                                                     
-      <hostname name="some_host" type="user"/>                                           
-      <hostname name="some_host" type="PTR"/>                                            
+      <hostnames>
+      <hostname name="some_host" type="user"/>
+      <hostname name="some_host" type="PTR"/>
       </hostnames> </host>
       )STR");
     const pugi::xml_node testNode {doc.document_element().root()};
@@ -245,10 +245,12 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       BOOST_TEST(1 == aliases.size());
       BOOST_TEST(1 == aliases.count("some_host"));
     }
-    BOOST_TEST("[1.2.3.4/32, 0, nmap user, 0, [some_host], ]"
-               == d.ipAddrs[0].toDebugString());
-    BOOST_TEST("[1.2.3.4/32, 0, nmap ptr, 0, [some_host], ]"
-               == d.ipAddrs[1].toDebugString());
+    BOOST_TEST(d.ipAddrs[0].toDebugString() ==
+        "[1.2.3.4/32, 0, nmap user, 0, [some_host], ]"
+        );
+    BOOST_TEST(d.ipAddrs[1].toDebugString() ==
+        "[1.2.3.4/32, 0, nmap ptr, 0, [some_host], ]"
+        );
   }
 
   {
@@ -257,7 +259,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       R"STR(
       <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <hostscript>
-      <script id="nbstat" output="NetBIOS name: some_host, NetBIOS user: &lt;unknown&gt;, NetBIOS MAC: 00:11:22:33:44:55 (NO-ONE)"/>
+      <script id="nbstat" output="NetBIOS name: some_host, NetBIOS user: &lt;some_user&gt;, NetBIOS MAC: 00:11:22:33:44:55 (NO-ONE)"/>
       </hostscript> </host>
       )STR");
     const pugi::xml_node testNode {doc.document_element().root()};
@@ -271,8 +273,9 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     const auto aliases {ipa.getAliases()};
     BOOST_TEST(1 == aliases.size());
     BOOST_TEST(1 == aliases.count("some_host"));
-    BOOST_TEST("[1.2.3.4/32, 0, nmap nbstat, 0, [some_host], ]"
-               == ipa.toDebugString());
+    BOOST_TEST(ipa.toDebugString() == 
+        "[1.2.3.4/32, 0, nmap nbstat, 0, [some_host], ]"
+        );
   }
 
   {
@@ -283,16 +286,16 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       R"STR(
       <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <hostscript>
-      <script id="smb-os-discovery" output="&#xa;  OS: Some OS (SomeOsFlavor 1.2.3)&#xa;  OS CPE: cpe:/o:some_vendor:some_os:::&#xa;  Computer name: some_host&#xa;  NetBIOS computer name: SOME_HOST\x00&#xa;  Domain name: some_domain.some_forest&#xa;  Forest name: some_forest&#xa;  FQDN: some_host.some_domain.some_forest&#xa;  System time: 2000-01-01T00:00:01+00:00&#xa;">
-      <elem key="os">Some OS</elem>
-      <elem key="lanmanager">SomeOsFlavor 1.2.3</elem>
-      <elem key="server">SOME_HOST\x00</elem>
-      <elem key="date">2000-01-01T00:00:01+00:00</elem>
-      <elem key="fqdn">some_host.some_domain.some_forest</elem>
-      <elem key="domain_dns">some_domain.some_forest</elem>
-      <elem key="forest_dns">some_forest</elem>
-      <elem key="workgroup">SOME_WORKGROUP\x00</elem>
-      <elem key="cpe">cpe:/o:::::</elem>
+      <script id="smb-os-discovery" output="&#xa;  OS: some_os (some_os_release)&#xa;  OS CPE: some_cpe&#xa;  Computer name: some_host&#xa;  NetBIOS computer name: some_host\x00&#xa;  Domain name: some_domain_dns&#xa;  Forest name: some_forest_dns&#xa;  FQDN: some_fqdn&#xa;  System time: some_date&#xa;">
+      <elem key="os">some_os</elem>
+      <elem key="lanmanager">some_os_release</elem>
+      <elem key="server">some_host\x00</elem>
+      <elem key="date">some_date</elem>
+      <elem key="fqdn">some_fqdn</elem>
+      <elem key="domain_dns">some_domain_dns</elem>
+      <elem key="forest_dns">some_forest_dns</elem>
+      <elem key="workgroup">some_workgroup\x00</elem>
+      <elem key="cpe">some_cpe</elem>
       </hostscript> </host>
       )STR");
     const pugi::xml_node testNode {doc.document_element().root()};
@@ -302,11 +305,80 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     const auto ipa {d.ipAddrs[0]};
     BOOST_TEST("1.2.3.4/32" == ipa.toString());
     const auto aliases {ipa.getAliases()};
-    BOOST_TEST(2 == aliases.size());
-    BOOST_TEST(1 == aliases.count("some_host"));
-    BOOST_TEST(1 == aliases.count("some_host.some_domain.some_forest"));
-    BOOST_TEST("[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_host, some_host.some_domain.some_forest], ]"
-               == ipa.toDebugString());
+    BOOST_TEST(ipa.toDebugString() ==
+        "[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_fqdn, some_host], ]"
+        );
+  }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports> <port>
+      <service name="microsoft-ds" hostname="some_host" />
+      </port> </ports> </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractHostnames(testNode, d);
+
+    BOOST_TEST(1 == d.ipAddrs.size());
+    for (const auto& ipa : d.ipAddrs) {
+      BOOST_TEST("1.2.3.4/32" == ipa.toString());
+      const auto aliases {ipa.getAliases()};
+      BOOST_TEST(1 == aliases.size());
+      BOOST_TEST(1 == aliases.count("some_host"));
+    }
+    BOOST_TEST(d.ipAddrs[0].toDebugString() ==
+        "[1.2.3.4/32, 0, nmap microsoft-ds, 0, [some_host], ]"
+        );
+  }
+
+  {
+    pugi::xml_document doc;
+    doc.load_string(
+      R"STR(
+      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+      <ports> <port>
+      <script id="rdp-ntlm-info" output="&#xa;  Target_Name: some_target&#xa;  NetBIOS_Domain_Name: some_netbios_domain_name&#xa;  NetBIOS_Computer_Name: some_netbios_computer_name&#xa;  DNS_Domain_Name: some_dns_domain_name&#xa;  DNS_Computer_Name: some_dns_computer_name&#xa;  DNS_Tree_Name: some_dns_tree_name&#xa;  Product_Version: product_version&#xa;  System_Time: system_time"><elem key="Target_Name">some_target</elem>
+      <elem key="NetBIOS_Domain_Name">some_netbios_domain_name</elem>
+      <elem key="NetBIOS_Computer_Name">some_netbios_computer_name</elem>
+      <elem key="DNS_Domain_Name">some_dns_domain_name</elem>
+      <elem key="DNS_Computer_Name">some_dns_computer_name</elem>
+      <elem key="DNS_Tree_Name">some_dns_tree_name</elem>
+      <elem key="Product_Version">product_version</elem>
+      <elem key="System_Time">system_time</elem>
+      </script>
+      <script id="ms-sql-ntlm-info" output="&#xa;  Target_Name: some_target&#xa;  NetBIOS_Domain_Name: some_netbios_domain_name&#xa;  NetBIOS_Computer_Name: some_netbios_computer_name&#xa;  DNS_Domain_Name: some_dns_domain_name&#xa;  DNS_Computer_Name: some_dns_computer_name&#xa;  Product_Version: product_version">
+      <elem key="Target_Name">some_target</elem>
+      <elem key="NetBIOS_Domain_Name">some_netbios_domain_name</elem>
+      <elem key="NetBIOS_Computer_Name">some_netbios_computer_name</elem>
+      <elem key="DNS_Domain_Name">some_dns_domain_name</elem>
+      <elem key="DNS_Computer_Name">some_dns_computer_name</elem>
+      <elem key="Product_Version">product_version</elem>
+      </script>
+      </port> </ports> </host>
+      )STR");
+    const pugi::xml_node testNode {doc.document_element().root()};
+
+    Data d;
+    tnxp.extractHostnames(testNode, d);
+
+    BOOST_TEST(2 == d.ipAddrs.size());
+    for (const auto& ipa : d.ipAddrs) {
+      BOOST_TEST("1.2.3.4/32" == ipa.toString());
+    }
+    // NOTE: not the best way...but no "easy" solution
+    BOOST_TEST(d.ipAddrs[0].toDebugString() ==
+        "[1.2.3.4/32, 0, nmap rdp-ntlm-info, 0,"
+        " [some_dns_computer_name, some_netbios_computer_name], ]"
+        );
+    BOOST_TEST(d.ipAddrs[1].toDebugString() ==
+        "[1.2.3.4/32, 0, nmap ms-sql-ntlm-info, 0,"
+        " [some_dns_computer_name, some_netbios_computer_name, some_target], ]"
+        );
   }
 }
 
@@ -321,7 +393,7 @@ BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
       <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <os>
       <osmatch>
-      <osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="2.6.X" accuracy="85"><cpe>cpe:/o:linux:linux_kernel:2.6.38</cpe></osclass>
+      <osclass type="some_type" vendor="some_vendor" osfamily="some_osfamily" osgen="some_osgen" accuracy="123"><cpe>some_cpe</cpe></osclass>
       </osmatch>
       </os>
       </host>
@@ -332,7 +404,10 @@ BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
     tnxp.extractOperatingSystems(testNode, d);
 
     const auto os {d.oses[0]};
-    BOOST_TEST("[[1.2.3.4/32, 0, , 0, [], ], linux, linux, 2.6.x, cpe:/o:linux:linux_kernel:2.6.38, 0.85]" == os.toDebugString());
+    BOOST_TEST(os.toDebugString() == 
+        "[[1.2.3.4/32, 0, , 0, [], ],"
+        " some_vendor, some_osfamily, some_osgen, some_cpe, 1.23]"
+        );
   }
 }
 
@@ -356,7 +431,9 @@ BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
     tnxp.extractTraceRoutes(testNode, d);
 
     const auto hop {d.tracerouteHops[0]};
-    BOOST_TEST("[[4.3.2.1/32, 1, , 0, [], ], [1.2.3.4/32, 0, , 0, [], ], 1]" == hop.toString());
+    BOOST_TEST(hop.toString() == 
+        "[[4.3.2.1/32, 1, , 0, [], ], [1.2.3.4/32, 0, , 0, [], ], 1]"
+        );
   }
 }
 
@@ -383,7 +460,9 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     tnxp.extractPortsAndServices(testNode, d);
 
     const auto port = d.ports[0];
-    BOOST_TEST("[-1, tcp, [1.2.3.4/32, 0, , 0, [], ], filtered, no-responses]" == port.toDebugString());
+    BOOST_TEST(port.toDebugString() == 
+        "[-1, tcp, [1.2.3.4/32, 0, , 0, [], ], filtered, no-responses]"
+        );
   }
 
   {
@@ -404,7 +483,9 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     tnxp.extractPortsAndServices(testNode, d);
 
     const auto port = d.ports[0];
-    BOOST_TEST("[-1, udp, [1.2.3.4/32, 0, , 0, [], ], filtered, udp-responses]" == port.toDebugString());
+    BOOST_TEST(port.toDebugString() ==
+        "[-1, udp, [1.2.3.4/32, 0, , 0, [], ], filtered, udp-responses]"
+        );
   }
 
   {
@@ -425,7 +506,9 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     tnxp.extractPortsAndServices(testNode, d);
 
     const auto port = d.ports[0];
-    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]" == port.toDebugString());
+    BOOST_TEST(port.toDebugString() ==
+        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]"
+        );
   }
 
   {
@@ -448,10 +531,15 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     tnxp.extractPortsAndServices(testNode, d);
 
     const auto port = d.ports[0];
-    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]" == port.toDebugString());
+    BOOST_TEST(port.toDebugString() ==
+        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]"
+        );
 
     const auto service = d.services[0];
-    BOOST_TEST("[[1.2.3.4/32, 0, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0, -, , ssh, openssh, probed, tcp, [22], [], ]" == service.toDebugString());
+    BOOST_TEST(service.toDebugString() ==
+        "[[1.2.3.4/32, 0, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ],"
+        " 0, -, , ssh, openssh, probed, tcp, [22], [], ]"
+        );
   }
 }
 
@@ -478,7 +566,9 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     tnxp.extractNseAndSsh(testNode, d);
 
     const auto nseResult = d.nseResults[0];
-    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]" == nseResult.port.toDebugString());
+    BOOST_TEST(nseResult.port.toDebugString() ==
+        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
+        );
     BOOST_TEST("ssh-hostkey" == nseResult.scriptId);
     BOOST_TEST("2048 aa:bb::cc::dd (RSA)" == nseResult.scriptOutput);
   }
@@ -508,7 +598,9 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     tnxp.extractNseAndSsh(testNode, d);
 
     const auto sshKey = d.sshKeys[0];
-    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]" == sshKey.port.toDebugString());
+    BOOST_TEST(sshKey.port.toDebugString() ==
+        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
+        );
     BOOST_TEST("ssh-rsa" == sshKey.type);
     BOOST_TEST(2048 == sshKey.bits);
     BOOST_TEST("abc789" == sshKey.fingerprint);
@@ -537,7 +629,9 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     tnxp.extractNseAndSsh(testNode, d);
 
     const auto sshAlgo = d.sshAlgorithms[0];
-    BOOST_TEST("[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]" == sshAlgo.port.toDebugString());
+    BOOST_TEST(sshAlgo.port.toDebugString() ==
+        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
+        );
     BOOST_TEST("ssh-rsa" == sshAlgo.type);
     BOOST_TEST("AAABBBCCC" == sshAlgo.name);
   }

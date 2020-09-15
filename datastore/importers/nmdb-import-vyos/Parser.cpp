@@ -68,15 +68,15 @@ Parser::Parser() : Parser::base_type(start)
 
   user =
     qi::lit("user") > token
-      [pnx::bind([&](std::string val){creds[1] = val;}, qi::_1)] >
+      [pnx::bind([&](const std::string& val){creds[1] = val;}, qi::_1)] >
     startBlock >
     *(  (qi::lit("level") > token > qi::eol)
-           [pnx::bind([&](std::string val){creds[0] = val;}, qi::_1)]
+           [pnx::bind([&](const std::string& val){creds[0] = val;}, qi::_1)]
       | (qi::lit("authentication") > startBlock >
          *(  (qi::lit("encrypted-password") > token > qi::eol)
-                [pnx::bind([&](std::string val){creds[2] = val;}, qi::_1)]
+                [pnx::bind([&](const std::string& val){creds[2] = val;}, qi::_1)]
            | (qi::lit("plaintext-password") > token > qi::eol)
-                [pnx::bind([&](std::string val){creds[3] = val;}, qi::_1)]
+                [pnx::bind([&](const std::string& val){creds[3] = val;}, qi::_1)]
          ) > stopBlock)
     ) > stopBlock
     ;

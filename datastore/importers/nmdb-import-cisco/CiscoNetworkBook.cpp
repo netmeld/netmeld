@@ -56,6 +56,7 @@ namespace netmeld::datastore::importers::cisco {
 
     objectNetwork =
       qi::lit("object network ") > bookName > qi::eol
+      // cppcheck-suppress compareBoolExpressionWithInt
       > *(indent
           > (  objectNetworkHostLine
              | objectNetworkSubnetLine
@@ -86,6 +87,7 @@ namespace netmeld::datastore::importers::cisco {
 
     objectGroupNetwork =
       qi::lit("object-group network ") > bookName > qi::eol
+      // cppcheck-suppress compareBoolExpressionWithInt
       > *(indent
           > (  networkObjectLine
              | groupObjectLine
@@ -130,7 +132,7 @@ namespace netmeld::datastore::importers::cisco {
         [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
       ;
     dataIpPrefix =
-      (&((ipNoPrefix >> qi::eol) | !ipNoPrefix) >> ipAddr)
+      (&((ipNoPrefix >> qi::eol) | (!ipNoPrefix)) >> ipAddr)
         [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
       ;
     dataIpMask =

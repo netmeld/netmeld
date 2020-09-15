@@ -80,7 +80,7 @@ namespace netmeld::datalake::objects {
       void setNewName(const std::string&);
       void setToolArgs(const std::string&);
 
-      std::string toDebugString() const;
+      std::string toDebugString() const override;
   };
 }
 #endif // DATA_ENTRY_HPP
