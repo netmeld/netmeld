@@ -138,5 +138,13 @@ namespace netmeld::playbook::utils {
         " SET is_completed = true"
         " WHERE (playbook_source_id = $1)"
         );
+
+    db.prepare(
+        "insert_playbook_runtime_error",
+        "INSERT INTO playbook_runtime_errors"
+        "  (playbook_source_id, error_type)"
+        " VALUES ($1, $2)"
+        " ON CONFLICT DO NOTHING"
+        );
   }
 }

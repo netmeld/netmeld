@@ -90,5 +90,24 @@ CREATE TABLE playbook_ip_routers (
 
 
 -- ----------------------------------------------------------------------
+-- Tracking for errors which occured during execution.
+-- ----------------------------------------------------------------------
+
+CREATE TABLE playbook_runtime_errors (
+    playbook_source_id          UUID            NOT NULL,
+    error_type                  TEXT            NOT NULL,
+    PRIMARY KEY (playbook_source_id, error_type),
+    FOREIGN KEY (playbook_source_id)
+      REFERENCES playbook_intra_network_sources(playbook_source_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (playbook_source_id)
+      REFERENCES playbook_inter_network_sources(playbook_source_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+-- ----------------------------------------------------------------------
 
 COMMIT TRANSACTION;
