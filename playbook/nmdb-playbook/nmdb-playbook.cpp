@@ -59,6 +59,7 @@ namespace nmpbu = netmeld::playbook::utils;
 #include <net/if.h>
 #include <netinet/ip.h>
 #include <sys/ioctl.h>
+#include <arpa/inet.h>
 
 namespace netmeld::playbook {
   std::mutex coutMutex; // this is used in a lot of places
@@ -678,7 +679,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       int socketId {socket(AF_INET, SOCK_DGRAM, 0)};
       if (socketId < 0) {
         LOG_WARN << "Socket creation for testing link status failed: "
-                 << errno  << std::endl;
+          << errno  << std::endl;
         return false;
       }
 
@@ -690,7 +691,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       if (rv == -1) {
         LOG_WARN << "ioctl query for testing link status failed: "
-                 << errno << std::endl;
+          << errno << std::endl;
         return false;
       }
 
@@ -708,13 +709,13 @@ class Tool : public nmdt::AbstractDatastoreTool
       for (auto ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
         // Skip invalid interfaces
         if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
-           continue;
+          continue;
         }
 
         // Don't need to know the address, just that it's set
         auto addrFamily = ifa->ifa_addr->sa_family;
         if (addrFamily == AF_INET || addrFamily == AF_INET6) {
-           hasAddr = true;
+          hasAddr = true;
         }
       }
 
@@ -723,6 +724,50 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
       return hasAddr;
+    }
+
+    bool
+    ifaceHasIp(const std::string& ifaceName, const std::string& ipAddr)
+    {
+      bool hasIp {false};
+      struct ifaddrs* ifAddrStruct {NULL};
+
+      getifaddrs(&ifAddrStruct);
+
+      auto ip  {ipAddr};
+      auto pos {ip.find_first_of('/')};
+      if (pos != std::string::npos) {
+        ip = ip.substr(0, pos);
+      }
+
+      for (auto ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        // Skip invalid interfaces
+        if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
+          continue;
+        }
+
+        auto addrFamily = ifa->ifa_addr->sa_family;
+        char address[INET6_ADDRSTRLEN];
+        if (addrFamily == AF_INET) {
+          void* addrPtr {
+            &reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr)->sin_addr};
+          inet_ntop(addrFamily, addrPtr, address, INET_ADDRSTRLEN);
+        }
+        if (addrFamily == AF_INET6) {
+          void* addrPtr {
+            &reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr)->sin6_addr};
+          inet_ntop(addrFamily, addrPtr, address, INET6_ADDRSTRLEN);
+        }
+        if (ip.compare(std::string(address)) == 0) {
+          hasIp = true;
+        }
+      }
+
+      if (ifAddrStruct != NULL) {
+        freeifaddrs(ifAddrStruct);
+      }
+
+      return hasIp;
     }
 
 
@@ -1269,7 +1314,8 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         LOG_INFO << std::endl << "### Phase " << phase << std::endl;
-        if (execute && isPhaseRuntimeError(db, playbookSourceId, linkName))
+        if (   execute
+            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
         {
           LOG_WARN << "Disabling this phase execution" << std::endl;
           cmdRunner.setExecute(false);
@@ -1344,7 +1390,8 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         LOG_INFO << std::endl << "### Phase " << phase << std::endl;
-        if (execute && isPhaseRuntimeError(db, playbookSourceId, linkName))
+        if (   execute
+            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
         {
           LOG_WARN << "Disabling this phase execution" << std::endl;
           cmdRunner.setExecute(false);
@@ -1386,7 +1433,8 @@ class Tool : public nmdt::AbstractDatastoreTool
 
   bool
   isPhaseRuntimeError(pqxx::connection& db,
-      const nmco::Uuid& playbookSourceId, const std::string& linkName)
+      const nmco::Uuid& playbookSourceId, const std::string& linkName,
+      const std::string& ipAddr)
   {
     bool isError {false};
     pqxx::work t {db};
@@ -1399,13 +1447,14 @@ class Tool : public nmdt::AbstractDatastoreTool
           );
     }
 
-    if (!ifaceHasAddress(linkName)) {
+    if (!ifaceHasAddress(linkName) || !ifaceHasIp(linkName, ipAddr)) {
       isError = true;
-      LOG_ERROR << "Interface has no IP address" << std::endl;
+      LOG_ERROR << "Interface has no/incorrect IP address" << std::endl;
       t.exec_prepared("insert_playbook_runtime_error",
           playbookSourceId, "Interface lost IP address during execution"
           );
     }
+
     t.commit();
 
     return isError;
