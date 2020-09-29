@@ -19,11 +19,12 @@ RUN apt update \
     libpqxx-dev \
     libpugixml-dev \
     libpcap0.8-dev \
-    python \
+  && apt install --assume-yes --no-install-recommends \
+    python3 \
     apt-transport-https \
     ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
-  && update-ca-certificates \
+  && update-ca-certificates
 
 # NOTE: The following are disable for auto-builds of docker images for use
 #       with the github CI workflow. Workflow containers must run as root.
