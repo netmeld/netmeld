@@ -12,6 +12,8 @@ on:
 
 jobs:
   docker:
+    if: github.repository == 'netmeld/netmeld'
+
     runs-on: ubuntu-latest
     
     steps:
