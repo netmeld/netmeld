@@ -1,12 +1,19 @@
 name: DockerBuild
 
-#on: push
 on:
   schedule:
     - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Tags to add to docker image (comma separated)'
+        required: false
+        default: 'latest'
 
 jobs:
   docker:
+    if: github.repository == 'netmeld/netmeld'
+
     runs-on: ubuntu-latest
     
     steps:
@@ -17,5 +24,5 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: netmeld/netmeld-dev
-          tags: latest
+          tags: ${{ github.event.inputs.tags }}
       
