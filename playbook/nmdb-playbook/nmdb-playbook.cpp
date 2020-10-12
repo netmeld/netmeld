@@ -689,7 +689,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       int socketId {socket(AF_INET, SOCK_DGRAM, 0)};
       if (socketId < 0) {
         LOG_WARN << "Socket creation for testing link status failed: "
-          << errno  << std::endl;
+                 << errno << std::endl;
         return false;
       }
 
@@ -701,7 +701,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       if (rv == -1) {
         LOG_WARN << "ioctl query for testing link status failed: "
-          << errno << std::endl;
+                 << errno << std::endl;
         return false;
       }
 
