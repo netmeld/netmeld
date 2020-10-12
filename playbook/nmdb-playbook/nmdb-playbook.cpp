@@ -234,7 +234,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       opts.addConfFileOption("ignore-scan-iface-state-change", std::make_tuple(
             "ignore-scan-iface-state-change",
-            NULL_SEMANTIC,
+            po::bool_switch()->required()->default_value(false),
             "")
           );
 
@@ -1449,13 +1449,13 @@ class Tool : public nmdt::AbstractDatastoreTool
       const nmco::Uuid& playbookSourceId, const std::string& linkName,
       const std::string& ipAddr)
   {
+    // short-circuit, if commanded
+    if (opts.getValueAs<bool>("ignore-scan-iface-state-change")) {
+      return false;
+    }
+
     bool isError {false};
     pqxx::work t {db};
-
-    // short-circuit if commanded
-    if (opts.exists("ignore-scan-iface-state-change")) {
-      return isError;
-    }
 
     if (ifaceIsDown(linkName)) {
       isError = true;
