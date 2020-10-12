@@ -220,8 +220,8 @@ class Tool : public nmdt::AbstractDatastoreTool
             "exclude-command",
             po::value<std::vector<uint32_t>>()->multitoken()->composing()->
               default_value(std::vector<uint32_t>{},"none"),
-            "Excluded specified, space separated, command ID(s); This can"
-            " break expected logic in some cases")
+            "Exclude, space separated, command ID(s);"
+            " This can break expected logic in some cases")
           );
 
       std::string confFileLoc = {NETMELD_CONF_DIR "/nmdb-playbook.conf"};
