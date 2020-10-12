@@ -224,15 +224,20 @@ class Tool : public nmdt::AbstractDatastoreTool
             " break expected logic in some cases")
           );
 
-      // TODO 29JUN18 Does this make sense?  Not currently changeable
       std::string confFileLoc = {NETMELD_CONF_DIR "/nmdb-playbook.conf"};
       opts.addAdvancedOption("config-file", std::make_tuple(
             "config-file",
             po::value<std::string>()->required()->default_value(confFileLoc),
             "Location of config file for non-command line options")
           );
-
       opts.setConfFile(confFileLoc);
+
+      opts.addConfFileOption("ignore-scan-iface-state-change", std::make_tuple(
+            "ignore-scan-iface-state-change",
+            NULL_SEMANTIC,
+            "")
+          );
+
       opts.addConfFileOption("nmap-ipv4-host-discovery-opts", std::make_tuple(
             "nmap-ipv4-host-discovery-opts",
             po::value<std::string>()->required(),
@@ -298,19 +303,24 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
+      if (    (opts.exists("intra-network") && opts.exists("inter-network"))
+          || !(opts.exists("intra-network") || opts.exists("inter-network"))
+         )
+      {
+        LOG_ERROR << "Required option --intra-network or --inter-network"
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
+
       // Ensure some test type specified
       PlaybookScope playbookScope {PlaybookScope::UNKNOWN};
       if (opts.exists("inter-network")) {
         playbookScope = PlaybookScope::INTER_NETWORK;
       }
-      else if (opts.exists("intra-network")) {
+      if (opts.exists("intra-network")) {
         playbookScope = PlaybookScope::INTRA_NETWORK;
       }
-      else {
-        LOG_ERROR << "Required option --intra-network or --inter-network"
-                  << std::endl;
-        std::exit(nmcu::Exit::FAILURE);
-      }
+      assert(playbookScope != PlaybookScope::UNKNOWN);
 
       // Handle inclusion/exclusion of tests
       auto stages {opts.getValueAs<std::vector<uint16_t>>("stage")};
@@ -1208,6 +1218,9 @@ class Tool : public nmdt::AbstractDatastoreTool
         uint16_t const vlan, VlanConfig const& vlanConfig)
     {
       nmpb::RaiiVlan raiiVlan {physIfaceName, vlan};
+      if (nmpb::VlanId::RESERVED <= vlan && nmpb::VlanId::NONE != vlan) {
+        return; // vlan id is invalid, skip processing
+      }
       std::string const linkName {raiiVlan.getLinkName()};
 
       // Each named Linux interface can only have one MAC address,
@@ -1438,6 +1451,11 @@ class Tool : public nmdt::AbstractDatastoreTool
   {
     bool isError {false};
     pqxx::work t {db};
+
+    // short-circuit if commanded
+    if (opts.exists("ignore-scan-iface-state-change")) {
+      return isError;
+    }
 
     if (ifaceIsDown(linkName)) {
       isError = true;

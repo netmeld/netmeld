@@ -68,7 +68,6 @@ class Tool : public nmdt::AbstractDatastoreTool
     void
     addToolOptions() override
     {
-      // TODO 28JUN18 Does this hack work with folks?
       opts.addRequiredOption("1", std::make_tuple(
             "[intra-network|inter-network]",
             NULL_SEMANTIC,
@@ -129,9 +128,11 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
-      // TODO 28JUN18 This becomes obsolete if we keep the option change above
       if (!opts.exists("intra-network") && !opts.exists("inter-network")) {
-        throw po::required_option("intra-network and/or inter-network");
+        LOG_ERROR << "Required option(s)"
+                  << " --intra-network and/or --inter-network"
+                  << " missing\n";
+        std::exit(nmcu::Exit::FAILURE);
       }
 
       const auto& dbName  {getDbName()};
