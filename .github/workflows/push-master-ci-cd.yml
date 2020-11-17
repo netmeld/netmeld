@@ -63,7 +63,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${DATETIME}
+        tag_name: ${{ env.DATETIME }}
         release_name: CI build - ${DATETIME}
         draft: false
         prerelease: false
@@ -76,5 +76,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./artifacts.zip
-        asset_name: netmeld-${DATETIME}-debs.zip
+        asset_name: netmeld-${{ env.DATETIME }}-debs.zip
         asset_content_type: application/zip
