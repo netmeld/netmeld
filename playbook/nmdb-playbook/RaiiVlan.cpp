@@ -36,11 +36,8 @@ namespace netmeld::playbook {
     if (VlanId::NONE == vlan) { return; }
 
     if (VlanId::RESERVED <= vlan) {
-      LOG_ERROR << "Invalid VLAN ID (VID)" << std::endl;
-      // TODO 20NOV18 This originally did below which would abort entire scan
-      //   throw std::invalid_argument("Invalid VLAN ID (VID).");
-      //              We may want to alter this logic to just aborting stage
-      std::exit(nmcu::Exit::FAILURE);
+      LOG_WARN << "Invalid VLAN ID (VID)\n";
+      return;
     }
 
     std::vector<std::string> commands;

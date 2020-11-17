@@ -39,13 +39,16 @@ SELECT DISTINCT
     pins.ip_addr                AS ip_addr,
     pins.description            AS description,
     count(DISTINCT tria.tool_run_id) AS tool_run_count,
-    count(DISTINCT ia.ip_addr)       AS responding_ip_addr_count
+    count(DISTINCT ia.ip_addr)       AS responding_ip_addr_count,
+    count(DISTINCT pre.error_type)   AS error_count
 FROM playbook_intra_network_sources AS pins
 LEFT OUTER JOIN tool_run_ip_addrs AS tria
 ON (pins.interface_name = tria.interface_name) AND
    (pins.ip_addr = tria.ip_addr)
 LEFT OUTER JOIN raw_ip_addrs AS ia
 ON (tria.tool_run_id = ia.tool_run_id)
+LEFT OUTER JOIN playbook_runtime_errors AS pre
+ON (pins.playbook_source_id = pre.playbook_source_id)
 WHERE (ia.is_responding) OR (ia.is_responding IS NULL)
 GROUP BY
     pins.playbook_source_id,
@@ -78,7 +81,8 @@ SELECT DISTINCT
              pir.rtr_ip_addr)   AS rtr_ip_addr,
     pins.description            AS description,
     count(DISTINCT tria.tool_run_id)    AS tool_run_count,
-    count(DISTINCT ia.ip_addr)          AS responding_ip_addr_count
+    count(DISTINCT ia.ip_addr)          AS responding_ip_addr_count,
+    count(DISTINCT pre.error_type)   AS error_count
 FROM playbook_inter_network_sources AS pins
 LEFT OUTER JOIN playbook_ip_routers AS pir
 ON (pir.rtr_ip_addr <<= network(pins.ip_addr))
@@ -91,6 +95,8 @@ ON (tria.tool_run_id = trir.tool_run_id) AND
    (pir.rtr_ip_addr = trir.rtr_ip_addr)
 LEFT OUTER JOIN raw_ip_addrs AS ia
 ON (tria.tool_run_id = ia.tool_run_id)
+LEFT OUTER JOIN playbook_runtime_errors AS pre
+ON (pins.playbook_source_id = pre.playbook_source_id)
 WHERE ((ia.is_responding) OR (ia.is_responding IS NULL)) AND
       ((pir.rtr_ip_addr != host(pins.ip_addr)::INET) OR
        (pir.rtr_ip_addr IS NULL))

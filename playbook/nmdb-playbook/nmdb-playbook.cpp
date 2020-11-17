@@ -24,6 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+
 #include <netmeld/core/objects/Uuid.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 #include <netmeld/core/utils/Exit.hpp>
@@ -56,7 +57,9 @@ namespace nmpbu = netmeld::playbook::utils;
 
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <netinet/ip.h>
 #include <sys/ioctl.h>
+#include <arpa/inet.h>
 
 namespace netmeld::playbook {
   std::mutex coutMutex; // this is used in a lot of places
@@ -64,17 +67,17 @@ namespace netmeld::playbook {
 
 struct SourceConfig
 {
-  nmco::Uuid              playbookSourceId;
+  nmco::Uuid             playbookSourceId;
   std::string            description;
   std::set<std::string>  ipRouters;
   int                    addrFamily;
 };
 
-using IpConfig = std::map<std::string, SourceConfig>;
-using VlanConfig = std::map<std::string, IpConfig>;
-using InterfaceConfig = std::map<uint16_t, VlanConfig>;
+using IpConfig            = std::map<std::string, SourceConfig>;
+using VlanConfig          = std::map<std::string, IpConfig>;
+using InterfaceConfig     = std::map<uint16_t, VlanConfig>;
 using PlaybookStageConfig = std::map<std::string, InterfaceConfig>;
-using Playbook = std::map<uint16_t, PlaybookStageConfig>;
+using Playbook            = std::map<uint16_t, PlaybookStageConfig>;
 
 
 enum class PlaybookScope { UNKNOWN, INTRA_NETWORK, INTER_NETWORK };
@@ -98,7 +101,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     std::string dbConnectString;
 
-    bool execute {false};
+    bool execute  {false};
     bool headless {false};
 
     int                 family {4};
@@ -109,16 +112,16 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     sfs::path scriptPath;
 
-    // ROE
-    std::string roeExcludedIpv4Path,
-                roeExcludedIpv6Path,
-                roeNetworksIpv4Path,
-                roeNetworksIpv6Path,
-                respondingHostsIpv4Path,
-                respondingHostsIpv6Path
-                ;
     std::string roeExcludedPath;
+    std::string roeExcludedIpv4Path;
+    std::string roeExcludedIpv6Path;
+
     std::string roeNetworksPath;
+    std::string roeNetworksIpv4Path;
+    std::string roeNetworksIpv6Path;
+
+    std::string respondingHostsIpv4Path;
+    std::string respondingHostsIpv6Path;
     std::string respondingHostsPath;
 
     std::string commandTitlePrefix;
@@ -217,20 +220,24 @@ class Tool : public nmdt::AbstractDatastoreTool
             "exclude-command",
             po::value<std::vector<uint32_t>>()->multitoken()->composing()->
               default_value(std::vector<uint32_t>{},"none"),
-            //po::value<std::string>(),
-            "Excluded specified, space separated, command ID(s); This can"
-            " break expected logic in some cases")
+            "Exclude, space separated, command ID(s);"
+            " This can break expected logic in some cases")
           );
 
-      // TODO 29JUN18 Does this make sense?  Not currently changeable
       std::string confFileLoc = {NETMELD_CONF_DIR "/nmdb-playbook.conf"};
       opts.addAdvancedOption("config-file", std::make_tuple(
             "config-file",
             po::value<std::string>()->required()->default_value(confFileLoc),
             "Location of config file for non-command line options")
           );
-
       opts.setConfFile(confFileLoc);
+
+      opts.addConfFileOption("ignore-scan-iface-state-change", std::make_tuple(
+            "ignore-scan-iface-state-change",
+            po::bool_switch()->required()->default_value(false),
+            "")
+          );
+
       opts.addConfFileOption("nmap-ipv4-host-discovery-opts", std::make_tuple(
             "nmap-ipv4-host-discovery-opts",
             po::value<std::string>()->required(),
@@ -296,19 +303,24 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
+      if (    (opts.exists("intra-network") && opts.exists("inter-network"))
+          || !(opts.exists("intra-network") || opts.exists("inter-network"))
+         )
+      {
+        LOG_ERROR << "Required option --intra-network or --inter-network"
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
+
       // Ensure some test type specified
       PlaybookScope playbookScope {PlaybookScope::UNKNOWN};
       if (opts.exists("inter-network")) {
         playbookScope = PlaybookScope::INTER_NETWORK;
       }
-      else if (opts.exists("intra-network")) {
+      if (opts.exists("intra-network")) {
         playbookScope = PlaybookScope::INTRA_NETWORK;
       }
-      else {
-        LOG_ERROR << "Required option --intra-network or --inter-network"
-                  << std::endl;
-        std::exit(nmcu::Exit::FAILURE);
-      }
+      assert(playbookScope != PlaybookScope::UNKNOWN);
 
       // Handle inclusion/exclusion of tests
       auto stages {opts.getValueAs<std::vector<uint16_t>>("stage")};
@@ -365,6 +377,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
+
       dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
       pqxx::connection db {dbConnectString};
       nmpbu::dbPreparePlaybook(db);
@@ -489,7 +502,7 @@ class Tool : public nmdt::AbstractDatastoreTool
                 LOG_WARN << physIfaceName << " link not down" << std::endl;
               }
 
-              // Ensure interface has not ipv4/6 address assigned
+              // Ensure interface has no ipv4/6 address assigned
               if (ifaceHasAddress(physIfaceName)) {
                 LOG_WARN << physIfaceName << " has an address" << std::endl;
               }
@@ -676,7 +689,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       int socketId {socket(AF_INET, SOCK_DGRAM, 0)};
       if (socketId < 0) {
         LOG_WARN << "Socket creation for testing link status failed: "
-                 << errno  << std::endl;
+                 << errno << std::endl;
         return false;
       }
 
@@ -706,13 +719,13 @@ class Tool : public nmdt::AbstractDatastoreTool
       for (auto ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
         // Skip invalid interfaces
         if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
-           continue;
+          continue;
         }
 
         // Don't need to know the address, just that it's set
         auto addrFamily = ifa->ifa_addr->sa_family;
         if (addrFamily == AF_INET || addrFamily == AF_INET6) {
-           hasAddr = true;
+          hasAddr = true;
         }
       }
 
@@ -721,6 +734,50 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
       return hasAddr;
+    }
+
+    bool
+    ifaceHasIp(const std::string& ifaceName, const std::string& ipAddr)
+    {
+      bool hasIp {false};
+      struct ifaddrs* ifAddrStruct {NULL};
+
+      getifaddrs(&ifAddrStruct);
+
+      auto ip  {ipAddr};
+      auto pos {ip.find_first_of('/')};
+      if (pos != std::string::npos) {
+        ip = ip.substr(0, pos);
+      }
+
+      for (auto ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        // Skip invalid interfaces
+        if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
+          continue;
+        }
+
+        auto addrFamily = ifa->ifa_addr->sa_family;
+        char address[INET6_ADDRSTRLEN];
+        if (addrFamily == AF_INET) {
+          void* addrPtr {
+            &reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr)->sin_addr};
+          inet_ntop(addrFamily, addrPtr, address, INET_ADDRSTRLEN);
+        }
+        if (addrFamily == AF_INET6) {
+          void* addrPtr {
+            &reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr)->sin6_addr};
+          inet_ntop(addrFamily, addrPtr, address, INET6_ADDRSTRLEN);
+        }
+        if (ip.compare(std::string(address)) == 0) {
+          hasIp = true;
+        }
+      }
+
+      if (ifAddrStruct != NULL) {
+        freeifaddrs(ifAddrStruct);
+      }
+
+      return hasIp;
     }
 
 
@@ -738,7 +795,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       //
       // Sniffing traffic for at least 90 seconds (preferably longer)
       // accomplishes both of these goals at the same time.
-      // Sniffing traffic for 90 seconds (preferably longer)
 
       uint16_t duration {std::max(MIN_CAPTURE_DURATION, _duration)};
       std::ostringstream oss;
@@ -1162,6 +1218,9 @@ class Tool : public nmdt::AbstractDatastoreTool
         uint16_t const vlan, VlanConfig const& vlanConfig)
     {
       nmpb::RaiiVlan raiiVlan {physIfaceName, vlan};
+      if (nmpb::VlanId::RESERVED <= vlan && nmpb::VlanId::NONE != vlan) {
+        return; // vlan id is invalid, skip processing
+      }
       std::string const linkName {raiiVlan.getLinkName()};
 
       // Each named Linux interface can only have one MAC address,
@@ -1178,7 +1237,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
         if (nmpb::VlanId::NONE == vlan) {
           // Ensure forwarding state (may not be "portfast") and snapshot
-          captureTraffic(linkName, 90);
+          captureTraffic(linkName, MIN_CAPTURE_DURATION);
         }
 
         for (const auto& xIpAddr : std::get<1>(xMacAddr)) {
@@ -1200,7 +1259,8 @@ class Tool : public nmdt::AbstractDatastoreTool
               {
                 setCommandTitlePrefix("Intra",
                     playbookStage, linkName, srcIpAddr);
-                intraNetworkActions(db, linkName, srcIpAddr);
+                intraNetworkActions(db, srcConf.playbookSourceId,
+                    linkName, srcIpAddr);
 
                 if (execute) {
                   pqxx::work t {db};
@@ -1216,7 +1276,8 @@ class Tool : public nmdt::AbstractDatastoreTool
                 for (const auto& rtrIpAddr : srcConf.ipRouters) {
                   setCommandTitlePrefix("Inter",
                       playbookStage, linkName, srcIpAddr);
-                  interNetworkActions(linkName, rtrIpAddr, srcIpAddr);
+                  interNetworkActions(db, srcConf.playbookSourceId,
+                      linkName, rtrIpAddr, srcIpAddr);
                 }
 
                 if (execute) {
@@ -1238,7 +1299,8 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     void
-    intraNetworkActions(pqxx::connection& db, std::string const& linkName,
+    intraNetworkActions(pqxx::connection& db,
+        const nmco::Uuid& playbookSourceId, std::string const& linkName,
         std::string const& srcIpAddr)
     {
       nmco::Uuid const sessionId;
@@ -1265,6 +1327,12 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         LOG_INFO << std::endl << "### Phase " << phase << std::endl;
+        if (   execute
+            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
+        {
+          LOG_WARN << "Disabling this phase execution" << std::endl;
+          cmdRunner.setExecute(false);
+        }
         switch (phase) {
           case 1:
             {
@@ -1287,8 +1355,12 @@ class Tool : public nmdt::AbstractDatastoreTool
               break;
             }
         }
+
+        cmdRunner.setExecute(execute); // update in case of alternate logic
         LOG_INFO << std::endl << "### End of phase " << phase << std::endl;
       }
+
+      cmdRunner.setExecute(execute); // update in case of alternate logic
 
       {
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
@@ -1297,13 +1369,14 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     void
-    interNetworkActions(std::string const& linkName,
+    interNetworkActions(pqxx::connection& db,
+        const nmco::Uuid& playbookSourceId, std::string const& linkName,
         std::string const& rtrIpAddr, std::string const& srcIpAddr)
     {
+      nmco::Uuid const sessionId;
+
       nmpb::RaiiIpRoute raiiIpRoute
       {linkName, rtrIpAddr};
-
-      nmco::Uuid const sessionId;
 
       // ARP/NDP the router: skip testing if unreachable
       std::ostringstream oss;
@@ -1330,6 +1403,12 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         LOG_INFO << std::endl << "### Phase " << phase << std::endl;
+        if (   execute
+            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
+        {
+          LOG_WARN << "Disabling this phase execution" << std::endl;
+          cmdRunner.setExecute(false);
+        }
         switch (phase) {
           case 1:
             {
@@ -1352,6 +1431,8 @@ class Tool : public nmdt::AbstractDatastoreTool
               break;
             }
         }
+
+        cmdRunner.setExecute(execute); // update in case of alternate logic
         LOG_INFO << std::endl << "### End of phase " << phase << std::endl;
       }
 
@@ -1362,6 +1443,40 @@ class Tool : public nmdt::AbstractDatastoreTool
         LOG_INFO << std::endl;
       }
     }
+
+  bool
+  isPhaseRuntimeError(pqxx::connection& db,
+      const nmco::Uuid& playbookSourceId, const std::string& linkName,
+      const std::string& ipAddr)
+  {
+    // short-circuit, if commanded
+    if (opts.getValueAs<bool>("ignore-scan-iface-state-change")) {
+      return false;
+    }
+
+    bool isError {false};
+    pqxx::work t {db};
+
+    if (ifaceIsDown(linkName)) {
+      isError = true;
+      LOG_ERROR << "Interface in down state" << std::endl;
+      t.exec_prepared("insert_playbook_runtime_error",
+          playbookSourceId, "Interface state changed (down) during execution"
+          );
+    }
+
+    if (!ifaceHasAddress(linkName) || !ifaceHasIp(linkName, ipAddr)) {
+      isError = true;
+      LOG_ERROR << "Interface has no/incorrect IP address" << std::endl;
+      t.exec_prepared("insert_playbook_runtime_error",
+          playbookSourceId, "Interface lost IP address during execution"
+          );
+    }
+
+    t.commit();
+
+    return isError;
+  }
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
