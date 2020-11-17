@@ -64,7 +64,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ env.DATETIME }}
-        release_name: CI build - ${DATETIME}
+        release_name: CI build - ${{ env.DATETIME }}
         draft: false
         prerelease: false
     
