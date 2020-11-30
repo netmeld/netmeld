@@ -4,16 +4,42 @@ digraph netmeld {
   ranksep=0.75;
   newrank=true;
   splines=spline;
+  compound=true;
+  concentrate=true;
 
   label="Netmeld Tool Suite 2.x -- Core Components and General Dataflow";
 
   // find core -iname "*.hpp" | sort -u
-  // find core/common/utils -iname "*.hpp" -printf '%f\n' | sed -e 's/.hpp/\\l/g' | sort -u | paste -sd '' -
+  // find common/utils/ -iname "*.hpp" -printf '%f\n' | sed -e 's/.hpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
 
   node [shape=rectangle];
-  objects [label="Objects\nAbstractObject\lTime\lUuid\l"];
-  tools [label="Tools\nAbstractTool\l"];
-  utils [label="Utils\nCmdExec\lExit\lFileManager\lForkExec\lLogger\lLoggerSingleton\lProgramOptions\lSeverity\lStreamUtilities\lStringUtilities\lThreadSafeQueue\l"];
+  objects [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="4">Object(s)</td></tr>
+      <tr><td align="left">AbstractObject</td></tr>
+      <tr><td align="left">Time</td></tr>
+      <tr><td align="left">Uuid</td></tr>
+    </table>>];
+  tools [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="2">Tool(s)</td></tr>
+      <tr><td align="left">AbstractTool</td></tr>
+    </table>>];
+  utils [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="12">Util(s)</td></tr>
+      <tr><td align="left">CmdExec</td></tr>
+      <tr><td align="left">Exit</td></tr>
+      <tr><td align="left">FileManager</td></tr>
+      <tr><td align="left">ForkExec</td></tr>
+      <tr><td align="left">Logger</td></tr>
+      <tr><td align="left">LoggerSingleton</td></tr>
+      <tr><td align="left">ProgramOptions</td></tr>
+      <tr><td align="left">Severity</td></tr>
+      <tr><td align="left">StreamUtilities</td></tr>
+      <tr><td align="left">StringUtilities</td></tr>
+      <tr><td align="left">ThreadSafeQueue</td></tr>
+    </table>>];
 
   tools->{objects utils};
   objects->utils;
