@@ -5,7 +5,7 @@ digraph netmeld {
   newrank=true;
   splines=spline;
 
-  label="Netmeld Tool Suite 2.x -- Core";
+  label="Netmeld Tool Suite 2.x -- Core Components and General Dataflow";
 
   // find core -iname "*.hpp" | sort -u
   // find core/common/utils -iname "*.hpp" -printf '%f\n' | sed -e 's/.hpp/\\l/g' | sort -u | paste -sd '' -

@@ -1,9 +1,9 @@
 DESCRIPTION
 ===========
 
-This provides most of the core functionality for the Netmeld tool suite
-to leverage.  Common functions and capabilities are pooled into this module
-to enable consistent behavior for tools and quicker tool development.
+This module provides core functionality for the Netmeld tool suite to leverage.
+Common functions and capabilities are pooled into this module to enable
+consistent behavior for tools and quicker tool development.
 
 ![](docs/netmeld-core.png)
 
