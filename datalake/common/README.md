@@ -1,9 +1,9 @@
 DESCRIPTION
 ===========
 
-This provides most of the core functionality for the Netmeld Datalake module
-to leverage.  Common functions and capabilities are pooled into this library
-to enable consistent behaviour for module tools and quicker tool development.
+This provides a library containing the core functionality for the module to
+leverage.  Common functions and capabilities are pooled into this library to
+enable consistent behaviour for module tools and quicker tool development.
 
 HANDLER FUNDAMENTALS
 ====================

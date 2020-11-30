@@ -16,7 +16,8 @@ Giving an invalid `--before` value will result in handler defined behaviour.
 EXAMPLES
 ========
 
-List data as organized by the `device-id` provided when stored is the default.
+Listing data as organized by the `device-id` provided when stored is the
+default.
 ```
 nmdl-list
 ```
@@ -24,6 +25,11 @@ nmdl-list
 List by any associated ingest tool.
 ```
 nmdl-list --by-tool
+```
+
+List data not associated to an ingest tool.
+```
+nmdl-list --unbinned
 ```
 
 List data on or before `January 25, 2001 at 18:30:54`.
