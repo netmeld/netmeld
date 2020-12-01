@@ -8,7 +8,7 @@ in this module extract data which has been identified as being useful from an
 assessment perspective.  While there could be multiple ways to implement the
 data store backend, currently it is a PostgreSQL database.
 
-![](docs/netmeld-core.png)
+![](docs/netmeld-datastore.png)
 
 
 DATA STORE FUNDAMENTALS
