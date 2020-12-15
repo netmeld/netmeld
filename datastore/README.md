@@ -1,26 +1,26 @@
 DESCRIPTION
 ===========
 
-This module primarily provides a data store backend to facilitate storage and
+This module primarily provides a data store back-end to facilitate storage and
 extraction of data.  This module also contains set(s) of tools binned by
 general functionality to further aid in this effort for an end-user.
 Unlike the Datalake module, only data which has been identified as being useful
 from an assessment perspective is extracted and stored.  
-While there could be multiple ways to implement the data store backend,
+While there could be multiple ways to implement the data store back-end,
 currently it is a PostgreSQL database.
 
 ![](docs/netmeld-datastore.png)
 
-The diagram hides most of the actual binaries (via an asterik, `*`) as they
-have been grouped into submodules.
-This module does not depend on any submodules and no submodule depends on
+The diagram hides most of the actual binaries (via an asterisk, `*`) as they
+have been grouped into sub-modules.
+This module does not depend on any sub-modules and no sub-module depends on
 another.  So none, any, or all can be leveraged depending on the end user's
 needs.
 The binaries fully called out are part of this module specifically and provide
 a consistent way to perform general manipulation of the data store directly
-(regardless of actual backend).
+(regardless of actual back-end).
 
-We view there to be two primariy usage perspectives/focuses, either tool or
+We view there to be two primary usage perspectives/focuses, either tool or
 library focused.
 As such, more information on the specifics is provided at
 [tool-info](docs/netmeld-datastore-tool-info.md)
@@ -29,11 +29,11 @@ and
 The rest of this documentation provides insight which has generally proven
 useful to be aware of, regardless of the perspective as many of the library
 features started out as tool specific features.
-Most of the backend can be ignored by a tool developer as the library objects
+Most of the back-end can be ignored by a tool developer as the library objects
 handle the majority of the logic and "do the right thing" based on data
 provided to it.
 End users will primarily need to know this if they intend to perform direct
-manipulation of the data store backend.
+manipulation of the data store back-end.
 
 
 DATA STORE FUNDAMENTALS
@@ -165,7 +165,7 @@ Therefore, all of the device-focused tools require specifying a
 `--device-id` option on the command line.
 While some tools are able to (and will) automatically extract, potentially
 multiple, device-id(s) from a device configuration file, this has proven to
-be more confusing to analysts and adds uncessesary complexity to tracking
+be more confusing to analysts and adds unnecessary complexity to tracking
 pedigree.
 So tools default to the provided `--device-id` and append the extracted portion
 to the provided when appropriate (e.g., virtual router config data).

@@ -10,7 +10,7 @@ This tool supports extracting information from the data lake from a
 particular instance in time via the `--before` option.  This means any data
 added after the passed value will not be reflected in the tools output.  This
 value defaults to "infinity", which implies use the latest version of data.
-Giving an invalid `--before` value will result in handler defined behaviour.
+Giving an invalid `--before` value will result in handler defined behavior.
 
 
 EXAMPLES
@@ -43,7 +43,7 @@ added before January 25, 2001.
 nmdl-list --before '2001-01-25'
 ```
 
-Generate a script typical for an ingest into the Netmeld datastore.
+Generate a script typical for an ingest into the Netmeld data-store.
 ```
 nmdl-list --ingest-script
 ```
