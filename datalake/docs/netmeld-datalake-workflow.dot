@@ -26,12 +26,17 @@ digraph G {
     label="Library Resources";
     style="dashed";
 
-    node[shape="rectangle"];
-    objects [label="DataEntry"];
-    tools [label="AbstractDatalakeTool"];
-
-    node[shape="none",margin=0];
     node[shape="rectangle",margin=0.1];
+    objects [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="2">Object(s)</td></tr>
+        <tr><td align="left">DataEntry</td></tr>
+      </table>>];
+    tools [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="2">Tool(s)</td></tr>
+        <tr><td align="left">AbstractDatalakeTool</td></tr>
+      </table>>];
     handlers [label=<
       <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
         <tr><td rowspan="3">Handler(s)</td></tr>
@@ -45,7 +50,7 @@ digraph G {
     style="dashed";
 
     node [shape="cylinder"];
-    git [label="git repository"];
+    git [label="Git Repository"];
   }
   
 

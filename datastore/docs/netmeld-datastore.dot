@@ -17,38 +17,12 @@ digraph netmeld {
   node[shape="rectangle",margin=0.1];
   bins [label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-      <tr><td rowspan="33">Bin(s)</td></tr>
-      <tr><td align="left">nmdb-export-port-list</td></tr>
-      <tr><td align="left">nmdb-export-query</td></tr>
-      <tr><td align="left">nmdb-graph-ac</td></tr>
-      <tr><td align="left">nmdb-graph-network</td></tr>
-      <tr><td align="left">nmdb-import-brocade</td></tr>
-      <tr><td align="left">nmdb-import-cisco</td></tr>
-      <tr><td align="left">nmdb-import-cisco-wireless</td></tr>
-      <tr><td align="left">nmdb-import-clw</td></tr>
-      <tr><td align="left">nmdb-import-hosts</td></tr>
-      <tr><td align="left">nmdb-import-ip-addr-show</td></tr>
-      <tr><td align="left">nmdb-import-ipconfig</td></tr>
-      <tr><td align="left">nmdb-import-ip-route-show</td></tr>
-      <tr><td align="left">nmdb-import-iptables-save</td></tr>
-      <tr><td align="left">nmdb-import-juniper-conf</td></tr>
-      <tr><td align="left">nmdb-import-juniper-set</td></tr>
-      <tr><td align="left">nmdb-import-nessus</td></tr>
-      <tr><td align="left">nmdb-import-nmap</td></tr>
-      <tr><td align="left">nmdb-import-pcap</td></tr>
-      <tr><td align="left">nmdb-import-ping</td></tr>
-      <tr><td align="left">nmdb-import-powerconnect</td></tr>
-      <tr><td align="left">nmdb-import-show-cdp-neighbor</td></tr>
-      <tr><td align="left">nmdb-import-show-inventory</td></tr>
-      <tr><td align="left">nmdb-import-show-mac-address-table</td></tr>
-      <tr><td align="left">nmdb-import-tshark</td></tr>
-      <tr><td align="left">nmdb-import-vyos</td></tr>
+      <tr><td rowspan="7">Bin(s)</td></tr>
+      <tr><td align="left">nmdb-export-*</td></tr>
+      <tr><td align="left">nmdb-graph-*</td></tr>
+      <tr><td align="left">nmdb-import-*</td></tr>
+      <tr><td align="left">nmdb-insert-*</td></tr>
       <tr><td align="left" port="init">nmdb-initialize</td></tr>
-      <tr><td align="left">nmdb-insert-ac</td></tr>
-      <tr><td align="left">nmdb-insert-address</td></tr>
-      <tr><td align="left">nmdb-insert-device</td></tr>
-      <tr><td align="left">nmdb-insert-device-hardware</td></tr>
-      <tr><td align="left">nmdb-insert-network</td></tr>
       <tr><td align="left" port="remove">nmdb-remove-tool-run</td></tr>
     </table>>];
 

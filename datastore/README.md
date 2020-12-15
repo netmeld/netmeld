@@ -1,14 +1,39 @@
 DESCRIPTION
 ===========
 
-This module provides a set of tools primarily focused to aid in the operations
-of getting data into and out of the Netmeld data store backend to allow further
-operation by an analyst or other tools.  Unlike the Datalake module, the tools
-in this module extract data which has been identified as being useful from an
-assessment perspective.  While there could be multiple ways to implement the
-data store backend, currently it is a PostgreSQL database.
+This module primarily provides a data store backend to facilitate storage and
+extraction of data.  This module also contains set(s) of tools binned by
+general functionality to further aid in this effort for an end-user.
+Unlike the Datalake module, only data which has been identified as being useful
+from an assessment perspective is extracted and stored.  
+While there could be multiple ways to implement the data store backend,
+currently it is a PostgreSQL database.
 
 ![](docs/netmeld-datastore.png)
+
+The diagram hides most of the actual binaries (via an asterik, `*`) as they
+have been grouped into submodules.
+This module does not depend on any submodules and no submodule depends on
+another.  So none, any, or all can be leveraged depending on the end user's
+needs.
+The binaries fully called out are part of this module specifically and provide
+a consistent way to perform general manipulation of the data store directly
+(regardless of actual backend).
+
+We view there to be two primariy usage perspectives/focuses, either tool or
+library focused.
+As such, more information on the specifics is provided at
+[tool-info](docs/netmeld-datastore-tool-info.md)
+and
+[library-info](docs/netmeld-datastore-library-info.md).
+The rest of this documentation provides insight which has generally proven
+useful to be aware of, regardless of the perspective as many of the library
+features started out as tool specific features.
+Most of the backend can be ignored by a tool developer as the library objects
+handle the majority of the logic and "do the right thing" based on data
+provided to it.
+End users will primarily need to know this if they intend to perform direct
+manipulation of the data store backend.
 
 
 DATA STORE FUNDAMENTALS
@@ -26,12 +51,13 @@ The `tool_runs` in the data store stores the tool run ID along with
 information about the tool run, such as the command line executed,
 path to where the output data is stored, and what time the command was run.
 
-For each tool run during a live assessment, other stores contain the context
-about where the tools were run (such as the assessor's MAC addresses,
+For tool runs during a live assessment, this provides a place to store the
+context about where the tools were run (e.g., the assessor's MAC addresses,
 IP addresses, routes, etc) and associate this context with the tool run ID.
 
 There is a reserved tool run ID of `32b2fd62-08ff-4d44-8da7-6fbd581a90c6`
-that is used for data that is manually entered by a human operator.
+that is used for data that is manually entered by a human operator
+(i.e., end user manipulation of the backing data store).
 All manually entered data should use this tool run ID.
 While some fidelity in the data origin is lost by this single tool run ID,
 it keeps the human operator's job manageable.
@@ -54,19 +80,19 @@ However, the ability to dig into the multiple tool runs must be available
 whenever an analyst needs that level of detail.
 
 In the Netmeld data store, all of the stores which expose the tool run ID
-have a `raw_` prefix (e.g., `raw_mac_addrs`, `raw_ip_addrs`, `raw_vlans`,
-`raw_ip_nets`, `raw_ports`, `raw_services`, `raw_devices`, etc).
+have a `raw_` prefix (e.g., `raw_mac_addrs`, `raw_ip_addrs`, etc).
 All of the stores which discard the tool run ID and merge
 duplicate entries from multiple tool runs lack the `raw_` prefix
-(e.g., `mac_addrs`, `ip_addrs`, `vlans`, `ip_nets`, `ports`, `services`,
-`devices`, etc).
+(e.g., `mac_addrs`, `ip_addrs`, etc).
 
 If you are writing new Netmeld tools or objects, you will be inserting data
 into `raw_*` stores and querying both `raw_*` and regular stores.
 
 Note that not every store will have a corresponding `raw_*` store
 as many are produced by queries that combine and filter across multiple
-`raw_*` and regular stores.
+`raw_*` and regular stores.  So, the relationship of a `raw_*` store could be
+of the one-to-many nature and the stores which lack the prefix could be of the
+many-to-many nature.
 
 
 ADDRESSES AND HOSTNAMES
@@ -87,6 +113,9 @@ Examples of some of the address and hostname stores include:
 `mac_addrs`, `ip_addrs`, `mac_addrs_ip_addrs`, `mac_addr_vendors`,
 `hostnames`, `vlans`, `ip_nets`, `vlans_ip_nets`,
 and the `raw_*` store versions of most of these.
+There are several library objects which handle populating one or more of those
+for tool developers:
+`Interface`, `MacAddress`, `IpAddress`, `Vlan`, etc.
 
 
 PORTS AND SERVICES
@@ -100,37 +129,54 @@ in the address stores.
 All of the detected services, banner grabs, and vulnerability information
 is linked to the IP address and port to which that information pertains.
 
+It is important to note that "to which that information pertains" may in fact
+mean the host which is leveraging the service and not the server itself.  To
+help distinguish, `network_services` contains services which are discovered
+from a network perspective (e.g., `nmap` scan) where as `device_ip_servers`
+contains services which are discovered from a local/device perspective
+(e.g., `ss` or `netstat` output) and contains a flag to denote if the
+service is local or not.
+
 Examples of some of the port and service stores include:
-`ports`, `services`, `ports_services`, `operating_systems`,
-`ssh_host_algorithms`, `ssh_host_public_keys`,
-`nse_results`, `nessus_results`,
+`ports`, `network_services`, `device_ip_servers`, `operating_systems`,
+`ssh_host_algorithms`, `ssh_host_public_keys`, `nse_results`, `nessus_results`,
 and the `raw_*` store versions of most of these.
+The `Service` object attempts to *correctly* bin services into the
+appropriate location (primary determinant being is there a device-id).
+For the rest, examples include:
+`Port`, `OperatingSystem`, and several objects which are tool specific.
+
 
 
 DEVICES
 -------
 
-The Netmeld data store contains various locations for storing
-specific information about networked devices.
-The information about devices usually comes from
-configuration files for or the output of commands executed on devices.
-The device-focused stores contain information about the device name,
-network interfaces, and other device configuration properties.
-The device's network interfaces are then linked to the appropriate
-MAC addresses and IP addresses in the address stores.
+The Netmeld data store contains various locations for storing specific
+information about networked devices.  The information about devices usually
+comes from configuration files or the output of commands executed on devices.
+The device-focused stores contain information about the device name, network
+interfaces, and other device configuration properties.  The device's network
+interfaces are then linked to the appropriate MAC addresses and IP addresses in
+the address stores.
 
 All tools that insert data into the device-focused stores must
 have an appropriate value to put in the `device_id` column.
-Therefore, most of the device-focused tools require specifying a
+Therefore, all of the device-focused tools require specifying a
 `--device-id` option on the command line.
-However, some tools are able to automatically extract the device-id
-from the device's configuration files.
+While some tools are able to (and will) automatically extract, potentially
+multiple, device-id(s) from a device configuration file, this has proven to
+be more confusing to analysts and adds uncessesary complexity to tracking
+pedigree.
+So tools default to the provided `--device-id` and append the extracted portion
+to the provided when appropriate (e.g., virtual router config data).
 
 Examples of some of the device stores include:
 `devices`, `device_interfaces`, `device_interface_summaries`,
 `device_mac_addrs`, `device_ip_addrs`, `device_mac_addrs_ip_addrs`,
 `device_ip_routes`, `device_virtualizations`,
 and the `raw_*` store versions of most of these.
+Almost every object contains the ability to pass and store a device-id, however
+the `DeviceInformation` object primarily enables the usage and logic.
 
 
 TOOL FUNDAMENTALS
@@ -146,7 +192,7 @@ core library, that is:
 * `--version`
 * `--verbosity`
 
-Additionally, all of the `nmdb-*` (Netmeld atabase) tools additionally support
+Additionally, all of the `nmdb-*` (Netmeld Database) tools additionally support
 the following options:
 
 * `--db-name arg`: The Netmeld data store to connect to. If not specified, this
@@ -158,10 +204,11 @@ report writing.
 * `--db-args args`: Additional database connection arguments. If not specified,
 this option defaults to '' (an empty string).  You will only need to specify these
 options if the database is not running on localhost and/or the default port,
-or requires additions options such as a password, etc. to make the connection.
+or requires additional options such as a password, etc. to make the connection.
 Arguments are of the form `keyword=value`, each pair is separated by a `space`.
 For more information about the format and available options see sections
-33.1.1 and 33.1.2 of the libpqxx docs at: https://www.postgresql.org/docs/current/libpq-connect.html
+33.1.1 and 33.1.2 of the libpqxx docs at:
+https://www.postgresql.org/docs/current/libpq-connect.html
 * `--tool-run-id arg`: The tool run ID to assign to the data.  If not specified,
 a tool run ID will be auto-generated.  Human assessors will almost never need
 to use this option.  This option is used by tool developers when one tool
