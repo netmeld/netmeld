@@ -1,13 +1,7 @@
 NAME
 ====
 
-Netmeld - A tool suite for use during system assessments
-
-
-SYNOPSIS
-========
-
-See specific tools.
+Netmeld - A tool suite for use during system assessments.
 
 
 DESCRIPTION
@@ -19,11 +13,15 @@ input from different file formats, store the data in a common format, allow
 users to easily query it, and enable analysts to tie different analysis tools
 together using a common back-end.
 
-INSTALLING NETMELD
+
+INSTALLATION
 ------------------
 
-See [INSTALL.md](docs/INSTALL.md) for instructions on installing Netmeld
-from source.
+We primarily target Kali Rolling and Debian Testing, so we package deb
+[releases](https://github.com/netmeld/netmeld/releases)
+on the GitHub page.
+To compile from source, see the [INSTALL.md](docs/INSTALL.md) for instructions.
+
 
 DO ONE THING AND DO IT WELL
 ---------------------------
@@ -34,34 +32,49 @@ The Netmeld tools follow a slightly modified version of the UNIX philosophy:
 > Write programs to handle text streams, because that is a universal interface.
 
 However, instead of text streams and pipes for inter-process communication,
-Netmeld tools use a data store as a central communication hub and store of
-accumulated data.  The data store is currently a PostgreSQL database.
-Where it makes sense, Netmeld tools support text streams and command chaining
-on either their input or output.
+Netmeld tools primarily use a data store as a central communication hub and
+store of accumulated data.  Where it makes sense, Netmeld tools support text
+streams and command chaining on either their input or output.
 
-Each Netmeld tool does one thing, for example:
-* The `nmdb-import-*` tools each parse a specific type of data
-and insert that data into the data store.
-* The `nmdb-insert-*` tools each provide a way to manually insert
-a specific type of data into the data store.
-* The `nmdb-export-*` tools each take data from the data store
-and export the data in a specific format.
-* The `nmdb-graph-*` tools each take data from the data store
-and produce a graphical view of some property of interest.
+Following this, the Netmeld tool suite is divided into several modules which
+focus on a specific area with regard to data collection and processing.
+Furthermore, the tools in these modules are focused on performing one specific
+task within the purview of the module.
 
-Generalized work and data flow of data artifacts and Netmeld modules:
+A generalized work and data flow for the Netmeld tool suite is depicted in
+the following diagram.
 
 ![](docs/netmeld-overview.png)
 
-See the individual modules for more information on the specific module.
+In general:
+* The `Core` module is a library to supply the functionality common to all
+  modules within this tool suite.
+* The `Datalake` module provides a repository for raw data collection and the
+  tools to import, export, or otherwise query the data stored.
+* The `Datastore` module provides a repository for the processed data and the
+  tools to import, export, or otherwise query the data stored.
+* The `Fetchers` module provides tools to automate the collection of data
+  from hosts within the targeted system.
+* The `Playbook` modules provides tools to automate the collection of data
+  from a network perspective within the targeted system.
+* The `Tool-*` modules are targeted tools which resolve a specific need across
+  multiple modules (potentially even external to Netmeld).  Generally, the
+  desire to keep these as loosely coupled to other Netmeld tools as possible is
+  high.
+
+See the individual module documentation for more detailed information on it
+and its tooling.
 
 
 AUTHOR
 ======
-Written by the Netmeld team at Sandia National Laboratories.  Netmeld
-(pre v1.0) originally written by Michael Berg (2013-2015).
+Modifications (2016-present) are handled by the Netmeld development team at
+Sandia National Laboratories.
+Netmeld (pre v1.0) was originally written by Michael Berg (2013-2015).
 
 
 REPORTING BUGS
 ==============
-Report bugs to <Netmeld@sandia.gov>.
+Report bugs to <Netmeld@sandia.gov> or on the
+[issue tracker](https://github.com/netmeld/netmeld/issues)
+of the projects GitHub page.

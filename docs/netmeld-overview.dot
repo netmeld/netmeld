@@ -4,67 +4,69 @@ digraph netmeld {
   ranksep=0.75;
   newrank=true;
   splines=spline;
+  compound=true;
+  concentrate=true;
 
-  label="Netmeld Tool Suite 2.x -- Dataflow Overview";
+  label="Netmeld Tool Suite 2.x -- General Dataflow Overview";
 
 
-  { // Sources
+  subgraph cluster_sources {
+    label="Data Sources";
     rank=same;
     node [shape=note];
-    srcManual [label="Targeted\nConfiguration\nSettings"];
-    srcConfigs [label="Configuration\n\& Other Files"];
+    srcTargeted [label="Targeted\nConfiguration\nSettings"];
+    srcConfigs [label="Configuration\nFiles"];
+    srcNetwork [label="Network\nCollection"];
+    srcOther [label="\"Other\"\nManually\nCollected\Data"];
   }
 
 
   // Modules
   node [shape=rectangle];
-  clw [label="Command\nLine\nWrapper"];
-  datastore [label="Datastore \&\nCore Helpers"];
-  exporters [label="Exporters"];
-  fetchers [label="Fetchers"];
-  graphers [label="Graphers"];
-  importers [label="Importers"];
-  inserters [label="Inserters"];
-  playbook [label="Playbook"];
+  {
+    rank=same;
+    datalake [label="Datalake"];
+    datastore [label="Datastore"];
+  }
+  {
+    rank=same;
+    fetchers [label="Fetchers"];
+    playbook [label="Playbook"];
+    tool_clw [label="Command\nLine\nWrapper"];
+  }
 
-  queries [label="Manual\nQueries"];
 
-
-  { // Artifacts
+  subgraph cluster_artifacts {
+    label="Collection Artifacts";
     rank=same;
     node [shape=note];
     artConfigs [label="Aggregated\nConfiguration\nArtifacts"];
     artGraphs [label="Topology\nGraphs"];
     artReports [label="Formatted\nReports"];
-    artRaw [label="Arbitrary\nRaw\nData"];
+    artArbitrary [label="Arbitrary\nRaw\nData"];
+    artTargeted [label="Targeted\nRaw\nData"];
   }
 
 
-  {rank=same; fetchers clw}
-  {rank=same; inserters importers playbook}
-  {rank=same; exporters graphers queries}
+  // Source to modules
+  srcTargeted->{datastore playbook};
+  srcConfigs->{datastore fetchers};
+  srcNetwork->{datastore playbook};
+  srcOther->{datalake tool_clw};
 
-  // Sources modules
-  srcManual->inserters;
-  srcConfigs->importers;
-  srcConfigs->fetchers [dir="both"];
-  fetchers->importers [style="dashed"];
-
-  // Modules to modules
-  clw->importers;
-  playbook->clw;
-
-  // Modules to datastore
-  inserters->datastore;
-  importers->datastore;
+  // Module to modules
+  // -- loose coupling
+  datalake->datastore [style="dashed"];
+  fetchers->datalake [style="dashed"];
+  tool_clw->datastore [style="dashed"];
+  // -- hard coupling
   playbook->datastore [dir="both"];
+  playbook->tool_clw;
 
-  // Datastore to modules
-  datastore->{exporters graphers queries};
-
-  // Modules to artifacts
-  exporters->artConfigs;
-  graphers->artGraphs;
-  queries->{artReports artRaw};
-
+  // Module to artifacts
+  datastore->{artConfigs artGraphs artReports artTargeted};
+  datalake->{artArbitrary};
+  fetchers->{artArbitrary};
+  playbook->{artArbitrary};
+  tool_clw->{artArbitrary};
 }
