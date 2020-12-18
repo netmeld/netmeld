@@ -3,41 +3,41 @@ DESCRIPTION
 
 This module primarily provides a data store back-end to facilitate storage and
 extraction of data.  This module also contains set(s) of tools binned by
-general functionality to further aid in this effort for an end-user.
-Unlike the Datalake module, only data which has been identified as being useful
-from an assessment perspective is extracted and stored.  
-While there could be multiple ways to implement the data store back-end,
-currently it is a PostgreSQL database.
+general functionality to further aid in this effort for an end-user.  Unlike
+the Datalake module, only data which has been identified as being useful from
+an assessment perspective is extracted and stored.
 
 ![](docs/netmeld-datastore.png)
 
-The diagram hides most of the actual binaries (via an asterisk, `*`) as they
-have been grouped into sub-modules.
-This module does not depend on any sub-modules and no sub-module depends on
-another.  So none, any, or all can be leveraged depending on the end user's
-needs.
-The binaries fully called out are part of this module specifically and provide
-a consistent way to perform general manipulation of the data store directly
-(regardless of actual back-end).
+The binaries called out are part of this module specifically and provide a
+consistent way to perform general manipulation of the data store directly
+(regardless of actual back-end).  The binaries with an asterisk, `*`, are
+part of sub-modules of the same name and are grouped by function, for example:
 
-We view there to be two primary usage perspectives/focuses, either tool or
-library focused.
-As such, more information on the specifics is provided at
-[tool-info](docs/netmeld-datastore-tool-info.md)
-and
-[library-info](docs/netmeld-datastore-library-info.md).
-The rest of this documentation provides insight which has generally proven
-useful to be aware of, regardless of the perspective as many of the library
-features started out as tool specific features.
-Most of the back-end can be ignored by a tool developer as the library objects
-handle the majority of the logic and "do the right thing" based on data
-provided to it.
-End users will primarily need to know this if they intend to perform direct
-manipulation of the data store back-end.
+* The `nmdb-import-*` tools each parse a specific type of data and insert that
+  data into the data store.
+* The `nmdb-insert-*` tools each provide a way to manually insert a specific
+  type of data into the data store.
+* The `nmdb-export-*` tools each take data from the data store and export the
+  data in a specific textual format.
+* The `nmdb-graph-*` tools each take data from the data store and produce a
+  graphical view of some property of interest.
+
+See the documentation for the library or sub-modules for more information on it
+specifically.
 
 
-DATA STORE FUNDAMENTALS
+DATASTORE FUNDAMENTALS
 ======================
+
+TYPES AND HANDLERS
+------------------
+While there could be multiple ways to implement the data store back-end,
+currently it is a PostgreSQL database.  We have considered multiple types
+and handlers in the past, but have not found sufficient justification for
+adding support directly.  We have made several design decisions to enable
+this should the desire be furthered.
+
 
 TOOL RUNS
 ---------

@@ -12,22 +12,24 @@ the concepts of:
 
 ![](docs/netmeld-datalake-workflow.png)
 
+See the documentation for the library for more information on it specifically.
 
-DATALAKE MODULE FUNDAMENTALS
-============================
 
-DATA LAKE TYPE AND HANDLERS
----------------------------
+DATALAKE FUNDAMENTALS
+=====================
 
-This module's tools interact with an interface which attempts to be agnostic
-of the data lake back-end, so in general the tools provide a common set of
-functionality that all data lake back-ends shall possess and support.
-However, ultimately they need to operate on a targeted data lake type and
-capabilities of those greatly vary.  Thus an end user may directly manipulate
-the data lake as needed.  If there are stipulations for how data shall be
-represented in the data lake for the handler to operate and pass meaningful
-data back to the tools as expected, the data lake handler shall clearly
-outline those requirements.
+TYPES AND HANDLERS
+------------------
+
+The tools interact with an interface which attempts to be agnostic of the data
+lake back-end, so in general the tools provide a common set of functionality
+that all data lake back-ends shall possess and support.  However, ultimately
+they need to operate on a targeted data lake type and capabilities of those
+greatly vary.  Thus, an end user may directly manipulate the data lake as
+needed.  If there are stipulations for how data shall be represented in the
+data lake for the handler to operate and pass meaningful data back to the tools
+as expected, the data lake handler shall clearly outline those requirements.
+
 
 TARGETED DATE AND TIME
 ----------------------
@@ -53,5 +55,6 @@ core library, that is:
 
 Additionally, all of the `nmdl-*` (Netmeld Datalake) tools shall support the
 following options:
+
 * `--lake-type`: The Netmeld data lake type to take action on.  This currently
-defaults to a data lake of type `git`.
+  defaults to a data lake of type `git`.

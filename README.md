@@ -63,7 +63,9 @@ In general:
   high.
 
 See the individual module documentation for more detailed information on it
-and its tooling.
+and its tooling.  Note that in the modules documentation, the term `End User`
+is used instead of identifing all the possible data sources for simplicity and
+may be a person or other tool.
 
 
 AUTHOR
