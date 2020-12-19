@@ -2,9 +2,9 @@ DESCRIPTION
 ===========
 
 This provides the library which contains the functionality needed to interact
-with the data store back-end in a consistant manner.  Though the Datastore
+with the data store back-end in a consistent manner.  Though the Datastore
 module contains sub-modules, this library is currently more monolithic in the
-sense that it contains all funtionality and does not require separate libraries
+sense that it contains all functionality and does not require separate libraries
 for each of the sub-modules.  This may change over time if the need arises.
 
 
@@ -14,14 +14,14 @@ LIBRARY FUNDAMENTALS
 UNIT TESTS
 ----------
 Many of the components of this library have associated unit tests.  We have
-made efforts to add these overtime (as we touch the components), but it isn't
+made efforts to add these overtime (as we touch the components), but it is not
 perfect.  Generally speaking, our efforts have been to implement unit testing
 to guard against unintended functionality changes and it is expected this is
 done for all *new* work.
 
 PARSERS
 -------
-The parsers contained in this library are generaly reusable in multiple tools
+The parsers contained in this library are generally reusable in multiple tools
 of this module.  As such, particular attention is given to abide by the formal
 documentation (e.g., RFCs) for each of them and any *new* parsers for this
 library must document what is the formal documentation being followed.
@@ -32,7 +32,7 @@ Almost all of the objects in this library map to a singular store within the
 data store back-end.  However, this is not always the case and some objects
 contain others so there is a chaining effect in terms of data entry and
 updates.  While it was considered, it is thought to create a tighter coupling
-to the data store backend as well as *lose* certain context about the data
+to the data store back-end as well as *lose* certain context about the data
 which would otherwise be present in the current representation.
 
 OBJECT STANDARDIZATION
