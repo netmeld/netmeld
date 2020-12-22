@@ -53,8 +53,8 @@ core library, that is:
 * `--version`
 * `--verbosity`
 
-Additionally, all of the `nmdl-*` (Netmeld Datalake) tools shall support the
-following options:
+All of the `nmdl-*` (Netmeld Datalake) tools shall support the following
+options:
 
 * `--lake-type`: The Netmeld data lake type to take action on.  This currently
   defaults to a data lake of type `git`.

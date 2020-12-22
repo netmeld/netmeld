@@ -192,25 +192,25 @@ core library, that is:
 * `--version`
 * `--verbosity`
 
-Additionally, all of the `nmdb-*` (Netmeld Database) tools additionally support
-the following options:
+All of the `nmdb-*` (Netmeld Database) tools additionally support the following
+options:
 
 * `--db-name arg`: The Netmeld data store to connect to. If not specified, this
-option defaults to the `site` data store.  You will typically use the default
-`site` data store while on-site and then specify an assessment-specific data store
-when re-importing data from all of the on-site assessment computers after
-returning home.  This assessment-specific data store is used for analysis and
-report writing.
+  option defaults to the `site` data store.  You will typically use the default
+  `site` data store while on-site and then specify an assessment-specific data
+  store when re-importing data from all of the on-site assessment computers
+  after returning home.  This assessment-specific data store is used for
+  analysis and report writing.
 * `--db-args args`: Additional database connection arguments. If not specified,
-this option defaults to '' (an empty string).  You will only need to specify these
-options if the database is not running on localhost and/or the default port,
-or requires additional options such as a password, etc. to make the connection.
-Arguments are of the form `keyword=value`, each pair is separated by a `space`.
-For more information about the format and available options see sections
-33.1.1 and 33.1.2 of the libpqxx docs at:
-https://www.postgresql.org/docs/current/libpq-connect.html
-* `--tool-run-id arg`: The tool run ID to assign to the data.  If not specified,
-a tool run ID will be auto-generated.  Human assessors will almost never need
-to use this option.  This option is used by tool developers when one tool
-(such as `clw`) is calling another tool (such as `nmdb-import-nmap`) and the
-tool run ID needs to propagate between those tools.
+  this option defaults to '' (an empty string).  You will only need to specify
+  these options if the database is not running on localhost and/or the default
+  port, or requires additional options such as a password, etc. to make the
+  connection.  Arguments are of the form `keyword=value`, each pair is
+  separated by a `space`.  For more information about the format and available
+  options see sections 33.1.1 and 33.1.2 of the libpqxx docs at:
+  https://www.postgresql.org/docs/current/libpq-connect.html
+* `--tool-run-id arg`: The tool run ID to assign to the data.  If not
+  specified, a tool run ID will be auto-generated.  Human assessors will almost
+  never need to use this option.  This option is used by tool developers when
+  one tool (such as `clw`) is calling another tool (such as `nmdb-import-nmap`)
+  and the tool run ID needs to propagate between those tools.
