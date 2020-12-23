@@ -1,7 +1,7 @@
 DESCRIPTION
 ===========
 
-The playbook provides a set of tools to aid an analyst in various
+This module provides a set of tools to aid an analyst in various
 aspects of network scanning type activities for a system assessment.
 The behavior of the majority of these tools is around configuration and
 orchestration rather than doing the actual work of scanning.
@@ -25,7 +25,7 @@ Intra-network scans provide one good set of data fairly quickly.
 
 Inter-network scans will try to route through various routers or firewalls
 attempting to reach devices and services in other networks.
-Inter-network scans frequently must content with restrictive firewalls,
+Inter-network scans frequently must contend with restrictive firewalls,
 load-balancers, and other network devices that block or shape traffic.
 Inter-network scans provide another good set of data more slowly
 that can then be compared to intra-network scans to better validate
@@ -61,48 +61,50 @@ For example:
 PHASES
 ------
 
-A phase is a logical grouping of commands which will execute in series
-or parallel within a stage.  Activities within a phase may feed data,
-via the data store, into other phases for that stage.  Phases are currently
-limited to being used for containing optional units of work within a stage.
-As such, not all commands are located under a phase (e.g. interface
-set up and tear down).  Intensity and complexity of activities
-typically increases through phase progression.
+A phase is a logical grouping of commands which will execute in series or
+parallel within a stage.  Activities within a phase may feed data, via the data
+store, into other phases for that stage.  Phases are currently limited to being
+used for containing optional units of work within a stage.  As such, not all
+commands are located under a phase (e.g. interface set up and tear down).  The
+expectation is intensity, complexity, and *cost* of activities typically
+increase through phase progression.
 
 
 COMMANDS
 --------
 
-A command is a singular unit of work within the playbook.
+A command is a singular unit of work within the playbook.  Ultimately, this
+will be the smallest logical unit of work.  Typically this translates to a
+singular command for the host to execute, but may be a set of associated or
+highly inter-dependent commands.
 
 
 PLAYBOOK WORKFLOW
 =================
 
-The following is an overview of the workflow and tools involved to
-leverage the playbook for scanning activities.
+The following graphic provides a general overview of the workflow and tools
+involved to leverage the playbook for scanning activities.
 
 ![](docs/netmeld-playbook-workflow.png)
 
-
-PREPARING THE PLAYBOOK
-----------------------
-
-Typically, a script is created which contains the logic for preparing
-the playbook.  The aim is to make it simple and understandable.
-It is suggested to create a singular script per stage.  See
-[](playbook-script.sh) for an example and the individual tools for
-more details.
+We typically create a script to both automate and document, in more than one
+place, the activity for the playbook.  The aim is to make it simple and
+understandable so it is suggested to create a singular script per stage.  See
+the example [playbook-script](playbook-script.sh) for a generalized start
+point.  The below discuses a topic which is not covered by a specific tool.
 
 
-RULES OF ENGAGEMENT
--------------------
-Currently, the `psql` tool is utilized to manipulated the Rules of
-Engagement (ROE) table within the data store.
+DEFINE SCOPE (IN/OUT)
+---------------------
+Abiding by what is in or out of scope, the Rules of Engagement (ROE), is very
+important during an assessment.  Thus, the Playbook tools will honor the scope
+defined in the data store.
 
-Assume that the ROE authorizes the assessment team to target the IP address
-space 10.1.1.0/24 and 192.168.0.0/16 at the customer site;
-however, the subnet 192.168.2.0/24 is off-limits for any number of reasons.
+Currently, the `psql` tool is utilized to manipulate the ROE within the data
+store.  For example:
+* Assume that the ROE authorizes the assessment team to target the IP address
+  space 10.1.1.0/24 and 192.168.0.0/16 at the customer site;
+  however, the subnet 192.168.2.0/24 is off-limits for any number of reasons.
 ```
 #!/bin/bash
 
@@ -112,7 +114,7 @@ psql ${DB_NAME} -c "INSERT INTO playbook_roe_ip_nets VALUES ('10.1.1.0/24', true
 psql ${DB_NAME} -c "INSERT INTO playbook_roe_ip_nets VALUES ('192.168.0.0/16', true)"
 psql ${DB_NAME} -c "INSERT INTO playbook_roe_ip_nets VALUES ('192.168.2.0/24', false)"
 ```
-A value of `true` in the second column means that the addresses are in-scope,
-while a value of `false` means that the addresses are out-of-scope.
-The values in the `playbook_roe_ip_nets` database table are used to generate
-target lists and exclude lists for tools such as Nmap.
+  A value of `true` in the second column means that the addresses are in-scope,
+  while a value of `false` means that the addresses are out-of-scope.
+  The values in the `playbook_roe_ip_nets` database table are used to generate
+  target lists and exclude lists for tools such as Nmap.
