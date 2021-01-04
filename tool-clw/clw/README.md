@@ -25,8 +25,8 @@ and capturing the STDIN, STDOUT, and STDERR from the command's execution.
 EXECUTION CONTEXT
 -----------------
 
-While some of this important context requires privilleged access, the tool
-can run from a non-privilleged user context and may output several warnings
+While some of this important context requires privileged access, the tool
+can run from a non-privileged user context and may output several warnings
 when it fails to collect certain context data.
 The contextual information captured by `clw` includes:
 
