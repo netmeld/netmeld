@@ -1,35 +1,58 @@
 DESCRIPTION
 ===========
 
-The `nmdb-playbook` tool is utilized to perform the actual playbook runs. The
-nmap commands this tool uses can be tuned via the configuration file located at
-`/usr/local/etc/netmeld/nmdb-playbook.conf`. At a minimum, the scan type option
-has to be provided.
+The `nmdb-playbook` tool is utilized to perform the actual playbook runs.
+It has several command line options and a configuration file which tune the
+behavior of this tool, however most have default values set.
+The configuration file is located at
+`/usr/local/etc/netmeld/nmdb-playbook.conf` and explains the configuration
+file only options.
 
-In general, the playbook is broken into stages, phases, and commands.
+In general, the playbook is broken into stages, phases, and commands as
+described in the Playbook module documentation.
 It is important to note, the `--stage` and `--phase` options
 specify which to keep, while the `--exclude-command` option
 specifies which to exclude.  All three can be used at the same time.
 
-There are points during a stage where the user is required to provide some
-acknowledgment before the playbook will continue.  To date, this is to
-facilitate running Nessus and other manual scans concurrently with the
-playbook activities.  Specifically, the tool starts an xterm with a notice to
-"Close this xterm when manual testing is complete."  The tool will not
-deconfigure network interfaces until the playbook scans are complete and the
-xterm with this notice is closed.  To ignore this behavior, the `--no-prompt`
-option is provided.  It will automatically deconfigure network interfaces as
-soon as the relevant playbook scans are complete.  However, if it is used
-in conjunction with the `--script` option, a script will be executed in lieu
-of the manual testing before the network interface is deconfigured.
+For reference, the following are examples of the various commands being
+executed during the various phases of a stage from both an intra and inter
+network perspective.
 
 General workflow for an intra network playbook execution.
-
 ![](../docs/netmeld-playbook-intra-network-workflow.png)
 
 General workflow for an inter network playbook execution.
-
 ![](../docs/netmeld-playbook-inter-network-workflow.png)
+
+
+GUI OR HEADLESS
+---------------
+
+Though the tool is a CLI tool, during scanning it will attempt to display the
+data in another interface to distinguish this tools output apart from other
+tooling output.  In the default mode it will attempt to start another `xterm`
+and in the headless mode it will open a `tmux` window.  The behavior described
+herein with regards to *window* can mean either of these cases as it is simply
+a matter of how the tooling is called.
+
+
+INTERACTIVE OR NOT
+------------------
+
+While the majority of the activites are automated, there are points during a
+stage where the user is required to provide some acknowledgment before the
+playbook will continue.  To date, this is to facilitate running manual,
+additional scans concurrently with the automated playbook activities.
+
+Specifically, the tool starts a window with a notice to
+"Close this window when manual testing is complete."
+The tool will not deconfigure network interfaces until the playbook scans are
+complete and the window with the notice is closed.  To ignore this behavior,
+the `--no-prompt` option is provided.  It will automatically deconfigure
+network interfaces as soon as the relevant playbook scans are complete.
+However, if it is used in conjunction with the `--script` option, a script will
+be executed in lieu of the manual testing before the network interface is
+deconfigured.
 
 
 EXAMPLES
