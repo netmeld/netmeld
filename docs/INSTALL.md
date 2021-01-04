@@ -26,15 +26,17 @@ docker pull netmeld/netmeld-dev
 Note that this will only get a build environment configured.  We will still
 need to grab the source and get it into the Docker environment somehow (e.g.,
 git clone, mount a local directory), run as the appropriate user, determine
-if we want it persistent or throw away per use, etc.  Configure Docker is
+if we want it persistent or throw away per use, etc.  Configuring Docker is
 beyond scope of this install guide.
 
 
 ## Build Dependencies
-The following breaks down the dependencies based on function.  This can be
-split even more if only targeted tool sets, version lock is needed, or other
-various reasons.  We, however, will only cover a general developer case.
-So, as a privileged user install the following:
+The following breaks down the dependencies based on function.
+This can be split even more for various reasons (e.g., targeted tool set
+development or usage, version locking, etc.), however we will only cover a
+general developer case.
+
+As a privileged user install the following:
 ```
 apt update
 
@@ -64,32 +66,38 @@ apt install \
 
 
 # Build and Install the Netmeld Software
-Ensure we have cloned the `netmeld` repository and are in the `netmeld`
+Ensure we have cloned the Netmeld repository and are in the `netmeld`
 directory.
 
 * Create makefiles: `cmake -S . -B ./build`
 * Building source:	`cmake --build ./build`
-  * Building tests (example): `cmake --build ./build --target Test.netmeld`
-  * Running tests (example):	`cmake --build ./build --target test`
+  * Build and run tests (example): `cmake --build ./build --target Test.netmeld`
+  * Run test (example):	`(cd build/; ctest Test.netmeld)`
 * Installing (as a privileged user): `cmake --install build`
 
 
-# Running the Tool set
-Note that on a fresh, bare install we may have to run (as a privileged user)
+# Running the Tool Set
+The following are steps needed specifically for installing from source.  The
+`deb` files handle these steps automatically.
+
+## Library Linking
+On a fresh, bare install we may have to run (as a privileged user)
 the `ldconfig` command to configure the dynamic linker run time bindings.
+Basically, if you attempt to run a tool and it complains about not finding
+a Netmeld library this will more than likely resolve the issue.
 
 ## Datalake Module Specific
 These steps are needed if working on the Datalake module.
 
 ### Initialize the Data Lake
 The default data lake is a `git` back-end and is, by default, located at
-`~/.netmeld/datalake`.  To accept these defaults:
+`~/.netmeld/datalake` (or see the output from `nmdl-initialize --help`).
+To accept these defaults:
 ```
 nmdl-initialize
 ```
 
-If a different location is needed, `nmdl-initialize --lake-path [path]`.
-
+If a different location is needed, `nmdl-initialize --lake-path LAKE_PATH`.
 
 ## Datastore Module Specific
 These steps are needed if working on the Datastore module (or associated
@@ -121,13 +129,12 @@ systemctl restart postgresql
 
 
 ### Initialize the Data Store
-The default database is named `site` and if that is fine then:
-
+The default database is named `site` and can be initialized with the following:
 ```
 nmdb-initialize
 ```
 
-To create a non-default database, `nmdb-initialize --db-name [dbname]`.
+To create a non-default database, `nmdb-initialize --db-name DB_NAME`.
 
 To create a visualization to assist in understanding the database schema with
 regards to the tables.  Note, this assumes we are using the default database
