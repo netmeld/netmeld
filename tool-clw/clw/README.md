@@ -79,7 +79,7 @@ EXAMPLES
 
 Wrap a nmap scan of localhost:
 ```
-clw nmap 127.0.0.1
+clw nmap localhost
 ```
 
 Wrap a ping of localhost:
