@@ -18,8 +18,16 @@ was run from the perspective of a system on the open Internet.
 Correctly interpreting test results requires this contextual information.
 
 The `clw` tool helps address this challenge by generating a tool run ID;
-capturing all of the context about the command's execution; and capturing
-the STDIN, STDOUT, and STDERR from the command's execution.
+capturing known important context about the command's execution environment;
+and capturing the STDIN, STDOUT, and STDERR from the command's execution.
+
+
+EXECUTION CONTEXT
+-----------------
+
+While some of this important context requires privilleged access, the tool
+can run from a non-privilleged user context and may output several warnings
+when it fails to collect certain context data.
 The contextual information captured by `clw` includes:
 
 * Unique tool run ID for this command
@@ -34,17 +42,24 @@ The contextual information captured by `clw` includes:
 * STDIN, STDOUT, and STDERR during the entire command execution
 * Start and end times for the command execution
 
-You can run any command-line command with `clw`:
+You can run any command-line command with `clw`.
+However, the context is captured when the command is invoked.
+So while the `clw` tool will work on interactive sessions, it will not capture
+execution environment changes which occur during the interactive session.
+However, the `clw` tool also works in a nested environment.
+So, if an interactive session is started via `clw bash` then running `clw nmap`
+during that session will correctly capture the context for the `nmap` command
+separately from the `bash` context.
 
-* Instead of running `nmap`, run `clw nmap`
-* Instead of running `ping`, run `clw ping`
-* Instead of running `traceroute`, run `clw traceroute`
+
+COMMAND AUGMENTATION
+--------------------
 
 For certain tools (currently `nmap`, `ping`, `ping6`, and `dumpcap`),
-`clw` augments the specified command with arguments that need
+`clw` augments the specified command with arguments we identify as needing
 to be present and will also automatically call the appropriate
-`nmdb-import-*` program when the command completes.
-* Explicit Augmentations
+`nmdb-import-*` program (if installed) when the command completes.
+* Explicit augmentations
   * `dumpcap`: The `-w` option is always appended and points to the file
 `results.pcapng` in the tool run result directory.
   * `nmap`: The `--reason`, `--stats-every 60s`, `--min-hostgroup 256`, and
@@ -58,12 +73,31 @@ The captured information is stored in the tool run result directory at
 the microsecond, and `uuid` is a UUID.  For example,
 `nmap_20151209T135930.105725_4a7903b1-1f35-4e18-9a14-65d916e90577`.
 
+
 EXAMPLES
 ========
+
+Wrap a nmap scan of localhost:
 ```
-clw nmap
+clw nmap 127.0.0.1
+```
 
-clw ping
+Wrap a ping of localhost:
+```
+clw ping localhost
+```
 
-clw traceroute
+Wrap a traceroute to localhost:
+```
+clw traceroute localhost
+```
+
+Wrap a netcat session listening on port 8080:
+```
+clw nc -nvlp 8080
+```
+
+Wrap a bash session:
+```
+clw bash
 ```
