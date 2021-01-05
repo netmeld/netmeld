@@ -39,7 +39,7 @@ a matter of how the tooling is called.
 INTERACTIVE OR NOT
 ------------------
 
-While the majority of the activites are automated, there are points during a
+While the majority of the activities are automated, there are points during a
 stage where the user is required to provide some acknowledgment before the
 playbook will continue.  To date, this is to facilitate running manual,
 additional scans concurrently with the automated playbook activities.
@@ -52,7 +52,7 @@ the `--no-prompt` option is provided.  It will automatically deconfigure
 network interfaces as soon as the relevant playbook scans are complete.
 However, if it is used in conjunction with the `--script` option, a script will
 be executed in lieu of the manual testing before the network interface is
-deconfigured.
+reconfigured.
 
 
 EXAMPLES
