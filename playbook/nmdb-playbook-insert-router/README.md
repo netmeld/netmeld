@@ -2,7 +2,14 @@ DESCRIPTION
 ===========
 
 The `nmdb-playbook-insert-router` tool is utilized to configure the routes to
-be used during a scan. At a minimum it requires the ip address.
+be used during a scan.  At a minimum it requires the ip address of the device
+acting as a router.
+
+It is important to realize these routes will be attempted to be leveraged for
+all inter-network scanning activities, while they are defined, regardless of
+the stage.  There are some validity checks made (in other playbook tooling) to
+ensure a route can actually be used, so the cost of defining multiple possible
+routes is minimized.
 
 
 EXAMPLES
