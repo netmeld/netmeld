@@ -7,7 +7,7 @@ digraph netmeld {
   compound=true;
   //concentrate=true; // NOTE: this incorrectly "hides" some lines
 
-  label="Netmeld Tool Suite 2.x -- Components and General Dataflow";
+  label="Netmeld Tool Suite 2.x -- Datastore Components and General Dataflow";
 
   node[shape="circle"];
   users [label="End\nUsers"];

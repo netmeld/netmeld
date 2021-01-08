@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 883)">
 <title>netmeld</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-883 1484.44,-883 1484.44,4 -4,4"/>
-<text text-anchor="middle" x="740.22" y="-7.8" font-family="Times,serif" font-size="14.00">Netmeld Tool Suite 2.x &#45;&#45; Components and General Dataflow</text>
+<text text-anchor="middle" x="740.22" y="-7.8" font-family="Times,serif" font-size="14.00">Netmeld Tool Suite 2.x &#45;&#45; Datastore Components and General Dataflow</text>
 <g id="clust1" class="cluster">
 <title>cluster_lib</title>
 <polygon fill="none" stroke="black" stroke-dasharray="5,2" points="384.44,-292 384.44,-871 1472.44,-871 1472.44,-292 384.44,-292"/>

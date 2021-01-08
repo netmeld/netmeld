@@ -7,66 +7,58 @@ digraph netmeld {
   compound=true;
   concentrate=true;
 
-  label="Netmeld Tool Suite 2.x -- General Dataflow Overview";
+  label="Netmeld Tool Suite 2.x -- Netmeld Modules Generalized Dataflow";
+
+  node[shape="rectangle",margin=0];
+  dataSources [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="5">Source(s)</td></tr>
+      <tr><td align="left">Configuration Files</td></tr>
+      <tr><td align="left">Network Collection</td></tr>
+      <tr><td align="left">Targeted Settings</td></tr>
+      <tr><td align="left">"Other" Manually<br />Collected Data</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataCollectors [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="5">Collector(s)</td></tr>
+      <tr><td align="left">Fetchers</td></tr>
+      <tr><td align="left">Playbook</td></tr>
+      <tr><td align="left">CLW</td></tr>
+      <tr><td align="left">People</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataParsers [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="3">Parser(s)</td></tr>
+      <tr><td align="left">Datastore</td></tr>
+      <tr><td align="left">People</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataStorage [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="4">Storage</td></tr>
+      <tr><td align="left">Datalake</td></tr>
+      <tr><td align="left">Datastore</td></tr>
+      <tr><td align="left">Filesystem</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataArtifacts [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="6">Artifact(s)</td></tr>
+      <tr><td align="left">Arbitrary Raw Data</td></tr>
+      <tr><td align="left">Processed Raw Data</td></tr>
+      <tr><td align="left">Aggregated Data</td></tr>
+      <tr><td align="left">Topology Graphs</td></tr>
+      <tr><td align="left">Formatted Reports</td></tr>
+    </table>>];
 
 
-  subgraph cluster_sources {
-    label="Data Sources";
-    rank=same;
-    node [shape=note];
-    srcTargeted [label="Targeted\nConfiguration\nSettings"];
-    srcConfigs [label="Configuration\nFiles"];
-    srcNetwork [label="Network\nCollection"];
-    srcOther [label="\"Other\"\nManually\nCollected\Data"];
-  }
-
-
-  // Modules
-  node [shape=rectangle];
-  {
-    rank=same;
-    datalake [label="Datalake"];
-    datastore [label="Datastore"];
-  }
-  {
-    rank=same;
-    fetchers [label="Fetchers"];
-    playbook [label="Playbook"];
-    tool_clw [label="Command\nLine\nWrapper"];
-  }
-
-
-  subgraph cluster_artifacts {
-    label="Collection Artifacts";
-    rank=same;
-    node [shape=note];
-    artConfigs [label="Aggregated\nConfiguration\nArtifacts"];
-    artGraphs [label="Topology\nGraphs"];
-    artReports [label="Formatted\nReports"];
-    artArbitrary [label="Arbitrary\nRaw\nData"];
-    artTargeted [label="Targeted\nRaw\nData"];
-  }
-
-
-  // Source to modules
-  srcTargeted->{datastore playbook};
-  srcConfigs->{datastore fetchers};
-  srcNetwork->{datastore playbook};
-  srcOther->{datalake tool_clw};
-
-  // Module to modules
-  // -- loose coupling
-  datalake->datastore [style="dashed"];
-  fetchers->datalake [style="dashed"];
-  tool_clw->datastore [style="dashed"];
-  // -- hard coupling
-  playbook->datastore [dir="both"];
-  playbook->tool_clw;
-
-  // Module to artifacts
-  datastore->{artConfigs artGraphs artReports artTargeted};
-  datalake->{artArbitrary};
-  fetchers->{artArbitrary};
-  playbook->{artArbitrary};
-  tool_clw->{artArbitrary};
+  {rank=same; dataParsers dataStorage}
+  dataSources->dataCollectors->{dataParsers dataStorage}->dataArtifacts;
+  dataParsers->dataStorage;
 }
