@@ -5,13 +5,13 @@ This export tool is provided as a convenience to export scan results in a
 predefined `ConTeXt` format, typically leveraged during assessment
 reporting.
 
-The command `nmdb-playbook-export-scans` currently has the following options:
-+ `--intra-network` exports intra-network scan information
-+ `--inter-network` exports inter-network scan information
-+ `--nessus` exports Nessus scan information
-+ `--ssh` exports SSH algorithm scan information
-+ `--toFile` outputs to a specified file instead of stdout; this uses
-  pre-defined values
+The command `nmdb-playbook-export-scans` currently supports creating reports
+of the following type:
+* Intra-network scan results
+* Inter-network scan results
+* SSH enabled algorithm results
+* Nessus scan results
+
 
 EXAMPLES
 ========
