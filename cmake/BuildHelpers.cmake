@@ -261,7 +261,7 @@ function(create_man_from_help tool_name)
           ${PANDOC} -f gfm -t man
             --output ${h2m_file} ${readme_file}
         COMMAND
-          bash -c "sed -i -e 's@.SH \\(.*\\)@[=\\1]@g' ${h2m_file}"
+          bash -c "sed -i -e 's@\\.SH \\(.*\\)@[=\\1]@g' ${h2m_file}"
         VERBATIM
       )
     endif()
