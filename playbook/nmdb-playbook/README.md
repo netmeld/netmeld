@@ -4,9 +4,8 @@ DESCRIPTION
 The `nmdb-playbook` tool is utilized to perform the actual playbook runs.
 It has several command line options and a configuration file which tune the
 behavior of this tool, however most have default values set.
-The configuration file is located at
-`/usr/local/etc/netmeld/nmdb-playbook.conf` and explains the configuration
-file only options.
+The configuration file explains the configuration file only options (see
+`--config-file` for default path).
 
 In general, the playbook is broken into stages, phases, and commands as
 described in the Playbook module documentation.

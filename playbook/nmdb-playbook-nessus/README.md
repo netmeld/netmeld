@@ -6,9 +6,7 @@ tool allows configuration and automation of several of the Nessus interactions
 via the command line instead of the Nessus web interface.
 
 Currently the tool is a Bash script and it's configuration is located in the
-script itself.  Typically, it is installed to
-`/usr/local/bin/nmdb-playbook-nessus.sh` but running
-`nmdb-playbook-nessus.sh --help` will also display the full path to the script.
+script itself.
 
 The tool requires five general configuration settings that should be updated
 before execution.

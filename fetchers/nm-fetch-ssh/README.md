@@ -10,9 +10,17 @@ U+2215 (`∕`).
 Use the `-h` flag to find the help message with additional options.
 
 EXAMPLES 
-======== 
+========
+
+Connect to the `linhost` target with the account `user` and execute the `ls`
+command.
 ``` 
-nmdb-fetch-ssh localhost ls 
+nmdb-fetch-ssh user@linhost ls 
+```
+
+Similar to above, except use a file with a list of commands to execute
+```
+nmdb-fetch-ssh --infile commands-linux.txt user@linhost
 ```
 
 See Also: `ssh (1)`
