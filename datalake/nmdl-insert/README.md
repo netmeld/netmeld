@@ -34,8 +34,14 @@ nmdl-insert --device-id device001 --tool nmdb-import-hosts ./hosts \
     --tool-args '--device-type workstation --device-color blue'
 ```
 
+Run the `ip addr show` sommand and pipe the output to the tool saving it in
+the lake as `ip_addr_show.txt`.
+```
+ip addr show | nmdl-insert --device-id device001 --pipe --rename ip_addr_show.txt
+```
+
 Add the file `some-data-file` for `device001` with a custom tool command which
-will perform some operation (e.g., `echo` the file lines) on file during
+will perform some operation (e.g., `echo` the file lines) on the file during
 execution of the ingest script.
 ```
 nmdl-insert --device-id device001 ./some-data-file \
