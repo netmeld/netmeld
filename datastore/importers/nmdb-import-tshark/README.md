@@ -18,10 +18,25 @@ Currently supported arguments:
 
 EXAMPLES
 ========
-``` 
-nmdb-import-tshark --db-name site
 
-nmdb-import-tshark --db-name site path.txt
-nmdb-import-tshark --db-name site --data-path path.txt
+Parse output from a pre-formatted file, named `data.json`.
+``` 
+nmdb-import-tshark data.json
 ```
 
+Process a pcapng file with tshark and pipe the output to the tool.
+```
+tshark -nV -T json -r capture.pcapng | nmdb-import-tshark --pipe
+```
+
+Similiar to prior, except do it for multiple files and leverage GNU parallel
+to parallelize (based on the number of cores) the processing.
+```
+find . -name '*.pcapng' | parallel 'tshark -nV -Tjson -r {} | nmdb-import-tshark --pipe'
+```
+
+Perform live capture, saving to `packet_capture` and send JSON output to the
+tool.
+```
+tshark -nV -w packet_capture -T json | nmdb-import-tshark --pipe
+```
