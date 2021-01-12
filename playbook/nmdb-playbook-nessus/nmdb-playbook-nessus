@@ -64,9 +64,31 @@ sleep_in_secs=5;
 
 printUsage()
 {
-  echo "Usage: $0 [-h|--help]";
-  echo "  To configure, directly edit the script (General configuration section)";
-  exit;
+  PROGRAM_NAME=`basename "$0"`;
+  read -r -d '' USAGE <<EOF
+Automate, older, Nessus scanning.  To configure, directly edit the script's
+"General configuration" section.
+
+Usage: $PROGRAM_NAME [options]
+
+Options:
+  -h [ --help ]     Show this help message, then exit.
+  -v [ --version ]  Show version information, then exit.
+EOF
+  
+  echo "${USAGE}";
+  exit 0;
+}
+
+printVersion()
+{
+  PROGRAM_NAME=`basename "$0"`;
+  read -r -d '' VERSION <<EOF
+${PROGRAM_NAME} (Netmeld)
+EOF
+
+  echo "${VERSION}";
+  exit 0;
 }
 
 getJsonVal()
@@ -94,13 +116,15 @@ getJsonLen()
     shift;
     case "$arg" in
       "--help") set -- "$@" "-h" ;;
+      "--version") set -- "$@" "-v" ;;
       *)        set -- "$@" "-h" ;;
     esac;
   done;
 
-  while getopts "h" opt; do
+  while getopts "hv" opt; do
     case "$opt" in
       "h") printUsage; exit ;;
+      "v") printVersion; exit ;;
       "?") printUsage; exit ;;
     esac;
   done;
