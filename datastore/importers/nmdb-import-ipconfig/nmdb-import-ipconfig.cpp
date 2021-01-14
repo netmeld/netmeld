@@ -36,7 +36,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 {
   public:
     Tool() : nmdt::AbstractImportTool<P,R>
-      ("ipconfig /all /allcompartment", PROGRAM_NAME, PROGRAM_VERSION)
+      ("ipconfig /allcompartments /all", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
     void

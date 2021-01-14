@@ -1,15 +1,23 @@
 DESCRIPTION
 ===========
 
-Parse and import Cisco WiSM and WLC configuration files (the ouput of
-`show run-config startup-commands`).
-This tool is more targeted towards the Cisco wireless device configuration
-and as such extracts more information than the `nmdb-import-cisco` tool.
+Parse and import the output of a Cisco device's
+`show run-config startup-commands` command.  Currently, this tool supports
+WiSM and WLC type devices.
+
 
 EXAMPLES
-======== 
-``` 
-nmdb-import-cisco-wireless tool-data.txt 
+========
 
-command | nmdb-import-cisco-wireless --pipe tool-data.txt
+Process the target data for the device `switch` from a local file.
+```
+nmdb-import-cisco-wireless --device-id switch configuration.txt
+```
+
+Assuming `...` is some command chain which retrieves the target data from a
+remote host and displays the results locally, then the following would process
+it and save the data to a file called `configuration.txt` in the current working
+directory.
+```
+... | nmdb-import-cisco-wireless --device-id switch configuration.txt --pipe
 ```

@@ -64,7 +64,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       this->opts.addOptionalOption("scan-origin-ip", std::make_tuple(
           "scan-origin-ip",
           po::value<std::string>(),
-          "Ip address of device where nmap scan originated")
+          "IP address of device where Nmap scan originated")
         );
     }
 

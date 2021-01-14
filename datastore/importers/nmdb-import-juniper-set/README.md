@@ -1,16 +1,24 @@
 DESCRIPTION
 ===========
 
-Parse and import Juniper set formatted configuration files.  This is mainly
-seen in their ScreenOS and NetScreen type devices.
+Parse and import the output of a Juniper device's `get config` command.
+Currently, this tool supports ScreenOS and NetScreen type devices.  However,
+there are commands on various Juniper devices to explicitly use or show data in
+this format (e.g., in JunOS `show | display set`).
 
-Since `nmdb-import-juniper-set` is importing information about a Juniper
-device's configuration, the `--device-id` option is required.
 
 EXAMPLES
 ========
-``` 
-nmdb-import-juniper-set --device-id conf.txt 
 
-cat conf1.txt | nmdb-import-juniper-set --pipe --device-id conf2.txt
+Process the target data for the device `switch` from a local file.
+```
+nmdb-import-juniper-set --device-id switch config.txt
+```
+
+Assuming `...` is some command chain which retrieves the target data from a
+remote host and displays the results locally, then the following would process
+it and save the data to a file called `config.txt` in the current working
+directory.
+```
+... | nmdb-import-juniper-set --device-id switch config.txt --pipe
 ```
