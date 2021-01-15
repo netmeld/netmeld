@@ -70,9 +70,9 @@ may be a person or other tool.
 
 AUTHOR
 ======
-Modifications (2016-present) are handled by the Netmeld development team at
+Written by Michael Berg (2013-2015, pre v1.0). Currently
+maintained (2016-present) by the Netmeld development team at
 Sandia National Laboratories.
-Netmeld (pre v1.0) was originally written by Michael Berg (2013-2015).
 
 
 REPORTING BUGS

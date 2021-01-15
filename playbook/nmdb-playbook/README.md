@@ -13,16 +13,6 @@ It is important to note, the `--stage` and `--phase` options
 specify which to keep, while the `--exclude-command` option
 specifies which to exclude.  All three can be used at the same time.
 
-For reference, the following are examples of the various commands being
-executed during the various phases of a stage from both an intra and inter
-network perspective.
-
-General workflow for an intra network playbook execution.
-![](../docs/netmeld-playbook-intra-network-workflow.png)
-
-General workflow for an inter network playbook execution.
-![](../docs/netmeld-playbook-inter-network-workflow.png)
-
 
 GUI OR HEADLESS
 ---------------
@@ -56,6 +46,16 @@ reconfigured.
 
 EXAMPLES
 ========
+
+For reference, the following are examples of the various commands being
+executed during the various phases of a stage from both an intra and inter
+network perspective.
+
+General workflow for an intra network playbook execution.
+![](../docs/netmeld-playbook-intra-network-workflow.png)
+
+General workflow for an inter network playbook execution.
+![](../docs/netmeld-playbook-inter-network-workflow.png)
 
 Perform a dry-run that displays what the playbook is going to do.  Review this
 output as a sanity check.

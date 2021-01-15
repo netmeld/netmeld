@@ -258,8 +258,9 @@ function(create_man_from_help tool_name)
       add_custom_command(
         TARGET ${tool_name}
         COMMAND
+          bash -c "sed -e 's@!\\[.*](.*)@```\\nImage at associated markdown page on https://github.com/netmeld/netmeld\\n```@g' ${readme_file}" |
           ${PANDOC} -f gfm -t man
-            --output ${h2m_file} ${readme_file}
+            --output ${h2m_file}
         COMMAND
           bash -c "sed -i -e 's@\\.SH \\(.*\\)@[=\\1]@g' ${h2m_file}"
         VERBATIM

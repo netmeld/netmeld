@@ -53,8 +53,10 @@ namespace netmeld::core::tools {
         "Report bugs to <Netmeld@sandia.gov>."
       };
       std::string author {
-        "Written by the Netmeld team at Sandia National Laboratories.\n"
-        "Netmeld (pre v1.0) originally written by Michael Berg (2013-2015)."
+        // "Written by" prefix required for help2man to extract author
+        "Written by Michael Berg (2013-2015, pre v1.0). Currently\n"
+        "maintained (2016-present) by the Netmeld development team at\n"
+        "Sandia National Laboratories."
       };
       std::string copyright {
         "Copyright 2017 National Technology & Engineering Solutions of\n"
