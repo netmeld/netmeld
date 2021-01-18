@@ -4,39 +4,43 @@ digraph netmeld {
   ranksep=0.75;
   newrank=true;
   splines=spline;
+  compound=true;
+  concentrate=true;
 
-  label="Netmeld Tool Suite 2.x -- Datastore & Core Helper Dataflow";
+  label="Netmeld Tool Suite 2.x -- Core Components and General Dataflow";
 
-
-  // find core/utils/ -iname "*.hpp" | sed -e 's/core\/utils\///g' -e 's/.hpp/\\l/g' | sort -u | paste -sd '' -
+  // find core -iname "*.hpp" | sort -u
+  // find common/utils/ -iname "*.hpp" -printf '%f\n' | sed -e 's/.hpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
 
   node [shape=rectangle];
-  init [label="nmdb-initialize"];
-  remove [label="nmdb-remove-tool-run"];
-  objects [label="Objects\nAbstractObject\lAcBook\lAcNetworkBook\lAcRule\lAcServiceBook\lCve\lDeviceInformation\lInterface\lInterfaceNetwork\lIpAddress\lIpNetwork\lMacAddress\lOperatingSystem\lPort\lRoute\lService\lTime\lToolObservations\lUuid\lVlan\l"];
-  parsers [label="Parsers\nParserCve\lParserDomainName\lParserHelper\lParserIpAddress\lParserMacAddress\l"];
-  schemas [label="Schemas\n"];
-  tools [label="Tools\nAbstractExportTool\lAbstractGraphTool\lAbstractImportTool\lAbstractInsertTool\lAbstractTool\l"];
-  utils [label="Utils\nAcBookUtilities\lExit\lFileManager\lForkExec\lLogger\lLoggerSingleton\lProgramOptions\lQueriesCommon\lSeverity\lStringUtilities\l"];
+  objects [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="4">Object(s)</td></tr>
+      <tr><td align="left">AbstractObject</td></tr>
+      <tr><td align="left">Time</td></tr>
+      <tr><td align="left">Uuid</td></tr>
+    </table>>];
+  tools [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="2">Tool(s)</td></tr>
+      <tr><td align="left">AbstractTool</td></tr>
+    </table>>];
+  utils [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="12">Util(s)</td></tr>
+      <tr><td align="left">CmdExec</td></tr>
+      <tr><td align="left">Exit</td></tr>
+      <tr><td align="left">FileManager</td></tr>
+      <tr><td align="left">ForkExec</td></tr>
+      <tr><td align="left">Logger</td></tr>
+      <tr><td align="left">LoggerSingleton</td></tr>
+      <tr><td align="left">ProgramOptions</td></tr>
+      <tr><td align="left">Severity</td></tr>
+      <tr><td align="left">StreamUtilities</td></tr>
+      <tr><td align="left">StringUtilities</td></tr>
+      <tr><td align="left">ThreadSafeQueue</td></tr>
+    </table>>];
 
-  node [shape=cylinder];
-  datastore [label="PostgreSQL Database"];
-
-  subgraph cluster_binaries {
-    label="Binaries";
-    style="dashed";
-
-    init;
-    remove;
-  }
-
-  {rank=same; schemas datastore};
-
-  {init remove}->datastore;
-  objects->datastore [dir="both"];
-  tools->parsers;
-  {objects parsers tools}->utils;
-  tools->objects;
-  schemas->datastore;
-  parsers->objects;
+  tools->{objects utils};
+  objects->utils;
 }

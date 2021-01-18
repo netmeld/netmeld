@@ -20,14 +20,25 @@ provided which should correspond to the order provided by a configuration
 file or the order in which it was processed.
 
 A best effort is attempted in terms of resolving network and service set
-identifiers into it's numerical equivalent, however this cannot always be
+identifiers into its numerical equivalent, however this cannot always be
 done (e.g., using device built-ins).
 
-Currently supports the `--device-id` option.
+By default, this tool will only generate a graph with known applied or enforced
+rules based on configuration settings.  Unfortunately, not all *apply* values
+are fully handled by the Datastore Import module tools.  To ensure rules are
+not accidentally missed, the `--all` option will ensure all rules stored in the
+data store are placed on the graph, regardless of whether they may or may not
+be actually applied or enforced.
 
 EXAMPLE
 =======
 
+Graph applied access control rules on the device called `workstation`.
 ``` 
 nmdb-graph-ac --device-id workstation
+```
+
+Graph all access control rules on the device called `workstation`.
+``` 
+nmdb-graph-ac --device-id workstation --all
 ```

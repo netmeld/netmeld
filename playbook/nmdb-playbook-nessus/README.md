@@ -1,15 +1,16 @@
 DESCRIPTION
 ===========
 
-The `nmdb-playbook-nessus.sh` tool is utilized to automate Nessus scans.  The
-tool allows configuration and automation of several of the Nessus interactions
-via the command line instead of the Nessus web interface.
+NOTE: This tool probably won't work with newer versions of Nessus since they
+changed the way to interact with the tool and this has not been updated since
+that change.
+
+This tool is utilized to help automate Nessus scans.  The tool allows
+configuration and automation of several of the Nessus interactions via the
+command line instead of the Nessus web interface.
 
 Currently the tool is a Bash script and it's configuration is located in the
-script itself.  Typically, it is installed to
-`/usr/local/bin/nmdb-playbook-nessus.sh` but running
-`nmdb-playbook-nessus.sh --help` will also display the full path to the script.
-
+script itself.
 The tool requires five general configuration settings that should be updated
 before execution.
 ```

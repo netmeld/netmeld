@@ -37,7 +37,7 @@ endif()
 
 find_program(SED sed)
 if (NOT SED)
-  message(WARNING "sed not found, docs will not fully generate.")
+  message(WARNING "sed not found, docs may leak build environment values.")
 endif()
 
 find_program(GZIP gzip)
@@ -258,10 +258,11 @@ function(create_man_from_help tool_name)
       add_custom_command(
         TARGET ${tool_name}
         COMMAND
+          bash -c "sed -e 's@!\\[.*](.*)@```\\nImage at associated markdown page on https://github.com/netmeld/netmeld\\n```@g' ${readme_file}" |
           ${PANDOC} -f gfm -t man
-            --output ${h2m_file} ${readme_file}
+            --output ${h2m_file}
         COMMAND
-          bash -c "sed -i -e 's/.SH \\(.*\\)/[=\\1]/g' ${h2m_file}"
+          bash -c "sed -i -e 's@\\.SH \\(.*\\)@[=\\1]@g' ${h2m_file}"
         VERBATIM
       )
     endif()
@@ -273,6 +274,19 @@ function(create_man_from_help tool_name)
           -I ${h2m_file}
           --no-discard-stderr -N
           -o ${man_file}
+    )
+    if(SED)
+      add_custom_command(
+        TARGET ${tool_name}
+        DEPENDS ${man_file}
+        COMMAND
+          bash -c "sed -i -e 's@\\(arg (=\\)$ENV{HOME}@\\1\\$HOME@g' ${man_file}"
+        VERBATIM
+      )
+    endif()
+    add_custom_command(
+      TARGET ${tool_name}
+      DEPENDS ${man_file}
       COMMAND
         ${GZIP} -f ${man_file}
     )

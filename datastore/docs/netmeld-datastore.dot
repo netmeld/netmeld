@@ -1,0 +1,111 @@
+digraph netmeld {
+  rankdir=LR;
+  nodesep=0.5;
+  ranksep=0.5;
+  newrank=true;
+  splines=spline;
+  compound=true;
+  //concentrate=true; // NOTE: this incorrectly "hides" some lines
+
+  label="Netmeld Tool Suite 2.x -- Datastore Components and General Dataflow";
+
+  node[shape="circle"];
+  users [label="End\nUsers"];
+
+  // find . -iname "nmdb-*" -printf '%f\n' | sed -e 's/.cpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
+
+  node[shape="rectangle",margin=0.1];
+  bins [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="7">Bin(s)</td></tr>
+      <tr><td align="left">nmdb-export-*</td></tr>
+      <tr><td align="left">nmdb-graph-*</td></tr>
+      <tr><td align="left">nmdb-import-*</td></tr>
+      <tr><td align="left">nmdb-insert-*</td></tr>
+      <tr><td align="left" port="init">nmdb-initialize</td></tr>
+      <tr><td align="left" port="remove">nmdb-remove-tool-run</td></tr>
+    </table>>];
+
+
+  // find common/schemas -iname "*.hpp" -printf '%f\n' | sed -e 's/.hpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
+
+  subgraph cluster_lib {
+    label="Library Resources";
+    style="dashed";
+
+    node[shape="rectangle",margin=0.1];
+    objects [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="19">Object(s)</td></tr>
+        <tr><td align="left">AbstractDatastoreObject</td></tr>
+        <tr><td align="left">AcBook</td></tr>
+        <tr><td align="left">AcNetworkBook</td></tr>
+        <tr><td align="left">AcRule</td></tr>
+        <tr><td align="left">AcServiceBook</td></tr>
+        <tr><td align="left">Cve</td></tr>
+        <tr><td align="left">DeviceInformation</td></tr>
+        <tr><td align="left">Interface</td></tr>
+        <tr><td align="left">InterfaceNetwork</td></tr>
+        <tr><td align="left">IpAddress</td></tr>
+        <tr><td align="left">IpNetwork</td></tr>
+        <tr><td align="left">MacAddress</td></tr>
+        <tr><td align="left">OperatingSystem</td></tr>
+        <tr><td align="left">Port</td></tr>
+        <tr><td align="left">Route</td></tr>
+        <tr><td align="left">Service</td></tr>
+        <tr><td align="left">ToolObservations</td></tr>
+        <tr><td align="left">Vlan</td></tr>
+      </table>>];
+    parsers [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="7">Parser(s)</td></tr>
+        <tr><td align="left">ParserCve</td></tr>
+        <tr><td align="left">ParserDomainName</td></tr>
+        <tr><td align="left">ParserHelper</td></tr>
+        <tr><td align="left">ParserIpAddress</td></tr>
+        <tr><td align="left">ParserMacAddress</td></tr>
+        <tr><td align="left">ParserTestHelper</td></tr>
+      </table>>];
+    tools [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="6">Tool(s)</td></tr>
+        <tr><td align="left" port="dstool">AbstractDatastoreTool</td></tr>
+        <tr><td align="left">AbstractExportTool</td></tr>
+        <tr><td align="left">AbstractGraphTool</td></tr>
+        <tr><td align="left">AbstractImportTool</td></tr>
+        <tr><td align="left">AbstractInsertTool</td></tr>
+      </table>>];
+    utils [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="4">Util(s)</td></tr>
+        <tr><td align="left">AcBookUtilities</td></tr>
+        <tr><td align="left">QueriesCommon</td></tr>
+        <tr><td align="left">ServiceFactory</td></tr>
+      </table>>];
+
+    schemas [label="Schema(s)"];
+  }
+
+  subgraph cluster_datastore {
+    label="Data Store(s)";
+    style="dashed";
+
+    node [shape="cylinder"];
+    psqldb [label="PostgreSQL Database"];
+  }
+
+
+  {rank=same; schemas psqldb};
+
+  users->bins;
+  users->psqldb [dir="both"];
+  schemas->psqldb;
+  objects->psqldb [dir="both", lhead="cluster_datastore"];
+  bins->tools [lhead="cluster_lib"];
+  bins:init->psqldb;
+  bins:remove->psqldb;
+  tools->{parsers objects utils};
+  tools:dstool->psqldb [lhead="cluster_datastore"];
+  parsers->{objects utils};
+  objects->utils;
+}

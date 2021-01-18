@@ -64,9 +64,61 @@ sleep_in_secs=5;
 
 printUsage()
 {
-  echo "Usage: $0 [-h|--help]";
-  echo "  To configure, directly edit the script (General configuration section)";
-  exit;
+  PROGRAM_NAME=`basename "$0"`;
+  read -r -d '' USAGE <<EOF
+Automate, older, Nessus scanning.  To configure, directly edit the script's
+"General configuration" section.
+
+Usage: $PROGRAM_NAME [options]
+
+Options:
+  -h [ --help ]     Show this help message, then exit.
+  -v [ --version ]  Show version information, then exit.
+EOF
+  
+  echo "${USAGE}";
+  exit 0;
+}
+
+printVersion()
+{
+  PROGRAM_NAME=`basename "$0"`;
+  read -r -d '' VERSION <<EOF
+${PROGRAM_NAME} (Netmeld)
+
+Copyright 2017 National Technology & Engineering Solutions of
+Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525
+with NTESS, the U.S. Government retains certain rights in this
+software.
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Written by Michael Berg (2013-2015, pre v1.0). Currently
+maintained (2016-present) by the Netmeld development team at
+Sandia National Laboratories.
+EOF
+
+  echo "${VERSION}";
+  exit 0;
 }
 
 getJsonVal()
@@ -94,13 +146,15 @@ getJsonLen()
     shift;
     case "$arg" in
       "--help") set -- "$@" "-h" ;;
+      "--version") set -- "$@" "-v" ;;
       *)        set -- "$@" "-h" ;;
     esac;
   done;
 
-  while getopts "h" opt; do
+  while getopts "hv" opt; do
     case "$opt" in
       "h") printUsage; exit ;;
+      "v") printVersion; exit ;;
       "?") printUsage; exit ;;
     esac;
   done;

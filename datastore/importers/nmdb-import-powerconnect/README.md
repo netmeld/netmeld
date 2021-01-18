@@ -1,10 +1,22 @@
 DESCRIPTION
 ===========
 
-Parse and import PowerConnect configuration files (the output of
-`show running-config`).
+Parse and import the output of a PowerConnect device's `show running-config`
+command.  Currently, this tool supports Dell's PowerConnect type devices.
 
-The `nmdb-import-powerconnect` tool automatically extracts the device-id from
-the configuration file.  The tool currently is limited and extracts very
-targeted information.  It will at least parse, hostname, interface data, and
-routes.
+
+EXAMPLES
+========
+
+Process the target data for the device `switch` from a local file.
+```
+nmdb-import-powerconnect --device-id switch configuration.txt
+```
+
+Assuming `...` is some command chain which retrieves the target data from a
+remote host and displays the results locally, then the following would process
+it and save the data to a file called `configuration.txt` in the current working
+directory.
+```
+... | nmdb-import-powerconnect --device-id switch configuration.txt --pipe
+```

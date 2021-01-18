@@ -1,30 +1,59 @@
 digraph netmeld {
   rankdir=LR;
-  nodesep=0.75;
-  ranksep=0.75;
+  nodesep=0.5;
+  ranksep=0.5;
   newrank=true;
   splines=spline;
+  compound=true;
+  concentrate=true; // NOTE: this may incorrectly "hide" some lines
 
-  label="Netmeld Tool Suite 2.x -- Playbook Dataflow";
+  label="Netmeld Tool Suite 2.x -- Playbook Components and General Dataflow";
 
+  node[shape="circle"];
+  users [label="End\nUsers"];
 
-  node [shape=rectangle];
-  datastore [label="Datastore \&\nCore Helpers"];
-  //ctd [label="cisco-type7-decode"];
-  nmpbis [label="nmdb-playbook-insert-source"];
-  nmpbir [label="nmdb-playbook-insert-router"];
-  nmpb [label="nmdb-playbook"];
-  pbcore [label="Playbook Core\nHelpers\nSchemas\lQueriesPlaybook"];
-  nmpbes [label="nmdb-playbook-export-scans"];
-  nmpbn [label="nmdb-playbook-nessus"];
+  // find playbook/ -iname "nmdb-*" -printf '%f\n' | sed -e 's/.cpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
+  node[shape="rectangle",margin=0.1];
+  bins [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="6">Bin(s)</td></tr>
+      <tr><td align="left">nmdb-playbook</td></tr>
+      <tr><td align="left">nmdb-playbook-export-scans</td></tr>
+      <tr><td align="left">nmdb-playbook-insert-router</td></tr>
+      <tr><td align="left">nmdb-playbook-insert-source</td></tr>
+      <tr><td align="left">nmdb-playbook-nessus</td></tr>
+    </table>>];
 
-  {rank="same"; nmpbis nmpbir nmpb}
+  // find playbook/common/ -iname "*.hpp" -printf '%f\n' | sed -e 's/.hpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
+  subgraph cluster_lib {
+    label="Library Resources";
+    style="dashed";
 
-  nmpb->pbcore;
-  pbcore->datastore;
-  {nmpbir nmpbis}->datastore;
-  nmpb->datastore [dir="both"];
-  datastore->nmpbes;
+    node[shape="rectangle",margin=0.1];
+    utils [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="2">Util(s)</td></tr>
+        <tr><td align="left" port="queries">QueriesPlaybook</td></tr>
+      </table>>];
 
-  datastore->nmpbn [style="dashed"];
+    schemas [label="Playbook Schema(s)"];
+    datastore_library [label="Datastore Module Library"];
+  }
+
+  subgraph cluster_datastore {
+    label="Data Store(s)";
+    style="dashed";
+
+    node [shape="cylinder"];
+    psqldb [label="PostgreSQL Database"];
+  }
+
+  {rank=same; schemas psqldb datastore_library};
+
+  users->bins;
+  users->psqldb [dir="both"];
+  schemas->psqldb;
+  datastore_library->psqldb;
+  bins->datastore_library [lhead="cluster_lib"];
+  utils:queries->psqldb;
 }

@@ -2,21 +2,20 @@ DESCRIPTION
 ===========
 
 Manually insert device hardware type information into the Netmeld database.
+The options can be given independently or all in one command.
 
-Since `nmdb-insert-device-hardware` is importing information about a device's
-hardware, the `--device-id` option is required.
 
-* Use the `--vendor` option to specify the name of device hardware vendor.
-* Use the `--model` option to specify the model of device hardware.
-* Use the `--hardware-revision` option to specify the hardware revision of
-device hardware.
-* Use the `--serial-number` option to specify the serial number of device
-hardware.
-* Use the `--description` option to specify a description of the device
-hardware.
+EXAMPLES
+========
 
-EXAMPLES 
-======== 
-``` 
-nmdb-insert-device-hardware --device-id workstation --vendor Dell
+Insert device information for `laptop`.  It was manufactured by `Dell` and has
+a serial number of `001`
+```
+nmdb-insert-device-hardware --device-id laptop --vendor Dell --serial-number 001
+```
+
+Same as prior, just in multiple lines.
+```
+nmdb-insert-device-hardware --device-id laptop --vendor Dell
+nmdb-insert-device-hardware --device-id laptop --serial-number 001
 ```

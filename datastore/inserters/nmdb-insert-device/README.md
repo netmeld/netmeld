@@ -2,32 +2,45 @@ DESCRIPTION
 ===========
 
 Manually insert device information into the Netmeld database.
-
-Since `nmdb-insert-device` is importing information about a device's
-configuration, the `--device-id` option is required.
-
-* Use the `--device-id` option to specify the ID for the device.
-* Use the `--vm-host-device-id` option to specify that the device
-is a virtual machine running on the specified host device.
-* Use the `--device-color` option to specify the device's color
-in network graphs.
-* Use the `--interface` option to specify the network interface name
-to with the following address options apply:
-* Use the `--mac-addr` option to insert a MAC address
-into the `raw_mac_addrs` and `raw_device_mac_addrs` tables.
-* Use the `--ip-addr` option to insert an IPv4 or IPv6 address
-into the `raw_ip_addrs` and `raw_device_ip_addrs` tables.
-* If you specify both the `--mac-addr` and `--ip-addr` options,
-it will also associate the MAC address and IP address
-in the `raw_mac_addrs_ip_addrs` table.
-* The `--mediaType` option will specify the interface media type.
-* Use the `--responding` option to flag a device as responding or not.
-* If the `--low-graph-priority` flag is set, the device will be out-of-the-way in network graphs.
+Though many of the options can be given independently, providing some within
+one command will cause different logic to execute.  So it is best to chain as
+many options as possible together for a device insertion.
 
 
-EXAMPLES 
-======== 
-``` 
+EXAMPLES
+========
+
+Insert a device named `workstation`.
+```
+nmdb-insert-device --device-id workstation
+```
+
+Same, but define an interface, MAC address, IP address, and subnet for the
+device as well.  Note, if we do not provide the subnet size it will assume
+a default of a `/32`.
+```
 nmdb-insert-device --device-id workstation --interface eth0 \
-    --ip-addr 192.168.1.2 --mac-addr 01:02:03:04:05:06
+    --mac-addr 01:02:03:04:05:06 --ip-addr 1.2.3.4/24
+```
+
+Note, that the prior will **NOT** result in the same results as the following
+and the following should be considered not preferred.  Effectively, the issue
+is there is no way to know to tie the information together when it is provided
+in multiple tool runs.
+```
+nmdb-insert-device --device-id workstation --interface eth0
+nmdb-insert-device --device-id workstation --mac-addr 01:02:03:04:05:06
+nmdb-insert-device --device-id workstation --ip-addr 1.2.3.4/24
+```
+
+Insert a device named `switch` with an interface that, though connected, is
+not responding or reachable.
+```
+nmdb-insert-device --device-id switch --interface 'gi0/0' --responding false
+```
+
+Insert a virtual device named `vm01` and associate it with the VM host machine
+called `metal01`.
+```
+nmdb-insert-device --device-id vm01 --vm-host-device-id metal01
 ```

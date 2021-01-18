@@ -1,18 +1,19 @@
 DESCRIPTION
 ===========
 
-This provides most of the core functionality for the Netmeld Datalake module
-to leverage.  Common functions and capabilities are pooled into this library
-to enable consistent behaviour for module tools and quicker tool development.
+This provides a library containing the core functionality for the module to
+leverage.  Common functions and capabilities are pooled into this library to
+enable consistent behavior for module tools and quicker tool development.
+
 
 HANDLER FUNDAMENTALS
 ====================
 
 GIT
 ---
-This handler leverages `git` as the data lake backend.  While manual
+This handler leverages `git` as the data lake back-end.  While manual
 manipulation of the repository can be performed, it may cause unexpected
-behaviour.
+behavior.
 
 One case is for determining the ingest tool and its arguments.  Specifically,
 this handler performs a regex search of the git commit body for the following

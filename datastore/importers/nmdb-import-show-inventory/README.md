@@ -3,11 +3,19 @@ DESCRIPTION
 
 Parse and import the output of a Cisco device's `show inventory` command.
 
-Since `nmdb-import-show-inventory` is importing information about a device's
-hardware configuration, the `--device-id` option is required.
 
 EXAMPLE
-======= 
-``` 
-nmdb-import-show-inventory --device-id cisco inventory.txt 
+=======
+
+Process the target data for the device `switch` from a local file.
+```
+nmdb-import-show-inventory --device-id switch inventory.txt
+```
+
+Assuming `...` is some command chain which retrieves the target data from a
+remote host and displays the results locally, then the following would process
+it and save the data to a file called `inventory.txt` in the current working
+directory.
+```
+... | nmdb-import-show-inventory --device-id switch inventory.txt --pipe
 ```

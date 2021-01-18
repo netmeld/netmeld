@@ -1,18 +1,21 @@
 DESCRIPTION
 ===========
 
-Parse and import the output of the `ping` and `ping6` commands.
-You must run the ping command with the `-n` option
-to output numeric IP addresses instead of DNS hostnames.
-If you run ping using `clw`, `clw` automatically adds `-n`
-to the command for you.
+Parse and import the output of the `ping -n` or `ping6 -n` commands.
+
 
 EXAMPLES
 ========
-``` 
-nmdb-import-ping ping_out.txt 
 
-cat ping_out.txt | nmdb-import-ping --pipe copy.txt 
+Process the target data from a local file.
+```
+nmdb-import-ping ping.txt
 ```
 
-See Also: `ping (8)`
+Assuming `...` is some command chain which retrieves the target data from a
+remote host and displays the results locally, then the following would process
+it and save the data to a file called `pipe.txt` in the current working
+directory.
+```
+... | nmdb-import-ping ping.txt --pipe
+```

@@ -4,67 +4,61 @@ digraph netmeld {
   ranksep=0.75;
   newrank=true;
   splines=spline;
+  compound=true;
+  concentrate=true;
 
-  label="Netmeld Tool Suite 2.x -- Dataflow Overview";
+  label="Netmeld Tool Suite 2.x -- Netmeld Modules Generalized Dataflow";
+
+  node[shape="rectangle",margin=0];
+  dataSources [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="5">Source(s)</td></tr>
+      <tr><td align="left">Configuration Files</td></tr>
+      <tr><td align="left">Network Collection</td></tr>
+      <tr><td align="left">Targeted Settings</td></tr>
+      <tr><td align="left">"Other" Manually<br />Collected Data</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataCollectors [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="5">Collector(s)</td></tr>
+      <tr><td align="left">Fetchers</td></tr>
+      <tr><td align="left">Playbook</td></tr>
+      <tr><td align="left">CLW</td></tr>
+      <tr><td align="left">People</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataParsers [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="3">Parser(s)</td></tr>
+      <tr><td align="left">Datastore</td></tr>
+      <tr><td align="left">People</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataStorage [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="4">Storage</td></tr>
+      <tr><td align="left">Datalake</td></tr>
+      <tr><td align="left">Datastore</td></tr>
+      <tr><td align="left">Filesystem</td></tr>
+    </table>>];
+
+  node[shape="rectangle",margin=0];
+  dataArtifacts [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+      <tr><td rowspan="6">Artifact(s)</td></tr>
+      <tr><td align="left">Arbitrary Raw Data</td></tr>
+      <tr><td align="left">Processed Raw Data</td></tr>
+      <tr><td align="left">Aggregated Data</td></tr>
+      <tr><td align="left">Topology Graphs</td></tr>
+      <tr><td align="left">Formatted Reports</td></tr>
+    </table>>];
 
 
-  { // Sources
-    rank=same;
-    node [shape=note];
-    srcManual [label="Targeted\nConfiguration\nSettings"];
-    srcConfigs [label="Configuration\n\& Other Files"];
-  }
-
-
-  // Modules
-  node [shape=rectangle];
-  clw [label="Command\nLine\nWrapper"];
-  datastore [label="Datastore \&\nCore Helpers"];
-  exporters [label="Exporters"];
-  fetchers [label="Fetchers"];
-  graphers [label="Graphers"];
-  importers [label="Importers"];
-  inserters [label="Inserters"];
-  playbook [label="Playbook"];
-
-  queries [label="Manual\nQueries"];
-
-
-  { // Artifacts
-    rank=same;
-    node [shape=note];
-    artConfigs [label="Aggregated\nConfiguration\nArtifacts"];
-    artGraphs [label="Topology\nGraphs"];
-    artReports [label="Formatted\nReports"];
-    artRaw [label="Arbitrary\nRaw\nData"];
-  }
-
-
-  {rank=same; fetchers clw}
-  {rank=same; inserters importers playbook}
-  {rank=same; exporters graphers queries}
-
-  // Sources modules
-  srcManual->inserters;
-  srcConfigs->importers;
-  srcConfigs->fetchers [dir="both"];
-  fetchers->importers [style="dashed"];
-
-  // Modules to modules
-  clw->importers;
-  playbook->clw;
-
-  // Modules to datastore
-  inserters->datastore;
-  importers->datastore;
-  playbook->datastore [dir="both"];
-
-  // Datastore to modules
-  datastore->{exporters graphers queries};
-
-  // Modules to artifacts
-  exporters->artConfigs;
-  graphers->artGraphs;
-  queries->{artReports artRaw};
-
+  {rank=same; dataParsers dataStorage}
+  dataSources->dataCollectors->{dataParsers dataStorage}->dataArtifacts;
+  dataParsers->dataStorage;
 }
