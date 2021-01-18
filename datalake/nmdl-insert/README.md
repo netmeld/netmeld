@@ -34,7 +34,7 @@ nmdl-insert --device-id device001 --tool nmdb-import-hosts ./hosts \
     --tool-args '--device-type workstation --device-color blue'
 ```
 
-Run the `ip addr show` sommand and pipe the output to the tool saving it in
+Run the `ip addr show` command and pipe the output to the tool saving it in
 the lake as `ip_addr_show.txt`.
 ```
 ip addr show | nmdl-insert --device-id device001 --pipe --rename ip_addr_show.txt

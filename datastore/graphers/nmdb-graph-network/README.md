@@ -63,7 +63,7 @@ nmdb-graph-network --layer 3 --device-id core | dot -Tpng -o layer3.png
 ```
 
 Some versions of Graphviz have issues loading the plugin for SVG conversion.
-If using SVG icons, inkscape can be used to output the graph in pdf or other
+If using SVG icons, Inkscape can be used to output the graph in pdf or other
 formats as such:
 
 ```

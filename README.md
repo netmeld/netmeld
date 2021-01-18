@@ -64,7 +64,7 @@ In general:
 
 See the individual module documentation for more detailed information on it
 and its tooling.  Note that in the modules documentation, the term `End User`
-is used instead of identifing all the possible data sources for simplicity and
+is used instead of identifying all the possible data sources for simplicity and
 may be a person or other tool.
 
 
