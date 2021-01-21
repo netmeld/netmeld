@@ -46,7 +46,7 @@ namespace netmeld::datastore::objects {
   {
     IpNetwork temp = nmdp::fromString<nmdp::ParserIpAddress, IpAddress>(_addr);
     address        = temp.address;
-    prefix           = temp.prefix;
+    prefix         = temp.prefix;
   }
 
   IpNetwork::IpNetwork(const std::vector<uint8_t>& _addr)
