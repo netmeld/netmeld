@@ -66,14 +66,11 @@ class Parser :
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
-      pingResponseLinux,
-      pingResponseWindows,
-      pingResponse;
-
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      pingLinux, linuxHeader, linuxResponse, linuxFooter,
-      pingWindows, windowsHeader, windowsResponse, windowsFooter,
+      pingLinux,
+        linuxHeader, linuxResponse, linuxNoResponse, linuxFooter,
+      pingWindows,
+        windowsHeader, windowsResponse, windowsNoResponse, windowsFooter,
       ignoredLine;
 
     qi::rule<nmdp::IstreamIter>

@@ -39,7 +39,10 @@ Parser::Parser() : Parser::base_type(start)
 
   // Linux
   pingLinux =
-    linuxHeader > *linuxResponse > ignoredLine > linuxFooter
+    linuxHeader
+    > *(linuxResponse | linuxNoResponse)
+    > ignoredLine
+    > linuxFooter
       [pnx::bind(&Parser::finalize, this)]
     ;
 
@@ -59,15 +62,25 @@ Parser::Parser() : Parser::base_type(start)
       [pnx::bind(&Parser::responsive, this) = true]
     ;
 
+  linuxNoResponse =
+    (  (qi::uint_ >> qi::lit("bytes from"))
+     | (qi::lit("From"))
+    ) > ignoredLine
+    ;
+
   linuxFooter =
-    qi::lit("---") > //+token > qi::eol >
-    +(+token > -qi::eol)
+    qi::lit("---") > +token > qi::eol
+    > qi::uint_ > qi::lit("packets") > +token > qi::eol
+    > -(qi::lit("rtt") > +token > -qi::eol)
     ;
 
 
   // Windows
   pingWindows =
-    windowsHeader > +windowsResponse > ignoredLine > windowsFooter
+    windowsHeader
+    > *(windowsResponse | windowsNoResponse)
+    > ignoredLine
+    > windowsFooter
       [pnx::bind(&Parser::finalize, this)]
     ;
 
@@ -77,9 +90,14 @@ Parser::Parser() : Parser::base_type(start)
 
   windowsResponse =
     qi::lit("Reply from")
-    >> ipAddr
+    >> ipValue
     >> (qi::lit(": bytes") | qi::lit(": time")) > +token > qi::eol
       [pnx::bind(&Parser::responsive, this) = true]
+    ;
+  windowsNoResponse =
+    (  (qi::lit("Reply from"))
+     | (qi::lit("Request"))
+    ) > ignoredLine
     ;
 
   windowsFooter =
@@ -118,7 +136,7 @@ Parser::Parser() : Parser::base_type(start)
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      (pingLinux)(linuxHeader)(linuxResponse)(linuxFooter)
+      (pingLinux)(linuxHeader)(linuxResponse)(linuxNoResponse)(linuxFooter)
       (pingWindows)(windowsHeader)(windowsResponse)(windowsFooter)
       (ignoredLine)
       (ipValue)(hostname)(ifaceName)
@@ -135,6 +153,7 @@ Parser::finalize()
   for (const auto& alias : tgtAliases) {
     tgtIp.addAlias(alias, REASON);
   }
+  tgtAliases.clear();
   tgtIp.setResponding(responsive);
   data.push_back(tgtIp);
 }

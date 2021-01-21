@@ -40,9 +40,11 @@ class TestParser : public Parser {
     public:
       using Parser::linuxHeader;
       using Parser::linuxResponse;
+      using Parser::linuxNoResponse;
       using Parser::linuxFooter;
       using Parser::windowsHeader;
       using Parser::windowsResponse;
+      using Parser::windowsNoResponse;
       using Parser::windowsFooter;
 
       using Parser::pingLinux;
@@ -86,8 +88,11 @@ BOOST_AUTO_TEST_CASE(testParts)
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "Parse rule 'linuxResponse':" << test);
     }
+  }
 
-    std::vector<std::string> testsBad {
+  { // linuxNoResponse
+    const auto& parserRule {tp.linuxNoResponse};
+    std::vector<std::string> testsOk {
       // 6 then 4:
       "64 bytes from 1::1: icmp_seq=1 Destination unreachable: Beyond scope of source addresss\n",
       "64 bytes from host1 (1::1): icmp_seq=1 Time to live exceeded\n",
@@ -96,10 +101,12 @@ BOOST_AUTO_TEST_CASE(testParts)
       "64 bytes from host1%eth0 (1::1%eth0): icmp_seq=1 Time to live exceeded\n",
       "64 bytes from 1.2.3.4: icmp_seq=1 Destination Host Unreachable\n",
       "64 bytes from host1 (1.2.3.4): icmp_seq=1 Time to live exceeded\n",
+      "From host1 (1.2.3.4) icmp_seq=1 Time to live exceeded\n",
+      "From 1.2.3.4 icmp_seq=3 Time to live exceeded\n",
     };
-    for (const auto& test : testsBad) {
-      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'linuxResponse':" << test);
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                 "Parse rule 'linuxNoResponse':" << test);
     }
   }
 
@@ -108,15 +115,18 @@ BOOST_AUTO_TEST_CASE(testParts)
     std::vector<std::string> testsOk {
       R"STR(--- host1 ping statistics ---
       3 packets transmitted, 3 received, 0% packet loss, time 2031ms
-      rtt min/avg/max/mdev = 0.031/0.060/0.076/0.021 ms)STR",
+      rtt min/avg/max/mdev = 0.031/0.060/0.076/0.021 ms
+      )STR",
       R"STR(--- 1.2.3.4 ping statistics ---
       3 packets transmitted, 3 received, 0% packet loss, time 2053ms
-      rtt min/avg/max/mdev = 0.024/0.040/0.064/0.017 ms)STR",
+      rtt min/avg/max/mdev = 0.024/0.040/0.064/0.017 ms
+      )STR",
       R"STR(--- 1::1 ping statistics ---
       3 packets transmitted, 3 received, 0% packet loss, time 2045ms
       rtt min/avg/max/mdev = 0.047/0.090/0.140/0.038 ms)STR",
       R"STR(--- 1::1 ping statistics ---
-      3 packets transmitted, 0 received, 100% packet loss, time 2037ms)STR",
+      3 packets transmitted, 0 received, 100% packet loss, time 2037ms
+      )STR",
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -208,11 +218,12 @@ BOOST_AUTO_TEST_CASE(testWhole)
     3 packets transmitted, 3 received, 0% packet loss, time 2043ms
     rtt min/avg/max/mdev = 0.047/0.127/0.173/0.056 ms
     )STR",
-    R"STR($ ping -c3 1.2.3.4
+    R"STR($ ping -c4 1.2.3.4
     PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
     64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.044 ms
     64 bytes from 1.2.3.4: icmp_seq=2 ttl=64 time=0.017 ms
     64 bytes from 1.2.3.4: icmp_seq=3 ttl=64 time=0.032 ms
+    From host1 (1.2.3.4) icmp_seq=1 Time to live exceeded
 
     --- 1.2.3.4 ping statistics ---
     3 packets transmitted, 3 received, 0% packet loss, time 2030ms
@@ -230,6 +241,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
     64 bytes from test.domain (1.2.3.4): icmp_seq=2 ttl=64 time=0.032 ms
     64 bytes from test.domain (1.2.3.4): icmp_seq=3 ttl=64 time=0.030 ms
     64 bytes from test.domain (1.2.3.4): icmp_seq=4 ttl=64 time=0.030 ms
+    From 1.2.3.4 icmp_seq=3 Time to live exceeded
     ^C
     --- test.domain ping statistics ---
     4 packets transmitted, 4 received, 0% packet loss, time 3063ms
