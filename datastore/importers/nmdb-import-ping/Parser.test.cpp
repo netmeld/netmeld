@@ -40,11 +40,9 @@ class TestParser : public Parser {
     public:
       using Parser::linuxHeader;
       using Parser::linuxResponse;
-      using Parser::linuxNoResponse;
       using Parser::linuxFooter;
       using Parser::windowsHeader;
       using Parser::windowsResponse;
-      using Parser::windowsNoResponse;
       using Parser::windowsFooter;
 
       using Parser::pingLinux;
@@ -83,17 +81,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       "64 bytes from host1%eth0 (1::1%eth0): icmp_seq=1 ttl=64 time=0.047 ms\n",
       "64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.031 ms\n",
       "64 bytes from host1 (1.2.3.4): icmp_seq=1 ttl=64 time=0.025 ms\n",
-    };
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'linuxResponse':" << test);
-    }
-  }
-
-  { // linuxNoResponse
-    const auto& parserRule {tp.linuxNoResponse};
-    std::vector<std::string> testsOk {
-      // 6 then 4:
+      // "router" alive samples
       "64 bytes from 1::1: icmp_seq=1 Destination unreachable: Beyond scope of source addresss\n",
       "64 bytes from host1 (1::1): icmp_seq=1 Time to live exceeded\n",
       "64 bytes from 1::1%eth0: icmp_seq=1 Destination unreachable: Beyond scope of source addresss\n",
@@ -106,7 +94,7 @@ BOOST_AUTO_TEST_CASE(testParts)
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'linuxNoResponse':" << test);
+                 "Parse rule 'linuxResponse':" << test);
     }
   }
 
@@ -155,19 +143,11 @@ BOOST_AUTO_TEST_CASE(testParts)
       // 6 then 4:
       "Reply from ::1: time<1ms\n",
       "Reply from 1.2.3.4: bytes=32 time<1ms TTL=64\n",
-    };
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'windowsResponse':" << test);
-    }
-
-    std::vector<std::string> testsBad {
-      // 6 then 4:
       "Reply from ::1: Destination host unreachable.\n",
       "Reply from 1.2.3.4: Destination host unreachable.\n",
     };
-    for (const auto& test : testsBad) {
-      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "Parse rule 'windowsResponse':" << test);
     }
   }
@@ -238,11 +218,16 @@ BOOST_AUTO_TEST_CASE(testWhole)
     R"STR(ping test.domain
     PING test.domain (1.2.3.4) 56(84) bytes of data.
     64 bytes from test.domain (1.2.3.4): icmp_seq=1 ttl=64 time=0.026 ms
-    64 bytes from test.domain (1.2.3.4): icmp_seq=2 ttl=64 time=0.032 ms
-    64 bytes from test.domain (1.2.3.4): icmp_seq=3 ttl=64 time=0.030 ms
-    64 bytes from test.domain (1.2.3.4): icmp_seq=4 ttl=64 time=0.030 ms
     From 1.2.3.4 icmp_seq=3 Time to live exceeded
     ^C
+    --- test.domain ping statistics ---
+    4 packets transmitted, 4 received, 0% packet loss, time 3063ms
+    rtt min/avg/max/mdev = 0.026/0.029/0.032/0.002 ms)STR",
+    R"STR(ping test.domain
+    PING test.domain (1.2.3.4) 56(84) bytes of data.
+    From 1.2.3.4 icmp_seq=3 Time to live exceeded
+    64 bytes from test.domain (1.2.3.4): icmp_seq=1 ttl=64 time=0.026 ms
+
     --- test.domain ping statistics ---
     4 packets transmitted, 4 received, 0% packet loss, time 3063ms
     rtt min/avg/max/mdev = 0.026/0.029/0.032/0.002 ms)STR",
@@ -254,6 +239,30 @@ BOOST_AUTO_TEST_CASE(testWhole)
     Reply from 1.2.3.4: bytes=32 time=19ms TTL=115
     Reply from 1.2.3.4: bytes=32 time=25ms TTL=115
     Reply from 1.2.3.4: bytes=32 time=18ms TTL=115
+
+    Ping statistics for 1.2.3.4:
+        Packets: Sent = 3, Received = 3, Lost = 0 (0% loss),
+        Approximate round trip times in milli-seconds:
+            Minimum = 18ms, Maximum = 25ms, Average = 20ms
+    )STR",
+    R"STR(ping -n 3 test.domain
+
+    Pinging test.domain [1.2.3.4] with 32 bytes of data:
+    Reply from 1.2.3.4: bytes=32 time=19ms TTL=115
+    Request timed out.
+    Reply from 1.2.3.4: bytes=32 time=25ms TTL=115
+
+    Ping statistics for 1.2.3.4:
+        Packets: Sent = 3, Received = 3, Lost = 0 (0% loss),
+        Approximate round trip times in milli-seconds:
+            Minimum = 18ms, Maximum = 25ms, Average = 20ms
+    )STR",
+    R"STR(ping -n 3 test.domain
+
+    Pinging test.domain [1.2.3.4] with 32 bytes of data:
+    Request timed out.
+    Reply from 1.2.3.4: bytes=32 time=19ms TTL=115
+    Reply from 1.2.3.4: bytes=32 time=25ms TTL=115
 
     Ping statistics for 1.2.3.4:
         Packets: Sent = 3, Received = 3, Lost = 0 (0% loss),
