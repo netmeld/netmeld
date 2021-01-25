@@ -336,14 +336,14 @@ namespace netmeld::datastore::utils {
 
     db.prepare
       ("insert_raw_mac_addr",
-       "INSERT INTO raw_mac_addrs"
-       " (tool_run_id, mac_addr, is_responding)"
-       " SELECT $1, $2, $3"
-       " WHERE NOT EXISTS ("
-       "   SELECT 1 FROM raw_mac_addrs"
-       "   WHERE ($1 = tool_run_id)"
-       "     AND ($2 = mac_addr)"
-       " )");
+       "INSERT INTO raw_mac_addrs AS orig"
+       "  (tool_run_id, mac_addr, is_responding)"
+       " VALUES ($1, $2, $3)"
+       " ON CONFLICT"
+       "  (tool_run_id, mac_addr)"
+       " DO UPDATE"
+       "  SET is_responding = (orig.is_responding OR $3)"
+       "");
 
     // ----------------------------------------------------------------------
     // TABLE: raw_ip_addrs
@@ -351,14 +351,14 @@ namespace netmeld::datastore::utils {
 
     db.prepare
       ("insert_raw_ip_addr",
-       "INSERT INTO raw_ip_addrs"
-       " (tool_run_id, ip_addr, is_responding)"
-       " SELECT $1, host(($2)::INET)::INET, $3"
-       " WHERE NOT EXISTS ("
-       "   SELECT 1 FROM raw_ip_addrs"
-       "   WHERE ($1 = tool_run_id)"
-       "     AND (host(($2)::INET)::INET = ip_addr)"
-       " )");
+       "INSERT INTO raw_ip_addrs AS orig"
+       "  (tool_run_id, ip_addr, is_responding)"
+       " VALUES ($1, host(($2)::INET)::INET, $3)"
+       " ON CONFLICT"
+       "  (tool_run_id, ip_addr)"
+       " DO UPDATE"
+       "  SET is_responding = (orig.is_responding OR $3)"
+       "");
 
     // ----------------------------------------------------------------------
     // TABLE: raw_mac_addrs_ip_addrs
