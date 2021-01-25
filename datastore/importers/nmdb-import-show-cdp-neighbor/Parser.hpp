@@ -79,13 +79,13 @@ class Parser :
       config,
       header,
       deviceData,
+      ipAddressValue,
+      platformValue,
+      interfaceValue,
       ignoredLine;
 
     qi::rule<nmdp::IstreamIter>
-      hostnameValue,
-      ipAddressValue,
-      platformValue,
-      interfaceValue;
+      hostnameValue;
 
     qi::rule<nmdp::IstreamIter, std::string()>
       token;

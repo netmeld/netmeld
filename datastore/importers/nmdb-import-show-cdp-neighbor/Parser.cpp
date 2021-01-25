@@ -69,28 +69,27 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   ipAddressValue =
-    qi::lit("IP") > -(qi::lit("v") > qi::char_("46")) > +qi::blank
-    > -(qi::char_("aA") > qi::lit("ddress: "))
+    qi::lit("IP") > -(qi::lit("v") > qi::char_("46"))
+    > -(qi::char_("aA") > qi::lit("ddress:"))
     > ipAddr
       [pnx::bind([&](nmdo::IpAddress val){nd.ipAddrs.push_back(val);}, qi::_1)]
     // cppcheck-suppress compareBoolExpressionWithInt
-    > *(+qi::blank > token)
+    > *token
     > qi::eol
     ;
 
   platformValue =
-    qi::lit("Platform: ")
+    qi::lit("Platform:")
     > token [pnx::bind(&NeighborData::curVendor, &nd) = qi::_1]
-    > +qi::blank
     > token [pnx::bind(&NeighborData::curModel, &nd) = qi::_1]
     // cppcheck-suppress compareBoolExpressionWithInt
-    > *(+qi::blank > token)
+    > *token
     > qi::eol
     ;
 
   interfaceValue =
-    qi::lit("Interface: ") > token
-    > +qi::blank > qi::lit("Port ID (outgoing port): ")
+    qi::lit("Interface:") > token
+    > qi::lit("Port ID (outgoing port):")
     > token [pnx::bind(&NeighborData::curIfaceName, &nd) = qi::_1]
     > qi::eol
     ;
