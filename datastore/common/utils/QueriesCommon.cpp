@@ -342,7 +342,7 @@ namespace netmeld::datastore::utils {
        " ON CONFLICT"
        "  (tool_run_id, mac_addr)"
        " DO UPDATE"
-       "  SET is_responding = (orig.is_responding OR $3)"
+       "  SET is_responding = GREATEST(orig.is_responding, $3)"
        "");
 
     // ----------------------------------------------------------------------
@@ -357,7 +357,7 @@ namespace netmeld::datastore::utils {
        " ON CONFLICT"
        "  (tool_run_id, ip_addr)"
        " DO UPDATE"
-       "  SET is_responding = (orig.is_responding OR $3)"
+       "  SET is_responding = GREATEST(orig.is_responding, $3)"
        "");
 
     // ----------------------------------------------------------------------
