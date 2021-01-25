@@ -24,79 +24,86 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-#include "Parser.hpp"
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdt = netmeld::datastore::tools;
 
+
 // =============================================================================
-// Import tool definition
+// Data containers
 // =============================================================================
-template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P, R>
+typedef std::vector<nmdo::IpAddress>  Result;
+
+
+// =============================================================================
+// Parser definition
+// =============================================================================
+class Parser :
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+  private:
+    Result data;
+
+    const std::string REASON  {"ping"};
+
+    nmdo::IpAddress tgtIp;
+    std::vector<std::string> tgtAliases;
+    bool responsive {false};
+
+  protected:
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      start;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      pingLinux, linuxHeader, linuxResponse, linuxFooter,
+      pingWindows, windowsHeader, windowsResponse, windowsFooter,
+      ignoredLine;
+
+    qi::rule<nmdp::IstreamIter>
+      ipValue,
+      hostname,
+      ifaceName,
+      token;
+
+    nmdp::ParserDomainName
+      domainName;
+
+    nmdp::ParserIpAddress
+      ipAddr;
+
+  public:
 
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  private: // Constructors should rarely appear at this scope
-  protected: // Constructors intended for internal/subclass API
-  public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportTool<P, R>
-      ("ping -n",       // command line tool imports data from
-       PROGRAM_NAME,    // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION  // program version (set in CMakeLists.txt)
-      )
-    {}
+  private:
+  protected:
+  public: // Constructor is only default and must be public
+    Parser();
 
 
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private: // Methods part of internal API
-    // Overriden from AbstractImportTool
-    void
-    addToolOptions() override
-    {
-      this->opts.removeRequiredOption("device-id");
-      this->opts.addOptionalOption("device-id", std::make_tuple(
-          "device-id",
-          po::value<std::string>(),
-          "Name of device.")
-        );
-    }
+  private:
+    void finalize();
 
-    // Overriden from AbstractImportTool
-    void
-    specificInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
-      const auto& deviceId  {this->getDeviceId()};
-
-      for (auto& result : this->tResults) {
-        result.save(t, toolRunId, deviceId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
-      }
-    }
-
-  protected: // Methods part of subclass API
-  public: // Methods part of public API
+  protected:
+  public:
+    // Object return
+    Result getData();
 };
-
-
-int
-main(int argc, char** argv)
-{
-  Tool<Parser, Result> tool;
-  return tool.start(argc, argv);
-}
+#endif // PARSER_HPP
