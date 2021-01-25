@@ -97,6 +97,12 @@ class Tool : public nmdt::AbstractImportTool<P,R>
             "Data to parse. Either --data-path param"
             " or implicit last argument.")
           );
+      this->opts.removeOptionalOption("pipe");
+      this->opts.addOptionalOption("pipe", std::make_tuple(
+            "pipe",
+            NULL_SEMANTIC,
+            "Read input from STDIN (does not save)")
+          );
 
       this->opts.addOptionalOption("quiet", std::make_tuple(
             "quiet",
