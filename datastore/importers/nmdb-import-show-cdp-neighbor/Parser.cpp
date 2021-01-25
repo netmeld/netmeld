@@ -73,7 +73,6 @@ Parser::Parser() : Parser::base_type(start)
     > -(qi::char_("aA") > qi::lit("ddress:"))
     > ipAddr
       [pnx::bind([&](nmdo::IpAddress val){nd.ipAddrs.push_back(val);}, qi::_1)]
-    // cppcheck-suppress compareBoolExpressionWithInt
     > *token
     > qi::eol
     ;
@@ -82,7 +81,6 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("Platform:")
     > token [pnx::bind(&NeighborData::curVendor, &nd) = qi::_1]
     > token [pnx::bind(&NeighborData::curModel, &nd) = qi::_1]
-    // cppcheck-suppress compareBoolExpressionWithInt
     > *token
     > qi::eol
     ;
@@ -110,7 +108,7 @@ Parser::Parser() : Parser::base_type(start)
       (ipAddressValue)
       (platformValue)
       (interfaceValue)
-      (ignoredLine)
+      //(ignoredLine)
       //(token)
       );
 }
