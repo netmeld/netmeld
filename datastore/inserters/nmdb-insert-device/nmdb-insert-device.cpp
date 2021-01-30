@@ -85,6 +85,7 @@ class Tool : public nmdt::AbstractInsertTool
     {
       const auto& toolRunId {getToolRunId()};
       const auto& deviceId  {getDeviceId()};
+      auto isResponding     {opts.getValueAs<bool>("responding")};
 
       if (opts.exists("vm-host-device-id")) {
         nmdo::DeviceInformation hostDevInfo;
@@ -107,7 +108,7 @@ class Tool : public nmdt::AbstractInsertTool
       nmdo::IpAddress ipAddr;
       if (opts.exists("ip-addr")) {
         ipAddr = nmdo::IpAddress(opts.getValue("ip-addr"));
-        ipAddr.setResponding(opts.exists("responding"));
+        ipAddr.setResponding(isResponding);
 
         ipAddr.save(t, toolRunId, deviceId);
         LOG_DEBUG << ipAddr.toDebugString() << std::endl;
@@ -117,7 +118,7 @@ class Tool : public nmdt::AbstractInsertTool
       if (opts.exists("mac-addr")) {
         macAddr = nmdo::MacAddress(opts.getValue("mac-addr"));
         macAddr.addIp(ipAddr);
-        macAddr.setResponding(opts.exists("responding"));
+        macAddr.setResponding(isResponding);
 
         macAddr.save(t, toolRunId, deviceId);
         LOG_DEBUG << macAddr.toDebugString() << std::endl;
@@ -129,7 +130,7 @@ class Tool : public nmdt::AbstractInsertTool
         iface.setMacAddress(macAddr);
         iface.addIpAddress(ipAddr);
 
-        if (opts.exists("responding")) {
+        if (isResponding) {
           iface.setUp();
         } else {
           iface.setDown();
