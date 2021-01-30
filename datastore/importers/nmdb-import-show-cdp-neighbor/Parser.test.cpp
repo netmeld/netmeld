@@ -73,7 +73,9 @@ BOOST_AUTO_TEST_CASE(testParts)
       "IPv6 1234::1234\n",
       "IP address: 1.2.3.4\n",
       "IPv4 address: 1.2.3.4\n",
+      "IPv4 Address: 1.2.3.4\n",
       "IPv6 address: 1234::1234\n",
+      "IPv6 Address: 1234::1234\n",
       "IP 1.2.3.4 (link-local)\n",
       "IPv4 1.2.3.4 (link-local)\n",
       "IPv6 1234::1234 (link-local)\n",
@@ -176,6 +178,8 @@ Native VLAN: 1234
 SysObjectID: 0.0
 Addresses:
           IPv6 1234::1234
+
+
 ---------------------------------------------
 Device-ID: a1234b4321
 Advertisement version: 2
@@ -199,7 +203,7 @@ Addresses:
                 "Parse rule 'testWhole': " << test);
 //      BOOST_TEST(3 == out.size());
       const auto& data {out[0]};
-      BOOST_TEST(4 == data.ipAddrs.size());
+      BOOST_TEST_REQUIRE(4 == data.ipAddrs.size());
 
       auto ipAddr {data.ipAddrs[0]};
       auto aliases {ipAddr.getAliases()};
