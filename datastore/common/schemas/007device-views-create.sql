@@ -517,7 +517,7 @@ FROM device_vlans_ip_nets AS dvin0
 INNER JOIN device_vlans_ip_nets AS dvin1
   ON (dvin0.vlan = dvin1.vlan)
  AND (dvin0.device_id < dvin1.device_id) -- ensures only one copy of entry
- AND (family(dvin0.ip_net) = family(dvin1.ip_net))
+ AND (inet_same_family(dvin0.ip_net, dvin1.ip_net))
  AND (dvin0.ip_net != dvin1.ip_net)
 ORDER BY device0_id, device1_id, vlan
 ;

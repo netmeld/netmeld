@@ -47,11 +47,12 @@ namespace netmeld::datastore::objects {
     public:
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     private:
     protected:
     public:
+      virtual ~IpAddress() = default;
       IpAddress();
       explicit IpAddress(const std::string&, const std::string& x="");
       explicit IpAddress(const std::vector<uint8_t>&);

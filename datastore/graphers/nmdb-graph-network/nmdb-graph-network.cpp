@@ -695,7 +695,7 @@ class Tool : public nmdt::AbstractGraphTool
           std::string fileName {pathIter.path().filename()};
 
           if (std::equal(deviceType.begin(), deviceType.end(),
-                         fileName.begin(),
+                         fileName.begin(), fileName.end(),
                          [](auto a, auto b) {
                             return std::tolower(a) == std::tolower(b);
                          })) {

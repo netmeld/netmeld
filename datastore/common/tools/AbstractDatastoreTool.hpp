@@ -44,7 +44,7 @@ namespace netmeld::datastore::tools {
     public:
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     private:
     protected:
@@ -54,6 +54,7 @@ namespace netmeld::datastore::tools {
       AbstractDatastoreTool(const char*, const char*, const char*);
 
     public:
+      virtual ~AbstractDatastoreTool() = default;
 
 
     // =========================================================================

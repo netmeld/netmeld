@@ -36,7 +36,7 @@ namespace nmdo = netmeld::datastore::objects;
 class TestCve : public nmdo::Cve {
   public:
     TestCve() : Cve() {};
-    TestCve(int _year, long int _number) : Cve(_year, _number) {};
+    TestCve(short _year, int _number) : Cve(_year, _number) {};
     explicit TestCve(const std::string& _id) : Cve(_id) {};
 
   public:

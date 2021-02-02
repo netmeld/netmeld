@@ -293,7 +293,7 @@ Parser::processIpv4Header(const Ipv4Header* _iph)
   ipAddrEntry.setResponding(true);
   ipAddrEntry.setReason(PCAP_REASON);
 
-  auto protoId {ph.getPayloadProtocol(_iph)};
+  uint8_t protoId {ph.getPayloadProtocol(_iph)};
   if (!isOffsetOk<Ipv4Header>()) { return; }
 
   // https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
@@ -317,7 +317,7 @@ Parser::processIpv4Header(const Ipv4Header* _iph)
     default:  // Flag unknown/unevaluated protocols
       {
         LOG_DEBUG << "Protocol unhandled: "
-                  << std::hex << std::showbase << static_cast<int>(protoId)
+                  << std::hex << std::showbase << static_cast<uint16_t>(protoId)
                   << std::dec << std::endl;
         break;
       }

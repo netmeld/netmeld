@@ -159,7 +159,7 @@ CREATE TABLE tool_run_ip_routes (
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    CHECK (family(dst_ip_net) = family(rtr_ip_addr)),
+    CHECK (inet_same_family(dst_ip_net, rtr_ip_addr)),
     CHECK ((rtr_ip_addr = host(rtr_ip_addr)::INET))
 );
 
