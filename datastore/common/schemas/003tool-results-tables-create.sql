@@ -682,40 +682,57 @@ ON raw_operating_systems(accuracy);
 -- Create UNIQUE partial indexes over likely combinations of columns
 -- for use with `ON CONFLICT` guards against duplicate data.
 
+CREATE UNIQUE INDEX raw_operating_systems_idx_unique
+ON raw_operating_systems
+  (( tool_run_id
+     || ' ' || ip_addr
+     || ' ' || COALESCE(vendor_name, '')
+     || ' ' || COALESCE(product_name, '')
+     || ' ' || COALESCE(product_version, '')
+     || ' ' || COALESCE(cpe, '')
+     || ' ' || COALESCE(accuracy, '-1.0')
+  ));
+
 -- Each of the (vendor, product, version) tuple and the CPE
 -- can be treated as separate candidate keys (if available).
 
-CREATE UNIQUE INDEX raw_operating_systems_idx_unique2
-ON raw_operating_systems(tool_run_id, ip_addr)
-WHERE (vendor_name IS NULL) AND
-      (product_name IS NULL) AND (product_version IS NULL) AND
-      (cpe IS NULL);
-
-CREATE UNIQUE INDEX raw_operating_systems_idx_unique3_cpe
-ON raw_operating_systems(tool_run_id, ip_addr, cpe)
-WHERE (cpe IS NOT NULL);
-
+-- CREATE UNIQUE INDEX raw_operating_systems_idx_unique2
+-- ON raw_operating_systems(tool_run_id, ip_addr)
+-- WHERE (vendor_name IS NULL) AND
+--       (product_name IS NULL) AND (product_version IS NULL) AND
+--       (cpe IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_operating_systems_idx_unique3_cpe
+-- ON raw_operating_systems(tool_run_id, ip_addr,
+--     vendor_name, product_name,
+--     cpe, accuracy)
+-- WHERE (product_version IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_operating_systems_idx_unique4_cpe
+-- ON raw_operating_systems(tool_run_id, ip_addr, cpe)
+-- WHERE (cpe IS NOT NULL);
+-- 
 -- The vendor and product information is increasingly specific.
 -- If less specific information (like vendor_name) is NULL,
 -- then more specific information is very likely also NULL.
-
-CREATE UNIQUE INDEX raw_operating_systems_idx_unique3_vendor
-ON raw_operating_systems(tool_run_id, ip_addr,
-       vendor_name)
-WHERE (vendor_name IS NOT NULL) AND
-      (product_name IS NULL) AND (product_version IS NULL);
-
-CREATE UNIQUE INDEX raw_operating_systems_idx_unique4_vendor
-ON raw_operating_systems(tool_run_id, ip_addr,
-       vendor_name, product_name)
-WHERE (vendor_name IS NOT NULL) AND
-      (product_name IS NOT NULL) AND (product_version IS NULL);
-
-CREATE UNIQUE INDEX raw_operating_systems_idx_unique5_vendor
-ON raw_operating_systems(tool_run_id, ip_addr,
-       vendor_name, product_name, product_version)
-WHERE (vendor_name IS NOT NULL) AND
-      (product_name IS NOT NULL) AND (product_version IS NOT NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_operating_systems_idx_unique3_vendor
+-- ON raw_operating_systems(tool_run_id, ip_addr,
+--        vendor_name)
+-- WHERE (vendor_name IS NOT NULL) AND
+--       (product_name IS NULL) AND (product_version IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_operating_systems_idx_unique4_vendor
+-- ON raw_operating_systems(tool_run_id, ip_addr,
+--        vendor_name, product_name)
+-- WHERE (vendor_name IS NOT NULL) AND
+--       (product_name IS NOT NULL) AND (product_version IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_operating_systems_idx_unique5_vendor
+-- ON raw_operating_systems(tool_run_id, ip_addr,
+--        vendor_name, product_name, product_version)
+-- WHERE (vendor_name IS NOT NULL) AND
+--       (product_name IS NOT NULL) AND (product_version IS NOT NULL);
 
 
 -- ----------------------------------------------------------------------

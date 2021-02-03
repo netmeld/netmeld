@@ -113,52 +113,64 @@ ON raw_device_hardware_information(device_id, device_type, vendor, model,
 -- Create UNIQUE partial indexes over likely combinations of columns
 -- for use with `ON CONFLICT` guards against duplicate data.
 
+CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique
+ON raw_device_hardware_information
+  (( tool_run_id
+     || ' ' || device_id
+     || ' ' || COALESCE(device_type, '')
+     || ' ' || COALESCE(vendor, '')
+     || ' ' || COALESCE(model, '')
+     || ' ' || COALESCE(hardware_revision, '')
+     || ' ' || COALESCE(serial_number, '')
+     || ' ' || COALESCE(description, '')
+  ));
+
 -- The vendor and hardware information is increasingly specific.
 -- If less specific information (like vendor) is NULL,
 -- then more specific information is very likely also NULL.
 
-CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique2
-ON raw_device_hardware_information(tool_run_id, device_id)
-WHERE (vendor IS NULL) AND (model IS NULL) AND
-      (hardware_revision IS NULL) AND (serial_number IS NULL);
-
-CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique3
-ON raw_device_hardware_information(tool_run_id, device_id,
-       vendor)
-WHERE (vendor IS NOT NULL) AND (model IS NULL) AND
-      (hardware_revision IS NULL) AND (serial_number IS NULL);
-
-CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique4_model
-ON raw_device_hardware_information(tool_run_id, device_id,
-       vendor, model)
-WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
-      (hardware_revision IS NULL) AND (serial_number IS NULL);
-
-CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique5_model
-ON raw_device_hardware_information(tool_run_id, device_id,
-       vendor, model, hardware_revision)
-WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
-      (hardware_revision IS NOT NULL) AND (serial_number IS NULL);
-
-CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique6
-ON raw_device_hardware_information(tool_run_id, device_id,
-       vendor, model, hardware_revision, serial_number)
-WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
-      (hardware_revision IS NOT NULL) AND (serial_number IS NOT NULL);
-
--- It is possible to have the vendor and serial_number,
--- while missing model or hardware_revision information.
-CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique4_serial
-ON raw_device_hardware_information(tool_run_id, device_id,
-       vendor, serial_number)
-WHERE (vendor IS NOT NULL) AND (model IS NULL) AND
-      (hardware_revision IS NULL) AND (serial_number IS NOT NULL);
-
-CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique5_serial
-ON raw_device_hardware_information(tool_run_id, device_id,
-       vendor, model, serial_number)
-WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
-      (hardware_revision IS NULL) AND (serial_number IS NOT NULL);
+-- CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique2
+-- ON raw_device_hardware_information(tool_run_id, device_id)
+-- WHERE (vendor IS NULL) AND (model IS NULL) AND
+--       (hardware_revision IS NULL) AND (serial_number IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique3
+-- ON raw_device_hardware_information(tool_run_id, device_id,
+--        vendor)
+-- WHERE (vendor IS NOT NULL) AND (model IS NULL) AND
+--       (hardware_revision IS NULL) AND (serial_number IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique4_model
+-- ON raw_device_hardware_information(tool_run_id, device_id,
+--        vendor, model)
+-- WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
+--       (hardware_revision IS NULL) AND (serial_number IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique5_model
+-- ON raw_device_hardware_information(tool_run_id, device_id,
+--        vendor, model, hardware_revision)
+-- WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
+--       (hardware_revision IS NOT NULL) AND (serial_number IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique6
+-- ON raw_device_hardware_information(tool_run_id, device_id,
+--        vendor, model, hardware_revision, serial_number)
+-- WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
+--       (hardware_revision IS NOT NULL) AND (serial_number IS NOT NULL);
+-- 
+-- -- It is possible to have the vendor and serial_number,
+-- -- while missing model or hardware_revision information.
+-- CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique4_serial
+-- ON raw_device_hardware_information(tool_run_id, device_id,
+--        vendor, serial_number)
+-- WHERE (vendor IS NOT NULL) AND (model IS NULL) AND
+--       (hardware_revision IS NULL) AND (serial_number IS NOT NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique5_serial
+-- ON raw_device_hardware_information(tool_run_id, device_id,
+--        vendor, model, serial_number)
+-- WHERE (vendor IS NOT NULL) AND (model IS NOT NULL) AND
+--       (hardware_revision IS NULL) AND (serial_number IS NOT NULL);
 
 
 -- ----------------------------------------------------------------------
@@ -353,24 +365,33 @@ ON raw_device_ip_routes(device_id, dst_ip_net, rtr_ip_addr);
 -- Create UNIQUE partial indexes over likely combinations of columns
 -- for use with `ON CONFLICT` guards against duplicate data.
 
-CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique3
-ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net)
-WHERE (interface_name IS NULL) and (rtr_ip_addr IS NULL);
+CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique
+ON raw_device_ip_routes
+  (( tool_run_id
+     || ' ' || device_id
+     || ' ' || COALESCE(interface_name, '')
+     || ' ' || dst_ip_net
+     || ' ' || COALESCE(rtr_ip_addr, '0.0.0.0/0')
+  ));
 
-CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique4_interface
-ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
-       interface_name)
-WHERE (interface_name IS NOT NULL) and (rtr_ip_addr IS NULL);
-
-CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique4_rtr_ip_addr
-ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
-       rtr_ip_addr)
-WHERE (interface_name IS NULL) and (rtr_ip_addr IS NOT NULL);
-
-CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique5
-ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
-       interface_name, rtr_ip_addr)
-WHERE (interface_name IS NOT NULL) and (rtr_ip_addr IS NOT NULL);
+-- CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique3
+-- ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net)
+-- WHERE (interface_name IS NULL) and (rtr_ip_addr IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique4_interface
+-- ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
+--        interface_name)
+-- WHERE (interface_name IS NOT NULL) and (rtr_ip_addr IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique4_rtr_ip_addr
+-- ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
+--        rtr_ip_addr)
+-- WHERE (interface_name IS NULL) and (rtr_ip_addr IS NOT NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique5
+-- ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
+--        interface_name, rtr_ip_addr)
+-- WHERE (interface_name IS NOT NULL) and (rtr_ip_addr IS NOT NULL);
 
 -- ----------------------------------------------------------------------
 -- Server tables from target devices (config files or console access)
@@ -414,6 +435,18 @@ ON raw_device_ip_servers(description);
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_ip_servers_idx_views
 ON raw_device_ip_servers(device_id, service_name, server_ip_addr);
+
+CREATE UNIQUE INDEX raw_device_ip_servers_idx_unique
+ON raw_device_ip_servers
+  (( tool_run_id
+     || ' ' || device_id
+     || ' ' || interface_name
+     || ' ' || service_name
+     || ' ' || server_ip_addr
+     || ' ' || COALESCE(port, '65536')
+     || ' ' || local_service
+     || ' ' || COALESCE(description, '')
+  ));
 
 
 -- ----------------------------------------------------------------------
@@ -783,14 +816,23 @@ ON raw_device_ac_nets(device_id, net_set_id, net_set_data);
 -- Create UNIQUE partial indexes over likely combinations of columns
 -- for use with `ON CONFLICT` guards against duplicate data.
 
-CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique4
-ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set)
-WHERE (net_set_data IS NULL);
+CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique
+ON raw_device_ac_nets
+  (( tool_run_id
+     || ' ' || device_id
+     || ' ' || net_set_id
+     || ' ' || net_set
+     || ' ' || COALESCE(net_set_data, '')
+  ));
 
-CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique5
-ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set,
-       net_set_data)
-WHERE (net_set_data IS NOT NULL);
+-- CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique4
+-- ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set)
+-- WHERE (net_set_data IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique5
+-- ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set,
+--        net_set_data)
+-- WHERE (net_set_data IS NOT NULL);
 
 
 CREATE TABLE raw_device_ac_services (
@@ -818,14 +860,22 @@ ON raw_device_ac_services(device_id, service_set, service_set_data);
 -- Create UNIQUE partial indexes over likely combinations of columns
 -- for use with `ON CONFLICT` guards against duplicate data.
 
-CREATE UNIQUE INDEX raw_device_ac_services_idx_unique3
-ON raw_device_ac_services(tool_run_id, device_id, service_set)
-WHERE (service_set_data IS NULL);
+CREATE UNIQUE INDEX raw_device_ac_services_idx_unique
+ON raw_device_ac_services
+  (( tool_run_id
+     || ' ' || device_id
+     || ' ' || service_set
+     || ' ' || COALESCE(service_set_data, '')
+  ));
 
-CREATE UNIQUE INDEX raw_device_ac_services_idx_unique4
-ON raw_device_ac_services(tool_run_id, device_id, service_set,
-       service_set_data)
-WHERE (service_set_data IS NOT NULL);
+-- CREATE UNIQUE INDEX raw_device_ac_services_idx_unique3
+-- ON raw_device_ac_services(tool_run_id, device_id, service_set)
+-- WHERE (service_set_data IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_services_idx_unique4
+-- ON raw_device_ac_services(tool_run_id, device_id, service_set,
+--        service_set_data)
+-- WHERE (service_set_data IS NOT NULL);
 
 
 CREATE TABLE raw_device_ac_rules (
@@ -883,65 +933,82 @@ ON raw_device_ac_rules(device_id, enabled, ac_id,
 -- Create UNIQUE partial indexes over likely combinations of columns
 -- for use with `ON CONFLICT` guards against duplicate data.
 
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique9
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set,
-       dst_net_set_id, dst_net_set)
-WHERE (src_iface IS NULL) AND (dst_iface IS NULL) AND
-      (service_set IS NULL);
-
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique10_src
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set, src_iface,
-       dst_net_set_id, dst_net_set)
-WHERE (src_iface IS NOT NULL) AND (dst_iface IS NULL) AND
-      (service_set IS NULL);
-
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique10_dst
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set,
-       dst_net_set_id, dst_net_set, dst_iface)
-WHERE (src_iface IS NULL) AND (dst_iface IS NOT NULL) AND
-      (service_set IS NULL);
-
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique10_service
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set,
-       dst_net_set_id, dst_net_set,
-       service_set)
-WHERE (src_iface IS NULL) AND (dst_iface IS NULL) AND
-      (service_set IS NOT NULL);
-
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique11_src_dst
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set, src_iface,
-       dst_net_set_id, dst_net_set, dst_iface)
-WHERE (src_iface IS NOT NULL) AND (dst_iface IS NOT NULL) AND
-      (service_set IS NULL);
-
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique11_src_service
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set, src_iface,
-       dst_net_set_id, dst_net_set,
-       service_set)
-WHERE (src_iface IS NOT NULL) AND (dst_iface IS NULL) AND
-      (service_set IS NOT NULL);
-
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique11_dst_service
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set,
-       dst_net_set_id, dst_net_set, dst_iface,
-       service_set)
-WHERE (src_iface IS NULL) AND (dst_iface IS NOT NULL) AND
-      (service_set IS NOT NULL);
-
-CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique12
-ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
-       src_net_set_id, src_net_set, src_iface,
-       dst_net_set_id, dst_net_set, dst_iface,
-       service_set)
-WHERE (src_iface IS NOT NULL) AND (dst_iface IS NOT NULL) AND
-      (service_set IS NOT NULL);
+CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique
+ON raw_device_ac_rules
+  ((
+    tool_run_id
+    || ' ' || device_id
+    || ' ' || enabled
+    || ' ' || ac_id
+    || ' ' || src_net_set_id
+    || ' ' || src_net_set
+    || ' ' || COALESCE(src_iface, '')
+    || ' ' || dst_net_set_id
+    || ' ' || dst_net_set
+    || ' ' || COALESCE(dst_iface,'')
+    || ' ' || COALESCE(service_set,'')
+    || ' ' || action
+    || ' ' || COALESCE(description, '')
+  ));
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique9
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set,
+--        dst_net_set_id, dst_net_set)
+-- WHERE (src_iface IS NULL) AND (dst_iface IS NULL) AND
+--       (service_set IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique10_src
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set, src_iface,
+--        dst_net_set_id, dst_net_set)
+-- WHERE (src_iface IS NOT NULL) AND (dst_iface IS NULL) AND
+--       (service_set IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique10_dst
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set,
+--        dst_net_set_id, dst_net_set, dst_iface)
+-- WHERE (src_iface IS NULL) AND (dst_iface IS NOT NULL) AND
+--       (service_set IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique10_service
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set,
+--        dst_net_set_id, dst_net_set,
+--        service_set)
+-- WHERE (src_iface IS NULL) AND (dst_iface IS NULL) AND
+--       (service_set IS NOT NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique11_src_dst
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set, src_iface,
+--        dst_net_set_id, dst_net_set, dst_iface)
+-- WHERE (src_iface IS NOT NULL) AND (dst_iface IS NOT NULL) AND
+--       (service_set IS NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique11_src_service
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set, src_iface,
+--        dst_net_set_id, dst_net_set,
+--        service_set)
+-- WHERE (src_iface IS NOT NULL) AND (dst_iface IS NULL) AND
+--       (service_set IS NOT NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique11_dst_service
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set,
+--        dst_net_set_id, dst_net_set, dst_iface,
+--        service_set)
+-- WHERE (src_iface IS NULL) AND (dst_iface IS NOT NULL) AND
+--       (service_set IS NOT NULL);
+-- 
+-- CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique12
+-- ON raw_device_ac_rules(tool_run_id, device_id, enabled, ac_id, action,
+--        src_net_set_id, src_net_set, src_iface,
+--        dst_net_set_id, dst_net_set, dst_iface,
+--        service_set)
+-- WHERE (src_iface IS NOT NULL) AND (dst_iface IS NOT NULL) AND
+--       (service_set IS NOT NULL);
 
 
 -- ----------------------------------------------------------------------
@@ -968,6 +1035,14 @@ ON raw_device_vlans(vlan);
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_vlans_idx_views
 ON raw_device_vlans(device_id, vlan);
+
+CREATE UNIQUE INDEX raw_device_vlans_idx_unique
+ON raw_device_vlans
+  (( tool_run_id
+     || ' ' || device_id
+     || ' ' || vlan
+     || ' ' || COALESCE(description, '')
+  ));
 
 
 CREATE TABLE raw_device_vlans_ip_nets (
