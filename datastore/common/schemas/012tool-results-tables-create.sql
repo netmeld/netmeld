@@ -41,6 +41,7 @@ CREATE TABLE raw_mac_addrs (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_mac_addrs_idx_tool_run_id
 ON raw_mac_addrs(tool_run_id);
 
@@ -51,9 +52,9 @@ CREATE INDEX raw_mac_addrs_idx_is_responding
 ON raw_mac_addrs(is_responding);
 
 
+
 -- ----------------------------------------------------------------------
--- IP Addresses of target systems
--- ----------------------------------------------------------------------
+
 
 CREATE TABLE raw_ip_addrs (
     tool_run_id                 UUID            NOT NULL,
@@ -67,6 +68,7 @@ CREATE TABLE raw_ip_addrs (
     CHECK (ip_addr = host(ip_addr)::INET)
 );
 
+-- Partial indexes
 CREATE INDEX raw_ip_addrs_idx_tool_run_id
 ON raw_ip_addrs(tool_run_id);
 
@@ -96,6 +98,7 @@ CREATE TABLE raw_mac_addrs_ip_addrs (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_mac_addrs_ip_addrs_idx_tool_run_id
 ON raw_mac_addrs_ip_addrs(tool_run_id);
 
@@ -127,6 +130,7 @@ CREATE TABLE raw_hostnames (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_hostnames_idx_tool_run_id
 ON raw_hostnames(tool_run_id);
 
@@ -161,6 +165,7 @@ CREATE TABLE raw_vlans (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_vlans_idx_tool_run_id
 ON raw_vlans(tool_run_id);
 
@@ -181,6 +186,7 @@ CREATE TABLE raw_ip_nets (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_ip_nets_idx_tool_run_id
 ON raw_ip_nets(tool_run_id);
 
@@ -214,6 +220,7 @@ CREATE TABLE raw_vlans_ip_nets (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_vlans_ip_nets_idx_tool_run_id
 ON raw_vlans_ip_nets(tool_run_id);
 
@@ -248,6 +255,7 @@ CREATE TABLE raw_ip_traceroutes (
     CHECK (hop_count BETWEEN 0 AND 255)
 );
 
+-- Partial indexes
 CREATE INDEX raw_ip_traceroutes_idx_tool_run_id
 ON raw_ip_traceroutes(tool_run_id);
 
@@ -282,6 +290,7 @@ CREATE TABLE raw_ports (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_ports_idx_tool_run_id
 ON raw_ports(tool_run_id);
 
@@ -324,6 +333,7 @@ CREATE TABLE raw_network_services (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_network_services_idx_tool_run_id
 ON raw_network_services(tool_run_id);
 
@@ -380,6 +390,7 @@ CREATE TABLE raw_nessus_results (
     CHECK (severity BETWEEN 0 AND 4)
 );
 
+-- Partial indexes
 CREATE INDEX raw_nessus_results_idx_tool_run_id
 ON raw_nessus_results(tool_run_id);
 
@@ -442,6 +453,7 @@ CREATE TABLE raw_nessus_results_cves (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_nessus_results_cves_idx_tool_run_id
 ON raw_nessus_results_cves(tool_run_id);
 
@@ -484,6 +496,7 @@ CREATE TABLE raw_nessus_results_metasploit_modules (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_nessus_results_metasploit_modules_idx_tool_run_id
 ON raw_nessus_results_metasploit_modules(tool_run_id);
 
@@ -527,6 +540,7 @@ CREATE TABLE raw_nse_results (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_nse_results_idx_tool_run_id
 ON raw_nse_results(tool_run_id);
 
@@ -573,6 +587,7 @@ CREATE TABLE raw_ssh_host_public_keys (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_ssh_host_public_keys_idx_tool_run_id
 ON raw_ssh_host_public_keys(tool_run_id);
 
@@ -617,6 +632,7 @@ CREATE TABLE raw_ssh_host_algorithms (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_ssh_host_algorithms_idx_tool_run_id
 ON raw_ssh_host_algorithms(tool_run_id);
 
@@ -657,6 +673,21 @@ CREATE TABLE raw_operating_systems (
         ON UPDATE CASCADE
 );
 
+-- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
+-- Create UNIQUE expresional index with substitutions of NULL values
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_operating_systems_idx_unique
+ON raw_operating_systems
+  (( tool_run_id
+     || ' ' || ip_addr
+     || ' ' || SUB_IF_NULL(vendor_name)
+     || ' ' || SUB_IF_NULL(product_name)
+     || ' ' || SUB_IF_NULL(product_version)
+     || ' ' || SUB_IF_NULL(cpe)
+     || ' ' || SUB_IF_NULL(accuracy)
+  ));
+
+-- Partial indexes
 CREATE INDEX raw_operating_systems_idx_tool_run_id
 ON raw_operating_systems(tool_run_id);
 
@@ -678,62 +709,6 @@ ON raw_operating_systems(cpe);
 CREATE INDEX raw_operating_systems_idx_accuracy
 ON raw_operating_systems(accuracy);
 
--- Since this table lacks a PRIMARY KEY and allows NULLs:
--- Create UNIQUE partial indexes over likely combinations of columns
--- for use with `ON CONFLICT` guards against duplicate data.
-
-CREATE UNIQUE INDEX raw_operating_systems_idx_unique
-ON raw_operating_systems
-  (( tool_run_id
-     || ' ' || ip_addr
-     || ' ' || COALESCE(vendor_name, '')
-     || ' ' || COALESCE(product_name, '')
-     || ' ' || COALESCE(product_version, '')
-     || ' ' || COALESCE(cpe, '')
-     || ' ' || COALESCE(accuracy, '-1.0')
-  ));
-
--- Each of the (vendor, product, version) tuple and the CPE
--- can be treated as separate candidate keys (if available).
-
--- CREATE UNIQUE INDEX raw_operating_systems_idx_unique2
--- ON raw_operating_systems(tool_run_id, ip_addr)
--- WHERE (vendor_name IS NULL) AND
---       (product_name IS NULL) AND (product_version IS NULL) AND
---       (cpe IS NULL);
--- 
--- CREATE UNIQUE INDEX raw_operating_systems_idx_unique3_cpe
--- ON raw_operating_systems(tool_run_id, ip_addr,
---     vendor_name, product_name,
---     cpe, accuracy)
--- WHERE (product_version IS NULL);
--- 
--- CREATE UNIQUE INDEX raw_operating_systems_idx_unique4_cpe
--- ON raw_operating_systems(tool_run_id, ip_addr, cpe)
--- WHERE (cpe IS NOT NULL);
--- 
--- The vendor and product information is increasingly specific.
--- If less specific information (like vendor_name) is NULL,
--- then more specific information is very likely also NULL.
--- 
--- CREATE UNIQUE INDEX raw_operating_systems_idx_unique3_vendor
--- ON raw_operating_systems(tool_run_id, ip_addr,
---        vendor_name)
--- WHERE (vendor_name IS NOT NULL) AND
---       (product_name IS NULL) AND (product_version IS NULL);
--- 
--- CREATE UNIQUE INDEX raw_operating_systems_idx_unique4_vendor
--- ON raw_operating_systems(tool_run_id, ip_addr,
---        vendor_name, product_name)
--- WHERE (vendor_name IS NOT NULL) AND
---       (product_name IS NOT NULL) AND (product_version IS NULL);
--- 
--- CREATE UNIQUE INDEX raw_operating_systems_idx_unique5_vendor
--- ON raw_operating_systems(tool_run_id, ip_addr,
---        vendor_name, product_name, product_version)
--- WHERE (vendor_name IS NOT NULL) AND
---       (product_name IS NOT NULL) AND (product_version IS NOT NULL);
-
 
 -- ----------------------------------------------------------------------
 
@@ -748,10 +723,13 @@ CREATE TABLE raw_tool_observations (
       ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_tool_observations_idx_tool_run_id
 ON raw_tool_observations(tool_run_id);
+
 CREATE INDEX raw_tool_observations_idx_category
 ON raw_tool_observations(category);
+
 CREATE INDEX raw_tool_observations_idx_observation
 ON raw_tool_observations(observation);
 

@@ -39,10 +39,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_tool_run",
        "INSERT INTO tool_runs"
-       " (id, tool_name, command_line, data_path, execute_time)"
+       "  (id, tool_name, command_line, data_path, execute_time)"
        " VALUES ($1, $2, $3, $4, TSRANGE($5, $6, '[]'))"
        " ON CONFLICT"
-       " (id)"
+       "  (id)"
        " DO NOTHING");
 
     db.prepare
@@ -58,10 +58,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_tool_run_interface",
        "INSERT INTO tool_run_interfaces"
-       " (tool_run_id, interface_name, media_type, is_up)"
+       "  (tool_run_id, interface_name, media_type, is_up)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, interface_name)"
+       "  (tool_run_id, interface_name)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -71,10 +71,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_tool_run_mac_addr",
        "INSERT INTO tool_run_mac_addrs"
-       " (tool_run_id, interface_name, mac_addr)"
+       "  (tool_run_id, interface_name, mac_addr)"
        " VALUES ($1, $2, $3)"
        " ON CONFLICT"
-       " (tool_run_id, interface_name, mac_addr)"
+       "  (tool_run_id, interface_name, mac_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -84,10 +84,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_tool_run_ip_addr",
        "INSERT INTO tool_run_ip_addrs"
-       " (tool_run_id, interface_name, ip_addr)"
+       "  (tool_run_id, interface_name, ip_addr)"
        " VALUES ($1, $2, $3)"
        " ON CONFLICT"
-       " (tool_run_id, interface_name, ip_addr)"
+       "  (tool_run_id, interface_name, ip_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -97,10 +97,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_tool_run_ip_route",
        "INSERT INTO tool_run_ip_routes"
-       " (tool_run_id, interface_name, dst_ip_net, rtr_ip_addr)"
+       "  (tool_run_id, interface_name, dst_ip_net, rtr_ip_addr)"
        " VALUES ($1, $2, network(($3)::INET), host(($4)::INET)::INET)"
        " ON CONFLICT"
-       " (tool_run_id, interface_name, dst_ip_net, rtr_ip_addr)"
+       "  (tool_run_id, interface_name, dst_ip_net, rtr_ip_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -110,10 +110,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device",
        "INSERT INTO raw_devices"
-       " (tool_run_id, device_id)"
+       "  (tool_run_id, device_id)"
        " VALUES ($1, $2)"
        " ON CONFLICT"
-       " (tool_run_id, device_id)"
+       "  (tool_run_id, device_id)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -123,10 +123,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_aaa",
        "INSERT INTO raw_devices_aaa"
-       " (tool_run_id, device_id, aaa_command)"
+       "  (tool_run_id, device_id, aaa_command)"
        " VALUES ($1, $2, $3)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, aaa_command)"
+       "  (tool_run_id, device_id, aaa_command)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -136,10 +136,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_device_extra_weight",
        "INSERT INTO device_extra_weights"
-       " (device_id, extra_weight)"
+       "  (device_id, extra_weight)"
        " VALUES ($1, $2)"
        " ON CONFLICT"
-       " (device_id)"
+       "  (device_id)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -149,10 +149,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_virtualization",
        "INSERT INTO raw_device_virtualizations"
-       " (tool_run_id, host_device_id, guest_device_id)"
+       "  (tool_run_id, host_device_id, guest_device_id)"
        " VALUES ($1, $2, $3)"
        " ON CONFLICT"
-       " (tool_run_id, host_device_id, guest_device_id)"
+       "  (tool_run_id, host_device_id, guest_device_id)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -162,10 +162,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_device_color",
        "INSERT INTO device_colors"
-       " (device_id, color)"
+       "  (device_id, color)"
        " VALUES ($1, $2)"
        " ON CONFLICT"
-       " (device_id)"
+       "  (device_id)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -175,8 +175,8 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_hardware_information",
        "INSERT INTO raw_device_hardware_information"
-       " (tool_run_id, device_id, device_type, vendor,"
-       "  model, hardware_revision, serial_number, description)"
+       "  (tool_run_id, device_id, device_type, vendor,"
+       "   model, hardware_revision, serial_number, description)"
        " VALUES ($1, $2, nullif($3, ''), nullif($4, ''),"
        "         nullif($5, ''), nullif($6, ''),"
        "         nullif($7, ''), nullif($8, ''))"
@@ -191,10 +191,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_interface",
        "INSERT INTO raw_device_interfaces"
-       " (tool_run_id, device_id, interface_name, media_type, is_up)"
+       "  (tool_run_id, device_id, interface_name, media_type, is_up)"
        " VALUES ($1, $2, $3, $4, $5)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name)"
+       "  (tool_run_id, device_id, interface_name)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -204,10 +204,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_mac_addr",
        "INSERT INTO raw_device_mac_addrs"
-       " (tool_run_id, device_id, interface_name, mac_addr)"
+       "  (tool_run_id, device_id, interface_name, mac_addr)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name, mac_addr)"
+       "  (tool_run_id, device_id, interface_name, mac_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -217,10 +217,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_ip_addr",
        "INSERT INTO raw_device_ip_addrs"
-       " (tool_run_id, device_id, interface_name, ip_addr)"
+       "  (tool_run_id, device_id, interface_name, ip_addr)"
        " VALUES ($1, $2, $3, host(($4)::INET)::INET)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name, ip_addr)"
+       "  (tool_run_id, device_id, interface_name, ip_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -230,9 +230,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_ip_route",
        "INSERT INTO raw_device_ip_routes"
-       " (tool_run_id, device_id, interface_name, dst_ip_net, rtr_ip_addr)"
+       "  (tool_run_id, device_id, interface_name, dst_ip_net, rtr_ip_addr)"
        " VALUES ($1, $2, nullif($3, ''),"
-       "         network(($4)::INET), host((nullif($5, '0.0.0.0/0'))::INET)::INET)"
+       "         network(($4)::INET),"
+       "         host((nullif($5, '0.0.0.0/0'))::INET)::INET)"
        " ON CONFLICT"
        // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
        " DO NOTHING");
@@ -244,10 +245,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_link_connection",
        "INSERT INTO raw_device_link_connections"
-       " (tool_run_id, self_device_id, self_interface_name, peer_mac_addr)"
+       "  (tool_run_id, self_device_id, self_interface_name, peer_mac_addr)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, self_device_id, self_interface_name, peer_mac_addr)"
+       "  (tool_run_id, self_device_id, self_interface_name, peer_mac_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -257,13 +258,13 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_ip_server",
        "INSERT INTO raw_device_ip_servers"
-       " (tool_run_id, device_id, interface_name, service_name,"
-       "  server_ip_addr, port, local_service, description)"
+       "  (tool_run_id, device_id, interface_name, service_name,"
+       "   server_ip_addr, port, local_service, description)"
        " VALUES ($1, $2, $3, $4, host(($5)::INET)::INET,"
        "         ($6)::PortNumber, $7, nullif($8, ''))"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name, service_name,"
-       "  server_ip_addr)"
+       "  (tool_run_id, device_id, interface_name, service_name,"
+       "   server_ip_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -303,10 +304,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_mac_addr_ip_addr",
        "INSERT INTO raw_mac_addrs_ip_addrs"
-       " (tool_run_id, mac_addr, ip_addr)"
+       "  (tool_run_id, mac_addr, ip_addr)"
        " VALUES ($1, $2, host(($3)::INET)::INET)"
        " ON CONFLICT"
-       " (tool_run_id, mac_addr, ip_addr)"
+       "  (tool_run_id, mac_addr, ip_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -316,10 +317,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_hostname",
        "INSERT INTO raw_hostnames"
-       " (tool_run_id, ip_addr, hostname, reason)"
+       "  (tool_run_id, ip_addr, hostname, reason)"
        " VALUES ($1, host(($2)::INET)::INET, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, hostname, reason)"
+       "  (tool_run_id, ip_addr, hostname, reason)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -328,9 +329,9 @@ namespace netmeld::datastore::utils {
 
     db.prepare
       ("insert_raw_operating_system",
-       "INSERT INTO raw_operating_systems"
-       " (tool_run_id, ip_addr,"
-       "  vendor_name, product_name, product_version, cpe, accuracy)"
+       "INSERT INTO raw_operating_systems AS orig"
+       "  (tool_run_id, ip_addr,"
+       "   vendor_name, product_name, product_version, cpe, accuracy)"
        " VALUES ($1, host(($2)::INET)::INET,"
        "         nullif($3, ''), nullif($4, ''), nullif($5, ''),"
        "         nullif($6, ''), $7)"
@@ -345,37 +346,37 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_vlan",
        "INSERT INTO raw_vlans"
-       " (tool_run_id, vlan, description)"
+       "  (tool_run_id, vlan, description)"
        " VALUES ($1, ($2)::VlanNumber, nullif($3, ''))"
        " ON CONFLICT"
-       " (tool_run_id, vlan)"
+       "  (tool_run_id, vlan)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_vlan",
        "INSERT INTO raw_device_vlans"
-       " (tool_run_id, device_id, vlan, description)"
+       "  (tool_run_id, device_id, vlan, description)"
        " VALUES ($1, $2, ($3)::VlanNumber, nullif($4, ''))"
        " ON CONFLICT"
-       " (tool_run_id, device_id, vlan)"
+       "  (tool_run_id, device_id, vlan)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_vlan_ip_net",
        "INSERT INTO raw_vlans_ip_nets"
-       " (tool_run_id, vlan, ip_net)"
+       "  (tool_run_id, vlan, ip_net)"
        " VALUES ($1, ($2)::VlanNumber, network(($3)::INET))"
        " ON CONFLICT"
-       " (tool_run_id, vlan, ip_net)"
+       "  (tool_run_id, vlan, ip_net)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_vlan_ip_net",
        "INSERT INTO raw_device_vlans_ip_nets"
-       " (tool_run_id, device_id, vlan, ip_net)"
+       "  (tool_run_id, device_id, vlan, ip_net)"
        " VALUES ($1, $2, ($3)::VlanNumber, network(($4)::INET))"
        " ON CONFLICT"
-       " (tool_run_id, device_id, vlan, ip_net)"
+       "  (tool_run_id, device_id, vlan, ip_net)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -385,10 +386,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_ip_net",
        "INSERT INTO raw_ip_nets"
-       " (tool_run_id, ip_net, description)"
+       "  (tool_run_id, ip_net, description)"
        " VALUES ($1, network(($2)::INET), nullif($3, ''))"
        " ON CONFLICT"
-       " (tool_run_id, ip_net)"
+       "  (tool_run_id, ip_net)"
        " DO NOTHING");
 
     db.prepare
@@ -405,10 +406,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_ip_net_extra_weight",
        "INSERT INTO ip_nets_extra_weights"
-       " (ip_net, extra_weight)"
+       "  (ip_net, extra_weight)"
        " VALUES (network(($1)::INET), $2)"
        " ON CONFLICT"
-       " (ip_net)"
+       "  (ip_net)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -418,10 +419,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_ip_traceroute",
        "INSERT INTO raw_ip_traceroutes"
-       " (tool_run_id, hop_count, rtr_ip_addr, dst_ip_addr)"
+       "  (tool_run_id, hop_count, rtr_ip_addr, dst_ip_addr)"
        " VALUES ($1, $2, host(($3)::INET)::INET, host(($4)::INET)::INET)"
        " ON CONFLICT"
-       " (tool_run_id, hop_count, rtr_ip_addr, dst_ip_addr)"
+       "  (tool_run_id, hop_count, rtr_ip_addr, dst_ip_addr)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -431,11 +432,11 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_port",
        "INSERT INTO raw_ports"
-       " (tool_run_id, ip_addr, protocol, port, port_state, port_reason)"
+       "  (tool_run_id, ip_addr, protocol, port, port_state, port_reason)"
        " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber,"
        "         nullif($5, ''), nullif($6, ''))"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port)"
+       "  (tool_run_id, ip_addr, protocol, port)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -445,13 +446,13 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_network_service",
        "INSERT INTO raw_network_services"
-       " (tool_run_id, ip_addr, protocol, port,"
-       "  service_name, service_description, service_reason, observer_ip_addr)"
+       "  (tool_run_id, ip_addr, protocol, port,"
+       "   service_name, service_description, service_reason, observer_ip_addr)"
        " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber,"
        "         nullif($5, ''), nullif($6, ''), nullif($7, ''),"
        "         (nullif($8, '0.0.0.0/0'))::INET)"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port)"
+       "  (tool_run_id, ip_addr, protocol, port)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -461,14 +462,14 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_nessus_result",
        "INSERT INTO raw_nessus_results"
-       " (tool_run_id, ip_addr, protocol, port,"
-       "  plugin_id, plugin_name, plugin_family, plugin_type, plugin_output,"
-       "  severity, description, solution)"
+       "  (tool_run_id, ip_addr, protocol, port,"
+       "   plugin_id, plugin_name, plugin_family, plugin_type, plugin_output,"
+       "   severity, description, solution)"
        " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5,"
-       "         nullif($6, ''), nullif($7, ''), nullif($8, ''), nullif($9, ''),"
-       "         $10, nullif($11, ''), nullif($12, ''))"
+       "         nullif($6, ''), nullif($7, ''), nullif($8, ''),"
+       "         nullif($9, ''), $10, nullif($11, ''), nullif($12, ''))"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port, plugin_id)"
+       "  (tool_run_id, ip_addr, protocol, port, plugin_id)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -478,10 +479,11 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_nessus_result_cve",
        "INSERT INTO raw_nessus_results_cves"
-       " (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, ($6)::CVE)"
+       "  (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id)"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5,"
+       "         ($6)::CVE)"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id)"
+       "  (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -491,10 +493,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_nessus_result_metasploit_module",
        "INSERT INTO raw_nessus_results_metasploit_modules"
-       " (tool_run_id, ip_addr, protocol, port, plugin_id, metasploit_name)"
+       "  (tool_run_id, ip_addr, protocol, port, plugin_id, metasploit_name)"
        " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, $6)"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port, plugin_id, metasploit_name)"
+       "  (tool_run_id, ip_addr, protocol, port, plugin_id, metasploit_name)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -504,11 +506,11 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_nse_result",
        "INSERT INTO raw_nse_results"
-       " (tool_run_id, ip_addr, protocol, port, script_id, script_output)"
+       "  (tool_run_id, ip_addr, protocol, port, script_id, script_output)"
        " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5,"
        "         nullif($6, ''))"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port, script_id)"
+       "  (tool_run_id, ip_addr, protocol, port, script_id)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -518,12 +520,13 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_ssh_host_public_key",
        "INSERT INTO raw_ssh_host_public_keys"
-       " (tool_run_id, ip_addr, protocol, port,"
-       "  ssh_key_type, ssh_key_bits, ssh_key_fingerprint, ssh_key_public)"
-       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, $6, $7, $8)"
+       "  (tool_run_id, ip_addr, protocol, port,"
+       "   ssh_key_type, ssh_key_bits, ssh_key_fingerprint, ssh_key_public)"
+       " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber,"
+       "         $5, $6, $7, $8)"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port,"
-       "  ssh_key_type, ssh_key_bits, ssh_key_fingerprint)"
+       "  (tool_run_id, ip_addr, protocol, port,"
+       "   ssh_key_type, ssh_key_bits, ssh_key_fingerprint)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -533,12 +536,12 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_ssh_host_algorithm",
        "INSERT INTO raw_ssh_host_algorithms"
-       " (tool_run_id, ip_addr, protocol, port,"
-       "  ssh_algo_type, ssh_algo_name)"
+       "  (tool_run_id, ip_addr, protocol, port,"
+       "   ssh_algo_type, ssh_algo_name)"
        " VALUES ($1, host(($2)::INET)::INET, $3, ($4)::PortNumber, $5, $6)"
        " ON CONFLICT"
-       " (tool_run_id, ip_addr, protocol, port,"
-       "  ssh_algo_type, ssh_algo_name)"
+       "  (tool_run_id, ip_addr, protocol, port,"
+       "   ssh_algo_type, ssh_algo_name)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -547,67 +550,67 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_interfaces_cdp",
        "INSERT INTO raw_device_interfaces_cdp"
-       " (tool_run_id, device_id, interface_name, is_cdp_enabled)"
+       "  (tool_run_id, device_id, interface_name, is_cdp_enabled)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name)"
+       "  (tool_run_id, device_id, interface_name)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_interfaces_bpdu",
        "INSERT INTO raw_device_interfaces_bpdu"
-       " (tool_run_id, device_id, interface_name, "
-       "  is_bpduguard_enabled, is_bpdufilter_enabled)"
+       "  (tool_run_id, device_id, interface_name, "
+       "   is_bpduguard_enabled, is_bpdufilter_enabled)"
        " VALUES ($1, $2, $3, $4, $5)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name)"
+       "  (tool_run_id, device_id, interface_name)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_interfaces_portfast",
        "INSERT INTO raw_device_interfaces_portfast"
-       " (tool_run_id, device_id, interface_name, is_portfast_enabled)"
+       "  (tool_run_id, device_id, interface_name, is_portfast_enabled)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name)"
+       "  (tool_run_id, device_id, interface_name)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_interfaces_mode",
        "INSERT INTO raw_device_interfaces_mode"
-       " (tool_run_id, device_id, interface_name, interface_mode)"
+       "  (tool_run_id, device_id, interface_name, interface_mode)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name)"
+       "  (tool_run_id, device_id, interface_name)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_interfaces_port_security",
        "INSERT INTO raw_device_interfaces_port_security"
-       " (tool_run_id, device_id, interface_name, "
-       "  is_port_security_enabled, is_mac_addr_sticky, max_mac_addrs, "
-       "  violation_action)"
+       "  (tool_run_id, device_id, interface_name, "
+       "   is_port_security_enabled, is_mac_addr_sticky, max_mac_addrs, "
+       "   violation_action)"
        " VALUES ($1, $2, $3, $4, $5, $6, $7)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name)"
+       "  (tool_run_id, device_id, interface_name)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_interfaces_port_security_mac_addr",
        "INSERT INTO raw_device_interfaces_port_security_mac_addrs"
-       " (tool_run_id, device_id, interface_name, mac_addr)"
+       "  (tool_run_id, device_id, interface_name, mac_addr)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name, mac_addr)"
+       "  (tool_run_id, device_id, interface_name, mac_addr)"
        " DO NOTHING");
 
     db.prepare
       ("insert_raw_device_interfaces_vlan",
        "INSERT INTO raw_device_interfaces_vlans"
-       " (tool_run_id, device_id, interface_name, vlan)"
+       "  (tool_run_id, device_id, interface_name, vlan)"
        " VALUES ($1, $2, $3, ($4)::VlanNumber)"
        " ON CONFLICT"
-       " (tool_run_id, device_id, interface_name, vlan)"
+       "  (tool_run_id, device_id, interface_name, vlan)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
@@ -617,7 +620,7 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_ac_net",
        "INSERT INTO raw_device_ac_nets"
-       " (tool_run_id, device_id, net_set_id, net_set, net_set_data)"
+       "  (tool_run_id, device_id, net_set_id, net_set, net_set_data)"
        " VALUES ($1, $2, $3, $4, $5)"
        " ON CONFLICT"
        // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
@@ -626,7 +629,7 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_ac_service",
        "INSERT INTO raw_device_ac_services"
-       " (tool_run_id, device_id, service_set, service_set_data)"
+       "  (tool_run_id, device_id, service_set, service_set_data)"
        " VALUES ($1, $2, $3, $4)"
        " ON CONFLICT"
        // Multiple UNIQUE partial indexes. Leave unspecified to match any of them.
@@ -639,10 +642,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_device_ac_rule",
        "INSERT INTO raw_device_ac_rules"
-       " (tool_run_id, device_id, enabled, ac_id,"
-       "  src_net_set_id, src_net_set, src_iface,"
-       "  dst_net_set_id, dst_net_set, dst_iface,"
-       "  service_set, action, description)"
+       "  (tool_run_id, device_id, enabled, ac_id,"
+       "   src_net_set_id, src_net_set, src_iface,"
+       "   dst_net_set_id, dst_net_set, dst_iface,"
+       "   service_set, action, description)"
        " VALUES ($1, $2, $3, $4,"
        "         $5, $6, nullif($7, ''),"
        "         $8, $9, nullif($10, ''),"
@@ -658,10 +661,10 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_tool_observation",
        "INSERT INTO raw_tool_observations"
-       " (tool_run_id, category, observation)"
+       "  (tool_run_id, category, observation)"
        " VALUES ($1, $2, $3)"
        " ON CONFLICT"
-       " (tool_run_id, category, observation)"
+       "  (tool_run_id, category, observation)"
        " DO NOTHING");
 
     // ----------------------------------------------------------------------

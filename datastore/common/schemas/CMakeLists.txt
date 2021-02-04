@@ -26,14 +26,15 @@
 
 foreach(ITEM
     000custom-types-create.sql
-    001mac-prefixes-tables-create.sql
-    002tool-runs-tables-create.sql
-    003tool-results-tables-create.sql
-    004device-tables-create.sql
-    005tool-runs-views-create.sql
-    006tool-results-views-create.sql
-    007device-views-create.sql
-    008tool-results-views-create.sql
+    001custom-functions-create.sql
+    010mac-prefixes-tables-create.sql
+    011tool-runs-tables-create.sql
+    012tool-results-tables-create.sql
+    013device-tables-create.sql
+    021tool-runs-views-create.sql
+    022tool-results-views-create.sql
+    023device-views-create.sql
+    024tool-results-views-create.sql
   )
   nm_install_conf(${ITEM} "${NETMELD_SCHEMA_DIR}")
 endforeach()

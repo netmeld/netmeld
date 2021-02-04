@@ -27,46 +27,98 @@
 BEGIN TRANSACTION;
 
 -- ----------------------------------------------------------------------
--- Common Vulnerabilities and Exposures (CVE)
 -- ----------------------------------------------------------------------
--- Historically, CVE identifiers all had the format "CVE-YYYY-NNNN".
--- However, due to an increasing number of reported vulnerabilities,
--- the "NNNN" part can now be longer than four digits when required
--- (such as "NNNNN" or "NNNNNN").
--- This means that CVE identifier strings are no longer guaranteed
--- to sort in the proper order ("CVE-2015-9999" vs "CVE-2015-10000").
---
--- To allow proper sorting of CVE identifiers,
--- and to simplify selecting CVEs in a specific year or range of years,
--- create a custom "CVE" aggregate type in the database.
+-- SUB_IF_NULL(PARAM1) 
+-- * PARAM1: TEXT | FLOAT | PORTNUMBER | INET
+-- * RETURNS: TEXT
+-- 
+-- These function provide consistent, comparable values for fields
+-- which may be NULL.  Specifically, these functions are targeted
+-- for usage in unique indexes to guard against duplicates in a table
+-- through an expresional index when partial index combinations have
+-- high complexity (>2 NULL fields).
 -- ----------------------------------------------------------------------
-CREATE TYPE CVE AS (
-    year        SMALLINT,
-    number      INT
-);
-
+CREATE OR REPLACE FUNCTION sub_if_null(TEXT)
+  RETURNS TEXT
+  AS
+  '
+  DECLARE
+    sub TEXT := ''~'';
+    temp TEXT;
+    results TEXT;
+  BEGIN
+    SELECT COALESCE($1, sub) INTO temp;
+    SELECT temp || MD5(temp) INTO results;
+    RETURN results;
+  END;
+  '
+  LANGUAGE plpgsql
+  CALLED ON NULL INPUT
+  PARALLEL SAFE
+  IMMUTABLE;
 
 -- ----------------------------------------------------------------------
--- Constrained-value types
+
+CREATE OR REPLACE FUNCTION sub_if_null(FLOAT)
+  RETURNS TEXT
+  AS
+  '
+  DECLARE
+    sub FLOAT := ''-1.0'';
+    temp FLOAT;
+    results TEXT;
+  BEGIN
+    SELECT COALESCE($1, sub) INTO temp;
+    SELECT temp::TEXT || MD5(temp::TEXT) INTO results;
+    RETURN results;
+  END;
+  '
+  LANGUAGE plpgsql
+  CALLED ON NULL INPUT
+  PARALLEL SAFE
+  IMMUTABLE;
+
 -- ----------------------------------------------------------------------
 
--- TCP, UDP, and SCTP port numbers are unsigned 16-bit fields: 0-65535.
--- * -1: Range includes -1 for cases where a single valid numerical
---   value is not appropriate and expansion of the true value is
---   potentially costly.  For example, nmap scans can identify
---   state (e.g., "resets") for multiple ports, up to 65535, with
---   one entry.
-CREATE DOMAIN PortNumber AS INT
-CHECK (VALUE BETWEEN -1 AND 65535);
+CREATE OR REPLACE FUNCTION sub_if_null(PORTNUMBER)
+  RETURNS TEXT
+  AS
+  '
+  DECLARE
+    sub PORTNUMBER := ''65536'';
+    temp PORTNUMBER;
+    results TEXT;
+  BEGIN
+    SELECT COALESCE($1, sub) INTO temp;
+    SELECT temp::TEXT || MD5(temp::TEXT) INTO results;
+    RETURN results;
+  END;
+  '
+  LANGUAGE plpgsql
+  CALLED ON NULL INPUT
+  PARALLEL SAFE
+  IMMUTABLE;
 
--- IEEE 802.1Q VLAN Identifier (VID) is an unsigned 12-bit field: 0-4095.
--- There are two reserved values:
--- * 0x000: Indicates that the frame does not carry a VLAN ID.
--- * 0xFFF: Reserved for implementation use; must not be configured or
---   transmitted. Can be used for wildcard matching or filtering.
--- The Netmeld database must be able to store all 4096 possible values.
-CREATE DOMAIN VlanNumber AS SMALLINT
-CHECK (VALUE BETWEEN 0 AND 4095);
+-- ----------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION sub_if_null(INET)
+  RETURNS TEXT
+  AS
+  '
+  DECLARE
+    sub INET := ''0.0.0.0/0'';
+    temp INET;
+    results TEXT;
+  BEGIN
+    SELECT COALESCE($1, sub) INTO temp;
+    SELECT temp::TEXT || MD5(temp::TEXT) INTO results;
+    RETURN results;
+  END;
+  '
+  LANGUAGE plpgsql
+  CALLED ON NULL INPUT
+  PARALLEL SAFE
+  IMMUTABLE;
 
 
 -- ----------------------------------------------------------------------
