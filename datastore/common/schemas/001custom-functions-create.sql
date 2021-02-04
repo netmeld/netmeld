@@ -28,10 +28,10 @@ BEGIN TRANSACTION;
 
 -- ----------------------------------------------------------------------
 -- ----------------------------------------------------------------------
--- SUB_IF_NULL(PARAM1) 
+-- SUB_IF_NULL(PARAM1)
 -- * PARAM1: TEXT | FLOAT | PORTNUMBER | INET
 -- * RETURNS: TEXT
--- 
+--
 -- These function provide consistent, comparable values for fields
 -- which may be NULL.  Specifically, these functions are targeted
 -- for usage in unique indexes to guard against duplicates in a table
