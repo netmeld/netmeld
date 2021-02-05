@@ -678,13 +678,11 @@ CREATE TABLE raw_operating_systems (
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_operating_systems_idx_unique
 ON raw_operating_systems
-  (( tool_run_id
-     || ' ' || ip_addr
-     || ' ' || SUB_IF_NULL(vendor_name)
-     || ' ' || SUB_IF_NULL(product_name)
-     || ' ' || SUB_IF_NULL(product_version)
-     || ' ' || SUB_IF_NULL(cpe)
-     || ' ' || SUB_IF_NULL(accuracy)
+  ((HASH_CHAIN(
+      tool_run_id::TEXT, ip_addr::TEXT,
+      vendor_name, product_name, product_version,
+      cpe, accuracy::TEXT
+    )
   ));
 
 -- Partial indexes

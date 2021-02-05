@@ -95,14 +95,10 @@ CREATE TABLE raw_device_hardware_information (
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique
 ON raw_device_hardware_information
-  (( tool_run_id
-     || ' ' || device_id
-     || ' ' || SUB_IF_NULL(device_type)
-     || ' ' || SUB_IF_NULL(vendor)
-     || ' ' || SUB_IF_NULL(model)
-     || ' ' || SUB_IF_NULL(hardware_revision)
-     || ' ' || SUB_IF_NULL(serial_number)
-     || ' ' || SUB_IF_NULL(description)
+  ((HASH_CHAIN(
+      tool_run_id::TEXT, device_id,
+      device_type, vendor, model, hardware_revision, serial_number, description
+    )
   ));
 
 -- Partial indexes
@@ -866,20 +862,12 @@ CREATE TABLE raw_device_ac_rules (
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique
 ON raw_device_ac_rules
-  ((
-    tool_run_id
-    || ' ' || device_id
-    || ' ' || enabled
-    || ' ' || ac_id
-    || ' ' || src_net_set_id
-    || ' ' || src_net_set
-    || ' ' || SUB_IF_NULL(src_iface)
-    || ' ' || dst_net_set_id
-    || ' ' || dst_net_set
-    || ' ' || SUB_IF_NULL(dst_iface)
-    || ' ' || SUB_IF_NULL(service_set)
-    || ' ' || action
-    || ' ' || SUB_IF_NULL(description)
+  ((HASH_CHAIN(
+    tool_run_id::TEXT, device_id, enabled::TEXT, ac_id::TEXT,
+    src_net_set_id, src_net_set, src_iface,
+    dst_net_set_id, dst_net_set, dst_iface,
+    service_set, action, description
+    )
   ));
 
 -- Partial indexes

@@ -28,90 +28,27 @@ BEGIN TRANSACTION;
 
 -- ----------------------------------------------------------------------
 -- ----------------------------------------------------------------------
--- SUB_IF_NULL(PARAM1)
--- * PARAM1: TEXT | FLOAT | PORTNUMBER | INET
--- * RETURNS: TEXT
+-- HASH_CHAIN()
 --
--- These function provide consistent, comparable values for fields
--- which may be NULL.  Specifically, these functions are targeted
--- for usage in unique indexes to guard against duplicates in a table
--- through an expresional index when partial index combinations have
+-- This function provides consistent, comparable values for fields
+-- which may be NULL.  Specifically, it is targeted for usage in
+-- unique indexes to guard against duplicates in a table through
+-- an expresional index when partial index combinations have
 -- high complexity (>2 NULL fields).
 -- ----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION sub_if_null(TEXT)
+CREATE OR REPLACE FUNCTION hash_chain(VARIADIC args TEXT[])
   RETURNS TEXT
   AS
   '
   DECLARE
     sub TEXT := ''~'';
-    temp TEXT;
+    temp TEXT := '''';
     results TEXT;
   BEGIN
-    SELECT COALESCE($1, sub) INTO temp;
-    SELECT temp || MD5(temp) INTO results;
-    RETURN results;
-  END;
-  '
-  LANGUAGE plpgsql
-  CALLED ON NULL INPUT
-  PARALLEL SAFE
-  IMMUTABLE;
-
--- ----------------------------------------------------------------------
-
-CREATE OR REPLACE FUNCTION sub_if_null(FLOAT)
-  RETURNS TEXT
-  AS
-  '
-  DECLARE
-    sub FLOAT := ''-1.0'';
-    temp FLOAT;
-    results TEXT;
-  BEGIN
-    SELECT COALESCE($1, sub) INTO temp;
-    SELECT temp::TEXT || MD5(temp::TEXT) INTO results;
-    RETURN results;
-  END;
-  '
-  LANGUAGE plpgsql
-  CALLED ON NULL INPUT
-  PARALLEL SAFE
-  IMMUTABLE;
-
--- ----------------------------------------------------------------------
-
-CREATE OR REPLACE FUNCTION sub_if_null(PORTNUMBER)
-  RETURNS TEXT
-  AS
-  '
-  DECLARE
-    sub PORTNUMBER := ''65536'';
-    temp PORTNUMBER;
-    results TEXT;
-  BEGIN
-    SELECT COALESCE($1, sub) INTO temp;
-    SELECT temp::TEXT || MD5(temp::TEXT) INTO results;
-    RETURN results;
-  END;
-  '
-  LANGUAGE plpgsql
-  CALLED ON NULL INPUT
-  PARALLEL SAFE
-  IMMUTABLE;
-
--- ----------------------------------------------------------------------
-
-CREATE OR REPLACE FUNCTION sub_if_null(INET)
-  RETURNS TEXT
-  AS
-  '
-  DECLARE
-    sub INET := ''0.0.0.0/0'';
-    temp INET;
-    results TEXT;
-  BEGIN
-    SELECT COALESCE($1, sub) INTO temp;
-    SELECT temp::TEXT || MD5(temp::TEXT) INTO results;
+    FOR i IN 1 .. ARRAY_UPPER(args, 1) LOOP
+      temp := MD5(temp || COALESCE(args[i], sub));
+    END LOOP;
+    SELECT temp INTO results;
     RETURN results;
   END;
   '
