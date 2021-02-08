@@ -3,6 +3,7 @@ all:
     local:
       hosts:
         127.0.0.1:
+          ansible_connection: local
     cisco:
       hosts:
     junos:
@@ -12,5 +13,7 @@ all:
     linux:
       hosts:
         sample.host:
+          ansible_user: someone
+          ansible_password: something
     windows:
       hosts:
