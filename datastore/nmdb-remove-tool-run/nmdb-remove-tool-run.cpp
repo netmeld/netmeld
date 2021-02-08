@@ -51,7 +51,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           "Tool run UUID to remove from the database."
           " Either --tool-run-id param or implicit last argument.")
         );
-      
+
       opts.addPositionalOption("tool-run-id", -1);
     }
 

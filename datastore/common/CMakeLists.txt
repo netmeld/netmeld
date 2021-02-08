@@ -42,12 +42,12 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/Service.cpp
     ./objects/ToolObservations.cpp
     ./objects/Vlan.cpp
-    
+
     ./tools/AbstractDatastoreTool.cpp
     ./tools/AbstractExportTool.cpp
     ./tools/AbstractGraphTool.cpp
     ./tools/AbstractInsertTool.cpp
-    
+
     ./utils/QueriesCommon.cpp
     ./utils/ServiceFactory.cpp
   )

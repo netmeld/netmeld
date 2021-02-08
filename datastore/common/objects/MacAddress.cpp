@@ -134,11 +134,11 @@ namespace netmeld::datastore::objects {
 
     std::ostringstream oss;
     auto iter {macAddr.begin()};
-    oss << std::hex << std::setfill('0') << std::setw(2) 
+    oss << std::hex << std::setfill('0') << std::setw(2)
         << static_cast<unsigned int>(*iter);
     ++iter;
     for (; iter != macAddr.end(); ++iter) {
-      oss << ':' << std::hex << std::setfill('0') << std::setw(2) 
+      oss << ':' << std::hex << std::setfill('0') << std::setw(2)
           << static_cast<unsigned int>(*iter);
     }
 

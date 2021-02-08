@@ -242,7 +242,7 @@ See: https://www.cisco.com/c/en/us/td/docs/security/asa/asa-command-reference/I-
     ( M_IP | M_OBJ | interface [ipv6] ) \
     [net-to-net] [dns|service ( tcp | udp | sctp ) R_PORT M_PORT] \
     [no-proxy-arp] [route-lookup]
----    
+---
    object network LIST
     description TEXT
     fqdn [v4|v6] D.OMAIN-NAME.0

@@ -205,7 +205,7 @@ PacketHelper::getQueryOffset(const uint8_t* _dnsPacketStart,
   return offset;
 }
 size_t
-PacketHelper::getQueryName(const uint8_t* _dnsPacketStart, 
+PacketHelper::getQueryName(const uint8_t* _dnsPacketStart,
                            const uint8_t* _curLoc,
                            std::ostringstream& _oss)
 {
@@ -214,7 +214,7 @@ PacketHelper::getQueryName(const uint8_t* _dnsPacketStart,
   while (0x00 != length) {
     if (0xC0 == (length & 0xF0)) { // it's a pointer
       auto nameOffset = (asUint16_t(_curLoc + offset) & 0x0FFF);
-      offset += 
+      offset +=
         getQueryName(_dnsPacketStart, {_dnsPacketStart + nameOffset}, _oss);
       length = 0x00;
     } else { // it's a value

@@ -122,7 +122,7 @@ namespace netmeld::datastore::importers::cisco {
     nxosRule =
       (nxosRemark | nxosStandard | nxosExtended)
       ;
-    
+
     nxosRemark =
       !qi::attr("")
       ;
@@ -397,7 +397,7 @@ namespace netmeld::datastore::importers::cisco {
           > token)
       )
       ;
-    
+
     inactiveArgument =
       qi::lit("inactive") [pnx::bind([&](){curRule.disable();})]
       ;

@@ -61,7 +61,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   // START OF: system {...}
-  system = 
+  system =
     qi::lit("system") >>
     startBlock >>
     *(  (qi::lit("host-name") > token)
@@ -440,7 +440,7 @@ Parser::Parser() : Parser::base_type(start)
 
 
   // START OF: logical-systems {...}
-  logicalSystems = 
+  logicalSystems =
     qi::lit("logical-systems") >> startBlock >>
     *((logicalSystem | ignoredBlock) >> -qi::eol) >>
     stopBlock
@@ -462,7 +462,7 @@ Parser::Parser() : Parser::base_type(start)
 
 
   // START OF: routing-instances {...}
-  routingInstances = 
+  routingInstances =
     qi::lit("routing-instances") >> startBlock >>
     *((routingInstance | ignoredBlock) >> -qi::eol) >>
     stopBlock

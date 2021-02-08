@@ -34,11 +34,11 @@ EXAMPLE
 =======
 
 Graph applied access control rules on the device called `workstation`.
-``` 
+```
 nmdb-graph-ac --device-id workstation
 ```
 
 Graph all access control rules on the device called `workstation`.
-``` 
+```
 nmdb-graph-ac --device-id workstation --all
 ```

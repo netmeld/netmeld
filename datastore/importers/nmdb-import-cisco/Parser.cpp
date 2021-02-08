@@ -99,7 +99,7 @@ Parser::Parser() : Parser::base_type(start)
   // [ip|ipv6] route dstNet nextHop {administrative_distance} {permanent}
   //   dstNet  == [ip/prefix | ip mask]
   //   nextHop == [ip/prefix | ip | iface]
-  route = 
+  route =
     (qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
        // ip_mask ip
     (  (ipMask >> ipAddr)

@@ -337,7 +337,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
     }
     status = true;
   }
- 
+
   // ===== bootp (DHCP) =====
   if (_pd.count(bootpOptionSubnetMask)) {
     const auto& subnetMask {s1(bootpOptionSubnetMask)};

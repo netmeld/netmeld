@@ -45,7 +45,7 @@ namespace netmeld::datastore::importers::cisco {
       ;
 
     ciscoServiceBook =
-      (  objectService 
+      (  objectService
        | objectGroupService
        | objectGroupProtocol
       )

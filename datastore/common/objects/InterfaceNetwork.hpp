@@ -45,7 +45,7 @@ namespace netmeld::datastore::objects {
     protected: // Variables intended for internal/subclass API
       std::string  name;
       std::string  description;
-      
+
       bool isPartial {false};
 
       // Default interface settings
