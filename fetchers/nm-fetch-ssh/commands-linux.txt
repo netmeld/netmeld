@@ -53,5 +53,5 @@ sudo uname -a
 sudo ls -lah /etc
 sudo cat /etc/hosts
 sudo cat /etc/os-release
-sudo dpkg --list
+sudo dpkg --list --no-pager
 sudo rpm -qa --queryformat="%-50{NAME}%10{VERSION}-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n"
