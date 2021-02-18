@@ -58,6 +58,7 @@ CREATE TABLE raw_device_virtualizations (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_virtualizations_idx_tool_run_id
 ON raw_device_virtualizations(tool_run_id);
 
@@ -83,32 +84,53 @@ CREATE TABLE raw_device_hardware_information (
     hardware_revision           TEXT            NULL,
     serial_number               TEXT            NULL,
     description                 TEXT            NULL,
--- TODO [#114] Primary key here is hard as this table is a data conglomorate
---    PRIMARY KEY (tool_run_id, device_id),
     FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
+-- Create UNIQUE expresional index with substitutions of NULL values
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique
+ON raw_device_hardware_information
+  ((HASH_CHAIN(
+      tool_run_id::TEXT, device_id,
+      device_type, vendor, model, hardware_revision, serial_number, description
+    )
+  ));
+
+-- Partial indexes
 CREATE INDEX raw_device_hardware_information_idx_tool_run_id
 ON raw_device_hardware_information(tool_run_id);
+
 CREATE INDEX raw_device_hardware_information_idx_device_id
 ON raw_device_hardware_information(device_id);
+
 CREATE INDEX raw_device_hardware_information_idx_device_type
 ON raw_device_hardware_information(device_type);
+
 CREATE INDEX raw_device_hardware_information_idx_vendor
 ON raw_device_hardware_information(vendor);
+
 CREATE INDEX raw_device_hardware_information_idx_model
 ON raw_device_hardware_information(model);
+
 CREATE INDEX raw_device_hardware_information_idx_hardware_revision
 ON raw_device_hardware_information(hardware_revision);
+
 CREATE INDEX raw_device_hardware_information_idx_serial_number
 ON raw_device_hardware_information(serial_number);
+
 CREATE INDEX raw_device_hardware_information_idx_description
 ON raw_device_hardware_information(description);
+
+-- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_hardware_information_idx_views
 ON raw_device_hardware_information(device_id, device_type, vendor, model,
     hardware_revision, serial_number, description);
+
 
 -- ----------------------------------------------------------------------
 
@@ -145,6 +167,7 @@ CREATE TABLE raw_device_interfaces (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_idx_tool_run_id
 ON raw_device_interfaces(tool_run_id);
 
@@ -187,6 +210,7 @@ CREATE TABLE raw_device_mac_addrs (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_mac_addrs_idx_tool_run_id
 ON raw_device_mac_addrs(tool_run_id);
 
@@ -229,6 +253,7 @@ CREATE TABLE raw_device_ip_addrs (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_ip_addrs_idx_tool_run_id
 ON raw_device_ip_addrs(tool_run_id);
 
@@ -274,10 +299,33 @@ CREATE TABLE raw_device_ip_routes (
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    CHECK (family(dst_ip_net) = family(rtr_ip_addr)),
+    CHECK (inet_same_family(dst_ip_net, rtr_ip_addr)),
     CHECK ((rtr_ip_addr = host(rtr_ip_addr)::INET))
 );
 
+-- Since this table lacks a PRIMARY KEY and allows NULLs (<3):
+-- Create UNIQUE partial indexes over likely combinations of columns
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique1
+ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net)
+WHERE (interface_name IS NULL) and (rtr_ip_addr IS NULL);
+
+CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique2_interface
+ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
+       interface_name)
+WHERE (interface_name IS NOT NULL) and (rtr_ip_addr IS NULL);
+
+CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique3_rtr_ip_addr
+ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
+       rtr_ip_addr)
+WHERE (interface_name IS NULL) and (rtr_ip_addr IS NOT NULL);
+
+CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique4
+ON raw_device_ip_routes(tool_run_id, device_id, dst_ip_net,
+       interface_name, rtr_ip_addr)
+WHERE (interface_name IS NOT NULL) and (rtr_ip_addr IS NOT NULL);
+
+-- Partial indexes
 CREATE INDEX raw_device_ip_routes_idx_tool_run_id
 ON raw_device_ip_routes(tool_run_id);
 
@@ -310,7 +358,7 @@ CREATE TABLE raw_device_ip_servers (
     interface_name              TEXT            NOT NULL,
     service_name                TEXT            NOT NULL,
     server_ip_addr              INET            NOT NULL,
-    port                        INT             NULL,
+    port                        PortNumber      NULL,
     local_service               BOOLEAN         NOT NULL,
     description                 TEXT            NULL,
     PRIMARY KEY (tool_run_id, device_id, interface_name, service_name,
@@ -320,20 +368,29 @@ CREATE TABLE raw_device_ip_servers (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- Partial indexes
 CREATE INDEX raw_device_ip_servers_idx_tool_run_id
 ON raw_device_ip_servers(tool_run_id);
+
 CREATE INDEX raw_device_ip_servers_idx_device_id
 ON raw_device_ip_servers(device_id);
+
 CREATE INDEX raw_device_ip_servers_idx_interface_name
 ON raw_device_ip_servers(interface_name);
+
 CREATE INDEX raw_device_ip_servers_idx_service_name
 ON raw_device_ip_servers(service_name);
+
 CREATE INDEX raw_device_ip_servers_idx_server_ip_addr
 ON raw_device_ip_servers(server_ip_addr);
+
 CREATE INDEX raw_device_ip_servers_idx_port
 ON raw_device_ip_servers(port);
+
 CREATE INDEX raw_device_ip_servers_idx_local_service
 ON raw_device_ip_servers(local_service);
+
 CREATE INDEX raw_device_ip_servers_idx_description
 ON raw_device_ip_servers(description);
 
@@ -365,6 +422,7 @@ CREATE TABLE raw_device_phys_connections (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_phys_connections_idx_tool_run_id
 ON raw_device_phys_connections(tool_run_id);
 
@@ -414,6 +472,7 @@ CREATE TABLE raw_device_link_connections (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_link_connections_idx_tool_run_id
 ON raw_device_link_connections(tool_run_id);
 
@@ -451,6 +510,7 @@ CREATE TABLE raw_devices_aaa (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_devices_aaa_idx_tool_run_id
 ON raw_devices_aaa(tool_run_id);
 
@@ -473,6 +533,7 @@ CREATE TABLE raw_device_interfaces_mode (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_mode_idx_tool_run_id
 ON raw_device_interfaces_mode(tool_run_id);
 
@@ -507,6 +568,7 @@ CREATE TABLE raw_device_interfaces_bpdu (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_bpdu_idx_tool_run_id
 ON raw_device_interfaces_bpdu(tool_run_id);
 
@@ -543,6 +605,7 @@ CREATE TABLE raw_device_interfaces_cdp (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_cdp_idx_tool_run_id
 ON raw_device_interfaces_cdp(tool_run_id);
 
@@ -576,6 +639,7 @@ CREATE TABLE raw_device_interfaces_portfast (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_portfast_idx_tool_run_id
 ON raw_device_interfaces_portfast(tool_run_id);
 
@@ -613,6 +677,7 @@ CREATE TABLE raw_device_interfaces_port_security (
     CHECK (0 < max_mac_addrs)
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_port_security_idx_tool_run_id
 ON raw_device_interfaces_port_security(tool_run_id);
 
@@ -659,6 +724,7 @@ CREATE TABLE raw_device_interfaces_port_security_mac_addrs (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_port_security_mac_addrs_idx_tool_run_id
 ON raw_device_interfaces_port_security_mac_addrs(tool_run_id);
 
@@ -693,19 +759,41 @@ CREATE TABLE raw_device_ac_nets (
       ON DELETE CASCADE
       ON UPDATE CASCADE
 );
+
+-- Since this table lacks a PRIMARY KEY and allows NULLs (<3):
+-- Create UNIQUE partial indexes over likely combinations of columns
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique1
+ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set)
+WHERE (net_set_data IS NULL);
+
+CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique2
+ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set,
+       net_set_data)
+WHERE (net_set_data IS NOT NULL);
+
+-- Partial indexes
 CREATE INDEX raw_device_ac_nets_idx_tool_run_id
 ON raw_device_ac_nets(tool_run_id);
+
 CREATE INDEX raw_device_ac_nets_idx_device_id
 ON raw_device_ac_nets(device_id);
+
 CREATE INDEX raw_device_ac_nets_idx_net_set_id
 ON raw_device_ac_nets(net_set_id);
+
 CREATE INDEX raw_device_ac_nets_idx_net_set
 ON raw_device_ac_nets(net_set);
+
 CREATE INDEX raw_device_ac_nets_idx_net_set_data
 ON raw_device_ac_nets(net_set_data);
+
+-- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_ac_nets_idx_views
 ON raw_device_ac_nets(device_id, net_set_id, net_set_data);
 
+
+-- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_ac_services (
     tool_run_id       UUID    NOT NULL,
@@ -717,17 +805,37 @@ CREATE TABLE raw_device_ac_services (
       ON DELETE CASCADE
       ON UPDATE CASCADE
 );
+
+-- Since this table lacks a PRIMARY KEY and allows NULLs (<3):
+-- Create UNIQUE partial indexes over likely combinations of columns
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_device_ac_services_idx_unique1
+ON raw_device_ac_services(tool_run_id, device_id, service_set)
+WHERE (service_set_data IS NULL);
+
+CREATE UNIQUE INDEX raw_device_ac_services_idx_unique2
+ON raw_device_ac_services(tool_run_id, device_id, service_set,
+       service_set_data)
+WHERE (service_set_data IS NOT NULL);
+
+-- Partial indexes
 CREATE INDEX raw_device_ac_services_idx_tool_run_id
 ON raw_device_ac_services(tool_run_id);
+
 CREATE INDEX raw_device_ac_services_idx_device_id
 ON raw_device_ac_services(device_id);
+
 CREATE INDEX raw_device_ac_services_idx_service_set
 ON raw_device_ac_services(service_set);
+
 CREATE INDEX raw_device_ac_services_idx_service_set_data
 ON raw_device_ac_services(service_set_data);
+
+-- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_ac_services_idx_views
 ON raw_device_ac_services(device_id, service_set, service_set_data);
 
+-- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_ac_rules (
     tool_run_id     UUID    NOT NULL,
@@ -748,32 +856,61 @@ CREATE TABLE raw_device_ac_rules (
       ON DELETE CASCADE
       ON UPDATE CASCADE
 );
+
+-- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
+-- Create UNIQUE expresional index with substitutions of NULL values
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique
+ON raw_device_ac_rules
+  ((HASH_CHAIN(
+    tool_run_id::TEXT, device_id, enabled::TEXT, ac_id::TEXT,
+    src_net_set_id, src_net_set, src_iface,
+    dst_net_set_id, dst_net_set, dst_iface,
+    service_set, action, description
+    )
+  ));
+
+-- Partial indexes
 CREATE INDEX raw_device_ac_rules_idx_tool_run_id
 ON raw_device_ac_rules(tool_run_id);
+
 CREATE INDEX raw_device_ac_rules_idx_device_id
 ON raw_device_ac_rules(device_id);
+
 CREATE INDEX raw_device_ac_rules_idx_enabled
 ON raw_device_ac_rules(enabled);
+
 CREATE INDEX raw_device_ac_rules_idx_ac_id
 ON raw_device_ac_rules(ac_id);
+
 CREATE INDEX raw_device_ac_rules_idx_src_net_set_id
 ON raw_device_ac_rules(src_net_set_id);
+
 CREATE INDEX raw_device_ac_rules_idx_src_net_set
 ON raw_device_ac_rules(src_net_set);
+
 CREATE INDEX raw_device_ac_rules_idx_src_iface
 ON raw_device_ac_rules(src_iface);
+
 CREATE INDEX raw_device_ac_rules_idx_dst_net_set_id
 ON raw_device_ac_rules(dst_net_set_id);
+
 CREATE INDEX raw_device_ac_rules_idx_dst_net_set
 ON raw_device_ac_rules(dst_net_set);
+
 CREATE INDEX raw_device_ac_rules_idx_dst_iface
 ON raw_device_ac_rules(dst_iface);
+
 CREATE INDEX raw_device_ac_rules_idx_service_set
 ON raw_device_ac_rules(service_set);
+
 CREATE INDEX raw_device_ac_rules_idx_action
 ON raw_device_ac_rules(action);
+
 CREATE INDEX raw_device_ac_rules_idx_description
 ON raw_device_ac_rules(description);
+
+-- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_ac_rules_idx_views
 ON raw_device_ac_rules(device_id, enabled, ac_id,
     src_net_set_id, src_net_set, src_iface,
@@ -784,34 +921,40 @@ ON raw_device_ac_rules(device_id, enabled, ac_id,
 -- ----------------------------------------------------------------------
 -- Device VLAN tables
 -- ----------------------------------------------------------------------
+
 CREATE TABLE raw_device_vlans (
     tool_run_id                 UUID            NOT NULL,
     device_id                   TEXT            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     description                 TEXT            NULL,
     PRIMARY KEY (tool_run_id, device_id, vlan),
     FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (vlan BETWEEN 0 and 4095)
+        ON UPDATE CASCADE
 );
+
+-- Partial indexes
 CREATE INDEX raw_device_vlans_idx_tool_run_id
 ON raw_device_vlans(tool_run_id);
+
 CREATE INDEX raw_device_vlans_idx_device_id
 ON raw_device_vlans(device_id);
+
 CREATE INDEX raw_device_vlans_idx_vlan
 ON raw_device_vlans(vlan);
+
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_vlans_idx_views
 ON raw_device_vlans(device_id, vlan);
 
+-- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_vlans_ip_nets (
     tool_run_id                 UUID            NOT NULL,
     device_id                   TEXT            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     ip_net                      CIDR            NOT NULL,
     PRIMARY KEY (tool_run_id, device_id, vlan, ip_net),
     FOREIGN KEY (tool_run_id, device_id, vlan)
@@ -823,25 +966,32 @@ CREATE TABLE raw_device_vlans_ip_nets (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- Partial indexes
 CREATE INDEX raw_device_vlans_ip_nets_idx_tool_run_id
 ON raw_device_vlans_ip_nets(tool_run_id);
+
 CREATE INDEX raw_device_vlans_ip_nets_idx_device_id
 ON raw_device_vlans_ip_nets(device_id);
+
 CREATE INDEX raw_device_vlans_ip_nets_idx_vlan
 ON raw_device_vlans_ip_nets(vlan);
+
 CREATE INDEX raw_device_vlans_ip_nets_idx_ip_net
 ON raw_device_vlans_ip_nets(ip_net);
+
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_vlans_ip_nets_idx_views
 ON raw_device_vlans_ip_nets(device_id, vlan, ip_net);
 
+-- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_vlans (
     tool_run_id                 UUID            NOT NULL,
     device_id                   TEXT            NOT NULL,
     interface_name              TEXT            NOT NULL,
-    vlan                        INT             NOT NULL,
+    vlan                        VlanNumber      NOT NULL,
     PRIMARY KEY (tool_run_id, device_id, interface_name, vlan),
     FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
@@ -849,14 +999,20 @@ CREATE TABLE raw_device_interfaces_vlans (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- Partial indexes
 CREATE INDEX raw_device_interfaces_vlans_idx_tool_run_id
 ON raw_device_interfaces_vlans(tool_run_id);
+
 CREATE INDEX raw_device_interfaces_vlans_idx_device_id
 ON raw_device_interfaces_vlans(device_id);
+
 CREATE INDEX raw_device_interfaces_vlans_idx_interface_name
 ON raw_device_interfaces_vlans(interface_name);
+
 CREATE INDEX raw_device_interfaces_vlans_idx_vlan
 ON raw_device_interfaces_vlans(vlan);
+
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_interfaces_vlans_idx_views

@@ -43,7 +43,7 @@ namespace netmeld::datastore::tools {
 
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     protected:
       // Default constructor, provided only for convienence
@@ -51,6 +51,8 @@ namespace netmeld::datastore::tools {
       // Standard constructor, should be primary
       AbstractExportTool(const char*, const char*, const char*);
 
+    public:
+      virtual ~AbstractExportTool() = default;
 
     // =========================================================================
     // Methods

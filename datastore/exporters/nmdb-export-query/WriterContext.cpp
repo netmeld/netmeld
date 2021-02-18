@@ -86,7 +86,7 @@ WriterContext::addQueryInfo(std::string _queryInfo, std::string _query)
 }
 
 void
-WriterContext::addColumn(std::string _colName, float _width)
+WriterContext::addColumn(std::string _colName, double _width)
 {
   columns.push_back(_colName);
   columnWidths.emplace(_colName, _width);

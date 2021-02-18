@@ -45,16 +45,17 @@ namespace netmeld::datastore::objects {
       IpAddr       address;
       uint8_t      prefix      {UINT8_MAX};
       std::string  reason;
-      uint32_t     extraWeight {0};
+      double       extraWeight {0.0};
 
     public:
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     private:
     protected:
     public:
+      virtual ~IpNetwork() = default;
       IpNetwork();
       explicit IpNetwork(const std::string&, const std::string& x="");
       explicit IpNetwork(const std::vector<uint8_t>&);
@@ -80,7 +81,7 @@ namespace netmeld::datastore::objects {
 
       void setAddress(const std::string&);
       void setPrefix(uint8_t);
-      void setExtraWeight(const uint32_t);
+      void setExtraWeight(const double);
       bool setNetmask(const IpNetwork&);
       bool setWildcardMask(const IpNetwork&);
       void setReason(const std::string&);

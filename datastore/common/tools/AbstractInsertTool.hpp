@@ -48,13 +48,16 @@ namespace netmeld::datastore::tools {
       nmdo::DeviceInformation  devInfo;
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     protected:
       // Default constructor, provided only for convienence
       AbstractInsertTool();
       // Standard constructor, should be primary
       AbstractInsertTool(const char*, const char*, const char*);
+
+    public:
+      virtual ~AbstractInsertTool() = default;
 
     // =========================================================================
     // Methods

@@ -42,11 +42,10 @@ namespace netmeld::playbook::utils {
         "insert_playbook_ip_router",
         "INSERT INTO playbook_ip_routers"
         " (rtr_ip_addr)"
-        " SELECT host(($1)::INET)::INET"
-        " WHERE NOT EXISTS ("
-        "   SELECT 1 FROM playbook_ip_routers"
-        "   WHERE (rtr_ip_addr = host(($1)::INET)::INET)"
-        " )"
+        " VALUES (host(($1)::INET)::INET)"
+        " ON CONFLICT"
+        " (rtr_ip_addr)"
+        " DO NOTHING"
         );
 
 
@@ -59,13 +58,12 @@ namespace netmeld::playbook::utils {
         " (playbook_source_id, is_completed, playbook_stage,"
         "  interface_name, vlan, mac_addr,"
         "  ip_addr, ptp_rtr_ip_addr, description)"
-        " SELECT $1, $2, $3,"
-        "        $4, $5, NULLIF($6, '')::MACADDR,"
-        "        ($7)::INET, NULLIF($8, '')::INET, NULLIF($9, '')"
-        " WHERE NOT EXISTS ("
-        "   SELECT 1 FROM playbook_inter_network_sources"
-        "   WHERE (playbook_source_id = $1)"
-        " )"
+        " VALUES ($1, $2, $3,"
+        "         $4, $5, NULLIF($6, '')::MACADDR,"
+        "         ($7)::INET, NULLIF($8, '')::INET, NULLIF($9, ''))"
+        " ON CONFLICT"
+        " (playbook_source_id)"
+        " DO NOTHING"
         );
 
     db.prepare(
@@ -74,13 +72,12 @@ namespace netmeld::playbook::utils {
         " (playbook_source_id, is_completed, playbook_stage,"
         "  interface_name, vlan, mac_addr,"
         "  ip_addr, description)"
-        " SELECT $1, $2, $3,"
-        "        $4, $5, NULLIF($6, '')::MACADDR,"
-        "        ($7)::INET, NULLIF($8, '')"
-        " WHERE NOT EXISTS ("
-        "   SELECT 1 FROM playbook_intra_network_sources"
-        "   WHERE (playbook_source_id = $1)"
-        " )"
+        " VALUES ($1, $2, $3,"
+        "         $4, $5, NULLIF($6, '')::MACADDR,"
+        "         ($7)::INET, NULLIF($8, ''))"
+        " ON CONFLICT"
+        " (playbook_source_id)"
+        " DO NOTHING"
         );
 
 

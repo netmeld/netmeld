@@ -42,11 +42,12 @@ namespace netmeld::core::objects {
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
-    public: // Constructors part of public API
+    public: // Constructors and destructors part of public API
+      virtual ~AbstractObject() = default;
       AbstractObject();
 
     // =========================================================================
