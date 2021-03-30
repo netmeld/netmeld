@@ -34,17 +34,17 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     (config)
-      [pnx::bind(&Parser::setVendor, this, "cisco"),
-       qi::_val = pnx::bind(&Parser::getData, this)]
+      [(pnx::bind(&Parser::setVendor, this, "cisco"),
+        qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
     *(
         (qi::lit("sysname") >> domainName >> qi::eol)
-           [pnx::bind(&Parser::setDevId, this, qi::_1)]
+           [(pnx::bind(&Parser::setDevId, this, qi::_1))]
       | (phyIface >> qi::eol)
       | (qi::lit("time ntp server") >> qi::omit[qi::uint_] >> ipAddr)
-           [pnx::bind(&Parser::addNtpService, this, qi::_1)]
+           [(pnx::bind(&Parser::addNtpService, this, qi::_1))]
       | ignoredLine
      )
     ;
@@ -52,10 +52,10 @@ Parser::Parser() : Parser::base_type(start)
   phyIface =
     (  ((qi::lit("interface address") >> -qi::lit("dynamic-interface")) >>
         token >> ipAddr >> ipAddr >> ipAddr)
-          [pnx::bind(&Parser::addIface2, this,
-                      qi::_1, qi::_2, qi::_3, qi::_4)]
+          [(pnx::bind(&Parser::addIface2, this,
+                      qi::_1, qi::_2, qi::_3, qi::_4))]
      | (qi::lit("interface address") >> token >> ipAddr >> ipAddr)
-          [pnx::bind(&Parser::addIface1, this, qi::_1, qi::_2, qi::_3)]
+          [(pnx::bind(&Parser::addIface1, this, qi::_1, qi::_2, qi::_3))]
     )
     ;
 

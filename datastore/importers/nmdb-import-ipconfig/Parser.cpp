@@ -38,13 +38,13 @@ Parser::Parser() : Parser::base_type(start)
     (qi::lit("Windows IP Configuration") > +qi::eol >>
      +(-compartmentHeader >>
        +( ("Host Name" >> dots > fqdn > qi::eol)
-            [pnx::bind(&Parser::addDevInfo, this, qi::_1)]
+            [(pnx::bind(&Parser::addDevInfo, this, qi::_1))]
         | ("Primary Dns Suffix" >> dots > -fqdn > qi::eol)
         | ignoredLine
        ) >> qi::eol >>
        *(adapter)
       )
-    ) [qi::_val = pnx::bind(&Parser::getData, this)] >>
+    ) [(qi::_val = pnx::bind(&Parser::getData, this))] >>
     *(ignoredLine) // Skip garbage after
     ;
 
@@ -55,15 +55,15 @@ Parser::Parser() : Parser::base_type(start)
   adapter =
     ifaceTypeName > +qi::eol >
     +( ("Physical Address" >> dots > macAddr > qi::eol)
-          [pnx::bind(&Parser::addIfaceMac, this, qi::_1)]
+          [(pnx::bind(&Parser::addIfaceMac, this, qi::_1))]
      | (ipLine > qi::eol)
-         [pnx::bind(&Parser::addIfaceIp, this, qi::_1)]
+         [(pnx::bind(&Parser::addIfaceIp, this, qi::_1))]
      | ("Media State" >> dots > "Media disconnected" > qi::eol)
-          [pnx::bind(&Parser::setIfaceDown, this)]
+          [(pnx::bind(&Parser::setIfaceDown, this))]
      | ("Connection-specific DNS Suffix" >> dots > -token
-          [pnx::bind(&Parser::setIfaceDnsSuffix, this, qi::_1)] > qi::eol)
+          [(pnx::bind(&Parser::setIfaceDnsSuffix, this, qi::_1))] > qi::eol)
      | ("Default Gateway" >> dots > *(getIp
-          [pnx::bind(&Parser::addRoute, this, qi::_1)] > qi::eol) > -qi::eol)
+          [(pnx::bind(&Parser::addRoute, this, qi::_1))] > qi::eol) > -qi::eol)
      | servers
      | ignoredLine
     ) >> *qi::eol
@@ -72,7 +72,7 @@ Parser::Parser() : Parser::base_type(start)
   ifaceTypeName =
     (token >> "adapter" >>
      qi::as_string[qi::lexeme[+(qi::char_ - ':')]] > ':')
-       [pnx::bind(&Parser::addIface, this, qi::_2, qi::_1)]
+       [(pnx::bind(&Parser::addIface, this, qi::_2, qi::_1))]
     ;
 
   dots =
@@ -81,19 +81,19 @@ Parser::Parser() : Parser::base_type(start)
 
   servers =
     ( ("DHCP Server" >> dots > getIp > qi::eol)
-          [pnx::bind(&Parser::addService, this, "DHCP", qi::_1)]
+          [(pnx::bind(&Parser::addService, this, "DHCP", qi::_1))]
      | ("DNS Servers" >> dots > +(getIp > qi::eol)
-          [pnx::bind(&Parser::addService, this, "DNS", qi::_1)])
+          [(pnx::bind(&Parser::addService, this, "DNS", qi::_1))])
      | (qi::hold[token >> qi::lit("WINS Server")] >> dots > getIp > qi::eol)
-          [pnx::bind(&Parser::addService, this, "WINS", qi::_2)]
+          [(pnx::bind(&Parser::addService, this, "WINS", qi::_2))]
     )
     ;
 
   ipLine =
     ("IP" >> -("v" > qi::char_("46"))) >> "Address" >> dots > getIp
-      [qi::_val = qi::_1] >>
+      [(qi::_val = qi::_1)] >>
     -(qi::eol >> "Subnet Mask" >> dots > getIp)
-      [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_val, qi::_1)]
+      [(pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_val, qi::_1))]
     ;
 
   getIp =

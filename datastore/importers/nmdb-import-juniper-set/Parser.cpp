@@ -40,7 +40,7 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     config
-      [qi::_val = pnx::bind(&Parser::getData, this)]
+      [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
@@ -70,37 +70,37 @@ Parser::Parser() : Parser::base_type(start)
   //   zone zone
   interface =
     ifaceTypeName
-      [pnx::bind(&Parser::initIface, this, qi::_1[0], qi::_1[1])] >>
+      [(pnx::bind(&Parser::initIface, this, qi::_1[0], qi::_1[1]))] >>
     (  (qi::lexeme[qi::lit("ip") >> -qi::lit("v6")] >> ipAddr)
-         [pnx::bind(&Parser::updateIfaceIp, this, qi::_1)]
+         [(pnx::bind(&Parser::updateIfaceIp, this, qi::_1))]
      | (qi::lit("ip unnumbered interface") >> token)
-         [pnx::bind(&Parser::unsup, this, "iface alias: " + qi::_1)]
+         [(pnx::bind(&Parser::unsup, this, "iface alias: " + qi::_1))]
      // NOTE: mip == host, maybe could do withe network book...but appling
      //       a netmask means the entire, individual, range is aliased
      | ((qi::lit("mip") >> ipAddr >> qi::lit("host") >> ipAddr) >>
         -(qi::lit("netmask") >> ipAddr) >> -vrouter)
-         [pnx::bind(&Parser::unsup, this, "mip defined")]
+         [(pnx::bind(&Parser::unsup, this, "mip defined"))]
      | (-(qi::lit("tag") >> qi::uint_) >> qi::lit("zone") >> token)
-         [pnx::bind(&Parser::updateZoneIfaceBook, this, qi::_2)]
+         [(pnx::bind(&Parser::updateZoneIfaceBook, this, qi::_2))]
     )
     ;
 
   interfaces =
     (  (ifaceTypeName >> "unit" >> qi::as_string[+qi::digit])
-         [pnx::bind(&Parser::initIface, this, qi::_1[0],
-                    qi::_1[1] + '.' + qi::_2)]
+         [(pnx::bind(&Parser::initIface, this, qi::_1[0],
+                     qi::_1[1] + '.' + qi::_2))]
      | (ifaceTypeName)
-         [pnx::bind(&Parser::initIface, this, qi::_1[0],
-                    qi::_1[1] + ".0")] // if no unit, assume 0
+         [(pnx::bind(&Parser::initIface, this, qi::_1[0],
+                     qi::_1[1] + ".0"))] // if no unit, assume 0
      | (qi::as_string[qi::lexeme[+qi::graph]] >>
         "unit" >> qi::as_string[+qi::digit])
-         [pnx::bind(&Parser::initIface, this, qi::_1, '.' + qi::_2)]
+         [(pnx::bind(&Parser::initIface, this, qi::_1, '.' + qi::_2))]
      | (qi::as_string[qi::lexeme[+qi::graph]])
-         [pnx::bind(&Parser::initIface, this, qi::_1, "")] // no slot or unit
+         [(pnx::bind(&Parser::initIface, this, qi::_1, ""))] // no slot or unit
     ) >>
     -( ("family" >> (qi::lit("inet6") | qi::lit("inet")) >> "address" >> ipAddr)
-         [pnx::bind(&Parser::updateIfaceIp, this, qi::_1)]
-     | (qi::lit("disable")) [pnx::bind(&Parser::disableIface, this)]
+         [(pnx::bind(&Parser::updateIfaceIp, this, qi::_1))]
+     | (qi::lit("disable")) [(pnx::bind(&Parser::disableIface, this))]
     )
     ;
 
@@ -115,8 +115,8 @@ Parser::Parser() : Parser::base_type(start)
   service =
     (token >> (qi::lit("protocol") | qi::lit("+")) >> token >>
      srvcSrcPort >> srvcDstPort)
-      [pnx::bind(&Parser::updateSrvcBook, this, qi::_1,
-          pnx::bind(&nmcu::getSrvcString, qi::_2, qi::_3, qi::_4))]
+      [(pnx::bind(&Parser::updateSrvcBook, this, qi::_1,
+          pnx::bind(&nmcu::getSrvcString, qi::_2, qi::_3, qi::_4)))]
     ;
 
   srvcSrcPort =
@@ -136,26 +136,26 @@ Parser::Parser() : Parser::base_type(start)
   // zone name {ip mask|ip/prefix|fqdn} [comment]
   address =
     (token >> token >> ipAddrOrFqdn >> *token)
-      [pnx::bind(&Parser::updateNetBook, this, qi::_1, qi::_2, qi::_3)]
+      [(pnx::bind(&Parser::updateNetBook, this, qi::_1, qi::_2, qi::_3))]
     ;
 
   ipAddrOrFqdn =
     (  (ipAddr >> ipAddr)
-         [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
-          qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
+         [(pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_2),
+           qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1))]
      | (ipAddr)
-         [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
+         [(qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1))]
      | (fqdn)
-         [qi::_val = qi::_1]
+         [(qi::_val = qi::_1)]
     )
     ;
 
   // {{address zone}|service} grpName [add name] [comment]
   group =
     (  (qi::lit("address") >> token >> token >> qi::lit("add") >> token)
-         [pnx::bind(&Parser::updateNetBookGroup, this, qi::_1, qi::_2, qi::_3)]
+         [(pnx::bind(&Parser::updateNetBookGroup, this, qi::_1, qi::_2, qi::_3))]
      | (qi::lit("service") >> token >> qi::lit("add") >> token)
-         [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1, qi::_2)]
+         [(pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1, qi::_2))]
      | (qi::omit[token >> token]) // ignore: {address|service} grpName
     ) >> qi::omit[*token] // comments
     ;
@@ -165,37 +165,36 @@ Parser::Parser() : Parser::base_type(start)
   // id number set src-address|dst-address|service|log value
   policy =
     (qi::lit("id") >> qi::uint_)
-      [pnx::bind(&Parser::updateCurRuleId, this, qi::_1)] >>
+      [(pnx::bind(&Parser::updateCurRuleId, this, qi::_1))] >>
     (  (qi::lit("from") >> token >> qi::lit("to") >> token >>
         token >> token >> token >> +token)
-          [pnx::bind(&Parser::addRule, this,
-                     qi::_1, qi::_2, qi::_3, qi::_4, qi::_5, qi::_6)]
+          [(pnx::bind(&Parser::addRule, this,
+                      qi::_1, qi::_2, qi::_3, qi::_4, qi::_5, qi::_6))]
      | (qi::lit("disable"))
-         [pnx::bind(&Parser::disableRule, this)]
+         [(pnx::bind(&Parser::disableRule, this))]
      | (qi::eol >>
         *(qi::lit("set") >> token >> (token | qi::as_string[qi::attr("")]) >>
           qi::omit[*token] >> qi::eol)
-            [pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2)] >>
+            [(pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2))] >>
         qi::lit("exit")
        )
      | (token >> qi::omit[*token] >> qi::eol)
-        [pnx::bind(&Parser::unsup, this, qi::_1)]
+        [(pnx::bind(&Parser::unsup, this, qi::_1))]
     )
     ;
 
   // route ip/prefix interface ifaceName [gateway ip]
   route =
-    (ipAddr >> qi::lit("interface") >> token [qi::_a = qi::_1])
-       [pnx::bind(&Parser::setIfaceRoute, this, qi::_a, qi::_1)] >>
+    (ipAddr >> qi::lit("interface") >> token [(qi::_a = qi::_1)])
+       [(pnx::bind(&Parser::setIfaceRoute, this, qi::_a, qi::_1))] >>
     (-qi::lit("gateway") >> ipAddr)
-      [pnx::bind(&Parser::setIfaceGateway, this, qi::_a, qi::_1)]
+      [(pnx::bind(&Parser::setIfaceGateway, this, qi::_a, qi::_1))]
     ;
 
   routes =
     ("static route" >> ipAddr >> "next-hop" >> ipAddr)
-      [pnx::bind(&Parser::setIfaceRoute, this, "", qi::_1),
-       pnx::bind(&Parser::setIfaceGateway, this, "", qi::_2)
-      ]
+      [(pnx::bind(&Parser::setIfaceRoute, this, "", qi::_1),
+        pnx::bind(&Parser::setIfaceGateway, this, "", qi::_2))]
     ;
 
   vrouter =

@@ -56,14 +56,13 @@ class Parser :
          qi::lit("PID:") >> token >> -qi::lit(',') >>
          qi::lit("VID:") >> token >> -qi::lit(',') >>
          qi::lit("SN:") >> token)
-           [qi::_val = pnx::construct<DevInfo>(),
-            pnx::bind(&DevInfo::setVendor, &qi::_val, VENDOR),
-            pnx::bind(&DevInfo::setDeviceType, &qi::_val, qi::_1),
-            pnx::bind(&DevInfo::setDescription, &qi::_val, qi::_2),
-            pnx::bind(&DevInfo::setModel, &qi::_val, qi::_3),
-            pnx::bind(&DevInfo::setHardwareRevision, &qi::_val, qi::_4),
-            pnx::bind(&DevInfo::setSerialNumber, &qi::_val, qi::_5)
-           ]
+           [(qi::_val = pnx::construct<DevInfo>(),
+             pnx::bind(&DevInfo::setVendor, &qi::_val, VENDOR),
+             pnx::bind(&DevInfo::setDeviceType, &qi::_val, qi::_1),
+             pnx::bind(&DevInfo::setDescription, &qi::_val, qi::_2),
+             pnx::bind(&DevInfo::setModel, &qi::_val, qi::_3),
+             pnx::bind(&DevInfo::setHardwareRevision, &qi::_val, qi::_4),
+             pnx::bind(&DevInfo::setSerialNumber, &qi::_val, qi::_5))]
         ;
 
       token =

@@ -42,8 +42,8 @@ Parser::Parser() : Parser::base_type(start)
 
   start =
     config
-      [pnx::bind([&](){d.devInfo.setVendor("cisco");}),
-       qi::_val = pnx::bind(&Parser::getData, this)]
+      [(pnx::bind([&](){d.devInfo.setVendor("cisco");}),
+        qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   // Unknown where belongs
@@ -51,30 +51,30 @@ Parser::Parser() : Parser::base_type(start)
 
   config =
     *(  (qi::lit("no cdp") >> (qi::lit("run") | qi::lit("enable")) > qi::eol)
-           [pnx::bind(&Parser::globalCdpEnabled, this) = false]
+           [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
 
       | ((qi::string("PIX") | qi::string("ASA"))
          >> qi::lit("Version") > *token > qi::eol)
-          [pnx::bind(&Parser::globalCdpEnabled, this) = false]
+          [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
 
       | (qi::lit("spanning-tree portfast") >>
           (  qi::lit("bpduguard")
-               [pnx::bind(&Parser::globalBpduGuardEnabled, this) = true]
+               [(pnx::bind(&Parser::globalBpduGuardEnabled, this) = true)]
            | qi::lit("bpdufilter")
-               [pnx::bind(&Parser::globalBpduFilterEnabled, this) = true]
+               [(pnx::bind(&Parser::globalBpduFilterEnabled, this) = true)]
           ) > *token > qi::eol)
 
       | (qi::lit("aaa ") >> tokens >> qi::eol)
-            [pnx::bind(&Parser::deviceAaaAdd, this, qi::_1)]
+            [(pnx::bind(&Parser::deviceAaaAdd, this, qi::_1))]
 
       | globalServices
 
       | domainData
       | (interface)
-          [pnx::bind(&Parser::vlanAddIfaceData, this)]
+          [(pnx::bind(&Parser::vlanAddIfaceData, this))]
       | route
       | vlan
-          [pnx::bind(&Parser::vlanAdd, this, qi::_1)]
+          [(pnx::bind(&Parser::vlanAdd, this, qi::_1))]
       | networkBooks
       | serviceBooks
       | accessPolicyRelated
@@ -87,12 +87,12 @@ Parser::Parser() : Parser::base_type(start)
 
   domainData =
     ( ((qi::lit("switchname") | qi::lit("hostname")) > domainName > qi::eol)
-          [pnx::bind([&](const std::string& val)
-                     {d.devInfo.setDeviceId(val);}, qi::_1)]
+          [(pnx::bind([&](const std::string& val)
+                      {d.devInfo.setDeviceId(val);}, qi::_1))]
      | (qi::lit("ip domain-name") > domainName > qi::eol)
-          [pnx::bind(&Parser::unsup, this, "ip domain-name")]
+          [(pnx::bind(&Parser::unsup, this, "ip domain-name"))]
      | (qi::lit("domain-name") >> domainName >> qi::eol)
-          [pnx::bind(&Parser::unsup, this, "domain-name")]
+          [(pnx::bind(&Parser::unsup, this, "domain-name"))]
     )
     ;
 
@@ -103,25 +103,25 @@ Parser::Parser() : Parser::base_type(start)
     (qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
        // ip_mask ip
     (  (ipMask >> ipAddr)
-         [pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2)]
+         [(pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2))]
        // ip_mask iface
      | (ipMask >> (!(qi::digit | qi::lit("permanent")) >> token))
-         [pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2)]
+         [(pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2))]
        // ip ip
      | (ipAddr >> ipAddr)
-         [pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2)]
+         [(pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2))]
        // ip iface
      | (ipAddr >> token)
-         [pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2)]
+         [(pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2))]
     ) > -(qi::uint_ | qi::lit("permanent")) > qi::eol
     ;
 
   vlan =
     (qi::lit("vlan") >> qi::ushort_ >> qi::eol)
-       [pnx::bind(&nmdo::Vlan::setId, &qi::_val, qi::_1)] >>
+       [(pnx::bind(&nmdo::Vlan::setId, &qi::_val, qi::_1))] >>
     *(indent >>
       (  (qi::lit("name") >> token)
-            [pnx::bind(&nmdo::Vlan::setDescription, &qi::_val, qi::_1)]
+            [(pnx::bind(&nmdo::Vlan::setDescription, &qi::_val, qi::_1))]
        | (qi::omit[+token]) // Ignore all other settings
       ) >> qi::eol
     )
@@ -130,66 +130,66 @@ Parser::Parser() : Parser::base_type(start)
   interface =
     qi::no_skip[qi::lit("interface")] >>
     (  (token >> token > qi::eol)
-          [pnx::bind(&Parser::ifaceInit, this, qi::_1 + " " + qi::_2)]
+          [(pnx::bind(&Parser::ifaceInit, this, qi::_1 + " " + qi::_2))]
      | (token > qi::eol)
-          [pnx::bind(&Parser::ifaceInit, this, qi::_1)]
+          [(pnx::bind(&Parser::ifaceInit, this, qi::_1))]
     ) >>
     *(indent >>
       qi::matches[qi::lit("no")]
-        [pnx::bind(&Parser::isNo, this) = qi::_1] >>
+        [(pnx::bind(&Parser::isNo, this) = qi::_1)] >>
       (  (qi::lit("inherit port-profile"))
-            [pnx::bind(&Parser::unsup, this, "port-profile")]
+            [(pnx::bind(&Parser::unsup, this, "port-profile"))]
        | (qi::lit("description") >> tokens)
-            [pnx::bind(&nmdo::InterfaceNetwork::setDescription,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
+            [(pnx::bind(&nmdo::InterfaceNetwork::setDescription,
+                        pnx::bind(&Parser::tgtIface, this), qi::_1))]
        | (qi::lit("shutdown"))
-            [pnx::bind([&](){tgtIface->setState(isNo);})]
+            [(pnx::bind([&](){tgtIface->setState(isNo);}))]
        | (qi::lit("cdp enable"))
-            [pnx::bind([&](){tgtIface->setDiscoveryProtocol(!isNo);}),
-             pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificCdp)]
+            [(pnx::bind([&](){tgtIface->setDiscoveryProtocol(!isNo);}),
+             pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificCdp))]
 
        | ((qi::lit("ipv6") | qi::lit("ip")) >> -qi::lit("-")
           >> qi::lit("address") >>
           (  (ipMask)
-               [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
+               [(pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
+                           pnx::bind(&Parser::tgtIface, this), qi::_1))]
            | (ipAddr)
-               [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                          pnx::bind(&Parser::tgtIface, this), qi::_1)]
+               [(pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
+                           pnx::bind(&Parser::tgtIface, this), qi::_1))]
            | (domainName >> ipAddr)
-               [pnx::bind(&Parser::ifaceAddAlias, this, qi::_1, qi::_2)]
+               [(pnx::bind(&Parser::ifaceAddAlias, this, qi::_1, qi::_2))]
            | (domainName)
-               [pnx::bind(&Parser::ifaceAddAlias, this,
-                          qi::_1, nmdo::IpAddress())]
+               [(pnx::bind(&Parser::ifaceAddAlias, this,
+                           qi::_1, nmdo::IpAddress()))]
           )
          )
 
        | (qi::lit("ip helper-address")
           >> -((qi::lit("vrf") > qi::omit[token]) | qi::lit("global"))
           >> ipAddr > -tokens)
-            [pnx::bind(&Parser::serviceAddDhcp, this, qi::_1)]
+            [(pnx::bind(&Parser::serviceAddDhcp, this, qi::_1))]
        | (qi::lit("ip dhcp relay address") >> ipAddr)
-            [pnx::bind(&Parser::serviceAddDhcp, this, qi::_1)]
+            [(pnx::bind(&Parser::serviceAddDhcp, this, qi::_1))]
 
        | (qi::lit("ip access-group") >> token >> token)
-            [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, "")]
+            [(pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, ""))]
        | (qi::lit("service-policy") >> token >> token)
-            [pnx::bind(&Parser::createServicePolicy, this, qi::_1, qi::_2)]
+            [(pnx::bind(&Parser::createServicePolicy, this, qi::_1, qi::_2))]
 
        | (qi::lit("nameif") >> token)
-            [pnx::bind([&](const std::string& val)
-                       {ifaceAliases.emplace(val, tgtIface);}, qi::_1)]
+            [(pnx::bind([&](const std::string& val)
+                        {ifaceAliases.emplace(val, tgtIface);}, qi::_1))]
 
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
        | (qi::lit("standby") >> qi::int_ >> qi::lit("ip")
           >> ipAddr >> -qi::lit("secondary"))
-            [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                       pnx::bind(&Parser::tgtIface, this), qi::_2)]
+            [(pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
+                        pnx::bind(&Parser::tgtIface, this), qi::_2))]
        // Capture Cisco N1000V virtual switches
        | (qi::lit("vmware vm mac") >> macAddr)
-            [pnx::bind(&nmdo::InterfaceNetwork::addReachableMac,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
+            [(pnx::bind(&nmdo::InterfaceNetwork::addReachableMac,
+                        pnx::bind(&Parser::tgtIface, this), qi::_1))]
        /* END: No examples of these, cannot verify */
 
        | switchport
@@ -205,21 +205,21 @@ Parser::Parser() : Parser::base_type(start)
     // NOTE None handle when an alias is used instead of an IP
     (  ((qi::lit("sntp") | qi::lit("ntp")) >> qi::lit("server")
         > -(qi::lit("vrf") > token)
-        > (  ipAddr [pnx::bind(&Parser::serviceAddNtp, this, qi::_1)]
+        > (  ipAddr [(pnx::bind(&Parser::serviceAddNtp, this, qi::_1))]
            | token
           ) > -tokens > qi::eol)
       | (qi::lit("snmp-server host")
-         > ( ipAddr [pnx::bind(&Parser::serviceAddSnmp, this, qi::_1)]
+         > ( ipAddr [(pnx::bind(&Parser::serviceAddSnmp, this, qi::_1))]
             | token
            ) > -tokens > qi::eol)
       | (qi::lit("radius-server host")
-         >> ipAddr [pnx::bind(&Parser::serviceAddRadius, this, qi::_1)]
+         >> ipAddr [(pnx::bind(&Parser::serviceAddRadius, this, qi::_1))]
          > -tokens > qi::eol)
       | (qi::lit("ip name-server") > -(qi::lit("vrf") > token)
-         > +ipAddr [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
+         > +ipAddr [(pnx::bind(&Parser::serviceAddDns, this, qi::_1))]
          > qi::eol)
       | (qi::lit("logging server")
-         > ipAddr [pnx::bind(&Parser::serviceAddSyslog, this, qi::_1)]
+         > ipAddr [(pnx::bind(&Parser::serviceAddSyslog, this, qi::_1))]
          > -tokens > qi::eol)
     )
     ;
@@ -227,8 +227,8 @@ Parser::Parser() : Parser::base_type(start)
   switchport =
     qi::lit("switchport") >>
     (  ((qi::lit("mode") > token) | qi::string("nonegotiate"))
-          [pnx::bind(&nmdo::InterfaceNetwork::setSwitchportMode,
-                     pnx::bind(&Parser::tgtIface, this), "L2 " + qi::_1)]
+          [(pnx::bind(&nmdo::InterfaceNetwork::setSwitchportMode,
+                      pnx::bind(&Parser::tgtIface, this), "L2 " + qi::_1))]
 
      | switchportPortSecurity
      | switchportVlan
@@ -239,23 +239,23 @@ Parser::Parser() : Parser::base_type(start)
     (
        (qi::lit("mac-address ")
         > -qi::lit("sticky")
-            [pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);})]
+            [(pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);}))]
         > -macAddr
-            [pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
-                       pnx::bind(&Parser::tgtIface, this), qi::_1)]
+            [(pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
+                        pnx::bind(&Parser::tgtIface, this), qi::_1))]
        )
      | ((qi::lit("maximum") >> qi::ushort_)
-          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
+          [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
+                      pnx::bind(&Parser::tgtIface, this), qi::_1))]
          > -(qi::lit("vlan") > qi::ushort_)
-          [pnx::bind(&Parser::unsup, this,
-                     "switchport port-security maximum COUNT vlan ID")]
+          [(pnx::bind(&Parser::unsup, this,
+                      "switchport port-security maximum COUNT vlan ID"))]
        )
      | (qi::lit("violation") >> token)
-          [pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
-                     pnx::bind(&Parser::tgtIface, this), qi::_1)]
+          [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
+                      pnx::bind(&Parser::tgtIface, this), qi::_1))]
      | (&qi::eol)
-          [pnx::bind([&](){tgtIface->setPortSecurity(!isNo);})]
+          [(pnx::bind([&](){tgtIface->setPortSecurity(!isNo);}))]
     )
     ;
   switchportVlan =
@@ -267,82 +267,82 @@ Parser::Parser() : Parser::base_type(start)
     >> qi::lit("vlan") > -qi::lit("add")
     > (  ((vlanRange | vlanId) % qi::lit(','))
        | (tokens)
-            [pnx::bind(&Parser::unsup, this,
-                       "switchport " + qi::_a + qi::_b + "vlan " + qi::_1)]
+            [(pnx::bind(&Parser::unsup, this,
+                        "switchport " + qi::_a + qi::_b + "vlan " + qi::_1))]
       )
 
     ;
   vlanRange =
     (qi::ushort_ >> qi::lit('-') >> qi::ushort_)
-      [pnx::bind(&nmdo::InterfaceNetwork::addVlanRange,
-                 pnx::bind(&Parser::tgtIface, this),
-                 qi::_1, qi::_2)]
+      [(pnx::bind(&nmdo::InterfaceNetwork::addVlanRange,
+                  pnx::bind(&Parser::tgtIface, this),
+                  qi::_1, qi::_2))]
     ;
   vlanId =
     qi::ushort_
-      [pnx::bind(&nmdo::InterfaceNetwork::addVlan,
-                 pnx::bind(&Parser::tgtIface, this), qi::_1)]
+      [(pnx::bind(&nmdo::InterfaceNetwork::addVlan,
+                  pnx::bind(&Parser::tgtIface, this), qi::_1))]
     ;
 
   spanningTree =
     qi::lit("spanning-tree") >
       // NOTE All have "default" values which require knowing edge-port state
     (  (qi::lit("bpduguard")
-         [pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
-          pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard)] >
+         [(pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
+           pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard))] >
         -(  qi::lit("enable")
-             [pnx::bind([&](){tgtIface->setBpduGuard(true);})]
+             [(pnx::bind([&](){tgtIface->setBpduGuard(true);}))]
          | qi::lit("disable")
-             [pnx::bind([&](){tgtIface->setBpduGuard(false);})]
+             [(pnx::bind([&](){tgtIface->setBpduGuard(false);}))]
         )
        )
      | (qi::lit("bpdufilter")
-         [pnx::bind([&](){tgtIface->setBpduFilter(!isNo);}),
-          pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduFilter)] >
+         [(pnx::bind([&](){tgtIface->setBpduFilter(!isNo);}),
+           pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduFilter))] >
         -(  qi::lit("enable")
-             [pnx::bind([&](){tgtIface->setBpduFilter(true);})]
+             [(pnx::bind([&](){tgtIface->setBpduFilter(true);}))]
          | qi::lit("disable")
-             [pnx::bind([&](){tgtIface->setBpduFilter(false);})]
+             [(pnx::bind([&](){tgtIface->setBpduFilter(false);}))]
         )
        )
      | ((qi::lit("port type") | qi::lit("portfast")) >>
         (  qi::lit("edge")    // == portfast on
-             [pnx::bind([&](){tgtIface->setPortfast(true);})]
+             [(pnx::bind([&](){tgtIface->setPortfast(true);}))]
          | qi::lit("network") // == portfast off
-             [pnx::bind([&](){tgtIface->setPortfast(false);})]
+             [(pnx::bind([&](){tgtIface->setPortfast(false);}))]
          | qi::lit("normal")  // == default
         )
        )
      | (qi::lit("portfast"))
-          [pnx::bind([&](){tgtIface->setPortfast(!isNo);})]
+          [(pnx::bind([&](){tgtIface->setPortfast(!isNo);}))]
      | tokens
-         [pnx::bind(&Parser::unsup, this, "spanning-tree " + qi::_1)]
+         [(pnx::bind(&Parser::unsup, this, "spanning-tree " + qi::_1))]
     )
     ;
 
   accessPolicyRelated =
     (  (qi::lit("policy-map") >> policyMap)
      | (qi::lit("class-map") >> classMap)
-     | aclRuleBook [pnx::bind(&Parser::aclRuleBookAdd, this, qi::_1)]
+     | aclRuleBook [(pnx::bind(&Parser::aclRuleBookAdd, this, qi::_1))]
        // access-group ac-list {in|out} interface ifaceName
      | (qi::lit("access-group") >> token >> token >>
         qi::lit("interface") >> token)
-          [pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3)]
+          [(pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3))]
     )
     ;
 
   policyMap =
-    token [qi::_a = qi::_1] >> qi::eol >>
+    token [(qi::_a = qi::_1)] >> qi::eol >>
     *(  (indent >> qi::lit("class") >> token >> qi::eol)
-          [pnx::bind(&Parser::updatePolicyMap, this, qi::_a, qi::_1)]
+          [(pnx::bind(&Parser::updatePolicyMap, this, qi::_a, qi::_1))]
       | qi::omit[(+indent >> tokens >> qi::eol)]
     )
     ;
 
   classMap =
-    qi::omit[token] >> token [qi::_a = qi::_1] >> qi::eol >>
+    qi::omit[token] >> token [(qi::_a = qi::_1)] >> qi::eol >>
     *(  (indent >> qi::lit("match access-group name") >> token >> qi::eol)
-          [pnx::bind(&Parser::updateClassMap, this, qi::_a, qi::_1)]
+          [(pnx::bind(&Parser::updateClassMap, this, qi::_a, qi::_1))]
       | qi::omit[(+indent >> tokens >> qi::eol)]
     )
     ;
@@ -350,8 +350,8 @@ Parser::Parser() : Parser::base_type(start)
   // General Helper(s)
   ipMask =
     (ipAddr >> +qi::blank >> ipAddr)
-      [pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_3),
-       qi::_val = qi::_1]
+      [(pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_3),
+        qi::_val = qi::_1)]
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
