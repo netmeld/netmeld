@@ -123,10 +123,23 @@ namespace netmeld::core::objects {
     return oss.str();
   }
 
-  bool
-  operator<(const Time& t1, const Time& t2)
+  std::strong_ordering
+  Time::operator<=>(const Time& rhs) const
   {
-    return t1.time < t2.time;
+    // boost::posix_time::ptime doesn't have operator<=>() yet.
+    if (time < rhs.time) {
+      return std::strong_ordering::less;
+    }
+    if (time > rhs.time) {
+      return std::strong_ordering::greater;
+    }
+    return std::strong_ordering::equal;
+  }
+
+  bool
+  Time::operator==(const Time& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 
   std::ostream&

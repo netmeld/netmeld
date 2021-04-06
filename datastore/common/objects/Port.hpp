@@ -27,6 +27,7 @@
 #ifndef PORT_HPP
 #define PORT_HPP
 
+#include <compare>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
 
@@ -40,10 +41,9 @@ namespace netmeld::datastore::objects {
     protected:
       int           port {INT_MAX};
       std::string   protocol;
-
-      IpAddress     ipAddr;
       std::string   state;
       std::string   reason;
+      IpAddress     ipAddr;
 
     public:
 
@@ -78,7 +78,8 @@ namespace netmeld::datastore::objects {
 
       std::string toDebugString() const override;
 
-      friend bool operator==(const Port&, const Port&);
+      std::partial_ordering operator<=>(const Port&) const;
+      bool operator==(const Port&) const;
   };
 }
 #endif //PORT_HPP

@@ -167,21 +167,4 @@ namespace netmeld::datastore::objects {
 
     return oss.str();
   }
-
-  bool
-  operator<(const IpAddress& first, const IpAddress& second)
-  {
-    return first.address < second.address;
-  }
-
-  bool
-  operator==(const IpAddress& first, const IpAddress& second)
-  {
-    return first.address == second.address
-        && first.prefix == second.prefix
-        && first.reason == second.reason
-        && boost::math::epsilon_difference(first.extraWeight, second.extraWeight) <= 1000.0
-        && first.isResponding == second.isResponding
-        && first.aliases == second.aliases;
-  }
 }

@@ -27,6 +27,7 @@
 #ifndef IP_NETWORK_HPP
 #define IP_NETWORK_HPP
 
+#include <compare>
 #include <boost/asio/ip/address.hpp>
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
@@ -108,8 +109,8 @@ namespace netmeld::datastore::objects {
       */
       bool setMask(const IpNetwork&);
 
-      friend bool operator<(const IpNetwork&, const IpNetwork&);
-      friend bool operator==(const IpNetwork&, const IpNetwork&);
+      std::partial_ordering operator<=>(const IpNetwork&) const;
+      bool operator==(const IpNetwork&) const;
   };
 }
 #endif // IP_NETWORK_HPP
