@@ -40,14 +40,14 @@ namespace netmeld::datastore::importers::cisco {
 
     start =
       ciscoNetworkBook
-       [qi::_val = pnx::bind(&CiscoNetworkBook::getData, this)]
+       [(qi::_val = pnx::bind(&CiscoNetworkBook::getData, this))]
       ;
 
     ciscoNetworkBook =
       (  nameLine
        | objectNetwork
        | objectGroupNetwork
-      ) [pnx::bind(&CiscoNetworkBook::finalizeCurBook, this)]
+      ) [(pnx::bind(&CiscoNetworkBook::finalizeCurBook, this))]
       ;
 
     nameLine =
@@ -113,8 +113,8 @@ namespace netmeld::datastore::importers::cisco {
     // Helper piece-wise rules
     //========
     bookName =
-      token [pnx::bind([&](const std::string& _name)
-                       {curBook.setName(_name);}, qi::_1)]
+      token [(pnx::bind([&](const std::string& _name)
+                        {curBook.setName(_name);}, qi::_1))]
       ;
 
     description =
@@ -129,22 +129,22 @@ namespace netmeld::datastore::importers::cisco {
       ;
     dataIp =
       (&ipNoPrefix > ipAddr)
-        [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
+        [(pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1))]
       ;
     dataIpPrefix =
       (&((ipNoPrefix >> qi::eol) | (!ipNoPrefix)) >> ipAddr)
-        [pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1)]
+        [(pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1))]
       ;
     dataIpMask =
       (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank] >> &ipNoPrefix >> ipAddr)
-        [pnx::bind(&CiscoNetworkBook::fromIpMask, this, qi::_1, qi::_2)]
+        [(pnx::bind(&CiscoNetworkBook::fromIpMask, this, qi::_1, qi::_2))]
       ;
     dataIpRange =
       (ipAddr >> qi::omit[+qi::blank] >> ipAddr)
-        [pnx::bind(&CiscoNetworkBook::fromIpRange, this, qi::_1, qi::_2)]
+        [(pnx::bind(&CiscoNetworkBook::fromIpRange, this, qi::_1, qi::_2))]
       ;
     dataString =
-      token [pnx::bind(&CiscoNetworkBook::addData, this, qi::_1)]
+      token [(pnx::bind(&CiscoNetworkBook::addData, this, qi::_1))]
       ;
 
     objectArgument =
@@ -152,8 +152,8 @@ namespace netmeld::datastore::importers::cisco {
       ;
     dataNetworkObjectMask =
       (&(!ipAddr) >> token >> ipAddr)
-        [pnx::bind(&CiscoNetworkBook::fromNetworkObjectMask,
-                   this, qi::_1, qi::_2)]
+        [(pnx::bind(&CiscoNetworkBook::fromNetworkObjectMask,
+                    this, qi::_1, qi::_2))]
       ;
 
 

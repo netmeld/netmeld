@@ -34,24 +34,24 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     (config)
-      [pnx::bind(&Parser::setVendor, this, "brocade"),
-       qi::_val = pnx::bind(&Parser::getData, this)]
+      [(pnx::bind(&Parser::setVendor, this, "brocade"),
+        qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
     *(
         (qi::lit("SwitchName =") >> domainName >> qi::eol)
-           [pnx::bind(&Parser::setDevId, this, qi::_1)]
+           [(pnx::bind(&Parser::setDevId, this, qi::_1))]
       | (qi::lit("[Boot Parameters]") >> qi::eol >> bootIface)
-           [pnx::bind(&Parser::addIface, this, qi::_1)]
+           [(pnx::bind(&Parser::addIface, this, qi::_1))]
       | (qi::lit("fc4.fcp.vendorId:") >> token >> qi::eol)
-           [pnx::bind(&Parser::updateVendor, this, qi::_1)]
+           [(pnx::bind(&Parser::updateVendor, this, qi::_1))]
       | (qi::lit("fc4.fcp.productId:") >> tokens >> qi::eol)
-           [pnx::bind(&Parser::updateProduct, this, qi::_1)]
+           [(pnx::bind(&Parser::updateProduct, this, qi::_1))]
       | (qi::lit("ts.clockServer:") >> ipAddr >> qi::eol)
-           [pnx::bind(&Parser::addNtpService, this, qi::_1)]
+           [(pnx::bind(&Parser::addNtpService, this, qi::_1))]
       | (qi::lit("ts.clockServerList:") >> +(ipAddr >> -qi::lit(";"))
-           [pnx::bind(&Parser::addNtpService, this, qi::_1)])
+           [(pnx::bind(&Parser::addNtpService, this, qi::_1))])
       | ignoredLine
      )
     ;
@@ -59,14 +59,14 @@ Parser::Parser() : Parser::base_type(start)
   bootIface =
     *(!qi::lit("[") >>
       (  (qi::lit("boot.ipa:") >> ipAddr)
-            [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress, &qi::_val, qi::_1)]
+            [(pnx::bind(&nmdo::InterfaceNetwork::addIpAddress, &qi::_val, qi::_1))]
        | (qi::lit("boot.mac:10:00:") >> macAddr) // macaddr8...great
-            [pnx::bind(&nmdo::InterfaceNetwork::setMacAddress, &qi::_val, qi::_1)]
+            [(pnx::bind(&nmdo::InterfaceNetwork::setMacAddress, &qi::_val, qi::_1))]
        | (qi::lit("boot.device:") >> token)
-            [qi::_a = qi::_1,
-             pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_1)]
+            [(qi::_a = qi::_1,
+              pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_1))]
        | (qi::lit("boot.gateway.ipa:") >> ipAddr)
-            [pnx::bind(&Parser::addIfaceRoute, this, qi::_1, qi::_a)]
+            [(pnx::bind(&Parser::addIfaceRoute, this, qi::_1, qi::_a))]
        | (qi::omit[+token])
       ) >> qi::eol
      )

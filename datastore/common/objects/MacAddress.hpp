@@ -27,6 +27,7 @@
 #ifndef MAC_ADDRESS_HPP
 #define MAC_ADDRESS_HPP
 
+#include <compare>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
 
@@ -40,7 +41,7 @@ namespace netmeld::datastore::objects {
     private:
     protected:
       std::vector<uint8_t>    macAddr;
-      std::vector<IpAddress>  ipAddrs;
+      std::set<IpAddress>     ipAddrs;
       bool                    isResponding {false};
 
     public:
@@ -78,8 +79,8 @@ namespace netmeld::datastore::objects {
       std::string toString() const;
       std::string toDebugString() const override;
 
-      friend bool operator<(const MacAddress&, const MacAddress&);
-      friend bool operator==(const MacAddress&, const MacAddress&);
+      std::partial_ordering operator<=>(const MacAddress&) const;
+      bool operator==(const MacAddress&) const;
   };
 }
 #endif // MAC_ADDRESS_HPP

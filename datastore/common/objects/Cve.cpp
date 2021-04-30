@@ -124,14 +124,25 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  bool
-  operator==(const Cve& first, const Cve& second)
+  std::partial_ordering
+  Cve::operator<=>(const Cve& rhs) const
   {
-    return first.year == second.year
-        && first.number == second.number
-        && first.port == second.port
-        && first.pluginId == second.pluginId
-        ;
+    if (auto cmp = year <=> rhs.year; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = number <=> rhs.number; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = port <=> rhs.port; 0 != cmp) {
+      return cmp;
+    }
+    return pluginId <=> rhs.pluginId;
+  }
+
+  bool
+  Cve::operator==(const Cve& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }
 

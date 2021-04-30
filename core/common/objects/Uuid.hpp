@@ -27,6 +27,7 @@
 #ifndef UUID_HPP
 #define UUID_HPP
 
+#include <compare>
 #include <string>
 
 #include <boost/uuid/uuid.hpp>
@@ -74,7 +75,9 @@ namespace netmeld::core::objects {
       std::string toString() const;
       std::string toDebugString() const;
 
-      friend bool operator==(const Uuid&, const Uuid&);
+      std::strong_ordering operator<=>(const Uuid&) const;
+      bool operator==(const Uuid&) const;
+
       friend std::ostream& operator<<(std::ostream&, const Uuid&);
   };
 }

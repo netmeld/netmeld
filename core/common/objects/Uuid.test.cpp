@@ -40,6 +40,8 @@ class TestUuid : public nmco::Uuid {
     explicit TestUuid(uuids::uuid _id) : Uuid(_id) {};
     explicit TestUuid(const std::string& _id) : Uuid(_id) {};
 
+    auto operator<=>(const TestUuid&) const = default;
+
   public:
     uuids::uuid getUuid() const
     { return uuid; }

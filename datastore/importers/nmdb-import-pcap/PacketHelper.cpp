@@ -90,7 +90,7 @@ PacketHelper::getPayloadProtocol(const VlanHeader* ph)
 nmdo::Vlan
 PacketHelper::getVlan(const VlanHeader* ph)
 {
-  auto vlanId = ntohs(ph->tagControl) & 0x0FFF;
+  uint16_t vlanId = ntohs(ph->tagControl) & 0x0FFF;
   return nmdo::Vlan(vlanId);
 }
 
@@ -116,12 +116,12 @@ PacketHelper::getSrcIpAddr(const ArpHeader* ph)
 uint8_t
 PacketHelper::getPayloadProtocol(const Ipv4Header* ph)
 {
-  return (ntohs(ph->payloadProtocol) >> 8);
+  return static_cast<uint8_t>(ntohs(ph->payloadProtocol) >> 8);
 }
 uint8_t
 PacketHelper::getPayloadProtocol(const Ipv6Header* ph)
 {
-  return (ntohs(ph->payloadProtocol) >> 8);
+  return static_cast<uint8_t>(ntohs(ph->payloadProtocol) >> 8);
 }
 nmdo::IpAddress
 PacketHelper::getSrcIpAddr(const Ipv4Header* ph)
@@ -151,7 +151,7 @@ PacketHelper::getDstPort(const UdpHeader* _uh)
 {
   return ntohs(_uh->dstPort);
 }
-uint16_t
+size_t
 PacketHelper::getLength(const UdpHeader* _uh)
 {
   return ntohs(_uh->length);
@@ -169,11 +169,11 @@ PacketHelper::getDstPort(const TcpHeader* _th)
 {
   return ntohs(_th->dstPort);
 }
-uint8_t
+size_t
 PacketHelper::getLength(const TcpHeader* _th)
 {
   uint8_t length = ((_th->flags)>>4)&0x0F;
-  return (length*4);;
+  return (length*4U);
 }
 
 

@@ -29,6 +29,8 @@
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
+#include <boost/math/special_functions/relative_difference.hpp>
+
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmcu = netmeld::core::utils;
 
@@ -56,15 +58,15 @@ namespace netmeld::datastore::objects {
     if (4 == size) {
       oss << std::dec;
       for (size_t i {0}; i < size; i++) {
-        oss << static_cast<unsigned int>(_addr.at(i));
+        oss << static_cast<uint16_t>(_addr.at(i));
         if (size > (i+1)) { oss << "."; }
       }
       setAddress(oss.str());
     } else if (16 == size) {
       oss << std::hex;
       for (size_t i {0}; i < size; i+=2) {
-        oss << static_cast<unsigned int>(_addr.at(i))
-            << static_cast<unsigned int>(_addr.at(i+1));
+        oss << static_cast<uint16_t>(_addr.at(i))
+            << static_cast<uint16_t>(_addr.at(i+1));
         if (size > (i+2)) { oss << ":"; }
       }
       setAddress(oss.str());
@@ -183,7 +185,7 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  IpNetwork::setExtraWeight(const uint32_t _extraWeight)
+  IpNetwork::setExtraWeight(const double _extraWeight)
   {
     extraWeight = _extraWeight;
   }
@@ -209,7 +211,7 @@ namespace netmeld::datastore::objects {
       }
     }
 
-    prefix = count;
+    prefix = static_cast<uint8_t>(count);
 
     return isContiguous;
   }
@@ -338,7 +340,7 @@ namespace netmeld::datastore::objects {
       toString(),
       fullReason); // insert converts '' to null
 
-    if (0 < extraWeight) {
+    if (0.0 < extraWeight) {
       t.exec_prepared("insert_ip_net_extra_weight",
         toString(),
         extraWeight);
@@ -349,7 +351,7 @@ namespace netmeld::datastore::objects {
   IpNetwork::toString() const
   {
     std::ostringstream oss;
-    oss << getNetwork() << '/' << static_cast<unsigned int>(prefix);
+    oss << getNetwork() << '/' << static_cast<uint16_t>(prefix);
     return oss.str();
   }
 
@@ -370,19 +372,34 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  bool
-  operator<(const IpNetwork& first, const IpNetwork& second)
+  std::partial_ordering
+  IpNetwork::operator<=>(const IpNetwork& rhs) const
   {
-    return first.address < second.address;
+    // boost::asio::ip::address doesn't have operator<=>() yet.
+    if (address < rhs.address) {
+      return std::partial_ordering::less;
+    }
+    if (address > rhs.address) {
+      return std::partial_ordering::greater;
+    }
+
+    if (auto cmp = prefix <=> rhs.prefix; 0 != cmp) {
+      return cmp;
+    }
+
+    if (auto cmp = reason <=> rhs.reason; 0 != cmp) {
+      return cmp;
+    }
+
+    if (boost::math::epsilon_difference(extraWeight, rhs.extraWeight) <= 1000.0) {
+      return std::partial_ordering::equivalent;
+    }
+    return extraWeight <=> rhs.extraWeight;
   }
 
   bool
-  operator==(const IpNetwork& first, const IpNetwork& second)
+  IpNetwork::operator==(const IpNetwork& rhs) const
   {
-    return first.address == second.address
-        && first.prefix == second.prefix
-        && first.reason == second.reason
-        && first.extraWeight == second.extraWeight
-        ;
+    return 0 == operator<=>(rhs);
   }
 }

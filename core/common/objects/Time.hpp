@@ -27,6 +27,7 @@
 #ifndef TIME_HPP
 #define TIME_HPP
 
+#include <compare>
 #include <string>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -75,7 +76,9 @@ namespace netmeld::core::objects {
       std::string toIsoString() const;
       std::string toDebugString() const;
 
-      friend bool operator<(const Time&, const Time&);
+      std::strong_ordering operator<=>(const Time&) const;
+      bool operator==(const Time&) const;
+
       friend std::ostream& operator<<(std::ostream&, const Time&);
       friend std::istream& operator>>(std::istream&, Time&);
   };

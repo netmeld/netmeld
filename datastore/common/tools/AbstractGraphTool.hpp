@@ -45,7 +45,7 @@ namespace netmeld::datastore::tools {
 
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     protected:
       // Default constructor, provided only for convienence
@@ -53,6 +53,8 @@ namespace netmeld::datastore::tools {
       // Standard constructor, should be primary
       AbstractGraphTool(const char*, const char*, const char*);
 
+    public:
+      virtual ~AbstractGraphTool() = default;
 
     // =========================================================================
     // Methods

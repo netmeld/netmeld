@@ -37,7 +37,7 @@ set(PROJECT_GNU_COMMON_FLAGS
   "-Wfatal-errors"
   "-Wcast-align"
   "-Wcast-qual"
-  #"-Wconversion"
+  "-Wconversion"
   "-Wsign-conversion"
   "-Wsign-compare"
   "-Wfloat-equal"
@@ -47,7 +47,7 @@ set(PROJECT_GNU_COMMON_FLAGS
   "-Wredundant-decls"
   #"-Wshadow"
   "-Wswitch-default"
-  #"-Wswitch-enum"
+  "-Wswitch-enum"
   "-Wundef"
   "-Wuninitialized"
   "-Winit-self"
@@ -76,10 +76,11 @@ set(PROJECT_GNU_C_FLAGS
   )
 
 set(PROJECT_GNU_CXX_FLAGS
-    # Following line needed to use boost libraries > 1.62 with cmake
-    #"-DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION"
-  "-std=c++17"
+  # Following line needed to use boost libraries > 1.62 with cmake
+  #"-DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION"
+  "-std=c++20"
   #"-Weffc++"
+  "-Wnon-virtual-dtor"
   "-Wctor-dtor-privacy"
   "-Wold-style-cast"
   "-Woverloaded-virtual"

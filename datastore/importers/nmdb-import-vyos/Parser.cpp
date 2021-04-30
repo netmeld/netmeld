@@ -34,7 +34,7 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    (config) [qi::_val = pnx::bind(&Parser::getData, this)]
+    (config) [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
@@ -50,11 +50,11 @@ Parser::Parser() : Parser::base_type(start)
   system =
     qi::lit("system") >> startBlock >
     *(  (qi::lit("host-name") > token)
-          [pnx::bind(&Parser::unsup, this, "host-name " + qi::_1)]
+          [(pnx::bind(&Parser::unsup, this, "host-name " + qi::_1))]
       | (qi::lit("domain-name") > fqdn)
-          [pnx::bind(&Parser::unsup, this, "domain-name " + qi::_1)]
+          [(pnx::bind(&Parser::unsup, this, "domain-name " + qi::_1))]
       | (qi::lit("name-server") > ipAddr)
-          [pnx::bind(&Parser::serviceAddDns, this, qi::_1)]
+          [(pnx::bind(&Parser::serviceAddDns, this, qi::_1))]
       | (login)
 //      | (ntp)
       | ignoredBlock
@@ -63,20 +63,20 @@ Parser::Parser() : Parser::base_type(start)
 
   login =
     qi::lit("login") >> startBlock >
-    *(user [pnx::bind(&Parser::noteCredentials, this)]) > stopBlock
+    *(user [(pnx::bind(&Parser::noteCredentials, this))]) > stopBlock
     ;
 
   user =
     qi::lit("user") > token
-      [pnx::bind([&](const std::string& val){creds[1] = val;}, qi::_1)] >
+      [(pnx::bind([&](const std::string& val){creds[1] = val;}, qi::_1))] >
     startBlock >
     *(  (qi::lit("level") > token > qi::eol)
-           [pnx::bind([&](const std::string& val){creds[0] = val;}, qi::_1)]
+           [(pnx::bind([&](const std::string& val){creds[0] = val;}, qi::_1))]
       | (qi::lit("authentication") > startBlock >
          *(  (qi::lit("encrypted-password") > token > qi::eol)
-                [pnx::bind([&](const std::string& val){creds[2] = val;}, qi::_1)]
+                [(pnx::bind([&](const std::string& val){creds[2] = val;}, qi::_1))]
            | (qi::lit("plaintext-password") > token > qi::eol)
-                [pnx::bind([&](const std::string& val){creds[3] = val;}, qi::_1)]
+                [(pnx::bind([&](const std::string& val){creds[3] = val;}, qi::_1))]
          ) > stopBlock)
     ) > stopBlock
     ;
@@ -90,24 +90,24 @@ Parser::Parser() : Parser::base_type(start)
 
   interface =
     (token > token)
-      [pnx::bind(&Parser::ifaceInit, this, qi::_2),
-       pnx::bind(&nmdo::InterfaceNetwork::setMediaType,
-                 pnx::bind(&Parser::tgtIface, this),
-                 qi::_1)] >
+      [(pnx::bind(&Parser::ifaceInit, this, qi::_2),
+        pnx::bind(&nmdo::InterfaceNetwork::setMediaType,
+                  pnx::bind(&Parser::tgtIface, this),
+                  qi::_1))] >
     startBlock >
     *(  (qi::lit("address") >
          (  ipAddr
-              [pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                         pnx::bind(&Parser::tgtIface, this),
-                         qi::_1)]
+              [(pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
+                          pnx::bind(&Parser::tgtIface, this),
+                          qi::_1))]
           | token
-              [pnx::bind(&Parser::unsup, this, "address " + qi::_1)]
+              [(pnx::bind(&Parser::unsup, this, "address " + qi::_1))]
          )
         )
       | (qi::lit("description") > token)
-          [pnx::bind(&nmdo::InterfaceNetwork::setDescription,
-                     pnx::bind(&Parser::tgtIface, this),
-                     qi::_1)]
+          [(pnx::bind(&nmdo::InterfaceNetwork::setDescription,
+                      pnx::bind(&Parser::tgtIface, this),
+                      qi::_1))]
       | ifaceFirewall
       | ignoredBlock
     ) > stopBlock
@@ -117,11 +117,11 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("firewall") >> startBlock >
     *( (qi::lit("out") > startBlock >
         *((qi::lit("ipv6-name") | qi::lit("name")) > token > qi::eol)
-          [pnx::bind(&Parser::ruleAddSrcIface, this, qi::_1)]
+          [(pnx::bind(&Parser::ruleAddSrcIface, this, qi::_1))]
         > stopBlock)
      | ((qi::lit("in") | qi::lit("local")) > startBlock >
         *((qi::lit("ipv6-name") | qi::lit("name")) > token > qi::eol)
-          [pnx::bind(&Parser::ruleAddDstIface, this, qi::_1)]
+          [(pnx::bind(&Parser::ruleAddDstIface, this, qi::_1))]
         > stopBlock)
     ) > stopBlock
     ;
@@ -143,21 +143,21 @@ Parser::Parser() : Parser::base_type(start)
 
   addressGroup =
     qi::lit("address-group") > token
-      [pnx::bind(&Parser::tgtBook, this) = qi::_1] >
+      [(pnx::bind(&Parser::tgtBook, this) = qi::_1)] >
     startBlock >
     *(  (qi::lit("address") > ipAddr)
-          [pnx::bind(&Parser::netBookAddAddr, this, qi::_1)]
+          [(pnx::bind(&Parser::netBookAddAddr, this, qi::_1))]
       | ignoredBlock
     ) > stopBlock
     ;
 
   ruleSets =
     (qi::lit("ipv6-name")|qi::lit("name")) > token
-      [pnx::bind(&Parser::tgtZone, this) = qi::_1] >
+      [(pnx::bind(&Parser::tgtZone, this) = qi::_1)] >
     startBlock >
     *(  rule
       | (qi::lit("default-action") > token)
-          [pnx::bind(&Parser::defaultAction, this) = qi::_1]
+          [(pnx::bind(&Parser::defaultAction, this) = qi::_1)]
       | (qi::lit("enable-default-log"))
       | ignoredBlock
     ) > stopBlock
@@ -165,42 +165,42 @@ Parser::Parser() : Parser::base_type(start)
 
   rule =
     qi::lit("rule") > qi::ulong_
-      [pnx::bind(&Parser::ruleInit, this, qi::_1)] >
+      [(pnx::bind(&Parser::ruleInit, this, qi::_1))] >
     startBlock >
     *(  (qi::lit("action") > token)
-          [pnx::bind(&nmdo::AcRule::addAction,
-                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
+          [(pnx::bind(&nmdo::AcRule::addAction,
+                      pnx::bind(&Parser::tgtRule, this), qi::_1))]
       | (qi::lit("description") > token)
-          [pnx::bind(&nmdo::AcRule::setRuleDescription,
-                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
+          [(pnx::bind(&nmdo::AcRule::setRuleDescription,
+                      pnx::bind(&Parser::tgtRule, this), qi::_1))]
       | (qi::lit("state") > startBlock > +(token > qi::lit("enable") > qi::eol) 
-          [pnx::bind([&](std::string val){states.push_back(val);},
-                     qi::_1)] > stopBlock)
+          [(pnx::bind([&](std::string val){states.push_back(val);},
+                      qi::_1))] > stopBlock)
       | (qi::lit("protocol") > token)
-          [pnx::bind(&Parser::proto, this) = qi::_1]
+          [(pnx::bind(&Parser::proto, this) = qi::_1)]
       | destination
       | source
       | (qi::lit("log") > token)
       | (qi::lit("disable"))
-          [pnx::bind(&nmdo::AcRule::disable,
-                     pnx::bind(&Parser::tgtRule, this))]
+          [(pnx::bind(&nmdo::AcRule::disable,
+                      pnx::bind(&Parser::tgtRule, this)))]
       | ignoredBlock
     ) > stopBlock
-      [pnx::bind(&Parser::ruleAddService, this)]
+      [(pnx::bind(&Parser::ruleAddService, this))]
     ;
 
   destination =
     qi::lit("destination") > startBlock >
     *(  (qi::lit("port") > token)
-          [pnx::bind(&Parser::dstPort, this) = qi::_1]
+          [(pnx::bind(&Parser::dstPort, this) = qi::_1)]
       | (qi::lit("group") > startBlock >
          qi::lit("address-group") > token
-          [pnx::bind(&nmdo::AcRule::addDst,
-                     pnx::bind(&Parser::tgtRule, this), qi::_1)] >
+          [(pnx::bind(&nmdo::AcRule::addDst,
+                      pnx::bind(&Parser::tgtRule, this), qi::_1))] >
          qi::eol > stopBlock)
       | (qi::lit("address") > token)
-          [pnx::bind(&nmdo::AcRule::addDst,
-                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
+          [(pnx::bind(&nmdo::AcRule::addDst,
+                      pnx::bind(&Parser::tgtRule, this), qi::_1))]
       | ignoredBlock
     ) > stopBlock
     ;
@@ -208,15 +208,15 @@ Parser::Parser() : Parser::base_type(start)
   source =
     qi::lit("source") > startBlock >
     *(  (qi::lit("port") > token)
-          [pnx::bind(&Parser::srcPort, this) = qi::_1]
+          [(pnx::bind(&Parser::srcPort, this) = qi::_1)]
       | (qi::lit("group") > startBlock >
          qi::lit("address-group") > token
-          [pnx::bind(&nmdo::AcRule::addSrc,
-                     pnx::bind(&Parser::tgtRule, this), qi::_1)] >
+          [(pnx::bind(&nmdo::AcRule::addSrc,
+                      pnx::bind(&Parser::tgtRule, this), qi::_1))] >
          qi::eol > stopBlock)
       | (qi::lit("address") > token)
-          [pnx::bind(&nmdo::AcRule::addSrc,
-                     pnx::bind(&Parser::tgtRule, this), qi::_1)]
+          [(pnx::bind(&nmdo::AcRule::addSrc,
+                      pnx::bind(&Parser::tgtRule, this), qi::_1))]
       | ignoredBlock
     ) > stopBlock
     ;

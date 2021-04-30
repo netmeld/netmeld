@@ -27,6 +27,8 @@
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
+#include <boost/math/special_functions/relative_difference.hpp>
+
 namespace nmcu = netmeld::core::utils;
 
 
@@ -164,22 +166,5 @@ namespace netmeld::datastore::objects {
     oss << "]";
 
     return oss.str();
-  }
-
-  bool
-  operator<(const IpAddress& first, const IpAddress& second)
-  {
-    return first.address < second.address;
-  }
-
-  bool
-  operator==(const IpAddress& first, const IpAddress& second)
-  {
-    return first.address == second.address
-        && first.prefix == second.prefix
-        && first.reason == second.reason
-        && first.extraWeight == second.extraWeight
-        && first.isResponding == second.isResponding
-        && first.aliases == second.aliases;
   }
 }

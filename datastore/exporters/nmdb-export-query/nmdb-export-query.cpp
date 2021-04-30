@@ -25,6 +25,7 @@
 // =============================================================================
 
 #include <netmeld/datastore/tools/AbstractExportTool.hpp>
+#include <boost/format.hpp>
 
 #include "WriterContext.hpp"
 
@@ -109,9 +110,9 @@ class Tool : public nmdt::AbstractExportTool
         }
       } else {
         float size = (records.columns() != 0)
-                   ? maxColumnWidth / records.columns()
+                   ? maxColumnWidth / static_cast<float>(records.columns())
                    : maxColumnWidth;
-        size = std::round(size*100.0) / 100.0;
+        size = std::round(size*100.0F) / 100.0F;
         for (size_t i {0}; i < records.columns(); i++) {
           sizes.push_back(size);
         }
@@ -120,17 +121,18 @@ class Tool : public nmdt::AbstractExportTool
       float sizeTotal = 0.0;
       for (size_t i {0}; i < sizes.size(); i++) {
         sizeTotal += sizes[i];
-        LOG_DEBUG << "Added " << sizes[i] << " size to total, now "
-                  << sizeTotal << std::endl;
+        LOG_DEBUG << "Added "
+                  << boost::format("%|.8f|") % sizes[i]
+                  << " size to total, now "
+                  << boost::format("%|.8f|") % sizeTotal
+                  << std::endl;
       }
 
       if (maxColumnWidth < sizeTotal) {
         LOG_ERROR << "Column widths total more than "
-                  << static_cast<long>(maxColumnWidth) << "."
-                    << maxColumnWidth-static_cast<long>(maxColumnWidth)
+                  << boost::format("%|.8f|") % maxColumnWidth
                   << ": "
-                  << static_cast<long>(sizeTotal) << "."
-                    << sizeTotal-static_cast<long>(sizeTotal)
+                  << boost::format("%|.8f|") % sizeTotal
                   << std::endl;
         std::exit(nmcu::Exit::FAILURE);
       }

@@ -87,7 +87,7 @@ namespace netmeld::core::tools {
       };
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     protected:
       // Default constructor, provided only for convienence
@@ -95,6 +95,8 @@ namespace netmeld::core::tools {
       // Standard constructor, should be primary
       AbstractTool(const char*, const char*, const char*);
 
+    public:
+      virtual ~AbstractTool() = default;
 
     // =========================================================================
     // Methods
