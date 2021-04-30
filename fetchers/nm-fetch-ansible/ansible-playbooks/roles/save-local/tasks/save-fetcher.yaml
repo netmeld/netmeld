@@ -2,7 +2,7 @@
 - name: "Ensuring Fetcher save directory is available under {{ save_root }}"
   delegate_to: localhost
   file:
-    path: "{{ save_root }}/{{ inventory_hostname }}/{{ dts }}-{{ uuid }}"
+    path: "{{ save_root }}/{{ inventory_hostname }}/{{ dts }}_{{ uuid }}"
     state: directory
     mode: 0755
   register: data_path
