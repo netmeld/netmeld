@@ -196,7 +196,7 @@ build_save_dir() {
 
   local timestamp="$(date +%Y%m%dT%H%M%S.%N)";
   local uuid="$(cat /proc/sys/kernel/random/uuid)";
-  targetDir="${targetDir}/${g_targetHost}_${timestamp}_${uuid}";
+  targetDir="${targetDir}/${g_targetHost}/${timestamp}_${uuid}";
   mkdir -p "${targetDir}";
 
   g_saveDirectory="${targetDir}";
