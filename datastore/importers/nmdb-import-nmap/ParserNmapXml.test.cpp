@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     const auto aliases {ipa.getAliases()};
     BOOST_TEST(1 == aliases.size());
     BOOST_TEST(1 == aliases.count("some_host"));
-    BOOST_TEST(ipa.toDebugString() == 
+    BOOST_TEST(ipa.toDebugString() ==
         "[1.2.3.4/32, 0, nmap nbstat, 0, [some_host], ]"
         );
   }
@@ -404,7 +404,7 @@ BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
     tnxp.extractOperatingSystems(testNode, d);
 
     const auto os {d.oses[0]};
-    BOOST_TEST(os.toDebugString() == 
+    BOOST_TEST(os.toDebugString() ==
         "[[1.2.3.4/32, 0, , 0, [], ],"
         " some_vendor, some_osfamily, some_osgen, some_cpe, 1.23]"
         );
@@ -431,7 +431,7 @@ BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
     tnxp.extractTraceRoutes(testNode, d);
 
     const auto hop {d.tracerouteHops[0]};
-    BOOST_TEST(hop.toString() == 
+    BOOST_TEST(hop.toString() ==
         "[[4.3.2.1/32, 1, , 0, [], ], [1.2.3.4/32, 0, , 0, [], ], 1]"
         );
   }
@@ -460,7 +460,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     tnxp.extractPortsAndServices(testNode, d);
 
     const auto port = d.ports[0];
-    BOOST_TEST(port.toDebugString() == 
+    BOOST_TEST(port.toDebugString() ==
         "[-1, tcp, [1.2.3.4/32, 0, , 0, [], ], filtered, no-responses]"
         );
   }

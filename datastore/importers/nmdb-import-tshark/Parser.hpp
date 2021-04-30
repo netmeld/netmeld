@@ -79,7 +79,7 @@ class Parser :
       iLine;
 
     // Data
-    const std::string 
+    const std::string
       ethSrc {"\"eth.src\": "},
       sllSrc {"\"sll.src.eth\": "},
       vlanId {"\"vlan.id\": "},
@@ -142,7 +142,7 @@ class Parser :
     PacketData pd;
 
     size_t parsedPacketCount {0};
-    
+
     std::string tempDnsRespName;
 
 

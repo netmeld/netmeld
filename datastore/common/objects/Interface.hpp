@@ -61,7 +61,7 @@ namespace netmeld::datastore::objects {
       Interface();
       explicit Interface(const std::string&);
 
-      
+
     // =========================================================================
     // Methods
     // =========================================================================

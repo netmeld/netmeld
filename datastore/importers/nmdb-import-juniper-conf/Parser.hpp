@@ -30,7 +30,7 @@
 #include <netmeld/datastore/objects/AcNetworkBook.hpp>
 #include <netmeld/datastore/objects/AcRule.hpp>
 #include <netmeld/datastore/objects/AcServiceBook.hpp>
-#include <netmeld/datastore/objects/DeviceInformation.hpp>                           
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
 #include <netmeld/datastore/objects/Route.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>

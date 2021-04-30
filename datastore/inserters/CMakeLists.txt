@@ -46,5 +46,5 @@ run or expand capabilities through tool development, as well as the \
 binaries necessary to insert targeted data into the Netmeld Datastore.")
 nm_add_deb_description(${desc})
 set(deps "netmeld-core, netmeld-datastore, \
-libboost-system1.71.0")
+libboost-system1.74.0")
 nm_add_deb_depends(${deps})

@@ -26,10 +26,12 @@
 
 #include <pqxx/pqxx>
 
+#include <netmeld/core/objects/Uuid.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 
-namespace nmdt = netmeld::datastore::tools;
+namespace nmco = netmeld::core::objects;
 namespace nmcu = netmeld::core::utils;
+namespace nmdt = netmeld::datastore::tools;
 
 
 class Tool : public nmdt::AbstractDatastoreTool
@@ -46,29 +48,37 @@ class Tool : public nmdt::AbstractDatastoreTool
       opts.addRequiredOption("tool-run-id", std::make_tuple(
           "tool-run-id",
           po::value<std::string>(),
-          "Tool run UUID to remove from the database.")
+          "Tool run UUID to remove from the database."
+          " Either --tool-run-id param or implicit last argument.")
         );
+
+      opts.addPositionalOption("tool-run-id", -1);
     }
 
     int
     runTool() override
     {
-      const auto& toolRunId  {opts.getValue("tool-run-id")};
-      const auto& dbName     {opts.getValue("db-name")};
-      const auto& dbArgs     {opts.getValue("db-args")};
+      const auto& dbName {opts.getValue("db-name")};
+      const auto& dbArgs {opts.getValue("db-args")};
 
-      pqxx::connection db{std::string("dbname=") + dbName + " " + dbArgs};
-      pqxx::work t{db};
+      if (!opts.exists("tool-run-id")) {
+        LOG_WARN << "UUID not given.\n";
 
-      db.prepare
-      ("delete_tool_run",
-       "DELETE FROM tool_runs"
-       " WHERE (id = $1)");
+      } else {
+        const auto& toolRunId {nmco::Uuid(opts.getValue("tool-run-id"))};
 
-      t.exec_prepared("delete_tool_run",
-          toolRunId);
+        pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs};
+        db.prepare
+        ("delete_tool_run",
+         "DELETE FROM tool_runs"
+         " WHERE (id = $1)");
 
-      t.commit();
+        pqxx::work t {db};
+        auto const& results {t.exec_prepared("delete_tool_run", toolRunId)};
+        LOG_INFO << "Removal count: " << results.affected_rows() << '\n';
+
+        t.commit();
+      }
 
       return nmcu::Exit::SUCCESS;
     }
