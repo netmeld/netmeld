@@ -62,6 +62,6 @@ run or expand capabilities through tool development, as well as the \
 binaries necessary to import structured data into the Netmeld Datastore.")
 nm_add_deb_description(${desc})
 set(deps "netmeld-core, netmeld-datastore, \
-libboost-iostreams1.71.0, libboost-system1.71.0, \
+libboost-iostreams1.74.0, libboost-system1.74.0, \
 libpcap0.8 (>= 0.9.8), libpugixml1v5 (>= 1.7)")
 nm_add_deb_depends(${deps})
