@@ -84,8 +84,8 @@ Parser<Iter>::Parser() : Parser::base_type(start)
 
   start =
     //+((+(qi::char_ - qi::eol) > qi::eol) | qi::eol)
-    qi::eps [qi::_val = pnx::construct<Result>()] >
-    jsonBlock [pnx::bind(&Parser::setDone, this)]
+    qi::eps [(qi::_val = pnx::construct<Result>())] >
+    jsonBlock [(pnx::bind(&Parser::setDone, this))]
     ;
 /*  multitime -q -n 10 nmdb-import-tshark tshark1.json
 --blind slurp
@@ -112,15 +112,15 @@ real        0.255       0.007       0.244       0.254       0.267
  */
   jsonBlock =
     qi::lit("[") > +qi::eol >
-    *(packetBlock [pnx::bind(&Parser::setNewPacket, this)]) >
+    *(packetBlock [(pnx::bind(&Parser::setNewPacket, this))]) >
     qi::lit("]") > -qi::eol
     ;
 
   packetBlock =
     qi::lit("{\n") >
-    +( (&qi::as_string[qi::raw[dataLines]] [qi::_b = qi::_1] >
-        dataLines [qi::_a = qi::_1] > qi::lazy(*qi::_a))
-         [pnx::bind(&Parser::setPacketData, this, qi::_b, qi::_2)]
+    +( (&qi::as_string[qi::raw[dataLines]] [(qi::_b = qi::_1)] >
+        dataLines [(qi::_a = qi::_1)] > qi::lazy(*qi::_a))
+         [(pnx::bind(&Parser::setPacketData, this, qi::_b, qi::_2))]
      | (jsonEob)
      | (iLine - (qi::lit('{') | jsonEob | qi::lit(']')))
     )

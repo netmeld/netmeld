@@ -42,7 +42,7 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     config
-      [qi::_val = pnx::bind(&Parser::getData, this)]
+      [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
@@ -65,7 +65,7 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("system") >>
     startBlock >>
     *(  (qi::lit("host-name") > token)
-//          [pnx::bind(&Parser::updateDeviceId, this, qi::_1)]
+//          [(pnx::bind(&Parser::updateDeviceId, this, qi::_1))]
         // domain-name/search
         // name-server
         // ntp
@@ -79,7 +79,7 @@ Parser::Parser() : Parser::base_type(start)
   // START OF: applications {...}
   applications =
     qi::lit("applications")
-      [pnx::bind(&Parser::updateTgtZone, this, DEFAULT_ZONE)] >>
+      [(pnx::bind(&Parser::updateTgtZone, this, DEFAULT_ZONE))] >>
     startBlock >>
     *(  applicationSet
       | application
@@ -90,10 +90,10 @@ Parser::Parser() : Parser::base_type(start)
 
   applicationSet =
     qi::lit("application-set") >> token
-      [pnx::bind(&Parser::updateBookName, this, qi::_1)] >>
+      [(pnx::bind(&Parser::updateBookName, this, qi::_1))] >>
     startBlock >>
     *( (qi::lit("application") >> token >> qi::eol)
-         [pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1)]
+         [(pnx::bind(&Parser::updateSrvcBookGroup, this, qi::_1))]
      | ignoredBlock
     ) >>
     stopBlock
@@ -101,24 +101,24 @@ Parser::Parser() : Parser::base_type(start)
 
   application =
     qi::lit("application") >> token
-      [pnx::bind(&Parser::updateBookName, this, qi::_1)] >>
+      [(pnx::bind(&Parser::updateBookName, this, qi::_1))] >>
       ( appMultiLine | appSingleLine | ignoredBlock )
-        [pnx::bind(&Parser::updateSrvcBook, this)]
+        [(pnx::bind(&Parser::updateSrvcBook, this))]
     ;
 
   appMultiLine =
     startBlock >>
     *( (token >> token >> qi::eol)
-         [pnx::bind(&Parser::updateSrvcData, this, qi::_1, qi::_2)]
+         [(pnx::bind(&Parser::updateSrvcData, this, qi::_1, qi::_2))]
      | (appSingleLine)
-         [pnx::bind(&Parser::updateSrvcBook, this)]
+         [(pnx::bind(&Parser::updateSrvcBook, this))]
     ) >>
     stopBlock
     ;
 
   appSingleLine =
     *(token >> token)
-      [pnx::bind(&Parser::updateSrvcData, this, qi::_1, qi::_2)] >>
+      [(pnx::bind(&Parser::updateSrvcData, this, qi::_1, qi::_2))] >>
     qi::eol
     ;
   // END OF: applications {...}
@@ -130,17 +130,17 @@ Parser::Parser() : Parser::base_type(start)
 
   interface =
     ( (qi::lit("interface-range") >> ignoredBlock)
-        [pnx::bind(&Parser::unsup, this, "interface-range")]
+        [(pnx::bind(&Parser::unsup, this, "interface-range"))]
     | (typeSlot >> startBlock >>
       *((  unit
          | (qi::lit("disable") >> semicolon)
-              [pnx::bind(&Parser::tgtIfaceUp, this) = false]
+              [(pnx::bind(&Parser::tgtIfaceUp, this) = false)]
          // description tokens
          | ignoredBlock
         ) >> -qi::eol
        ) >> stopBlock
-          [pnx::bind(&Parser::updateIfaceNameTypeState, this),
-           pnx::bind(&Parser::tgtIfaceUp, this) = true]
+          [(pnx::bind(&Parser::updateIfaceNameTypeState, this),
+            pnx::bind(&Parser::tgtIfaceUp, this) = true)]
       )
     | ignoredBlock
     )
@@ -149,31 +149,31 @@ Parser::Parser() : Parser::base_type(start)
   typeSlot =
       (qi::as_string[+qi::ascii::alpha] >>
        qi::as_string[+qi::ascii::graph | qi::attr("")]
-      ) [pnx::bind(&Parser::updateIfaceTypeSlot, this, qi::_1, qi::_2)]
+      ) [(pnx::bind(&Parser::updateIfaceTypeSlot, this, qi::_1, qi::_2))]
     ;
 
   unit =
     qi::lit("unit") >> qi::uint_
-      [pnx::bind(&Parser::updateIfaceUnit, this, qi::_1)] >>
+      [(pnx::bind(&Parser::updateIfaceUnit, this, qi::_1))] >>
     startBlock >>
     *((  family
        | (qi::lit("vlan-id") >> qi::ushort_ >> semicolon)
-            [pnx::bind(&Parser::addIfaceVlan, this, qi::_1)]
+            [(pnx::bind(&Parser::addIfaceVlan, this, qi::_1))]
        | (qi::lit("disable") >> semicolon)
-            [pnx::bind(&Parser::tgtIfaceUp, this) = (tgtIfaceUp && false)]
+            [(pnx::bind(&Parser::tgtIfaceUp, this) = (tgtIfaceUp && false))]
        | ignoredBlock
       ) >> -qi::eol
-     ) >> stopBlock [pnx::bind(&Parser::tgtIfaceUp, this) = (tgtIfaceUp && true)]
+     ) >> stopBlock [(pnx::bind(&Parser::tgtIfaceUp, this) = (tgtIfaceUp && true))]
     ;
 
   family =
     qi::lit("family") >> token >> startBlock >>
     *((  (qi::lit("address") >> ipAddr >> ((startBlock >> ignoredBlock >> stopBlock) | semicolon))
-           [pnx::bind(&Parser::addIfaceIpAddr, this, qi::_1)]
+           [(pnx::bind(&Parser::addIfaceIpAddr, this, qi::_1))]
        | (qi::lit("port-mode") >> token)
-           [pnx::bind(&Parser::updateIfaceMode, this, "L2 " + qi::_1)]
+           [(pnx::bind(&Parser::updateIfaceMode, this, "L2 " + qi::_1))]
        | (qi::lit("native-vlan-id") >> qi::ushort_ >> semicolon)
-           [pnx::bind(&Parser::addIfaceVlan, this, qi::_1)]
+           [(pnx::bind(&Parser::addIfaceVlan, this, qi::_1))]
        | ifaceVlan
        | ignoredBlock
       ) >> -qi::eol
@@ -185,13 +185,13 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("members") >> -qi::lit('[') >>
     +(!qi::lit(']') >>
      (  (qi::lit("all"))
-          [pnx::bind(&Parser::addIfaceVlanMembers, this, "all")]
+          [(pnx::bind(&Parser::addIfaceVlanMembers, this, "all"))]
       | (qi::ushort_ >> qi::lit('-') >> qi::ushort_)
-          [pnx::bind(&Parser::addIfaceVlanRange, this, qi::_1, qi::_2)]
+          [(pnx::bind(&Parser::addIfaceVlanRange, this, qi::_1, qi::_2))]
       | (qi::ushort_ )
-          [pnx::bind(&Parser::addIfaceVlan, this, qi::_1)]
+          [(pnx::bind(&Parser::addIfaceVlan, this, qi::_1))]
       | token
-          [pnx::bind(&Parser::addIfaceVlanMembers, this, qi::_1)]
+          [(pnx::bind(&Parser::addIfaceVlanMembers, this, qi::_1))]
      )
     ) >> -qi::lit(']') >> semicolon >> qi::eol >> stopBlock
     ;
@@ -208,19 +208,19 @@ Parser::Parser() : Parser::base_type(start)
   routeStatic =
     qi::lit("static") >> startBlock >>
     *((  route
-           [pnx::bind(&Parser::addRoute, this, qi::_1)]
+           [(pnx::bind(&Parser::addRoute, this, qi::_1))]
        | ignoredBlock
       ) >> -qi::eol
      ) >> stopBlock
     ;
   route =
     qi::lit("route") >> ipAddr
-      [pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1)] >>
+      [(pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1))] >>
     qi::lit("next-hop") >>
     (  (ipAddr >> semicolon)
-         [pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1)]
+         [(pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1))]
      | token
-         [pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1)]
+         [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
     ) >> qi::eol
     ;
   // END OF: routing-options {...}
@@ -246,18 +246,18 @@ Parser::Parser() : Parser::base_type(start)
 
   policyFromTo =
     (qi::lit("from-zone") >> token >> qi::lit("to-zone") >> token)
-       [pnx::bind(&Parser::updateZones, this, qi::_1, qi::_2)] >>
+       [(pnx::bind(&Parser::updateZones, this, qi::_1, qi::_2))] >>
     startBlock >>
     *((  policy
        | ignoredBlock
       ) >> -qi::eol
      ) >> stopBlock
-         [pnx::bind(&Parser::updateZones, this, DEFAULT_ZONE, DEFAULT_ZONE)]
+         [(pnx::bind(&Parser::updateZones, this, DEFAULT_ZONE, DEFAULT_ZONE))]
     ;
 
   policy =
     qi::lit("policy") >> token
-      [pnx::bind(&Parser::updateCurRuleId, this, qi::_1)] >>
+      [(pnx::bind(&Parser::updateCurRuleId, this, qi::_1))] >>
     startBlock >>
     *((  policyMatch
        | policyThen
@@ -269,7 +269,7 @@ Parser::Parser() : Parser::base_type(start)
   policyMatch =
     qi::lit("match") >> startBlock >>
     *((  (token >> (tokenList | +token))
-           [pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2)]
+           [(pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2))]
        | ignoredBlock
       ) >> -qi::eol
      ) >> stopBlock
@@ -278,11 +278,11 @@ Parser::Parser() : Parser::base_type(start)
   policyThen =
     qi::lit("then") >> startBlock >>
     *((  (+token >> qi::eol)
-            [pnx::bind(&Parser::updateRule, this, "action", qi::_1)]
+            [(pnx::bind(&Parser::updateRule, this, "action", qi::_1))]
        | logBlock
-           [pnx::bind(&Parser::updateRule, this, "action", qi::_1)]
+           [(pnx::bind(&Parser::updateRule, this, "action", qi::_1))]
        | (+token > startBlock > +ignoredBlock > stopBlock)
-            [pnx::bind(&Parser::updateRule, this, "action", qi::_1)]
+            [(pnx::bind(&Parser::updateRule, this, "action", qi::_1))]
        | (ignoredBlock)
       ) >> -qi::eol
      ) >> stopBlock
@@ -302,20 +302,20 @@ Parser::Parser() : Parser::base_type(start)
 
   zone =
     (qi::lit("security-zone") >> token)
-      [pnx::bind(&Parser::updateTgtZone, this, qi::_1)] >>
+      [(pnx::bind(&Parser::updateTgtZone, this, qi::_1))] >>
     startBlock >>
     *((  addressBook
        | zoneIface
        | ignoredBlock
       ) >> -qi::eol
      ) >> stopBlock
-        [pnx::bind(&Parser::updateTgtZone, this, DEFAULT_ZONE)]
+        [(pnx::bind(&Parser::updateTgtZone, this, DEFAULT_ZONE))]
     ;
 
   addressBook =
     qi::lit("address-book") >> startBlock >>
     (  (qi::hold[(!qi::lit("attach") >> token >> startBlock)]
-          [pnx::bind(&Parser::updateTgtZone, this, qi::_1)] >>
+          [(pnx::bind(&Parser::updateTgtZone, this, qi::_1))] >>
         addressBookData >> stopBlock
        )
      | addressBookData
@@ -327,7 +327,7 @@ Parser::Parser() : Parser::base_type(start)
        | addressSet
        // attach { zone zone-name; }
        | (qi::lit("attach") >> startBlock >> +token >> -qi::eol >> stopBlock)
-            [pnx::bind(&Parser::unsup, this, "address-book attach zone")]
+            [(pnx::bind(&Parser::unsup, this, "address-book attach zone"))]
        // description text;
        | ignoredBlock
       ) >> -qi::eol)
@@ -335,22 +335,22 @@ Parser::Parser() : Parser::base_type(start)
 
   address =
     qi::lit("address") >> token
-      [qi::_a = qi::_1] >>
+      [(qi::_a = qi::_1)] >>
     (  (ipAddr >> semicolon >> qi::eol)
-          [pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1)]
+          [(pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1))]
      | (startBlock >>
        *((  (ipAddr >> semicolon)
-              [pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1)]
+              [(pnx::bind(&Parser::updateNetBookIp, this, qi::_a, qi::_1))]
           // dns-name domain-name { ipv4-only; ipv6-only; }
           | (qi::lit("dns-name") >> fqdn >> -ignoredBlock)
-              [pnx::bind(&Parser::updateNetBookStr, this, qi::_a, qi::_1)]
+              [(pnx::bind(&Parser::updateNetBookStr, this, qi::_a, qi::_1))]
           // range-address lower-limit to upper-limit;
           | (qi::lit("range-address") >> token >> qi::lit("to") >> token)
-              [pnx::bind(&Parser::updateNetBookStr, this, qi::_a,
-                         qi::_1+"-"+qi::_2)]
+              [(pnx::bind(&Parser::updateNetBookStr, this, qi::_a,
+                          qi::_1+"-"+qi::_2))]
           // wildcard-address ipv4-address/wildcard-mask;
           | (qi::lit("wildcard-address") >> token)
-              [pnx::bind(&Parser::updateNetBookStr, this, qi::_a, qi::_1)]
+              [(pnx::bind(&Parser::updateNetBookStr, this, qi::_a, qi::_1))]
           // description text;
           | (ignoredBlock)
          ) >> -qi::eol
@@ -360,10 +360,10 @@ Parser::Parser() : Parser::base_type(start)
 
   addressSet =
     qi::lit("address-set") >> token
-      [qi::_a = qi::_1] >>
+      [(qi::_a = qi::_1)] >>
     startBlock >>
       *((  (qi::lexeme[qi::lit("address") >> -qi::lit("-set")] >> token)
-              [pnx::bind(&Parser::updateNetBookGroup, this, qi::_a, qi::_1)]
+              [(pnx::bind(&Parser::updateNetBookGroup, this, qi::_a, qi::_1))]
          // description text;
          | (ignoredBlock)
         ) >> -qi::eol
@@ -373,7 +373,7 @@ Parser::Parser() : Parser::base_type(start)
   zoneIface =
     qi::lit("interfaces") >> startBlock >>
     *((  (token >> -(startBlock >> ignoredBlock >> stopBlock))
-           [pnx::bind(&Parser::addZoneIface, this, qi::_1)]
+           [(pnx::bind(&Parser::addZoneIface, this, qi::_1))]
        | ignoredBlock
       ) >> -qi::eol
      ) >> stopBlock
@@ -391,7 +391,7 @@ Parser::Parser() : Parser::base_type(start)
 
   group =
     (token >> startBlock)
-      [pnx::bind(&Parser::addGroup, this, qi::_1, qi::_1)] >>
+      [(pnx::bind(&Parser::addGroup, this, qi::_1, qi::_1))] >>
     *((  system
        | applications
        | interfaces
@@ -400,7 +400,7 @@ Parser::Parser() : Parser::base_type(start)
        | ignoredBlock
       ) >> -qi::eol
     ) >> stopBlock
-      [pnx::bind(&Parser::resetDevice, this)]
+      [(pnx::bind(&Parser::resetDevice, this))]
     ;
   // END OF: groups {...}
 
@@ -415,19 +415,19 @@ Parser::Parser() : Parser::base_type(start)
 
   vlan =
     token
-      [qi::_a = qi::_1,
-       pnx::bind(&Parser::updateVlanDescription, this, qi::_a, qi::_a)] >>
+      [(qi::_a = qi::_1,
+        pnx::bind(&Parser::updateVlanDescription, this, qi::_a, qi::_a))] >>
     startBlock >>
     *((  (qi::lit("vlan-id") >> qi::ushort_)
-           [pnx::bind(&Parser::addVlan, this, qi::_a, qi::_1)]
+           [(pnx::bind(&Parser::addVlan, this, qi::_a, qi::_1))]
        | (qi::lit("l3-interface") >> token >> -startBlock)
-           [pnx::bind(&Parser::tgtIfaceName, this) = qi::_1,
-            pnx::bind(&Parser::updateIfaceMode, this, "L3")]
+           [(pnx::bind(&Parser::tgtIfaceName, this) = qi::_1,
+             pnx::bind(&Parser::updateIfaceMode, this, "L3"))]
        | (qi::lit("interface") >> token)
-           [pnx::bind(&Parser::tgtIfaceName, this) = qi::_1,
-            pnx::bind(&Parser::unsup, this, "vlans{vlan{interface}}")]
+           [(pnx::bind(&Parser::tgtIfaceName, this) = qi::_1,
+             pnx::bind(&Parser::unsup, this, "vlans{vlan{interface}}"))]
        | (qi::lit("description") >> token)
-           [pnx::bind(&Parser::updateVlanDescription, this, qi::_a, qi::_1)]
+           [(pnx::bind(&Parser::updateVlanDescription, this, qi::_a, qi::_1))]
        | ignoredBlock
        // https://www.juniper.net/documentation/en_US/junos/topics/topic-map/bridging-and-vlans.html#id-configuring-a-vlan
          // domain-type
@@ -448,7 +448,7 @@ Parser::Parser() : Parser::base_type(start)
 
   logicalSystem =
     (token >> startBlock)
-      [pnx::bind(&Parser::addDevice, this, qi::_1, "logical-system")] >>
+      [(pnx::bind(&Parser::addDevice, this, qi::_1, "logical-system"))] >>
     *((  applications
        | interfaces
        | routingOptions
@@ -456,7 +456,7 @@ Parser::Parser() : Parser::base_type(start)
        | ignoredBlock
       ) >> -qi::eol
      ) >> stopBlock
-    [pnx::bind(&Parser::resetDevice, this)]
+    [(pnx::bind(&Parser::resetDevice, this))]
     ;
   // END OF: logical-systems {...}
 
@@ -470,14 +470,14 @@ Parser::Parser() : Parser::base_type(start)
 
   routingInstance =
     (token >> startBlock)
-      [pnx::bind(&Parser::addDevice, this, qi::_1, "routing-instance")] >>
+      [(pnx::bind(&Parser::addDevice, this, qi::_1, "routing-instance"))] >>
     *((  (qi::lit("interface") > token > qi::eol)
-           [pnx::bind(&Parser::addInvalidIface, this, qi::_1)]
+           [(pnx::bind(&Parser::addInvalidIface, this, qi::_1))]
        | routingOptions
        | ignoredBlock
       ) >> -qi::eol
      ) >> stopBlock
-    [pnx::bind(&Parser::resetDevice, this)]
+    [(pnx::bind(&Parser::resetDevice, this))]
     ;
   // END OF: routing-instances {...}
 

@@ -77,7 +77,7 @@ using IpConfig            = std::map<std::string, SourceConfig>;
 using VlanConfig          = std::map<std::string, IpConfig>;
 using InterfaceConfig     = std::map<uint16_t, VlanConfig>;
 using PlaybookStageConfig = std::map<std::string, InterfaceConfig>;
-using Playbook            = std::map<uint16_t, PlaybookStageConfig>;
+using Playbook            = std::map<size_t, PlaybookStageConfig>;
 
 
 enum class PlaybookScope { UNKNOWN, INTRA_NETWORK, INTER_NETWORK };
@@ -94,7 +94,7 @@ class Tool : public nmdt::AbstractDatastoreTool
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
-    static uint16_t const MIN_CAPTURE_DURATION {90};
+    static size_t const MIN_CAPTURE_DURATION {90};
 
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     std::string pbDir;
@@ -104,11 +104,11 @@ class Tool : public nmdt::AbstractDatastoreTool
     bool execute  {false};
     bool headless {false};
 
-    int                 family {4};
-    std::string         familyStr;
-    std::set<uint16_t>  enabledStages;
-    std::set<uint16_t>  enabledPhases;
-    uint16_t            maxPhases {3};
+    int family {4};
+    std::string familyStr;
+    std::set<size_t> enabledStages;
+    std::set<size_t> enabledPhases;
+    size_t maxPhases {3};
 
     sfs::path scriptPath;
 
@@ -184,14 +184,14 @@ class Tool : public nmdt::AbstractDatastoreTool
           );
       opts.addOptionalOption("stage", std::make_tuple(
             "stage",
-            po::value<std::vector<uint16_t>>()->multitoken()->composing()->
-              default_value(std::vector<uint16_t>{},"all"),
+            po::value<std::vector<size_t>>()->multitoken()->composing()->
+              default_value(std::vector<size_t>{},"all"),
             "Only process the specified, space separated, stage(s)")
           );
       opts.addOptionalOption("phase", std::make_tuple(
             "phase",
-            po::value<std::vector<uint16_t>>()->multitoken()->composing()->
-              default_value(std::vector<uint16_t>{},"all"),
+            po::value<std::vector<size_t>>()->multitoken()->composing()->
+              default_value(std::vector<size_t>{},"all"),
             "Only process the specified, space separated, phase(s) in a given"
             "stage")
           );
@@ -218,10 +218,10 @@ class Tool : public nmdt::AbstractDatastoreTool
           );
       opts.addAdvancedOption("exclude-command", std::make_tuple(
             "exclude-command",
-            po::value<std::vector<uint32_t>>()->multitoken()->composing()->
-              default_value(std::vector<uint32_t>{},"none"),
-            "Exclude, space separated, command ID(s);"
-            " This can break expected logic in some cases")
+            po::value<std::vector<size_t>>()->multitoken()->composing()->
+              default_value(std::vector<size_t>{},"none"),
+            "Excluded specified, space separated, command ID(s); This can"
+            " break expected logic in some cases")
           );
 
       std::string confFileLoc = {NETMELD_CONF_DIR "/nmdb-playbook.conf"};
@@ -323,15 +323,15 @@ class Tool : public nmdt::AbstractDatastoreTool
       assert(playbookScope != PlaybookScope::UNKNOWN);
 
       // Handle inclusion/exclusion of tests
-      auto stages {opts.getValueAs<std::vector<uint16_t>>("stage")};
+      auto stages {opts.getValueAs<std::vector<size_t>>("stage")};
       if (!stages.empty()) {
         enabledStages = std::set(stages.begin(), stages.end());
       }
-      auto phases {opts.getValueAs<std::vector<uint16_t>>("phase")};
+      auto phases {opts.getValueAs<std::vector<size_t>>("phase")};
       if (!phases.empty()) {
         enabledPhases = std::set(phases.begin(), phases.end());
       }
-      auto tests {opts.getValueAs<std::vector<uint32_t>>("exclude-command")};
+      auto tests {opts.getValueAs<std::vector<size_t>>("exclude-command")};
       if (!tests.empty()) {
         cmdRunner.disableCommands(std::set(tests.begin(), tests.end()));
       }
@@ -399,6 +399,7 @@ class Tool : public nmdt::AbstractDatastoreTool
                 t.exec_prepared("select_playbook_inter_network");
               break;
             }
+          case PlaybookScope::UNKNOWN:  // intentional fallthrough
           default:
             {
               break;
@@ -408,7 +409,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         for (const auto& playbookIpSourceRow : playbookIpSourceRows) {
           nmco::Uuid playbookSourceId;
           playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);
-          uint16_t playbookStage;
+          size_t playbookStage;
           playbookIpSourceRow.at("playbook_stage").to(playbookStage);
           std::string interfaceName;
           playbookIpSourceRow.at("interface_name").to(interfaceName);
@@ -443,7 +444,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
 
       for (const auto& xStage : playbook) {
-        uint16_t const playbookStage {std::get<0>(xStage)};
+        size_t const playbookStage {std::get<0>(xStage)};
 
         if (!enabledStages.empty() && !enabledStages.count(playbookStage)) {
           continue;
@@ -542,6 +543,7 @@ class Tool : public nmdt::AbstractDatastoreTool
                 break;
               }
             case PlaybookScope::INTER_NETWORK:  // intentional fallthrough
+            case PlaybookScope::UNKNOWN:  // intentional fallthrough
             default:
               {
                 // Run interface threads serially (only one interface at a time)
@@ -783,7 +785,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     // COMMON
     void
-    captureTraffic(std::string const& linkName, uint16_t const _duration)
+    captureTraffic(std::string const& linkName, size_t const _duration)
     {
       // After bringing up the physical (non-VLAN) interface,
       // this software must wait at least 45 seconds for the
@@ -796,7 +798,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       // Sniffing traffic for at least 90 seconds (preferably longer)
       // accomplishes both of these goals at the same time.
 
-      uint16_t duration {std::max(MIN_CAPTURE_DURATION, _duration)};
+      size_t duration {std::max(MIN_CAPTURE_DURATION, _duration)};
       std::ostringstream oss;
       oss << "clw dumpcap -i " << linkName << " -a duration:" << duration;
 
@@ -807,7 +809,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     void
-    setCommandTitlePrefix(std::string const& type, uint16_t const playbookStage,
+    setCommandTitlePrefix(std::string const& type, size_t const playbookStage,
         std::string const& linkName, std::string const& srcIpAddr)
     {
       std::ostringstream oss;
@@ -1127,7 +1129,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     void
     physIfaceThreadActions(PlaybookScope const playbookScope,
-        uint16_t const playbookStage, std::string const& physIfaceName,
+        size_t const playbookStage, std::string const& physIfaceName,
         InterfaceConfig const& ifaceConfig)
     {
       // Bring up the physical interface only for:
@@ -1145,7 +1147,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         nmpb::RaiiIpLink raiiLink {physIfaceName};
 
         captureTraffic(physIfaceName,
-            opts.getValueAs<uint16_t>("capture-duration"));
+            opts.getValueAs<size_t>("capture-duration"));
 
         // Proceed with testing on VLANs.
         std::map<uint16_t, std::thread> vlanThreads;
@@ -1169,7 +1171,8 @@ class Tool : public nmdt::AbstractDatastoreTool
                 // Run VLAN threads in parallel.
                 break;
               }
-            case PlaybookScope::INTER_NETWORK:  // intentional fallthrough.
+            case PlaybookScope::INTER_NETWORK:  // intentional fallthrough
+            case PlaybookScope::UNKNOWN:  // intentional fallthrough
             default:
               {
                 // Run VLAN threads serially (only one VLAN active at a time).
@@ -1214,7 +1217,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     void
     vlanIfaceThreadActions(PlaybookScope const playbookScope,
-        uint16_t const playbookStage, std::string const& physIfaceName,
+        size_t const playbookStage, std::string const& physIfaceName,
         uint16_t const vlan, VlanConfig const& vlanConfig)
     {
       nmpb::RaiiVlan raiiVlan {physIfaceName, vlan};
@@ -1289,6 +1292,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
                 break;
               }
+            case PlaybookScope::UNKNOWN:  // intentional fallthrough
             default:
               {
                 break;

@@ -135,12 +135,21 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  bool
-  operator==(const Route& first, const Route& second)
+  std::partial_ordering
+  Route::operator<=>(const Route& rhs) const
   {
-    return first.dstNet == second.dstNet
-        && first.rtrIp == second.rtrIp
-        && first.ifaceName == second.ifaceName
-        ;
+    if (auto cmp = dstNet <=> rhs.dstNet; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = rtrIp <=> rhs.rtrIp; 0 != cmp) {
+      return cmp;
+    }
+    return ifaceName <=> rhs.ifaceName;
+  }
+
+  bool
+  Route::operator==(const Route& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

@@ -166,7 +166,7 @@ class Tool : public nmct::AbstractTool
     }
 
     std::pair<std::string, std::string>
-    getNext(const std::string& str, const uint8_t len)
+    getNext(const std::string& str, const size_t len)
     {
       if (str.empty() || str.size() < len) {
         LOG_ERROR << "Expected " << len << " characters, but only "
@@ -188,7 +188,7 @@ class Tool : public nmct::AbstractTool
 
       uint8_t num {0};
       for (size_t x {0}; x < gaps.size(); ++x) {
-        num += gaps.at(x) * moduli.at(x);
+        num = static_cast<uint8_t>(num + (gaps.at(x) * moduli.at(x)));
       }
       return static_cast<char>(num);
     }
@@ -208,7 +208,7 @@ class Tool : public nmct::AbstractTool
         std::tie(next, rest) = getNext(rest, decodeModuli.size());
         for (auto c : next) {
           auto diff {KEY_SIZE + alphaNum.at(c) - alphaNum.at(prev)};
-          gaps.push_back((diff % KEY_SIZE) - 1);
+          gaps.push_back(static_cast<uint8_t>((diff % KEY_SIZE) - 1));
           prev = c;
         }
         decoded.append(1, gapDecode(gaps, decodeModuli));

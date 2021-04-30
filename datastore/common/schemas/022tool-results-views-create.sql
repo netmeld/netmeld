@@ -299,7 +299,7 @@ SELECT
 FROM raw_ports AS p
 JOIN tool_run_ip_addrs AS tria
 ON (p.tool_run_id = tria.tool_run_id) AND
-   (family(p.ip_addr) = family(tria.ip_addr)) AND
+   (inet_same_family(p.ip_addr, tria.ip_addr)) AND
    (p.ip_addr <<= network(tria.ip_addr)) AND
    (p.ip_addr != host(tria.ip_addr)::INET)
 --   (host(p.ip_addr)::INET != host(tria.ip_addr)::INET)
@@ -339,7 +339,7 @@ SELECT
 FROM raw_ports AS p
 JOIN tool_run_ip_addrs AS tria
 ON (p.tool_run_id = tria.tool_run_id) AND
-   (family(p.ip_addr) = family(tria.ip_addr)) AND
+   (inet_same_family(p.ip_addr, tria.ip_addr)) AND
    (NOT (p.ip_addr <<= network(tria.ip_addr)))
 JOIN tool_run_interfaces AS trif
 ON (tria.tool_run_id = trif.tool_run_id) AND
@@ -350,7 +350,7 @@ ON (tria.tool_run_id = trir.tool_run_id) AND
    ((tria.interface_name = trir.interface_name) OR
     (left(tria.interface_name,
           -length(substring(tria.interface_name from '@[^@]*$'))) = trir.interface_name)) AND
-   (family(tria.ip_addr) = family(trir.rtr_ip_addr)) AND
+   (inet_same_family(tria.ip_addr, trir.rtr_ip_addr)) AND
    (p.ip_addr <<= trir.dst_ip_net) AND
    (trir.rtr_ip_addr <<= network(tria.ip_addr) OR tria.ip_addr = host(tria.ip_addr)::INET) AND
 --   (trir.rtr_ip_addr <<= network(tria.ip_addr)) AND

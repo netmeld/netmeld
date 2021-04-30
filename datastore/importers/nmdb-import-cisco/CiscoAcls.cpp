@@ -39,7 +39,7 @@ namespace netmeld::datastore::importers::cisco {
     using nmdsic::indent;
 
     start =
-      ciscoAcl [qi::_val = pnx::bind(&CiscoAcls::getData, this)]
+      ciscoAcl [(qi::_val = pnx::bind(&CiscoAcls::getData, this))]
       ;
 
     ciscoAcl =
@@ -79,7 +79,7 @@ namespace netmeld::datastore::importers::cisco {
       action
       >> sourceAddrIos
       >> *(logArgument)
-      > qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
+      > qi::eol [(pnx::bind(&CiscoAcls::curRuleFinalize, this))]
       ;
 
     iosExtended =
@@ -103,7 +103,7 @@ namespace netmeld::datastore::importers::cisco {
            | logArgument
            | untrackedArguments
           )
-      >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
+      >> qi::eol [(pnx::bind(&CiscoAcls::curRuleFinalize, this))]
       ;
 
     iosIpv6 =
@@ -188,7 +188,7 @@ namespace netmeld::datastore::importers::cisco {
            | inactiveArgument
            | untrackedArguments
           )
-      >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
+      >> qi::eol [(pnx::bind(&CiscoAcls::curRuleFinalize, this))]
       ;
 
   //  asaWebType =
@@ -203,7 +203,7 @@ namespace netmeld::datastore::importers::cisco {
   //         | logArgument
   //         | inactive
   //        )
-  //    >> qi::eol [pnx::bind(&CiscoAcls::curRuleFinalize, this)]
+  //    >> qi::eol [(pnx::bind(&CiscoAcls::curRuleFinalize, this))]
   //    ;
   //  asaEther =
   //    qi::lit("ethertype ")
@@ -221,13 +221,13 @@ namespace netmeld::datastore::importers::cisco {
       (qi::lit("ipv6") | qi::lit("ip"))
       ;
     bookName =
-      token [pnx::bind(&CiscoAcls::initRuleBook, this, qi::_1)]
+      token [(pnx::bind(&CiscoAcls::initRuleBook, this, qi::_1))]
       ;
 
     action =
       (qi::string("permit") | qi::string("deny"))
-        [pnx::bind(&CiscoAcls::initCurRule, this),
-         pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1)]
+        [(pnx::bind(&CiscoAcls::initCurRule, this),
+          pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1))]
       ;
 
     dynamicArgument =
@@ -236,14 +236,14 @@ namespace netmeld::datastore::importers::cisco {
 
     protocolArgument =
       -(qi::lit("object") >> -qi::lit("-group "))
-      >> token [pnx::bind(&CiscoAcls::curRuleProtocol, this) = qi::_1]
+      >> token [(pnx::bind(&CiscoAcls::curRuleProtocol, this) = qi::_1)]
       ;
 
     sourceAddrIos =
-      addressArgumentIos [pnx::bind(&CiscoAcls::setCurRuleSrc, this, qi::_1)]
+      addressArgumentIos [(pnx::bind(&CiscoAcls::setCurRuleSrc, this, qi::_1))]
       ;
     destinationAddrIos =
-      addressArgumentIos [pnx::bind(&CiscoAcls::setCurRuleDst, this, qi::_1)]
+      addressArgumentIos [(pnx::bind(&CiscoAcls::setCurRuleDst, this, qi::_1))]
       ;
     addressArgumentIos =
       (  (qi::lit("host ") >> addrIpOnly)
@@ -256,52 +256,52 @@ namespace netmeld::datastore::importers::cisco {
       ;
     addrIpOnly =
       (&ipNoPrefix > ipAddr)
-        [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
+        [(qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1))]
       ;
     ipNoPrefix =
       (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
       ;
     addrIpPrefix =
        (&((ipNoPrefix >> qi::eol) | (!ipNoPrefix)) >> ipAddr)
-         [qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1)]
+         [(qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1))]
       ;
     addrIpMask =
        (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank]
         >> !(&(qi::lit("0.0.0.0") | qi::lit("255.255.255.255")))
         >> &ipNoPrefix >> ipAddr)
-         [qi::_val = pnx::bind(&CiscoAcls::setMask, this, qi::_1, qi::_2)]
+         [(qi::_val = pnx::bind(&CiscoAcls::setMask, this, qi::_1, qi::_2))]
       ;
     anyTerm =
       qi::as_string[qi::string("any") >> -qi::char_("46") >> &qi::space]
-        [qi::_val = qi::_1] // Needed as partial match returns itself
+        [(qi::_val = qi::_1)] // Needed as partial match returns itself
       ;
 
     sourcePort =
-      portArgument [pnx::bind(&CiscoAcls::curRuleSrcPort, this) = qi::_1]
+      portArgument [(pnx::bind(&CiscoAcls::curRuleSrcPort, this) = qi::_1)]
       ;
     destinationPort =
-      portArgument [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
+      portArgument [(pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1)]
       ;
     portArgument =
-      (  (qi::lit("eq ") > token) [qi::_val = qi::_1]
-       | (qi::lit("neq ") > token) [qi::_val = "!" + qi::_1]
-       | (qi::lit("lt ") > token) [qi::_val = "<" + qi::_1]
-       | (qi::lit("gt ") > token) [qi::_val = ">" + qi::_1]
-       | (qi::lit("range ") > token > token) [qi::_val = (qi::_1+"-"+qi::_2)]
+      (  (qi::lit("eq ") > token) [(qi::_val = qi::_1)]
+       | (qi::lit("neq ") > token) [(qi::_val = "!" + qi::_1)]
+       | (qi::lit("lt ") > token) [(qi::_val = "<" + qi::_1)]
+       | (qi::lit("gt ") > token) [(qi::_val = ">" + qi::_1)]
+       | (qi::lit("range ") > token > token) [(qi::_val = (qi::_1+"-"+qi::_2))]
       )
       ;
     icmpArgument =
       (  (qi::lit("object-group ") > token)
-          [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
+          [(pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1)]
        | icmpTypeCode
        | icmpMessage
       )
       ;
     icmpTypeCode =
       qi::as_string[+qi::digit]
-        [pnx::bind(&CiscoAcls::curRuleSrcPort, this) = qi::_1]
+        [(pnx::bind(&CiscoAcls::curRuleSrcPort, this) = qi::_1)]
       > -(+qi::blank > -qi::as_string[+qi::digit]
-        [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1])
+        [(pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1)])
       ;
     icmpMessage = // A token is too greedy, so...
       (  qi::string("administratively-prohibited")
@@ -348,7 +348,7 @@ namespace netmeld::datastore::importers::cisco {
        | qi::string("traceroute")
        | qi::string("ttl-exceeded")
        | qi::string("unreachable")
-      ) [pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1]
+      ) [(pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1)]
       ;
 
     untrackedArguments =
@@ -371,11 +371,11 @@ namespace netmeld::datastore::importers::cisco {
     establishedArgument =
       (  qi::string("established")
        | qi::string("tracked") /* arista equivalent */
-      ) [pnx::bind(&CiscoAcls::addCurRuleOption, this, qi::_1)]
+      ) [(pnx::bind(&CiscoAcls::addCurRuleOption, this, qi::_1))]
       ;
 
     logArgument =
-      logArgumentString [pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1)]
+      logArgumentString [(pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1))]
       ;
     logArgumentString =
       qi::string("log") >> -qi::string("-input")
@@ -399,15 +399,15 @@ namespace netmeld::datastore::importers::cisco {
       ;
 
     inactiveArgument =
-      qi::lit("inactive") [pnx::bind([&](){curRule.disable();})]
+      qi::lit("inactive") [(pnx::bind([&](){curRule.disable();}))]
       ;
 
     remarkArgument =
-      tokens [pnx::bind(&CiscoAcls::curRuleDescription, this) = qi::_1]
+      tokens [(pnx::bind(&CiscoAcls::curRuleDescription, this) = qi::_1)]
       ;
 
     ignoredRuleLine =
-      tokens [pnx::bind(&CiscoAcls::addIgnoredRuleData, this, qi::_1)]
+      tokens [(pnx::bind(&CiscoAcls::addIgnoredRuleData, this, qi::_1))]
       >> qi::eol
       ;
 

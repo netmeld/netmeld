@@ -134,12 +134,21 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
-  bool
-  operator<(const Vlan& first, const Vlan& second)
+  std::partial_ordering
+  Vlan::operator<=>(const Vlan& rhs) const
   {
-    return first.vlanId < second.vlanId;
+    if (auto cmp = vlanId <=> rhs.vlanId; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = description <=> rhs.description; 0 != cmp) {
+      return cmp;
+    }
+    return ipNet <=> rhs.ipNet;
+  }
+
+  bool
+  Vlan::operator==(const Vlan& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

@@ -48,13 +48,14 @@ namespace netmeld::datalake::handlers {
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
-    // Constructors
+    // Constructors and Destructors
     // =========================================================================
     private: // Constructors which should be hidden from API users
       AbstractHandler();
     protected: // Constructors part of subclass API
       AbstractHandler(const std::string&);
-    public: // Constructors part of public API
+    public: // Constructors and destructors part of public API
+      virtual ~AbstractHandler() = default;
 
     // =========================================================================
     // Methods

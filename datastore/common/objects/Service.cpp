@@ -232,36 +232,45 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  bool
-  operator==(const Service& first, const Service& second)
+  std::partial_ordering
+  Service::operator<=>(const Service& rhs) const
   {
-    return first.dstAddress == second.dstAddress
-        && first.srcAddress == second.srcAddress
-        && first.isLocal == second.isLocal
-        && first.interfaceName == second.interfaceName
-        && first.zone == second.zone
-        && first.serviceName == second.serviceName
-        && first.serviceDescription == second.serviceDescription
-        && first.serviceReason == second.serviceReason
-        && first.protocol == second.protocol
-        && first.dstPorts == second.dstPorts
-        && first.srcPorts == second.srcPorts
-        ;
+    if (auto cmp = dstAddress <=> rhs.dstAddress; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = srcAddress <=> rhs.srcAddress; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = isLocal <=> rhs.isLocal; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = interfaceName <=> rhs.interfaceName; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = zone <=> rhs.zone; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = serviceName <=> rhs.serviceName; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = serviceDescription <=> rhs.serviceDescription; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = serviceReason <=> rhs.serviceReason; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = dstPorts <=> rhs.dstPorts; 0 != cmp) {
+      return cmp;
+    }
+    return srcPorts <=> rhs.srcPorts;
   }
 
   bool
-  operator<(const Service& first, const Service& second)
+  Service::operator==(const Service& rhs) const
   {
-    if (first == second) { return false; }
-
-    if (first.serviceName == second.serviceName) {
-      if (first.protocol == second.protocol) {
-        return first.dstAddress < second.dstAddress;
-      } else {
-        return first.protocol < second.protocol;
-      }
-    } else {
-      return first.serviceName < second.serviceName;
-    }
+    return 0 == operator<=>(rhs);
   }
 }

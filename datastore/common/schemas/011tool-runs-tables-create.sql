@@ -40,6 +40,7 @@ CREATE TABLE tool_runs (
     PRIMARY KEY (id)
 );
 
+-- Partial indexes
 CREATE INDEX tool_runs_idx_tool_name
 ON tool_runs(tool_name);
 
@@ -63,6 +64,7 @@ CREATE TABLE tool_run_interfaces (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX tool_run_interfaces_idx_tool_run_id
 ON tool_run_interfaces(tool_run_id);
 
@@ -91,6 +93,7 @@ CREATE TABLE tool_run_mac_addrs (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX tool_run_mac_addrs_idx_tool_run_id_interface_name
 ON tool_run_mac_addrs(tool_run_id, interface_name);
 
@@ -124,6 +127,7 @@ CREATE TABLE tool_run_ip_addrs (
         ON UPDATE CASCADE
 );
 
+-- Partial indexes
 CREATE INDEX tool_run_ip_addrs_idx_tool_run_id_interface_name
 ON tool_run_ip_addrs(tool_run_id, interface_name);
 
@@ -159,10 +163,11 @@ CREATE TABLE tool_run_ip_routes (
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    CHECK (family(dst_ip_net) = family(rtr_ip_addr)),
+    CHECK (inet_same_family(dst_ip_net, rtr_ip_addr)),
     CHECK ((rtr_ip_addr = host(rtr_ip_addr)::INET))
 );
 
+-- Partial indexes
 CREATE INDEX tool_run_ip_routes_idx_tool_run_id_interface_name
 ON tool_run_ip_routes(tool_run_id, interface_name);
 

@@ -42,7 +42,7 @@ class WriterContext {
   protected: // Variables intended for internal/subclass API
     std::string queryInfo;
     std::vector<std::string> columns;
-    std::map<std::string, float> columnWidths;
+    std::map<std::string, double> columnWidths;
     std::vector<std::vector<std::string>> rows;
 
   public: // Variables should rarely appear at this scope
@@ -65,7 +65,7 @@ class WriterContext {
   protected: // Methods part of subclass API
   public: // Methods part of public API
     void addQueryInfo(std::string, std::string);
-    void addColumn(std::string, float);
+    void addColumn(std::string, double);
     void addRow(std::vector<std::string>);
     std::string write() const;
 };

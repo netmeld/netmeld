@@ -127,14 +127,27 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  bool
-  operator==(const Port& first, const Port& second)
+  std::partial_ordering
+  Port::operator<=>(const Port& rhs) const
   {
-    return first.port == second.port
-        && first.protocol == second.protocol
-        && first.ipAddr == second.ipAddr
-        && first.state == second.state
-        && first.reason == second.reason
-        ;
+    if (auto cmp = port <=> rhs.port; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = state <=> rhs.state; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = reason <=> rhs.reason; 0 != cmp) {
+      return cmp;
+    }
+    return ipAddr <=> rhs.ipAddr;
+  }
+
+  bool
+  Port::operator==(const Port& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

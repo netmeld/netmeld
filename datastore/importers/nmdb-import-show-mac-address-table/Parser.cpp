@@ -41,12 +41,12 @@ Parser::Parser() : Parser::base_type(start)
 
   link =
     -qi::ascii::char_("GRO*+")
-    >> vlanId [pnx::bind(&Data::addVlan, &qi::_val, qi::_1)]
-    >> macAddr [pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1)]
-    >> portName [pnx::bind(&Data::setName, &qi::_val, qi::_1)]
+    >> vlanId [(pnx::bind(&Data::addVlan, &qi::_val, qi::_1))]
+    >> macAddr [(pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1))]
+    >> portName [(pnx::bind(&Data::setName, &qi::_val, qi::_1))]
     >> qi::omit[*token]
-    >  -qi::eol [pnx::bind(&Data::setPartial, &qi::_val, true),
-                 pnx::bind(&Data::setState, &qi::_val, true)]
+    >  -qi::eol [(pnx::bind(&Data::setPartial, &qi::_val, true),
+                  pnx::bind(&Data::setState, &qi::_val, true))]
     ;
 
   vlanId =
@@ -55,7 +55,7 @@ Parser::Parser() : Parser::base_type(start)
 
   portName =
     -qi::hold[typeValue > -(+qi::blank)]
-    > token [qi::_val = qi::_1]
+    > token [(qi::_val = qi::_1)]
     ;
 
   typeValue =

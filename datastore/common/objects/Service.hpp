@@ -27,6 +27,7 @@
 #ifndef SERVICE_HPP
 #define SERVICE_HPP
 
+#include <compare>
 #include <set>
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
@@ -101,8 +102,8 @@ namespace netmeld::datastore::objects {
 
       std::string toDebugString() const override;
 
-      friend bool operator==(const Service&, const Service&);
-      friend bool operator<(const Service&, const Service&);
+      std::partial_ordering operator<=>(const Service&) const;
+      bool operator==(const Service&) const;
   };
 }
 #endif // SERVICE_HPP

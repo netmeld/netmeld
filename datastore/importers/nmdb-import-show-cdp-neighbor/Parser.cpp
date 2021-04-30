@@ -37,12 +37,12 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     config
-      [qi::_val = pnx::bind(&Parser::getData, this)]
+      [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
     *(qi::eol)
-    >> *(header >> deviceData) [pnx::bind(&Parser::finalizeData, this)]
+    >> *(header >> deviceData) [(pnx::bind(&Parser::finalizeData, this))]
     ;
 
   header =
@@ -63,8 +63,8 @@ Parser::Parser() : Parser::base_type(start)
     (  (qi::lit("Device") > (+qi::blank | qi::lit('-')) > qi::lit("ID:"))
      | (qi::lit("SysName:"))
     ) > -(+qi::blank)
-    > token [pnx::bind(&NeighborData::curHostname, &nd)
-             = pnx::bind(&nmcu::toLower, qi::_1)]
+    > token [(pnx::bind(&NeighborData::curHostname, &nd)
+              = pnx::bind(&nmcu::toLower, qi::_1))]
     > qi::eol
     ;
 
@@ -72,15 +72,15 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("IP") > -(qi::lit("v") > qi::char_("46"))
     > -(qi::char_("aA") > qi::lit("ddress:"))
     > ipAddr
-      [pnx::bind([&](nmdo::IpAddress val){nd.ipAddrs.push_back(val);}, qi::_1)]
+      [(pnx::bind([&](nmdo::IpAddress val){nd.ipAddrs.push_back(val);}, qi::_1))]
     > *token
     > qi::eol
     ;
 
   platformValue =
     qi::lit("Platform:")
-    > token [pnx::bind(&NeighborData::curVendor, &nd) = qi::_1]
-    > token [pnx::bind(&NeighborData::curModel, &nd) = qi::_1]
+    > token [(pnx::bind(&NeighborData::curVendor, &nd) = qi::_1)]
+    > token [(pnx::bind(&NeighborData::curModel, &nd) = qi::_1)]
     > *token
     > qi::eol
     ;
@@ -88,7 +88,7 @@ Parser::Parser() : Parser::base_type(start)
   interfaceValue =
     qi::lit("Interface:") > token
     > qi::lit("Port ID (outgoing port):")
-    > token [pnx::bind(&NeighborData::curIfaceName, &nd) = qi::_1]
+    > token [(pnx::bind(&NeighborData::curIfaceName, &nd) = qi::_1)]
     > qi::eol
     ;
 

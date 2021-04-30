@@ -41,11 +41,11 @@ namespace netmeld::playbook {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      bool                execute {false};
-      bool                headless {false};
+      bool execute  {false};
+      bool headless {false};
 
-      uint32_t            commandIdNumber {0};
-      std::set<uint32_t>  disabledCommands;
+      size_t commandIdNumber {0};
+      std::set<size_t> disabledCommands;
 
     public: // Variables should rarely appear at this scope
 
@@ -70,11 +70,11 @@ namespace netmeld::playbook {
     public: // Methods part of public API
       static CommandRunnerSingleton& getInstance();
 
-      void disableCommands(std::set<uint32_t> const&);
+      void disableCommands(std::set<size_t> const&);
       void setExecute(bool const);
       void setHeadless(bool const);
 
-      bool isEnabled(uint32_t const) const;
+      bool isEnabled(size_t const) const;
 
       bool systemExec(std::string const&);
       void threadExec(std::vector<std::tuple<std::string, std::string>> const&);

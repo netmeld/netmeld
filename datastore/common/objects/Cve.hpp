@@ -27,6 +27,7 @@
 #ifndef CVE_HPP
 #define CVE_HPP
 
+#include <compare>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/Port.hpp>
 
@@ -76,7 +77,8 @@ namespace netmeld::datastore::objects {
       std::string toString() const;
       std::string toDebugString() const override;
 
-      friend bool operator==(const Cve&, const Cve&);
+      std::partial_ordering operator<=>(const Cve&) const;
+      bool operator==(const Cve&) const;
   };
 }
 

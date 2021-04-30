@@ -57,11 +57,11 @@ namespace netmeld::datastore::parsers {
         // TODO Why do none of these use the space skipper?
         macAddrLine =
           qi::lit("  - ") >> // two spaces before -
-          macAddr [pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1)] >>
+          macAddr [(pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1))] >>
           (  (qi::lit(" (interface ") >> ifaceName
-                [pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1)])
+                [(pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1))])
            | (qi::lit(" (interfaces ") >> token
-                [pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1)] >>
+                [(pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1))] >>
               -qi::omit[+(qi::blank >> token)] >> qi::eol
              )
           )
@@ -69,9 +69,9 @@ namespace netmeld::datastore::parsers {
 
         ipAddrLine =
           qi::lit(" - ") >> // one space before -
-          ipAddr [pnx::bind(&nmdo::Interface::addIpAddress, &qi::_val, qi::_1)] >>
+          ipAddr [(pnx::bind(&nmdo::Interface::addIpAddress, &qi::_val, qi::_1))] >>
           qi::lit(" (on interface ") >>
-          ifaceName [pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1)]
+          ifaceName [(pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1))]
           ;
 
         ifaceName =
