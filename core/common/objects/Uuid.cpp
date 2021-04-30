@@ -73,10 +73,23 @@ namespace netmeld::core::objects {
     return oss.str();
   }
 
-  bool
-  operator==(const Uuid& first, const Uuid& second)
+  std::strong_ordering
+  Uuid::operator<=>(const Uuid& rhs) const
   {
-    return first.uuid == second.uuid;
+    // boost::uuids::uuid doesn't have operator<=>() yet.
+    if (uuid < rhs.uuid) {
+      return std::strong_ordering::less;
+    }
+    if (uuid > rhs.uuid) {
+      return std::strong_ordering::greater;
+    }
+    return std::strong_ordering::equal;
+  }
+
+  bool
+  Uuid::operator==(const Uuid& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 
   std::ostream&

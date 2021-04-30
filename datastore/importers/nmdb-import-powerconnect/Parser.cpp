@@ -33,8 +33,8 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     config
-      [pnx::bind(&Parser::setVendor, this, "Dell"),
-       qi::_val = pnx::bind(&Parser::getData, this)]
+      [(pnx::bind(&Parser::setVendor, this, "Dell"),
+        qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
@@ -46,29 +46,29 @@ Parser::Parser() : Parser::base_type(start)
 
   hostname =
     ("hostname" > token > qi::eol)
-      [pnx::bind(&Parser::setDevId, this, qi::_1)]
+      [(pnx::bind(&Parser::setDevId, this, qi::_1))]
     ;
 
   interface =
     "interface" >> typeSlot >> qi::eol >>
     *( (("ip address" >> ipAddr >> ipAddr)
-         [pnx::bind(&Parser::addIfaceIp, this, qi::_1, qi::_2)] >>
+         [(pnx::bind(&Parser::addIfaceIp, this, qi::_1, qi::_2))] >>
         -ipAddr
-         [pnx::bind(&Parser::setIfaceGateway, this, qi::_1)] >>
+         [(pnx::bind(&Parser::setIfaceGateway, this, qi::_1))] >>
         qi::eol)
      | ("switchport mode" >> token)
-         [pnx::bind(&Parser::updateIfaceSwitchportMode, this, qi::_1)]
+         [(pnx::bind(&Parser::updateIfaceSwitchportMode, this, qi::_1))]
      | ("shutdown" >> qi::eol)
-         [pnx::bind(&Parser::disableIface, this)]
+         [(pnx::bind(&Parser::disableIface, this))]
      | (ignoredLine - ("exit" > qi::eol))
     ) >> "exit" > qi::eol
     ;
 
   typeSlot =
       ("vlan" >> token >> -token)
-        [pnx::bind(&Parser::updateIfaceTypeSlot, this, "vlan", qi::_1)]
+        [(pnx::bind(&Parser::updateIfaceTypeSlot, this, "vlan", qi::_1))]
     | (qi::as_string[+qi::ascii::alpha] >> qi::as_string[+qi::ascii::graph])
-        [pnx::bind(&Parser::updateIfaceTypeSlot, this, qi::_1, qi::_2)]
+        [(pnx::bind(&Parser::updateIfaceTypeSlot, this, qi::_1, qi::_2))]
     ;
 
   token =

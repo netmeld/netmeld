@@ -27,6 +27,7 @@
 #ifndef VLAN_HPP
 #define VLAN_HPP
 
+#include <compare>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/IpNetwork.hpp>
 
@@ -73,7 +74,8 @@ namespace netmeld::datastore::objects {
 
       std::string toDebugString() const override;
 
-      friend bool operator<(const Vlan&, const Vlan&);
+      std::partial_ordering operator<=>(const Vlan&) const;
+      bool operator==(const Vlan&) const;
   };
 }
 #endif // VLAN_HPP

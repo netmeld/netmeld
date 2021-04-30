@@ -69,10 +69,7 @@ namespace netmeld::datastore::objects {
   void
   MacAddress::addIp(IpAddress& _ipAddr)
   {
-    auto* vec {&ipAddrs};
-    if (std::find(vec->begin(), vec->end(), _ipAddr) == vec->end()) {
-      vec->push_back(_ipAddr);
-    }
+    ipAddrs.insert(_ipAddr);
   }
 
   void
@@ -159,18 +156,21 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  bool
-  operator<(const MacAddress& first, const MacAddress& second)
+  std::partial_ordering
+  MacAddress::operator<=>(const MacAddress& rhs) const
   {
-    return first.macAddr < second.macAddr;
+    if (auto cmp = macAddr <=> rhs.macAddr; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = isResponding <=> rhs.isResponding; 0 != cmp) {
+      return cmp;
+    }
+    return ipAddrs <=> rhs.ipAddrs;
   }
 
   bool
-  operator==(const MacAddress& first, const MacAddress& second)
+  MacAddress::operator==(const MacAddress& rhs) const
   {
-    return first.macAddr == second.macAddr
-        && first.ipAddrs == second.ipAddrs
-        && first.isResponding == second.isResponding
-        ;
+    return 0 == operator<=>(rhs);
   }
 }

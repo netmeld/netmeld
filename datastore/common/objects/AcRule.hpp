@@ -27,6 +27,7 @@
 #ifndef AC_RULE_HPP
 #define AC_RULE_HPP
 
+#include <compare>
 #include <vector>
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
@@ -108,8 +109,8 @@ namespace netmeld::datastore::objects {
                 const nmco::Uuid&, const std::string&) override;
       std::string toDebugString() const override;
 
-      friend bool operator<(const AcRule&, const AcRule&);
-      friend bool operator==(const AcRule&, const AcRule&);
+      auto operator<=>(const AcRule&) const = default;
+      bool operator==(const AcRule&) const = default;
   };
 }
 #endif // AC_RULE_HPP

@@ -48,10 +48,10 @@ class Parser :
 
       line =
         (ipAddr
-           [qi::_val = qi::_1] >>
+           [(qi::_val = qi::_1)] >>
          +hostname
-           [pnx::bind(&nmdo::IpAddress::addAlias,
-                      &qi::_val, qi::_1, "hosts file")] >>
+           [(pnx::bind(&nmdo::IpAddress::addAlias,
+                       &qi::_val, qi::_1, "hosts file"))] >>
          -comment >> qi::eol
         )
         | (comment >> qi::eol)

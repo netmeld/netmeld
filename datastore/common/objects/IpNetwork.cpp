@@ -372,19 +372,34 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  bool
-  operator<(const IpNetwork& first, const IpNetwork& second)
+  std::partial_ordering
+  IpNetwork::operator<=>(const IpNetwork& rhs) const
   {
-    return first.address < second.address;
+    // boost::asio::ip::address doesn't have operator<=>() yet.
+    if (address < rhs.address) {
+      return std::partial_ordering::less;
+    }
+    if (address > rhs.address) {
+      return std::partial_ordering::greater;
+    }
+
+    if (auto cmp = prefix <=> rhs.prefix; 0 != cmp) {
+      return cmp;
+    }
+
+    if (auto cmp = reason <=> rhs.reason; 0 != cmp) {
+      return cmp;
+    }
+
+    if (boost::math::epsilon_difference(extraWeight, rhs.extraWeight) <= 1000.0) {
+      return std::partial_ordering::equivalent;
+    }
+    return extraWeight <=> rhs.extraWeight;
   }
 
   bool
-  operator==(const IpNetwork& first, const IpNetwork& second)
+  IpNetwork::operator==(const IpNetwork& rhs) const
   {
-    return first.address == second.address
-        && first.prefix == second.prefix
-        && first.reason == second.reason
-        && boost::math::epsilon_difference(first.extraWeight, second.extraWeight) <= 1000.0
-        ;
+    return 0 == operator<=>(rhs);
   }
 }

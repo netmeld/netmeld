@@ -27,6 +27,7 @@
 #ifndef ROUTE_HPP
 #define ROUTE_HPP
 
+#include <compare>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/objects/IpNetwork.hpp>
@@ -74,7 +75,8 @@ namespace netmeld::datastore::objects {
 
       std::string toDebugString() const override;
 
-      friend bool operator==(const Route&, const Route&);
+      std::partial_ordering operator<=>(const Route&) const;
+      bool operator==(const Route&) const;
   };
 }
 #endif // ROUTE_HPP

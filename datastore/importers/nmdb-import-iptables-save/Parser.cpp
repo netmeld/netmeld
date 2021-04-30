@@ -38,13 +38,13 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
     (*(table))
-      [qi::_val = pnx::bind(&Parser::getData, this)]
+      [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   table =
     commentLine >>
     qi::lexeme[qi::lit("*") >> token]
-      [pnx::bind(&Parser::setTableName, this, qi::_1)] >> qi::eol >>
+      [(pnx::bind(&Parser::setTableName, this, qi::_1))] >> qi::eol >>
     +(chain) >>
     *(rule) >>
     qi::lit("COMMIT") >> qi::eol >>
@@ -53,53 +53,53 @@ Parser::Parser() : Parser::base_type(start)
 
   chain =
     (qi::lit(":") >> token >> token >> counts >> qi::eol)
-      [pnx::bind(&Parser::updateChainPolicy, this, qi::_1, qi::_2)]
+      [(pnx::bind(&Parser::updateChainPolicy, this, qi::_1, qi::_2))]
     ;
 
   rule =
     -counts >>
     (qi::lit("-A") >> token
-       [pnx::bind(&Parser::updateCurRuleId, this, qi::_1)] >>
+       [(pnx::bind(&Parser::updateCurRuleId, this, qi::_1))] >>
      // TODO 09FEB19 Improve logic to match certain module formats e.g.,
      //      -p tcp -m tcp --sport :1024 ! --dport 1024:2048
      // http://ipset.netfilter.org/iptables-extensions.man.html
      *(  (qi::lexeme[qi::lit("-p tcp -m tcp")] >> sportModule >> dportModule)
-           [pnx::bind(&Parser::updateRulePort, this, "tcp", qi::_1, qi::_2)]
+           [(pnx::bind(&Parser::updateRulePort, this, "tcp", qi::_1, qi::_2))]
        | (qi::lexeme[qi::lit("-p udp -m udp")] >> sportModule >> dportModule)
-           [pnx::bind(&Parser::updateRulePort, this, "udp", qi::_1, qi::_2)]
+           [(pnx::bind(&Parser::updateRulePort, this, "udp", qi::_1, qi::_2))]
        | (qi::lexeme[qi::lit("-p icmp -m icmp")] >> icmpModule)
-           [pnx::bind(&Parser::updateRulePort, this, "icmp", "", qi::_1)]
+           [(pnx::bind(&Parser::updateRulePort, this, "icmp", "", qi::_1))]
        | (qi::matches[qi::lit("!")] >> optionSwitch >> optionValue)
-           [pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2, qi::_3)]
+           [(pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2, qi::_3))]
       ) >>
      qi::eol)
-      [pnx::bind(&Parser::finalizeRule, this)]
+      [(pnx::bind(&Parser::finalizeRule, this))]
     ;
 
   sportModule =
     (  (qi::char_("!") >> qi::lit("--sport") >> token)
-         [qi::_val = qi::_1 + qi::_2]
+         [(qi::_val = qi::_1 + qi::_2)]
      | (qi::lit("--sport") >> token)
-         [qi::_val = qi::_1]
+         [(qi::_val = qi::_1)]
      | (qi::attr(std::string()))
-         [qi::_val = qi::_1]
+         [(qi::_val = qi::_1)]
     )
     ;
   dportModule =
     (  (qi::char_("!") >> qi::lit("--dport") >> token)
-         [qi::_val = qi::_1 + qi::_2]
+         [(qi::_val = qi::_1 + qi::_2)]
      | (qi::lit("--dport") >> token)
-         [qi::_val = qi::_1]
+         [(qi::_val = qi::_1)]
      | (qi::attr(std::string()))
-         [qi::_val = qi::_1]
+         [(qi::_val = qi::_1)]
     )
     ;
   icmpModule =
     (  (qi::char_("!") >>
         (qi::lit("--icmp-type") | qi::lit("--icmpv6-type")) >> token)
-         [qi::_val = qi::_1 + qi::_2]
+         [(qi::_val = qi::_1 + qi::_2)]
      | ((qi::lit("--icmp-type") | qi::lit("--icmpv6-type")) >> token)
-         [qi::_val = qi::_1]
+         [(qi::_val = qi::_1)]
     )
     ;
     ;

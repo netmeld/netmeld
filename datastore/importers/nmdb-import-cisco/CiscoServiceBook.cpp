@@ -40,8 +40,8 @@ namespace netmeld::datastore::importers::cisco {
 
     start =
       ciscoServiceBook
-        [pnx::bind(&CiscoServiceBook::finalizeCurBook, this),
-         qi::_val = pnx::bind(&CiscoServiceBook::getData, this)]
+        [(pnx::bind(&CiscoServiceBook::finalizeCurBook, this),
+          qi::_val = pnx::bind(&CiscoServiceBook::getData, this))]
       ;
 
     ciscoServiceBook =
@@ -65,7 +65,7 @@ namespace netmeld::datastore::importers::cisco {
       > -sourcePort
       > -destinationPort
       > -icmpArgument
-      > qi::eol [pnx::bind(&CiscoServiceBook::addCurData, this)]
+      > qi::eol [(pnx::bind(&CiscoServiceBook::addCurData, this))]
       ;
 
     objectGroupService =
@@ -81,14 +81,14 @@ namespace netmeld::datastore::importers::cisco {
       ;
     portObjectArgumentLine =
       qi::lit("port-object ") > unallocatedPort
-      > qi::eol [pnx::bind(&CiscoServiceBook::addCurData, this)]
+      > qi::eol [(pnx::bind(&CiscoServiceBook::addCurData, this))]
       ;
     serviceObjectLine =
       qi::lit("service-object ")
       > (  (objectArgument)
          | (protocolArgument > -sourcePort > -destinationPort > -icmpArgument)
         )
-      > qi::eol [pnx::bind(&CiscoServiceBook::addCurData, this)]
+      > qi::eol [(pnx::bind(&CiscoServiceBook::addCurData, this))]
       ;
     groupObjectLine =
       qi::lit("group-object ") > dataString > qi::eol
@@ -107,7 +107,7 @@ namespace netmeld::datastore::importers::cisco {
       ;
     protocolObjectLine =
       qi::lit("protocol-object ") > protocolArgument > qi::eol
-        [pnx::bind(&CiscoServiceBook::addCurData, this)]
+        [(pnx::bind(&CiscoServiceBook::addCurData, this))]
       ;
 
 
@@ -115,8 +115,8 @@ namespace netmeld::datastore::importers::cisco {
     // Helper piece-wise rules
     //========
     bookName =
-      token [pnx::bind([&](const std::string& _name)
-                       {curBook.setName(_name);}, qi::_1)]
+      token [(pnx::bind([&](const std::string& _name)
+                        {curBook.setName(_name);}, qi::_1))]
       ;
 
     description =
@@ -125,17 +125,17 @@ namespace netmeld::datastore::importers::cisco {
 
 
     protocolArgument =
-      token [pnx::bind(&CiscoServiceBook::curProtocol, this) = qi::_1]
+      token [(pnx::bind(&CiscoServiceBook::curProtocol, this) = qi::_1)]
       ;
 
     sourcePort =
       (qi::lit("source ") > portArgument)
-        [pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1]
+        [(pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1)]
       ;
 
     destinationPort =
       (qi::lit("destination ") > portArgument)
-        [pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1]
+        [(pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1)]
       ;
 
     icmpArgument =
@@ -143,9 +143,9 @@ namespace netmeld::datastore::importers::cisco {
       ;
     icmpTypeCode =
       qi::as_string[+qi::digit]
-        [pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1]
+        [(pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1)]
       > -(+qi::blank > -qi::as_string[+qi::digit]
-        [pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1])
+        [(pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1)])
       ;
     icmpMessage = // A token is too greedy, so...
       (  qi::string("administratively-prohibited")
@@ -192,19 +192,19 @@ namespace netmeld::datastore::importers::cisco {
        | qi::string("traceroute")
        | qi::string("ttl-exceeded")
        | qi::string("unreachable")
-      ) [pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1]
+      ) [(pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1)]
       ;
 
     unallocatedPort =
       portArgument
-        [pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1]
+        [(pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1)]
       ;
     portArgument =
-      (  (qi::lit("eq ") > token) [qi::_val = qi::_1]
-       | (qi::lit("neq ") > token) [qi::_val = "!" + qi::_1]
-       | (qi::lit("lt ") > token) [qi::_val = "<" + qi::_1]
-       | (qi::lit("gt ") > token) [qi::_val = ">" + qi::_1]
-       | (qi::lit("range ") > token > token) [qi::_val = (qi::_1 + "-" + qi::_2)]
+      (  (qi::lit("eq ") > token) [(qi::_val = qi::_1)]
+       | (qi::lit("neq ") > token) [(qi::_val = "!" + qi::_1)]
+       | (qi::lit("lt ") > token) [(qi::_val = "<" + qi::_1)]
+       | (qi::lit("gt ") > token) [(qi::_val = ">" + qi::_1)]
+       | (qi::lit("range ") > token > token) [(qi::_val = (qi::_1 + "-" + qi::_2))]
       )
       ;
 
@@ -213,7 +213,7 @@ namespace netmeld::datastore::importers::cisco {
       ;
 
     dataString =
-      token [pnx::bind(&CiscoServiceBook::addData, this, qi::_1)]
+      token [(pnx::bind(&CiscoServiceBook::addData, this, qi::_1))]
       ;
 
 

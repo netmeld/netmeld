@@ -27,6 +27,7 @@
 #ifndef IP_ADDRESS_HPP
 #define IP_ADDRESS_HPP
 
+#include <compare>
 #include <set>
 
 #include <netmeld/datastore/objects/IpNetwork.hpp>
@@ -79,8 +80,8 @@ namespace netmeld::datastore::objects {
       std::string toString() const;
       std::string toDebugString() const override;
 
-      friend bool operator<(const IpAddress&, const IpAddress&);
-      friend bool operator==(const IpAddress&, const IpAddress&);
+      auto operator<=>(const IpAddress&) const = default;
+      bool operator==(const IpAddress&) const = default;
   };
 }
 #endif // IP_ADDRESS_HPP
