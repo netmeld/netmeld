@@ -36,20 +36,31 @@ Parser::Parser() : Parser::base_type(start)
     // Skip garbage before
     *(!qi::lit("Windows IP Configuration") >> -qi::omit[+token] >> qi::eol) >>
     (qi::lit("Windows IP Configuration") > +qi::eol >>
-     +(-compartmentHeader >>
-       +( ("Host Name" >> dots > fqdn > qi::eol)
-            [(pnx::bind(&Parser::addDevInfo, this, qi::_1))]
-        | ("Primary Dns Suffix" >> dots > -fqdn > qi::eol)
-        | ignoredLine
-       ) >> qi::eol >>
-       *(adapter)
-      )
-    ) [(qi::_val = pnx::bind(&Parser::getData, this))] >>
+     (
+      +adapter |
+      +(
+        
+        -compartmentHeader >>
+        hostData >>
+        *(adapter)
+      
+       )
+     )
+    ) [qi::_val = pnx::bind(&Parser::getData, this)] >>
     *(ignoredLine) // Skip garbage after
     ;
 
+
   compartmentHeader =
     +qi::lit('=') > qi::eol > ignoredLine > +qi::lit('=') > qi::eol
+    ;
+  
+  hostData = 
+    +( ("Host Name" >> dots > fqdn > qi::eol)
+        [pnx::bind(&Parser::addDevInfo, this, qi::_1)]
+        | ("Primary Dns Suffix" >> dots > -fqdn > qi::eol)
+        | ignoredLine
+       ) >> qi::eol
     ;
 
   adapter =
