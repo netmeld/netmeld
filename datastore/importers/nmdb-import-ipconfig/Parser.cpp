@@ -50,7 +50,6 @@ Parser::Parser() : Parser::base_type(start)
     *(ignoredLine) // Skip garbage after
     ;
 
-
   compartmentHeader =
     +qi::lit('=') > qi::eol > ignoredLine > +qi::lit('=') > qi::eol
     ;
