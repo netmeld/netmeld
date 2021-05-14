@@ -169,7 +169,6 @@ class Tool : public nmdt::AbstractExportTool
         // Open and parse the port list file.
         sfs::path const portListPath {this->getConfPath()};
 
-
         Results portRanges {
           nmdp::fromFilePath<Parser, Results>(portListPath.string())
         };
