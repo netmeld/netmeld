@@ -73,14 +73,14 @@ Parser::Parser() : Parser::base_type(start)
      | ("Connection-specific DNS Suffix" >> dots > -token
           [(pnx::bind(&Parser::setIfaceDnsSuffix, this, qi::_1))] > qi::eol)
      | ("Default Gateway" >> dots > *(getIp
-          [(pnx::bind(&Parser::addRoute, this, qi::_1))] > qi::eol) > -qi::eol)
+          [(pnx::bind(&Parser::addRoute, this, qi::_1))] > qi::eol))
      | servers
      | ignoredLine
     ) >> *qi::eol
     ;
 
   ifaceTypeName =
-    (token >> "adapter" >>
+    (ifaceType >> "adapter" >>
      qi::as_string[qi::lexeme[+(qi::char_ - ':')]] > ':')
        [(pnx::bind(&Parser::addIface, this, qi::_2, qi::_1))]
     ;
@@ -114,6 +114,10 @@ Parser::Parser() : Parser::base_type(start)
     +qi::ascii::graph
     ;
 
+  ifaceType =
+    +(qi::ascii::print - "adapter")
+    ;
+
   ignoredLine =
     +(qi::char_ - qi::eol) > qi::eol
     ;
@@ -121,6 +125,7 @@ Parser::Parser() : Parser::base_type(start)
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (compartmentHeader)
+      (hostData)
       (adapter)(ifaceTypeName)
       (servers)
       (ipLine)(getIp)
@@ -146,8 +151,13 @@ void
 Parser::addIface(const std::string& _name, const std::string& _type)
 {
   nmdo::Interface iface;
+  std::string whitespace = "\t\n\v\f\r ";
+  std::string type = _type;
+  type = type.erase(type.find_last_not_of(whitespace) + 1);
+  type = type.erase(0, type.find_first_not_of(whitespace));
+  
   iface.setName(_name);
-  iface.setMediaType(_type);
+  iface.setMediaType(type);
   iface.setUp();
 
   curIfaceName = iface.getName();

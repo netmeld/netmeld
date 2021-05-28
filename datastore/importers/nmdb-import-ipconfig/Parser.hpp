@@ -76,7 +76,7 @@ class Parser :
       getIp;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      token;
+      token, ifaceType;
 
     qi::rule<nmdp::IstreamIter>
       dots,
