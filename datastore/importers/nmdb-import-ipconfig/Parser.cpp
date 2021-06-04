@@ -72,8 +72,8 @@ Parser::Parser() : Parser::base_type(start)
           [(pnx::bind(&Parser::setIfaceDown, this))]
      | ("Connection-specific DNS Suffix" >> dots > -token
           [(pnx::bind(&Parser::setIfaceDnsSuffix, this, qi::_1))] > qi::eol)
-     | ("Default Gateway" >> dots > *(getIp
-          [(pnx::bind(&Parser::addRoute, this, qi::_1))] > qi::eol))
+     | ("Default Gateway" >> dots > (+(getIp
+          [(pnx::bind(&Parser::addRoute, this, qi::_1))] > qi::eol) | qi::eol ))
      | servers
      | ignoredLine
     ) >> *qi::eol
@@ -176,7 +176,13 @@ Parser::addIfaceIp(nmdo::IpAddress& _ipAddr)
 {
   auto& iface {d.ifaces[curIfaceName]};
   if (dnsSuffix.count(curIfaceName)) {
-    auto alias {curHostname + '.' + dnsSuffix[curIfaceName]};
+    auto alias {curHostname};
+
+    if (!curHostname.empty()) {
+      alias += '.';
+    }
+    alias += dnsSuffix[curIfaceName];
+
     _ipAddr.addAlias(alias, "ipconfig");
   }
   iface.addIpAddress(_ipAddr);
