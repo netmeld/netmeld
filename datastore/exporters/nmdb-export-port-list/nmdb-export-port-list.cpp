@@ -118,6 +118,14 @@ class Tool : public nmdt::AbstractExportTool
             NULL_SEMANTIC,
             "Use ports from database instead of from resource file.")
           );
+          
+      auto& nmfm {nmcu::FileManager::getInstance()};
+      opts.addOptionalOption("config-path", std::make_tuple(
+            "config-path,c",
+            po::value<std::string>()->default_value(nmfm.getConfPath()/"port-list.conf"),
+            "Use specified port configuration file instead of the default.")
+          );
+
     }
 
     int
@@ -160,8 +168,7 @@ class Tool : public nmdt::AbstractExportTool
       }
       else {
         // Open and parse the port list file.
-        auto& nmfm {nmcu::FileManager::getInstance()};
-        sfs::path const portListPath {nmfm.getConfPath()/"port-list.conf"};
+        sfs::path const portListPath {sfs::path(opts.getValue("config-path"))};
 
         Results portRanges {
           nmdp::fromFilePath<Parser, Results>(portListPath.string())
@@ -250,6 +257,7 @@ class Tool : public nmdt::AbstractExportTool
 
       return nmcu::Exit::SUCCESS;
     }
+
 };
 
 
