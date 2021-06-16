@@ -65,7 +65,7 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      compartmentHeader;
+      hostData, compartmentHeader;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       adapter, ifaceTypeName,
@@ -76,7 +76,7 @@ class Parser :
       getIp;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      token;
+      token, ifaceType;
 
     qi::rule<nmdp::IstreamIter>
       dots,

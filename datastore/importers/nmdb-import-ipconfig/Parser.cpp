@@ -36,20 +36,30 @@ Parser::Parser() : Parser::base_type(start)
     // Skip garbage before
     *(!qi::lit("Windows IP Configuration") >> -qi::omit[+token] >> qi::eol) >>
     (qi::lit("Windows IP Configuration") > +qi::eol >>
-     +(-compartmentHeader >>
-       +( ("Host Name" >> dots > fqdn > qi::eol)
-            [(pnx::bind(&Parser::addDevInfo, this, qi::_1))]
-        | ("Primary Dns Suffix" >> dots > -fqdn > qi::eol)
-        | ignoredLine
-       ) >> qi::eol >>
-       *(adapter)
-      )
-    ) [(qi::_val = pnx::bind(&Parser::getData, this))] >>
+     (
+      +adapter |
+      +(
+        
+        -compartmentHeader >>
+        hostData >>
+        *(adapter)
+      
+       )
+     )
+    ) [qi::_val = pnx::bind(&Parser::getData, this)] >>
     *(ignoredLine) // Skip garbage after
     ;
 
   compartmentHeader =
     +qi::lit('=') > qi::eol > ignoredLine > +qi::lit('=') > qi::eol
+    ;
+  
+  hostData = 
+    +( ("Host Name" >> dots > fqdn > qi::eol)
+        [pnx::bind(&Parser::addDevInfo, this, qi::_1)]
+        | ("Primary Dns Suffix" >> dots > -fqdn > qi::eol)
+        | ignoredLine
+       ) >> qi::eol
     ;
 
   adapter =
@@ -62,15 +72,15 @@ Parser::Parser() : Parser::base_type(start)
           [(pnx::bind(&Parser::setIfaceDown, this))]
      | ("Connection-specific DNS Suffix" >> dots > -token
           [(pnx::bind(&Parser::setIfaceDnsSuffix, this, qi::_1))] > qi::eol)
-     | ("Default Gateway" >> dots > *(getIp
-          [(pnx::bind(&Parser::addRoute, this, qi::_1))] > qi::eol) > -qi::eol)
+     | ("Default Gateway" >> dots > (+(getIp
+          [(pnx::bind(&Parser::addRoute, this, qi::_1))] > qi::eol) | qi::eol ))
      | servers
      | ignoredLine
     ) >> *qi::eol
     ;
 
   ifaceTypeName =
-    (token >> "adapter" >>
+    (ifaceType >> "adapter" >>
      qi::as_string[qi::lexeme[+(qi::char_ - ':')]] > ':')
        [(pnx::bind(&Parser::addIface, this, qi::_2, qi::_1))]
     ;
@@ -104,6 +114,10 @@ Parser::Parser() : Parser::base_type(start)
     +qi::ascii::graph
     ;
 
+  ifaceType =
+    +(qi::ascii::print - "adapter")
+    ;
+
   ignoredLine =
     +(qi::char_ - qi::eol) > qi::eol
     ;
@@ -111,6 +125,7 @@ Parser::Parser() : Parser::base_type(start)
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (compartmentHeader)
+      (hostData)
       (adapter)(ifaceTypeName)
       (servers)
       (ipLine)(getIp)
@@ -136,8 +151,13 @@ void
 Parser::addIface(const std::string& _name, const std::string& _type)
 {
   nmdo::Interface iface;
+  std::string whitespace = "\t\n\v\f\r ";
+  std::string type = _type;
+  type = type.erase(type.find_last_not_of(whitespace) + 1);
+  type = type.erase(0, type.find_first_not_of(whitespace));
+  
   iface.setName(_name);
-  iface.setMediaType(_type);
+  iface.setMediaType(type);
   iface.setUp();
 
   curIfaceName = iface.getName();
@@ -156,7 +176,13 @@ Parser::addIfaceIp(nmdo::IpAddress& _ipAddr)
 {
   auto& iface {d.ifaces[curIfaceName]};
   if (dnsSuffix.count(curIfaceName)) {
-    auto alias {curHostname + '.' + dnsSuffix[curIfaceName]};
+    auto alias {curHostname};
+
+    if (!curHostname.empty()) {
+      alias += '.';
+    }
+    alias += dnsSuffix[curIfaceName];
+
     _ipAddr.addAlias(alias, "ipconfig");
   }
   iface.addIpAddress(_ipAddr);
