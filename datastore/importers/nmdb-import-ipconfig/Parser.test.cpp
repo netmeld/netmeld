@@ -56,37 +56,48 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // compartmentHeader
     const auto &parserRule {tp.compartmentHeader};
     std::vector<std::string> testsOk {
+      //more than one equal sign in the first and last lines
       R"STR(==============================================================================
       Network Information for Compartment 1 (ACTIVE)
       ==============================================================================
-)STR",
+      )STR",
 
+      //one equal sign in the first and last lines
       R"STR(=
       NetworkInformationforCompartment1 (ACTIVE)
       =
-)STR"
+      )STR"
     };
     std::vector<std::string> testsFail {
+      //more than one equal sign between the first and last lines
       R"STR(==============================================================================
       Network Information for Compartment 1 (ACTIVE)
       Extra Line
       ==============================================================================
-)STR",
+      )STR",
 
+      //the first line of equal signs is missing
       R"STR(
       Network Information for Compartment 1 (ACTIVE)
       ==============================================================================
-)STR",
+      )STR",
 
+      //the last line of equal signs is missing
+      R"STR(==============================================================================
+      Network Information for Compartment 1 (ACTIVE)
+      )STR",
+
+      //there are non equal sign characters in the last line
       R"STR(==============================================================================
       Network Information for Compartment 1 (ACTIVE)
       ==============================================ERR================================
-)STR",
+      )STR",
 
+      //there are non equal sign characters in the first line
       R"STR(====ERR==========================================================================
       Network Information for Compartment 1 (ACTIVE)
       ==============================================================================
-)STR"
+      )STR"
     };
     for (const auto& test: testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -101,15 +112,17 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // hostData
     const auto &parserRule {tp.hostData};
     std::vector<std::string> testsOk {
+      //Host Name, also tests empty Primary Dns Suffix
       R"STR(Host Name . . . . . . . . . . . . : TEST-DATA
       Primary Dns Suffix. . . . . . . . . . . : 
 
-)STR",
+      )STR",
 
+      //Host Name, also tests non-empty Primary Dns Suffix
       R"STR(Host Name . . . . . . . . . . . . : TEST-DATA
       Primary Dns Suffix. . . . . . . . . . . : net.meld.net
 
-)STR"
+      )STR"
     };
     for (const auto& test: testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -120,12 +133,14 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // adapter
     const auto &parserRule {tp.adapter};
     std::vector<std::string> testsOk {
+      //adapter with no connection
       R"STR(Ethernet adapter Ethernet:
 
       Media State . . . . . . . . . . . : Media disconnected
       Connection-specific DNS Suffix  . : net.meld.net
       )STR",
 
+      //adapter, ipv4, no default gateway
       R"STR(Ethernet adapter vEthernet (Default Switch):
 
       Connection-specific DNS Suffix  . :
@@ -135,6 +150,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       Default Gateway . . . . . . . . . : 
       )STR",
 
+      //adapter, ipv4, has default gateway with 1 address
       R"STR(Wireless LAN adapter Wi-Fi:
 
       Connection-specific DNS Suffix  . :
@@ -144,6 +160,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       Default Gateway . . . . . . . . . : 192.168.1.1
       )STR",
 
+      //adapter, ipv4, has default gateway with 2+ address
       R"STR(Wireless LAN adapter Wi-Fi:
 
       Connection-specific DNS Suffix  . :
@@ -164,14 +181,20 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // ifaceTypeName
     const auto &parserRule {tp.ifaceTypeName};
     std::vector<std::string> testsOk {
+      //1 word in adapter type
       "Ethernet adapter Ethernet:",
+      //2 words in adapter type
       "Wireless LAN adapter Wi-Fi 2:",
+      //3+ words in adapter type
       "Local Area Network adapter Network:"
     };
     std::vector<std::string> testsFail {
+      //missing word adapter
       "Ethernet adept Ethernet:",
+      //missing word adapter and adapter name
       "Wireless LAN adaptation:",
-      "Local Area Network addition Network:",
+
+      //missing colon after adapter name
       "Local Area Network adapter Network"
     };
     for (const auto& test: testsOk) {
@@ -200,6 +223,7 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // servers
     const auto &parserRule {tp.servers};
     std::vector<std::string> testsOk {
+      
       R"STR(DHCP Server. . . . . . . . . . . . : 192.168.1.2
       )STR",
 
@@ -208,7 +232,7 @@ BOOST_AUTO_TEST_CASE(testParts)
 
       R"STR(DNS Servers. . . . . . . . . . . . : 1.1.1.1
                                                  2.2.2.2
-                                                 )STR",
+      )STR",
 
       R"STR(Test WINS Server. . . . . . . . . . . . : 1.1.1.1
       )STR"
@@ -226,6 +250,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       R"STR(IPv4 Address . . . . . . . . . . . : 10.21.32.43)STR",
       R"STR(IPv6 Address . . . . . . . . . . . : fe80:abcd:abcd:abcd::abcd)STR",
 
+      //tests subnet masks for IP addresses
       R"STR(IP Address . . . . . . . . . . . . : 10.20.30.40
       Subnet Mask. . . . . . . . . . . . . . . : 255.255.0.0)STR",
       R"STR(IPv4 Address . . . . . . . . . . . : 10.21.32.43
@@ -264,6 +289,7 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // ifaceType
     const auto &parserRule {tp.ifaceType};
     std::vector<std::string> testsOk {
+      
       "Ethernet",
       "Wireless LAN",
       "Local Area Network"
