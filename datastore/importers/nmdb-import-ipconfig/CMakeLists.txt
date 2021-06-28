@@ -33,4 +33,18 @@ target_link_libraries(${TGT_TOOL}
     netmeld-datastore
   )
 
+foreach(ITEM
+    Parser
+  )
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+    )
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
+endforeach()
+
 nm_install_bin(${TGT_TOOL})
