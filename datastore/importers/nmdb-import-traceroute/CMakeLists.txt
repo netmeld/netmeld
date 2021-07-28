@@ -24,45 +24,27 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-set(MODULE_VERSION "2.0")
+add_executable(${TGT_TOOL}
+    Parser.cpp
+    ${TGT_TOOL}.cpp
+  )
+
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+  )
+
+nm_install_bin(${TGT_TOOL})
 
 foreach(ITEM
-    #import-tool-template
-    nmdb-import-brocade
-    nmdb-import-cisco
-    nmdb-import-cisco-wireless
-    nmdb-import-clw
-    nmdb-import-hosts
-    nmdb-import-ip-addr-show
-    nmdb-import-ipconfig
-    nmdb-import-ip-route-show
-    nmdb-import-iptables-save
-    nmdb-import-juniper-conf
-    nmdb-import-juniper-set
-    nmdb-import-nessus
-    nmdb-import-nmap
-    nmdb-import-pcap
-    nmdb-import-ping
-    nmdb-import-powerconnect
-    nmdb-import-show-cdp-neighbor
-    nmdb-import-show-inventory
-    nmdb-import-show-mac-address-table
-    nmdb-import-traceroute
-    nmdb-import-tshark
-    nmdb-import-vyos
+    Parser
   )
-  target_as_tool(${ITEM})
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+    )
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
 endforeach()
-
-# ----------------------------------------------------------------------
-# Deb Creation
-# ----------------------------------------------------------------------
-set(desc "This package provides the Datastore Importers module for the \
-Netmeld tool suite.  Included are the library and headers necessary to \
-run or expand capabilities through tool development, as well as the \
-binaries necessary to import structured data into the Netmeld Datastore.")
-nm_add_deb_description(${desc})
-set(deps "netmeld-core, netmeld-datastore, \
-libboost-iostreams1.74.0, libboost-system1.74.0, \
-libpcap0.8 (>= 0.9.8), libpugixml1v5 (>= 1.7)")
-nm_add_deb_depends(${deps})
