@@ -51,11 +51,6 @@ Parser::Parser() : Parser::base_type(start)
       *qi::eol >> (windowsTrace | linuxTrace)
     ;
 
-  // cppcheck-suppress useInitializationList`
-  ignore =
-    *(qi::omit[qi::char_] - qi::eol) % qi::eol
-    ;
-
   windowsTrace = 
     windowsHeader >> +qi::eol >> *windowsHop >> "Trace complete." >> *qi::eol
     ;
@@ -94,13 +89,6 @@ Parser::Parser() : Parser::base_type(start)
       ) >> *(qi::omit[qi::char_] - qi::eol) >> qi::eol
     ;
 
-  /*>> +qi::space >> qi::repeat(0, 3)[qi::string("*") >> +qi::space] >>
-      >> +qi::digit >> +qi::space >> qi::repeat(0, 3)[qi::string("*")] >>
-      +qi::space >> (fqdn | ipAddr) >> " (" > ipAddr > ")" >>
-      -(
-        +qi::space >> +qi::digit >> " ms" >>
-        qi::repeat(0, 2)[+qi::space >> -((fqdn | ipAddr) >> " (" > ipAddr > ")") >> +qi::digit >> " ms"]
-      )*/
     ms =
       +qi::digit >> -("." >> +qi::digit) >> "ms"
       ;
@@ -112,13 +100,12 @@ Parser::Parser() : Parser::base_type(start)
       (windowsHeader)
       (windowsHop)
 
-      //(linuxTrace)
-      //(linuxHeader)
-      //(linuxHop)
+      (linuxTrace)
+      (linuxHeader)
+      (linuxHop)
 
       (ms)
 
-      (ignore)
       );
 }
 
