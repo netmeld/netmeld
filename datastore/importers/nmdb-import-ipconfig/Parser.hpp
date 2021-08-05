@@ -60,6 +60,20 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+
+    nmdp::ParserDomainName  fqdn;
+    nmdp::ParserIpAddress   ipAddr;
+    nmdp::ParserMacAddress  macAddr;
+
+    // Helpers
+    Data d;
+
+    std::string curHostname;
+    std::string curIfaceName;
+
+    std::map<std::string, std::string> dnsSuffix;
+  
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -81,19 +95,7 @@ class Parser :
     qi::rule<nmdp::IstreamIter>
       dots,
       ignoredLine;
-
-    nmdp::ParserDomainName  fqdn;
-    nmdp::ParserIpAddress   ipAddr;
-    nmdp::ParserMacAddress  macAddr;
-
-    // Helpers
-    Data d;
-
-    std::string curHostname;
-    std::string curIfaceName;
-
-    std::map<std::string, std::string> dnsSuffix;
-
+    
   // ===========================================================================
   // Constructors
   // ===========================================================================
