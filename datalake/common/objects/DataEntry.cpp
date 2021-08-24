@@ -52,6 +52,10 @@ namespace netmeld::datalake::objects {
   { return pipedData; }
 
   std::string
+  DataEntry::getCommitter() const
+  { return committer; }
+
+  std::string
   DataEntry::getDataPath() const
   { return dataPath; }
 
@@ -64,12 +68,12 @@ namespace netmeld::datalake::objects {
   { return ingestTool; }
 
   std::string
-  DataEntry::getToolArgs() const
-  { return toolArgs; }
-
-  std::string
   DataEntry::getNewName() const
   { return newName; }
+
+  std::string
+  DataEntry::getToolArgs() const
+  { return toolArgs; }
 
   std::string
   DataEntry::getSaveName() const
@@ -106,6 +110,22 @@ namespace netmeld::datalake::objects {
     }
 
     return nmcu::trim(oss.str());
+  }
+
+  void
+  DataEntry::setCommitter(const std::string& _committer)
+  {
+    // `git`:
+    //   - have at least one character not of (see git's ident.c:crud())
+    std::regex gitCrudList {"^[\\x00-\\x20\\.,:;<>\"'\\\\]+$"};
+    if (std::regex_match(_committer, gitCrudList)) {
+      LOG_DEBUG << "Ignoring 'committer' value as it only contains"
+                << " invalid characters (maybe non-printable): "
+                << _committer << '\n';
+      return;
+    }
+
+    committer = _committer;
   }
 
   void
