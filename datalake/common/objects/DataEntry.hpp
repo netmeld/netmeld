@@ -47,6 +47,7 @@ namespace netmeld::datalake::objects {
       std::string ingestTool {""};
       std::string toolArgs   {""};
       std::string newName    {""};
+      std::string committer  {""};
 
     public: // Variables should rarely appear at this scope
 
@@ -67,6 +68,7 @@ namespace netmeld::datalake::objects {
     public: // Methods part of public API
       bool isPipedData() const;
 
+      std::string getCommitter() const;
       std::string getDataPath() const;
       std::string getDeviceId() const;
       std::string getIngestCmd() const;
@@ -75,6 +77,7 @@ namespace netmeld::datalake::objects {
       std::string getSaveName() const;
       std::string getToolArgs() const;
 
+      void setCommitter(const std::string&);
       void setDataPath(const std::string&);
       void setDeviceId(const std::string&);
       void setIngestTool(const std::string&);

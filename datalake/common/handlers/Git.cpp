@@ -160,14 +160,31 @@ namespace netmeld::datalake::handlers {
       sfs::copy(srcRelPath, dstRelPath, sfs::copy_options::overwrite_existing);
     }
 
-    // Store data
+    // Construct store string
     std::ostringstream oss;
-    oss << "git add ."
-        << " && git commit -m '"
+    oss << "git add . && git";
+
+    // author (1/2): value may be malformed; override later if well-formed
+    const std::string committer {_de.getCommitter()};
+    if (!committer.empty()) {
+      oss << " -c user.name='" << committer << "'"
+          << " -c user.email='<>'";
+    }
+
+    // commit
+    oss  << " commit --message '"
           << CHECK_IN_PREFIX << dstRelPath
           << '\n' << INGEST_TOOL_PREFIX << _de.getIngestTool()
           << '\n' << TOOL_ARGS_PREFIX << _de.getToolArgs()
         << "\n'";
+
+    // author (2/2): well-formed override check
+    std::regex reGitCommitter {".*<.*>"};
+    if (std::regex_match(committer, reGitCommitter)) {
+      oss << " --author '" << committer << "'";
+    }
+
+    // Store data
     nmcu::cmdExec(oss.str());
   }
 
