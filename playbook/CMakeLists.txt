@@ -50,10 +50,10 @@ binaries necessary to orchestrate network scanning activities and \
 collect data in a standardized way for futher processing with the \
 Netmeld tool suite.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core, netmeld-datastore, \
+set(deps "netmeld-core, \
 arping, nmap, macchanger, wireshark-common")
 nm_add_deb_depends(${deps})
-set(deps "xterm | tmux")
+set(deps "xterm | tmux, netmeld-datastore")
 nm_add_deb_recommends(${deps})
 set(deps "context")
 nm_add_deb_suggests(${deps})

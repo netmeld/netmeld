@@ -41,5 +41,5 @@ for the Netmeld tool suite.  Included is the binary necessary to \
 capture command execution and system environment data for record and \
 post analysis efforts.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core, git")
+set(deps "netmeld-core")
 nm_add_deb_depends(${deps})
