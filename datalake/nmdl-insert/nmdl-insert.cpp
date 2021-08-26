@@ -113,6 +113,11 @@ class Tool : public nmdlt::AbstractDatalakeTool
             "Data file name to use instead when data path file is stored;"
             " not a path.  Required when `--pipe` used.")
           );
+      opts.addAdvancedOption("committer", std::make_tuple(
+            "committer",
+            po::value<std::string>(),
+            "Value to use for commit author")
+          );
     }
 
   protected: // Methods part of subclass API
@@ -158,9 +163,14 @@ class Tool : public nmdlt::AbstractDatalakeTool
         de.setToolArgs(toolArgs);
       }
 
-      if (opts.exists("rename")){
+      if (opts.exists("rename")) {
         const auto& newName {opts.getValue("rename")};
         de.setNewName(newName);
+      }
+
+      if (opts.exists("committer")) {
+        const auto& committer {opts.getValue("committer")};
+        de.setCommitter(committer);
       }
 
       dataLake->commit(de);
