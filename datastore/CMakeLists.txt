@@ -55,9 +55,11 @@ or expand capabilities through tool development, as well as the \
 binaries necessary to instantiate and manage a data store compatible \
 with the Netmeld tool suite.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core, postgresql (>= 11), postgresql-client (>= 11), \
+set(deps "netmeld-core, \
 libc6 (>= 2.4), libgcc-s1 (>= 3.0), libpqxx-6.4 (>= 6.4), libstdc++6 (>= 9)")
 nm_add_deb_depends(${deps})
+set(deps "postgresql (>= 11), postgresql-client (>= 11)")
+nm_add_deb_recommends(${deps})
 set(deps "postgresql-contrib (>= 11), postgresql-autodoc (>= 11)")
 nm_add_deb_suggests(${deps})
 nm_add_deb_control_data(debian-control)
