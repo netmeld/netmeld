@@ -47,5 +47,7 @@ or expand capabilities through tool development, as well as the \
 binaries necessary to instantiate and manage a data lake compatible \
 with the Netmeld tool suite.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core, git")
+set(deps "netmeld-core")
 nm_add_deb_depends(${deps})
+set(deps "git")
+nm_add_deb_recommends(${deps})

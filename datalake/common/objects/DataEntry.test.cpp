@@ -44,18 +44,58 @@ BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
     TestDataEntry tde;
-    BOOST_CHECK(tde.getDeviceId().empty());
+    BOOST_CHECK(tde.getCommitter().empty());
     BOOST_CHECK(tde.getDataPath().empty());
+    BOOST_CHECK(tde.getDeviceId().empty());
+    BOOST_CHECK(tde.getIngestCmd().empty());
     BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
     BOOST_CHECK(tde.getNewName().empty());
     BOOST_CHECK(tde.getSaveName().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
+    BOOST_CHECK(tde.getToolArgs().empty());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
+  {
+    TestDataEntry tde;
+
+    std::vector<std::string> testsOk {
+      "Some One",
+      "Some Other <email>",
+      "Some Other1<email@other.new>",
+    };
+
+    for (const auto& committer : testsOk) {
+      tde.setCommitter(committer);
+      BOOST_CHECK_EQUAL(committer, tde.getCommitter());
+    }
+
+    std::vector<std::string> testsBad {
+      " ", ".", ",", ":", ";", "<", ">", "\"", "'", "\\",
+      " .,:;<>\"'\\",
+    };
+    const std::string empty {""};
+    tde.setCommitter(empty); // reset
+    for (const auto& committer : testsBad) {
+      tde.setCommitter(committer);
+      BOOST_CHECK_EQUAL(empty, tde.getCommitter());
+    }
+    int i {0};
+    for (char c {'\0'}; i <= 20; ++i, ++c) {
+      std::string s(1,c);
+      tde.setCommitter(s);
+      BOOST_CHECK_EQUAL(empty, tde.getCommitter());
+    }
+
+    BOOST_CHECK(tde.getDataPath().empty());
+    BOOST_CHECK(tde.getDeviceId().empty());
+    BOOST_CHECK(tde.getIngestCmd().empty());
+    BOOST_CHECK(tde.getIngestTool().empty());
+    BOOST_CHECK(tde.getNewName().empty());
+    BOOST_CHECK(tde.getSaveName().empty());
+    BOOST_CHECK(tde.getToolArgs().empty());
+  }
   {
     TestDataEntry tde;
     const std::string path {"../maybe_some/non-existant/path"};
@@ -64,11 +104,12 @@ BOOST_AUTO_TEST_CASE(testSetters)
     BOOST_CHECK_EQUAL(std::filesystem::absolute(path), tde.getDataPath());
     BOOST_CHECK_EQUAL("path", tde.getSaveName());
 
+    BOOST_CHECK(tde.getCommitter().empty());
     BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
-    BOOST_CHECK(tde.getNewName().empty());
     BOOST_CHECK(tde.getIngestCmd().empty());
+    BOOST_CHECK(tde.getIngestTool().empty());
+    BOOST_CHECK(tde.getNewName().empty());
+    BOOST_CHECK(tde.getToolArgs().empty());
   }
 
   {
@@ -78,6 +119,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     BOOST_CHECK_EQUAL(devId, tde.getDeviceId());
 
+    BOOST_CHECK(tde.getCommitter().empty());
     BOOST_CHECK(tde.getDataPath().empty());
     BOOST_CHECK(tde.getIngestTool().empty());
     BOOST_CHECK(tde.getToolArgs().empty());
@@ -103,6 +145,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     BOOST_CHECK_EQUAL(toolName, tde.getIngestTool());
     BOOST_CHECK_EQUAL((toolName+args), tde.getIngestCmd());
 
+    BOOST_CHECK(tde.getCommitter().empty());
     BOOST_CHECK(tde.getDataPath().empty());
     BOOST_CHECK(tde.getDeviceId().empty());
     BOOST_CHECK(tde.getToolArgs().empty());
@@ -118,6 +161,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     BOOST_CHECK_EQUAL(name, tde.getNewName());
     BOOST_CHECK_EQUAL(name, tde.getSaveName());
 
+    BOOST_CHECK(tde.getCommitter().empty());
     BOOST_CHECK(tde.getDataPath().empty());
     BOOST_CHECK(tde.getDeviceId().empty());
     BOOST_CHECK(tde.getIngestTool().empty());
@@ -135,6 +179,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     BOOST_CHECK_EQUAL(name, tde.getNewName());
     BOOST_CHECK_EQUAL(name, tde.getSaveName());
 
+    BOOST_CHECK(tde.getCommitter().empty());
     BOOST_CHECK(tde.getDeviceId().empty());
     BOOST_CHECK(tde.getIngestTool().empty());
     BOOST_CHECK(tde.getToolArgs().empty());
@@ -148,6 +193,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     BOOST_CHECK_EQUAL(args, tde.getToolArgs());
 
+    BOOST_CHECK(tde.getCommitter().empty());
     BOOST_CHECK(tde.getDeviceId().empty());
     BOOST_CHECK(tde.getDataPath().empty());
     BOOST_CHECK(tde.getIngestTool().empty());
