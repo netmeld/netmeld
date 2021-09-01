@@ -43,7 +43,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/objects/NextHop.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
@@ -53,7 +53,7 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef nmdo::AbstractDatastoreObject  Data;
+typedef nmdo::NextHop  Data;
 //struct Data { };
 typedef std::vector<Data>    Result;
 
@@ -68,7 +68,8 @@ class Parser :
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    //Data d;
+    Data d;
+    Result r;
 
   protected:
     // Rules
@@ -84,9 +85,6 @@ class Parser :
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       linuxTrace, linuxHeader, linuxHop;
 
-    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-      ms;
-
     nmdp::ParserDomainName  fqdn;
     nmdp::ParserIpAddress   ipAddr;
 
@@ -100,5 +98,10 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
+    void addHop(const unsigned int);
+
+    void getDestinationIP(const nmdo::IpAddress&);
+
+    Result getData();
 };
 #endif // PARSER_HPP

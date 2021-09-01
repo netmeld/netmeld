@@ -41,6 +41,7 @@
 */
 
 #include "Parser.hpp"
+#include <iostream>
 
 // =============================================================================
 // Parser logic
@@ -48,7 +49,7 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-      *qi::eol >> (windowsTrace | linuxTrace)
+      *qi::eol >> (windowsTrace | linuxTrace)[pnx::bind(&Parser::getData, this)]
     ;
 
   windowsTrace = 
@@ -57,18 +58,21 @@ Parser::Parser() : Parser::base_type(start)
 
   windowsHeader =
     "Tracing route to" >> (ipAddr | (fqdn >> "[" > ipAddr > "]")) >> qi::eol >>
-      "over a maximum of" >> +qi::digit >> "hops:"
+      "over a maximum of" >> qi::uint_ >> "hops:"
     ;
 
   windowsHop = 
-      qi::lexeme[+qi::digit] >> 
+      qi::uint_[pnx::bind(&Parser::addHop, this, qi::_1)] >> 
       qi::repeat(3)[
         (
         qi::string("*") | 
         qi::string("<1 ms") |
-        ms
+        (qi::int_ >> "ms")
         ) 
-      ] >> (ipAddr | (fqdn >> "[" > ipAddr > "]")) >> +qi::eol
+      ] >> (ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] | 
+              (fqdn >> "[" > 
+              ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] >
+              "]")) >> +qi::eol
     ;
 
   linuxTrace = 
@@ -77,21 +81,20 @@ Parser::Parser() : Parser::base_type(start)
 
   linuxHeader = 
     "traceroute to" >> (fqdn | ipAddr) >> "(" > ipAddr > ")," >>
-      +qi::digit >> "hops max, " >> +qi::digit >> "byte packets" 
+      qi::uint_ >> "hops max, " >> qi::uint_ >> "byte packets" 
     ;
 
   linuxHop = 
-    +qi::digit >> 
+    qi::uint_[pnx::bind(&Parser::addHop, this, qi::_1)] >> 
       qi::skip[qi::repeat(0, 3)["*"]] >>
-      -((fqdn | ipAddr ) >> "(" > ipAddr > ")" >>
-        ms >>
-        qi::repeat(0, 2)[-((fqdn | ipAddr ) >> "(" > ipAddr > ")") >> ms]
-      ) >> *(qi::omit[qi::char_] - qi::eol) >> qi::eol
+      -((fqdn | ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] ) >> "(" >
+        ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] > ")" >>
+        (qi::double_ >> "ms") >>
+        qi::repeat(0, 2)[-((fqdn | ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] ) >> 
+          "(" > ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] >
+          ")") >> qi::double_ >> "ms"]
+      ) >> qi::eol
     ;
-
-    ms =
-      +qi::digit >> -("." >> +qi::digit) >> "ms"
-      ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
@@ -104,8 +107,6 @@ Parser::Parser() : Parser::base_type(start)
       (linuxHeader)
       (linuxHop)
 
-      (ms)
-
       );
 }
 
@@ -113,3 +114,41 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
 // Parser helper methods
 // =============================================================================
+  void
+  Parser::addHop(const unsigned int hopNumber) {
+    d = Data(hopNumber);
+    if (hopNumber > 1) {
+      Data previousHop = r.back();
+      auto lastHopNumber = previousHop.getHopNumber();
+      auto previousHopIt = r.rbegin();
+      for (auto it2 = previousHopIt++; it2 != r.rend(); ++it2) {
+        if (it2->getHopNumber() != lastHopNumber) {
+          break;
+        }
+        previousHopIt = it2;
+      } 
+      previousHop = *previousHopIt;
+      d.setOrigin(previousHop.getDestination());
+      r.pop_back();
+    }
+    r.push_back(d);
+  }
+
+  void
+  Parser::getDestinationIP(const nmdo::IpAddress& destination) {
+    const nmdo::IpAddress origin = r.back().getOrigin();
+    r.back().setDestination(destination);
+    r.emplace_back(r.back().getHopNumber());
+    r.back().setOrigin(origin);
+  }
+
+  Result
+  Parser::getData()
+  {
+    r.pop_back();
+    for (auto d : r) {
+      LOG_DEBUG << "(" << d.getHopNumber() << ", " << 
+        d.getOrigin() << ", " << d.getDestination() << ")" << std::endl;
+    }
+    return r;
+  }
