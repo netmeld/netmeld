@@ -43,7 +43,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/datastore/objects/NextHop.hpp>
+#include <netmeld/datastore/objects/TracerouteHop.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
@@ -53,7 +53,7 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef nmdo::NextHop  Data;
+typedef nmdo::TracerouteHop  Data;
 //struct Data { };
 typedef std::vector<Data>    Result;
 
@@ -98,7 +98,7 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void addHop(const unsigned int);
+    void addHop(int);
 
     void getDestinationIP(const nmdo::IpAddress&);
 

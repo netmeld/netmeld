@@ -30,7 +30,6 @@ add_executable(${TGT_TOOL}
     NseResult.cpp
     SshAlgorithm.cpp
     SshPublicKey.cpp
-    TracerouteHop.cpp
   )
 
 target_link_libraries(${TGT_TOOL}
@@ -49,7 +48,6 @@ foreach(ITEM
       NseResult.cpp
       SshAlgorithm.cpp
       SshPublicKey.cpp
-      TracerouteHop.cpp
       ${ITEM}.hpp
       ${ITEM}.cpp
     )

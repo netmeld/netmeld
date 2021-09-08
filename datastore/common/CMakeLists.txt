@@ -36,12 +36,12 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/IpAddress.cpp
     ./objects/IpNetwork.cpp
     ./objects/MacAddress.cpp
-    ./objects/NextHop.cpp
     ./objects/OperatingSystem.cpp
     ./objects/Port.cpp
     ./objects/Route.cpp
     ./objects/Service.cpp
     ./objects/ToolObservations.cpp
+    ./objects/TracerouteHop.cpp
     ./objects/Vlan.cpp
 
     ./tools/AbstractDatastoreTool.cpp

@@ -35,13 +35,13 @@
 #include <netmeld/datastore/objects/Port.hpp>
 #include <netmeld/datastore/objects/Service.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/TracerouteHop.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "NseResult.hpp"
 #include "SshAlgorithm.hpp"
 #include "SshPublicKey.hpp"
-#include "TracerouteHop.hpp"
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
@@ -56,7 +56,7 @@ struct Data
   std::vector<nmdo::MacAddress>       macAddrs;
   std::vector<nmdo::IpAddress>        ipAddrs;
   std::vector<nmdo::OperatingSystem>  oses;
-  std::vector<TracerouteHop>          tracerouteHops;
+  std::vector<nmdo::TracerouteHop>    tracerouteHops;
   std::vector<nmdo::Port>             ports;
   std::vector<nmdo::Service>          services;
   std::vector<NseResult>              nseResults;

@@ -39,6 +39,7 @@ foreach(ITEM
     Route
     Service
     ToolObservations
+    TracerouteHop
     Vlan
   )
   nm_add_test(${ITEM})

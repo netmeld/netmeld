@@ -24,25 +24,49 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef TRACEROUTE_HOP
-#define TRACEROUTE_HOP
+#include "TracerouteHop.hpp"
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
+namespace netmeld::datastore::objects {
 
-namespace nmdo = netmeld::datastore::objects;
-
-class TracerouteHop : public nmdo::AbstractDatastoreObject
+bool
+TracerouteHop::isValid() const
 {
-  public :
-    nmdo::IpAddress  rtrIpAddr;
-    nmdo::IpAddress  dstIpAddr;
-    int              hopCount {-1};
+  return rtrIpAddr.isValid()
+      && dstIpAddr.isValid()
+      && (hopCount != -1);
+}
 
-    bool isValid() const override;
-    void save(pqxx::transaction_base&,
-              const nmco::Uuid&, const std::string&) override;
-    std::string toString() const;
-};
+void
+TracerouteHop::save(pqxx::transaction_base& t,
+                    const nmco::Uuid& toolRunId, const std::string& deviceId)
+{
+  if (!isValid()) {
+    LOG_DEBUG << "TracerouteHop object is not saving: " << toDebugString()
+              << std::endl;
+    return;
+  }
 
-#endif //TRACEROUTE_HOP
+  rtrIpAddr.save(t, toolRunId, deviceId);
+  dstIpAddr.save(t, toolRunId, deviceId);
+
+  t.exec_prepared("insert_raw_ip_traceroute",
+      toolRunId,
+      hopCount,
+      rtrIpAddr.toString(),
+      dstIpAddr.toString());
+}
+
+std::string
+TracerouteHop::toString() const
+{
+  std::ostringstream oss;
+  oss << "[";
+  oss << rtrIpAddr << ", "
+      << dstIpAddr << ", "
+      << hopCount;
+  oss << "]";
+
+  return oss.str();
+}
+
+}

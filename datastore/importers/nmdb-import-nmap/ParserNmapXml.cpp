@@ -247,7 +247,7 @@ ParserNmapXml::extractTraceRoutes(const pugi::xml_node& nmapNode, Data& data)
   for (const auto& xHop : nmapNode.select_nodes("host/trace/hop")) {
     pugi::xml_node nodeHop {xHop.node()};
 
-    TracerouteHop hop;
+    nmdo::TracerouteHop hop;
     hop.hopCount = nodeHop.attribute("ttl").as_int();
 
     hop.rtrIpAddr = nmdo::IpAddress(nodeHop.attribute("ipaddr").as_string());

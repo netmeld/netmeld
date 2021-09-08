@@ -49,7 +49,7 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-      *qi::eol >> (windowsTrace | linuxTrace)[pnx::bind(&Parser::getData, this)]
+      *qi::eol >> (windowsTrace | linuxTrace)[qi::_val = pnx::bind(&Parser::getData, this)]
     ;
 
   windowsTrace = 
@@ -115,40 +115,47 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
   void
-  Parser::addHop(const unsigned int hopNumber) {
-    d = Data(hopNumber);
+  Parser::addHop(int hopNumber) {
+    d = Data();
+    d.hopCount = hopNumber;
     if (hopNumber > 1) {
+      r.pop_back();
+      LOG_DEBUG << "PREVIOUS " << r.back().toString() << std::endl;
       Data previousHop = r.back();
-      auto lastHopNumber = previousHop.getHopNumber();
+      auto lastHopNumber = previousHop.hopCount;
       auto previousHopIt = r.rbegin();
       for (auto it2 = previousHopIt++; it2 != r.rend(); ++it2) {
-        if (it2->getHopNumber() != lastHopNumber) {
+        if (it2->hopCount != lastHopNumber) {
           break;
         }
         previousHopIt = it2;
       } 
       previousHop = *previousHopIt;
-      d.setOrigin(previousHop.getDestination());
-      r.pop_back();
+      d.rtrIpAddr = previousHop.dstIpAddr;
     }
     r.push_back(d);
   }
 
   void
   Parser::getDestinationIP(const nmdo::IpAddress& destination) {
-    const nmdo::IpAddress origin = r.back().getOrigin();
-    r.back().setDestination(destination);
-    r.emplace_back(r.back().getHopNumber());
-    r.back().setOrigin(origin);
+    const nmdo::IpAddress origin = r.back().rtrIpAddr;
+    int prevHopCount = r.back().hopCount;
+    r.back().dstIpAddr = destination;
+    r.emplace_back();
+    r.back().hopCount = prevHopCount;
+    r.back().rtrIpAddr = origin;
   }
 
   Result
   Parser::getData()
   {
-    r.pop_back();
-    for (auto d : r) {
-      LOG_DEBUG << "(" << d.getHopNumber() << ", " << 
-        d.getOrigin() << ", " << d.getDestination() << ")" << std::endl;
+    if (r.empty()) {
+      return Result();
     }
-    return r;
+    Result res;
+    for (auto it = r.begin() + 1; it != r.end(); ++it) {
+      res.push_back(*it);
+    }
+    res.pop_back();
+    return res;
   }
