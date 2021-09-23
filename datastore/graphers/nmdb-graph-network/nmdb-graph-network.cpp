@@ -345,6 +345,12 @@ class Tool : public nmdt::AbstractGraphTool
          "   host_device_id, guest_device_id"
          " FROM device_virtualizations");
 
+      db.prepare
+        ("select_traceroutes",
+         "SELECT DISTINCT"
+         "   rtr_ip_addr, dst_ip_addr"
+         " FROM raw_ip_traceroutes");
+
 
     useIcons = opts.exists("icons");
     hideUnknown = opts.exists("no-unknown");
@@ -379,6 +385,7 @@ class Tool : public nmdt::AbstractGraphTool
     boost::remove_edge_if(IsRedundantEdge(graph), graph);
 
     buildVirtualizationGraph(db);
+    buildTracerouteGraph(db);
 
     boost::write_graphviz
       (std::cout, graph,
@@ -489,6 +496,7 @@ class Tool : public nmdt::AbstractGraphTool
 
           addBidirectionalEdge(ipNet, vertexName);
         }
+
       }
 
       t.commit();
@@ -510,6 +518,34 @@ class Tool : public nmdt::AbstractGraphTool
 
         Vertex const u = vertexLookup.at(guestDeviceName);
         Vertex const v = vertexLookup.at(hostDeviceName);
+
+        Edge e;
+        bool inserted;
+
+        tie(e, inserted) = boost::add_edge(u, v, graph);
+        graph[e].style = "dashed";
+        graph[e].direction = "forward";
+      }
+
+      t.commit();
+    }
+
+    // Create graph edges that connect VM host and guest devices.
+    void
+    buildTracerouteGraph(pqxx::connection& db)
+    {
+      pqxx::work t{db};
+
+      pqxx::result tracerouteRows =
+        t.exec_prepared("select_traceroutes");
+      for (const auto& tracerouteRow : tracerouteRows) {
+        std::string origin;
+        tracerouteRow.at("rtr_ip_addr").to(origin);
+        std::string destination;
+        tracerouteRow.at("dst_ip_addr").to(destination);
+
+        Vertex const u = vertexLookup.at(origin);
+        Vertex const v = vertexLookup.at(destination);
 
         Edge e;
         bool inserted;
