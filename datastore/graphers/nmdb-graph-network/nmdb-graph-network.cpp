@@ -170,6 +170,7 @@ class Tool : public nmdt::AbstractGraphTool
     bool useIcons    {false};
     bool hideUnknown {false};
     bool removeEmptySubnets {false};
+    bool showTracerouteHops {false};
 
   public:
     Tool() : nmdt::AbstractGraphTool
@@ -205,6 +206,11 @@ class Tool : public nmdt::AbstractGraphTool
             NULL_SEMANTIC,
             "Omit empty subnet graph nodes")
           );
+      opts.addOptionalOption("show-traceroute-hops", std::make_tuple(
+            "show-traceroute-hops",
+            NULL_SEMANTIC,
+            "Show hops found in traceroutes for devices")
+      );
     }
 
     int
@@ -348,13 +354,15 @@ class Tool : public nmdt::AbstractGraphTool
       db.prepare
         ("select_traceroutes",
          "SELECT DISTINCT"
-         "   rtr_ip_addr, dst_ip_addr"
+         "   rtr_ip_addr, dst_ip_addr,"
+         "   hop_count"
          " FROM raw_ip_traceroutes");
 
 
     useIcons = opts.exists("icons");
     hideUnknown = opts.exists("no-unknown");
     removeEmptySubnets = opts.exists("no-empty-subnets");
+    showTracerouteHops = opts.exists("show-traceroute-hops");
 
     int layer = std::stoi(opts.getValue("layer"));
     switch (layer) {
@@ -534,6 +542,10 @@ class Tool : public nmdt::AbstractGraphTool
     void
     buildTracerouteGraph(pqxx::connection& db)
     {
+      if (!showTracerouteHops) {
+        return;
+      }
+
       pqxx::work t{db};
 
       pqxx::result tracerouteRows =
@@ -543,6 +555,8 @@ class Tool : public nmdt::AbstractGraphTool
         tracerouteRow.at("rtr_ip_addr").to(origin);
         std::string destination;
         tracerouteRow.at("dst_ip_addr").to(destination);
+        std::string hopNumber;
+        tracerouteRow.at("hop_count").to(hopNumber);
 
         Vertex const u = vertexLookup.at(origin);
         Vertex const v = vertexLookup.at(destination);
@@ -553,6 +567,8 @@ class Tool : public nmdt::AbstractGraphTool
         tie(e, inserted) = boost::add_edge(u, v, graph);
         graph[e].style = "dashed";
         graph[e].direction = "forward";
+        graph[e].label = std::string("hop ") + hopNumber;
+        graph[e].weight = 2.0;
       }
 
       t.commit();
