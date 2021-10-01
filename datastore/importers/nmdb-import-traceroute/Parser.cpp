@@ -124,7 +124,6 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
   void
   Parser::addHop(int hopNumber) {
-    LOG_DEBUG << "addHop" << std::endl;
     d = Data();
     d.hopCount = hopNumber;
     if (hopNumber > 1) {
@@ -147,7 +146,6 @@ Parser::Parser() : Parser::base_type(start)
 
   void
   Parser::getDestinationIP(const nmdo::IpAddress& destination) {
-    LOG_DEBUG << "getDestinationIP" << std::endl;
     const nmdo::IpAddress origin = r.back().rtrIpAddr;
     int prevHopCount = r.back().hopCount;
     r.back().dstIpAddr = destination;
@@ -159,7 +157,6 @@ Parser::Parser() : Parser::base_type(start)
   Result
   Parser::getData()
   {
-    LOG_DEBUG << "getData" << std::endl;
     if (r.empty()) {
       return Result();
     }
