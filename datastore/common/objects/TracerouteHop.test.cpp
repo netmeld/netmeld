@@ -11,7 +11,7 @@
 // furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// all copies or substantial hopions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -38,3 +38,53 @@ class TestTracerouteHop : public nmdo::TracerouteHop {
     TestTracerouteHop() : TracerouteHop() {};
 
 };
+
+BOOST_AUTO_TEST_CASE(testValidity)
+{
+  {
+    TestTracerouteHop hop;
+    BOOST_CHECK(!hop.isValid());
+  }
+
+  {
+    int n = 1;
+    TestTracerouteHop hop;
+    hop.hopCount = n;
+    BOOST_CHECK(!hop.isValid());
+  }
+
+  {
+    nmdo::IpAddress origin {"10.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.rtrIpAddr = origin;
+    BOOST_CHECK(!hop.isValid());
+  }
+
+  {
+    nmdo::IpAddress destination {"100.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.dstIpAddr = destination;
+    BOOST_CHECK(!hop.isValid());
+  }
+
+  {
+    nmdo::IpAddress origin {"10.0.0.1/24"};
+    nmdo::IpAddress destination {"100.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.rtrIpAddr = origin;
+    hop.dstIpAddr = destination;
+    BOOST_CHECK(!hop.isValid());
+  }
+
+  {
+    int n = 1;
+    nmdo::IpAddress origin {"10.0.0.1/24"};
+    nmdo::IpAddress destination {"100.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.rtrIpAddr = origin;
+    hop.dstIpAddr = destination;
+    hop.hopCount = n;
+    BOOST_CHECK(hop.isValid());
+  }
+
+}
