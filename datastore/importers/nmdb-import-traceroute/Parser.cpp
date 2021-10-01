@@ -57,7 +57,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   windowsHeader =
-    "Tracing route to" >> (ipAddr | (fqdn >> "[" > ipAddr > "]")) >> qi::eol >>
+    "Tracing route to" >> (ipAddr | (fqdn >> "[" > ipAddr > "]")) >> -qi::eol >>
       "over a maximum of" >> qi::uint_ >> "hops:"
     ;
 
