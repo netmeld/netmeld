@@ -80,10 +80,10 @@ class Parser :
       ignore;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      windowsTrace, windowsHeader, windowsHop;
+      windowsTrace, windowsHeader, windowsHop, windowsDomainIP;
       
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      linuxTrace, linuxHeader, linuxHop;
+      linuxTrace, linuxHeader, linuxHop, linuxDomainIP;
 
     nmdp::ParserDomainName  fqdn;
     nmdp::ParserIpAddress   ipAddr;

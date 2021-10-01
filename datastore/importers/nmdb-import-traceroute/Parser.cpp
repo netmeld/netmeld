@@ -69,10 +69,14 @@ Parser::Parser() : Parser::base_type(start)
         qi::string("<1 ms") |
         (qi::int_ >> "ms")
         ) 
-      ] >> (ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] | 
-              (fqdn >> "[" > 
-              ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] >
-              "]")) >> +qi::eol
+      ] >> windowsDomainIP >> +qi::eol
+    ;
+
+  windowsDomainIP =
+      ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] | 
+        (fqdn >> "[" > 
+        ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] >
+        "]")
     ;
 
   linuxTrace = 
@@ -87,13 +91,17 @@ Parser::Parser() : Parser::base_type(start)
   linuxHop = 
     qi::uint_[pnx::bind(&Parser::addHop, this, qi::_1)] >> 
       qi::skip[qi::repeat(0, 3)["*"]] >>
-      -((fqdn | ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] ) >> "(" >
-        ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] > ")" >>
-        (qi::double_ >> "ms") >>
-        qi::repeat(0, 2)[-((fqdn | ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] ) >> 
-          "(" > ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] >
-          ")") >> qi::double_ >> "ms"]
+      -(linuxDomainIP >> qi::double_ >> "ms" >>
+        qi::repeat(0, 2)[(-linuxDomainIP >> qi::double_ >> "ms") | "*"]
       ) >> qi::eol
+    ;
+
+  linuxDomainIP =
+    (
+      (fqdn | ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)]) >>
+        "(" > ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] > ")"
+    ) |
+      ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)]
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
@@ -116,6 +124,7 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
   void
   Parser::addHop(int hopNumber) {
+    LOG_DEBUG << "addHop" << std::endl;
     d = Data();
     d.hopCount = hopNumber;
     if (hopNumber > 1) {
@@ -138,6 +147,7 @@ Parser::Parser() : Parser::base_type(start)
 
   void
   Parser::getDestinationIP(const nmdo::IpAddress& destination) {
+    LOG_DEBUG << "getDestinationIP" << std::endl;
     const nmdo::IpAddress origin = r.back().rtrIpAddr;
     int prevHopCount = r.back().hopCount;
     r.back().dstIpAddr = destination;
@@ -149,6 +159,7 @@ Parser::Parser() : Parser::base_type(start)
   Result
   Parser::getData()
   {
+    LOG_DEBUG << "getData" << std::endl;
     if (r.empty()) {
       return Result();
     }
