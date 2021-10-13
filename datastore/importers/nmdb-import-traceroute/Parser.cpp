@@ -24,22 +24,6 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - If using a custom Parser
-     - Data ordering is different as the focus is the parsing logic, not rule
-       instantiation
-     - It occasionally is more reasonable to interact and place data with an
-       intermediary object
-       - The code can be collocated or a separate file, depending on complexity
-*/
-
 #include "Parser.hpp"
 #include <iostream>
 
