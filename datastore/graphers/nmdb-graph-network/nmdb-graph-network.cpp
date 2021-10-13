@@ -538,7 +538,7 @@ class Tool : public nmdt::AbstractGraphTool
       t.commit();
     }
 
-    // Create graph edges that connect VM host and guest devices.
+    // Create graph edges that represent hops found in traceroutes
     void
     buildTracerouteGraph(pqxx::connection& db)
     {
@@ -567,7 +567,11 @@ class Tool : public nmdt::AbstractGraphTool
         tie(e, inserted) = boost::add_edge(u, v, graph);
         graph[e].style = "dashed";
         graph[e].direction = "forward";
-        graph[e].label = std::string("hop ") + hopNumber;
+        if (graph[e].label.empty()) {
+          graph[e].label = std::string("hop ") + hopNumber;
+        } else {
+          graph[e].label += std::string("\nhop ") + hopNumber;
+        }
         graph[e].weight = 2.0;
       }
 
