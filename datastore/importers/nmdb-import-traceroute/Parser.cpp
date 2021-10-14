@@ -46,7 +46,8 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   windowsHop = 
-      qi::uint_[pnx::bind(&Parser::addHop, this, qi::_1)] >> 
+    qi::int_[pnx::bind(&Parser::recordHopNumber, this, qi::_1)] >> 
+      //qi::uint_[pnx::bind(&Parser::addHop, this, qi::_1)] >> 
       qi::repeat(3)[
         (
         qi::string("*") | 
@@ -57,9 +58,9 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   windowsDomainIP =
-      ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] | 
+    ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)] | 
         (fqdn >> "[" > 
-        ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] >
+        ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)] >
         "]")
     ;
 
@@ -73,7 +74,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   linuxHop = 
-    qi::uint_[pnx::bind(&Parser::addHop, this, qi::_1)] >> 
+    qi::int_[pnx::bind(&Parser::recordHopNumber, this, qi::_1)] >> 
       qi::skip[qi::repeat(0, 3)["*"]] >>
       -(linuxDomainIP >> qi::double_ >> "ms" >>
         qi::repeat(0, 2)[(-linuxDomainIP >> qi::double_ >> "ms") | "*"]
@@ -82,10 +83,10 @@ Parser::Parser() : Parser::base_type(start)
 
   linuxDomainIP =
     (
-      (fqdn | ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)]) >>
-        "(" > ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)] > ")"
+      (fqdn | ipAddr) >>
+        "(" > ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)] > ")"
     ) |
-      ipAddr[pnx::bind(&Parser::getDestinationIP, this, qi::_1)]
+      ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)]
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
@@ -107,47 +108,47 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
   void
-  Parser::addHop(int hopNumber) {
-    d = Data();
-    d.hopCount = hopNumber;
-    if (hopNumber > 1) {
-      r.pop_back();
-      LOG_DEBUG << "PREVIOUS " << r.back().toString() << std::endl;
-      Data previousHop = r.back();
-      auto lastHopNumber = previousHop.hopCount;
-      auto previousHopIt = r.rbegin();
-      for (auto it2 = previousHopIt++; it2 != r.rend(); ++it2) {
-        if (it2->hopCount != lastHopNumber) {
-          break;
-        }
-        previousHopIt = it2;
-      } 
-      previousHop = *previousHopIt;
-      d.rtrIpAddr = previousHop.dstIpAddr;
-    }
-    r.push_back(d);
+  Parser::recordHopNumber(int hopNumber) {
+    LOG_DEBUG << "RECORDING HOP NUMBER: " << hopNumber << std::endl;
+    currentHopNumber = hopNumber;
+    flushHops();
   }
 
   void
-  Parser::getDestinationIP(const nmdo::IpAddress& destination) {
-    const nmdo::IpAddress origin = r.back().rtrIpAddr;
-    int prevHopCount = r.back().hopCount;
-    r.back().dstIpAddr = destination;
-    r.emplace_back();
-    r.back().hopCount = prevHopCount;
-    r.back().rtrIpAddr = origin;
+  Parser::recordHopDestination(const nmdo::IpAddress& destination) {
+    if (!prevDests.empty()) {
+      for (auto& prevDest : prevDests) {
+        curHops.emplace_back();
+        curHops.back().rtrIpAddr = prevDest;
+        curHops.back().dstIpAddr = destination;
+        curHops.back().hopCount = currentHopNumber;
+      }
+    } else {
+      curHops.emplace_back();
+      curHops.back().dstIpAddr = destination;
+      curHops.back().hopCount = currentHopNumber;
+    }
+  }
+
+  void
+  Parser::flushHops() {
+    if (!curHops.empty()) {
+      if (curHops.back().hopCount != 1){
+        for (auto& hop: curHops) {
+          r.emplace_back(hop);
+        }
+      }
+      prevDests.clear();
+      for (auto& hop: curHops) {
+        prevDests.emplace(hop.dstIpAddr);
+      }
+      curHops.clear();
+    }
   }
 
   Result
   Parser::getData()
   {
-    if (r.empty()) {
-      return Result();
-    }
-    Result res;
-    for (auto it = r.begin() + 1; it != r.end(); ++it) {
-      res.push_back(*it);
-    }
-    res.pop_back();
-    return res;
+    flushHops();
+    return r;
   }

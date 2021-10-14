@@ -54,6 +54,10 @@ class Parser :
     Data d;
     Result r;
 
+    std::set<nmdo::IpAddress> prevDests;
+    std::vector<nmdo::TracerouteHop> curHops;
+    int currentHopNumber;
+
   protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
@@ -81,9 +85,12 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void addHop(int);
 
-    void getDestinationIP(const nmdo::IpAddress&);
+    void recordHopNumber(int);
+
+    void recordHopDestination(const nmdo::IpAddress&);
+
+    void flushHops();
 
     Result getData();
 };
