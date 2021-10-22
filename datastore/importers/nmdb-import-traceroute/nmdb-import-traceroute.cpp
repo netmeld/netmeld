@@ -89,7 +89,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
         // save
         result.save(t, toolRunId, deviceId);
-        LOG_DEBUG << result.toString() << std::endl;
+        LOG_DEBUG << result.toDebugString() << std::endl;
 
       }
     }
