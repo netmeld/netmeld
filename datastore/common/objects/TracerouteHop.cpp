@@ -57,7 +57,7 @@ TracerouteHop::save(pqxx::transaction_base& t,
 }
 
 std::string
-TracerouteHop::toString() const
+TracerouteHop::toDebugString() const
 {
   std::ostringstream oss;
   oss << "[";
@@ -67,6 +67,12 @@ TracerouteHop::toString() const
   oss << "]";
 
   return oss.str();
+}
+
+std::string
+TracerouteHop::toString() const
+{
+  return this->toDebugString();
 }
 
 }

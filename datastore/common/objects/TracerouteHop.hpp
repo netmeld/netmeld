@@ -44,6 +44,7 @@ class TracerouteHop : public nmdo::AbstractDatastoreObject
     bool isValid() const override;
     void save(pqxx::transaction_base&,
               const nmco::Uuid&, const std::string&) override;
+    std::string toDebugString() const override;
     std::string toString() const;
 };
 
