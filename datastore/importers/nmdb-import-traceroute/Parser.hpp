@@ -90,6 +90,8 @@ class Parser :
 
     void recordHopDestination(const nmdo::IpAddress&);
 
+    void recordHopDestinationWithAlias(const nmdo::IpAddress&, const std::string&);
+
     void flushHops();
 
     Result getData();
