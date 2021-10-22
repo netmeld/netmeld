@@ -1,17 +1,23 @@
 DESCRIPTION
 ===========
 
-Description of what the tool parses.
-
-Various information about the tool.  Include any special considerations when
-using the tool.  Potentially explain option requirements more in depth.
+Parses and imports the output from the `traceroute [-n]` command on Linux
+systems and the `tracert [-d]` command on Windows systems. 
 
 EXAMPLES
 ========
+
+Parse the contents of a traceroute from a local text file.
 ```
-import-tool --device-id server tool-data.txt
-command |
-import-tool --pipe --device-id server tool-data.txt
+nmdb-import-traceroute --device-id server tool-data.txt
 ```
 
-See Also: `related-tool (8)`
+
+
+Assuming `...` is some command chain which retrieves the target data from a
+remote host and displays the results locally, then the following would process
+it and save the data to a file called `traceroute.txt` in the current working
+directory.
+```
+... | nmdb-import-traceroute --pipe --device-id server traceroute.txt
+```
