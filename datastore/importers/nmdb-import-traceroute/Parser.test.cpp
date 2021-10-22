@@ -67,14 +67,10 @@ over a maximum of 30 hops:)STR"
     const auto& parserRule {tp.windowsHop};
     std::vector<std::string> testsOk {
 
-      R"STR(  1    <1 ms    10 ms    100 ms  192.168.1.2 
-)STR",
-      R"STR(  2    <1 ms    1 ms    100 ms  192.168.1.3 
-)STR",
-      R"STR(  1    <1 ms    10 ms    100 ms  domain.domain.tld [192.168.1.2] 
-)STR",
-      R"STR(  2    <1 ms    1 ms    100 ms  domain.domain.tld [192.168.1.3] 
-)STR"
+      R"STR(  1    <1 ms    10 ms    100 ms  192.168.1.2 )STR",
+      R"STR(  2    <1 ms    1 ms    100 ms  192.168.1.3 )STR",
+      R"STR(  1    <1 ms    10 ms    100 ms  domain.domain.tld [192.168.1.2] )STR",
+      R"STR(  2    <1 ms    1 ms    100 ms  domain.domain.tld [192.168.1.3] )STR"
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -99,16 +95,11 @@ over a maximum of 30 hops:)STR"
     const auto& parserRule {tp.linuxHop};
     std::vector<std::string> testsOk {
 
-      R"STR( 1  192.168.2.3 (192.168.2.3)  0.138 ms  0.061 ms  0.190 ms
-)STR",
-      R"STR( 10  domain.domain.tld (192.168.2.3)  0.138 ms  0.061 ms  0.190 ms 
-)STR",
-      R"STR( 2  * domain.domain.tld (192.168.2.3)  2 ms domain2.domain.tld (192.168.2.5)  3 ms
-)STR",
-      R"STR( 5  * * 192.168.2.3 (192.168.2.3)  0.061 ms
-)STR",
-      R"STR( 7  * * *
-)STR"
+      R"STR( 1  192.168.2.3 (192.168.2.3)  0.138 ms  0.061 ms  0.190 ms)STR",
+      R"STR( 10  domain.domain.tld (192.168.2.3)  0.138 ms  0.061 ms  0.190 ms )STR",
+      R"STR( 2  * domain.domain.tld (192.168.2.3)  2 ms domain2.domain.tld (192.168.2.5)  3 ms)STR",
+      R"STR( 5  * * 192.168.2.3 (192.168.2.3)  0.061 ms)STR",
+      R"STR( 7  * * *)STR"
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
