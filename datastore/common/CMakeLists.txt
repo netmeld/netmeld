@@ -41,6 +41,7 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/Route.cpp
     ./objects/Service.cpp
     ./objects/ToolObservations.cpp
+    ./objects/TracerouteHop.cpp
     ./objects/Vlan.cpp
 
     ./tools/AbstractDatastoreTool.cpp

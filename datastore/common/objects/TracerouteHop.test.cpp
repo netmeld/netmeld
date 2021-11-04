@@ -11,7 +11,7 @@
 // furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// all copies or substantial hopions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -24,45 +24,67 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "TracerouteHop.hpp"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
-bool
-TracerouteHop::isValid() const
-{
-  return rtrIpAddr.isValid()
-      && dstIpAddr.isValid()
-      && (hopCount != -1);
-}
+#include <netmeld/datastore/objects/TracerouteHop.hpp>
 
-void
-TracerouteHop::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string& deviceId)
+namespace nmdo = netmeld::datastore::objects;
+
+
+class TestTracerouteHop : public nmdo::TracerouteHop {
+  public:
+    TestTracerouteHop() : TracerouteHop() {};
+
+};
+
+BOOST_AUTO_TEST_CASE(testValidity)
 {
-  if (!isValid()) {
-    LOG_DEBUG << "TracerouteHop object is not saving: " << toDebugString()
-              << std::endl;
-    return;
+  {
+    TestTracerouteHop hop;
+    BOOST_CHECK(!hop.isValid());
   }
 
-  rtrIpAddr.save(t, toolRunId, deviceId);
-  dstIpAddr.save(t, toolRunId, deviceId);
+  {
+    int n = 1;
+    TestTracerouteHop hop;
+    hop.hopCount = n;
+    BOOST_CHECK(!hop.isValid());
+  }
 
-  t.exec_prepared("insert_raw_ip_traceroute",
-      toolRunId,
-      hopCount,
-      rtrIpAddr.toString(),
-      dstIpAddr.toString());
-}
+  {
+    nmdo::IpAddress origin {"10.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.rtrIpAddr = origin;
+    BOOST_CHECK(!hop.isValid());
+  }
 
-std::string
-TracerouteHop::toString() const
-{
-  std::ostringstream oss;
-  oss << "[";
-  oss << rtrIpAddr << ", "
-      << dstIpAddr << ", "
-      << hopCount;
-  oss << "]";
+  {
+    nmdo::IpAddress destination {"100.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.dstIpAddr = destination;
+    BOOST_CHECK(!hop.isValid());
+  }
 
-  return oss.str();
+  {
+    nmdo::IpAddress origin {"10.0.0.1/24"};
+    nmdo::IpAddress destination {"100.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.rtrIpAddr = origin;
+    hop.dstIpAddr = destination;
+    BOOST_CHECK(!hop.isValid());
+  }
+
+  {
+    int n = 1;
+    nmdo::IpAddress origin {"10.0.0.1/24"};
+    nmdo::IpAddress destination {"100.0.0.1/24"};
+    TestTracerouteHop hop;
+    hop.rtrIpAddr = origin;
+    hop.dstIpAddr = destination;
+    hop.hopCount = n;
+    BOOST_CHECK(hop.isValid());
+  }
+
 }

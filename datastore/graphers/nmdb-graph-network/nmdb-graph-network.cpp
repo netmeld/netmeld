@@ -170,6 +170,7 @@ class Tool : public nmdt::AbstractGraphTool
     bool useIcons    {false};
     bool hideUnknown {false};
     bool removeEmptySubnets {false};
+    bool showTracerouteHops {false};
 
   public:
     Tool() : nmdt::AbstractGraphTool
@@ -205,6 +206,11 @@ class Tool : public nmdt::AbstractGraphTool
             NULL_SEMANTIC,
             "Omit empty subnet graph nodes")
           );
+      opts.addOptionalOption("show-traceroute-hops", std::make_tuple(
+            "show-traceroute-hops",
+            NULL_SEMANTIC,
+            "Show hops found in traceroutes for devices")
+      );
     }
 
     int
@@ -345,10 +351,18 @@ class Tool : public nmdt::AbstractGraphTool
          "   host_device_id, guest_device_id"
          " FROM device_virtualizations");
 
+      db.prepare
+        ("select_traceroutes",
+         "SELECT DISTINCT"
+         "   rtr_ip_addr, dst_ip_addr,"
+         "   hop_count"
+         " FROM raw_ip_traceroutes");
+
 
     useIcons = opts.exists("icons");
     hideUnknown = opts.exists("no-unknown");
     removeEmptySubnets = opts.exists("no-empty-subnets");
+    showTracerouteHops = opts.exists("show-traceroute-hops");
 
     int layer = std::stoi(opts.getValue("layer"));
     switch (layer) {
@@ -379,6 +393,7 @@ class Tool : public nmdt::AbstractGraphTool
     boost::remove_edge_if(IsRedundantEdge(graph), graph);
 
     buildVirtualizationGraph(db);
+    buildTracerouteGraph(db);
 
     boost::write_graphviz
       (std::cout, graph,
@@ -489,6 +504,7 @@ class Tool : public nmdt::AbstractGraphTool
 
           addBidirectionalEdge(ipNet, vertexName);
         }
+
       }
 
       t.commit();
@@ -517,6 +533,46 @@ class Tool : public nmdt::AbstractGraphTool
         tie(e, inserted) = boost::add_edge(u, v, graph);
         graph[e].style = "dashed";
         graph[e].direction = "forward";
+      }
+
+      t.commit();
+    }
+
+    // Create graph edges that represent hops found in traceroutes
+    void
+    buildTracerouteGraph(pqxx::connection& db)
+    {
+      if (!showTracerouteHops) {
+        return;
+      }
+
+      pqxx::work t{db};
+
+      pqxx::result tracerouteRows =
+        t.exec_prepared("select_traceroutes");
+      for (const auto& tracerouteRow : tracerouteRows) {
+        std::string origin;
+        tracerouteRow.at("rtr_ip_addr").to(origin);
+        std::string destination;
+        tracerouteRow.at("dst_ip_addr").to(destination);
+        std::string hopNumber;
+        tracerouteRow.at("hop_count").to(hopNumber);
+
+        Vertex const u = vertexLookup.at(origin);
+        Vertex const v = vertexLookup.at(destination);
+
+        Edge e;
+        bool inserted;
+
+        tie(e, inserted) = boost::add_edge(u, v, graph);
+        graph[e].style = "dashed";
+        graph[e].direction = "forward";
+        if (graph[e].label.empty()) {
+          graph[e].label = std::string("hop ") + hopNumber;
+        } else {
+          graph[e].label += std::string("\nhop ") + hopNumber;
+        }
+        graph[e].weight = 2.0;
       }
 
       t.commit();
