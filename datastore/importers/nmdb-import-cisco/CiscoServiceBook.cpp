@@ -75,6 +75,7 @@ namespace netmeld::datastore::importers::cisco {
               | serviceObjectLine
               | groupObjectLine
               | description
+              | protocolPortLine
               | (qi::eol) // space prefixed blank line
              )
          )
@@ -93,7 +94,11 @@ namespace netmeld::datastore::importers::cisco {
     groupObjectLine =
       qi::lit("group-object ") > dataString > qi::eol
       ;
-
+    protocolPortLine =
+      ( (protocolArgument >> unallocatedPort >> qi::eol)
+      | (protocolArgument >> -sourcePort >> -destinationPort >> -icmpArgument >> qi::eol)
+      )[(pnx::bind(&CiscoServiceBook::addCurData, this))]
+      ;
 
     objectGroupProtocol =
       qi::lit("object-group protocol ") > bookName > qi::eol
@@ -142,9 +147,9 @@ namespace netmeld::datastore::importers::cisco {
       (icmpTypeCode | icmpMessage)
       ;
     icmpTypeCode =
-      qi::as_string[+qi::digit]
+      qi::as_string[+qi::ascii::digit]
         [(pnx::bind(&CiscoServiceBook::curSrcPort, this) = qi::_1)]
-      > -(+qi::blank > -qi::as_string[+qi::digit]
+      > -(+qi::ascii::blank > -qi::as_string[+qi::ascii::digit]
         [(pnx::bind(&CiscoServiceBook::curDstPort, this) = qi::_1)])
       ;
     icmpMessage = // A token is too greedy, so...
@@ -227,6 +232,7 @@ namespace netmeld::datastore::importers::cisco {
         (objectGroupService)
           (portObjectArgumentLine)
           (serviceObjectLine)
+          (protocolPortLine)
         (objectGroupProtocol)
           (protocolObjectLine)
           (groupObjectLine)

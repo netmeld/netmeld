@@ -32,6 +32,9 @@
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/objects/IpNetwork.hpp>
 
+#include <map>
+#include <string>
+#include <vector>
 
 namespace netmeld::datastore::objects {
 
@@ -41,9 +44,18 @@ namespace netmeld::datastore::objects {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      IpNetwork    dstNet;
-      IpAddress    rtrIp;
+      std::string  vrfId;
+      std::string  tableId;
+      IpNetwork    dstIpNet;
+      std::string  nextVrfId;
+      std::string  nextTableId;
+      IpAddress    nextHopIpAddr;
       std::string  ifaceName;
+      std::string  protocol;
+      std::string  description;
+      size_t adminDistance;
+      size_t metric;
+      bool isActive;
 
     public: // Variables should rarely appear at this scope
 
@@ -63,11 +75,22 @@ namespace netmeld::datastore::objects {
       void updateForSave(const bool);
 
     public: // Methods part of public API
-      void setDstNet(const IpAddress&);
-      void setRtrIp(const IpAddress&);
+      void setVrfId(const std::string&);
+      void setTableId(const std::string&);
+      void setDstIpNet(const IpAddress&);
+      void setNextVrfId(const std::string&);
+      void setNextTableId(const std::string&);
+      void setNextHopIpAddr(const IpAddress&);
       void setIfaceName(const std::string&);
+      void setProtocol(const std::string&);
+      void setDescription(const std::string&);
+      void setAdminDistance(size_t);
+      void setMetric(size_t);
+      void setActive(bool);
 
       bool isValid() const override;
+      bool isV4() const;
+      bool isV6() const;
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
       void saveAsMetadata(pqxx::transaction_base&,
@@ -78,5 +101,7 @@ namespace netmeld::datastore::objects {
       std::partial_ordering operator<=>(const Route&) const;
       bool operator==(const Route&) const;
   };
+
+  typedef std::vector<Route> RoutingTable;
 }
 #endif // ROUTE_HPP

@@ -67,7 +67,7 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  MacAddress::addIp(IpAddress& _ipAddr)
+  MacAddress::addIp(const IpAddress& _ipAddr)
   {
     ipAddrs.insert(_ipAddr);
   }

@@ -215,10 +215,10 @@ Parser::Parser() : Parser::base_type(start)
     ;
   route =
     qi::lit("route") >> ipAddr
-      [(pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1))] >>
+      [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
     qi::lit("next-hop") >>
     (  (ipAddr >> semicolon)
-         [(pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1))]
+         [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
      | token
          [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
     ) >> qi::eol
@@ -520,7 +520,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   semicolon =
-    qi::skip(qi::blank)[qi::lit(';') >> -comment]
+    qi::skip(qi::ascii::blank)[qi::lit(';') >> -comment]
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(

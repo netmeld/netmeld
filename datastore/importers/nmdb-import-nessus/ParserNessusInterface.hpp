@@ -62,7 +62,7 @@ namespace netmeld::datastore::parsers {
                 [(pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1))])
            | (qi::lit(" (interfaces ") >> token
                 [(pnx::bind(&nmdo::Interface::setName, &qi::_val, qi::_1))] >>
-              -qi::omit[+(qi::blank >> token)] >> qi::eol
+              -qi::omit[+(qi::ascii::blank >> token)] >> qi::eol
              )
           )
           ;

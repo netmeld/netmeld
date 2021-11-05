@@ -60,9 +60,9 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   hostnameValue =
-    (  (qi::lit("Device") > (+qi::blank | qi::lit('-')) > qi::lit("ID:"))
+    (  (qi::lit("Device") > (+qi::ascii::blank | qi::lit('-')) > qi::lit("ID:"))
      | (qi::lit("SysName:"))
-    ) > -(+qi::blank)
+    ) > -(+qi::ascii::blank)
     > token [(pnx::bind(&NeighborData::curHostname, &nd)
               = pnx::bind(&nmcu::toLower, qi::_1))]
     > qi::eol

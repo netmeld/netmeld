@@ -48,10 +48,10 @@ class Parser :
 
       defaultRoute =
         dstIpNet
-          [(pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1))] >>
+          [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
         qi::lit("via") >>
         ipAddr
-          [(pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1))] >>
+          [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))] >>
         ifaceName
           [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))] >>
         qi::omit[*token] >> qi::eol
@@ -59,13 +59,13 @@ class Parser :
 
       route =
         dstIpNet
-          [(pnx::bind(&nmdo::Route::setDstNet, &qi::_val, qi::_1))] >>
+          [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
         ifaceName
           [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))] >>
         // IPv6 doesn't seem to do this, so needs to be optional
         -(qi::lit("proto kernel scope link src") >>
           ipAddr
-            [(pnx::bind(&nmdo::Route::setRtrIp, &qi::_val, qi::_1))]
+            [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
          ) >>
         qi::omit[*token] >> qi::eol
         ;

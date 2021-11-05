@@ -60,8 +60,16 @@ BOOST_AUTO_TEST_CASE(testWellformedNoPrefixV4)
 {
   std::vector<std::string> ips =
   {
+    "0.0.0.0",
     "1.2.3.4",
+    "255.255.255.255"
   };
+
+  for (const auto& ip : ips) {
+    auto temp = nmdp::fromString<nmdp::ParserIpv4Address, nmdo::IpAddress>(ip);
+    auto tempIp = ip + "/32";
+    BOOST_CHECK_EQUAL(tempIp, temp.toString());
+  }
 
   for (const auto& ip : ips) {
     auto temp = nmdp::fromString<nmdp::ParserIpAddress, nmdo::IpAddress>(ip);
@@ -76,8 +84,15 @@ BOOST_AUTO_TEST_CASE(testWellformedNoPrefixV6)
   {
     "::",
     "::1",
+    "2001:db8:1:a::ffff",
     "2001:db8:1:a:b:23:456:789"
   };
+
+  for (const auto& ip : ips) {
+    auto temp = nmdp::fromString<nmdp::ParserIpv6Address, nmdo::IpAddress>(ip);
+    auto tempIp = ip + "/128";
+    BOOST_CHECK_EQUAL(tempIp, temp.toString());
+  }
 
   for (const auto& ip : ips) {
     auto temp = nmdp::fromString<nmdp::ParserIpAddress, nmdo::IpAddress>(ip);

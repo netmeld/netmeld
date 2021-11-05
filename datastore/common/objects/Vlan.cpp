@@ -56,7 +56,7 @@ namespace netmeld::datastore::objects {
   void
   Vlan::setDescription(const std::string& _description)
   {
-    description = nmcu::toLower(_description);
+    description = _description;
   }
 
   void

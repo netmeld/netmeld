@@ -58,6 +58,7 @@ namespace netmeld::datastore::utils {
       static nmdo::Service makeRadius();
       static nmdo::Service makeSnmp();
       static nmdo::Service makeSyslog();
+      static nmdo::Service makeTacacsPlus();
 
 
     // =========================================================================

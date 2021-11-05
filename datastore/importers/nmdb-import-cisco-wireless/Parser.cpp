@@ -65,7 +65,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   tokens =
-    qi::as_string[+(token >> *qi::blank)]
+    qi::as_string[+(token >> *qi::ascii::blank)]
     ;
 
   token =
@@ -136,8 +136,8 @@ Parser::addIface2(const std::string& name,
   if (rtr.isValid()){
     nmdo::Route route;
     route.setIfaceName(name);
-    route.setDstNet(ip); // saves as both addr and net
-    route.setRtrIp(rtr);
+    route.setDstIpNet(ip); // saves as both addr and net
+    route.setNextHopIpAddr(rtr);
     d.routes.push_back(route);
   }
 }

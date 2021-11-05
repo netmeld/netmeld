@@ -70,7 +70,7 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Interface::addIpAddress(IpAddress& ipAddr)
+  Interface::addIpAddress(const IpAddress& ipAddr)
   {
     macAddr.addIp(ipAddr);
   }
@@ -118,7 +118,8 @@ namespace netmeld::datastore::objects {
       deviceId,
       name,
       mediaType,
-      isUp);
+      isUp,
+      nullptr);
 
     macAddr.setResponding(isUp);
     macAddr.save(t, toolRunId, deviceId);

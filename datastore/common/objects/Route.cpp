@@ -26,24 +26,52 @@
 
 #include <netmeld/datastore/objects/Route.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
+#include <boost/format.hpp>
 
 namespace nmcu = netmeld::core::utils;
 
 
 namespace netmeld::datastore::objects {
-  Route::Route()
+  Route::Route() :
+    adminDistance(0),
+    metric(0),
+    isActive(true)
   {}
 
   void
-  Route::setDstNet(const IpAddress& _dstNet)
+  Route::setVrfId(const std::string& _vrfId)
   {
-    dstNet = _dstNet;
+    vrfId = _vrfId;  // preserve case.
   }
 
   void
-  Route::setRtrIp(const IpAddress& _rtrIp)
+  Route::setTableId(const std::string& _tableId)
   {
-    rtrIp = _rtrIp;
+    tableId = _tableId;  // preserve case.
+  }
+
+  void
+  Route::setDstIpNet(const IpAddress& _dstIpNet)
+  {
+    dstIpNet = _dstIpNet;
+  }
+
+  void
+  Route::setNextVrfId(const std::string& _nextVrfId)
+  {
+    nextVrfId = _nextVrfId;  // preserve case.
+  }
+
+  void
+  Route::setNextTableId(const std::string& _nextTableId)
+  {
+    nextTableId = _nextTableId;  // preserve case.
+  }
+
+  void
+  Route::setNextHopIpAddr(const IpAddress& _nextHopIpAddr)
+  {
+    nextHopIpAddr = _nextHopIpAddr;
   }
 
   void
@@ -52,29 +80,70 @@ namespace netmeld::datastore::objects {
     ifaceName = nmcu::toLower(_ifaceName);
   }
 
+  void
+  Route::setProtocol(const std::string& _protocol)
+  {
+    protocol = nmcu::toLower(_protocol);
+  }
+
+  void
+  Route::setAdminDistance(size_t _adminDistance)
+  {
+    adminDistance = _adminDistance;
+  }
+
+  void
+  Route::setMetric(size_t _metric)
+  {
+    metric = _metric;
+  }
+
+  void
+  Route::setActive(bool _isActive)
+  {
+    isActive = _isActive;
+  }
+
+  void
+  Route::setDescription(const std::string& _description)
+  {
+    description = _description;
+  }
+
   bool
   Route::isValid() const
   {
-    return !(rtrIp.isDefault() && dstNet.isDefault())
-        ;
+    return !(nextHopIpAddr.isDefault() && dstIpNet.isDefault());
+  }
+
+  bool
+  Route::isV4() const
+  {
+    return dstIpNet.isV4();
+  }
+
+  bool
+  Route::isV6() const
+  {
+    return dstIpNet.isV6();
   }
 
   void
   Route::updateForSave(const bool isMetadataSave)
   {
-    if (rtrIp.isDefault() && !dstNet.isDefault()) {
-      if (isMetadataSave && dstNet.isV6()) {
-        rtrIp = IpAddress::getIpv6Default();
+    if (nextHopIpAddr.isDefault() && !dstIpNet.isDefault()) {
+      if (isMetadataSave && dstIpNet.isV6()) {
+        nextHopIpAddr = IpAddress::getIpv6Default();
       } else {
         // Always use IPv4 default for datastore as only one null case
-        rtrIp = IpAddress::getIpv4Default();
+        nextHopIpAddr = IpAddress::getIpv4Default();
       }
     }
-    else if (!rtrIp.isDefault() && dstNet.isDefault()) {
-      if (rtrIp.isV4()) {
-        dstNet = IpNetwork::getIpv4Default();
+    else if (!nextHopIpAddr.isDefault() && dstIpNet.isDefault()) {
+      if (nextHopIpAddr.isV4()) {
+        dstIpNet = IpNetwork::getIpv4Default();
       } else {
-        dstNet = IpNetwork::getIpv6Default();
+        dstIpNet = IpNetwork::getIpv6Default();
       }
     }
   }
@@ -90,15 +159,24 @@ namespace netmeld::datastore::objects {
     }
     updateForSave(false);
 
-    dstNet.save(t, toolRunId, deviceId);
-    rtrIp.save(t, toolRunId, deviceId);
+    dstIpNet.save(t, toolRunId, deviceId);
+    nextHopIpAddr.save(t, toolRunId, deviceId);
 
     t.exec_prepared("insert_raw_device_ip_route",
         toolRunId,
         deviceId, // insert converts to lower
+        vrfId,
+        tableId,
+        isActive,
+        dstIpNet.toString(),
+        nextVrfId, // insert converts '' to null
+        nextTableId, // insert converts '' to null
+        nextHopIpAddr.toString(), // insert converts 0.0.0.0/0 to null
         ifaceName, // insert converts '' to null
-        dstNet.toString(),
-        rtrIp.toString()); // insert converts 0.0.0.0/0 to null
+        protocol, // insert converts to lower and '' to null
+        adminDistance,
+        metric,
+        description); // insert converts '' to null
   }
 
   void
@@ -114,8 +192,8 @@ namespace netmeld::datastore::objects {
     t.exec_prepared("insert_tool_run_ip_route",
         toolRunId,
         ifaceName,
-        dstNet.toString(),
-        rtrIp.toString());
+        dstIpNet.toString(),
+        nextHopIpAddr.toString());
   }
 
   std::string
@@ -123,14 +201,19 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "[";
-
-    oss << ifaceName
-        << ", " << dstNet.toString()
-        << ", " << rtrIp.toString()
+    oss << boost::format("[%1%,%2%,%3%,%4%,%5%,%6%,%7%,%8%,%9%,%10%,%11%]")
+        % vrfId
+        % tableId
+        % isActive
+        % dstIpNet.toString()
+        % nextVrfId
+        % nextTableId
+        % nextHopIpAddr.toString()
+        % ifaceName
+        % protocol
+        % adminDistance
+        % metric
         ;
-
-    oss << "]";
 
     return oss.str();
   }
@@ -138,13 +221,40 @@ namespace netmeld::datastore::objects {
   std::partial_ordering
   Route::operator<=>(const Route& rhs) const
   {
-    if (auto cmp = dstNet <=> rhs.dstNet; 0 != cmp) {
+    if (auto cmp = isActive <=> rhs.isActive; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = rtrIp <=> rhs.rtrIp; 0 != cmp) {
+    if (auto cmp = vrfId <=> rhs.vrfId; 0 != cmp) {
       return cmp;
     }
-    return ifaceName <=> rhs.ifaceName;
+    if (auto cmp = tableId <=> rhs.tableId; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = dstIpNet <=> rhs.dstIpNet; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = nextVrfId <=> rhs.nextVrfId; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = nextTableId <=> rhs.nextTableId; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = nextHopIpAddr <=> rhs.nextHopIpAddr; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = ifaceName <=> rhs.ifaceName; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = adminDistance <=> rhs.adminDistance; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = metric <=> rhs.metric; 0 != cmp) {
+      return cmp;
+    }
+    return description <=> rhs.description;
   }
 
   bool

@@ -538,7 +538,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     const auto service = d.services[0];
     BOOST_TEST(service.toDebugString() ==
         "[[1.2.3.4/32, 0, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ],"
-        " 0, -, , ssh, openssh, probed, tcp, [22], [], ]"
+        " 0, -, , ssh, OpenSSH, probed, tcp, [22], [], ]"
         );
   }
 }

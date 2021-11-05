@@ -68,7 +68,7 @@ namespace netmeld::datastore::objects {
     private:
     protected:
     public:
-      void addIpAddress(IpAddress&);
+      void addIpAddress(const IpAddress&);
 
       void setName(const std::string&);
       void setMediaType(const std::string&);

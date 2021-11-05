@@ -96,6 +96,15 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
 
+        LOG_DEBUG << "Iteration over DNS search domains\n";
+        for (auto& dnsSearchDomain : results.dnsSearchDomains) {
+          t.exec_prepared("insert_raw_device_dns_search_domain",
+              toolRunId,
+              deviceId,
+              dnsSearchDomain);
+        }
+
+        // 04-03-2019 NOTE: Manually saving here because we do not have nor
         LOG_DEBUG << "Iteration over AAAs\n";
         for (auto& result : results.aaas) {
           // 04-03-2019 NOTE: Manually saving here because we do not have nor

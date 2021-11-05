@@ -30,6 +30,7 @@ target_as_library(common)
 
 foreach(ITEM
     #general-tool-template
+    nmdb-convert-acls
     nmdb-initialize
     nmdb-remove-tool-run
   )

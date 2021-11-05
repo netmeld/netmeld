@@ -91,7 +91,9 @@ namespace netmeld::datastore::importers::cisco {
       > *(indent
           > (  networkObjectLine
              | groupObjectLine
+             | hostArgument
              | description
+             | dataIpMask
              | (qi::eol) // space prefixed blank line
             )
          )
@@ -125,7 +127,8 @@ namespace netmeld::datastore::importers::cisco {
       qi::lit("host ") > (dataIp | dataString)
       ;
     ipNoPrefix =
-      (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
+      (ipAddr.ipv4Addr.ipv4 | ipAddr.ipv6Addr.ipv6) >>
+      !(qi::lit('/') >> ipAddr.ipv6Addr.prefix)
       ;
     dataIp =
       (&ipNoPrefix > ipAddr)
@@ -136,11 +139,11 @@ namespace netmeld::datastore::importers::cisco {
         [(pnx::bind(&CiscoNetworkBook::fromIp, this, qi::_1))]
       ;
     dataIpMask =
-      (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank] >> &ipNoPrefix >> ipAddr)
+      (&ipNoPrefix >> ipAddr >> qi::omit[+qi::ascii::blank] >> &ipNoPrefix >> ipAddr)
         [(pnx::bind(&CiscoNetworkBook::fromIpMask, this, qi::_1, qi::_2))]
       ;
     dataIpRange =
-      (ipAddr >> qi::omit[+qi::blank] >> ipAddr)
+      (ipAddr >> qi::omit[+qi::ascii::blank] >> ipAddr)
         [(pnx::bind(&CiscoNetworkBook::fromIpRange, this, qi::_1, qi::_2))]
       ;
     dataString =

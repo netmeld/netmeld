@@ -151,20 +151,20 @@ ON tool_run_ip_addrs(interface_name, ip_addr);
 -- ----------------------------------------------------------------------
 
 -- dst_ip_net  = '0.0.0.0/0' or '::/0' for the default route.
--- rtr_ip_addr = '0.0.0.0'   or '::'   for directly connected LANs.
+-- next_hop_ip_addr = '0.0.0.0'   or '::'   for directly connected LANs.
 
 CREATE TABLE tool_run_ip_routes (
     tool_run_id                 UUID            NOT NULL,
     interface_name              TEXT            NOT NULL,
     dst_ip_net                  CIDR            NOT NULL,
-    rtr_ip_addr                 INET            NOT NULL,
-    PRIMARY KEY (tool_run_id, interface_name, dst_ip_net, rtr_ip_addr),
+    next_hop_ip_addr            INET            NOT NULL,
+    PRIMARY KEY (tool_run_id, interface_name, dst_ip_net, next_hop_ip_addr),
     FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    CHECK (inet_same_family(dst_ip_net, rtr_ip_addr)),
-    CHECK ((rtr_ip_addr = host(rtr_ip_addr)::INET))
+    CHECK (next_hop_ip_addr = host(next_hop_ip_addr)::INET),
+    CHECK (inet_same_family(dst_ip_net, next_hop_ip_addr))
 );
 
 -- Partial indexes
@@ -180,13 +180,13 @@ ON tool_run_ip_routes(interface_name);
 CREATE INDEX tool_run_ip_routes_idx_dst_ip_net
 ON tool_run_ip_routes(dst_ip_net);
 
-CREATE INDEX tool_run_ip_routes_idx_rtr_ip_addr
-ON tool_run_ip_routes(rtr_ip_addr);
+CREATE INDEX tool_run_ip_routes_idx_next_hop_ip_addr
+ON tool_run_ip_routes(next_hop_ip_addr);
 
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX tool_run_ip_routes_idx_views
-ON tool_run_ip_routes(interface_name, dst_ip_net, rtr_ip_addr);
+ON tool_run_ip_routes(interface_name, dst_ip_net, next_hop_ip_addr);
 
 
 -- ----------------------------------------------------------------------

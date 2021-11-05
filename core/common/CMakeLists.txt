@@ -26,6 +26,8 @@
 
 add_library(${TGT_LIBRARY} SHARED
     ./objects/AbstractObject.cpp
+    ./objects/DnsQuestion.cpp
+    ./objects/DnsResponse.cpp
     ./objects/Time.cpp
     ./objects/Uuid.cpp
 

@@ -51,6 +51,8 @@ find_package(Boost REQUIRED
   unit_test_framework
   )
 
+find_package(nlohmann_json REQUIRED)
+
 # Appears to not be linked by default
 link_libraries(stdc++fs)
 

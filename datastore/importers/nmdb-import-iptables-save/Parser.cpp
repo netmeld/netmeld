@@ -105,19 +105,19 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   counts =
-    qi::lit("[") >> +qi::digit >> qi::lit(":") >> +qi::digit >> qi::lit("]")
+    qi::lit("[") >> +qi::ascii::digit >> qi::lit(":") >> +qi::ascii::digit >> qi::lit("]")
     ;
 
   optionSwitch =
     // appear to be short form (-[a-z]) only
-    qi::lit("-") >> qi::alpha
+    qi::lit("-") >> qi::ascii::alpha
     ;
 
   optionValue =
     // mName [module-options]
     // module-options appear to be long form (--) and may contain negated (!)
     *((token - (optionSwitch | (qi::lit("! ") >> optionSwitch))) >>
-      *qi::blank
+      *qi::ascii::blank
     )
     ;
 

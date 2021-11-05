@@ -87,6 +87,8 @@ namespace netmeld::datastore::objects {
       bool setWildcardMask(const IpNetwork&);
       void setReason(const std::string&);
 
+      uint8_t getPrefix() const;
+
       bool isDefault() const;
       bool isValid() const override;
       bool isV4() const;

@@ -93,6 +93,16 @@ namespace netmeld::datastore::utils {
     return service;
   }
 
+  nmdo::Service
+  ServiceFactory::makeTacacsPlus()
+  {
+    nmdo::Service service;
+    service.setServiceName("tacacs");
+    service.setProtocol("tcp");
+    service.addDstPort("49");
+    return service;
+  }
+
   //nmdo::Service
   //ServiceFactory::make()
   //{

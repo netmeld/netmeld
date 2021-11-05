@@ -69,6 +69,7 @@ namespace netmeld::datastore::importers::cisco {
         objectGroupService,
           portObjectArgumentLine,
           serviceObjectLine,
+          protocolPortLine,
         objectGroupProtocol,
           protocolObjectLine,
           groupObjectLine,

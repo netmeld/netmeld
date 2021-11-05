@@ -88,9 +88,9 @@ namespace netmeld::datastore::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void addIpAddress(IpAddress&);
-      void addPortSecurityStickyMac(MacAddress&);
-      void addReachableMac(MacAddress&);
+      void addIpAddress(const IpAddress&);
+      void addPortSecurityStickyMac(const MacAddress&);
+      void addReachableMac(const MacAddress&);
       void addVlan(const uint16_t);
       void addVlanRange(const uint16_t, const uint16_t);
       void setDiscoveryProtocol(bool);

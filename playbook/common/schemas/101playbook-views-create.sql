@@ -92,7 +92,7 @@ ON (pins.interface_name = tria.interface_name) AND
 LEFT OUTER JOIN tool_run_ip_routes AS trir
 ON (tria.tool_run_id = trir.tool_run_id) AND
    (pins.interface_name = trir.interface_name) AND
-   (pir.rtr_ip_addr = trir.rtr_ip_addr)
+   (pir.rtr_ip_addr = trir.next_hop_ip_addr)
 LEFT OUTER JOIN raw_ip_addrs AS ia
 ON (tria.tool_run_id = ia.tool_run_id)
 LEFT OUTER JOIN playbook_runtime_errors AS pre

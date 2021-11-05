@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     TestService service;
 
     service.setServiceDescription("Service Description");
-    BOOST_CHECK_EQUAL("service description", service.getServiceDescription());
+    BOOST_CHECK_EQUAL("Service Description", service.getServiceDescription());
   }
 
   {

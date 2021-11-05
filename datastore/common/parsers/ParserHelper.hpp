@@ -84,6 +84,19 @@ namespace netmeld::datastore::parsers {
   }
 
   template<class P, class R>
+  bool matchString(const std::string& data)
+  {
+    R temp;
+    std::istringstream dataStream(data);
+    dataStream.unsetf(std::ios::skipws); // disable skipping whitespace
+    IstreamIter i(dataStream), e;
+
+    bool const success = qi::parse(i, e, P(), temp);
+
+    return ((success) && (i == e));
+  }
+
+  template<class P, class R>
   R fromString(const std::string& data)
   {
     R result;

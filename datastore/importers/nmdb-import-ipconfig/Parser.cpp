@@ -39,11 +39,9 @@ Parser::Parser() : Parser::base_type(start)
      (
       +adapter |
       +(
-        
         -compartmentHeader >>
         hostData >>
         *(adapter)
-      
        )
      )
     ) [qi::_val = pnx::bind(&Parser::getData, this)] >>
@@ -53,8 +51,8 @@ Parser::Parser() : Parser::base_type(start)
   compartmentHeader =
     +qi::lit('=') > qi::eol > ignoredLine > +qi::lit('=') > qi::eol
     ;
-  
-  hostData = 
+
+  hostData =
     +( ("Host Name" >> dots > fqdn > qi::eol)
         [pnx::bind(&Parser::addDevInfo, this, qi::_1)]
         | ("Primary Dns Suffix" >> dots > -fqdn > qi::eol)
@@ -155,7 +153,7 @@ Parser::addIface(const std::string& _name, const std::string& _type)
   std::string type = _type;
   type = type.erase(type.find_last_not_of(whitespace) + 1);
   type = type.erase(0, type.find_first_not_of(whitespace));
-  
+
   iface.setName(_name);
   iface.setMediaType(type);
   iface.setUp();
@@ -208,15 +206,15 @@ Parser::addRoute(const nmdo::IpAddress& _ipAddr)
     if (ipAddr.isV4() && _ipAddr.isV4()) {
       nmdo::Route route;
       route.setIfaceName(curIfaceName);
-      route.setRtrIp(_ipAddr);
-      route.setDstNet(ipAddr);
+      route.setNextHopIpAddr(_ipAddr);
+      route.setDstIpNet(ipAddr);
       d.routes.push_back(route);
     }
     if (ipAddr.isV6() && _ipAddr.isV6()) {
       nmdo::Route route;
       route.setIfaceName(curIfaceName);
-      route.setRtrIp(_ipAddr);
-      route.setDstNet(ipAddr);
+      route.setNextHopIpAddr(_ipAddr);
+      route.setDstIpNet(ipAddr);
       d.routes.push_back(route);
     }
   }

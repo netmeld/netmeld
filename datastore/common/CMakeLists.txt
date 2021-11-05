@@ -29,8 +29,17 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/AcNetworkBook.cpp
     ./objects/AcServiceBook.cpp
     ./objects/AcRule.cpp
+    ./objects/AclIpNetSet.cpp
+    ./objects/AclPortSet.cpp
+    ./objects/AclService.cpp
+    ./objects/AclZone.cpp
+    ./objects/AclRule.cpp
+    ./objects/AclRulePort.cpp
+    ./objects/AclRuleService.cpp
     ./objects/Cve.cpp
     ./objects/DeviceInformation.cpp
+    ./objects/DnsLookup.cpp
+    ./objects/DnsResolver.cpp
     ./objects/Interface.cpp
     ./objects/InterfaceNetwork.cpp
     ./objects/IpAddress.cpp
@@ -38,11 +47,12 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/MacAddress.cpp
     ./objects/OperatingSystem.cpp
     ./objects/Port.cpp
+    ./objects/PortRange.cpp
     ./objects/Route.cpp
     ./objects/Service.cpp
     ./objects/ToolObservations.cpp
     ./objects/Vlan.cpp
-
+    ./objects/Vrf.cpp
     ./tools/AbstractDatastoreTool.cpp
     ./tools/AbstractExportTool.cpp
     ./tools/AbstractGraphTool.cpp

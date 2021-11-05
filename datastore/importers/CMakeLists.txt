@@ -29,24 +29,32 @@ set(MODULE_VERSION "2.0")
 foreach(ITEM
     #import-tool-template
     nmdb-import-brocade
+    nmdb-import-brocade-show-ip-route
     nmdb-import-cisco
+    nmdb-import-cisco-show-ip-route
     nmdb-import-cisco-wireless
     nmdb-import-clw
+    nmdb-import-dig
+    nmdb-import-f5-json
     nmdb-import-hosts
-    nmdb-import-ip-addr-show
     nmdb-import-ipconfig
+    nmdb-import-ip-addr-show
     nmdb-import-ip-route-show
     nmdb-import-iptables-save
     nmdb-import-juniper-conf
     nmdb-import-juniper-set
+    nmdb-import-juniper-show-route
+    nmdb-import-juniper-xml
     nmdb-import-nessus
     nmdb-import-nmap
+    nmdb-import-paloalto-xml
     nmdb-import-pcap
     nmdb-import-ping
     nmdb-import-powerconnect
     nmdb-import-show-cdp-neighbor
     nmdb-import-show-inventory
     nmdb-import-show-mac-address-table
+    nmdb-import-show-neighbor
     nmdb-import-tshark
     nmdb-import-vyos
   )
