@@ -44,6 +44,7 @@ namespace netmeld::datastore::objects {
     protected:
       std::string const      ANY_PORT {"0-65535"};
 
+      std::string            dstFqdn;    // FQDN this is on
       IpAddress              dstAddress; // IP this is on
       IpAddress              srcAddress; // IP this seen from
       bool                   isLocal {false};
@@ -87,6 +88,7 @@ namespace netmeld::datastore::objects {
 
       std::string getServiceName() const;
 
+      void setDstFqdn(const std::string&);
       void setDstAddress(const IpAddress&);
       void setSrcAddress(const IpAddress&);
       void setInterfaceName(const std::string&);

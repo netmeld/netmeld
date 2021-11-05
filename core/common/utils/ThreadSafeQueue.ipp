@@ -27,17 +27,12 @@
 // NOTE This implementation is included in the header (at the end) since it
 //      leverages templating.
 
-#include <netmeld/core/utils/ThreadSafeQueue.hpp>
-
 
 namespace netmeld::core::utils {
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  template<typename T>
-  ThreadSafeQueue<T>::ThreadSafeQueue()
-  {}
 
 
   // ===========================================================================
@@ -64,6 +59,9 @@ namespace netmeld::core::utils {
   ThreadSafeQueue<T>::pop()
   {
     std::lock_guard<std::mutex> lock(queueMutex);
+    if (queue.empty()) {
+      return;
+    }
     queue.pop();
   }
 

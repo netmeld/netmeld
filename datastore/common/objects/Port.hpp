@@ -66,6 +66,7 @@ namespace netmeld::datastore::objects {
       void setProtocol(const std::string&);
       void setReason(const std::string&);
       void setState(const std::string&);
+      void setIpAddr(const IpAddress&);
 
       std::string getIpAddr() const;
       std::string getProtocol() const;

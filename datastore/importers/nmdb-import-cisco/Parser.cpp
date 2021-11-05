@@ -57,6 +57,14 @@ Parser::Parser() : Parser::base_type(start)
          >> qi::lit("Version") > *token > qi::eol)
           [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
 
+      | (qi::lit("spanning-tree mode") >> token >> qi::eol)
+
+      | (qi::lit("spanning-tree mst configuration") >> qi::eol >>
+         *(indent >>
+           (qi::omit[tokens]) >>
+           qi::eol)
+        )
+
       | (qi::lit("spanning-tree portfast") >>
           (  qi::lit("bpduguard")
                [(pnx::bind(&Parser::globalBpduGuardEnabled, this) = true)]
@@ -72,9 +80,10 @@ Parser::Parser() : Parser::base_type(start)
       | domainData
       | (interface)
           [(pnx::bind(&Parser::vlanAddIfaceData, this))]
+      | routerId
       | route
       | vlan
-          [(pnx::bind(&Parser::vlanAdd, this, qi::_1))]
+          [(pnx::bind(&Parser::vlansAdd, this, qi::_1))]
       | networkBooks
       | serviceBooks
       | accessPolicyRelated
@@ -86,26 +95,41 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   domainData =
-    ( ((qi::lit("switchname") | qi::lit("hostname")) > domainName > qi::eol)
-          [(pnx::bind([&](const std::string& val)
-                      {d.devInfo.setDeviceId(val);}, qi::_1))]
-     | (qi::lit("ip domain-name") > domainName > qi::eol)
-          [(pnx::bind(&Parser::unsup, this, "ip domain-name"))]
-     | (qi::lit("domain-name") >> domainName >> qi::eol)
-          [(pnx::bind(&Parser::unsup, this, "domain-name"))]
+    ( ((qi::lit("switchname") | qi::lit("hostname")) >
+       domainName >> qi::omit[*(qi::char_ - qi::eol)] > qi::eol
+      )[(pnx::bind([&](const std::string& val)
+                   {d.devInfo.setDeviceId(val);}, qi::_1))]
+    | (qi::lit("ip") >> -qi::lit("dns") >>
+       (qi::lit("domain-name") | qi::lit("domain name")) >>
+       -(qi::lit("vrf") >> token) >>
+       domainName
+         [(pnx::bind(&Parser::deviceAddDnsSearchDomain, this, qi::_1))] >>
+       qi::eol)
+    | (qi::lit("domain-name") >>
+       domainName
+         [(pnx::bind(&Parser::deviceAddDnsSearchDomain, this, qi::_1))] >>
+       qi::eol)
     )
     ;
 
-  // [ip|ipv6] route dstNet nextHop {administrative_distance} {permanent}
-  //   dstNet  == [ip/prefix | ip mask]
+  routerId =
+    (-(qi::lit("ipv6") | qi::lit("ip")) >>
+     qi::lit("router-id") >> ipAddr >>
+     qi::eol
+    )
+    ;
+
+  // [ip|ipv6] route dstIpNet nextHop {administrative_distance} {permanent}
+  //   dstIpNet  == [ip/prefix | ip mask]
   //   nextHop == [ip/prefix | ip | iface]
   route =
     (qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
+    -(qi::lit("vrf") >> token) >>
        // ip_mask ip
     (  (ipMask >> ipAddr)
          [(pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2))]
        // ip_mask iface
-     | (ipMask >> (!(qi::digit | qi::lit("permanent")) >> token))
+     | (ipMask >> (!(qi::ascii::digit | qi::lit("permanent") | qi::lit("track")) >> token))
          [(pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2))]
        // ip ip
      | (ipAddr >> ipAddr)
@@ -113,18 +137,38 @@ Parser::Parser() : Parser::base_type(start)
        // ip iface
      | (ipAddr >> token)
          [(pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2))]
-    ) > -(qi::uint_ | qi::lit("permanent")) > qi::eol
+    ) >
+    -( qi::uint_
+         [(pnx::bind(&Parser::routeSetAdminDistance, this, qi::_1))]
+     | qi::lit("permanent")
+     ) >
+    -(qi::lit("track") >> qi::lit("bfd") >> -qi::uint_) >
+    -(qi::lit("tag") >> token) >
+    qi::eol
+    ;
+
+  vlanNumberRange =
+    ( (qi::ushort_ >> qi::lit("-") >> qi::ushort_)
+        [(qi::_val = pnx::construct<std::tuple<uint16_t, uint16_t>>(qi::_1, qi::_2))]
+    | (qi::ushort_)
+        [(qi::_val = pnx::construct<std::tuple<uint16_t, uint16_t>>(qi::_1, qi::_1))]
+    )
+    ;
+
+  vlanNumberRangeList =
+    (vlanNumberRange % qi::lit(","))
     ;
 
   vlan =
-    (qi::lit("vlan") >> qi::ushort_ >> qi::eol)
-       [(pnx::bind(&nmdo::Vlan::setId, &qi::_val, qi::_1))] >>
-    *(indent >>
-      (  (qi::lit("name") >> token)
-            [(pnx::bind(&nmdo::Vlan::setDescription, &qi::_val, qi::_1))]
-       | (qi::omit[+token]) // Ignore all other settings
-      ) >> qi::eol
-    )
+    ( (qi::lit("vlan") >> vlanNumberRangeList >> qi::eol)
+         [(qi::_a = qi::_1)] >>
+      *( indent >>
+         ( (qi::lit("name") >> tokens)
+              [(pnx::bind(&nmdo::Vlan::setDescription, &qi::_b, qi::_1))]
+         | (qi::omit[+token]) // Ignore all other settings
+         ) >> qi::eol
+       )
+    ) [(qi::_val = pnx::bind(&Parser::expandVlanNumberRangeList, this, qi::_a, qi::_b))]
     ;
 
   interface =
@@ -146,16 +190,20 @@ Parser::Parser() : Parser::base_type(start)
             [(pnx::bind([&](){tgtIface->setState(isNo);}))]
        | (qi::lit("cdp enable"))
             [(pnx::bind([&](){tgtIface->setDiscoveryProtocol(!isNo);}),
-             pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificCdp))]
+              pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificCdp))]
 
        | ((qi::lit("ipv6") | qi::lit("ip")) >> -qi::lit("-")
           >> qi::lit("address") >>
           (  (ipMask)
                [(pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                           pnx::bind(&Parser::tgtIface, this), qi::_1))]
+                           pnx::bind(&Parser::tgtIface, this), qi::_1),
+                 // Cache network prefix for later settings in interface
+                 qi::_a = pnx::bind(&nmdo::IpNetwork::getPrefix, qi::_1))]
            | (ipAddr)
                [(pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
-                           pnx::bind(&Parser::tgtIface, this), qi::_1))]
+                           pnx::bind(&Parser::tgtIface, this), qi::_1),
+                 // Cache network prefix for later settings in interface
+                 qi::_a = pnx::bind(&nmdo::IpNetwork::getPrefix, qi::_1))]
            | (domainName >> ipAddr)
                [(pnx::bind(&Parser::ifaceAddAlias, this, qi::_1, qi::_2))]
            | (domainName)
@@ -163,6 +211,12 @@ Parser::Parser() : Parser::base_type(start)
                            qi::_1, nmdo::IpAddress()))]
           )
          )
+
+       | (qi::lit("vrrp") >> qi::omit[token] >> qi::lit("ip") >> ipAddr)
+            [(// Use cached network prefix for the master VRRP IP
+              pnx::bind(&nmdo::IpNetwork::setPrefix, qi::_1, qi::_a),
+              pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
+                        pnx::bind(&Parser::tgtIface, this), qi::_1))]
 
        | (qi::lit("ip helper-address")
           >> -((qi::lit("vrf") > qi::omit[token]) | qi::lit("global"))
@@ -244,7 +298,18 @@ Parser::Parser() : Parser::base_type(start)
             [(pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
                         pnx::bind(&Parser::tgtIface, this), qi::_1))]
        )
-     | ((qi::lit("maximum") >> qi::ushort_)
+     | (qi::lit("sticky")  // Brocade style
+         [(pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);}))] >>
+        -(qi::lit("mac-address") >>
+          macAddr
+            [(pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
+                        pnx::bind(&Parser::tgtIface, this), qi::_1))] >>
+          -(qi::lit("vlan") > qi::ushort_)
+            [(pnx::bind(&Parser::unsup, this,
+                        "switchport port-security sticky mac-address MAC vlan ID"))]
+         )
+       )
+     | (((qi::lit("maximum") | qi::lit("max")) >> qi::ushort_)
           [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                       pnx::bind(&Parser::tgtIface, this), qi::_1))]
          > -(qi::lit("vlan") > qi::ushort_)
@@ -254,6 +319,7 @@ Parser::Parser() : Parser::base_type(start)
      | (qi::lit("violation") >> token)
           [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
                       pnx::bind(&Parser::tgtIface, this), qi::_1))]
+     | (qi::lit("shutdown-time") >> qi::int_)
      | (&qi::eol)
           [(pnx::bind([&](){tgtIface->setPortSecurity(!isNo);}))]
     )
@@ -314,7 +380,7 @@ Parser::Parser() : Parser::base_type(start)
         )
        )
      | (qi::lit("portfast"))
-          [(pnx::bind([&](){tgtIface->setPortfast(!isNo);}))]
+         [(pnx::bind([&](){tgtIface->setPortfast(!isNo);}))]
      | tokens
          [(pnx::bind(&Parser::unsup, this, "spanning-tree " + qi::_1))]
     )
@@ -349,7 +415,7 @@ Parser::Parser() : Parser::base_type(start)
 
   // General Helper(s)
   ipMask =
-    (ipAddr >> +qi::blank >> ipAddr)
+    (ipAddr >> +qi::ascii::blank >> ipAddr)
       [(pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_3),
         qi::_val = qi::_1)]
     ;
@@ -372,7 +438,7 @@ Parser::Parser() : Parser::base_type(start)
       (policyMap)(classMap)
       (addressArgument)
       (ports)
-      (vlan)
+      //(vlan)
       (ipMask)
       (tokens)(token)
       );
@@ -387,6 +453,12 @@ void
 Parser::deviceAaaAdd(const std::string& aaa)
 {
   d.aaas.push_back(nmcu::trim("aaa " + aaa));
+}
+
+void
+Parser::deviceAddDnsSearchDomain(const std::string& domain)
+{
+  d.dnsSearchDomains.push_back(domain);
 }
 
 // Service related
@@ -447,24 +519,36 @@ Parser::serviceAddSyslog(const nmdo::IpAddress& ip)
 
 // Route related
 void
-Parser::routeAddIp(const nmdo::IpAddress& dstNet, const nmdo::IpAddress& rtrIp)
+Parser::routeAddIp(const nmdo::IpAddress& dstIpNet, const nmdo::IpAddress& rtrIp)
 {
   nmdo::Route route;
-  route.setDstNet(dstNet);
-  route.setRtrIp(rtrIp);
+  route.setDstIpNet(dstIpNet);
+  route.setNextHopIpAddr(rtrIp);
+  route.setProtocol("static");
+  route.setMetric(0);
 
   d.routes.push_back(route);
 }
 
 void
-Parser::routeAddIface(const nmdo::IpAddress& dstNet,
+Parser::routeAddIface(const nmdo::IpAddress& dstIpNet,
                       const std::string& rtrIface)
 {
   nmdo::Route route;
-  route.setDstNet(dstNet);
+  route.setDstIpNet(dstIpNet);
   route.setIfaceName(rtrIface);
+  route.setProtocol("static");
+  route.setMetric(0);
 
   d.routes.push_back(route);
+}
+
+void
+Parser::routeSetAdminDistance(const size_t adminDistance)
+{
+  if (!d.routes.empty()) {
+    d.routes.back().setAdminDistance(adminDistance);
+  }
 }
 
 
@@ -494,6 +578,31 @@ Parser::ifaceAddAlias(const std::string& _alias, const nmdo::IpAddress& _mask)
 
 
 // Vlan related
+std::vector<nmdo::Vlan>
+Parser::expandVlanNumberRangeList(
+    const std::vector<std::tuple<uint16_t, uint16_t>>& vlanNumbers,
+    const nmdo::Vlan& vlanPrototype) const
+{
+  std::vector<nmdo::Vlan> vlans;
+  for (const auto& range : vlanNumbers) {
+    // Widen the uint16_t vlan number to a size_t to prevent looping forever on 0-65535.
+    for (size_t i{std::get<0>(range)}; i <= static_cast<size_t>(std::get<1>(range)); ++i) {
+      nmdo::Vlan vlan{vlanPrototype};
+      vlan.setId(static_cast<uint16_t>(i));
+      vlans.emplace_back(vlan);
+    }
+  }
+  return vlans;
+}
+
+void
+Parser::vlansAdd(std::vector<nmdo::Vlan>& vlans)
+{
+  for (auto vlan : vlans) {
+    vlanAdd(vlan);
+  }
+}
+
 void
 Parser::vlanAdd(nmdo::Vlan& vlan)
 {

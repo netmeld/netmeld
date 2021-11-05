@@ -118,7 +118,7 @@ class Tool : public nmdt::AbstractExportTool
             NULL_SEMANTIC,
             "Use ports from database instead of from resource file.")
           );
-          
+
       auto& nmfm {nmcu::FileManager::getInstance()};
       opts.addOptionalOption("config-path", std::make_tuple(
             "config-path,c",

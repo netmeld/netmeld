@@ -132,8 +132,8 @@ Parser::setIfaceGateway(nmdo::IpAddress& _ip)
 {
   auto& iface {d.ifaces[tgtIfaceName]};
   for (auto& ip : iface.getIpAddresses()) { // should only be one ip/route
-    d.routes[tgtIfaceName].setDstNet(ip);
-    d.routes[tgtIfaceName].setRtrIp(_ip);
+    d.routes[tgtIfaceName].setDstIpNet(ip);
+    d.routes[tgtIfaceName].setNextHopIpAddr(_ip);
   }
 }
 

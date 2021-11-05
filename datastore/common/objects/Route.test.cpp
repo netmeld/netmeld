@@ -41,14 +41,35 @@ class TestRoute : public nmdo::Route {
     void ufs(bool isMetadata)
     { updateForSave(isMetadata); }
 
-    nmdo::IpNetwork getDstNet() const
-    { return dstNet; }
+    std::string getVrfId() const
+    { return vrfId; }
 
-    nmdo::IpAddress getRtrIp() const
-    { return rtrIp; }
+    std::string getTableId() const
+    { return tableId; }
+
+    nmdo::IpNetwork getDstIpNet() const
+    { return dstIpNet; }
+
+    std::string getNextVrfId() const
+    { return nextVrfId; }
+
+    std::string getNextTableId() const
+    { return nextTableId; }
+
+    nmdo::IpAddress getNextHopIpAddr() const
+    { return nextHopIpAddr; }
 
     std::string getIfaceName() const
     { return ifaceName; }
+
+    std::string getProtocol() const
+    { return protocol; }
+
+    size_t getAdminDistance() const
+    { return adminDistance; }
+
+    size_t getMetric() const
+    { return metric; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -57,8 +78,8 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestRoute route;
 
-    BOOST_CHECK_EQUAL(ipAddr, route.getDstNet());
-    BOOST_CHECK_EQUAL(ipAddr, route.getRtrIp());
+    BOOST_CHECK_EQUAL(ipAddr, route.getDstIpNet());
+    BOOST_CHECK_EQUAL(ipAddr, route.getNextHopIpAddr());
     BOOST_CHECK(route.getIfaceName().empty());
   }
 }
@@ -67,18 +88,46 @@ BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
     TestRoute route;
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
-    route.setDstNet(ipAddr);
-    BOOST_CHECK_EQUAL(ipAddr, route.getDstNet());
+    route.setVrfId("someVrfId");
+    BOOST_CHECK_EQUAL("someVrfId", route.getVrfId());
+  }
+
+  {
+    TestRoute route;
+
+    route.setNextVrfId("someVrfId");
+    BOOST_CHECK_EQUAL("someVrfId", route.getNextVrfId());
+  }
+
+  {
+    TestRoute route;
+
+    route.setTableId("someTableId");
+    BOOST_CHECK_EQUAL("someTableId", route.getTableId());
+  }
+
+  {
+    TestRoute route;
+
+    route.setNextTableId("someTableId");
+    BOOST_CHECK_EQUAL("someTableId", route.getNextTableId());
   }
 
   {
     TestRoute route;
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
-    route.setRtrIp(ipAddr);
-    BOOST_CHECK_EQUAL(ipAddr, route.getRtrIp());
+    route.setDstIpNet(ipAddr);
+    BOOST_CHECK_EQUAL(ipAddr, route.getDstIpNet());
+  }
+
+  {
+    TestRoute route;
+    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
+
+    route.setNextHopIpAddr(ipAddr);
+    BOOST_CHECK_EQUAL(ipAddr, route.getNextHopIpAddr());
   }
 
   {
@@ -86,6 +135,27 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     route.setIfaceName("ifaceName");
     BOOST_CHECK_EQUAL("ifacename", route.getIfaceName());
+  }
+
+  {
+    TestRoute route;
+
+    route.setProtocol("OSPF");
+    BOOST_CHECK_EQUAL("ospf", route.getProtocol());
+  }
+
+  {
+    TestRoute route;
+
+    route.setAdminDistance(42);
+    BOOST_CHECK_EQUAL(42, route.getAdminDistance());
+  }
+
+  {
+    TestRoute route;
+
+    route.setMetric(1000);
+    BOOST_CHECK_EQUAL(1000, route.getMetric());
   }
 
   {
@@ -98,12 +168,12 @@ BOOST_AUTO_TEST_CASE(testSetters)
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_EQUAL(r1, r2);
-      r1.setRtrIp(ipAddr);
-      r2.setRtrIp(ipAddr);
+      r1.setNextHopIpAddr(ipAddr);
+      r2.setNextHopIpAddr(ipAddr);
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(dIpAddr, r2.getDstNet());
+      BOOST_CHECK_EQUAL(dIpAddr, r2.getDstIpNet());
     }
 
     nmdo::IpAddress rIpAddr = nmdo::IpAddress::getIpv4Default();
@@ -113,12 +183,12 @@ BOOST_AUTO_TEST_CASE(testSetters)
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_EQUAL(r1, r2);
-      r1.setDstNet(ipAddr);
-      r2.setDstNet(ipAddr);
+      r1.setDstIpNet(ipAddr);
+      r2.setDstIpNet(ipAddr);
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(rIpAddr, r2.getRtrIp());
+      BOOST_CHECK_EQUAL(rIpAddr, r2.getNextHopIpAddr());
     }
   }
 
@@ -132,12 +202,12 @@ BOOST_AUTO_TEST_CASE(testSetters)
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_EQUAL(r1, r2);
-      r1.setRtrIp(ipAddr);
-      r2.setRtrIp(ipAddr);
+      r1.setNextHopIpAddr(ipAddr);
+      r2.setNextHopIpAddr(ipAddr);
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(dIpAddr, r2.getDstNet());
+      BOOST_CHECK_EQUAL(dIpAddr, r2.getDstIpNet());
     }
 
     nmdo::IpAddress rIpAddr = nmdo::IpAddress::getIpv4Default();
@@ -147,12 +217,12 @@ BOOST_AUTO_TEST_CASE(testSetters)
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_EQUAL(r1, r2);
-      r1.setDstNet(ipAddr);
-      r2.setDstNet(ipAddr);
+      r1.setDstIpNet(ipAddr);
+      r2.setDstIpNet(ipAddr);
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(false);
       BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(rIpAddr, r2.getRtrIp());
+      BOOST_CHECK_EQUAL(rIpAddr, r2.getNextHopIpAddr());
     }
     {
       TestRoute r1, r2;
@@ -160,12 +230,12 @@ BOOST_AUTO_TEST_CASE(testSetters)
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(true);
       BOOST_CHECK_EQUAL(r1, r2);
-      r1.setDstNet(ipAddr);
-      r2.setDstNet(ipAddr);
+      r1.setDstIpNet(ipAddr);
+      r2.setDstIpNet(ipAddr);
       BOOST_CHECK_EQUAL(r1, r2);
       r2.ufs(true);
       BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(dIpAddr, r2.getRtrIp());
+      BOOST_CHECK_EQUAL(dIpAddr, r2.getNextHopIpAddr());
     }
   }
 }
@@ -178,7 +248,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
       TestRoute route;
 
       BOOST_CHECK(!route.isValid());
-      route.setRtrIp(ipAddr);
+      route.setNextHopIpAddr(ipAddr);
       BOOST_CHECK(route.isValid());
     }
 
@@ -186,7 +256,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
       TestRoute route;
 
       BOOST_CHECK(!route.isValid());
-      route.setDstNet(ipAddr);
+      route.setDstIpNet(ipAddr);
       BOOST_CHECK(route.isValid());
     }
   }
@@ -196,9 +266,9 @@ BOOST_AUTO_TEST_CASE(testValidity)
     nmdo::IpAddress ipAddr;
 
     BOOST_CHECK(ipAddr.isDefault());
-    route.setRtrIp(ipAddr);
+    route.setNextHopIpAddr(ipAddr);
     BOOST_CHECK(!route.isValid());
-    route.setDstNet(ipAddr);
+    route.setDstIpNet(ipAddr);
     BOOST_CHECK(!route.isValid());
   }
 }

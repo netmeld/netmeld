@@ -47,19 +47,19 @@ namespace netmeld::datastore::objects {
   // Methods
   // ===========================================================================
   void
-  InterfaceNetwork::addIpAddress(IpAddress& _ipAddr)
+  InterfaceNetwork::addIpAddress(const IpAddress& _ipAddr)
   {
     macAddr.addIp(_ipAddr);
   }
 
   void
-  InterfaceNetwork::addPortSecurityStickyMac(MacAddress& _macAddr)
+  InterfaceNetwork::addPortSecurityStickyMac(const MacAddress& _macAddr)
   {
     learnedMacAddrs.insert(_macAddr);
   }
 
   void
-  InterfaceNetwork::addReachableMac(MacAddress& _macAddr)
+  InterfaceNetwork::addReachableMac(const MacAddress& _macAddr)
   {
     reachableMacAddrs.insert(_macAddr);
   }
@@ -210,7 +210,8 @@ namespace netmeld::datastore::objects {
       deviceId,
       name,
       mediaType,
-      isUp);
+      isUp,
+      description);
 
     if (!isPartial) {
       t.exec_prepared("insert_raw_device_interfaces_cdp",

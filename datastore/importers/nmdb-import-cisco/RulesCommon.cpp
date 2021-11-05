@@ -34,7 +34,7 @@ namespace netmeld::datastore::importers::cisco {
 
   qi::rule<nmdp::IstreamIter, std::string()>
   tokens =
-    qi::as_string[+(token >> *qi::blank)]
+    qi::as_string[+(token >> *qi::ascii::blank)]
     ;
 
   qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>

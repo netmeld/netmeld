@@ -34,14 +34,18 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    *((!link) > ignoredLine)
-    > *link
-    > *ignoredLine
+    *(link | ignoredLine)
     ;
+
+  // vlanId = "All" entries are various link-layer multicast protocol addresses.
+  // These "All" multicast address lines should not be matched by the `link` rule
+  // and should fall through to be handled by `ignoredLine`.
 
   link =
     -qi::ascii::char_("GRO*+")
-    >> vlanId [(pnx::bind(&Data::addVlan, &qi::_val, qi::_1))]
+    >> ( qi::lit("N/A")
+       | vlanId [(pnx::bind(&Data::addVlan, &qi::_val, qi::_1))]
+       )
     >> macAddr [(pnx::bind(&Data::addReachableMac, &qi::_val, qi::_1))]
     >> portName [(pnx::bind(&Data::setName, &qi::_val, qi::_1))]
     >> qi::omit[*token]
@@ -50,27 +54,27 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   vlanId =
-    (qi::ushort_ > !qi::digit)
+    (qi::ushort_ > !qi::ascii::digit)
     ;
 
   portName =
-    -qi::hold[typeValue > -(+qi::blank)]
-    > token [(qi::_val = qi::_1)]
+    -qi::hold[typeValue > -(+qi::ascii::blank)]
+    >> token [(qi::_val = qi::_1)]
     ;
 
   typeValue =
-    +qi::ascii::char_("a-zA-Z") >> +qi::blank
+    +qi::ascii::char_("a-zA-Z") >> +qi::ascii::blank
     > -( // age >> secure >> ntfy
-         (+qi::ascii::char_("-0-9") > +qi::blank
-          > qi::ascii::char_("TFC~") > +qi::blank
+         (+qi::ascii::char_("-0-9") > +qi::ascii::blank
+          > qi::ascii::char_("TFC~") > +qi::ascii::blank
           > qi::ascii::char_("TFC~")
          )
-         // learn >> age
-       | ((qi::lit("Yes") | qi::lit("No")) > +qi::blank
-          > +qi::ascii::char_("-0-9")
+         // learn >> -age
+       | ((qi::lit("Yes") | qi::lit("No")) >
+          -(+qi::ascii::blank >> +qi::ascii::char_("-0-9"))
          )
          // protocol | pv
-       | (+qi::ascii::char_("a-z,") >> !qi::digit)
+       | (+qi::ascii::char_("a-z,") >> !qi::ascii::digit)
       )
     ;
 

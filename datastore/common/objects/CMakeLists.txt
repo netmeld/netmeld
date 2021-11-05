@@ -36,11 +36,13 @@ foreach(ITEM
     MacAddress
     OperatingSystem
     Port
+    PortRange
     Route
     Service
     ToolObservations
     TracerouteHop
     Vlan
+    Vrf
   )
   nm_add_test(${ITEM})
   target_link_libraries(${TGT_TEST}

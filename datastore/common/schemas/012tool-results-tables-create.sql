@@ -154,6 +154,93 @@ ON raw_hostnames(ip_addr, hostname, reason);
 
 -- ----------------------------------------------------------------------
 
+CREATE TABLE raw_dns_lookups (
+    tool_run_id                 UUID            NOT NULL,
+    resolver_ip_addr            INET            NOT NULL,
+    resolver_port               PortNumber      NOT NULL,
+    query_fqdn                  TEXT            NOT NULL,
+    query_class                 TEXT            NOT NULL,
+    query_type                  TEXT            NOT NULL,
+    response_status             TEXT            NOT NULL,
+    response_section            TEXT            NOT NULL,
+    response_fqdn               TEXT            NOT NULL,
+    response_class              TEXT            NOT NULL,
+    response_type               TEXT            NOT NULL,
+    response_ttl                INT             NOT NULL,
+    response_data               TEXT            NOT NULL,
+    PRIMARY KEY (tool_run_id, resolver_ip_addr, resolver_port,
+                 query_fqdn, query_class, query_type,
+                 response_status, response_section,
+                 response_fqdn, response_class, response_type,
+                 response_ttl, response_data),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CHECK (resolver_ip_addr = host(resolver_ip_addr)::INET),
+    CHECK (query_fqdn  = lower(query_fqdn)),
+    CHECK (query_class = upper(query_class)),
+    CHECK (query_type  = upper(query_type)),
+    CHECK (response_status  = upper(response_status)),
+    CHECK (response_section = upper(response_section)),
+    CHECK (response_fqdn  = lower(response_fqdn)),
+    CHECK (response_class = upper(response_class)),
+    CHECK (response_type  = upper(response_type))
+);
+
+-- Partial indexes
+CREATE INDEX raw_dns_lookups_idx_tool_run_id
+ON raw_dns_lookups(tool_run_id);
+
+CREATE INDEX raw_dns_lookups_idx_resolver_ip_addr
+ON raw_dns_lookups(resolver_ip_addr);
+
+CREATE INDEX raw_dns_lookups_idx_resolver_port
+ON raw_dns_lookups(resolver_port);
+
+CREATE INDEX raw_dns_lookups_idx_query_fqdn
+ON raw_dns_lookups(query_fqdn);
+
+CREATE INDEX raw_dns_lookups_idx_query_class
+ON raw_dns_lookups(query_class);
+
+CREATE INDEX raw_dns_lookups_idx_query_type
+ON raw_dns_lookups(query_type);
+
+CREATE INDEX raw_dns_lookups_idx_response_status
+ON raw_dns_lookups(response_status);
+
+CREATE INDEX raw_dns_lookups_idx_response_section
+ON raw_dns_lookups(response_section);
+
+CREATE INDEX raw_dns_lookups_idx_response_fqdn
+ON raw_dns_lookups(response_fqdn);
+
+CREATE INDEX raw_dns_lookups_idx_response_class
+ON raw_dns_lookups(response_class);
+
+CREATE INDEX raw_dns_lookups_idx_response_type
+ON raw_dns_lookups(response_type);
+
+CREATE INDEX raw_dns_lookups_idx_response_ttl
+ON raw_dns_lookups(response_ttl);
+
+CREATE INDEX raw_dns_lookups_idx_response_data
+ON raw_dns_lookups(response_data);
+
+-- Index the primary key without tool_run_id (if not already indexed).
+-- Helps the views that ignore the tool_run_id.
+CREATE INDEX raw_dns_lookups_idx_views
+ON raw_dns_lookups
+   (resolver_ip_addr, resolver_port,
+    query_fqdn, query_class, query_type,
+    response_status, response_section,
+    response_fqdn, response_class, response_type,
+    response_ttl, response_data);
+
+
+-- ----------------------------------------------------------------------
+
 CREATE TABLE raw_vlans (
     tool_run_id                 UUID            NOT NULL,
     vlan                        VlanNumber      NOT NULL,
@@ -674,7 +761,7 @@ CREATE TABLE raw_operating_systems (
 );
 
 -- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
--- Create UNIQUE expresional index with substitutions of NULL values
+-- Create UNIQUE expressional index with substitutions of NULL values
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_operating_systems_idx_unique
 ON raw_operating_systems

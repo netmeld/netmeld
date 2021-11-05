@@ -281,6 +281,12 @@ namespace netmeld::datastore::objects {
     reason = _reason;
   }
 
+  uint8_t
+  IpNetwork::getPrefix() const
+  {
+    return prefix;
+  }
+
   bool
   IpNetwork::isDefault() const
   {

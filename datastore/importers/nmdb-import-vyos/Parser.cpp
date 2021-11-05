@@ -173,7 +173,7 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("description") > token)
           [(pnx::bind(&nmdo::AcRule::setRuleDescription,
                       pnx::bind(&Parser::tgtRule, this), qi::_1))]
-      | (qi::lit("state") > startBlock > +(token > qi::lit("enable") > qi::eol)
+      | (qi::lit("state") > startBlock > +(token > qi::lit("enable") > qi::eol) 
           [(pnx::bind([&](std::string val){states.push_back(val);},
                       qi::_1))] > stopBlock)
       | (qi::lit("protocol") > token)

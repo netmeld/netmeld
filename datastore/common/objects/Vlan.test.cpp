@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     std::string desc {"Some Description"};
     TestVlan vlan {id, desc};
     BOOST_CHECK_EQUAL(id, vlan.getVlanId());
-    BOOST_CHECK_EQUAL("some description", vlan.getDescription());
+    BOOST_CHECK_EQUAL("Some Description", vlan.getDescription());
   }
 }
 
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
   vlan.setIpNet(ipNet);
 
   BOOST_CHECK_EQUAL(id, vlan.getVlanId());
-  BOOST_CHECK_EQUAL("desc", vlan.getDescription());
+  BOOST_CHECK_EQUAL("Desc", vlan.getDescription());
   BOOST_CHECK_EQUAL(ipNet, vlan.getIpNet());
 }
 

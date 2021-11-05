@@ -72,7 +72,7 @@ class Parser :
     std::string curIfaceName;
 
     std::map<std::string, std::string> dnsSuffix;
-  
+
   protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>

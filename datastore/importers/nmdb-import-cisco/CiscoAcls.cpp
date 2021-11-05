@@ -76,7 +76,8 @@ namespace netmeld::datastore::importers::cisco {
       )
       ;
     iosStandardRuleLine =
-      action
+      -qi::uint_
+      >> action
       >> sourceAddrIos
       >> *(logArgument)
       > qi::eol [(pnx::bind(&CiscoAcls::curRuleFinalize, this))]
@@ -259,20 +260,21 @@ namespace netmeld::datastore::importers::cisco {
         [(qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1))]
       ;
     ipNoPrefix =
-      (ipAddr.ipv4 | ipAddr.ipv6) >> !(qi::lit('/') >> ipAddr.prefix)
+      (ipAddr.ipv4Addr.ipv4 | ipAddr.ipv6Addr.ipv6) >>
+      !(qi::lit('/') >> ipAddr.ipv6Addr.prefix)
       ;
     addrIpPrefix =
        (&((ipNoPrefix >> qi::eol) | (!ipNoPrefix)) >> ipAddr)
          [(qi::_val = pnx::bind(&nmdo::IpAddress::toString, &qi::_1))]
       ;
     addrIpMask =
-       (&ipNoPrefix >> ipAddr >> qi::omit[+qi::blank]
+       (&ipNoPrefix >> ipAddr >> qi::omit[+qi::ascii::blank]
         >> !(&(qi::lit("0.0.0.0") | qi::lit("255.255.255.255")))
         >> &ipNoPrefix >> ipAddr)
          [(qi::_val = pnx::bind(&CiscoAcls::setMask, this, qi::_1, qi::_2))]
       ;
     anyTerm =
-      qi::as_string[qi::string("any") >> -qi::char_("46") >> &qi::space]
+      qi::as_string[qi::string("any") >> -qi::char_("46") >> &qi::ascii::space]
         [(qi::_val = qi::_1)] // Needed as partial match returns itself
       ;
 
@@ -298,9 +300,9 @@ namespace netmeld::datastore::importers::cisco {
       )
       ;
     icmpTypeCode =
-      qi::as_string[+qi::digit]
+      qi::as_string[+qi::ascii::digit]
         [(pnx::bind(&CiscoAcls::curRuleSrcPort, this) = qi::_1)]
-      > -(+qi::blank > -qi::as_string[+qi::digit]
+      > -(+qi::ascii::blank > -qi::as_string[+qi::ascii::digit]
         [(pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1)])
       ;
     icmpMessage = // A token is too greedy, so...
@@ -352,19 +354,19 @@ namespace netmeld::datastore::importers::cisco {
       ;
 
     untrackedArguments =
-      (  (qi::lit("dest-option-type") > +qi::blank > token)
-       | (qi::lit("dscp") > +qi::blank > token)
-       | (qi::lit("flow-label") > +qi::blank > token)
-       | (qi::lit("fragments") >> &(qi::blank | qi::eol))
-       | (qi::lit("mobility") >> &(qi::blank | qi::eol))
-       | (qi::lit("mobility-type") > +qi::blank > token)
-       | (qi::lit("precedence") > +qi::blank > token)
-       | (qi::lit("routing") >> &(qi::blank | qi::eol))
-       | (qi::lit("routing-type") > +qi::blank > token)
-       | (qi::lit("sequence") > +qi::blank > token)
-       | (qi::lit("time-range") > +qi::blank > token)
-       | (qi::lit("tos") > +qi::blank > token)
-       | (qi::lit("undetermined-transport") >> &(qi::blank | qi::eol))
+      (  (qi::lit("dest-option-type") > +qi::ascii::blank > token)
+       | (qi::lit("dscp") > +qi::ascii::blank > token)
+       | (qi::lit("flow-label") > +qi::ascii::blank > token)
+       | (qi::lit("fragments") >> &(qi::ascii::blank | qi::eol))
+       | (qi::lit("mobility") >> &(qi::ascii::blank | qi::eol))
+       | (qi::lit("mobility-type") > +qi::ascii::blank > token)
+       | (qi::lit("precedence") > +qi::ascii::blank > token)
+       | (qi::lit("routing") >> &(qi::ascii::blank | qi::eol))
+       | (qi::lit("routing-type") > +qi::ascii::blank > token)
+       | (qi::lit("sequence") > +qi::ascii::blank > token)
+       | (qi::lit("time-range") > +qi::ascii::blank > token)
+       | (qi::lit("tos") > +qi::ascii::blank > token)
+       | (qi::lit("undetermined-transport") >> &(qi::ascii::blank | qi::eol))
       )
       ;
 
@@ -379,7 +381,7 @@ namespace netmeld::datastore::importers::cisco {
       ;
     logArgumentString =
       qi::string("log") >> -qi::string("-input")
-      >> *qi::hold[+qi::blank
+      >> *qi::hold[+qi::ascii::blank
         >> (!&(qi::lit("time-range") | qi::lit("inactive")))
         >> token
       ]

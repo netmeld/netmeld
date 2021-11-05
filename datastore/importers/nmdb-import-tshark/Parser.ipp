@@ -140,7 +140,7 @@ real        0.255       0.007       0.244       0.254       0.267
      | (qi::lit('"') >
         +((qi::lit('\\') > qi::char_) | (qi::char_ - qi::lit('"'))) >
         qi::lit('"'))
-     | (+qi::graph)
+     | (+qi::ascii::graph)
     ) > -qi::lit(',') > qi::eol
     ;
   //  non-attribute generating

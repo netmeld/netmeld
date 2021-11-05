@@ -86,16 +86,16 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   interfaces =
-    (  (ifaceTypeName >> "unit" >> qi::as_string[+qi::digit])
+    (  (ifaceTypeName >> "unit" >> qi::as_string[+qi::ascii::digit])
          [(pnx::bind(&Parser::initIface, this, qi::_1[0],
                      qi::_1[1] + '.' + qi::_2))]
      | (ifaceTypeName)
          [(pnx::bind(&Parser::initIface, this, qi::_1[0],
                      qi::_1[1] + ".0"))] // if no unit, assume 0
-     | (qi::as_string[qi::lexeme[+qi::graph]] >>
-        "unit" >> qi::as_string[+qi::digit])
+     | (qi::as_string[qi::lexeme[+qi::ascii::graph]] >>
+        "unit" >> qi::as_string[+qi::ascii::digit])
          [(pnx::bind(&Parser::initIface, this, qi::_1, '.' + qi::_2))]
-     | (qi::as_string[qi::lexeme[+qi::graph]])
+     | (qi::as_string[qi::lexeme[+qi::ascii::graph]])
          [(pnx::bind(&Parser::initIface, this, qi::_1, ""))] // no slot or unit
     ) >>
     -( ("family" >> (qi::lit("inet6") | qi::lit("inet")) >> "address" >> ipAddr)
@@ -227,13 +227,13 @@ Parser::Parser() : Parser::base_type(start)
 void
 Parser::setIfaceRoute(const std::string& _iface, nmdo::IpAddress& _ip)
 {
-  d.routes[_iface].setDstNet(_ip);
+  d.routes[_iface].setDstIpNet(_ip);
 }
 
 void
 Parser::setIfaceGateway(const std::string& _iface, nmdo::IpAddress& _ip)
 {
-  d.routes[_iface].setRtrIp(_ip);
+  d.routes[_iface].setNextHopIpAddr(_ip);
 }
 
 void

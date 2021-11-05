@@ -125,11 +125,11 @@ WHERE ((tr.tool_name = 'ping6') AND (tr.command_line LIKE '% ff02::2'))
 UNION
 SELECT DISTINCT
     dir.tool_run_id             AS tool_run_id,
-    dir.rtr_ip_addr             AS ip_addr,
+    dir.next_hop_ip_addr        AS ip_addr,
     ia.is_responding            AS is_responding
 FROM raw_device_ip_routes AS dir
 JOIN ip_addrs AS ia
-ON (dir.rtr_ip_addr = ia.ip_addr)
+ON (dir.next_hop_ip_addr = ia.ip_addr)
 ;
 
 
@@ -202,6 +202,69 @@ SELECT DISTINCT
     hostname                    AS hostname,
     reason                      AS reason
 FROM raw_hostnames
+;
+
+
+-- ----------------------------------------------------------------------
+
+CREATE VIEW dns_lookups AS
+SELECT DISTINCT
+    resolver_ip_addr            AS resolver_ip_addr,
+    resolver_port               AS resolver_port,
+    query_fqdn                  AS query_fqdn,
+    query_class                 AS query_class,
+    query_type                  AS query_type,
+    response_status             AS response_status,
+    response_section            AS response_section,
+    response_fqdn               AS response_fqdn,
+    response_class              AS response_class,
+    response_type               AS response_type,
+    response_ttl                AS response_ttl,
+    response_data               AS response_data
+FROM raw_dns_lookups
+;
+
+
+-- ----------------------------------------------------------------------
+
+CREATE VIEW dns_ip_addrs AS
+WITH RECURSIVE dns_ip_addrs_recursion(
+    resolver_ip_addr,
+    resolver_port,
+    response_fqdn,
+    response_data
+) AS (
+    -- Base case: direct resolutions in any response section
+    SELECT DISTINCT
+        dns_lookups.resolver_ip_addr  AS resolver_ip_addr,
+        dns_lookups.resolver_port     AS resolver_port,
+        dns_lookups.response_fqdn     AS response_fqdn,
+        dns_lookups.response_data     AS response_data
+    FROM dns_lookups
+    WHERE (response_status = 'NOERROR') AND
+          (response_class = 'IN') AND
+          ((response_type = 'A') OR
+           (response_type = 'AAAA'))
+    UNION
+    -- Recursive case: indirect resolutions via CNAME chaining
+    SELECT DISTINCT
+        dns_lookups.resolver_ip_addr  AS resolver_ip_addr,
+        dns_lookups.resolver_port     AS resolver_port,
+        dns_lookups.response_fqdn     AS response_fqdn,
+        dns_recur.response_data       AS response_data
+    FROM dns_ip_addrs_recursion AS dns_recur
+    JOIN dns_lookups
+    ON (dns_lookups.resolver_ip_addr = dns_recur.resolver_ip_addr) AND
+       (dns_lookups.resolver_port = dns_recur.resolver_port) AND
+       (dns_lookups.response_type = 'CNAME') AND
+       (dns_lookups.response_data = dns_recur.response_fqdn)
+)
+SELECT DISTINCT
+    dns_recur.resolver_ip_addr      	AS resolver_ip_addr,
+    dns_recur.resolver_port           AS resolver_port,
+    dns_recur.response_fqdn           AS fqdn,
+    dns_recur.response_data::INET     AS ip_addr
+FROM dns_ip_addrs_recursion AS dns_recur
 ;
 
 
@@ -330,7 +393,7 @@ CREATE VIEW raw_inter_network_ports AS
 SELECT
     p.tool_run_id               AS tool_run_id,
     tria.ip_addr                AS src_ip_addr,
-    trir.rtr_ip_addr            AS rtr_ip_addr,
+    trir.next_hop_ip_addr       AS next_hop_ip_addr,
     p.ip_addr                   AS dst_ip_addr,
     p.protocol                  AS protocol,
     p.port                      AS port,
@@ -350,12 +413,12 @@ ON (tria.tool_run_id = trir.tool_run_id) AND
    ((tria.interface_name = trir.interface_name) OR
     (left(tria.interface_name,
           -length(substring(tria.interface_name from '@[^@]*$'))) = trir.interface_name)) AND
-   (inet_same_family(tria.ip_addr, trir.rtr_ip_addr)) AND
+   (inet_same_family(tria.ip_addr, trir.next_hop_ip_addr)) AND
    (p.ip_addr <<= trir.dst_ip_net) AND
-   (trir.rtr_ip_addr <<= network(tria.ip_addr) OR tria.ip_addr = host(tria.ip_addr)::INET) AND
---   (trir.rtr_ip_addr <<= network(tria.ip_addr)) AND
-   (trir.rtr_ip_addr != '0.0.0.0') AND
-   (trir.rtr_ip_addr != '::')
+   (trir.next_hop_ip_addr <<= network(tria.ip_addr) OR tria.ip_addr = host(tria.ip_addr)::INET) AND
+--   (trir.next_hop_ip_addr <<= network(tria.ip_addr)) AND
+   (trir.next_hop_ip_addr != '0.0.0.0') AND
+   (trir.next_hop_ip_addr != '::')
 ;
 
 
@@ -364,7 +427,7 @@ ON (tria.tool_run_id = trir.tool_run_id) AND
 CREATE VIEW inter_network_ports AS
 SELECT DISTINCT
     src_ip_addr                 AS src_ip_addr,
-    rtr_ip_addr                 AS rtr_ip_addr,
+    next_hop_ip_addr            AS next_hop_ip_addr,
     dst_ip_addr                 AS dst_ip_addr,
     protocol                    AS protocol,
     port                        AS port,
@@ -434,7 +497,7 @@ ON (inp.dst_ip_addr = s.ip_addr) AND
 CREATE VIEW inter_network_ports_services AS
 SELECT DISTINCT
     inp.src_ip_addr             AS src_ip_addr,
-    inp.rtr_ip_addr             AS rtr_ip_addr,
+    inp.next_hop_ip_addr        AS next_hop_ip_addr,
     inp.dst_ip_addr             AS dst_ip_addr,
     inp.protocol                AS protocol,
     inp.port                    AS port,

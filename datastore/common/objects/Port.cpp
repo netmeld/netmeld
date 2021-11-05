@@ -62,6 +62,12 @@ namespace netmeld::datastore::objects {
     reason = nmcu::toLower(_reason);
   }
 
+  void
+  Port::setIpAddr(const IpAddress& _ipAddr)
+  {
+    ipAddr = _ipAddr;
+  }
+
   std::string
   Port::getIpAddr() const
   {

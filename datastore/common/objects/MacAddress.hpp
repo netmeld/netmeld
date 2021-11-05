@@ -62,7 +62,7 @@ namespace netmeld::datastore::objects {
     private:
     protected:
     public:
-      void addIp(IpAddress&);
+      void addIp(const IpAddress&);
 
       void setMac(const std::string&);
       void setMac(const std::vector<uint8_t>&);

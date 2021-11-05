@@ -35,15 +35,15 @@ namespace nmdo = netmeld::datastore::objects;
 
 namespace netmeld::datastore::parsers {
 
-  class ParserIpAddress :
+  class ParserIpv4Address :
     public qi::grammar<IstreamIter, nmdo::IpAddress()>
   {
     public:
-      ParserIpAddress() : ParserIpAddress::base_type(start)
+      ParserIpv4Address() : ParserIpv4Address::base_type(start)
       {
         start =
           qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()] >>
-          ( (qi::as_string[ipv4 | ipv6])
+          ( (qi::as_string[ipv4])
             [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
             >>
             -(qi::lit('/') >> prefix)
@@ -59,6 +59,41 @@ namespace netmeld::datastore::parsers {
 
         octet = // unless changes occur in Boost, time waster for bounds checks
           (qi::repeat(1,3)[qi::ascii::digit])
+          ;
+
+        prefix %=
+          qi::uint_ >> qi::eps[qi::_pass = (qi::_val >= 0 && qi::_val <= 32)]
+          ;
+
+        BOOST_SPIRIT_DEBUG_NODES((start)(ipv4)(prefix));
+      }
+
+      qi::rule<IstreamIter, nmdo::IpAddress()>
+        start;
+
+      qi::rule<IstreamIter, std::string()>
+        ipv4,
+        octet;
+
+      qi::rule<IstreamIter, unsigned int>
+        prefix;
+  };
+
+
+  class ParserIpv6Address :
+    public qi::grammar<IstreamIter, nmdo::IpAddress()>
+  {
+    public:
+      ParserIpv6Address() : ParserIpv6Address::base_type(start)
+      {
+        start =
+          qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()] >>
+          ( (qi::as_string[ipv6])
+            [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
+            >>
+            -(qi::lit('/') >> prefix)
+            [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
+          )
           ;
 
         ipv6 =
@@ -88,18 +123,41 @@ namespace netmeld::datastore::parsers {
           qi::uint_ >> qi::eps[qi::_pass = (qi::_val >= 0 && qi::_val <= 128)]
           ;
 
-        BOOST_SPIRIT_DEBUG_NODES((start)(ipv4)(ipv6)(prefix)(octet)(h16));
+        BOOST_SPIRIT_DEBUG_NODES((start)(ipv6)(prefix)(h16));
       }
 
       qi::rule<IstreamIter, nmdo::IpAddress()>
         start;
 
       qi::rule<IstreamIter, std::string()>
-        ipv4, ipv6,
-        octet, h16;
+        ipv6,
+        h16;
 
       qi::rule<IstreamIter, unsigned int>
         prefix;
+  };
+
+
+  class ParserIpAddress :
+    public qi::grammar<IstreamIter, nmdo::IpAddress()>
+  {
+    public:
+      ParserIpAddress() : ParserIpAddress::base_type(start)
+      {
+        start = (ipv4Addr | ipv6Addr)
+          ;
+
+        BOOST_SPIRIT_DEBUG_NODES((start));
+      }
+
+      qi::rule<IstreamIter, nmdo::IpAddress()>
+        start;
+
+      ParserIpv4Address
+        ipv4Addr;
+
+      ParserIpv6Address
+        ipv6Addr;
   };
 }
 #endif // PARSER_IP_ADDRESS_HPP

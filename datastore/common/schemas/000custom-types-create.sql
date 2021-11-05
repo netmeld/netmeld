@@ -59,6 +59,7 @@ CREATE TYPE CVE AS (
 CREATE DOMAIN PortNumber AS INT
 CHECK (VALUE BETWEEN -1 AND 65535);
 
+
 -- IEEE 802.1Q VLAN Identifier (VID) is an unsigned 12-bit field: 0-4095.
 -- There are two reserved values:
 -- * 0x000: Indicates that the frame does not carry a VLAN ID.
@@ -67,6 +68,30 @@ CHECK (VALUE BETWEEN -1 AND 65535);
 -- The Netmeld database must be able to store all 4096 possible values.
 CREATE DOMAIN VlanNumber AS SMALLINT
 CHECK (VALUE BETWEEN 0 AND 4095);
+
+
+-- ----------------------------------------------------------------------
+-- Port Range type for use in Access Control Lists (ACLs).
+-- Used to perform calculations with ranges like 0-65535 or 9000-9999.
+-- ----------------------------------------------------------------------
+CREATE TYPE PortRange AS RANGE (
+    SUBTYPE = PortNumber
+);
+
+
+-- ----------------------------------------------------------------------
+-- Network information about each hop on an IP route.
+-- ----------------------------------------------------------------------
+CREATE TYPE RouteHop AS (
+    device_id                   TEXT,
+    vrf_id                      TEXT,
+    incoming_interface_name     TEXT,
+    incoming_ip_addr            INET,
+    incoming_ip_net             CIDR,
+    outgoing_interface_name     TEXT,
+    outgoing_ip_addr            INET,
+    outgoing_ip_net             CIDR
+);
 
 
 -- ----------------------------------------------------------------------

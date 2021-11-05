@@ -60,6 +60,7 @@ struct Data
 {
   std::string                          domainName;
   nmdo::DeviceInformation              devInfo;
+  std::vector<std::string>             dnsSearchDomains;
   std::vector<std::string>             aaas;
   nmdo::ToolObservations               observations;
 
@@ -94,15 +95,20 @@ class Parser :
       config,
       domainData,
       globalServices,
+      routerId,
       route,
       vlanDef,
-      interface,
       switchport,
         switchportPortSecurity,
           vlanRange,
           vlanId,
         spanningTree,
       accessPolicyRelated;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
+             qi::locals<uint8_t>>
+      interface
+      ;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
              qi::locals<std::string, std::string>>
@@ -115,7 +121,14 @@ class Parser :
       addressArgument,
       ports;
 
-    qi::rule<nmdp::IstreamIter, nmdo::Vlan(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, std::tuple<uint16_t, uint16_t>(), qi::ascii::blank_type>
+      vlanNumberRange;
+
+    qi::rule<nmdp::IstreamIter, std::vector<std::tuple<uint16_t, uint16_t>>(), qi::ascii::blank_type>
+      vlanNumberRangeList;
+
+    qi::rule<nmdp::IstreamIter, std::vector<nmdo::Vlan>(), qi::ascii::blank_type,
+             qi::locals<std::vector<std::tuple<uint16_t, uint16_t>>, nmdo::Vlan>>
       vlan;
 
     qi::rule<nmdp::IstreamIter, nmdo::IpAddress()>
@@ -177,6 +190,7 @@ class Parser :
   private: // Methods which should be hidden from API users
     // Device related
     void deviceAaaAdd(const std::string&);
+    void deviceAddDnsSearchDomain(const std::string&);
 
     // Service related
     void serviceAddDhcp(const nmdo::IpAddress&);
@@ -189,6 +203,7 @@ class Parser :
     // Route related
     void routeAddIp(const nmdo::IpAddress&, const nmdo::IpAddress&);
     void routeAddIface(const nmdo::IpAddress&, const std::string&);
+    void routeSetAdminDistance(const size_t);
 
     // Interface related
     void ifaceInit(const std::string&);
@@ -196,6 +211,10 @@ class Parser :
     void ifaceAddAlias(const std::string&, const nmdo::IpAddress&);
 
     // Vlan related
+    std::vector<nmdo::Vlan> expandVlanNumberRangeList(
+        const std::vector<std::tuple<uint16_t, uint16_t>>&,
+        const nmdo::Vlan&) const;
+    void vlansAdd(std::vector<nmdo::Vlan>&);
     void vlanAdd(nmdo::Vlan&);
     void vlanAddIfaceData();
 

@@ -33,7 +33,7 @@ BEGIN TRANSACTION;
 -- This function provides consistent, comparable values for fields
 -- which may be NULL.  Specifically, it is targeted for usage in
 -- unique indexes to guard against duplicates in a table through
--- an expresional index when partial index combinations have
+-- an expressional index when partial index combinations have
 -- high complexity (>2 NULL fields).
 -- ----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION hash_chain(VARIADIC args TEXT[])

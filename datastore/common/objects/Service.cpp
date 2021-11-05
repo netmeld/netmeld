@@ -63,6 +63,12 @@ namespace netmeld::datastore::objects {
   }
 
   void
+  Service::setDstFqdn(const std::string& _fqdn)
+  {
+    dstFqdn = _fqdn;
+  }
+
+  void
   Service::setDstAddress(const IpAddress& _addr)
   {
     dstAddress = _addr;
@@ -89,7 +95,7 @@ namespace netmeld::datastore::objects {
   void
   Service::setServiceDescription(const std::string& _desc)
   {
-    serviceDescription = nmcu::toLower(_desc);
+    serviceDescription = _desc;
   }
 
   void
@@ -235,6 +241,9 @@ namespace netmeld::datastore::objects {
   std::partial_ordering
   Service::operator<=>(const Service& rhs) const
   {
+    if (auto cmp = dstFqdn <=> rhs.dstFqdn; 0 != cmp) {
+      return cmp;
+    }
     if (auto cmp = dstAddress <=> rhs.dstAddress; 0 != cmp) {
       return cmp;
     }
