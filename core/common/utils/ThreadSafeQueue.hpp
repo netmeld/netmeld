@@ -50,7 +50,9 @@ namespace netmeld::core::utils {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      ThreadSafeQueue<T>();
+      ThreadSafeQueue() = default;
+      ThreadSafeQueue(const ThreadSafeQueue<T>&) = delete;
+      ThreadSafeQueue& operator=(const ThreadSafeQueue<T>&) = delete;
 
     // =========================================================================
     // Methods
@@ -64,7 +66,6 @@ namespace netmeld::core::utils {
       const T& front() const;
       void pop();
       void push(const T&);
-      //void push(T&&);
   };
 }
 #include "ThreadSafeQueue.ipp"
