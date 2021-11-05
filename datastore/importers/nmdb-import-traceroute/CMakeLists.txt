@@ -24,63 +24,27 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-add_library(${TGT_LIBRARY} SHARED
-    ./objects/AbstractDatastoreObject.cpp
-    ./objects/AcNetworkBook.cpp
-    ./objects/AcServiceBook.cpp
-    ./objects/AcRule.cpp
-    ./objects/AclIpNetSet.cpp
-    ./objects/AclPortSet.cpp
-    ./objects/AclService.cpp
-    ./objects/AclZone.cpp
-    ./objects/AclRule.cpp
-    ./objects/AclRulePort.cpp
-    ./objects/AclRuleService.cpp
-    ./objects/Cve.cpp
-    ./objects/DeviceInformation.cpp
-    ./objects/DnsLookup.cpp
-    ./objects/DnsResolver.cpp
-    ./objects/Interface.cpp
-    ./objects/InterfaceNetwork.cpp
-    ./objects/IpAddress.cpp
-    ./objects/IpNetwork.cpp
-    ./objects/MacAddress.cpp
-    ./objects/OperatingSystem.cpp
-    ./objects/Port.cpp
-    ./objects/PortRange.cpp
-    ./objects/Route.cpp
-    ./objects/Service.cpp
-    ./objects/ToolObservations.cpp
-    ./objects/TracerouteHop.cpp
-    ./objects/Vlan.cpp
-    ./objects/Vrf.cpp
-    ./tools/AbstractDatastoreTool.cpp
-    ./tools/AbstractExportTool.cpp
-    ./tools/AbstractGraphTool.cpp
-    ./tools/AbstractInsertTool.cpp
-
-    ./utils/QueriesCommon.cpp
-    ./utils/ServiceFactory.cpp
-  )
-target_include_directories(${TGT_LIBRARY}
-  PUBLIC
-    ${Boost_INCLUDE_DIRS}
-    include
-  )
-target_link_libraries(${TGT_LIBRARY}
-  PUBLIC
-    netmeld-core
-    pqxx
+add_executable(${TGT_TOOL}
+    Parser.cpp
+    ${TGT_TOOL}.cpp
   )
 
-nm_install_lib(${TGT_LIBRARY})
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+  )
+
+nm_install_bin(${TGT_TOOL})
 
 foreach(ITEM
-      objects
-      parsers
-      tools
-      utils
-      schemas
+    Parser
+  )
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ${ITEM}.hpp
+      ${ITEM}.cpp
     )
-  nm_install_include(${ITEM} "datastore")
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
 endforeach()

@@ -40,6 +40,7 @@ foreach(ITEM
     Route
     Service
     ToolObservations
+    TracerouteHop
     Vlan
     Vrf
   )

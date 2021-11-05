@@ -55,6 +55,7 @@ foreach(ITEM
     nmdb-import-show-inventory
     nmdb-import-show-mac-address-table
     nmdb-import-show-neighbor
+    nmdb-import-traceroute
     nmdb-import-tshark
     nmdb-import-vyos
   )

@@ -24,89 +24,76 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef NMAP_XML_PARSER_HPP
-#define NMAP_XML_PARSER_HPP
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-#include <pugixml.hpp>
-
-#include <netmeld/datastore/objects/IpAddress.hpp>
-#include <netmeld/datastore/objects/MacAddress.hpp>
-#include <netmeld/datastore/objects/OperatingSystem.hpp>
-#include <netmeld/datastore/objects/Port.hpp>
-#include <netmeld/datastore/objects/Service.hpp>
-#include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/objects/TracerouteHop.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
-
-#include "NseResult.hpp"
-#include "SshAlgorithm.hpp"
-#include "SshPublicKey.hpp"
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
-namespace nmdt = netmeld::datastore::tools;
-namespace nmdu = netmeld::datastore::utils;
 
 // =============================================================================
 // Data containers
 // =============================================================================
-struct Data
-{
-  std::vector<nmdo::MacAddress>       macAddrs;
-  std::vector<nmdo::IpAddress>        ipAddrs;
-  std::vector<nmdo::OperatingSystem>  oses;
-  std::vector<nmdo::TracerouteHop>    tracerouteHops;
-  std::vector<nmdo::Port>             ports;
-  std::vector<nmdo::Service>          services;
-  std::vector<NseResult>              nseResults;
-  std::vector<SshPublicKey>           sshKeys;
-  std::vector<SshAlgorithm>           sshAlgorithms;
-
-  nmdo::ToolObservations              observations;
-};
-typedef std::vector<Data>  Result;
+typedef nmdo::TracerouteHop  Data;
+typedef std::vector<Data>    Result;
 
 
 // =============================================================================
 // Parser definition
 // =============================================================================
-class ParserNmapXml
+class Parser :
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private:
+  private: // Variables are always private
+    Data d;
+    Result r;
+
+    std::set<nmdo::IpAddress> prevDests;
+    std::vector<nmdo::TracerouteHop> curHops;
+    int currentHopNumber;
+
   protected:
-  public:
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      start;
+
+    qi::rule<nmdp::IstreamIter>
+      ignore;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      windowsTrace, windowsHeader, windowsHop, windowsDomainIP;
+      
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      linuxTrace, linuxHeader, linuxHop, linuxDomainIP;
+
+    nmdp::ParserDomainName  fqdn;
+    nmdp::ParserIpAddress   ipAddr;
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  private:
-  protected:
-  public:
-    ParserNmapXml();
+  public: // Constructor is only default and must be public
+    Parser();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
   private:
-  protected:
-    bool extractHostIsResponding(const pugi::xml_node&) const;
-    nmdo::MacAddress extractHostMacAddr(const pugi::xml_node&) const;
-    nmdo::IpAddress extractHostIpAddr(const pugi::xml_node&) const;
 
-  public:
-    std::tuple<std::string, std::string>
-      extractExecutionTiming(const pugi::xml_node&);
+    void recordHopNumber(int);
 
-    void extractMacAndIpAddrs(const pugi::xml_node&, Data&);
-    void extractHostnames(const pugi::xml_node&, Data&);
-    void extractOperatingSystems(const pugi::xml_node&, Data&);
-    void extractTraceRoutes(const pugi::xml_node&, Data&);
-    void extractPortsAndServices(const pugi::xml_node&, Data&);
-    void extractNseAndSsh(const pugi::xml_node&, Data&);
+    void recordHopDestination(const nmdo::IpAddress&);
+
+    void recordHopDestinationWithAlias(const nmdo::IpAddress&, const std::string&);
+
+    void flushHops();
+
+    Result getData();
 };
-
-#endif //NMAP_XML_PARSER_HPP
+#endif // PARSER_HPP
