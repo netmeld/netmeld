@@ -168,9 +168,9 @@ class Tool : public nmdt::AbstractGraphTool
     std::map<std::string, Vertex> vertexLookup;
     NetworkGraph graph;
     bool useIcons    {false};
+    bool useIconFolder {false};
     bool hideUnknown {false};
     bool removeEmptySubnets {false};
-    bool showTracerouteHops {false};
 
   public:
     Tool() : nmdt::AbstractGraphTool
@@ -180,6 +180,7 @@ class Tool : public nmdt::AbstractGraphTool
 
     void addToolOptions() override
     {
+      std::string filePath;
       opts.addRequiredOption("layer", std::make_tuple(
             "layer,L",
             po::value<std::string>()->required(),
@@ -196,6 +197,11 @@ class Tool : public nmdt::AbstractGraphTool
             NULL_SEMANTIC,
             "Enable device icons in graph")
           );
+      opts.addOptionalOption("icon-folder", std::make_tuple(
+	    "icon-folder",
+	    NULL_SEMANTIC,
+	    "Set custom destination for alternate icons. ")
+	  );
       opts.addOptionalOption("no-unknown", std::make_tuple(
             "no-unknown",
             NULL_SEMANTIC,
@@ -206,11 +212,6 @@ class Tool : public nmdt::AbstractGraphTool
             NULL_SEMANTIC,
             "Omit empty subnet graph nodes")
           );
-      opts.addOptionalOption("show-traceroute-hops", std::make_tuple(
-            "show-traceroute-hops",
-            NULL_SEMANTIC,
-            "Show hops found in traceroutes for devices")
-      );
     }
 
     int
@@ -351,18 +352,11 @@ class Tool : public nmdt::AbstractGraphTool
          "   host_device_id, guest_device_id"
          " FROM device_virtualizations");
 
-      db.prepare
-        ("select_traceroutes",
-         "SELECT DISTINCT"
-         "   rtr_ip_addr, dst_ip_addr,"
-         "   hop_count"
-         " FROM raw_ip_traceroutes");
-
 
     useIcons = opts.exists("icons");
+    useIconFolder = opts.exists("icon-folder");
     hideUnknown = opts.exists("no-unknown");
     removeEmptySubnets = opts.exists("no-empty-subnets");
-    showTracerouteHops = opts.exists("show-traceroute-hops");
 
     int layer = std::stoi(opts.getValue("layer"));
     switch (layer) {
@@ -393,7 +387,6 @@ class Tool : public nmdt::AbstractGraphTool
     boost::remove_edge_if(IsRedundantEdge(graph), graph);
 
     buildVirtualizationGraph(db);
-    buildTracerouteGraph(db);
 
     boost::write_graphviz
       (std::cout, graph,
@@ -504,7 +497,6 @@ class Tool : public nmdt::AbstractGraphTool
 
           addBidirectionalEdge(ipNet, vertexName);
         }
-
       }
 
       t.commit();
@@ -533,46 +525,6 @@ class Tool : public nmdt::AbstractGraphTool
         tie(e, inserted) = boost::add_edge(u, v, graph);
         graph[e].style = "dashed";
         graph[e].direction = "forward";
-      }
-
-      t.commit();
-    }
-
-    // Create graph edges that represent hops found in traceroutes
-    void
-    buildTracerouteGraph(pqxx::connection& db)
-    {
-      if (!showTracerouteHops) {
-        return;
-      }
-
-      pqxx::work t{db};
-
-      pqxx::result tracerouteRows =
-        t.exec_prepared("select_traceroutes");
-      for (const auto& tracerouteRow : tracerouteRows) {
-        std::string origin;
-        tracerouteRow.at("rtr_ip_addr").to(origin);
-        std::string destination;
-        tracerouteRow.at("dst_ip_addr").to(destination);
-        std::string hopNumber;
-        tracerouteRow.at("hop_count").to(hopNumber);
-
-        Vertex const u = vertexLookup.at(origin);
-        Vertex const v = vertexLookup.at(destination);
-
-        Edge e;
-        bool inserted;
-
-        tie(e, inserted) = boost::add_edge(u, v, graph);
-        graph[e].style = "dashed";
-        graph[e].direction = "forward";
-        if (graph[e].label.empty()) {
-          graph[e].label = std::string("hop ") + hopNumber;
-        } else {
-          graph[e].label += std::string("\nhop ") + hopNumber;
-        }
-        graph[e].weight = 2.0;
       }
 
       t.commit();
@@ -671,10 +623,19 @@ class Tool : public nmdt::AbstractGraphTool
     {
       std::string label = "\" + <<TABLE border=\"0\" cellborder=\"0\"><TR>";
 
+      if (useIcons) {
       label += getUseIconString(typeName);
 
       label += "<td><font point-size=\"10\">" + name + "<br/>";
 
+      }
+     
+      if (useIconFolder) {      
+      label += getUseIconsCustomPath(typeName);
+
+      label += "<td><font point-size=\"10\">" + name + "<br/>";
+
+      }
       return label;
     }
 
@@ -765,6 +726,46 @@ class Tool : public nmdt::AbstractGraphTool
 
       return label;
     }
+    
+    
+    std::string
+    getUseIconsCustomPath(std::string deviceType)
+    {
+      if (!useIconFolder) {
+	return "";
+      }      
+      
+      auto& nmfm {nmcu::FileManager::getInstance()};
+      sfs::path customPath {nmfm.getConfPath()/"images"};
+      std::cin >> customPath;
+      
+      std::string iconPath {customPath.string() + "/unknown.svg"};
+      std::string label {
+	"<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
+      };
+
+      if (!deviceType.empty()) {
+	for (auto& pathIter : sfs::recursive_directory_iterator(customPath)) {
+	  std::string fileName {pathIter.path().filename()};
+	  
+	  if (std::equal(deviceType.begin(), deviceType.end(),
+			  fileName.begin(), fileName.end(),
+			  [](auto a, auto b) {
+			    return std::tolower(a) == std::tolower(b);
+			  })) {
+	     iconPath = fileName;
+	     break;
+	    }
+	   }
+	  }
+
+	label += iconPath + "\" scale=\"true\"/<>/TD>";
+	
+	return label;
+     
+
+    }
+  
 
     void
     addBidirectionalEdge(std::string orig, std::string dest)
