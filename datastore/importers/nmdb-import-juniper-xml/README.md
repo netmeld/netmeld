@@ -20,7 +20,7 @@ device's configuration, the `--device-id` and `--data-path` options are required
 
 
 EXAMPLES
-======== 
+========
 ``` 
 nmdb-import-juniper-xml --device-id firewall --data-path firewall_config.xml
 ```

@@ -99,8 +99,10 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           parser.parseRouteInfo(dataNode);
         }
         else if ("xnm:error" == dataNodeName) {
-          // Ignored: Generally a "command is not valid" message when
-          // an attempted command is not supported on that device.
+          parser.parseError(dataNode);
+        }
+        else if ("xnm:warning" == dataNodeName) {
+          parser.parseWarning(dataNode);
         }
         else {
           parser.parseUnsupported(dataNode);
@@ -138,6 +140,15 @@ class Tool : public nmdt::AbstractImportTool<P,R>
             iface.save(t, toolRunId, deviceId);
           }
 
+          LOG_DEBUG << "Iterating over interface hierarchies" << std::endl;
+          for (auto& [underlyingIfaceName, virtualIfaceName] : logicalSystem.ifaceHierarchies) {
+            t.exec_prepared("insert_raw_device_interface_hierarchy",
+                toolRunId,
+                deviceId,
+                underlyingIfaceName,
+                virtualIfaceName);
+          }
+
           LOG_DEBUG << "Iterating over VRFs:" << std::endl;
           for (auto& [vrfName, vrf] : logicalSystem.vrfs) {
             LOG_DEBUG << vrf.toDebugString() << std::endl;
@@ -172,9 +183,11 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           }
 
           LOG_DEBUG << "Iterating over ACL ipNets:" << std::endl;
-          for (auto& [aclIpNetSetName, aclIpNetSet] : logicalSystem.aclIpNetSets) {
-            LOG_DEBUG << aclIpNetSet.toDebugString() << std::endl;
-            aclIpNetSet.save(t, toolRunId, deviceId);
+          for (auto& [aclIpNetSetsNamespace, aclIpNetSetsValue] : logicalSystem.aclIpNetSets) {
+            for (auto& [aclIpNetSetName, aclIpNetSet] : aclIpNetSetsValue) {
+              LOG_DEBUG << aclIpNetSet.toDebugString() << std::endl;
+              aclIpNetSet.save(t, toolRunId, deviceId);
+            }
           }
 
           LOG_DEBUG << "Iterating over ACL services:" << std::endl;

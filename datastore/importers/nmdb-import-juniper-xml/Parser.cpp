@@ -164,10 +164,15 @@ Parser::parseConfig(const pugi::xml_node& configNode)
   for (const auto& interfacesMatch :
        configNode.select_nodes("interfaces[not(@inactive='inactive')]")) {
     const pugi::xml_node interfacesNode{interfacesMatch.node()};
-    auto parsedIfaces{parseConfigInterfaces(interfacesNode)};
+    auto parsedIfacesTuple{parseConfigInterfaces(interfacesNode)};
+    auto parsedIfaces{std::get<0>(parsedIfacesTuple)};
     logicalSystem.ifaces.merge(parsedIfaces);
     for (const auto& [conflictName, conflict] : parsedIfaces) {
       std::cerr << "ifaces merge conflict: " << conflictName << std::endl;
+    }
+    auto parsedIfaceHierarchies{std::get<1>(parsedIfacesTuple)};
+    for (const auto& ifaceHierarchy : parsedIfaceHierarchies) {
+      logicalSystem.ifaceHierarchies.emplace_back(ifaceHierarchy);
     }
   }
 
@@ -219,13 +224,16 @@ Parser::parseConfig(const pugi::xml_node& configNode)
       std::cerr << "aclIpNetSets merge conflict: " << conflictName << std::endl;
     }
   }
-  logicalSystem.aclIpNetSets["any-ipv4"].setId("any-ipv4");
-  logicalSystem.aclIpNetSets["any-ipv4"].addIpNet(nmdo::IpNetwork("0.0.0.0/0"));
-  logicalSystem.aclIpNetSets["any-ipv6"].setId("any-ipv6");
-  logicalSystem.aclIpNetSets["any-ipv6"].addIpNet(nmdo::IpNetwork("::/0"));
-  logicalSystem.aclIpNetSets["any"].setId("any");
-  logicalSystem.aclIpNetSets["any"].addIncludedId("any-ipv4");
-  logicalSystem.aclIpNetSets["any"].addIncludedId("any-ipv6");
+  logicalSystem.aclIpNetSets["global"];
+  for (auto& [aclIpNetSetsNamespace, aclIpNetSetsValue] : logicalSystem.aclIpNetSets) {
+    aclIpNetSetsValue["any-ipv4"].setId("any-ipv4", aclIpNetSetsNamespace);
+    aclIpNetSetsValue["any-ipv4"].addIpNet(nmdo::IpNetwork("0.0.0.0/0"));
+    aclIpNetSetsValue["any-ipv6"].setId("any-ipv6", aclIpNetSetsNamespace);
+    aclIpNetSetsValue["any-ipv6"].addIpNet(nmdo::IpNetwork("::/0"));
+    aclIpNetSetsValue["any"].setId("any", aclIpNetSetsNamespace);
+    aclIpNetSetsValue["any"].addIncludedId("any-ipv4");
+    aclIpNetSetsValue["any"].addIncludedId("any-ipv6");
+  }
 
   for (const auto& applicationsMatch :
        configNode.select_nodes("applications[not(@inactive='inactive')]")) {
@@ -253,10 +261,12 @@ Parser::parseConfig(const pugi::xml_node& configNode)
 }
 
 
-std::map<std::string, nmdo::InterfaceNetwork>
+std::tuple<std::map<std::string, nmdo::InterfaceNetwork>,
+           std::vector<InterfaceHierarchy>>
 Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
 {
   std::map<std::string, nmdo::InterfaceNetwork> ifaces;
+  std::vector<InterfaceHierarchy> ifaceHierarchies;
 
   const std::regex mediaTypeRegex{"^([a-zA-Z]+)\\S*$"};
   std::smatch mediaTypeMatch;
@@ -277,6 +287,21 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
       ifaces[ifaceName].setDescription(ifaceRangeName);
       if (std::regex_match(ifaceName, mediaTypeMatch, mediaTypeRegex)) {
         ifaces[ifaceName].setMediaType(mediaTypeMatch[1]);
+      }
+
+      for (const auto optionsMatch : memberNode.select_nodes(
+             "(../gigether-options[not(@inactive='inactive')])|"
+             "(../ether-options[not(@inactive='inactive')])")) {
+        const pugi::xml_node optionsNode{optionsMatch.node()};
+        for (const auto virtualIfaceMatch : optionsNode.select_nodes(
+               "(redundant-parent[not(@inactive='inactive')]/parent[not(@inactive='inactive')])|"
+               "(ieee-802.3ad[not(@inactive='inactive')]/bundle[not(@inactive='inactive')])")) {
+          const std::string virtualIfaceName{
+            virtualIfaceMatch.node().text().as_string()
+          };
+          ifaces[virtualIfaceName].setName(virtualIfaceName);
+          ifaceHierarchies.emplace_back(ifaceName, virtualIfaceName);
+        }
       }
     }
   }
@@ -303,6 +328,34 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
       if (disableMatch) {
         ifaces[ifaceName].setState(false);
       }
+
+      for (const auto optionsMatch : ifaceNode.select_nodes(
+             "(gigether-options[not(@inactive='inactive')])|"
+             "(ether-options[not(@inactive='inactive')])")) {
+        const pugi::xml_node optionsNode{optionsMatch.node()};
+        for (const auto virtualIfaceMatch : optionsNode.select_nodes(
+               "(redundant-parent[not(@inactive='inactive')]/parent[not(@inactive='inactive')])|"
+               "(ieee-802.3ad[not(@inactive='inactive')]/bundle[not(@inactive='inactive')])")) {
+          const std::string virtualIfaceName{
+            virtualIfaceMatch.node().text().as_string()
+          };
+          ifaces[virtualIfaceName].setName(virtualIfaceName);
+          ifaceHierarchies.emplace_back(ifaceName, virtualIfaceName);
+        }
+      }
+
+      for (const auto optionsMatch : ifaceNode.select_nodes(
+             "fabric-options[not(@inactive='inactive')]")) {
+        const pugi::xml_node optionsNode{optionsMatch.node()};
+        for (const auto underlyingIfaceMatch : optionsNode.select_nodes(
+             "member-interfaces[not(@inactive='inactive')]/name")) {
+          const std::string underlyingIfaceName{
+            underlyingIfaceMatch.node().text().as_string()
+          };
+          ifaces[underlyingIfaceName].setName(underlyingIfaceName);
+          ifaceHierarchies.emplace_back(underlyingIfaceName, ifaceName);
+        }
+      }
     }
 
     // Logical interface units
@@ -313,6 +366,8 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
         unitNode.select_node("name").node().text().as_string()
       };
       const std::string ifaceUnitId{ifaceName + "." + unitName};
+
+      ifaceHierarchies.emplace_back(ifaceName, ifaceUnitId);
 
       ifaces[ifaceUnitId].setName(ifaceUnitId);
       if (std::regex_match(ifaceName, mediaTypeMatch, mediaTypeRegex)) {
@@ -378,7 +433,7 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
     }
   }
 
-  return ifaces;
+  return std::tuple{ifaces, ifaceHierarchies};
 }
 
 
@@ -511,10 +566,23 @@ Parser::parseConfigZones(const pugi::xml_node& zonesNode)
 }
 
 
-std::map<std::string, nmdo::AclIpNetSet>
+std::map<std::string, std::map<std::string, nmdo::AclIpNetSet>>
 Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
 {
-  std::map<std::string, nmdo::AclIpNetSet> aclIpNetSets;
+  std::map<std::string, std::map<std::string, nmdo::AclIpNetSet>> aclIpNetSets;
+
+  std::string addressBookNamespace;
+  const auto& securityZoneMatch{
+    addressBookNode.select_node("parent::security-zone[not(@inactive='inactive')]")
+  };
+  if (securityZoneMatch) {
+    const pugi::xml_node securityZoneNode{securityZoneMatch.node()};
+    addressBookNamespace = securityZoneNode.select_node("name").node().text().as_string();
+  }
+  else {
+    addressBookNamespace = addressBookNode.select_node("name").node().text().as_string();
+  }
+  aclIpNetSets[addressBookNamespace];
 
   for (const auto& addressMatch :
        addressBookNode.select_nodes("address[not(@inactive='inactive')]")) {
@@ -522,12 +590,12 @@ Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
     const std::string ipNetName{
       addressNode.select_node("name").node().text().as_string()
     };
-    aclIpNetSets[ipNetName].setId(ipNetName);
+    aclIpNetSets[addressBookNamespace][ipNetName].setId(ipNetName, addressBookNamespace);
 
     for (const auto& ipPrefixMatch :
          addressNode.select_nodes("ip-prefix[not(@inactive='inactive')]")) {
       const nmdo::IpNetwork ipNet{ipPrefixMatch.node().text().as_string()};
-      aclIpNetSets[ipNetName].addIpNet(ipNet);
+      aclIpNetSets[addressBookNamespace][ipNetName].addIpNet(ipNet);
     }
 
     for (const auto& dnsNameMatch :
@@ -537,7 +605,7 @@ Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
         dnsNameNode.select_node("name").node().text().as_string()
       };
       data.observations.addNotable("FQDNs are used that must be resolved");
-      aclIpNetSets[ipNetName].addHostname(dnsName);
+      aclIpNetSets[addressBookNamespace][ipNetName].addHostname(dnsName);
     }
   }
 
@@ -547,7 +615,7 @@ Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
     const std::string ipNetSetName{
       addressSetNode.select_node("name").node().text().as_string()
     };
-    aclIpNetSets[ipNetSetName].setId(ipNetSetName);
+    aclIpNetSets[addressBookNamespace][ipNetSetName].setId(ipNetSetName, addressBookNamespace);
 
     for (const auto& addressMatch :
          addressSetNode.select_nodes("address[not(@inactive='inactive')]")) {
@@ -555,7 +623,7 @@ Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
       const std::string ipNetName{
         addressNode.select_node("name").node().text().as_string()
       };
-      aclIpNetSets[ipNetSetName].addIncludedId(ipNetName);
+      aclIpNetSets[addressBookNamespace][ipNetSetName].addIncludedId(ipNetName);
     }
   }
 
@@ -788,6 +856,20 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
 
   for (const auto& incomingZoneId : incomingZoneIds) {
     for (const auto& outgoingZoneId : outgoingZoneIds) {
+      // Initially default to global address-book.
+      std::string srcIpNetSetNamespace{"global"};
+      std::string dstIpNetSetNamespace{"global"};
+      if (policyNode.select_node("../../../zones/security-zone/address-book")) {
+        // Use per-zone address-books instead of global address-book.
+        // However, leave "any" zones on the global address-book.
+        if ("any" != incomingZoneId) {
+          srcIpNetSetNamespace = incomingZoneId;
+        }
+        if ("any" != outgoingZoneId) {
+          dstIpNetSetNamespace = outgoingZoneId;
+        }
+      }
+
       size_t ruleIdBase{0};
       if (false) {
         ruleIdBase = 5000000;  // Default Policies
@@ -809,8 +891,8 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
             aclRule.setAction(action);
             aclRule.setIncomingZoneId(incomingZoneId);
             aclRule.setOutgoingZoneId(outgoingZoneId);
-            aclRule.setSrcIpNetSetId(srcIpNetSetId);
-            aclRule.setDstIpNetSetId(dstIpNetSetId);
+            aclRule.setSrcIpNetSetId(srcIpNetSetId, srcIpNetSetNamespace);
+            aclRule.setDstIpNetSetId(dstIpNetSetId, dstIpNetSetNamespace);
             aclRule.setServiceId(serviceId);
             aclRule.setDescription(description);
             aclRules.emplace_back(aclRule);
@@ -836,7 +918,7 @@ Parser::parseRouteInfo(const pugi::xml_node& routeInfoNode)
 
   auto& logicalSystem{data.logicalSystems[logicalSystemName]};
 
-  nmdo::RoutingTable routes; 
+  nmdo::RoutingTable routes;
   for (const auto& routeTableMatch :
        routeInfoNode.select_nodes("route-table[not(@inactive='inactive')]")) {
     const pugi::xml_node routeTableNode{routeTableMatch.node()};
@@ -1286,6 +1368,26 @@ Parser::parseEthernetSwitching(const pugi::xml_node& l2ngNode)
       }
     }
   }
+}
+
+
+void
+Parser::parseError(const pugi::xml_node& errorNode)
+{
+  const std::string message{
+    errorNode.select_node("message").node().text().as_string()
+  };
+  data.observations.addNotable(message);
+}
+
+
+void
+Parser::parseWarning(const pugi::xml_node& warningNode)
+{
+  const std::string message{
+    warningNode.select_node("message").node().text().as_string()
+  };
+  data.observations.addNotable(message);
 }
 
 
