@@ -291,7 +291,14 @@ Parser::Parser() : Parser::base_type(start)
   switchportPortSecurity =
     qi::lit("port-security ") >
     (
-       (qi::lit("mac-address ")
+       ((-qi::lit("mac-address") >> (qi::lit("maximum") | qi::lit("max")) >> qi::ushort_)
+          [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
+                      pnx::bind(&Parser::tgtIface, this), qi::_1))]
+         > -(qi::lit("vlan") > qi::ushort_)
+          [(pnx::bind(&Parser::unsup, this,
+                      "switchport port-security maximum COUNT vlan ID"))]
+       )
+     | (qi::lit("mac-address ")
         > -qi::lit("sticky")
             [(pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);}))]
         > -macAddr
@@ -308,13 +315,6 @@ Parser::Parser() : Parser::base_type(start)
             [(pnx::bind(&Parser::unsup, this,
                         "switchport port-security sticky mac-address MAC vlan ID"))]
          )
-       )
-     | (((qi::lit("maximum") | qi::lit("max")) >> qi::ushort_)
-          [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
-                      pnx::bind(&Parser::tgtIface, this), qi::_1))]
-         > -(qi::lit("vlan") > qi::ushort_)
-          [(pnx::bind(&Parser::unsup, this,
-                      "switchport port-security maximum COUNT vlan ID"))]
        )
      | (qi::lit("violation") >> token)
           [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
@@ -356,20 +356,22 @@ Parser::Parser() : Parser::base_type(start)
     (  (qi::lit("bpduguard")
          [(pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
            pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard))] >
-        -(  qi::lit("enable")
+        -( qi::lit("enable")
              [(pnx::bind([&](){tgtIface->setBpduGuard(true);}))]
          | qi::lit("disable")
              [(pnx::bind([&](){tgtIface->setBpduGuard(false);}))]
-        )
+         | qi::lit("rate-limit")
+             [(pnx::bind(&Parser::unsup, this, "spanning-tree bpduguard rate-limit"))]
+         )
        )
      | (qi::lit("bpdufilter")
          [(pnx::bind([&](){tgtIface->setBpduFilter(!isNo);}),
            pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduFilter))] >
-        -(  qi::lit("enable")
+        -( qi::lit("enable")
              [(pnx::bind([&](){tgtIface->setBpduFilter(true);}))]
          | qi::lit("disable")
              [(pnx::bind([&](){tgtIface->setBpduFilter(false);}))]
-        )
+         )
        )
      | ((qi::lit("port type") | qi::lit("portfast")) >>
         (  qi::lit("edge")    // == portfast on
@@ -377,6 +379,7 @@ Parser::Parser() : Parser::base_type(start)
          | qi::lit("network") // == portfast off
              [(pnx::bind([&](){tgtIface->setPortfast(false);}))]
          | qi::lit("normal")  // == default
+         | qi::lit("auto")
         )
        )
      | (qi::lit("portfast"))
