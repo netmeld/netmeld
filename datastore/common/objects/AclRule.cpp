@@ -98,8 +98,7 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclRule::save(pqxx::transaction_base& t,
-      const nmco::Uuid& toolRunId, const std::string& deviceId)
+  AclRule::save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&)
   {
 
   }

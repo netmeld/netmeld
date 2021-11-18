@@ -7,6 +7,6 @@ Parse and import the output of a Juniper device's
 
 EXAMPLES
 ========
-``` 
+```
 nmdb-import-juniper-show-route --device-id device show-route.txt
 ```

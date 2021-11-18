@@ -79,7 +79,7 @@ Parser::Parser() : Parser::base_type(start)
       -(qi::lit(",") >> +(qi::char_ - qi::eol)) >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIp, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
@@ -113,7 +113,7 @@ Parser::Parser() : Parser::base_type(start)
       -(iface[(qi::_a = qi::_1)]) >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIp, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
@@ -155,7 +155,7 @@ Parser::Parser() : Parser::base_type(start)
       qi::omit[*(qi::char_ - qi::eol)] >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIp, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
@@ -195,7 +195,7 @@ Parser::Parser() : Parser::base_type(start)
       token >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIp, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
@@ -238,7 +238,7 @@ Parser::Parser() : Parser::base_type(start)
       -(qi::lit(",") >> +(qi::char_ - qi::eol)) >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIp, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
@@ -273,7 +273,7 @@ Parser::Parser() : Parser::base_type(start)
       iface[(qi::_a = qi::_1)] >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIp, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
@@ -296,7 +296,7 @@ Parser::Parser() : Parser::base_type(start)
       iface[(qi::_a = qi::_1)] >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIp, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 

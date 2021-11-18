@@ -78,7 +78,7 @@ namespace netmeld::datastore::objects {
 
       std::string getName() const;
       MacAddress getMacAddress() const;
-      std::vector<IpAddress> getIpAddresses() const;
+      const std::set<IpAddress>& getIpAddresses() const;
 
       bool isValid() const override;
 

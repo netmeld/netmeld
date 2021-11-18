@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestMacAddress macAddr;
 
     BOOST_CHECK_EQUAL("Invalid MAC", macAddr.toString());
-    BOOST_CHECK(macAddr.getIpAddrs().empty());
+    BOOST_CHECK(macAddr.getIpAddresses().empty());
     BOOST_CHECK_EQUAL(false, macAddr.getIsResponding());
   }
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestMacAddress macAddr {mac};
 
     BOOST_CHECK_EQUAL(mac, macAddr.toString());
-    BOOST_CHECK(macAddr.getIpAddrs().empty());
+    BOOST_CHECK(macAddr.getIpAddresses().empty());
     BOOST_CHECK_EQUAL(false, macAddr.getIsResponding());
   }
 
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     for (size_t i {0}; i<mac.size(); i++) {
       BOOST_CHECK_EQUAL(mac[i], macAddr.getMacAddr()[i]);
     }
-    BOOST_CHECK(macAddr.getIpAddrs().empty());
+    BOOST_CHECK(macAddr.getIpAddresses().empty());
     BOOST_CHECK_EQUAL(false, macAddr.getIsResponding());
   }
 }
@@ -112,8 +112,8 @@ BOOST_AUTO_TEST_CASE(testSetters)
     TestMacAddress macAddr;
     nmdo::IpAddress ipAddr("10.0.0.1/24");
 
-    macAddr.addIp(ipAddr);
-    for (const auto& ia : macAddr.getIpAddrs()) {
+    macAddr.addIpAddress(ipAddr);
+    for (const auto& ia : macAddr.getIpAddresses()) {
       BOOST_CHECK_EQUAL(ipAddr, ia);
     }
   }

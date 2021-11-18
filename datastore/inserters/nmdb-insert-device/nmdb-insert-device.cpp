@@ -117,7 +117,7 @@ class Tool : public nmdt::AbstractInsertTool
       nmdo::MacAddress macAddr;
       if (opts.exists("mac-addr")) {
         macAddr = nmdo::MacAddress(opts.getValue("mac-addr"));
-        macAddr.addIp(ipAddr);
+        macAddr.addIpAddress(ipAddr);
         macAddr.setResponding(isResponding);
 
         macAddr.save(t, toolRunId, deviceId);

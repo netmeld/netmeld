@@ -73,7 +73,7 @@ namespace netmeld::datastore::objects {
       for (auto& response : responses) {
         t.exec_prepared("insert_raw_dns_lookup",
             toolRunId,
-            resolver.getIpAddr(),
+            resolver.getIpAddress().toString(),
             resolver.getPort(),
             question.getFqdn(),
             question.getClass(),

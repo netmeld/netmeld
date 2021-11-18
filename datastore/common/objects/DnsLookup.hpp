@@ -71,7 +71,7 @@ namespace netmeld::datastore::objects {
       void setQuestion(const nmco::DnsQuestion&);
       void setStatus(const std::string&);
       void addResponseSection(const std::pair<std::string, nmco::DnsResponses>&);
-      
+
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
 
@@ -79,4 +79,5 @@ namespace netmeld::datastore::objects {
   };
   typedef std::vector<DnsLookup> DnsLookups;
 }
+
 #endif // DNS_LOOKUP_HPP

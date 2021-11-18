@@ -411,7 +411,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           }
 
           if (1 == macCount) { // If only one found, associate MAC-to-IP
-            data.macAddrs.back().addIp(ipAddr);
+            data.macAddrs.back().addIpAddress(ipAddr);
           }
         }
       }

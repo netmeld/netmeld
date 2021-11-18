@@ -36,7 +36,7 @@ Parser::Parser() : Parser::base_type(start)
       *qi::eol > (windowsTrace | linuxTrace)[qi::_val = pnx::bind(&Parser::getData, this)]
     ;
 
-  windowsTrace = 
+  windowsTrace =
     windowsHeader >> +qi::eol >> +(windowsHop[pnx::bind(&Parser::flushHops, this)] > qi::eol) >> *qi::eol >> "Trace complete." >> *qi::eol
     ;
 
@@ -45,33 +45,33 @@ Parser::Parser() : Parser::base_type(start)
       "over a maximum of" > qi::uint_ > "hops:"
     ;
 
-  windowsHop = 
+  windowsHop =
     qi::int_[pnx::bind(&Parser::recordHopNumber, this, qi::_1)] >>
         +(
-        qi::string("*") | 
+        qi::string("*") |
         qi::string("<1 ms") |
         (qi::int_ >> "ms")
-        ) 
+        )
       >> windowsDomainIP
     ;
 
   windowsDomainIP =
-    ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)] | 
+    ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)] |
         (fqdn > "[" >
         ipAddr > "]")[pnx::bind(&Parser::recordHopDestinationWithAlias, this, qi::_2, qi::_1)]
     ;
 
-  linuxTrace = 
+  linuxTrace =
     linuxHeader >> +qi::eol >> +(linuxHop[pnx::bind(&Parser::flushHops, this)] >> qi::eol) >> *qi::eol
     ;
 
-  linuxHeader = 
+  linuxHeader =
     "traceroute to" >> (fqdn | ipAddr) > "(" > ipAddr > ")," >
-      qi::uint_ > "hops max, " > qi::uint_ > "byte packets" 
+      qi::uint_ > "hops max, " > qi::uint_ > "byte packets"
     ;
 
-  linuxHop = 
-    qi::int_[pnx::bind(&Parser::recordHopNumber, this, qi::_1)] >> 
+  linuxHop =
+    qi::int_[pnx::bind(&Parser::recordHopNumber, this, qi::_1)] >>
       *qi::string("*") >>
       -(linuxDomainIP >> qi::double_ > "ms" >>
         *((-linuxDomainIP >> qi::double_ > "ms") | "*")
@@ -86,7 +86,7 @@ Parser::Parser() : Parser::base_type(start)
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      
+
       (windowsTrace)
       (windowsHeader)
       (windowsHop)
@@ -104,57 +104,57 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-  void
-  Parser::recordHopNumber(int hopNumber) {
-    currentHopNumber = hopNumber;
-  }
+void
+Parser::recordHopNumber(int hopNumber) {
+  currentHopNumber = hopNumber;
+}
 
-  void
-  Parser::recordHopDestination(const nmdo::IpAddress& destination) {
-    std::string alias;
-    recordHopDestinationWithAlias(destination, alias);
-    LOG_DEBUG << "RECORDING HOP DEST" << std::endl;
-  }
+void
+Parser::recordHopDestination(const nmdo::IpAddress& destination) {
+  std::string alias;
+  recordHopDestinationWithAlias(destination, alias);
+  LOG_DEBUG << "RECORDING HOP DEST" << std::endl;
+}
 
-  void
-  Parser::recordHopDestinationWithAlias(const nmdo::IpAddress& destination, const std::string& alias) {
-    nmdo::IpAddress dest{destination};
-    std::string reason;
-    if (!alias.empty()) {
-      dest.addAlias(alias, reason);
-    }
-    if (!prevDests.empty()) {
-      for (auto& prevDest : prevDests) {
-        curHops.emplace_back();
-        curHops.back().rtrIpAddr = prevDest;
-        curHops.back().dstIpAddr = dest;
-        curHops.back().hopCount = currentHopNumber;
-      }
-    } else {
+void
+Parser::recordHopDestinationWithAlias(const nmdo::IpAddress& destination, const std::string& alias) {
+  nmdo::IpAddress dest{destination};
+  std::string reason;
+  if (!alias.empty()) {
+    dest.addAlias(alias, reason);
+  }
+  if (!prevDests.empty()) {
+    for (auto& prevDest : prevDests) {
       curHops.emplace_back();
+      curHops.back().rtrIpAddr = prevDest;
       curHops.back().dstIpAddr = dest;
       curHops.back().hopCount = currentHopNumber;
     }
+  } else {
+    curHops.emplace_back();
+    curHops.back().dstIpAddr = dest;
+    curHops.back().hopCount = currentHopNumber;
   }
+}
 
-  void
-  Parser::flushHops() {
-    if (!curHops.empty()) {
-      if (curHops.back().rtrIpAddr.isValid()){
-        for (auto& hop: curHops) {
-          r.emplace_back(hop);
-        }
-      }
-      prevDests.clear();
+void
+Parser::flushHops() {
+  if (!curHops.empty()) {
+    if (curHops.back().rtrIpAddr.isValid()){
       for (auto& hop: curHops) {
-        prevDests.emplace(hop.dstIpAddr);
+        r.emplace_back(hop);
       }
-      curHops.clear();
     }
+    prevDests.clear();
+    for (auto& hop: curHops) {
+      prevDests.emplace(hop.dstIpAddr);
+    }
+    curHops.clear();
   }
+}
 
-  Result
-  Parser::getData()
-  {
-    return r;
-  }
+Result
+Parser::getData()
+{
+  return r;
+}

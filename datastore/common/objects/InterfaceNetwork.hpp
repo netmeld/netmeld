@@ -111,7 +111,8 @@ namespace netmeld::datastore::objects {
 
       std::string getName() const;
       bool getState() const;
-      std::vector<IpAddress> getIpAddresses() const;
+      const std::set<IpAddress>& getIpAddresses() const;
+      const std::set<Vlan>& getVlans() const;
 
       // Always overriden from AbstractDatastoreObject
       bool isValid() const override;

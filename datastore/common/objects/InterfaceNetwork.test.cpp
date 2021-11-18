@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     interface.addIpAddress(ipAddr);
     auto ipAddrs = interface.getIpAddresses();
     BOOST_CHECK_EQUAL(1, ipAddrs.size());
-    BOOST_CHECK_EQUAL(ipAddr, ipAddrs[0]);
+    BOOST_CHECK_EQUAL(ipAddr, *ipAddrs.cbegin());
   }
 
   {

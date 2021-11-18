@@ -68,7 +68,7 @@ class Parser :
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       windowsTrace, windowsHeader, windowsHop, windowsDomainIP;
-      
+
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       linuxTrace, linuxHeader, linuxHop, linuxDomainIP;
 

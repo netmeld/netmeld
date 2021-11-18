@@ -423,7 +423,7 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
               nmdo::IpAddress peerIpAddr{
                 peerIpAddrMatch.node().text().as_string()
               };
-              peerMacAddr.addIp(peerIpAddr);
+              peerMacAddr.addIpAddress(peerIpAddr);
             }
 
             ifaces[ifaceUnitId].addReachableMac(peerMacAddr);
@@ -1158,7 +1158,7 @@ Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
           nmdo::IpAddress peerIpAddr{
             peerIpAddrMatch.node().text().as_string()
           };
-          peerMacAddr.addIp(peerIpAddr);
+          peerMacAddr.addIpAddress(peerIpAddr);
         }
 
         ifaces[ifaceName].addReachableMac(peerMacAddr);
@@ -1208,7 +1208,7 @@ Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
           nmdo::IpAddress peerIpAddr{
             peerIpAddrMatch.node().text().as_string()
           };
-          peerMacAddr.addIp(peerIpAddr);
+          peerMacAddr.addIpAddress(peerIpAddr);
         }
 
         ifaces[ifaceName].addReachableMac(peerMacAddr);
@@ -1361,7 +1361,7 @@ Parser::parseEthernetSwitching(const pugi::xml_node& l2ngNode)
           nmdo::IpAddress ipAddr{
             ipAddrMatch.node().text().as_string()
           };
-          macAddr.addIp(ipAddr);
+          macAddr.addIpAddress(ipAddr);
         }
 
         ifaces[ifaceName].addReachableMac(macAddr);

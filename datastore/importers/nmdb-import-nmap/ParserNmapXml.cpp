@@ -119,7 +119,7 @@ ParserNmapXml::extractMacAndIpAddrs(const pugi::xml_node& nmapNode, Data& data)
     nmdo::MacAddress macAddr {extractHostMacAddr(nodeHost)};
     macAddr.setResponding(isResponding);
     auto ipAddr {extractHostIpAddr(nodeHost)};
-    macAddr.addIp(ipAddr);
+    macAddr.addIpAddress(ipAddr);
 
     data.macAddrs.push_back(macAddr);
   }

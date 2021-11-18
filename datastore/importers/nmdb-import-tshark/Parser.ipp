@@ -293,7 +293,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
     macAddr.setMac(macAddrStr);
     nmdo::IpAddress ipAddr {ipAddrStr, TSHARK_REASON};
     ipAddr.setResponding(true);
-    macAddr.addIp(ipAddr);
+    macAddr.addIpAddress(ipAddr);
     macAddr.setResponding(true);
     status = true;
   }
@@ -387,7 +387,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
       const auto& ipAddrStr {s1(bootpOptionDhcpServerId)};
       nmdo::IpAddress ipAddr {ipAddrStr, TSHARK_REASON};
       ipAddr.setResponding(true);
-      macAddr.addIp(ipAddr);
+      macAddr.addIpAddress(ipAddr);
     }
     macAddr.setResponding(true);
     status = true;
@@ -454,12 +454,12 @@ Parser<Iter>::processPacket(PacketData& _pd)
 //    // ===== IPv4 =====
 //    if (_pd.count(ipSrc)) {
 //      nmdo::IpAddress ipAddr {s1(ipSrc), TSHARK_REASON};
-//      macAddr.addIp(ipAddr);
+//      macAddr.addIpAddress(ipAddr);
 //    }
 //    // ===== IPv6 =====
 //    if (_pd.count(ipv6Src)) {
 //      nmdo::IpAddress ipAddr {s1(ipv6Src), TSHARK_REASON};
-//      macAddr.addIp(ipAddr);
+//      macAddr.addIpAddress(ipAddr);
 //    }
   }
 

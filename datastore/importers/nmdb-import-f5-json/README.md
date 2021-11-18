@@ -8,7 +8,7 @@ device's configuration, the `--device-id` and `--data-path` options are required
 
 
 EXAMPLES
-======== 
-``` 
+========
+```
 nmdb-import-f5-json --device-id proxy --data-path proxy.json
 ```

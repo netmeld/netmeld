@@ -42,7 +42,7 @@ class TestOperatingSystem : public nmdo::OperatingSystem {
     {};
 
   public:
-    nmdo::IpAddress getIpAddr() const
+    nmdo::IpAddress getIpAddress() const
     { return ipAddr; }
 
     std::string getVendorName() const
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestOperatingSystem operatingSystem;
     nmdo::IpAddress ipAddr;
 
-    BOOST_CHECK_EQUAL(ipAddr, operatingSystem.getIpAddr());
+    BOOST_CHECK_EQUAL(ipAddr, operatingSystem.getIpAddress());
     BOOST_CHECK(operatingSystem.getVendorName().empty());
     BOOST_CHECK(operatingSystem.getProductName().empty());
     BOOST_CHECK(operatingSystem.getProductVersion().empty());
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
     TestOperatingSystem operatingSystem {ipAddr};
 
-    BOOST_CHECK_EQUAL(ipAddr, operatingSystem.getIpAddr());
+    BOOST_CHECK_EQUAL(ipAddr, operatingSystem.getIpAddress());
     BOOST_CHECK(operatingSystem.getVendorName().empty());
     BOOST_CHECK(operatingSystem.getProductName().empty());
     BOOST_CHECK(operatingSystem.getProductVersion().empty());
