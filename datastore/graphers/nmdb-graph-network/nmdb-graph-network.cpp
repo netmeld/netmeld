@@ -180,7 +180,7 @@ class Tool : public nmdt::AbstractGraphTool
 
     void addToolOptions() override
     {
-      std::string filePath;
+      
       opts.addRequiredOption("layer", std::make_tuple(
             "layer,L",
             po::value<std::string>()->required(),
@@ -197,9 +197,9 @@ class Tool : public nmdt::AbstractGraphTool
             NULL_SEMANTIC,
             "Enable device icons in graph")
           );
-      opts.addOptionalOption("icon-folder", std::make_tuple(
+      opts.addRequiredOption("icon-folder", std::make_tuple(
 	    "icon-folder",
-	    NULL_SEMANTIC,
+	    po::value<std::string>(),
 	    "Set custom destination for alternate icons. ")
 	  );
       opts.addOptionalOption("no-unknown", std::make_tuple(
@@ -729,40 +729,20 @@ class Tool : public nmdt::AbstractGraphTool
     
     
     std::string
-    getUseIconsCustomPath(std::string deviceType)
+    getUseIconsCustomPath(sfs::path name)
     {
       if (!useIconFolder) {
 	return "";
       }      
       
-      auto& nmfm {nmcu::FileManager::getInstance()};
-      sfs::path customPath {nmfm.getConfPath()/"images"};
-      std::cin >> customPath;
-      
-      std::string iconPath {customPath.string() + "/unknown.svg"};
+      std::string iconPath {name.string()};
       std::string label {
 	"<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
       };
-
-      if (!deviceType.empty()) {
-	for (auto& pathIter : sfs::recursive_directory_iterator(customPath)) {
-	  std::string fileName {pathIter.path().filename()};
-	  
-	  if (std::equal(deviceType.begin(), deviceType.end(),
-			  fileName.begin(), fileName.end(),
-			  [](auto a, auto b) {
-			    return std::tolower(a) == std::tolower(b);
-			  })) {
-	     iconPath = fileName;
-	     break;
-	    }
-	   }
-	  }
-
+       
 	label += iconPath + "\" scale=\"true\"/<>/TD>";
 	
 	return label;
-     
 
     }
   
