@@ -113,15 +113,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     sfs::path scriptPath;
 
     std::string roeExcludedPath;
-    std::string roeExcludedIpv4Path;
-    std::string roeExcludedIpv6Path;
-
     std::string roeNetworksPath;
-    std::string roeNetworksIpv4Path;
-    std::string roeNetworksIpv6Path;
-
-    std::string respondingHostsIpv4Path;
-    std::string respondingHostsIpv6Path;
     std::string respondingHostsPath;
 
     std::string commandTitlePrefix;
@@ -167,9 +159,15 @@ class Tool : public nmdt::AbstractDatastoreTool
           );
       opts.addRequiredOption("capture-duration", std::make_tuple(
             "capture-duration",
-            po::value<uint16_t>()->required()->default_value(300),
+            po::value<size_t>()->required()->default_value(300),
             "Capture traffic for specified number of seconds when the physical"
             " interface is brought up")
+          );
+      std::string savePathLoc = {nmfm.getSavePath()/"playbook"};
+      opts.addRequiredOption("save-path", std::make_tuple(
+            "save-path",
+            po::value<std::string>()->required()->default_value(savePathLoc),
+            "Location to save output from playbook run")
           );
 
       opts.addOptionalOption("intra-network", std::make_tuple(
@@ -303,6 +301,217 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
+      const auto& playbookScope {validatePlaybookScope()};
+
+      validateScriptTests();
+      validateEnabledTests();
+
+      // Execute, or not
+      execute = opts.exists("execute");
+      cmdRunner.setExecute(execute);
+
+      // Headless, or not
+      headless = opts.exists("headless");
+      cmdRunner.setHeadless(headless);
+
+      // Create directory for meta-data about and results from this tool run
+      sfs::path const saveDir {opts.getValue("save-path")};
+      if (execute) {
+        sfs::create_directories(saveDir);
+      }
+      pbDir = sfs::canonical(saveDir).string();
+
+      Playbook playbook;
+
+      const auto& dbName  {getDbName()};
+      const auto& dbArgs  {opts.getValue("db-args")};
+
+      dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
+      pqxx::connection db {dbConnectString};
+      nmpbu::dbPreparePlaybook(db);
+
+      if (true) {
+        std::string query;
+        switch (playbookScope) {
+          case PlaybookScope::INTRA_NETWORK:
+          {
+            query = "select_playbook_intra_network";
+            break;
+          }
+          case PlaybookScope::INTER_NETWORK:
+          {
+            query = "select_playbook_inter_network";
+            break;
+          }
+          case PlaybookScope::UNKNOWN:  // intentional fallthrough
+          default:
+          {
+            break;
+          }
+        }
+
+        pqxx::read_transaction t {db};
+        pqxx::result playbookIpSourceRows {t.exec_prepared(query)};
+        for (const auto& playbookIpSourceRow : playbookIpSourceRows) {
+          size_t playbookStage;
+          playbookIpSourceRow.at("playbook_stage").to(playbookStage);
+          std::string interfaceName;
+          playbookIpSourceRow.at("interface_name").to(interfaceName);
+          uint16_t vlan;
+          playbookIpSourceRow.at("vlan").to(vlan, static_cast<uint16_t>(0));
+          std::string macAddr;
+          playbookIpSourceRow.at("mac_addr").to(macAddr);
+          std::string ipAddr;
+          playbookIpSourceRow.at("ip_addr").to(ipAddr);
+          std::string rtrIpAddr;
+          playbookIpSourceRow.at("rtr_ip_addr").to(rtrIpAddr);
+
+          nmco::Uuid playbookSourceId;
+          playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);
+          std::string description;
+          playbookIpSourceRow.at("description").to(description);
+          int addrFamily;
+          playbookIpSourceRow.at("addr_family").to(addrFamily);
+
+          // Create the source location for testing.
+          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+            .playbookSourceId = playbookSourceId;
+          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+            .description = description;
+          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+            .addrFamily = addrFamily;
+
+          if (opts.exists("inter-network") && !rtrIpAddr.empty()) {
+            // Add any routers for inter-network tests from this location.
+            playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+              .ipRouters.insert(rtrIpAddr);
+          }
+        }
+      }
+
+
+      for (const auto& [playbookStage, stageConfigs] : playbook) {
+        if (!enabledStages.empty() && !enabledStages.count(playbookStage)) {
+          continue;
+        }
+
+        if (true) {
+          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+          LOG_INFO << "#### Playbook: Stage " << playbookStage << " ####"
+                   << std::endl;
+        }
+
+        for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
+          LOG_INFO << "# Disconnect target(s), if necessary, and connect "
+                   << ifaceName << "." << std::endl
+                   << "# This interface will cycle through settings:"
+                   << std::endl;
+
+          for (const auto& [vlan, vlanConfigs] : ifaceConfigs) {
+            for (const auto& [macAddr, ipConfigs] : vlanConfigs) {
+              for (const auto& [ipAddr, srcConfig] : ipConfigs) {
+                const auto& description {srcConfig.description};
+                LOG_INFO << "#\tVLAN: " << vlan
+                         << ", MAC: " << macAddr
+                         << ", IP: " << ipAddr
+                         << ", Desc: " << description
+                         << std::endl;
+                if (srcConfig.ipRouters.size()) {
+                  LOG_INFO << "#\t\tRouters:";
+                  for (const auto& rtrIpAddr : srcConfig.ipRouters) {
+                    LOG_INFO << " " << rtrIpAddr;
+                  }
+                  LOG_INFO << std::endl;
+                }
+              }
+            }
+          }
+          LOG_INFO << std::endl;
+        }
+
+        if (execute) {
+          std::string userInput;
+
+          // Sanity check, cycle all interfaces before aborting
+          for (const auto& [stage, stageConfigs] : playbook) {
+            for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
+
+              // Ensure interface is down
+              if (!ifaceIsDown(ifaceName)) {
+                LOG_WARN << ifaceName << " link not down" << std::endl;
+              }
+
+              // Ensure interface has no ipv4/6 address assigned
+              if (ifaceHasAddress(ifaceName)) {
+                LOG_WARN << ifaceName << " has an address" << std::endl;
+              }
+            }
+          }
+
+          while (!opts.exists("no-prompt")) {
+            LOG_INFO << "Enter 'Y' to continue or 'Q' to quit: ";
+            std::cin >> userInput;
+
+            if (("Y" == userInput) || ("y" == userInput) ||
+                ("Q" == userInput) || ("q" == userInput)) {
+              break;
+            }
+          }
+
+          if (("Q" == userInput) || ("q" == userInput)) {
+            break;
+          }
+        }
+
+        std::map<std::string, std::thread> physIfaceThreads;
+
+        for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
+
+          // Start a thread to manage the configuration of this interface
+          physIfaceThreads[ifaceName] =
+            std::thread(&Tool::physIfaceThreadActions, this,
+                   playbookScope, playbookStage,
+                   ifaceName, ifaceConfigs);
+
+          switch (playbookScope) {
+            case PlaybookScope::INTRA_NETWORK:
+              {
+                // Run interface threads in parallel
+                break;
+              }
+            case PlaybookScope::INTER_NETWORK:  // intentional fallthrough
+            case PlaybookScope::UNKNOWN:  // intentional fallthrough
+            default:
+              {
+                // Run interface threads serially (only one interface at a time)
+
+                // Wait for thread to complete before starting next thread.
+                physIfaceThreads[ifaceName].join();
+                physIfaceThreads.erase(ifaceName);
+
+                break;
+              }
+          }
+        }
+
+        // Wait for interface threads (if any) to finish
+        for (auto& [_, ifaceThread] : physIfaceThreads) {
+          ifaceThread.join();
+        }
+        physIfaceThreads.clear();
+
+        if (true) {
+          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+          LOG_INFO << std::endl;
+        }
+      }
+
+      return nmcu::Exit::SUCCESS;
+    }
+
+    PlaybookScope
+    validatePlaybookScope()
+    {
       if (    (opts.exists("intra-network") && opts.exists("inter-network"))
           || !(opts.exists("intra-network") || opts.exists("inter-network"))
          )
@@ -322,20 +531,12 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
       assert(playbookScope != PlaybookScope::UNKNOWN);
 
-      // Handle inclusion/exclusion of tests
-      auto stages {opts.getValueAs<std::vector<size_t>>("stage")};
-      if (!stages.empty()) {
-        enabledStages = std::set(stages.begin(), stages.end());
-      }
-      auto phases {opts.getValueAs<std::vector<size_t>>("phase")};
-      if (!phases.empty()) {
-        enabledPhases = std::set(phases.begin(), phases.end());
-      }
-      auto tests {opts.getValueAs<std::vector<size_t>>("exclude-command")};
-      if (!tests.empty()) {
-        cmdRunner.disableCommands(std::set(tests.begin(), tests.end()));
-      }
+      return playbookScope;
+    }
 
+    void
+    validateScriptTests()
+    {
       // Sanity check for script tests
       if (opts.exists("script")) {
         if (!opts.exists("no-prompt")) {
@@ -359,217 +560,24 @@ class Tool : public nmdt::AbstractDatastoreTool
           std::exit(nmcu::Exit::FAILURE);
         }
       }
+    }
 
-      // Execute, or not
-      execute = opts.exists("execute");
-      cmdRunner.setExecute(execute);
-
-      // Headless, or not
-      headless = opts.exists("headless");
-      cmdRunner.setHeadless(headless);
-
-      // Create directory for meta-data about and results from this tool run
-      sfs::path const saveDir {nmfm.getSavePath()/"playbook"};
-      sfs::create_directories(saveDir);
-      pbDir = saveDir.string();
-
-      Playbook playbook;
-
-      const auto& dbName  {getDbName()};
-      const auto& dbArgs  {opts.getValue("db-args")};
-
-      dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
-      pqxx::connection db {dbConnectString};
-      nmpbu::dbPreparePlaybook(db);
-
-      if (true) {
-        pqxx::read_transaction t {db};
-
-        pqxx::result playbookIpSourceRows;
-        switch (playbookScope) {
-          case PlaybookScope::INTRA_NETWORK:
-            {
-              playbookIpSourceRows =
-                t.exec_prepared("select_playbook_intra_network");
-              break;
-            }
-          case PlaybookScope::INTER_NETWORK:
-            {
-              playbookIpSourceRows =
-                t.exec_prepared("select_playbook_inter_network");
-              break;
-            }
-          case PlaybookScope::UNKNOWN:  // intentional fallthrough
-          default:
-            {
-              break;
-            }
-        }
-
-        for (const auto& playbookIpSourceRow : playbookIpSourceRows) {
-          nmco::Uuid playbookSourceId;
-          playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);
-          size_t playbookStage;
-          playbookIpSourceRow.at("playbook_stage").to(playbookStage);
-          std::string interfaceName;
-          playbookIpSourceRow.at("interface_name").to(interfaceName);
-          uint16_t vlan;
-          playbookIpSourceRow.at("vlan").to(vlan, static_cast<uint16_t>(0));
-          std::string macAddr;
-          playbookIpSourceRow.at("mac_addr").to(macAddr);
-          std::string ipAddr;
-          playbookIpSourceRow.at("ip_addr").to(ipAddr);
-          std::string rtrIpAddr;
-          playbookIpSourceRow.at("rtr_ip_addr").to(rtrIpAddr);
-          std::string description;
-          playbookIpSourceRow.at("description").to(description);
-          int addrFamily;
-          playbookIpSourceRow.at("addr_family").to(addrFamily);
-
-          // Create the source location for testing.
-          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-            .playbookSourceId = playbookSourceId;
-          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-            .description = description;
-          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-            .addrFamily = addrFamily;
-
-          if (opts.exists("inter-network") && !rtrIpAddr.empty()) {
-            // Add any routers for inter-network tests from this location.
-            playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-              .ipRouters.insert(rtrIpAddr);
-          }
-        }
+    void
+    validateEnabledTests()
+    {
+      // Handle inclusion/exclusion of tests
+      auto stages {opts.getValueAs<std::vector<size_t>>("stage")};
+      if (!stages.empty()) {
+        enabledStages = std::set(stages.begin(), stages.end());
       }
-
-
-      for (const auto& xStage : playbook) {
-        size_t const playbookStage {std::get<0>(xStage)};
-
-        if (!enabledStages.empty() && !enabledStages.count(playbookStage)) {
-          continue;
-        }
-
-        if (true) {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << "#### Playbook: Stage " << playbookStage << " ####"
-                   << std::endl;
-        }
-
-        for (const auto& xIface : std::get<1>(xStage)) {
-          std::string const& physIfaceName {std::get<0>(xIface)};
-
-          LOG_INFO << "# Disconnect target(s), if necessary, and connect "
-                   << physIfaceName << "." << std::endl
-                   << "# This interface will cycle through settings:"
-                   << std::endl;
-
-          for (const auto& xVlan : std::get<1>(xIface)) {
-            uint16_t const vlan {std::get<0>(xVlan)};
-            for (const auto& xMacAddr : std::get<1>(xVlan)) {
-              std::string const& macAddr {std::get<0>(xMacAddr)};
-              for (const auto& xIpAddr : std::get<1>(xMacAddr)) {
-                std::string const& ipAddr {std::get<0>(xIpAddr)};
-                SourceConfig const& srcConf {std::get<1>(xIpAddr)};
-                std::string const& description {srcConf.description};
-                LOG_INFO << "#\tVLAN: " << vlan
-                         << ", MAC: " << macAddr
-                         << ", IP: " << ipAddr
-                         << ", Desc: " << description
-                         << std::endl;
-                if (srcConf.ipRouters.size()) {
-                  LOG_INFO << "#\t\tRouters:";
-                  for (const auto& rtrIpAddr : srcConf.ipRouters) {
-                    LOG_INFO << " " << rtrIpAddr;
-                  }
-                  LOG_INFO << std::endl;
-                }
-              }
-            }
-          }
-          LOG_INFO << std::endl;
-        }
-
-        if (execute) {
-          std::string userInput;
-
-          // Sanity check, cycle all interfaces before aborting
-          for (const auto& stage : playbook) {
-            for (const auto& xIface : std::get<1>(stage)) {
-              std::string const& physIfaceName {std::get<0>(xIface)};
-
-              // Ensure interface is down
-              if (!ifaceIsDown(physIfaceName)) {
-                LOG_WARN << physIfaceName << " link not down" << std::endl;
-              }
-
-              // Ensure interface has no ipv4/6 address assigned
-              if (ifaceHasAddress(physIfaceName)) {
-                LOG_WARN << physIfaceName << " has an address" << std::endl;
-              }
-            }
-          }
-
-          while (!opts.exists("no-prompt")) {
-            LOG_INFO << "Enter 'Y' to continue or 'Q' to quit: ";
-            std::cin >> userInput;
-
-            if (("Y" == userInput) || ("y" == userInput) ||
-                ("Q" == userInput) || ("q" == userInput)) {
-              break;
-            }
-          }
-
-          if (("Q" == userInput) || ("q" == userInput)) {
-            break;
-          }
-        }
-
-        std::map<std::string, std::thread> physIfaceThreads;
-
-        for (const auto& xIface : std::get<1>(xStage)) {
-          std::string const& physIfaceName {std::get<0>(xIface)};
-
-          // Start a thread to manage the configuration of this interface
-          physIfaceThreads[physIfaceName] =
-            std::thread(&Tool::physIfaceThreadActions, this,
-                   playbookScope, playbookStage,
-                   physIfaceName, std::get<1>(xIface));
-
-          switch (playbookScope) {
-            case PlaybookScope::INTRA_NETWORK:
-              {
-                // Run interface threads in parallel
-                break;
-              }
-            case PlaybookScope::INTER_NETWORK:  // intentional fallthrough
-            case PlaybookScope::UNKNOWN:  // intentional fallthrough
-            default:
-              {
-                // Run interface threads serially (only one interface at a time)
-
-                // Wait for thread to complete before starting next thread.
-                physIfaceThreads[physIfaceName].join();
-                physIfaceThreads.erase(physIfaceName);
-
-                break;
-              }
-          }
-        }
-
-        // Wait for interface threads (if any) to finish
-        for (auto& ifaceThread : physIfaceThreads) {
-          std::get<1>(ifaceThread).join();
-        }
-        physIfaceThreads.clear();
-
-        if (true) {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << std::endl;
-        }
+      auto phases {opts.getValueAs<std::vector<size_t>>("phase")};
+      if (!phases.empty()) {
+        enabledPhases = std::set(phases.begin(), phases.end());
       }
-
-      return nmcu::Exit::SUCCESS;
+      auto tests {opts.getValueAs<std::vector<size_t>>("exclude-command")};
+      if (!tests.empty()) {
+        cmdRunner.disableCommands(std::set(tests.begin(), tests.end()));
+      }
     }
 
     void
@@ -580,6 +588,8 @@ class Tool : public nmdt::AbstractDatastoreTool
       roeExcludedPath = oss.str();
 
       std::ostringstream dbPrefix;
+      // TODO verify this works
+      //dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
       dbPrefix << "psql -d " << opts.getValue("db-name") << " -A -t -c ";
 
       std::vector<std::string> commands;
@@ -642,6 +652,8 @@ class Tool : public nmdt::AbstractDatastoreTool
       respondingHostsPath = oss.str();
 
       std::ostringstream dbPrefix;
+      // TODO verify this works
+      //dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
       dbPrefix << "psql -d " << opts.getValue("db-name") << " -A -t -c ";
 
       std::vector<std::string> commands;
@@ -1130,7 +1142,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     void
     physIfaceThreadActions(PlaybookScope const playbookScope,
         size_t const playbookStage, std::string const& physIfaceName,
-        InterfaceConfig const& ifaceConfig)
+        InterfaceConfig const& ifaceConfigs)
     {
       // Bring up the physical interface only for:
       // - Passive network sniffing before sourcing any frames.
@@ -1140,7 +1152,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       { // Block scope needed for proper RAII
         // Change the MAC address if necessary.
         std::string const& srcMacAddr
-          {(ifaceConfig.begin()->second).begin()->first};
+          {(ifaceConfigs.begin()->second).begin()->first};
         nmpb::RaiiMacAddr raiiMacAddr {physIfaceName, srcMacAddr};
 
         // Bring up the physical interface.
@@ -1152,9 +1164,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         // Proceed with testing on VLANs.
         std::map<uint16_t, std::thread> vlanThreads;
 
-        for (const auto& xVlan : ifaceConfig) {
-          uint16_t const vlanId {std::get<0>(xVlan)};
-
+        for (const auto& [vlanId, vlanConfigs] : ifaceConfigs) {
           if (nmpb::VlanId::NONE == vlanId) {
             continue;
           }
@@ -1163,7 +1173,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           vlanThreads[vlanId] =
             std::thread(&Tool::vlanIfaceThreadActions, this,
                    playbookScope, playbookStage,
-                   physIfaceName, vlanId, std::get<1>(xVlan));
+                   physIfaceName, vlanId, vlanConfigs);
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
@@ -1187,8 +1197,8 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         // Wait for VLAN threads (if any) to finish.
-        for (auto& vlanThread : vlanThreads) {
-          std::get<1>(vlanThread).join();
+        for (auto& [_, vlanThread] : vlanThreads) {
+          vlanThread.join();
         }
         vlanThreads.clear();
 
@@ -1197,9 +1207,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       // Perform any direct testing with the physical interface (non-VLAN).
 
-      for (const auto& xVlan : ifaceConfig) {
-        uint16_t const vlanId {std::get<0>(xVlan)};
-
+      for (const auto& [vlanId, vlanConfigs] : ifaceConfigs) {
         if (nmpb::VlanId::NONE != vlanId) {
           continue;
         }
@@ -1208,7 +1216,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::thread vlanThread =
           std::thread(&Tool::vlanIfaceThreadActions, this,
                  playbookScope, playbookStage,
-                 physIfaceName, vlanId, std::get<1>(xVlan));
+                 physIfaceName, vlanId, vlanConfigs);
 
         vlanThread.join();
       }
@@ -1218,7 +1226,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     void
     vlanIfaceThreadActions(PlaybookScope const playbookScope,
         size_t const playbookStage, std::string const& physIfaceName,
-        uint16_t const vlan, VlanConfig const& vlanConfig)
+        uint16_t const vlan, VlanConfig const& vlanConfigs)
     {
       nmpb::RaiiVlan raiiVlan {physIfaceName, vlan};
       if (nmpb::VlanId::RESERVED <= vlan && nmpb::VlanId::NONE != vlan) {
@@ -1229,9 +1237,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       // Each named Linux interface can only have one MAC address,
       // so MAC addresses can't be parallelized and must be assigned serially.
 
-      for (const auto& xMacAddr : vlanConfig) {
-        std::string const& srcMacAddr {std::get<0>(xMacAddr)};
-
+      for (const auto& [srcMacAddr, ipConfigs] : vlanConfigs) {
         // Change the VLAN MAC address if necessary.
         nmpb::RaiiMacAddr raiiMacAddr {linkName, srcMacAddr};
 
@@ -1243,10 +1249,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           captureTraffic(linkName, MIN_CAPTURE_DURATION);
         }
 
-        for (const auto& xIpAddr : std::get<1>(xMacAddr)) {
-          std::string const& srcIpAddr {std::get<0>(xIpAddr)};
-          SourceConfig const& srcConf {std::get<1>(xIpAddr)};
-
+        for (const auto& [srcIpAddr, srcConf] : ipConfigs) {
           // do IP addr specific stuff
           family = srcConf.addrFamily;
           familyStr = std::to_string(family);
