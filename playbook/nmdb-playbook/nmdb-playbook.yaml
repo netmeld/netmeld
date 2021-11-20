@@ -2,13 +2,13 @@ runtime-options:
   ignore-scan-iface-state-change: false
 
 intra-network:
-  stages:
+  phases:
     # Phase options available
     #   - {{linkName}} -- the interface the play is currently using
     #   - {{ipNet}} -- the IP subnet of the target network
     #   - {{ipNetBcast}} -- the broadcast IP of the target network
     #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
-    phase1:
+    - plays:
       - name: Initial Host Discovery
         ipv4:
           - title: network broadcast ping
@@ -47,7 +47,7 @@ intra-network:
       - name: Host Discovery and IP Protocol Scans
         ipv4:
           - title: nmap IPv4 ARP host discovery
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -58,7 +58,7 @@ intra-network:
               - --excludefile {{roeExcludedPath}}
               - "{{ipNet}}"
           - title: nmap IPv4 IP protocol scan
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -96,13 +96,14 @@ intra-network:
     # Phase options available
     #   - {{linkName}} -- the interface the play is currently using
     #   - {{respondingHostsPath}} -- path to file containing IPs who
-    #     responded in prior phases
+    #     responded in prior phase
     #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
-    phase2:
+    - generateRespondingHosts: true
+      plays:
       - name: Port Scans (plus basic info gathering)
         ipv4:
           - title: nmap IPv4 TCP port scan
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -119,7 +120,7 @@ intra-network:
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
           - title: nmap IPv4 UDP port scan
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -173,7 +174,7 @@ intra-network:
       - name: Service Scans (most scripts enabled)
         ipv4:
           - title: nmap IPv4 service scan
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -201,18 +202,20 @@ intra-network:
               - -p `nmdb-export-port-list --tcp-all`
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
+    - plays:
+      - manual-tests: true
 
 inter-network:
-  stages:
+  phases:
     # Phase options available
     #   - {{linkName}} -- the interface the play is currently using
     #   - {{roeNetworksPath}} -- the IP subnet of the target network
     #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
-    phase1:
+    - plays:
       - name: Host Discovery and IP Protocol Scans
         ipv4:
           - title: nmap IPv4 ICMP host discovery
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -224,32 +227,35 @@ inter-network:
               - -iL {{roeNetworksPath}}
               - --excludefile {{roeExcludedPath}}
           - title: nmap IPv4 port discovery
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
               - -sn
               - -T4
-              - -PS
-                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
-                427,443,445,464,543-544,636,749-751,873,902,
-                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
-                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
-                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
-              - -PA
-                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
-                427,443,445,464,543-544,636,749-751,873,902,
-                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
-                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
-                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
-              - -PU
-                49,53,65-69,88,111,123,135-139,161-162,389,427,464,
-                500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,
-                2049,3268-3269,4174,5353-5355,49152-49169,65530-65535
+              - "-PS\
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
+                427,443,445,464,543-544,636,749-751,873,902,\
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
+                9000-9010,9443,10000-10010,10443,49152-49169,\
+                65530-65535"
+              - "-PA\
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
+                427,443,445,464,543-544,636,749-751,873,902,\
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
+                9000-9010,9443,10000-10010,10443,49152-49169,\
+                65530-65535"
+              - "-PU\
+                49,53,65-69,88,111,123,135-139,161-162,389,427,464,\
+                500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,\
+                2049,3268-3269,4174,5353-5355,49152-49169,\
+                65530-65535"
               - -iL {{roeNetworksPath}}
               - --excludefile {{roeExcludedPath}}
           - title: nmap IPv4 IP protocol scan
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -275,43 +281,49 @@ inter-network:
               - -e {{linkName}}
               - -sn
               - -T4
-              - -PS
-                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
-                427,443,445,464,543-544,636,749-751,873,902,
-                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
-                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
-                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
-              - -PA
-                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
-                427,443,445,464,543-544,636,749-751,873,902,
-                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
-                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
-                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
-              - -PU
-                49,53,65-69,88,111,123,135-139,161-162,389,427,464,
-                500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,
-                2049,3268-3269,4174,5353-5355,49152-49169,65530-65535
+              - "-PS\
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
+                427,443,445,464,543-544,636,749-751,873,902,\
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
+                9000-9010,9443,10000-10010,10443,49152-49169,\
+                65530-65535"
+              - "-PA\
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
+                427,443,445,464,543-544,636,749-751,873,902,\
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
+                9000-9010,9443,10000-10010,10443,49152-49169,\
+                65530-65535"
+              - "-PU\
+                49,53,65-69,88,111,123,135-139,161-162,389,427,464,\
+                500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,\
+                2049,3268-3269,4174,5353-5355,49152-49169,\
+                65530-65535"
               - -iL {{roeNetworksPath}}
               - --excludefile {{roeExcludedPath}}
-          - title: nmap IPv4 IP protocol scan
-            cmd: clw nmap -4
+          - title: nmap IPv6 IP protocol scan
+            cmd: clw nmap -6
             opts:
               - -n
               - -e {{linkName}}
               - -sO
               - -T4
+              - --script '(targets-ipv6-* or ipv6-node-info)'
+              - --script-args 'newtargets'
               - -iL {{roeNetworksPath}}
               - --excludefile {{roeExcludedPath}}
     # Phase options available
     #   - {{linkName}} -- the interface the play is currently using
     #   - {{respondingHostsPath}} -- path to file containing IPs who
-    #     responded in prior phases
+    #     responded in prior phase
     #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
-    phase2:
+    - generateRespondingHosts: true
+      plays:
       - name: Port Scans (plus basic info gathering)
         ipv4:
           - title: nmap IPv4 TCP port scan
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -328,7 +340,7 @@ inter-network:
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
           - title: nmap IPv4 UDP port scan
-            cmd: clw nmap -4
+            cmd: clw nmap
             opts:
               - -n
               - -e {{linkName}}
@@ -379,3 +391,5 @@ inter-network:
               - -p `nmdb-export-port-list --udp`
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
+    - plays:
+      - manual-tests: true

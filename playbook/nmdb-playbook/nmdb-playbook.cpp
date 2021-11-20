@@ -835,219 +835,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
     }
 
-    // INTRA-NETWORK
-    void
-    intraNetworkHostDiscovery(std::string const& linkName,
-        std::string const& ipNet, std::string const& ipNetBcast)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      YAML::Node yConfig {YAML::LoadFile(playsFile)};
-      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
-      const auto& playsIntraStages {yConfig["intra-network"]["stages"]["phase1"]};
-      for (const auto& yStage : playsIntraStages) {
-        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
-        const auto& stageName {yStage["name"].as<std::string>()};
-        for (const auto& play : yStage[ipTarget]) {
-        LOG_DEBUG << YAML::Dump(play) << std::endl;
-          const auto& playTitle {play["title"].as<std::string>()};
-          const auto& playCmd   {play["cmd"].as<std::string>()};
-          std::string allOpts {""};
-          std::regex reLinkName(R"(\{\{linkName\}\})");
-          std::regex reIpNet(R"(\{\{ipNet\}\})");
-          std::regex reIpNetBcast(R"(\{\{ipNetBcast\}\})");
-          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
-          for (const auto& yOpt : play["opts"]) {
-            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
-            auto opt {yOpt.as<std::string>()};
-            opt = std::regex_replace(opt, reLinkName, linkName);
-            opt = std::regex_replace(opt, reIpNet, ipNet);
-            opt = std::regex_replace(opt, reIpNetBcast, ipNetBcast);
-            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
-            if (!allOpts.ends_with(" ")) {
-              allOpts.append(" ");
-            }
-            allOpts.append(opt);
-          }
-          cmdTitle.str(std::string());
-          command.str(std::string());
-          cmdTitle << commandTitlePrefix << " " << playTitle;
-          command << playCmd << allOpts;
-          commands.emplace_back(cmdTitle.str(), command.str());
-        }
-          
-        {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << std::endl
-                   << "## " << stageName << std::endl;
-          for (const auto& cmd : commands) {
-            std::vector<std::tuple<std::string, std::string>> cmds;
-            cmds.emplace_back(cmd);
-            cmdRunner.threadExec(cmds);
-          }
-          commands.clear();
-        }
-      }
-    }
-
-    void
-    intraNetworkPortScans(std::string const& linkName)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      YAML::Node yConfig {YAML::LoadFile(playsFile)};
-      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
-      const auto& playsIntraStages {yConfig["intra-network"]["stages"]["phase2"]};
-      for (const auto& yStage : playsIntraStages) {
-        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
-        const auto& stageName {yStage["name"].as<std::string>()};
-        for (const auto& play : yStage[ipTarget]) {
-        LOG_DEBUG << YAML::Dump(play) << std::endl;
-          const auto& playTitle {play["title"].as<std::string>()};
-          const auto& playCmd   {play["cmd"].as<std::string>()};
-          std::string allOpts {""};
-          std::regex reLinkName(R"(\{\{linkName\}\})");
-          std::regex reRespondingHostsPath(R"(\{\{respondingHostsPath\}\})");
-          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
-          for (const auto& yOpt : play["opts"]) {
-            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
-            auto opt {yOpt.as<std::string>()};
-            opt = std::regex_replace(opt, reLinkName, linkName);
-            opt = std::regex_replace(opt, reRespondingHostsPath, respondingHostsPath);
-            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
-            if (!allOpts.ends_with(" ")) {
-              allOpts.append(" ");
-            }
-            allOpts.append(opt);
-          }
-          cmdTitle.str(std::string());
-          command.str(std::string());
-          cmdTitle << commandTitlePrefix << " " << playTitle;
-          command << playCmd << allOpts;
-          commands.emplace_back(cmdTitle.str(), command.str());
-        }
-          
-        {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << std::endl
-                   << "## " << stageName << std::endl;
-          for (const auto& cmd : commands) {
-            std::vector<std::tuple<std::string, std::string>> cmds;
-            cmds.emplace_back(cmd);
-            cmdRunner.threadExec(cmds);
-          }
-          commands.clear();
-        }
-      }
-    }
-
-    // INTER-NETWORK
-    void
-    interNetworkHostDiscovery(std::string const& linkName)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      YAML::Node yConfig {YAML::LoadFile(playsFile)};
-      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
-      const auto& playsIntraStages {yConfig["inter-network"]["stages"]["phase1"]};
-      for (const auto& yStage : playsIntraStages) {
-        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
-        const auto& stageName {yStage["name"].as<std::string>()};
-        for (const auto& play : yStage[ipTarget]) {
-        LOG_DEBUG << YAML::Dump(play) << std::endl;
-          const auto& playTitle {play["title"].as<std::string>()};
-          const auto& playCmd   {play["cmd"].as<std::string>()};
-          std::string allOpts {""};
-          std::regex reLinkName(R"(\{\{linkName\}\})");
-          std::regex reRoeNetworksPath(R"(\{\{roeNetworksPath\}\})");
-          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
-          for (const auto& yOpt : play["opts"]) {
-            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
-            auto opt {yOpt.as<std::string>()};
-            opt = std::regex_replace(opt, reLinkName, linkName);
-            opt = std::regex_replace(opt, reRoeNetworksPath, roeNetworksPath);
-            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
-            if (!allOpts.ends_with(" ")) {
-              allOpts.append(" ");
-            }
-            allOpts.append(opt);
-          }
-          cmdTitle.str(std::string());
-          command.str(std::string());
-          cmdTitle << commandTitlePrefix << " " << playTitle;
-          command << playCmd << allOpts;
-          commands.emplace_back(cmdTitle.str(), command.str());
-        }
-          
-        {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << std::endl
-                   << "## " << stageName << std::endl;
-          for (const auto& cmd : commands) {
-            std::vector<std::tuple<std::string, std::string>> cmds;
-            cmds.emplace_back(cmd);
-            cmdRunner.threadExec(cmds);
-          }
-          commands.clear();
-        }
-      }
-    }
-
-    void
-    interNetworkPortScans(std::string const& linkName)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      YAML::Node yConfig {YAML::LoadFile(playsFile)};
-      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
-      const auto& playsIntraStages {yConfig["inter-network"]["stages"]["phase2"]};
-      for (const auto& yStage : playsIntraStages) {
-        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
-        const auto& stageName {yStage["name"].as<std::string>()};
-        for (const auto& play : yStage[ipTarget]) {
-        LOG_DEBUG << YAML::Dump(play) << std::endl;
-          const auto& playTitle {play["title"].as<std::string>()};
-          const auto& playCmd   {play["cmd"].as<std::string>()};
-          std::string allOpts {""};
-          std::regex reLinkName(R"(\{\{linkName\}\})");
-          std::regex reRespondingHostsPath(R"(\{\{respondingHostsPath\}\})");
-          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
-          for (const auto& yOpt : play["opts"]) {
-            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
-            auto opt {yOpt.as<std::string>()};
-            opt = std::regex_replace(opt, reLinkName, linkName);
-            opt = std::regex_replace(opt, reRespondingHostsPath, respondingHostsPath);
-            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
-            if (!allOpts.ends_with(" ")) {
-              allOpts.append(" ");
-            }
-            allOpts.append(opt);
-          }
-          cmdTitle.str(std::string());
-          command.str(std::string());
-          cmdTitle << commandTitlePrefix << " " << playTitle;
-          command << playCmd << allOpts;
-          commands.emplace_back(cmdTitle.str(), command.str());
-        }
-          
-        {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << std::endl
-                   << "## " << stageName << std::endl;
-          for (const auto& cmd : commands) {
-            std::vector<std::tuple<std::string, std::string>> cmds;
-            cmds.emplace_back(cmd);
-            cmdRunner.threadExec(cmds);
-          }
-          commands.clear();
-        }
-      }
-    }
-
     void
     physIfaceThreadActions(PlaybookScope const playbookScope,
         size_t const playbookStage, std::string const& physIfaceName,
@@ -1237,50 +1024,123 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
       generateTargetFiles(sessionId.toString(), false);
-      for (size_t phase {1}; phase <= maxPhases; phase++) {
-        if (!enabledPhases.empty() && !enabledPhases.count(phase)) {
-          continue;
-        }
 
-        LOG_INFO << std::endl << "### Phase " << phase << std::endl;
-        if (   execute
-            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
-        {
-          LOG_WARN << "Disabling this phase execution" << std::endl;
-          cmdRunner.setExecute(false);
-        }
-        switch (phase) {
-          case 1:
-            {
-              intraNetworkHostDiscovery(linkName, ipNet, ipNetBcast);
-              break;
-            }
-          case 2:
-            {
-              generateRespondingHosts(sessionId.toString(), ipNet);
-              intraNetworkPortScans(linkName);
-              break;
-            }
-          case 3:
-            {
-              manualTesting(linkName, srcIpAddr);
-              break;
-            }
-          default:
-            {
-              break;
-            }
-        }
-
-        cmdRunner.setExecute(execute); // update in case of alternate logic
-        LOG_INFO << std::endl << "### End of phase " << phase << std::endl;
-      }
+      networkPhases(db, sessionId, playbookSourceId, srcIpAddr,
+                    linkName, ipNet, ipNetBcast, "intra-network");
 
       cmdRunner.setExecute(execute); // update in case of alternate logic
 
       {
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl;
+      }
+    }
+
+    template<typename T>
+    bool
+    yIs(const YAML::Node& _node, const std::string& _key, T _value)
+    {
+      return (_node[_key].IsDefined())
+          && (_node[_key].as<T>() == _value)
+          ;
+    }
+
+    void
+    networkPhases(
+      pqxx::connection& db,
+      const nmco::Uuid& playbookSourceId,
+      const nmco::Uuid& sessionId,
+      const std::string& srcIpAddr,
+      const std::string& linkName,
+      const std::string& ipNet,
+      const std::string& ipNetBcast,
+      const std::string& target
+    )
+    {
+      std::regex reLinkName(R"(\{\{linkName\}\})");
+      std::regex reIpNet(R"(\{\{ipNet\}\})");
+      std::regex reIpNetBcast(R"(\{\{ipNetBcast\}\})");
+      std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
+      std::regex reRespondingHostsPath(R"(\{\{respondingHostsPath\}\})");
+      std::regex reRoeNetworksPath(R"(\{\{roeNetworksPath\}\})");
+
+      std::vector<std::tuple<std::string, std::string>> commands;
+      std::ostringstream cmdTitle, command;
+
+      YAML::Node yConfig {YAML::LoadFile(playsFile)};
+      //LOG_DEBUG << "Config:\n" << YAML::Dump(yConfig) << std::endl;
+      const auto& yPhases {yConfig[target]["phases"]};
+      LOG_DEBUG << "Phases:\n" << YAML::Dump(yPhases) << std::endl;
+      size_t phaseId {1};
+      for (const auto& yPhase : yPhases) {
+        LOG_DEBUG << "Phase:\n" << YAML::Dump(yPhase) << std::endl;
+        if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
+          continue;
+        }
+        LOG_INFO << std::endl << "### Phase " << phaseId << std::endl;
+        if (   execute
+            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
+        {
+          LOG_WARN << "Disabling this phase execution" << std::endl;
+          cmdRunner.setExecute(false);
+        }
+
+        if (yIs<bool>(yPhase, "generateRespondingHosts", true)) {
+          generateRespondingHosts(sessionId.toString(), ipNet);
+        }
+
+        for (const auto& yPlays : yPhase["plays"]) {
+          LOG_DEBUG << "Plays:\n" << YAML::Dump(yPlays) << std::endl;
+          if (yIs<bool>(yPlays, "manual-tests", true)) {
+            manualTesting(linkName, srcIpAddr);
+            continue;
+          }
+
+          const auto& playName {yPlays["name"].as<std::string>()}; 
+          std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+          for (const auto& yPlay : yPlays[ipTarget]) {
+            LOG_DEBUG << "Play:\n" << YAML::Dump(yPlay) << std::endl;
+            const auto& playTitle {yPlay["title"].as<std::string>()};
+            const auto& playCmd   {yPlay["cmd"].as<std::string>()};
+            std::string allOpts {""};
+            for (const auto& yOpt : yPlay["opts"]) {
+              LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
+              auto opt {yOpt.as<std::string>()};
+              opt = std::regex_replace(opt, reLinkName, linkName);
+              opt = std::regex_replace(opt, reIpNet, ipNet);
+              opt = std::regex_replace(opt, reIpNetBcast, ipNetBcast);
+              opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
+              opt = std::regex_replace(opt, reRespondingHostsPath, respondingHostsPath);
+              opt = std::regex_replace(opt, reRoeNetworksPath, roeNetworksPath);
+              if (!allOpts.ends_with(" ")) {
+                allOpts.append(" ");
+              }
+              allOpts.append(opt);
+            }
+            cmdTitle.str(std::string());
+            command.str(std::string());
+            cmdTitle << commandTitlePrefix << " " << playTitle;
+            command << playCmd << allOpts;
+            commands.emplace_back(cmdTitle.str(), command.str());
+          }
+          
+          {
+            std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+            LOG_INFO << std::endl
+                     << "## " << playName << std::endl;
+            for (const auto& cmd : commands) {
+              std::vector<std::tuple<std::string, std::string>> cmds;
+              cmds.emplace_back(cmd);
+              cmdRunner.threadExec(cmds);
+            }
+            commands.clear();
+          }
+        }
+
+        cmdRunner.setExecute(execute); // update in case of alternate logic
+        LOG_INFO << std::endl << "### End of phase " << phaseId << std::endl;
+
+        ++phaseId;
       }
     }
 
@@ -1313,44 +1173,8 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
       generateTargetFiles(sessionId.toString(), true);
-      for (size_t phase {1}; phase <= maxPhases; phase++) {
-        if (!enabledPhases.empty() && !enabledPhases.count(phase)) {
-          continue;
-        }
-
-        LOG_INFO << std::endl << "### Phase " << phase << std::endl;
-        if (   execute
-            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
-        {
-          LOG_WARN << "Disabling this phase execution" << std::endl;
-          cmdRunner.setExecute(false);
-        }
-        switch (phase) {
-          case 1:
-            {
-              interNetworkHostDiscovery(linkName);
-              break;
-            }
-          case 2:
-            {
-              generateRespondingHosts(sessionId.toString());
-              interNetworkPortScans(linkName);
-              break;
-            }
-          case 3:
-            {
-              manualTesting(linkName, srcIpAddr);
-              break;
-            }
-          default:
-            {
-              break;
-            }
-        }
-
-        cmdRunner.setExecute(execute); // update in case of alternate logic
-        LOG_INFO << std::endl << "### End of phase " << phase << std::endl;
-      }
+      networkPhases(db, sessionId, playbookSourceId, srcIpAddr,
+                    linkName, "", "", "inter-network");
 
       cmdRunner.setExecute(execute); // update in case of alternate logic
 
