@@ -24,6 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <regex>
+#include <yaml-cpp/yaml.h>
 
 #include <netmeld/core/objects/Uuid.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
@@ -31,6 +33,7 @@
 #include <netmeld/datastore/utils/QueriesCommon.hpp>
 
 #include <netmeld/playbook/utils/QueriesPlaybook.hpp>
+
 
 #include "CommandRunnerSingleton.hpp"
 #include "RaiiIpAddr.hpp"
@@ -101,6 +104,8 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     nmpbu::PlaybookQueries pbq;
     std::string dbConnectString;
+
+    std::string playsFile;
 
     bool execute  {false};
     bool headless {false};
@@ -223,88 +228,25 @@ class Tool : public nmdt::AbstractDatastoreTool
             "Excluded specified, space separated, command ID(s); This can"
             " break expected logic in some cases")
           );
-      
       const auto& queryFileLoc {nmfm.getConfPath()/"queries-playbook.yaml"};
       opts.addAdvancedOption("query-file", std::make_tuple(
             "query-file",
             po::value<std::string>()->required()->default_value(queryFileLoc),
             "Location of queries file for playbook runs")
           );
-
-      const auto& confFileLoc {nmfm.getConfPath()/"nmdb-playbook.conf"};
-      opts.addAdvancedOption("config-file", std::make_tuple(
-            "config-file",
-            po::value<std::string>()->required()->default_value(confFileLoc),
-            "Location of config file for non-command line options")
+      const auto& playsFileLoc {nmfm.getConfPath()/"plays-playbook.yaml"};
+      opts.addAdvancedOption("plays-file", std::make_tuple(
+            "plays-file",
+            po::value<std::string>()->required()->default_value(playsFileLoc),
+            "Location of plays file for stages, phases, and commands")
           );
-      opts.setConfFile(confFileLoc);
 
+      // TODO add to yaml or fix via opts
       opts.addConfFileOption("ignore-scan-iface-state-change", std::make_tuple(
             "ignore-scan-iface-state-change",
             po::bool_switch()->required()->default_value(false),
             "")
           );
-
-      opts.addConfFileOption("nmap-ipv4-host-discovery-opts", std::make_tuple(
-            "nmap-ipv4-host-discovery-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv6-host-discovery-opts", std::make_tuple(
-            "nmap-ipv6-host-discovery-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv4-protocol-scan-opts", std::make_tuple(
-            "nmap-ipv4-protocol-scan-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv6-protocol-scan-opts", std::make_tuple(
-            "nmap-ipv6-protocol-scan-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv4-port-scan-opts", std::make_tuple(
-          "nmap-ipv4-port-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ipv6-port-scan-opts", std::make_tuple(
-          "nmap-ipv6-port-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ipv4-service-scan-opts", std::make_tuple(
-          "nmap-ipv4-service-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ipv6-service-scan-opts", std::make_tuple(
-          "nmap-ipv6-service-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ps-ports", std::make_tuple(
-          "nmap-ps-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-pu-ports", std::make_tuple(
-          "nmap-pu-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-tcp-ports", std::make_tuple(
-          "nmap-tcp-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-udp-ports", std::make_tuple(
-          "nmap-udp-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
       }
 
     int
@@ -329,6 +271,9 @@ class Tool : public nmdt::AbstractDatastoreTool
         sfs::create_directories(saveDir);
       }
       pbDir = sfs::canonical(saveDir).string();
+
+      sfs::path const playsPath = opts.getValue("plays-file");
+      playsFile = sfs::canonical(playsPath).string();
 
       Playbook playbook;
 
@@ -898,89 +843,51 @@ class Tool : public nmdt::AbstractDatastoreTool
       std::vector<std::tuple<std::string, std::string>> commands;
       std::ostringstream cmdTitle, command;
 
-      // IP pings
-      if (4 == family) {
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " network broadcast ping";
-        command << "clw ping -4 -n -I " << linkName
-                << " -L -c 4 -b " << ipNetBcast;
-        commands.emplace_back(cmdTitle.str(), command.str());
-
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " global broadcast ping";
-        command << "clw ping -4 -n -I " << linkName
-                << " -L -c 4 -b 255.255.255.255";
-        commands.emplace_back(cmdTitle.str(), command.str());
-      } else {
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " all-nodes multicast ping";
-        command << "clw ping -6 -n -I " << linkName
-                << " -L -c 4 -b ff02::1";
-        commands.emplace_back(cmdTitle.str(), command.str());
-
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " all-routers multicast ping";
-        command << "clw ping -6 -n -I " << linkName
-                << " -L -c 4 -b ff02::2";
-        commands.emplace_back(cmdTitle.str(), command.str());
-      }
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Initial Host Discovery" << std::endl;
-        for (const auto& cmd : commands) {
-          std::vector<std::tuple<std::string, std::string>> cmds;
-          cmds.emplace_back(cmd);
-          cmdRunner.threadExec(cmds);
+      YAML::Node yConfig {YAML::LoadFile(playsFile)};
+      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+      const auto& playsIntraStages {yConfig["intra-network"]["stages"]["phase1"]};
+      for (const auto& yStage : playsIntraStages) {
+        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
+        const auto& stageName {yStage["name"].as<std::string>()};
+        for (const auto& play : yStage[ipTarget]) {
+        LOG_DEBUG << YAML::Dump(play) << std::endl;
+          const auto& playTitle {play["title"].as<std::string>()};
+          const auto& playCmd   {play["cmd"].as<std::string>()};
+          std::string allOpts {""};
+          std::regex reLinkName(R"(\{\{linkName\}\})");
+          std::regex reIpNet(R"(\{\{ipNet\}\})");
+          std::regex reIpNetBcast(R"(\{\{ipNetBcast\}\})");
+          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
+          for (const auto& yOpt : play["opts"]) {
+            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
+            auto opt {yOpt.as<std::string>()};
+            opt = std::regex_replace(opt, reLinkName, linkName);
+            opt = std::regex_replace(opt, reIpNet, ipNet);
+            opt = std::regex_replace(opt, reIpNetBcast, ipNetBcast);
+            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
+            if (!allOpts.ends_with(" ")) {
+              allOpts.append(" ");
+            }
+            allOpts.append(opt);
+          }
+          cmdTitle.str(std::string());
+          command.str(std::string());
+          cmdTitle << commandTitlePrefix << " " << playTitle;
+          command << playCmd << allOpts;
+          commands.emplace_back(cmdTitle.str(), command.str());
         }
-        commands.clear();
-      }
-
-      // Nmap host discovery (ARP/NDP)
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " ARP host discovery";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sn -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-host-discovery-opts")
-              << " --script '(ip-forwarding)'"
-              ;
-      if (6 == family) {
-        command << " or (targets-ipv6-* or ipv6-node-info)'"
-                << " --script-args 'newtargets'"
-                ;
-        // TODO 27NOV18 We may want to update --script-args for
-        //              targets-ipv6-map4to6, targets-ipv6-wordlist
-        //              so they work
-      }
-      command << " --excludefile " << roeExcludedPath
-              << " " << ipNet;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap IP protocol scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               <<" IP protocol scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sO -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-protocol-scan-opts")
-              << " --excludefile " << roeExcludedPath
-              << " " << ipNet;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Host Discovery and IP Protocol Scans" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
+          
+        {
+          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+          LOG_INFO << std::endl
+                   << "## " << stageName << std::endl;
+          for (const auto& cmd : commands) {
+            std::vector<std::tuple<std::string, std::string>> cmds;
+            cmds.emplace_back(cmd);
+            cmdRunner.threadExec(cmds);
+          }
+          commands.clear();
+        }
       }
     }
 
@@ -990,61 +897,50 @@ class Tool : public nmdt::AbstractDatastoreTool
       std::vector<std::tuple<std::string, std::string>> commands;
       std::ostringstream cmdTitle, command;
 
-      // Nmap TCP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " TCP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sS -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-tcp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap UDP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " UDP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sU -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-udp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Port Scans (plus basic info gathering)" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
+      YAML::Node yConfig {YAML::LoadFile(playsFile)};
+      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+      const auto& playsIntraStages {yConfig["intra-network"]["stages"]["phase2"]};
+      for (const auto& yStage : playsIntraStages) {
+        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
+        const auto& stageName {yStage["name"].as<std::string>()};
+        for (const auto& play : yStage[ipTarget]) {
+        LOG_DEBUG << YAML::Dump(play) << std::endl;
+          const auto& playTitle {play["title"].as<std::string>()};
+          const auto& playCmd   {play["cmd"].as<std::string>()};
+          std::string allOpts {""};
+          std::regex reLinkName(R"(\{\{linkName\}\})");
+          std::regex reRespondingHostsPath(R"(\{\{respondingHostsPath\}\})");
+          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
+          for (const auto& yOpt : play["opts"]) {
+            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
+            auto opt {yOpt.as<std::string>()};
+            opt = std::regex_replace(opt, reLinkName, linkName);
+            opt = std::regex_replace(opt, reRespondingHostsPath, respondingHostsPath);
+            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
+            if (!allOpts.ends_with(" ")) {
+              allOpts.append(" ");
+            }
+            allOpts.append(opt);
+          }
+          cmdTitle.str(std::string());
+          command.str(std::string());
+          cmdTitle << commandTitlePrefix << " " << playTitle;
+          command << playCmd << allOpts;
+          commands.emplace_back(cmdTitle.str(), command.str());
+        }
+          
+        {
+          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+          LOG_INFO << std::endl
+                   << "## " << stageName << std::endl;
+          for (const auto& cmd : commands) {
+            std::vector<std::tuple<std::string, std::string>> cmds;
+            cmds.emplace_back(cmd);
+            cmdRunner.threadExec(cmds);
+          }
+          commands.clear();
+        }
       }
-
-      // Nmap service scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " service scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sS -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-service-scan-opts")
-              << " -p " << opts.getValue("nmap-tcp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Service Scans (most scripts enabled)" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
-      }
-
     }
 
     // INTER-NETWORK
@@ -1054,57 +950,49 @@ class Tool : public nmdt::AbstractDatastoreTool
       std::vector<std::tuple<std::string, std::string>> commands;
       std::ostringstream cmdTitle, command;
 
-      // Nmap ICMP host discovery
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " ICMP host discovery";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sn "
-                << opts.getValue("nmap-ipv"+familyStr+"-host-discovery-opts")
-              << " -PE"
-              ;
-      if (4 == family) {
-        // ICMP Timestamp and Address Mask pings not valid for IPv6
-        command << " -PP -PM";
-      }
-      command << " -iL " << roeNetworksPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap port discovery
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " port discovery";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sn "
-                << opts.getValue("nmap-ipv"+familyStr+"-host-discovery-opts")
-              << " -PS" << opts.getValue("nmap-ps-ports")
-              << " -PA" << opts.getValue("nmap-ps-ports")
-              << " -PU" << opts.getValue("nmap-pu-ports")
-              << " -iL " << roeNetworksPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap protocol scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " IP protocol scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sO "
-                << opts.getValue("nmap-ipv"+familyStr+"-protocol-scan-opts")
-              << " -iL " << roeNetworksPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Host Discovery and IP Protocol Scans" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
+      YAML::Node yConfig {YAML::LoadFile(playsFile)};
+      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+      const auto& playsIntraStages {yConfig["inter-network"]["stages"]["phase1"]};
+      for (const auto& yStage : playsIntraStages) {
+        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
+        const auto& stageName {yStage["name"].as<std::string>()};
+        for (const auto& play : yStage[ipTarget]) {
+        LOG_DEBUG << YAML::Dump(play) << std::endl;
+          const auto& playTitle {play["title"].as<std::string>()};
+          const auto& playCmd   {play["cmd"].as<std::string>()};
+          std::string allOpts {""};
+          std::regex reLinkName(R"(\{\{linkName\}\})");
+          std::regex reRoeNetworksPath(R"(\{\{roeNetworksPath\}\})");
+          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
+          for (const auto& yOpt : play["opts"]) {
+            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
+            auto opt {yOpt.as<std::string>()};
+            opt = std::regex_replace(opt, reLinkName, linkName);
+            opt = std::regex_replace(opt, reRoeNetworksPath, roeNetworksPath);
+            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
+            if (!allOpts.ends_with(" ")) {
+              allOpts.append(" ");
+            }
+            allOpts.append(opt);
+          }
+          cmdTitle.str(std::string());
+          command.str(std::string());
+          cmdTitle << commandTitlePrefix << " " << playTitle;
+          command << playCmd << allOpts;
+          commands.emplace_back(cmdTitle.str(), command.str());
+        }
+          
+        {
+          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+          LOG_INFO << std::endl
+                   << "## " << stageName << std::endl;
+          for (const auto& cmd : commands) {
+            std::vector<std::tuple<std::string, std::string>> cmds;
+            cmds.emplace_back(cmd);
+            cmdRunner.threadExec(cmds);
+          }
+          commands.clear();
+        }
       }
     }
 
@@ -1114,38 +1002,49 @@ class Tool : public nmdt::AbstractDatastoreTool
       std::vector<std::tuple<std::string, std::string>> commands;
       std::ostringstream cmdTitle, command;
 
-      // Nmap TCP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " TCP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -Pn -sS "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-tcp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap UDP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " UDP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -Pn -sU "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-udp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Port Scans (plus basic info gathering)" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
+      YAML::Node yConfig {YAML::LoadFile(playsFile)};
+      std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+      const auto& playsIntraStages {yConfig["inter-network"]["stages"]["phase2"]};
+      for (const auto& yStage : playsIntraStages) {
+        LOG_DEBUG << YAML::Dump(yStage) << std::endl;
+        const auto& stageName {yStage["name"].as<std::string>()};
+        for (const auto& play : yStage[ipTarget]) {
+        LOG_DEBUG << YAML::Dump(play) << std::endl;
+          const auto& playTitle {play["title"].as<std::string>()};
+          const auto& playCmd   {play["cmd"].as<std::string>()};
+          std::string allOpts {""};
+          std::regex reLinkName(R"(\{\{linkName\}\})");
+          std::regex reRespondingHostsPath(R"(\{\{respondingHostsPath\}\})");
+          std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
+          for (const auto& yOpt : play["opts"]) {
+            LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
+            auto opt {yOpt.as<std::string>()};
+            opt = std::regex_replace(opt, reLinkName, linkName);
+            opt = std::regex_replace(opt, reRespondingHostsPath, respondingHostsPath);
+            opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
+            if (!allOpts.ends_with(" ")) {
+              allOpts.append(" ");
+            }
+            allOpts.append(opt);
+          }
+          cmdTitle.str(std::string());
+          command.str(std::string());
+          cmdTitle << commandTitlePrefix << " " << playTitle;
+          command << playCmd << allOpts;
+          commands.emplace_back(cmdTitle.str(), command.str());
+        }
+          
+        {
+          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+          LOG_INFO << std::endl
+                   << "## " << stageName << std::endl;
+          for (const auto& cmd : commands) {
+            std::vector<std::tuple<std::string, std::string>> cmds;
+            cmds.emplace_back(cmd);
+            cmdRunner.threadExec(cmds);
+          }
+          commands.clear();
+        }
       }
     }
 

@@ -1,0 +1,381 @@
+runtime-options:
+  ignore-scan-iface-state-change: false
+
+intra-network:
+  stages:
+    # Phase options available
+    #   - {{linkName}} -- the interface the play is currently using
+    #   - {{ipNet}} -- the IP subnet of the target network
+    #   - {{ipNetBcast}} -- the broadcast IP of the target network
+    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
+    phase1:
+      - name: Initial Host Discovery
+        ipv4:
+          - title: network broadcast ping
+            cmd: clw ping -4
+            opts:
+              - -n
+              - -I {{linkName}}
+              - -L
+              - -c 4
+              - -b {{ipNetBcast}}
+          - title: global broadcast ping
+            cmd: clw ping -4
+            opts:
+              - -n
+              - -I {{linkName}}
+              - -L
+              - -c 4
+              - -b 255.255.255.255
+        ipv6:
+          - title: all-nodes multicast ping
+            cmd: clw ping -6
+            opts:
+              - -n
+              - -I {{linkName}}
+              - -L
+              - -c 4
+              - -b ff02::1
+          - title: all-routers multicast ping
+            cmd: clw ping -6
+            opts:
+              - -n
+              - -I {{linkName}}
+              - -L
+              - -c 4
+              - -b ff02::2
+      - name: Host Discovery and IP Protocol Scans
+        ipv4:
+          - title: nmap IPv4 ARP host discovery
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sn
+              - -PR
+              - -T4
+              - --script '(ip-forwarding)'
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+          - title: nmap IPv4 IP protocol scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sO
+              - -PR
+              - -T4
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+        ipv6:
+          - title: nmap IPv6 ARP host discovery
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sn
+              - -PR
+              - -T4
+              - --script '(ip-forwarding) or (targets-ipv6-* or ipv6-node-info)'
+              - --script-args 'newtargets'
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+          - title: nmap IPv6 IP protocol scan
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sO
+              - -PR
+              - -T4
+              - --script '(targets-ipv6-* or ipv6-node-info)'
+              # TODO ? add targets-ipv6-map4to6 and targets-ipv6-wordlist
+              - --script-args 'newtargets'
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+    # Phase options available
+    #   - {{linkName}} -- the interface the play is currently using
+    #   - {{respondingHostsPath}} -- path to file containing IPs who
+    #     responded in prior phases
+    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
+    phase2:
+      - name: Port Scans (plus basic info gathering)
+        ipv4:
+          - title: nmap IPv4 TCP port scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sS
+              - -PR
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --tcp-all`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv4 UDP port scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sU
+              - -PR
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --udp`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+        ipv6:
+          - title: nmap IPv6 TCP port scan
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sS
+              - -PR
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --tcp-all`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv6 UDP port scan
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sU
+              - -PR
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --udp`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+      - name: Service Scans (most scripts enabled)
+        ipv4:
+          - title: nmap IPv4 service scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sS
+              - -PR
+              - -T4
+              - -A
+              - --script
+                '((default or discovery) and not (external or brute or dos))'
+              - -p `nmdb-export-port-list --tcp-all`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+        ipv6:
+          - title: nmap IPv6 service scan
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sS
+              - -PR
+              - -T4
+              - -A
+              - --script
+                '((default or discovery) and not (external or brute or dos))'
+              - -p `nmdb-export-port-list --tcp-all`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+
+inter-network:
+  stages:
+    # Phase options available
+    #   - {{linkName}} -- the interface the play is currently using
+    #   - {{roeNetworksPath}} -- the IP subnet of the target network
+    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
+    phase1:
+      - name: Host Discovery and IP Protocol Scans
+        ipv4:
+          - title: nmap IPv4 ICMP host discovery
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sn
+              - -T4
+              - -PE
+              - -PP
+              - -PM
+              - -iL {{roeNetworksPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv4 port discovery
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sn
+              - -T4
+              - -PS
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
+                427,443,445,464,543-544,636,749-751,873,902,
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
+                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
+              - -PA
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
+                427,443,445,464,543-544,636,749-751,873,902,
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
+                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
+              - -PU
+                49,53,65-69,88,111,123,135-139,161-162,389,427,464,
+                500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,
+                2049,3268-3269,4174,5353-5355,49152-49169,65530-65535
+              - -iL {{roeNetworksPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv4 IP protocol scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sO
+              - -T4
+              - -iL {{roeNetworksPath}}
+              - --excludefile {{roeExcludedPath}}
+        ipv6:
+          - title: nmap IPv6 ICMP host discovery
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sn
+              - -T4
+              - -PE
+              - -iL {{roeNetworksPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv6 port discovery
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sn
+              - -T4
+              - -PS
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
+                427,443,445,464,543-544,636,749-751,873,902,
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
+                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
+              - -PA
+                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,
+                427,443,445,464,543-544,636,749-751,873,902,
+                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,
+                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,
+                9000-9010,9443,10000-10010,10443,49152-49169,65530-65535
+              - -PU
+                49,53,65-69,88,111,123,135-139,161-162,389,427,464,
+                500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,
+                2049,3268-3269,4174,5353-5355,49152-49169,65530-65535
+              - -iL {{roeNetworksPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv4 IP protocol scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -sO
+              - -T4
+              - -iL {{roeNetworksPath}}
+              - --excludefile {{roeExcludedPath}}
+    # Phase options available
+    #   - {{linkName}} -- the interface the play is currently using
+    #   - {{respondingHostsPath}} -- path to file containing IPs who
+    #     responded in prior phases
+    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
+    phase2:
+      - name: Port Scans (plus basic info gathering)
+        ipv4:
+          - title: nmap IPv4 TCP port scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -Pn
+              - -sS
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --tcp-all`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv4 UDP port scan
+            cmd: clw nmap -4
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -Pn
+              - -sU
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --udp`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+        ipv6:
+          - title: nmap IPv6 TCP port scan
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -Pn
+              - -sS
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --tcp-all`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+          - title: nmap IPv6 UDP port scan
+            cmd: clw nmap -6
+            opts:
+              - -n
+              - -e {{linkName}}
+              - -Pn
+              - -sU
+              - -T4
+              - -O
+              - --script
+                '(banner or dns-nsid or ntp-info or rpcinfo
+                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
+                  or smtp-commands or smb-os-discovery
+                  or smbv2-enabled or vnc-info)'
+              - -p `nmdb-export-port-list --udp`
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
