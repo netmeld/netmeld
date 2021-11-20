@@ -28,10 +28,24 @@
 #define QUERIES_PLAYBOOK_HPP
 
 #include <pqxx/pqxx>
+#include <yaml-cpp/yaml.h>
 
+#include <netmeld/core/utils/LoggerSingleton.hpp>
 
 namespace netmeld::playbook::utils {
 
-  void dbPreparePlaybook(pqxx::connection&);
+  class PlaybookQueries {
+    private:
+      std::map<std::string, std::string> queries;
+
+      void addQuery(const std::string&, const std::string&);
+
+    public:
+      PlaybookQueries();
+
+      void init(const std::string&);
+      void dbPrepare(pqxx::connection& db);
+
+  };
 }
 #endif // QUERIES_PLAYBOOK_HPP

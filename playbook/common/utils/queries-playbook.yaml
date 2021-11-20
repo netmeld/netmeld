@@ -1,0 +1,87 @@
+queries:
+  # Common
+  # Insert router
+  - id: insert_playbook_ip_router
+    psql:
+      INSERT INTO playbook_ip_routers
+        (rtr_ip_addr)
+      VALUES (host(($1)::INET)::INET)
+      ON CONFLICT
+        (rtr_ip_addr)
+      DO NOTHING
+  # Insert Source
+  - id: insert_playbook_inter_network_source
+    psql:
+      INSERT INTO playbook_inter_network_sources
+        (playbook_source_id, is_completed, playbook_stage,
+         interface_name, vlan, mac_addr,
+         ip_addr, ptp_rtr_ip_addr, description)
+      VALUES
+        ($1, $2, $3, $4, $5,
+         NULLIF($6, '')::MACADDR, ($7)::INET,
+         NULLIF($8, '')::INET, NULLIF($9, ''))
+      ON CONFLICT
+        (playbook_source_id)
+      DO NOTHING
+  - id: insert_playbook_intra_network_source
+    psql:
+      INSERT INTO playbook_intra_network_sources
+        (playbook_source_id, is_completed, playbook_stage,
+         interface_name, vlan, mac_addr,
+         ip_addr, description)
+      VALUES
+        ($1, $2, $3, $4, $5, NULLIF($6, '')::MACADDR,
+         ($7)::INET, NULLIF($8, ''))
+      ON CONFLICT
+        (playbook_source_id)
+      DO NOTHING
+  # Playbook
+  - id: select_playbook_intra_network
+    psql:
+      SELECT
+        playbook_source_id,
+        playbook_stage,
+        interface_name,
+        vlan,
+        mac_addr,
+        text(ip_addr) AS ip_addr,
+        NULL AS rtr_ip_addr,
+        description,
+        family(ip_addr) AS addr_family
+      FROM playbook_intra_network_dashboard
+      WHERE (NOT is_completed)
+  - id: select_playbook_inter_network
+    psql:
+      SELECT
+        playbook_source_id,
+        playbook_stage,
+        interface_name,
+        vlan,
+        mac_addr,
+        text(ip_addr) AS ip_addr,
+        rtr_ip_addr,
+        description,
+        family(ip_addr) AS addr_family
+      FROM playbook_inter_network_dashboard
+      WHERE (NOT is_completed)
+  - id: select_network_and_broadcast
+    psql:
+      SELECT
+         network(($1)::INET)                AS ip_net,
+         host(broadcast(($1)::INET))::INET  AS ip_net_bcast
+  - id: playbook_intra_network_set_completed
+    psql:
+      UPDATE playbook_intra_network_sources
+      SET is_completed = true
+      WHERE (playbook_source_id = $1)
+  - id: playbook_inter_network_set_completed
+    psql:
+      UPDATE playbook_inter_network_sources
+      SET is_completed = true
+      WHERE (playbook_source_id = $1)
+  - id: insert_playbook_runtime_error
+    psql:
+      INSERT INTO playbook_runtime_errors
+        (playbook_source_id, error_type)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING

@@ -99,6 +99,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     std::string pbDir;
 
+    nmpbu::PlaybookQueries pbq;
     std::string dbConnectString;
 
     bool execute  {false};
@@ -163,7 +164,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             "Capture traffic for specified number of seconds when the physical"
             " interface is brought up")
           );
-      std::string savePathLoc = {nmfm.getSavePath()/"playbook"};
+      const auto& savePathLoc {nmfm.getSavePath()/"playbook"};
       opts.addRequiredOption("save-path", std::make_tuple(
             "save-path",
             po::value<std::string>()->required()->default_value(savePathLoc),
@@ -214,6 +215,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             po::value<std::string>(),
             "During no-prompt run, call script in place of manual testing")
           );
+
       opts.addAdvancedOption("exclude-command", std::make_tuple(
             "exclude-command",
             po::value<std::vector<size_t>>()->multitoken()->composing()->
@@ -221,8 +223,15 @@ class Tool : public nmdt::AbstractDatastoreTool
             "Excluded specified, space separated, command ID(s); This can"
             " break expected logic in some cases")
           );
+      
+      const auto& queryFileLoc {nmfm.getConfPath()/"queries-playbook.yaml"};
+      opts.addAdvancedOption("query-file", std::make_tuple(
+            "query-file",
+            po::value<std::string>()->required()->default_value(queryFileLoc),
+            "Location of queries file for playbook runs")
+          );
 
-      std::string confFileLoc = {NETMELD_CONF_DIR "/nmdb-playbook.conf"};
+      const auto& confFileLoc {nmfm.getConfPath()/"nmdb-playbook.conf"};
       opts.addAdvancedOption("config-file", std::make_tuple(
             "config-file",
             po::value<std::string>()->required()->default_value(confFileLoc),
@@ -328,7 +337,8 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
       pqxx::connection db {dbConnectString};
-      nmpbu::dbPreparePlaybook(db);
+      pbq.init(opts.getValue("query-file"));
+      pbq.dbPrepare(db);
 
       if (true) {
         std::string query;
@@ -1258,7 +1268,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           nmpb::RaiiIpAddr raiiIpAddr {linkName, srcIpAddr};
 
           pqxx::connection db {dbConnectString};
-          nmpbu::dbPreparePlaybook(db);
+          pbq.dbPrepare(db);
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
