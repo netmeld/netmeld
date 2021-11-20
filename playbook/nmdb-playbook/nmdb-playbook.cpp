@@ -1068,15 +1068,13 @@ class Tool : public nmdt::AbstractDatastoreTool
       std::ostringstream cmdTitle, command;
 
       YAML::Node yConfig {YAML::LoadFile(playsFile)};
-      //LOG_DEBUG << "Config:\n" << YAML::Dump(yConfig) << std::endl;
-      const auto& yPhases {yConfig[target]["phases"]};
-      LOG_DEBUG << "Phases:\n" << YAML::Dump(yPhases) << std::endl;
+
+      const auto& yPhasesArray {yConfig[target]["phases"]};
+
       size_t phaseId {1};
-      for (const auto& yPhase : yPhases) {
-        LOG_DEBUG << "Phase:\n" << YAML::Dump(yPhase) << std::endl;
-        if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
-          continue;
-        }
+
+      // In stage; Per phase configuration
+      for (const auto& yPhaseMap : yPhasesArray) {
         LOG_INFO << std::endl << "### Phase " << phaseId << std::endl;
         if (   execute
             && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
@@ -1085,38 +1083,53 @@ class Tool : public nmdt::AbstractDatastoreTool
           cmdRunner.setExecute(false);
         }
 
-        if (yIs<bool>(yPhase, "generateRespondingHosts", true)) {
+        if (!(!enabledPhases.empty() && !enabledPhases.count(phaseId))
+            && yIs<bool>(yPhaseMap, "generateRespondingHosts", true)) {
           generateRespondingHosts(sessionId.toString(), ipNet);
         }
 
-        for (const auto& yPlays : yPhase["plays"]) {
-          LOG_DEBUG << "Plays:\n" << YAML::Dump(yPlays) << std::endl;
-          if (yIs<bool>(yPlays, "manual-tests", true)) {
-            manualTesting(linkName, srcIpAddr);
+        // In phase; Per command-set configuration
+        const auto& yPhaseArray {yPhaseMap["plays"]};
+        for (const auto& yCmdSetMap : yPhaseArray) {
+          if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
             continue;
           }
 
-          const auto& playName {yPlays["name"].as<std::string>()}; 
+          if (yIs<bool>(yCmdSetMap, "manual-tests", true)) {
+            manualTesting(linkName, srcIpAddr);
+            continue;
+          }
+          // End of unique
+
+          const auto& playName {yCmdSetMap["name"].as<std::string>()}; 
           std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
-          for (const auto& yPlay : yPlays[ipTarget]) {
-            LOG_DEBUG << "Play:\n" << YAML::Dump(yPlay) << std::endl;
-            const auto& playTitle {yPlay["title"].as<std::string>()};
-            const auto& playCmd   {yPlay["cmd"].as<std::string>()};
+
+          // In command set; Per command configuration
+          for (const auto& yCmdMap : yCmdSetMap[ipTarget]) {
+            const auto& playTitle {yCmdMap["title"].as<std::string>()};
+            const auto& playCmd   {yCmdMap["cmd"].as<std::string>()};
+
+            // In command; Per command option configuration
             std::string allOpts {""};
-            for (const auto& yOpt : yPlay["opts"]) {
+            for (const auto& yOpt : yCmdMap["opts"]) {
               LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
               auto opt {yOpt.as<std::string>()};
+
+              // Replace keywords with values
               opt = std::regex_replace(opt, reLinkName, linkName);
               opt = std::regex_replace(opt, reIpNet, ipNet);
               opt = std::regex_replace(opt, reIpNetBcast, ipNetBcast);
               opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
               opt = std::regex_replace(opt, reRespondingHostsPath, respondingHostsPath);
               opt = std::regex_replace(opt, reRoeNetworksPath, roeNetworksPath);
+
               if (!allOpts.ends_with(" ")) {
                 allOpts.append(" ");
               }
               allOpts.append(opt);
             }
+
+            // Add command to command set
             cmdTitle.str(std::string());
             command.str(std::string());
             cmdTitle << commandTitlePrefix << " " << playTitle;
@@ -1124,7 +1137,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             commands.emplace_back(cmdTitle.str(), command.str());
           }
           
-          {
+          { // Add command set to phase
             std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
             LOG_INFO << std::endl
                      << "## " << playName << std::endl;
