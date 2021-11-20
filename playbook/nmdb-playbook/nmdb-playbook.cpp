@@ -228,13 +228,13 @@ class Tool : public nmdt::AbstractDatastoreTool
             "Excluded specified, space separated, command ID(s); This can"
             " break expected logic in some cases")
           );
-      const auto& queryFileLoc {nmfm.getConfPath()/"queries-playbook.yaml"};
+      const auto& queryFileLoc {nmfm.getConfPath()/"playbook/queries.yaml"};
       opts.addAdvancedOption("query-file", std::make_tuple(
             "query-file",
             po::value<std::string>()->required()->default_value(queryFileLoc),
             "Location of queries file for playbook runs")
           );
-      const auto& playsFileLoc {nmfm.getConfPath()/"plays-playbook.yaml"};
+      const auto& playsFileLoc {nmfm.getConfPath()/"playbook/plays.yaml"};
       opts.addAdvancedOption("plays-file", std::make_tuple(
             "plays-file",
             po::value<std::string>()->required()->default_value(playsFileLoc),

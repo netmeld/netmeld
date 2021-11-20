@@ -72,7 +72,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             "IP address of router to use")
           );
 
-      const auto& queryFileLoc {nmfm.getConfPath()/"queries-playbook.yaml"};
+      const auto& queryFileLoc {nmfm.getConfPath()/"playbook/queries.yaml"};
       opts.addAdvancedOption("query-file", std::make_tuple(
             "query-file",
             po::value<std::string>()->required()->default_value(queryFileLoc),

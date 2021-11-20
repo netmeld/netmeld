@@ -25,7 +25,7 @@
 # =============================================================================
 
 foreach(ITEM
-    queries-playbook.yaml
+    queries.yaml
   )
-  nm_install_conf(${ITEM} "${NETMELD_CONF_DIR}")
+  nm_install_conf(${ITEM} "playbook")
 endforeach()

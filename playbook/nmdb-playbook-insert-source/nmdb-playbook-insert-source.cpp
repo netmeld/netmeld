@@ -126,7 +126,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             "MAC address to assign to network interface")
           );
 
-      const auto& queryFileLoc {nmfm.getConfPath()/"queries-playbook.yaml"};
+      const auto& queryFileLoc {nmfm.getConfPath()/"playbook/queries.yaml"};
       opts.addAdvancedOption("query-file", std::make_tuple(
             "query-file",
             po::value<std::string>()->required()->default_value(queryFileLoc),
