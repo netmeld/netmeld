@@ -65,6 +65,7 @@ struct Data
   nmdo::ToolObservations               observations;
 
   std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
+  std::map<uint16_t, std::set<std::string>> portChannels;
 
   std::vector<nmdo::Route>             routes;
   std::vector<nmdo::Service>           services;
@@ -98,6 +99,8 @@ class Parser :
       routerId,
       route,
       vlanDef,
+      channelGroup,
+      encapsulation,
       switchport,
         switchportPortSecurity,
           vlanRange,
@@ -209,6 +212,12 @@ class Parser :
     void ifaceInit(const std::string&);
     void ifaceSetUpdate(std::set<std::string>* const);
     void ifaceAddAlias(const std::string&, const nmdo::IpAddress&);
+
+    // Port-channel related
+    void portChannelAddIface(uint16_t);
+
+    // Encapsulation related
+    void encapsulationDot1qAddVlan(uint16_t);
 
     // Vlan related
     std::vector<nmdo::Vlan> expandVlanNumberRangeList(
