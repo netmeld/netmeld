@@ -1,14 +1,31 @@
 runtime-options:
   ignore-scan-iface-state-change: false
 
+# Strucutre
+#  intra-network|inter-network: # Playbook pre-defined scoping
+#    phases: # just a placeholder
+#      - generateRespondingHosts: true|false # Generate responding hosts file
+#        phase: # just a placeholder
+#        - name: # command set title
+#          ipv4: # IPv4 related commands
+#            - title: # command title
+#              cmd: # command to run
+#              opts: # command options; allows variable replacement
+#                - opt1 # command option 1
+#                - opt2 {{ipNet}} # command option 2 with variable replacement
+#          ipv6: # IPv6 related commands, same as ipv4 structure
+
+
+# Phase variable replacement options
+#   - {{ipNetBcast}} -- the broadcast IP of the target network
+#   - {{ipNet}} -- the IP subnet of the target network
+#   - {{linkName}} -- the interface the play is currently using
+#   - {{respondingHostsPath}} -- path to file containing known alive IPs
+#   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
+#   - {{roeNetworksPath}} -- the IP subnet of the target network
 intra-network:
   phases:
-    # Phase options available
-    #   - {{linkName}} -- the interface the play is currently using
-    #   - {{ipNet}} -- the IP subnet of the target network
-    #   - {{ipNetBcast}} -- the broadcast IP of the target network
-    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
-    - plays:
+    - phase:
       - name: Initial Host Discovery
         ipv4:
           - title: network broadcast ping
@@ -93,13 +110,29 @@ intra-network:
               - --script-args 'newtargets'
               - --excludefile {{roeExcludedPath}}
               - "{{ipNet}}"
-    # Phase options available
-    #   - {{linkName}} -- the interface the play is currently using
-    #   - {{respondingHostsPath}} -- path to file containing IPs who
-    #     responded in prior phase
-    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
+    - phase:
+      # TODO add lookup with resolvers pulled from DB
+      - name: DNS Lookup With Nmap
+        ipv4:
+          - title: nmap IPv4 DNS lookup, default resolver
+            cmd: clw nmap
+            opts:
+              - -R
+              - -sL
+              - --resolve-all
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+        ipv6:
+          - title: nmap IPv6 DNS lookup, default resolver
+            cmd: clw nmap -6
+            opts:
+              - -R
+              - -sL
+              - --resolve-all
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
     - generateRespondingHosts: true
-      plays:
+      phase:
       - name: Port Scans (plus basic info gathering)
         ipv4:
           - title: nmap IPv4 TCP port scan
@@ -202,16 +235,12 @@ intra-network:
               - -p `nmdb-export-port-list --tcp-all`
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
-    - plays:
+    - phase:
       - manual-tests: true
 
 inter-network:
   phases:
-    # Phase options available
-    #   - {{linkName}} -- the interface the play is currently using
-    #   - {{roeNetworksPath}} -- the IP subnet of the target network
-    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
-    - plays:
+    - phase:
       - name: Host Discovery and IP Protocol Scans
         ipv4:
           - title: nmap IPv4 ICMP host discovery
@@ -313,13 +342,29 @@ inter-network:
               - --script-args 'newtargets'
               - -iL {{roeNetworksPath}}
               - --excludefile {{roeExcludedPath}}
-    # Phase options available
-    #   - {{linkName}} -- the interface the play is currently using
-    #   - {{respondingHostsPath}} -- path to file containing IPs who
-    #     responded in prior phase
-    #   - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
     - generateRespondingHosts: true
-      plays:
+      phase:
+      - name: DNS Lookup With Nmap
+        ipv4:
+          - title: nmap IPv4 DNS lookup, default resolver
+            cmd: clw nmap
+            opts:
+              - -R
+              - -sL
+              - --resolve-all
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+        ipv6:
+          - title: nmap IPv6 DNS lookup, default resolver
+            cmd: clw nmap -6
+            opts:
+              - -R
+              - -sL
+              - --resolve-all
+              - -iL {{respondingHostsPath}}
+              - --excludefile {{roeExcludedPath}}
+    - generateRespondingHosts: true
+      phase:
       - name: Port Scans (plus basic info gathering)
         ipv4:
           - title: nmap IPv4 TCP port scan
@@ -391,5 +436,23 @@ inter-network:
               - -p `nmdb-export-port-list --udp`
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
-    - plays:
+    - phase:
       - manual-tests: true
+
+dns-lookup:
+  phases:
+    - phase:
+      - name: DNS Lookup With Nmap
+        ipv4:
+          - title: nmap IPv4 DNS lookup, default resolver
+            cmd: clw nmap
+            opts:
+              - -R
+              - -sL
+              - --resolve-all
+              - {{ipNet}}
+        ipv6:
+          - title:
+            cmd:
+            opts:
+              -

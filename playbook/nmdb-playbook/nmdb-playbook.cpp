@@ -1089,8 +1089,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         // In phase; Per command-set configuration
-        const auto& yPhaseArray {yPhaseMap["plays"]};
-        for (const auto& yCmdSetMap : yPhaseArray) {
+        for (const auto& yCmdSetMap : yPhaseMap["phase"]) {
           if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
             continue;
           }
