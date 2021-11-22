@@ -1062,7 +1062,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       YAML::Node yConfig {YAML::LoadFile(playsFile)};
 
-      const auto& yPhasesArray    {yConfig[target]["phases"]};
+      const auto& yPhasesArray    {yConfig[target]["stage"]};
       const auto& yRunOptionsMap  {yConfig["runtime-options"]};
 
       size_t phaseId {1};
@@ -1092,20 +1092,18 @@ class Tool : public nmdt::AbstractDatastoreTool
             manualTesting(linkName, srcIpAddr);
             continue;
           }
-          // End of unique
 
-          const auto& playName {yCmdSetMap["name"].as<std::string>()}; 
+          const auto& cmdSetName {yCmdSetMap["name"].as<std::string>()}; 
           std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
 
           // In command set; Per command configuration
           for (const auto& yCmdMap : yCmdSetMap[ipTarget]) {
-            const auto& playTitle {yCmdMap["title"].as<std::string>()};
-            const auto& playCmd   {yCmdMap["cmd"].as<std::string>()};
+            const auto& cmdTitle  {yCmdMap["title"].as<std::string>()};
+            const auto& cmd       {yCmdMap["cmd"].as<std::string>()};
 
             // In command; Per command option configuration
             std::string allOpts {""};
             for (const auto& yOpt : yCmdMap["opts"]) {
-              LOG_DEBUG << YAML::Dump(yOpt) << std::endl;
               auto opt {yOpt.as<std::string>()};
 
               // Replace keywords with values
@@ -1125,15 +1123,15 @@ class Tool : public nmdt::AbstractDatastoreTool
             // Add command to command set
             cmdTitle.str(std::string());
             command.str(std::string());
-            cmdTitle << commandTitlePrefix << " " << playTitle;
-            command << playCmd << allOpts;
+            cmdTitle << commandTitlePrefix << " " << cmdTitle;
+            command << cmd << allOpts;
             commands.emplace_back(cmdTitle.str(), command.str());
           }
           
           { // Add command set to phase
             std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
             LOG_INFO << std::endl
-                     << "## " << playName << std::endl;
+                     << "## " << cmdSetName << std::endl;
             for (const auto& cmd : commands) {
               std::vector<std::tuple<std::string, std::string>> cmds;
               cmds.emplace_back(cmd);

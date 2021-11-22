@@ -24,6 +24,8 @@
 #               - "{{ipNet}}" # Example variable replacement if by self
 #         # IPv6 related commands; same schema as IPv4
 #         ipv6:
+#       # Execute manual test prompt
+#       - manual-tests: true|false
 #       # Phase optional options (same YAML scope as "phase")
 #       # Generate responding hosts file
 #       generate-responding-hosts: true|false
