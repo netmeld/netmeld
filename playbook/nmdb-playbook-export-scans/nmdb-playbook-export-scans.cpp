@@ -243,7 +243,7 @@ class Tool : public nmdt::AbstractExportTool
               srcIp);
         for (const auto& routerRow : routerRows) {
           std::string rtrIp;
-          routerRow.at("rtr_ip_addr").to(rtrIp);
+          routerRow.at("next_hop_ip_addr").to(rtrIp);
 
           std::string rtrName = getHostname(t, rtrIp);
 
@@ -581,17 +581,17 @@ class Tool : public nmdt::AbstractExportTool
 
       db.prepare
         ("select_internetwork_scan_router",
-         "SELECT DISTINCT rtr_ip_addr"
+         "SELECT DISTINCT next_hop_ip_addr"
          " FROM inter_network_ports"
          " WHERE ($1 = src_ip_addr)"
-         " ORDER BY rtr_ip_addr");
+         " ORDER BY next_hop_ip_addr");
 
       db.prepare
         ("select_internetwork_scan_destination",
          "SELECT DISTINCT dst_ip_addr"
          " FROM inter_network_ports"
          " WHERE ($1 = src_ip_addr)"
-         "   AND ($2 = rtr_ip_addr)"
+         "   AND ($2 = next_hop_ip_addr)"
          " ORDER BY dst_ip_addr");
 
       db.prepare
@@ -600,7 +600,7 @@ class Tool : public nmdt::AbstractExportTool
          "   protocol, port, port_state, port_reason"
          " FROM inter_network_ports"
          " WHERE ($1 = src_ip_addr)"
-         "   AND ($2 = rtr_ip_addr)"
+         "   AND ($2 = next_hop_ip_addr)"
          "   AND ($3 = dst_ip_addr)"
          "   AND ( ((('open' = port_state) OR ('closed' = port_state))"
          "          AND NOT (('ip' = protocol) OR ('' = protocol) OR ('-1' = port)))"

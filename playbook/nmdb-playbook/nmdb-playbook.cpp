@@ -267,9 +267,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       // Create directory for meta-data about and results from this tool run
       sfs::path const saveDir {opts.getValue("save-path")};
-      if (execute) {
-        sfs::create_directories(saveDir);
-      }
+      sfs::create_directories(saveDir);
       pbDir = sfs::canonical(saveDir).string();
 
       sfs::path const playsPath = opts.getValue("plays-file");
@@ -319,7 +317,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           std::string ipAddr;
           playbookIpSourceRow.at("ip_addr").to(ipAddr);
           std::string rtrIpAddr;
-          playbookIpSourceRow.at("rtr_ip_addr").to(rtrIpAddr);
+          playbookIpSourceRow.at("next_hop_ip_addr").to(rtrIpAddr);
 
           nmco::Uuid playbookSourceId;
           playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);

@@ -4,10 +4,10 @@ queries:
   - id: insert_playbook_ip_router
     psql:
       INSERT INTO playbook_ip_routers
-        (rtr_ip_addr)
+        (next_hop_ip_addr)
       VALUES (host(($1)::INET)::INET)
       ON CONFLICT
-        (rtr_ip_addr)
+        (next_hop_ip_addr)
       DO NOTHING
   # Insert Source
   - id: insert_playbook_inter_network_source
@@ -15,7 +15,7 @@ queries:
       INSERT INTO playbook_inter_network_sources
         (playbook_source_id, is_completed, playbook_stage,
          interface_name, vlan, mac_addr,
-         ip_addr, ptp_rtr_ip_addr, description)
+         ip_addr, ptp_next_hop_ip_addr, description)
       VALUES
         ($1, $2, $3, $4, $5,
          NULLIF($6, '')::MACADDR, ($7)::INET,
@@ -45,7 +45,7 @@ queries:
         vlan,
         mac_addr,
         text(ip_addr) AS ip_addr,
-        NULL AS rtr_ip_addr,
+        NULL AS next_hop_ip_addr,
         description,
         family(ip_addr) AS addr_family
       FROM playbook_intra_network_dashboard
@@ -59,7 +59,7 @@ queries:
         vlan,
         mac_addr,
         text(ip_addr) AS ip_addr,
-        rtr_ip_addr,
+        next_hop_ip_addr,
         description,
         family(ip_addr) AS addr_family
       FROM playbook_inter_network_dashboard

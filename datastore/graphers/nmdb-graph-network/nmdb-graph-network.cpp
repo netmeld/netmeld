@@ -354,7 +354,7 @@ class Tool : public nmdt::AbstractGraphTool
       db.prepare
         ("select_traceroutes",
          "SELECT DISTINCT"
-         "   rtr_ip_addr, dst_ip_addr,"
+         "   next_hop_ip_addr, dst_ip_addr,"
          "   hop_count"
          " FROM raw_ip_traceroutes");
 
@@ -552,7 +552,7 @@ class Tool : public nmdt::AbstractGraphTool
         t.exec_prepared("select_traceroutes");
       for (const auto& tracerouteRow : tracerouteRows) {
         std::string origin;
-        tracerouteRow.at("rtr_ip_addr").to(origin);
+        tracerouteRow.at("next_hop_ip_addr").to(origin);
         std::string destination;
         tracerouteRow.at("dst_ip_addr").to(destination);
         std::string hopNumber;
