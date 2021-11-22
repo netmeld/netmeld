@@ -190,14 +190,15 @@ class Tool : public nmdt::AbstractDatastoreTool
             "stage",
             po::value<std::vector<size_t>>()->multitoken()->composing()->
               default_value(std::vector<size_t>{},"all"),
-            "Only process the specified, space separated, stage(s)")
+            "Only run the specified stages"
+            "; Space separated list")
           );
       opts.addOptionalOption("phase", std::make_tuple(
             "phase",
             po::value<std::vector<size_t>>()->multitoken()->composing()->
               default_value(std::vector<size_t>{},"all"),
-            "Only process the specified, space separated, phase(s) in a given"
-            "stage")
+            "For all stages, only run the specified phases"
+            "; Space separated list")
           );
       opts.addOptionalOption("execute", std::make_tuple(
             "execute",
@@ -225,8 +226,9 @@ class Tool : public nmdt::AbstractDatastoreTool
             "exclude-command",
             po::value<std::vector<size_t>>()->multitoken()->composing()->
               default_value(std::vector<size_t>{},"none"),
-            "Excluded specified, space separated, command ID(s); This can"
-            " break expected logic in some cases")
+            "Exclude specified command IDs"
+            "; Space separated list"
+            "; This can break expected logic in some cases")
           );
       const auto& queryFileLoc {nmfm.getConfPath()/"playbook/queries.yaml"};
       opts.addAdvancedOption("query-file", std::make_tuple(
@@ -239,13 +241,6 @@ class Tool : public nmdt::AbstractDatastoreTool
             "plays-file",
             po::value<std::string>()->required()->default_value(playsFileLoc),
             "Location of plays file for stages, phases, and commands")
-          );
-
-      // TODO add to yaml or fix via opts
-      opts.addConfFileOption("ignore-scan-iface-state-change", std::make_tuple(
-            "ignore-scan-iface-state-change",
-            po::bool_switch()->required()->default_value(false),
-            "")
           );
       }
 
@@ -1067,14 +1062,15 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       YAML::Node yConfig {YAML::LoadFile(playsFile)};
 
-      const auto& yPhasesArray {yConfig[target]["phases"]};
+      const auto& yPhasesArray    {yConfig[target]["phases"]};
+      const auto& yRunOptionsMap  {yConfig["runtime-options"]};
 
       size_t phaseId {1};
 
       // In stage; Per phase configuration
       for (const auto& yPhaseMap : yPhasesArray) {
         LOG_INFO << std::endl << "### Phase " << phaseId << std::endl;
-        if (   execute
+        if (   yIs<bool>(yRunOptionsMap, "ignore-iface-state-change", true)
             && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
         {
           LOG_WARN << "Disabling this phase execution" << std::endl;
@@ -1082,7 +1078,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         if (!(!enabledPhases.empty() && !enabledPhases.count(phaseId))
-            && yIs<bool>(yPhaseMap, "generateRespondingHosts", true)) {
+            && yIs<bool>(yPhaseMap, "generate-responding-hosts", true)) {
           generateRespondingHosts(sessionId.toString(), ipNet);
         }
 
@@ -1199,8 +1195,8 @@ class Tool : public nmdt::AbstractDatastoreTool
       const nmco::Uuid& playbookSourceId, const std::string& linkName,
       const std::string& ipAddr)
   {
-    // short-circuit, if commanded
-    if (opts.getValueAs<bool>("ignore-scan-iface-state-change")) {
+    // short-circuit, if not actually running
+    if (!execute) {
       return false;
     }
 
