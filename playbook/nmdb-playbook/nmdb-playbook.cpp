@@ -374,18 +374,16 @@ class Tool : public nmdt::AbstractDatastoreTool
           std::string userInput;
 
           // Sanity check, cycle all interfaces before aborting
-          for (const auto& [stage, stageConfigs] : playbook) {
-            for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
+          for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
 
-              // Ensure interface is down
-              if (!ifaceIsDown(ifaceName)) {
-                LOG_WARN << ifaceName << " link not down" << std::endl;
-              }
+            // Ensure interface is down
+            if (!ifaceIsDown(ifaceName)) {
+              LOG_WARN << ifaceName << " link not down" << std::endl;
+            }
 
-              // Ensure interface has no ipv4/6 address assigned
-              if (ifaceHasAddress(ifaceName)) {
-                LOG_WARN << ifaceName << " has an address" << std::endl;
-              }
+            // Ensure interface has no ipv4/6 address assigned
+            if (ifaceHasAddress(ifaceName)) {
+              LOG_WARN << ifaceName << " has an address" << std::endl;
             }
           }
 
