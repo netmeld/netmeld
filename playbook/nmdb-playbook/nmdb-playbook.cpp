@@ -102,7 +102,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     std::string pbDir;
 
-    nmpbu::PlaybookQueries pbq;
+    nmpbu::QueriesPlaybook queriesPb;
     std::string dbConnectString;
 
     std::string playsFile;
@@ -224,10 +224,10 @@ class Tool : public nmdt::AbstractDatastoreTool
             "; Space separated list"
             "; This can break expected logic in some cases")
           );
-      const auto& queryFileLoc {nmfm.getConfPath()/"playbook/queries.yaml"};
       opts.addAdvancedOption("query-file", std::make_tuple(
             "query-file",
-            po::value<std::string>()->required()->default_value(queryFileLoc),
+            po::value<std::string>()->required()
+              ->default_value(queriesPb.getDefaultQueryFilePath()),
             "Location of queries file for playbook runs")
           );
       const auto& playsFileLoc {nmfm.getConfPath()/"playbook/plays.yaml"};
@@ -268,8 +268,8 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
       pqxx::connection db {dbConnectString};
-      pbq.init(opts.getValue("query-file"));
-      pbq.dbPrepare(db);
+      queriesPb.init(opts.getValue("query-file"));
+      queriesPb.dbPrepare(db);
 
       if (true) {
         std::string query;
@@ -872,7 +872,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           nmpb::RaiiIpAddr raiiIpAddr {linkName, srcIpAddr};
 
           pqxx::connection db {dbConnectString};
-          pbq.dbPrepare(db);
+          queriesPb.dbPrepare(db);
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:

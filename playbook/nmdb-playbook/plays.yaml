@@ -313,8 +313,8 @@ inter-network:
               - -sn
               - -T4
               - -PE
-              - -PP
-              - -PM
+              - -PP # ICMP Timestamp; not valid for IPv6
+              - -PM # ICMP Address Mask; not valid for IPv6
               - -iL {{roeNetworksPath}}
               - --excludefile {{roeExcludedPath}}
           - title: nmap IPv4 port discovery

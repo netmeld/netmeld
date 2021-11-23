@@ -40,6 +40,8 @@ class Tool : public nmdt::AbstractDatastoreTool
   private: // Variables should generally be private
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
 
+    nmpbu::QueriesPlaybook queriesPb;
+
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
 
@@ -72,10 +74,10 @@ class Tool : public nmdt::AbstractDatastoreTool
             "IP address of router to use")
           );
 
-      const auto& queryFileLoc {nmfm.getConfPath()/"playbook/queries.yaml"};
       opts.addAdvancedOption("query-file", std::make_tuple(
             "query-file",
-            po::value<std::string>()->required()->default_value(queryFileLoc),
+            po::value<std::string>()->required()
+              ->default_value(queriesPb.getDefaultQueryFilePath()),
             "Location of queries file for playbook runs")
           );
     }
@@ -86,9 +88,8 @@ class Tool : public nmdt::AbstractDatastoreTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      nmpbu::PlaybookQueries pbq;
-      pbq.init(opts.getValue("query-file"));
-      pbq.dbPrepare(db);
+      queriesPb.init(opts.getValue("query-file"));
+      queriesPb.dbPrepare(db);
 
       nmdo::IpAddress ipAddr {opts.getValue("ip-addr")};
 

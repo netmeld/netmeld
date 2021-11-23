@@ -30,22 +30,29 @@
 #include <pqxx/pqxx>
 #include <yaml-cpp/yaml.h>
 
+#include <netmeld/core/utils/FileManager.hpp>
 #include <netmeld/core/utils/LoggerSingleton.hpp>
+
+namespace nmcu = netmeld::core::utils;
 
 namespace netmeld::playbook::utils {
 
-  class PlaybookQueries {
+  class QueriesPlaybook {
     private:
+      nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+
+      sfs::path queryFilePath {nmfm.getConfPath()/"playbook/queries.yaml"};
       std::map<std::string, std::string> queries;
 
       void addQuery(const std::string&, const std::string&);
 
     public:
-      PlaybookQueries();
+      QueriesPlaybook();
 
       void init(const std::string&);
       void dbPrepare(pqxx::connection& db);
 
+      std::string getDefaultQueryFilePath();
   };
 }
 #endif // QUERIES_PLAYBOOK_HPP

@@ -28,11 +28,11 @@
 
 namespace netmeld::playbook::utils {
 
-  PlaybookQueries::PlaybookQueries()
+  QueriesPlaybook::QueriesPlaybook()
   {}
 
   void
-  PlaybookQueries::addQuery(const std::string& _name,
+  QueriesPlaybook::addQuery(const std::string& _name,
                             const std::string& _query)
   {
     queries[_name] = _query;
@@ -42,7 +42,7 @@ namespace netmeld::playbook::utils {
   }
 
   void
-  PlaybookQueries::dbPrepare(pqxx::connection& db)
+  QueriesPlaybook::dbPrepare(pqxx::connection& db)
   {
     for (const auto& [_name, _query] : queries) {
       db.prepare(_name, _query);
@@ -50,7 +50,7 @@ namespace netmeld::playbook::utils {
   }
 
   void
-  PlaybookQueries::init(const std::string& _queryFilePath)
+  QueriesPlaybook::init(const std::string& _queryFilePath)
   {
     YAML::Node yConfig {YAML::LoadFile(_queryFilePath)};
 
@@ -60,5 +60,19 @@ namespace netmeld::playbook::utils {
       const auto& query {yQuery["psql"].as<std::string>()};
       addQuery(name, query);
     }
+  }
+
+  std::string
+  QueriesPlaybook::getDefaultQueryFilePath()
+  {
+    std::ifstream file {queryFilePath.string()};
+    if (!file.good()) {
+      LOG_WARN << "Playbook queries file path ("
+               << queryFilePath
+               << ") does not exist or is inaccessible.\n"
+               << std::endl;
+               ;
+    }
+    return queryFilePath;
   }
 }
