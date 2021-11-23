@@ -34,6 +34,21 @@ runtime-options:
   ignore-iface-state-change: false
 
 
+templates:
+  - phase: &manual-testing
+    - name: Manual Testing Prompt
+      ipv4: &manual-testing-ipv4
+      - title: Manual Tests
+        cmd: echo ''
+        opts:
+          - ; echo 'Finish any manual testing that is using
+                    {{linkName}} {{srcIpAddr}}.'
+          - ; echo 'Close this xterm when manual testing is complete.'
+          - ; echo 'When this xterm is closed,
+                    {{linkName}} {{srcIpAddr}} will be deconfigured.'
+          - ; while [[ 1 == 1 ]]; do sleep 600; done;
+      ipv6: *manual-testing-ipv4
+
 # Phase variable replacement options
 # - {{ipNetBcast}} -- the broadcast IP of the target network
 # - {{ipNet}} -- the IP subnet of the target network
@@ -128,14 +143,14 @@ intra-network:
               - --excludefile {{roeExcludedPath}}
               - "{{ipNet}}"
     - phase:
-      # TODO add lookup with resolvers pulled from DB
-      - name: DNS Lookup With Nmap
+      - name: Default DNS Lookup With Nmap
         ipv4:
           - title: nmap IPv4 DNS lookup, default resolver
             cmd: clw nmap
             opts:
               - -R
               - -sL
+              - -T4
               - --resolve-all
               - --excludefile {{roeExcludedPath}}
               - "{{ipNet}}"
@@ -145,6 +160,7 @@ intra-network:
             opts:
               - -R
               - -sL
+              - -T4
               - --resolve-all
               - --excludefile {{roeExcludedPath}}
               - "{{ipNet}}"
@@ -253,7 +269,36 @@ intra-network:
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
     - phase:
-      - manual-tests: true
+      - name: Learned DNS Lookup With Nmap
+        ipv4:
+          - title: nmap IPv4 DNS lookup, via open port 53
+            cmd: echo ''
+            opts:
+              - ; DNS_SERVERS=`psql site
+              - "-A -t -c \"select ip_addr from ports_services
+                          where port = '999' and port_state = 'open'\""
+              - "| tr '\n' ','`"
+              - ; clw nmap
+              - -R -sL -T4
+              - --dns-servers "${DNS_SERVERS}"
+              - --resolve-all
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+        ipv6:
+          - title: nmap IPv6 DNS lookup, via open port 53
+            cmd: echo ''
+            opts:
+              - ; DNS_SERVERS=`psql site
+              - "-A -t -c \"select ip_addr from ports_services
+                          where port = '999' and port_state = 'open'\""
+              - "| tr '\n' ','`"
+              - ; clw nmap -6
+              - -R -sL -T4
+              - --dns-servers "${DNS_SERVERS}"
+              - --resolve-all
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+    - phase: *manual-testing
 
 inter-network:
   stage:
@@ -453,4 +498,33 @@ inter-network:
               - -iL {{respondingHostsPath}}
               - --excludefile {{roeExcludedPath}}
     - phase:
-      - manual-tests: true
+      - name: Learned DNS Lookup With Nmap
+        ipv4:
+          - title: nmap IPv4 DNS lookup, via open port 53
+            cmd: echo ''
+            opts:
+              - ; DNS_SERVERS=`psql site
+              - "-A -t -c \"select ip_addr from ports_services
+                          where port = '999' and port_state = 'open'\""
+              - "| tr '\n' ','`"
+              - ; clw nmap
+              - -R -sL -T4
+              - --dns-servers "${DNS_SERVERS}"
+              - --resolve-all
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+        ipv6:
+          - title: nmap IPv6 DNS lookup, via open port 53
+            cmd: echo ''
+            opts:
+              - ; DNS_SERVERS=`psql site
+              - "-A -t -c \"select ip_addr from ports_services
+                          where port = '999' and port_state = 'open'\""
+              - "| tr '\n' ','`"
+              - ; clw nmap -6
+              - -R -sL -T4
+              - --dns-servers "${DNS_SERVERS}"
+              - --resolve-all
+              - --excludefile {{roeExcludedPath}}
+              - "{{ipNet}}"
+    - phase: *manual-testing

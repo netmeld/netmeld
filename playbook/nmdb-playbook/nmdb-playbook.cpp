@@ -213,13 +213,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       opts.addOptionalOption("no-prompt", std::make_tuple(
             "no-prompt",
             NULL_SEMANTIC,
-            "Don't prompt user to complete manual testing before automatically"
-            " deconfiguring the network interface")
-          );
-      opts.addOptionalOption("script", std::make_tuple(
-            "script",
-            po::value<std::string>(),
-            "During no-prompt run, call script in place of manual testing")
+            "Cycle stages without prompting user")
           );
 
       opts.addAdvancedOption("exclude-command", std::make_tuple(
@@ -249,7 +243,6 @@ class Tool : public nmdt::AbstractDatastoreTool
     {
       const auto& playbookScope {validatePlaybookScope()};
 
-      validateScriptTests();
       validateEnabledTests();
 
       // Execute, or not
@@ -483,34 +476,6 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     void
-    validateScriptTests()
-    {
-      // Sanity check for script tests
-      if (opts.exists("script")) {
-        if (!opts.exists("no-prompt")) {
-          LOG_ERROR << "Option --no-prompt is required when using --script"
-                    << std::endl;
-          std::exit(nmcu::Exit::FAILURE);
-        }
-
-        scriptPath = opts.getValue("script");
-        if (!sfs::exists(scriptPath)) {
-          LOG_ERROR << "Script file does not exist: " << scriptPath
-                    << std::endl;
-          std::exit(nmcu::Exit::FAILURE);
-        }
-        // Get canonical path after ensuring file exists
-        scriptPath = sfs::canonical(scriptPath);
-
-        if (access(scriptPath.c_str(), X_OK)) {
-          LOG_ERROR << "Script file not executable by you: " << scriptPath
-                    << std::endl;
-          std::exit(nmcu::Exit::FAILURE);
-        }
-      }
-    }
-
-    void
     validateEnabledTests()
     {
       // Handle inclusion/exclusion of tests
@@ -536,9 +501,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       roeExcludedPath = oss.str();
 
       std::ostringstream dbPrefix;
-      // TODO verify this works
-      //dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
-      dbPrefix << "psql -d " << opts.getValue("db-name") << " -A -t -c ";
+      dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
 
       std::vector<std::string> commands;
       std::ostringstream command;
@@ -600,9 +563,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       respondingHostsPath = oss.str();
 
       std::ostringstream dbPrefix;
-      // TODO verify this works
-      //dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
-      dbPrefix << "psql -d " << opts.getValue("db-name") << " -A -t -c ";
+      dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
 
       std::vector<std::string> commands;
       std::ostringstream command;
@@ -780,42 +741,6 @@ class Tool : public nmdt::AbstractDatastoreTool
           ;
 
       commandTitlePrefix = oss.str();
-    }
-
-    void
-    manualTesting(std::string const& linkName, std::string const& srcIpAddr)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " Manual Tests";
-      command << "echo 'Finish any manual testing that is using "
-                << linkName << " " << srcIpAddr << ".'; "
-              << "echo 'Close this xterm when manual testing is complete.'; "
-              << "echo 'When this xterm is closed, "
-                << linkName << " " << srcIpAddr << " will be deconfigured.'; "
-              << "while [[ 1 == 1 ]]; do sleep 600; done;";
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl << "## Manual Testing Prompt" << std::endl;
-
-        if (opts.exists("no-prompt") && opts.exists("script")) {
-          LOG_INFO << std::endl << "# Call custom script: " << std::endl;
-          cmdRunner.systemExec(scriptPath.string());
-        } else if (!opts.exists("no-prompt")) {
-          // behave normally
-          cmdRunner.threadExec(commands);
-        } else if (opts.exists("no-prompt")) {
-          // skip prompt
-          // NOTE 15NOV18 Making this skip the number may require reworking
-          //              the isEnabled logic, not worth it currently
-        }
-        commands.clear();
-      }
     }
 
     void
@@ -1029,125 +954,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
     }
 
-    template<typename T>
-    bool
-    yIs(const YAML::Node& _node, const std::string& _key, T _value)
-    {
-      return (_node[_key].IsDefined())
-          && (_node[_key].as<T>() == _value)
-          ;
-    }
-
-    void
-    networkPhases(
-      pqxx::connection& db,
-      const nmco::Uuid& playbookSourceId,
-      const nmco::Uuid& sessionId,
-      const std::string& srcIpAddr,
-      const std::string& linkName,
-      const std::string& ipNet,
-      const std::string& ipNetBcast,
-      const std::string& target
-    )
-    {
-      std::regex reLinkName(R"(\{\{linkName\}\})");
-      std::regex reIpNet(R"(\{\{ipNet\}\})");
-      std::regex reIpNetBcast(R"(\{\{ipNetBcast\}\})");
-      std::regex reRoeExcludedPath(R"(\{\{roeExcludedPath\}\})");
-      std::regex reRespondingHostsPath(R"(\{\{respondingHostsPath\}\})");
-      std::regex reRoeNetworksPath(R"(\{\{roeNetworksPath\}\})");
-
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      YAML::Node yConfig {YAML::LoadFile(playsFile)};
-
-      const auto& yPhasesArray    {yConfig[target]["stage"]};
-      const auto& yRunOptionsMap  {yConfig["runtime-options"]};
-
-      size_t phaseId {1};
-
-      // In stage; Per phase configuration
-      for (const auto& yPhaseMap : yPhasesArray) {
-        LOG_INFO << std::endl << "### Phase " << phaseId << std::endl;
-        if (   yIs<bool>(yRunOptionsMap, "ignore-iface-state-change", true)
-            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
-        {
-          LOG_WARN << "Disabling this phase execution" << std::endl;
-          cmdRunner.setExecute(false);
-        }
-
-        if (!(!enabledPhases.empty() && !enabledPhases.count(phaseId))
-            && yIs<bool>(yPhaseMap, "generate-responding-hosts", true)) {
-          generateRespondingHosts(sessionId.toString(), ipNet);
-        }
-
-        // In phase; Per command-set configuration
-        for (const auto& yCmdSetMap : yPhaseMap["phase"]) {
-          if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
-            continue;
-          }
-
-          if (yIs<bool>(yCmdSetMap, "manual-tests", true)) {
-            manualTesting(linkName, srcIpAddr);
-            continue;
-          }
-
-          const auto& cmdSetName {yCmdSetMap["name"].as<std::string>()}; 
-          std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
-
-          // In command set; Per command configuration
-          for (const auto& yCmdMap : yCmdSetMap[ipTarget]) {
-            const auto& cmdTitle  {yCmdMap["title"].as<std::string>()};
-            const auto& cmd       {yCmdMap["cmd"].as<std::string>()};
-
-            // In command; Per command option configuration
-            std::string allOpts {""};
-            for (const auto& yOpt : yCmdMap["opts"]) {
-              auto opt {yOpt.as<std::string>()};
-
-              // Replace keywords with values
-              opt = std::regex_replace(opt, reLinkName, linkName);
-              opt = std::regex_replace(opt, reIpNet, ipNet);
-              opt = std::regex_replace(opt, reIpNetBcast, ipNetBcast);
-              opt = std::regex_replace(opt, reRoeExcludedPath, roeExcludedPath);
-              opt = std::regex_replace(opt, reRespondingHostsPath, respondingHostsPath);
-              opt = std::regex_replace(opt, reRoeNetworksPath, roeNetworksPath);
-
-              if (!allOpts.ends_with(" ")) {
-                allOpts.append(" ");
-              }
-              allOpts.append(opt);
-            }
-
-            // Add command to command set
-            cmdTitle.str(std::string());
-            command.str(std::string());
-            cmdTitle << commandTitlePrefix << " " << cmdTitle;
-            command << cmd << allOpts;
-            commands.emplace_back(cmdTitle.str(), command.str());
-          }
-          
-          { // Add command set to phase
-            std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-            LOG_INFO << std::endl
-                     << "## " << cmdSetName << std::endl;
-            for (const auto& cmd : commands) {
-              std::vector<std::tuple<std::string, std::string>> cmds;
-              cmds.emplace_back(cmd);
-              cmdRunner.threadExec(cmds);
-            }
-            commands.clear();
-          }
-        }
-
-        cmdRunner.setExecute(execute); // update in case of alternate logic
-        LOG_INFO << std::endl << "### End of phase " << phaseId << std::endl;
-
-        ++phaseId;
-      }
-    }
-
     void
     interNetworkActions(pqxx::connection& db,
         const nmco::Uuid& playbookSourceId, std::string const& linkName,
@@ -1185,6 +991,120 @@ class Tool : public nmdt::AbstractDatastoreTool
       {
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl;
+      }
+    }
+
+    template<typename T>
+    bool
+    yIs(const YAML::Node& _node, const std::string& _key, T _value)
+    {
+      return (_node[_key].IsDefined())
+          && (_node[_key].as<T>() == _value)
+          ;
+    }
+
+    void
+    networkPhases(
+      pqxx::connection& db,
+      const nmco::Uuid& playbookSourceId,
+      const nmco::Uuid& sessionId,
+      const std::string& srcIpAddr,
+      const std::string& linkName,
+      const std::string& ipNet,
+      const std::string& ipNetBcast,
+      const std::string& target
+    )
+    {
+      std::vector<std::tuple<std::regex, std::string>> replacementMap {
+        {std::regex(R"(\{\{srcIpAddr\}\})"), srcIpAddr},
+        {std::regex(R"(\{\{linkName\}\})"), linkName},
+        {std::regex(R"(\{\{ipNet\}\})"), ipNet},
+        {std::regex(R"(\{\{ipNetBcast\}\})"), ipNetBcast},
+        {std::regex(R"(\{\{roeExcludedPath\}\})"), roeExcludedPath},
+        {std::regex(R"(\{\{roeNetworksPath\}\})"), roeNetworksPath},
+        {std::regex(R"(\{\{respondingHostsPath\}\})"), respondingHostsPath},
+      };
+
+      std::vector<std::tuple<std::string, std::string>> commands;
+      std::ostringstream cmdTitle, command;
+
+      YAML::Node yConfig {YAML::LoadFile(playsFile)};
+
+      const auto& yPhasesArray    {yConfig[target]["stage"]};
+      const auto& yRunOptionsMap  {yConfig["runtime-options"]};
+
+      size_t phaseId {1};
+
+      // In stage; Per phase configuration
+      for (const auto& yPhaseMap : yPhasesArray) {
+        LOG_INFO << std::endl << "### Phase " << phaseId << std::endl;
+        if (   yIs<bool>(yRunOptionsMap, "ignore-iface-state-change", true)
+            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
+        {
+          LOG_WARN << "Disabling this phase execution" << std::endl;
+          cmdRunner.setExecute(false);
+        }
+
+        if (!(!enabledPhases.empty() && !enabledPhases.count(phaseId))
+            && yIs<bool>(yPhaseMap, "generate-responding-hosts", true)) {
+          generateRespondingHosts(sessionId.toString(), ipNet);
+        }
+
+        // In phase; Per command-set configuration
+        for (const auto& yCmdSetMap : yPhaseMap["phase"]) {
+          if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
+            continue;
+          }
+
+          const auto& cmdSetName {yCmdSetMap["name"].as<std::string>()}; 
+          std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+
+          // In command set; Per command configuration
+          for (const auto& yCmdMap : yCmdSetMap[ipTarget]) {
+            const auto& csCmdTitle {yCmdMap["title"].as<std::string>()};
+            const auto& csCmd      {yCmdMap["cmd"].as<std::string>()};
+
+            // In command; Per command option configuration
+            std::string allOpts {""};
+            for (const auto& yOpt : yCmdMap["opts"]) {
+              auto opt {yOpt.as<std::string>()};
+
+              // Replace keywords with values
+              for (const auto& [k,v] : replacementMap) {
+                opt = std::regex_replace(opt, k, v);
+              }
+
+              if (!allOpts.ends_with(" ")) {
+                allOpts.append(" ");
+              }
+              allOpts.append(opt);
+            }
+
+            // Add command to command set
+            cmdTitle.str(std::string());
+            command.str(std::string());
+            cmdTitle << commandTitlePrefix << " " << csCmdTitle;
+            command << csCmd << allOpts;
+            commands.emplace_back(cmdTitle.str(), command.str());
+          }
+          
+          { // Add command set to phase
+            std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+            LOG_INFO << std::endl
+                     << "## " << cmdSetName << std::endl;
+            for (const auto& cmd : commands) {
+              std::vector<std::tuple<std::string, std::string>> cmds;
+              cmds.emplace_back(cmd);
+              cmdRunner.threadExec(cmds);
+            }
+            commands.clear();
+          }
+        }
+
+        cmdRunner.setExecute(execute); // update in case of alternate logic
+        LOG_INFO << std::endl << "### End of phase " << phaseId << std::endl;
+
+        ++phaseId;
       }
     }
 
