@@ -128,8 +128,8 @@ class Tool : public nmdt::AbstractDatastoreTool
             "MAC address to assign to network interface")
           );
 
-      opts.addAdvancedOption("query-file", std::make_tuple(
-            "query-file",
+      opts.addAdvancedOption("queries-file", std::make_tuple(
+            "queries-file",
             po::value<std::string>()->required()
               ->default_value(queriesPb.getDefaultQueryFilePath()),
             "Location of queries file for playbook runs")
@@ -149,7 +149,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      queriesPb.init(opts.getValue("query-file"));
+      queriesPb.init(opts.getValue("queries-file"));
       queriesPb.dbPrepare(db);
       pqxx::work t{db};
 

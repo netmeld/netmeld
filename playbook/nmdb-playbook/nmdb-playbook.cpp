@@ -224,8 +224,8 @@ class Tool : public nmdt::AbstractDatastoreTool
             "; Space separated list"
             "; This can break expected logic in some cases")
           );
-      opts.addAdvancedOption("query-file", std::make_tuple(
-            "query-file",
+      opts.addAdvancedOption("queries-file", std::make_tuple(
+            "queries-file",
             po::value<std::string>()->required()
               ->default_value(queriesPb.getDefaultQueryFilePath()),
             "Location of queries file for playbook runs")
@@ -268,7 +268,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
       pqxx::connection db {dbConnectString};
-      queriesPb.init(opts.getValue("query-file"));
+      queriesPb.init(opts.getValue("queries-file"));
       queriesPb.dbPrepare(db);
 
       if (true) {
