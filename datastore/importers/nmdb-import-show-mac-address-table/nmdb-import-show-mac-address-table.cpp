@@ -24,10 +24,13 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "Parser.hpp"
 
+namespace nmcu = netmeld::core::utils;
 namespace nmdt = netmeld::datastore::tools;
 
 
@@ -65,9 +68,16 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       LOG_DEBUG << "Iterating over results\n";
-      for (auto& result : this->tResults) {
-        result.save(t, toolRunId, deviceId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
+      for (auto& iface : this->tResults) {
+        // The network port name is sometimes a list that must be expanded
+        std::vector<std::string> ifaceNames;
+        boost::split(ifaceNames, iface.getName(), boost::is_any_of(","));
+        for (std::string ifaceName : ifaceNames) {
+          // Expand shortened names like "giX" to "gigabitethernetX"
+          iface.setName(nmcu::expandCiscoIfaceName(ifaceName));
+          iface.save(t, toolRunId, deviceId);
+          LOG_DEBUG << iface.toDebugString() << std::endl;
+        }
       }
     }
 

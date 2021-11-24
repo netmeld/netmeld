@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <boost/algorithm/string.hpp>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
@@ -108,6 +109,61 @@ namespace netmeld::core::utils {
                 const std::string& _srcPorts, const std::string& _dstPorts)
   {
     return _proto + ":" + _srcPorts + ":" + _dstPorts;
+  }
 
+  std::string
+  expandCiscoIfaceName(const std::string& _ifaceName)
+  {
+    // Various Cisco output uses two-letter interface prefixes.
+    // These short interface names need to be expanded in order to match
+    // the interface names obtained from the running configuration.
+    std::string ifaceName{toLower(_ifaceName)};
+
+    boost::trim(ifaceName);
+
+    // Ethernet variations (ordered by speed)
+    if (ifaceName.starts_with("et") &&
+        !ifaceName.starts_with("ethernet")) {
+      ifaceName.replace(0, 2, "ethernet");
+    }
+    else if (ifaceName.starts_with("fa") &&
+             !ifaceName.starts_with("fastethernet")) {
+      ifaceName.replace(0, 2, "fastethernet");
+    }
+    else if (ifaceName.starts_with("gi") &&
+             !ifaceName.starts_with("gigabitethernet")) {
+      ifaceName.replace(0, 2, "gigabitethernet");
+    }
+    else if (ifaceName.starts_with("te") &&
+             !ifaceName.starts_with("tengigabitethernet")) {
+      ifaceName.replace(0, 2, "tengigabitethernet");
+    }
+    else if (ifaceName.starts_with("fo") &&
+             !ifaceName.starts_with("fortygigabitethernet")) {
+      ifaceName.replace(0, 2, "fortygigabitethernet");
+    }
+    // Other interface types (ordered alphabetically)
+    else if (ifaceName.starts_with("lo") &&
+             !ifaceName.starts_with("loopback")) {
+      ifaceName.replace(0, 2, "loopback");
+    }
+    else if (ifaceName.starts_with("po") &&
+             !ifaceName.starts_with("port-channel")) {
+      ifaceName.replace(0, 2, "port-channel");
+    }
+    else if (ifaceName.starts_with("se") &&
+             !ifaceName.starts_with("serial")) {
+      ifaceName.replace(0, 2, "serial");
+    }
+    else if (ifaceName.starts_with("tu") &&
+             !ifaceName.starts_with("tunnel")) {
+      ifaceName.replace(0, 2, "tunnel");
+    }
+    else if (ifaceName.starts_with("vl") &&
+             !ifaceName.starts_with("vlan")) {
+      ifaceName.replace(0, 2, "vlan");
+    }
+
+    return ifaceName;
   }
 }
