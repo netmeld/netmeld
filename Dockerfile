@@ -20,6 +20,7 @@ RUN apt update \
       libpugixml-dev \
       libpcap0.8-dev \
       nlohmann-json3-dev \
+      libyaml-cpp-dev \
  && apt install --assume-yes --no-install-recommends \
       python3 \
       apt-transport-https \

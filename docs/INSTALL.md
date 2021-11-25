@@ -47,7 +47,7 @@ apt install \
   libboost-date-time-dev libboost-iostreams-dev \
     libboost-program-options-dev libboost-system-dev \
     libboost-test-dev libboost-regex-dev \
-  libpugixml-dev nlohmann-json3-dev \
+  libpugixml-dev nlohmann-json3-dev libyaml-cpp-dev \
   libpcap0.8-dev
 
 # Needed for complete tool set execution; assumes prior installed

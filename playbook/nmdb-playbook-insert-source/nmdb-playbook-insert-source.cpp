@@ -42,6 +42,10 @@ class Tool : public nmdt::AbstractDatastoreTool
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
+    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+
+    nmpbu::QueriesPlaybook queriesPb;
+
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
 
@@ -77,7 +81,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       opts.addRequiredOption("stage", std::make_tuple(
             "stage",
-            po::value<int>()->required(),
+            po::value<size_t>()->required(),
             "Numbered stage within the playbook")
           );
       opts.addRequiredOption("interface", std::make_tuple(
@@ -102,8 +106,8 @@ class Tool : public nmdt::AbstractDatastoreTool
             "Add to across routers playbook")
           );
 
-      opts.addOptionalOption("ptp-rtr-ip-addr", std::make_tuple(
-            "ptp-rtr-ip-addr",
+      opts.addOptionalOption("ptp-next-hop-ip-addr", std::make_tuple(
+            "ptp-next-hop-ip-addr",
             po::value<std::string>()->required()->default_value(""),
             "Point-to-Point router IP address (Prefer using the"
             " nmdb-playbook-insert-router tool where possible)")
@@ -123,6 +127,13 @@ class Tool : public nmdt::AbstractDatastoreTool
             po::value<std::string>()->required()->default_value(""),
             "MAC address to assign to network interface")
           );
+
+      opts.addAdvancedOption("queries-file", std::make_tuple(
+            "queries-file",
+            po::value<std::string>()->required()
+              ->default_value(queriesPb.getDefaultQueryFilePath()),
+            "Location of queries file for playbook runs")
+          );
     }
 
     int
@@ -138,29 +149,30 @@ class Tool : public nmdt::AbstractDatastoreTool
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
       pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      nmpbu::dbPreparePlaybook(db);
+      queriesPb.init(opts.getValue("queries-file"));
+      queriesPb.dbPrepare(db);
       pqxx::work t{db};
 
-      nmco::Uuid const pbSourceId;
-      bool const isComplete = false;
+      const nmco::Uuid pbSourceId;
+      const bool isComplete {false};
 
-      int const pbStage = opts.getValueAs<int>("stage");
+      const size_t pbStage {opts.getValueAs<size_t>("stage")};
 
-      std::string const ifaceName = opts.getValue("interface");
-      uint16_t const vlan = opts.getValueAs<uint16_t>("vlan");
+      const std::string ifaceName {opts.getValue("interface")};
+      const uint16_t vlan {opts.getValueAs<uint16_t>("vlan")};
 
-      std::string const macAddr = opts.getValue("mac-addr");
+      const std::string macAddr {opts.getValue("mac-addr")};
 
-      nmdo::IpAddress ipAddr   {opts.getValue("ip-addr")};
+      nmdo::IpAddress ipAddr {opts.getValue("ip-addr")};
       if (!ipAddr.isValid()) {
         LOG_ERROR << "Aborting: Supplied IP address is invalid for usage"
               << std::endl;
         return nmcu::Exit::FAILURE;
       }
 
-      std::string ptpRtrIpString = opts.getValue("ptp-rtr-ip-addr");
-      if (!ptpRtrIpString.empty()) {
-        nmdo::IpAddress ptpRtrIp {ptpRtrIpString};
+      std::string ptpNextHopIpAddr {opts.getValue("ptp-next-hop-ip-addr")};
+      if (!ptpNextHopIpAddr.empty()) {
+        nmdo::IpAddress ptpRtrIp {ptpNextHopIpAddr};
         if (!ptpRtrIp.isValid()) {
           LOG_ERROR << "Aborting: Supplied point-to-point router IP"
                 << " is invalid for usage"
@@ -169,7 +181,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
       }
 
-      std::string const description = opts.getValue("description");
+      const std::string description {opts.getValue("description")};
 
       if (opts.exists("intra-network")) {
         t.exec_prepared("insert_playbook_intra_network_source",
@@ -191,7 +203,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             vlan,
             macAddr,
             ipAddr.toString(),
-            ptpRtrIpString,
+            ptpNextHopIpAddr,
             description);
       }
 

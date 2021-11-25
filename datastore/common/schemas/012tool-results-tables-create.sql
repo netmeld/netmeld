@@ -328,10 +328,10 @@ ON raw_vlans_ip_nets(vlan, ip_net);
 CREATE TABLE raw_ip_traceroutes (
     tool_run_id                 UUID            NOT NULL,
     hop_count                   INT             NOT NULL,
-    rtr_ip_addr                 INET            NOT NULL,
+    next_hop_ip_addr            INET            NOT NULL,
     dst_ip_addr                 INET            NOT NULL,
-    PRIMARY KEY (tool_run_id, hop_count, rtr_ip_addr, dst_ip_addr),
-    FOREIGN KEY (tool_run_id, rtr_ip_addr)
+    PRIMARY KEY (tool_run_id, hop_count, next_hop_ip_addr, dst_ip_addr),
+    FOREIGN KEY (tool_run_id, next_hop_ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
@@ -349,8 +349,8 @@ ON raw_ip_traceroutes(tool_run_id);
 CREATE INDEX raw_ip_traceroutes_idx_hop_count
 ON raw_ip_traceroutes(hop_count);
 
-CREATE INDEX raw_ip_traceroutes_idx_rtr_ip_addr
-ON raw_ip_traceroutes(rtr_ip_addr);
+CREATE INDEX raw_ip_traceroutes_idx_next_hop_ip_addr
+ON raw_ip_traceroutes(next_hop_ip_addr);
 
 CREATE INDEX raw_ip_traceroutes_idx_dst_ip_addr
 ON raw_ip_traceroutes(dst_ip_addr);
@@ -358,7 +358,7 @@ ON raw_ip_traceroutes(dst_ip_addr);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_ip_traceroutes_idx_views
-ON raw_ip_traceroutes(hop_count, rtr_ip_addr, dst_ip_addr);
+ON raw_ip_traceroutes(hop_count, next_hop_ip_addr, dst_ip_addr);
 
 
 -- ----------------------------------------------------------------------

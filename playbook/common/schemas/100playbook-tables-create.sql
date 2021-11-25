@@ -70,7 +70,7 @@ CREATE TABLE playbook_inter_network_sources (
     vlan                        INT             NOT NULL,
     mac_addr                    MACADDR         NULL,
     ip_addr                     INET            NOT NULL,
-    ptp_rtr_ip_addr             INET            NULL,
+    ptp_next_hop_ip_addr        INET            NULL,
     description                 TEXT            NULL,
     PRIMARY KEY (playbook_source_id),
     UNIQUE (playbook_stage, interface_name, vlan, ip_addr),
@@ -83,9 +83,9 @@ CREATE TABLE playbook_inter_network_sources (
 -- ----------------------------------------------------------------------
 
 CREATE TABLE playbook_ip_routers (
-    rtr_ip_addr                 INET            NOT NULL,
-    PRIMARY KEY (rtr_ip_addr),
-    CHECK ((rtr_ip_addr = host(rtr_ip_addr)::INET))
+    next_hop_ip_addr            INET            NOT NULL,
+    PRIMARY KEY (next_hop_ip_addr),
+    CHECK ((next_hop_ip_addr = host(next_hop_ip_addr)::INET))
 );
 
 
