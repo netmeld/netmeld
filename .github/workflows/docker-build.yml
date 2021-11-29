@@ -15,14 +15,21 @@ jobs:
     if: github.repository == 'netmeld/netmeld'
 
     runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v2
 
-      - uses: docker/build-push-action@v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: netmeld/netmeld-dev
-          tags: ${{ github.event.inputs.tags }}
-      
+          logout: true
+
+      - name: Build and push netmeld-dev to DockerHub
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: netmeld/netmeld-dev:${{ github.event.inputs.tags }}
