@@ -491,118 +491,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
     }
 
-    void
-    generateTargetFiles(std::string const& sessionId, bool const inScopeNeeded)
-    {
-      std::ostringstream oss;
-      oss << pbDir << "/ROE-Excluded-IPv" << family << "-" << sessionId;
-      roeExcludedPath = oss.str();
-
-      std::ostringstream dbPrefix;
-      dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
-
-      std::vector<std::string> commands;
-      std::ostringstream command;
-
-      // ROE Excludes
-      command.str(std::string());
-      command << dbPrefix.str() << '"'
-              << "SELECT DISTINCT ip_net FROM playbook_roe_ip_nets"
-              << " WHERE (NOT in_scope) AND (" << family << " = family(ip_net))"
-              << " ORDER BY ip_net\" >> " << roeExcludedPath
-              ;
-      commands.emplace_back(command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl << "## Target Files (ROE excluded)"
-                 << std::endl;
-        for (const auto& cmd : commands) {
-          cmdRunner.systemExec(cmd);
-        }
-        commands.clear();
-      }
-
-      nmfm.removeWrite(roeExcludedPath);
-
-      if (inScopeNeeded) {
-        oss.str(std::string());
-        oss << pbDir << "/ROE-Networks-IPv" << family << "-" << sessionId;
-        roeNetworksPath = oss.str();
-
-        // ROE in-scope
-        command.str(std::string());
-        command << dbPrefix.str() << '"'
-                << "SELECT DISTINCT ip_net FROM playbook_roe_ip_nets"
-                << " WHERE (in_scope) AND (" << family << " = family(ip_net))"
-                << " ORDER BY ip_net\" >> " << roeNetworksPath
-                ;
-        commands.emplace_back(command.str());
-
-        {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << std::endl << "## Target Files (ROE in-scope)"
-                   << std::endl;
-          for (const auto& cmd : commands) {
-            cmdRunner.systemExec(cmd);
-          }
-          commands.clear();
-        }
-        nmfm.removeWrite(roeNetworksPath);
-      }
-    }
-
-    void
-    generateRespondingHosts(std::string const& sessionId,
-        std::string const& ipNet = {})
-    {
-      std::ostringstream oss;
-      oss << pbDir << "/Responding-Hosts-IPv" << family << "-" << sessionId;
-      respondingHostsPath = oss.str();
-
-      std::ostringstream dbPrefix;
-      dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
-
-      std::vector<std::string> commands;
-      std::ostringstream command;
-
-      // Responding hosts
-      command.str(std::string());
-      command << dbPrefix.str() << '"'
-              << "SELECT DISTINCT ia.ip_addr FROM raw_ip_addrs AS ia"
-              << " JOIN tool_runs AS tr"
-              << "   ON (ia.tool_run_id = tr.id)"
-              << " JOIN playbook_roe_ip_nets AS roe"
-              << "   ON (ia.ip_addr <<= roe.ip_net)"
-              << " WHERE (ia.is_responding)"
-              << "   AND (" << family << " = family(ia.ip_addr))"
-              << "   AND (roe.in_scope)"
-              ;
-      if (ipNet.empty()) { // inter-network
-        command << "   AND (tr.tool_name = 'nmap')"
-                << "   AND (tr.command_line LIKE '%nmap %ROE-%-IPv"
-                << family << "-" << sessionId << " %')"
-                ;
-      } else { // intra-network
-        command << "   AND (ia.ip_addr <<= '" << ipNet << "')"
-                ;
-      }
-      command << " ORDER BY ia.ip_addr\" >> " << respondingHostsPath
-              ;
-      commands.emplace_back(command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl << "## Target Files (Responding Hosts)"
-                 << std::endl;
-        for (const auto& cmd : commands) {
-          cmdRunner.systemExec(cmd);
-        }
-        commands.clear();
-      }
-      nmfm.removeWrite(respondingHostsPath);
-    }
-
     // HELPERS
     bool
     ifaceIsDown(std::string const& ifaceName)
@@ -939,10 +827,11 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
       }
 
-      generateTargetFiles(sessionId.toString(), false);
-
+      //generateTargetFiles(sessionId.toString(), false);
+      primeSessionData(sessionId.toString());
       networkPhases(db, sessionId, playbookSourceId, srcIpAddr,
-                    linkName, ipNet, ipNetBcast, "intra-network");
+                    linkName, ipNet, ipNetBcast, "intra-network",
+                    "");
 
       cmdRunner.setExecute(execute); // update in case of alternate logic
 
@@ -962,27 +851,29 @@ class Tool : public nmdt::AbstractDatastoreTool
       nmpb::RaiiIpRoute raiiIpRoute
       {linkName, rtrIpAddr};
 
-      // ARP/NDP the router: skip testing if unreachable
-      std::ostringstream oss;
-      oss << nmapPrefix << " -n -sn -e " << linkName
-          << " " << rtrIpAddr << " 2>&1 | grep 'Host is up'"
-          ;
+      //// ARP/NDP the router: skip testing if unreachable
+      //std::ostringstream oss;
+      //oss << nmapPrefix << " -n -sn -e " << linkName
+      //    << " " << rtrIpAddr << " 2>&1 | grep 'Host is up'"
+      //    ;
 
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        bool isRouterReachable = cmdRunner.systemExec(oss.str());
-        if (!isRouterReachable) {
-          LOG_INFO << std::endl;
-          LOG_WARN << "Could not ARP/NDP router " << rtrIpAddr << std::endl
-                   << "Skipping tests through router " << rtrIpAddr << std::endl
-                   << std::endl;
-          cmdRunner.setExecute(false); // disable, but maintain count
-        }
-      }
+      //{
+      //  std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+      //  bool isRouterReachable = cmdRunner.systemExec(oss.str());
+      //  if (!isRouterReachable) {
+      //    LOG_INFO << std::endl;
+      //    LOG_WARN << "Could not ARP/NDP router " << rtrIpAddr << std::endl
+      //             << "Skipping tests through router " << rtrIpAddr << std::endl
+      //             << std::endl;
+      //    cmdRunner.setExecute(false); // disable, but maintain count
+      //  }
+      //}
 
-      generateTargetFiles(sessionId.toString(), true);
+      //generateTargetFiles(sessionId.toString(), true);
+      primeSessionData(sessionId.toString());
       networkPhases(db, sessionId, playbookSourceId, srcIpAddr,
-                    linkName, "", "", "inter-network");
+                    linkName, "", "", "inter-network",
+                    rtrIpAddr);
 
       cmdRunner.setExecute(execute); // update in case of alternate logic
 
@@ -990,6 +881,30 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_INFO << std::endl;
       }
+    }
+
+    void
+    primeSessionData(std::string const& sessionId)
+    {
+      std::ostringstream oss;
+
+      oss.str(std::string());
+      oss << pbDir << "/ROE-Excluded-IPv" << family << "-" << sessionId;
+      roeExcludedPath = oss.str();
+      // TODO
+      //nmfm.removeWrite(roeExcludedPath);
+
+      oss.str(std::string());
+      oss << pbDir << "/ROE-Networks-IPv" << family << "-" << sessionId;
+      roeNetworksPath = oss.str();
+      // TODO
+      //nmfm.removeWrite(roeNetworksPath);
+
+      oss.str(std::string());
+      oss << pbDir << "/Responding-Hosts-IPv" << family << "-" << sessionId;
+      respondingHostsPath = oss.str();
+      // TODO
+      //nmfm.removeWrite(respondingHostsPath);
     }
 
     template<typename T>
@@ -1010,22 +925,10 @@ class Tool : public nmdt::AbstractDatastoreTool
       const std::string& linkName,
       const std::string& ipNet,
       const std::string& ipNetBcast,
-      const std::string& target
+      const std::string& target,
+      const std::string& rtrIpAddr
     )
     {
-      std::vector<std::tuple<std::regex, std::string>> replacementMap {
-        {std::regex(R"(\{\{srcIpAddr\}\})"), srcIpAddr},
-        {std::regex(R"(\{\{linkName\}\})"), linkName},
-        {std::regex(R"(\{\{ipNet\}\})"), ipNet},
-        {std::regex(R"(\{\{ipNetBcast\}\})"), ipNetBcast},
-        {std::regex(R"(\{\{roeExcludedPath\}\})"), roeExcludedPath},
-        {std::regex(R"(\{\{roeNetworksPath\}\})"), roeNetworksPath},
-        {std::regex(R"(\{\{respondingHostsPath\}\})"), respondingHostsPath},
-      };
-
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
       YAML::Node yConfig {YAML::LoadFile(playsFile)};
 
       const auto& yPhasesArray    {yConfig[target]["stage"]};
@@ -1043,13 +946,9 @@ class Tool : public nmdt::AbstractDatastoreTool
           cmdRunner.setExecute(false);
         }
 
-        if (!(!enabledPhases.empty() && !enabledPhases.count(phaseId))
-            && yIs<bool>(yPhaseMap, "generate-responding-hosts", true)) {
-          generateRespondingHosts(sessionId.toString(), ipNet);
-        }
+        for (const auto& yCmdSetMap : yPhaseMap["pre"]) {
+          std::vector<std::tuple<std::string, std::string>> commands;
 
-        // In phase; Per command-set configuration
-        for (const auto& yCmdSetMap : yPhaseMap["phase"]) {
           if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
             continue;
           }
@@ -1059,43 +958,147 @@ class Tool : public nmdt::AbstractDatastoreTool
 
           // In command set; Per command configuration
           for (const auto& yCmdMap : yCmdSetMap[ipTarget]) {
-            const auto& csCmdTitle {yCmdMap["title"].as<std::string>()};
-            const auto& csCmd      {yCmdMap["cmd"].as<std::string>()};
-
             // In command; Per command option configuration
-            std::string allOpts {""};
+            std::ostringstream ossOpts;
+            for (const auto& yOpt : yCmdMap["opts"]) {
+              std::vector<std::tuple<std::regex, std::string>> replacementMap {
+                {std::regex(R"(\{\{srcIpAddr\}\})"), srcIpAddr},
+                {std::regex(R"(\{\{linkName\}\})"), linkName},
+                {std::regex(R"(\{\{ipNet\}\})"), ipNet},
+                {std::regex(R"(\{\{ipNetBcast\}\})"), ipNetBcast},
+                {std::regex(R"(\{\{roeExcludedPath\}\})"), roeExcludedPath},
+                {std::regex(R"(\{\{roeNetworksPath\}\})"), roeNetworksPath},
+                {std::regex(R"(\{\{respondingHostsPath\}\})"), respondingHostsPath},
+                {std::regex(R"(\{\{rtrIpAddr\}\})"), rtrIpAddr},
+                {std::regex(R"(\{\{family\}\})"), familyStr},
+                {std::regex(R"(\{\{sessionId\}\})"), sessionId.toString()},
+              };
+
+              // Replace keywords with values
+              auto opt {yOpt.as<std::string>()};
+              for (const auto& [k,v] : replacementMap) {
+                opt = std::regex_replace(opt, k, v);
+              }
+              
+              ossOpts << " " << opt;
+            }
+
+            // Add command to command set
+            std::ostringstream ossTitle, ossCmd;
+            ossTitle << commandTitlePrefix << " "
+                     << yCmdMap["title"].as<std::string>();
+            ossCmd << yCmdMap["cmd"].as<std::string>()
+                   << ossOpts.str();
+            commands.emplace_back(ossTitle.str(), ossCmd.str());
+          }
+
+          for (const auto& yPsqlMap : yCmdSetMap["psql"]) {
+            std::vector<std::tuple<std::regex, std::string>> replacementMap {
+              {std::regex(R"(\{\{srcIpAddr\}\})"), srcIpAddr},
+              {std::regex(R"(\{\{linkName\}\})"), linkName},
+              {std::regex(R"(\{\{ipNet\}\})"), ipNet},
+              {std::regex(R"(\{\{ipNetBcast\}\})"), ipNetBcast},
+              {std::regex(R"(\{\{roeExcludedPath\}\})"), roeExcludedPath},
+              {std::regex(R"(\{\{roeNetworksPath\}\})"), roeNetworksPath},
+              {std::regex(R"(\{\{respondingHostsPath\}\})"), respondingHostsPath},
+              {std::regex(R"(\{\{rtrIpAddr\}\})"), rtrIpAddr},
+              {std::regex(R"(\{\{family\}\})"), familyStr},
+              {std::regex(R"(\{\{sessionId\}\})"), sessionId.toString()},
+            };
+
+            // Replace keywords with values
+            auto query   {yPsqlMap["query"].as<std::string>()};
+            auto outfile {yPsqlMap["outfile"].as<std::string>()};
+            for (const auto& [k,v] : replacementMap) {
+              query = std::regex_replace(query, k, v);
+              outfile = std::regex_replace(outfile, k, v);
+            }
+
+            // Add command to command set
+            std::ostringstream ossTitle, ossCmd;
+            ossTitle << commandTitlePrefix << " psql cmd";
+            ossCmd << "psql " << '"' << dbConnectString << '"' << " -A -t -c "
+                   << '"' << query << '"'
+                   << " >> " << outfile;
+            commands.emplace_back(ossTitle.str(), ossCmd.str());
+          }
+
+          { // Add command set to phase
+            std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+            LOG_INFO << std::endl
+                     << "## " << cmdSetName << std::endl;
+
+            std::vector<std::tuple<std::string, std::string>> cmds;
+            for (const auto& [_, cmd] : commands) {
+              bool stillExec {cmdRunner.systemExec(cmd)};
+              if (!stillExec) {
+                LOG_WARN << std::endl
+                         << yCmdSetMap["err-msg"].as<std::string>()
+                         << std::endl;
+                cmdRunner.setExecute(false); // disable to maintain count
+              }
+            }
+          }
+        }
+
+        // In phase; Per command-set configuration
+        for (const auto& yCmdSetMap : yPhaseMap["phase"]) {
+          std::vector<std::tuple<std::string, std::string>> commands;
+
+          if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
+            continue;
+          }
+
+          const auto& cmdSetName {yCmdSetMap["name"].as<std::string>()}; 
+          std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+
+          // In command set; Per command configuration
+          for (const auto& yCmdMap : yCmdSetMap[ipTarget]) {
+            // In command; Per command option configuration
+            std::ostringstream ossOpts;
             for (const auto& yOpt : yCmdMap["opts"]) {
               auto opt {yOpt.as<std::string>()};
+
+              std::vector<std::tuple<std::regex, std::string>> replacementMap {
+                {std::regex(R"(\{\{srcIpAddr\}\})"), srcIpAddr},
+                {std::regex(R"(\{\{linkName\}\})"), linkName},
+                {std::regex(R"(\{\{ipNet\}\})"), ipNet},
+                {std::regex(R"(\{\{ipNetBcast\}\})"), ipNetBcast},
+                {std::regex(R"(\{\{roeExcludedPath\}\})"), roeExcludedPath},
+                {std::regex(R"(\{\{roeNetworksPath\}\})"), roeNetworksPath},
+                {std::regex(R"(\{\{respondingHostsPath\}\})"), respondingHostsPath},
+                {std::regex(R"(\{\{rtrIpAddr\}\})"), rtrIpAddr},
+                {std::regex(R"(\{\{family\}\})"), familyStr},
+                {std::regex(R"(\{\{sessionId\}\})"), sessionId.toString()},
+              };
 
               // Replace keywords with values
               for (const auto& [k,v] : replacementMap) {
                 opt = std::regex_replace(opt, k, v);
               }
-
-              if (!allOpts.ends_with(" ")) {
-                allOpts.append(" ");
-              }
-              allOpts.append(opt);
+              
+              ossOpts << " " << opt;
             }
 
             // Add command to command set
-            cmdTitle.str(std::string());
-            command.str(std::string());
-            cmdTitle << commandTitlePrefix << " " << csCmdTitle;
-            command << csCmd << allOpts;
-            commands.emplace_back(cmdTitle.str(), command.str());
+            std::ostringstream ossTitle, ossCmd;
+            ossTitle << commandTitlePrefix << " "
+                     << yCmdMap["title"].as<std::string>();
+            ossCmd << yCmdMap["cmd"].as<std::string>()
+                   << ossOpts.str();
+            commands.emplace_back(ossTitle.str(), ossCmd.str());
           }
           
           { // Add command set to phase
+            std::vector<std::tuple<std::string, std::string>> cmds;
+            for (const auto& cmd : commands) {
+              cmds.emplace_back(cmd);
+            }
+
             std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
             LOG_INFO << std::endl
                      << "## " << cmdSetName << std::endl;
-            for (const auto& cmd : commands) {
-              std::vector<std::tuple<std::string, std::string>> cmds;
-              cmds.emplace_back(cmd);
-              cmdRunner.threadExec(cmds);
-            }
-            commands.clear();
+            cmdRunner.threadExec(cmds);
           }
         }
 
@@ -1106,39 +1109,39 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
     }
 
-  bool
-  isPhaseRuntimeError(pqxx::connection& db,
-      const nmco::Uuid& playbookSourceId, const std::string& linkName,
-      const std::string& ipAddr)
-  {
-    // short-circuit, if not actually running
-    if (!execute) {
-      return false;
+    bool
+    isPhaseRuntimeError(pqxx::connection& db,
+        const nmco::Uuid& playbookSourceId, const std::string& linkName,
+        const std::string& ipAddr)
+    {
+      // short-circuit, if not actually running
+      if (!execute) {
+        return false;
+      }
+
+      bool isError {false};
+      pqxx::work t {db};
+
+      if (ifaceIsDown(linkName)) {
+        isError = true;
+        LOG_ERROR << "Interface in down state" << std::endl;
+        t.exec_prepared("insert_playbook_runtime_error",
+            playbookSourceId, "Interface state changed (down) during execution"
+            );
+      }
+
+      if (!ifaceHasAddress(linkName) || !ifaceHasIp(linkName, ipAddr)) {
+        isError = true;
+        LOG_ERROR << "Interface has no/incorrect IP address" << std::endl;
+        t.exec_prepared("insert_playbook_runtime_error",
+            playbookSourceId, "Interface lost IP address during execution"
+            );
+      }
+
+      t.commit();
+
+      return isError;
     }
-
-    bool isError {false};
-    pqxx::work t {db};
-
-    if (ifaceIsDown(linkName)) {
-      isError = true;
-      LOG_ERROR << "Interface in down state" << std::endl;
-      t.exec_prepared("insert_playbook_runtime_error",
-          playbookSourceId, "Interface state changed (down) during execution"
-          );
-    }
-
-    if (!ifaceHasAddress(linkName) || !ifaceHasIp(linkName, ipAddr)) {
-      isError = true;
-      LOG_ERROR << "Interface has no/incorrect IP address" << std::endl;
-      t.exec_prepared("insert_playbook_runtime_error",
-          playbookSourceId, "Interface lost IP address during execution"
-          );
-    }
-
-    t.commit();
-
-    return isError;
-  }
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
