@@ -736,7 +736,7 @@ class Tool : public nmdt::AbstractGraphTool
       }
       
       sfs::path imagePath {opts.getValue("icon-folder")};
-      std::string iconPath {imagePath.string() + "/unknown.svg"};
+      std::string iconPath {imagePath.string()};
       std::string label {
 	"<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
       };
@@ -757,7 +757,7 @@ class Tool : public nmdt::AbstractGraphTool
 	}
       }
        
-	label += iconPath + "\" scale=\"true\"/<>/TD>";
+	label += iconPath + "\" scale=\"true\"/></TD>";
 	
 	return label;
 
