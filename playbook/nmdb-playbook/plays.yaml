@@ -1,133 +1,161 @@
+---
 # Schema
 #
 # # Per-run configuration options
 # runtime-options:
 #   # Ignore unexpected interface state changes; per phase check
 #   ignore-iface-state-change: true|false
-#
-# # Playbook pre-defined scoping
-# intra-network|inter-network:
-#   # Stage definition; one per scope as primarily controlled in tool logic
-#   stage:
-#     # Phase definition; multiple per stage
-#     - phase:
-#       # Command set; multiple per phase
-#       - name: # Text to use for identifying the command set
-#         # IPv4 related commands
-#         ipv4:
-#           # Command; multiple per command set
-#           - title: # Text to use for identifying the command
-#             cmd: # Command to run
-#             opts: # Command options; allows variable replacement
-#               - opt1 # Example
-#               - opt2 {{ipNet}} # Example with variable replacement
-#               - "{{ipNet}}" # Example variable replacement if by self
-#         # IPv6 related commands; same schema as IPv4
-#         ipv6:
-#       # Execute manual test prompt
-#       - manual-tests: true|false
-#       # Phase optional options (same YAML scope as "phase")
-#       # Generate responding hosts file
-#       generate-responding-hosts: true|false
 
 runtime-options:
   ignore-iface-state-change: false
 
+#
+# intra-network|inter-network: # Playbook pre-defined scoping
+#   stage: # one per scope as primarily controlled in tool logic
+#   - # Phase; multiple per stage; serial
+#     phase:
+#     - # Command set; multiple per phase; serial
+#       name: # Command set title
+#       on-fail: # Signals failure will terminate further processing
+#         disable: stage|phase # What to disable
+#         msg: # The error message to emit
+#       always|ipv4|ipv6: # Flag for when to run the commands
+#       - # Commands; multiple per command set; parallel
+#         title: # Text to use for identifying the command
+#         cmd: # Command to run
+#         opts: # Command options; allows variable replacement
+#         - # In-order command options
 
 templates:
-  - nmap:
-    - &nmap-dns-db-query
-      DNS_SERVERS=`psql site -A -t -R, -c
-        "SELECT DISTINCT host(ip_addr)
-          FROM ports_services
-          WHERE port = '53'
-            AND port_state = 'open'"
-      ;
-      
-  - phase: &manual-testing
-    - name: Manual Testing Prompt
-      ipv4: &manual-testing-ipv4
-      - title: Manual Tests
-        cmd: echo ''
-        opts:
-          - ; echo 'Finish any manual testing that is using
-                    {{linkName}} {{srcIpAddr}}.'
-          - ; echo 'Close this xterm when manual testing is complete.'
-          - ; echo 'When this xterm is closed,
-                    {{linkName}} {{srcIpAddr}} will be deconfigured.'
-          - ; while [[ 1 == 1 ]]; do sleep 600; done;
-      ipv6: *manual-testing-ipv4
+- nmap:
+  - &nmap-dns-db-query
+    DNS_SERVERS=`psql site -A -t -R, -c
+      "SELECT DISTINCT host(ip_addr)
+        FROM ports_services
+        WHERE port = '53'
+          AND port_state = 'open'"
+    ;
 
-  - &pre-check-router-reachability
+- phase:      
+  - &manual-testing
+    name: Manual Testing Prompt
+    ipv4: &manual-testing-ipv4
+    - title: Manual Tests
+      cmd: echo ''
+      opts:
+      - ; echo 'Finish any manual testing that is using
+                {{linkName}} {{srcIpAddr}}.'
+      - ; echo 'Close this xterm when manual testing is complete.'
+      - ; echo 'When this xterm is closed,
+                {{linkName}} {{srcIpAddr}} will be deconfigured.'
+      - ; while [[ 1 == 1 ]]; do sleep 600; done;
+    ipv6: *manual-testing-ipv4
+
+  - &check-router-reachability
     name: Check Router Reachability
-    err-msg: Could not ARP/NDP router. Skipping tests through
-      router {{rtrIpAddr}}.
+    on-fail:
+      disable: stage
+      msg: Could not ARP/NDP router.
+           Skipping tests through router {{rtrIpAddr}}.
     ipv4:
-      - title:
-        cmd: clw nmap
-        opts: &opts-nmap-router-reachability
-          - -n -sn -e {{linkName}} {{rtrIpAddr}}
-          - 2>&1 | grep 'Host is up'
+    - title:
+      cmd: clw nmap
+      opts: &opts-nmap-router-reachability
+      - -n -sn -e {{linkName}} {{rtrIpAddr}}
+      - 2>&1 | grep 'Host is up'
     ipv6:
-      - title:
-        cmd: clw nmap -6
-        opts: *opts-nmap-router-reachability
-  - &pre-generate-responding-hosts-intra
+    - title:
+      cmd: clw nmap -6
+      opts: *opts-nmap-router-reachability
+
+  - &generate-responding-hosts-intra
     name: Target Files (Responding Hosts)
-    psql:
-      - outfile: "{{respondingHostsPath}}"
-        query:
-          SELECT DISTINCT ia.ip_addr
-          FROM raw_ip_addrs AS ia
-          JOIN tool_runs AS tr
-            ON (ia.tool_run_id = tr.id)
-          JOIN playbook_roe_ip_nets AS roe
-            ON (ia.ip_addr <<= roe.ip_net)
-          WHERE (ia.is_responding)
-            AND ({{family}} = family(ia.ip_addr))
-            AND (roe.in_scope)
-            AND (ia.ip_addr <<= '{{ipNet}}')
-          ORDER BY ia.ip_addr
-  - &pre-generate-responding-hosts-inter
+    on-fail:
+      disable: phase
+      msg: Could not generate responding hosts file(s).
+    always:
+    - title: psql cmd
+      cmd: psql
+      opts:
+      - &psql-common
+        "\"{{dbConnectString}}\" -A -t -c"
+      - '"'
+      - SELECT DISTINCT ia.ip_addr
+        FROM raw_ip_addrs AS ia
+        JOIN tool_runs AS tr
+          ON (ia.tool_run_id = tr.id)
+        JOIN playbook_roe_ip_nets AS roe
+          ON (ia.ip_addr <<= roe.ip_net)
+        WHERE (ia.is_responding)
+          AND ({{family}} = family(ia.ip_addr))
+          AND (roe.in_scope)
+          AND (ia.ip_addr <<= '{{ipNet}}')
+        ORDER BY ia.ip_addr
+      - '"'
+      - ">> {{respondingHostsPath}}"
+  - &generate-responding-hosts-inter
     name: Target Files (Responding Hosts)
-    psql:
-      - outfile: "{{respondingHostsPath}}"
-        query:
-          SELECT DISTINCT ia.ip_addr
-          FROM raw_ip_addrs AS ia
-          JOIN tool_runs AS tr
-            ON (ia.tool_run_id = tr.id)
-          JOIN playbook_roe_ip_nets AS roe
-            ON (ia.ip_addr <<= roe.ip_net)
-          WHERE (ia.is_responding)
-            AND ({{family}} = family(ia.ip_addr))
-            AND (roe.in_scope)
-            AND (tr.tool_name = 'nmap')
-            AND (tr.command_line LIKE
-                 '%nmap %ROE-%-IPv{{family}}-{{sessionId}} %')
-          ORDER BY ia.ip_addr
-  - &pre-generate-roe-exclude
+    on-fail:
+      disable: phase
+      msg: Could not generate responding hosts file(s).
+    always:
+    - title: psql cmd
+      cmd: psql
+      opts:
+      - *psql-common
+      - '"'
+      - SELECT DISTINCT ia.ip_addr
+        FROM raw_ip_addrs AS ia
+        JOIN tool_runs AS tr
+          ON (ia.tool_run_id = tr.id)
+        JOIN playbook_roe_ip_nets AS roe
+          ON (ia.ip_addr <<= roe.ip_net)
+        WHERE (ia.is_responding)
+          AND ({{family}} = family(ia.ip_addr))
+          AND (roe.in_scope)
+          AND (tr.tool_name = 'nmap')
+          AND (tr.command_line LIKE
+               '%nmap %ROE-%-IPv{{family}}-{{sessionId}} %')
+        ORDER BY ia.ip_addr
+      - '"'
+      - ">> {{respondingHostsPath}}"
+
+  - &generate-roe-exclude
     name: Target Files (ROE excluded)
-    err-msg: Could not generate ROE exclude file(s).
-    psql:
-      - outfile: "{{roeExcludedPath}}"
-        query:
-          SELECT DISTINCT ip_net
-          FROM playbook_roe_ip_nets
-          WHERE (NOT in_scope)
-            AND ({{family}} = family(ip_net))
-          ORDER BY ip_net
-  - &pre-generate-roe-include
-    name: Target Files (ROE in-scope)
-    err-msg: Could not generate ROE include file(s).
-    psql:
-      - outfile: "{{roeNetworksPath}}"
-        query:
-          SELECT DISTINCT ip_net
-          FROM playbook_roe_ip_nets
-          WHERE (in_scope)
-            AND ({{family}} = family(ip_net))
-          ORDER BY ip_net
+    on-fail:
+      disable: stage
+      msg: Could not generate ROE exclude file(s).
+    always:
+    - title: psql cmd
+      cmd: psql
+      opts:
+      - *psql-common
+      - '"'
+      - SELECT DISTINCT ip_net
+        FROM playbook_roe_ip_nets
+        WHERE (NOT in_scope)
+          AND ({{family}} = family(ip_net))
+        ORDER BY ip_net
+      - '"'
+      - ">> {{roeExcludedPath}}"
+  - &generate-roe-include
+    name: Target Files (ROE included)
+    on-fail:
+      disable: stage
+      msg: Could not generate ROE include file(s).
+    always:
+    - title: psql cmd
+      cmd: psql
+      opts:
+      - *psql-common
+      - '"'
+      - SELECT DISTINCT ip_net
+        FROM playbook_roe_ip_nets
+        WHERE (in_scope)
+          AND ({{family}} = family(ip_net))
+        ORDER BY ip_net
+      - '"'
+      - ">> {{roeIncludedPath}}"
 
 
 
@@ -137,124 +165,123 @@ templates:
 # - {{linkName}} -- the interface the play is currently using
 # - {{respondingHostsPath}} -- path to file containing known alive IPs
 # - {{roeExcludedPath}} -- path to file containing IPs excluded from scan
-# - {{roeNetworksPath}} -- the IP subnet of the target network
+# - {{roeIncludedPath}} -- the IP subnet of the target network
 intra-network:
   stage:
-    - pre:
-        - *pre-generate-roe-exclude
-      phase:
+    - phase:
+      - *generate-roe-exclude
+    - phase:
       - name: Initial Host Discovery
         ipv4:
-          - title: network broadcast ping
-            cmd: clw ping -4
-            opts:
-              - -n -I {{linkName}} -L -c 4
-              - -b {{ipNetBcast}}
-          - title: global broadcast ping
-            cmd: clw ping -4
-            opts:
-              - -n -I {{linkName}} -L -c 4
-              - -b 255.255.255.255
+        - title: network broadcast ping
+          cmd: clw ping -4
+          opts:
+          - -n -I {{linkName}} -L -c 4
+          - -b {{ipNetBcast}}
+        - title: global broadcast ping
+          cmd: clw ping -4
+          opts:
+          - -n -I {{linkName}} -L -c 4
+          - -b 255.255.255.255
         ipv6:
-          - title: all-nodes multicast ping
-            cmd: clw ping -6
-            opts:
-              - -n -I {{linkName}} -L -c 4
-              - -b ff02::1
-          - title: all-routers multicast ping
-            cmd: clw ping -6
-            opts:
-              - -n -I {{linkName}} -L -c 4
-              - -b ff02::2
+        - title: all-nodes multicast ping
+          cmd: clw ping -6
+          opts:
+          - -n -I {{linkName}} -L -c 4
+          - -b ff02::1
+        - title: all-routers multicast ping
+          cmd: clw ping -6
+          opts:
+          - -n -I {{linkName}} -L -c 4
+          - -b ff02::2
       - name: Host Discovery and IP Protocol Scans
         ipv4:
-          - title: nmap IPv4 ARP host discovery
-            cmd: clw nmap
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sn
-              - --script '(ip-forwarding)'
-              - "{{ipNet}} --excludefile {{roeExcludedPath}}"
-          - title: nmap IPv4 IP protocol scan
-            cmd: clw nmap
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sO
-              - "{{ipNet}} --excludefile {{roeExcludedPath}}"
+        - title: nmap IPv4 ARP host discovery
+          cmd: clw nmap
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sn
+          - --script '(ip-forwarding)'
+          - "{{ipNet}} --excludefile {{roeExcludedPath}}"
+        - title: nmap IPv4 IP protocol scan
+          cmd: clw nmap
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sO
+          - "{{ipNet}} --excludefile {{roeExcludedPath}}"
         ipv6:
-          - title: nmap IPv6 ARP host discovery
-            cmd: clw nmap -6
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sn
-              - --script
-                '(ip-forwarding) or (targets-ipv6-* or ipv6-node-info)'
-              - --script-args 'newtargets'
-              - "{{ipNet}} --excludefile {{roeExcludedPath}}"
-          - title: nmap IPv6 IP protocol scan
-            cmd: clw nmap -6
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sO
-              - --script '(targets-ipv6-* or ipv6-node-info)'
-              - --script-args 'newtargets'
-              - "{{ipNet}} --excludefile {{roeExcludedPath}}"
+        - title: nmap IPv6 ARP host discovery
+          cmd: clw nmap -6
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sn
+          - --script
+            '(ip-forwarding) or (targets-ipv6-* or ipv6-node-info)'
+          - --script-args 'newtargets'
+          - "{{ipNet}} --excludefile {{roeExcludedPath}}"
+        - title: nmap IPv6 IP protocol scan
+          cmd: clw nmap -6
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sO
+          - --script '(targets-ipv6-* or ipv6-node-info)'
+          - --script-args 'newtargets'
+          - "{{ipNet}} --excludefile {{roeExcludedPath}}"
     - phase:
       - name: Default DNS Lookup With Nmap
         ipv4:
-          - title: nmap IPv4 DNS lookup, default resolver
-            cmd: clw nmap
-            opts: &opts-nmap-ipv4-dns-intra
-              - -R -e {{linkName}} -sL -T4 --resolve-all
-              - "{{ipNet}} --excludefile {{roeExcludedPath}}"
+        - title: nmap IPv4 DNS lookup, default resolver
+          cmd: clw nmap
+          opts: &opts-nmap-ipv4-dns-intra
+          - -R -e {{linkName}} -sL -T4 --resolve-all
+          - "{{ipNet}} --excludefile {{roeExcludedPath}}"
         ipv6:
-          - title: nmap IPv6 DNS lookup, default resolver
-            cmd: clw nmap -6
-            opts: *opts-nmap-ipv4-dns-intra
-    - pre:
-        - *pre-generate-responding-hosts-intra
-      phase:
+        - title: nmap IPv6 DNS lookup, default resolver
+          cmd: clw nmap -6
+          opts: *opts-nmap-ipv4-dns-intra
+    - phase:
+      - *generate-responding-hosts-intra
       - name: Port Scans (plus basic info gathering)
         ipv4:
-          - title: nmap IPv4 TCP port scan
-            cmd: clw nmap
-            opts: &opts-nmap-ipv4-tcp-port-scan
-              - -n -e {{linkName}} -PR -T4
-              - -Pn -O --script
-                '(banner or dns-nsid or ntp-info or rpcinfo
-                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
-                  or smtp-commands or smb-os-discovery
-                  or smbv2-enabled or vnc-info)'
-              - -sS -p `nmdb-export-port-list --tcp-all`
-              - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
-          - title: nmap IPv4 UDP port scan
-            cmd: clw nmap
-            opts: &opts-nmap-ipv4-udp-port-scan
-              - -n -e {{linkName}} -PR -T4
-              - -Pn -O --script
-                '(banner or dns-nsid or ntp-info or rpcinfo
-                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
-                  or smtp-commands or smb-os-discovery
-                  or smbv2-enabled or vnc-info)'
-              - -sU -p `nmdb-export-port-list --udp`
-              - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 TCP port scan
+          cmd: clw nmap
+          opts: &opts-nmap-ipv4-tcp-port-scan
+          - -n -e {{linkName}} -PR -T4
+          - -Pn -O --script
+            '(banner or dns-nsid or ntp-info or rpcinfo
+              or ssh-hostkey or ssh2-enum-algos or ssl-cert
+              or smtp-commands or smb-os-discovery
+              or smbv2-enabled or vnc-info)'
+          - -sS -p `nmdb-export-port-list --tcp-all`
+          - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 UDP port scan
+          cmd: clw nmap
+          opts: &opts-nmap-ipv4-udp-port-scan
+          - -n -e {{linkName}} -PR -T4
+          - -Pn -O --script
+            '(banner or dns-nsid or ntp-info or rpcinfo
+              or ssh-hostkey or ssh2-enum-algos or ssl-cert
+              or smtp-commands or smb-os-discovery
+              or smbv2-enabled or vnc-info)'
+          - -sU -p `nmdb-export-port-list --udp`
+          - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
         ipv6:
-          - title: nmap IPv6 TCP port scan
-            cmd: clw nmap -6
-            opts: *opts-nmap-ipv4-tcp-port-scan
-          - title: nmap IPv6 UDP port scan
-            cmd: clw nmap -6
-            opts: *opts-nmap-ipv4-udp-port-scan
+        - title: nmap IPv6 TCP port scan
+          cmd: clw nmap -6
+          opts: *opts-nmap-ipv4-tcp-port-scan
+        - title: nmap IPv6 UDP port scan
+          cmd: clw nmap -6
+          opts: *opts-nmap-ipv4-udp-port-scan
       - name: Service Scans (most scripts enabled)
         ipv4:
-          - title: nmap IPv4 TCP service scan
-            cmd: clw nmap
-            opts: &opts-nmap-ipv4-tcp-service-scan
-              - -n -e {{linkName}} -PR -T4
-              - -A --script
-                '((default or discovery) and not (external or brute or dos))'
-              - -sS -p `nmdb-export-port-list --tcp-all`
-              - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 TCP service scan
+          cmd: clw nmap
+          opts: &opts-nmap-ipv4-tcp-service-scan
+          - -n -e {{linkName}} -PR -T4
+          - -A --script
+            '((default or discovery) and not (external or brute or dos))'
+          - -sS -p `nmdb-export-port-list --tcp-all`
+          - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
         ipv6:
           - title: nmap IPv6 TCP service scan
             cmd: clw nmap -6
@@ -262,157 +289,158 @@ intra-network:
     - phase:
       - name: Learned DNS Lookup With Nmap
         ipv4:
-          - title: nmap IPv4 DNS lookup, via open port 53
-            cmd: echo '';
-            opts:
-              - *nmap-dns-db-query
-              - clw nmap
-              - -R -e {{linkName}} -sL -T4 --resolve-all
-              - --dns-servers "${DNS_SERVERS}"
-              - "{{ipNet}} --excludefile {{roeExcludedPath}}"
+        - title: nmap IPv4 DNS lookup, via open port 53
+          cmd: echo '';
+          opts:
+          - *nmap-dns-db-query
+          - clw nmap
+          - -R -e {{linkName}} -sL -T4 --resolve-all
+          - --dns-servers "${DNS_SERVERS}"
+          - "{{ipNet}} --excludefile {{roeExcludedPath}}"
         ipv6:
-          - title: nmap IPv6 DNS lookup, via open port 53
-            cmd: echo ''
-            opts:
-              - *nmap-dns-db-query
-              - clw nmap -6
-              - -R -e {{linkName}} -sL -T4 --resolve-all
-              - --dns-servers "${DNS_SERVERS}"
-              - "{{ipNet}} --excludefile {{roeExcludedPath}}"
-    - phase: *manual-testing
+        - title: nmap IPv6 DNS lookup, via open port 53
+          cmd: echo ''
+          opts:
+          - *nmap-dns-db-query
+          - clw nmap -6
+          - -R -e {{linkName}} -sL -T4 --resolve-all
+          - --dns-servers "${DNS_SERVERS}"
+          - "{{ipNet}} --excludefile {{roeExcludedPath}}"
+    - phase:
+      - *manual-testing
 
 inter-network:
   stage:
-    - pre:
-        - *pre-check-router-reachability
-        - *pre-generate-roe-exclude
-        - *pre-generate-roe-include
-      phase:
+    - phase:
+      - *check-router-reachability
+      - *generate-roe-exclude
+      - *generate-roe-include
+    - phase:
       - name: Host Discovery and IP Protocol Scans
         ipv4:
-          - title: nmap IPv4 ICMP host discovery
-            cmd: clw nmap
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sn
-              - -PE
-              - -PP # ICMP Timestamp; not valid for IPv6
-              - -PM # ICMP Address Mask; not valid for IPv6
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
-          - title: nmap IPv4 port discovery
-            cmd: clw nmap
-            opts: &opts-nmap-ipv4-port-discovery
-              - -n -e {{linkName}} -PR -T4
-              - -sn
-              - "-PS\
-                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
-                427,443,445,464,543-544,636,749-751,873,902,\
-                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
-                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
-                9000-9010,9443,10000-10010,10443,49152-49169,\
-                65530-65535"
-              - "-PA\
-                21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
-                427,443,445,464,543-544,636,749-751,873,902,\
-                1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
-                4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
-                9000-9010,9443,10000-10010,10443,49152-49169,\
-                65530-65535"
-              - "-PU\
-                49,53,65-69,88,111,123,135-139,161-162,389,427,464,\
-                500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,\
-                2049,3268-3269,4174,5353-5355,49152-49169,\
-                65530-65535"
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
-          - title: nmap IPv4 IP protocol scan
-            cmd: clw nmap
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sO
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 ICMP host discovery
+          cmd: clw nmap
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sn
+          - -PE
+          - -PP # ICMP Timestamp; not valid for IPv6
+          - -PM # ICMP Address Mask; not valid for IPv6
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 port discovery
+          cmd: clw nmap
+          opts: &opts-nmap-ipv4-port-discovery
+          - -n -e {{linkName}} -PR -T4
+          - -sn
+          - "-PS\
+            21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
+            427,443,445,464,543-544,636,749-751,873,902,\
+            1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
+            4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
+            9000-9010,9443,10000-10010,10443,49152-49169,\
+            65530-65535"
+          - "-PA\
+            21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
+            427,443,445,464,543-544,636,749-751,873,902,\
+            1645-1646,1812-1813,2049,3260,3268-3269,3283,3306,3389,3868,\
+            4174,5353-5355,5432,5900-5919,8000,8080-8089,8443,8888,\
+            9000-9010,9443,10000-10010,10443,49152-49169,\
+            65530-65535"
+          - "-PU\
+            49,53,65-69,88,111,123,135-139,161-162,389,427,464,\
+            500,543-544,546-547,749-751,902,1645-1646,1812-1813,1985,\
+            2049,3268-3269,4174,5353-5355,49152-49169,\
+            65530-65535"
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 IP protocol scan
+          cmd: clw nmap
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sO
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
         ipv6:
-          - title: nmap IPv6 ICMP host discovery
-            cmd: clw nmap -6
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sn
-              - -PE
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
-          - title: nmap IPv6 port discovery
-            cmd: clw nmap -6
-            opts: *opts-nmap-ipv4-port-discovery
-          - title: nmap IPv6 IP protocol scan
-            cmd: clw nmap -6
-            opts:
-              - -n -e {{linkName}} -PR -T4
-              - -sO
-              - --script '(targets-ipv6-* or ipv6-node-info)'
-                --script-args 'newtargets'
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
-    - pre:
-        - *pre-generate-responding-hosts-inter
-      phase:
+        - title: nmap IPv6 ICMP host discovery
+          cmd: clw nmap -6
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sn
+          - -PE
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv6 port discovery
+          cmd: clw nmap -6
+          opts: *opts-nmap-ipv4-port-discovery
+        - title: nmap IPv6 IP protocol scan
+          cmd: clw nmap -6
+          opts:
+          - -n -e {{linkName}} -PR -T4
+          - -sO
+          - --script '(targets-ipv6-* or ipv6-node-info)'
+            --script-args 'newtargets'
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
+    - phase:
       - name: DNS Lookup With Nmap
         ipv4:
-          - title: nmap IPv4 DNS lookup, default resolver
-            cmd: clw nmap
-            opts: &opts-nmap-ipv4-dns-intra
-              - -R -e {{linkName}} -sL -T4 --resolve-all
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 DNS lookup, default resolver
+          cmd: clw nmap
+          opts: &opts-nmap-ipv4-dns-intra
+          - -R -e {{linkName}} -sL -T4 --resolve-all
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
         ipv6:
-          - title: nmap IPv6 DNS lookup, default resolver
-            cmd: clw nmap -6
-            opts: *opts-nmap-ipv4-dns-intra
+        - title: nmap IPv6 DNS lookup, default resolver
+          cmd: clw nmap -6
+          opts: *opts-nmap-ipv4-dns-intra
     - phase:
+      - *generate-responding-hosts-inter
       - name: Port Scans (plus basic info gathering)
         ipv4:
-          - title: nmap IPv4 TCP port scan
-            cmd: clw nmap
-            opts: &inter-opts-nmap-ipv4-tcp-port-scan
-              - -n -e {{linkName}} -PR -T4
-              - -Pn -O --script
-                '(banner or dns-nsid or ntp-info or rpcinfo
-                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
-                  or smtp-commands or smb-os-discovery
-                  or smbv2-enabled or vnc-info)'
-              - -sS -p `nmdb-export-port-list --tcp-all`
-              - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
-          - title: nmap IPv4 UDP port scan
-            cmd: clw nmap
-            opts: &inter-opts-nmap-ipv4-udp-port-scan
-              - -n -e {{linkName}} -PR -T4
-              - -Pn -O --script
-                '(banner or dns-nsid or ntp-info or rpcinfo
-                  or ssh-hostkey or ssh2-enum-algos or ssl-cert
-                  or smtp-commands or smb-os-discovery
-                  or smbv2-enabled or vnc-info)'
-              - -sU -p `nmdb-export-port-list --udp`
-              - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 TCP port scan
+          cmd: clw nmap
+          opts: &inter-opts-nmap-ipv4-tcp-port-scan
+          - -n -e {{linkName}} -PR -T4
+          - -Pn -O --script
+            '(banner or dns-nsid or ntp-info or rpcinfo
+              or ssh-hostkey or ssh2-enum-algos or ssl-cert
+              or smtp-commands or smb-os-discovery
+              or smbv2-enabled or vnc-info)'
+          - -sS -p `nmdb-export-port-list --tcp-all`
+          - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 UDP port scan
+          cmd: clw nmap
+          opts: &inter-opts-nmap-ipv4-udp-port-scan
+          - -n -e {{linkName}} -PR -T4
+          - -Pn -O --script
+            '(banner or dns-nsid or ntp-info or rpcinfo
+              or ssh-hostkey or ssh2-enum-algos or ssl-cert
+              or smtp-commands or smb-os-discovery
+              or smbv2-enabled or vnc-info)'
+          - -sU -p `nmdb-export-port-list --udp`
+          - -iL {{respondingHostsPath}} --excludefile {{roeExcludedPath}}
         ipv6:
-          - title: nmap IPv6 TCP port scan
-            cmd: clw nmap -6
-            opts: *inter-opts-nmap-ipv4-tcp-port-scan
-          - title: nmap IPv6 UDP port scan
-            cmd: clw nmap -6
-            opts: *inter-opts-nmap-ipv4-udp-port-scan
+        - title: nmap IPv6 TCP port scan
+          cmd: clw nmap -6
+          opts: *inter-opts-nmap-ipv4-tcp-port-scan
+        - title: nmap IPv6 UDP port scan
+          cmd: clw nmap -6
+          opts: *inter-opts-nmap-ipv4-udp-port-scan
     - phase:
       - name: Learned DNS Lookup With Nmap
         ipv4:
-          - title: nmap IPv4 DNS lookup, via open port 53
-            cmd: echo ''
-            opts:
-              - *nmap-dns-db-query
-              - clw nmap
-              - -R -e {{linkName}} -sL -T4 --resolve-all
-              - --dns-servers "${DNS_SERVERS}"
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
+        - title: nmap IPv4 DNS lookup, via open port 53
+          cmd: echo ''
+          opts:
+          - *nmap-dns-db-query
+          - clw nmap
+          - -R -e {{linkName}} -sL -T4 --resolve-all
+          - --dns-servers "${DNS_SERVERS}"
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
         ipv6:
-          - title: nmap IPv6 DNS lookup, via open port 53
-            cmd: echo ''
-            opts:
-              - *nmap-dns-db-query
-              - clw nmap -6
-              - -R -e {{linkName}} -sL -T4 --resolve-all
-              - --dns-servers "${DNS_SERVERS}"
-              - -iL {{roeNetworksPath}} --excludefile {{roeExcludedPath}}
-    - phase: *manual-testing
+        - title: nmap IPv6 DNS lookup, via open port 53
+          cmd: echo ''
+          opts:
+          - *nmap-dns-db-query
+          - clw nmap -6
+          - -R -e {{linkName}} -sL -T4 --resolve-all
+          - --dns-servers "${DNS_SERVERS}"
+          - -iL {{roeIncludedPath}} --excludefile {{roeExcludedPath}}
+    - phase:
+      - *manual-testing
