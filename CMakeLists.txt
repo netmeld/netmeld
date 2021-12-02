@@ -53,6 +53,8 @@ find_package(Boost REQUIRED
 
 find_package(nlohmann_json REQUIRED)
 
+find_package(yaml-cpp REQUIRED)
+
 # Appears to not be linked by default
 link_libraries(stdc++fs)
 

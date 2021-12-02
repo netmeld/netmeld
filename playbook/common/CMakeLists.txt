@@ -32,11 +32,13 @@ target_include_directories(${TGT_LIBRARY}
   PUBLIC
     ${Boost_INCLUDE_DIRS}
     include
+    ${YAML_CPP_INCLUDE_DIR}
   )
 
 target_link_libraries(${TGT_LIBRARY}
   PUBLIC
     netmeld-datastore
+    ${YAML_CPP_LIBRARIES}
   )
 
 nm_install_lib(${TGT_LIBRARY})

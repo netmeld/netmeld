@@ -42,7 +42,7 @@ target_link_libraries(${TGT_TOOL}
   )
 
 nm_install_bin(${TGT_TOOL})
-nm_install_conf(nmdb-playbook.conf "")
+nm_install_conf(plays.yaml "playbook")
 nm_install_conf("sysctl.d/40-nmdb-playbook.conf" "sysctl.d")
 
 install(
