@@ -161,7 +161,6 @@ public:
 // =============================================================================
 // Main code
 // =============================================================================
-
 class Tool : public nmdt::AbstractGraphTool
 {
   private:
@@ -181,43 +180,42 @@ class Tool : public nmdt::AbstractGraphTool
 
     void addToolOptions() override
     {
-
       opts.addRequiredOption("layer", std::make_tuple(
-            "layer,L",
-            po::value<std::string>()->required(),
-            "Layer of the network stack to graph")
-          );
+          "layer,L",
+          po::value<std::string>()->required(),
+          "Layer of the network stack to graph")
+        );
       opts.addRequiredOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>()->required(),
-            "Device ID or subnet CIDR address to use as graph's root node")
-          );
+          "device-id",
+          po::value<std::string>()->required(),
+          "Device ID or subnet CIDR address to use as graph's root node")
+        );
 
       opts.addOptionalOption("icons", std::make_tuple(
-            "icons",
-            NULL_SEMANTIC,
-            "Enable device icons in graph")
-          );
+          "icons",
+          NULL_SEMANTIC,
+          "Enable device icons in graph")
+        );
       opts.addOptionalOption("icon-folder", std::make_tuple(
-	    "icon-folder",
-	    po::value<std::string>(),
-	    "Set custom destination for alternate icons. ")
-	  );
+          "icon-folder",
+          po::value<std::string>(),
+          "Set custom destination for alternate icons")
+        );
       opts.addOptionalOption("no-unknown", std::make_tuple(
-            "no-unknown",
-            NULL_SEMANTIC,
-            "Omit 'Unknown Device' graph nodes")
-          );
+          "no-unknown",
+          NULL_SEMANTIC,
+          "Omit 'Unknown Device' graph nodes")
+        );
       opts.addOptionalOption("no-empty-subnets", std::make_tuple(
-            "no-empty-subnets",
-            NULL_SEMANTIC,
-            "Omit empty subnet graph nodes")
-          );
+          "no-empty-subnets",
+          NULL_SEMANTIC,
+          "Omit empty subnet graph nodes")
+        );
       opts.addOptionalOption("show-traceroute-hops", std::make_tuple(
-      ￼            "show-traceroute-hops",
-      ￼            NULL_SEMANTIC,
-      ￼            "Show hops found in traceroutes for devices")
-      ￼      );
+          "show-traceroute-hops",
+          NULL_SEMANTIC,
+          "Show hops found in traceroutes for devices")
+        );
     }
 
     int
@@ -365,51 +363,51 @@ class Tool : public nmdt::AbstractGraphTool
          "   hop_count"
          " FROM raw_ip_traceroutes");
 
-    useIcons = opts.exists("icons");
-    useIconFolder = opts.exists("icon-folder");
-    hideUnknown = opts.exists("no-unknown");
-    removeEmptySubnets = opts.exists("no-empty-subnets");
-    showTracerouteHops = opts.exists("show-traceroute-hops");
+      useIcons = opts.exists("icons");
+      useIconFolder = opts.exists("icon-folder");
+      hideUnknown = opts.exists("no-unknown");
+      removeEmptySubnets = opts.exists("no-empty-subnets");
+      showTracerouteHops = opts.exists("show-traceroute-hops");
 
-    int layer = std::stoi(opts.getValue("layer"));
-    switch (layer) {
-    case 2:
-      buildLayer2Graph(db);
-      break;
-    case 3:
-      buildLayer3Graph(db);
-      break;
-    default:
-      break;
-    }
+      int layer = std::stoi(opts.getValue("layer"));
+      switch (layer) {
+        case 2:
+          buildLayer2Graph(db);
+          break;
+        case 3:
+          buildLayer3Graph(db);
+          break;
+        default:
+          break;
+      }
 
-    std::string const deviceId {nmcu::toLower(opts.getValue("device-id"))};
-    if (!vertexLookup.count(deviceId)) {
-      LOG_ERROR << "Specified device-id ("
-                << deviceId << ") not found in datastore"
-                << std::endl;
-      std::exit(nmcu::Exit::FAILURE);
-    }
+      std::string const deviceId {nmcu::toLower(opts.getValue("device-id"))};
+      if (!vertexLookup.count(deviceId)) {
+        LOG_ERROR << "Specified device-id ("
+                  << deviceId << ") not found in datastore"
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
 
-    boost::dijkstra_shortest_paths
-      (graph, vertexLookup.at(deviceId),
-       weight_map(boost::get(&EdgeProperties::weight, graph)).
-       distance_map(boost::get(&VertexProperties::distance, graph)));
+      boost::dijkstra_shortest_paths
+        (graph, vertexLookup.at(deviceId),
+         weight_map(boost::get(&EdgeProperties::weight, graph)).
+         distance_map(boost::get(&VertexProperties::distance, graph)));
 
-    // Remove all the "wrong direction" and redundant edges.
-    boost::remove_edge_if(IsRedundantEdge(graph), graph);
+      // Remove all the "wrong direction" and redundant edges.
+      boost::remove_edge_if(IsRedundantEdge(graph), graph);
 
-    buildVirtualizationGraph(db);
-    buildTracerouteGraph(db);
+      buildVirtualizationGraph(db);
+      buildTracerouteGraph(db);
 
-    boost::write_graphviz
-      (std::cout, graph,
-       LabelWriter(graph),   // VertexPropertyWriter
-       LabelWriter(graph),   // EdgePropertyWriter
-       GraphWriter(),        // GraphPropertyWriter
-       boost::get(&VertexProperties::name, graph));  // VertexID
+      boost::write_graphviz
+        (std::cout, graph,
+         LabelWriter(graph),   // VertexPropertyWriter
+         LabelWriter(graph),   // EdgePropertyWriter
+         GraphWriter(),        // GraphPropertyWriter
+         boost::get(&VertexProperties::name, graph));  // VertexID
 
-    return nmcu::Exit::SUCCESS;
+      return nmcu::Exit::SUCCESS;
     }
 
   // ===========================================================================
@@ -678,17 +676,13 @@ class Tool : public nmdt::AbstractGraphTool
       std::string label = "\" + <<TABLE border=\"0\" cellborder=\"0\"><TR>";
 
       if (useIcons) {
-      label += getUseIconString(typeName);
-
-      label += "<td><font point-size=\"10\">" + name + "<br/>";
-
+        label += getUseIconString(typeName);
+        label += "<td><font point-size=\"10\">" + name + "<br/>";
       }
 
       if (useIconFolder) {
-      label += getUseIconsCustomPath(typeName);
-
-      label += "<td><font point-size=\"10\">" + name + "<br/>";
-
+        label += getUseIconsCustomPath(typeName);
+        label += "<td><font point-size=\"10\">" + name + "<br/>";
       }
       return label;
     }
@@ -783,38 +777,39 @@ class Tool : public nmdt::AbstractGraphTool
 
 
     std::string
-    getUseIconsCustomPath (std::string customPath)
+    getUseIconsCustomPath(std::string customPath)
     {
       if (!useIconFolder) {
-	return "";
+        return "";
       }
 
       sfs::path imagePath {opts.getValue("icon-folder")};
       std::string iconPath {imagePath.string()};
       std::string label {
-	"<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
+        "<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
       };
 
 
       if(!customPath.empty()) {
-	for (auto& pathIter : sfs::recursive_directory_iterator(imagePath)) {
-         std::string fileName {pathIter.path().filename()};
-
-	 if (std::equal(customPath.begin(), customPath.end(),
-				 fileName.begin(), fileName.end(),
-				 [](auto a, auto b) {
-				 return std::tolower(a) == std::tolower(b);
-				 })) {
-		 iconPath = fileName;
-		 break;
-	 }
-	}
+        for (auto& pathIter : sfs::recursive_directory_iterator(imagePath)) {
+          std::string fileName {pathIter.path().filename()};
+          
+          if (std::equal(customPath.begin(), customPath.end(),
+              fileName.begin(), fileName.end(),
+              [](auto a, auto b)
+              {
+                return std::tolower(a) == std::tolower(b);
+              }))
+          {
+            iconPath = fileName;
+            break;
+          }
+        }
       }
 
-	label += iconPath + "\" scale=\"true\"/></TD>";
+      label += iconPath + "\" scale=\"true\"/></TD>";
 
-	return label;
-
+      return label;
     }
 
 
