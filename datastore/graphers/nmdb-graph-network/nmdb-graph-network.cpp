@@ -171,6 +171,7 @@ class Tool : public nmdt::AbstractGraphTool
     bool useIconFolder {false};
     bool hideUnknown {false};
     bool removeEmptySubnets {false};
+    bool showTracerouteHops {false};
 
   public:
     Tool() : nmdt::AbstractGraphTool
@@ -180,7 +181,7 @@ class Tool : public nmdt::AbstractGraphTool
 
     void addToolOptions() override
     {
-      
+
       opts.addRequiredOption("layer", std::make_tuple(
             "layer,L",
             po::value<std::string>()->required(),
@@ -212,6 +213,11 @@ class Tool : public nmdt::AbstractGraphTool
             NULL_SEMANTIC,
             "Omit empty subnet graph nodes")
           );
+      opts.addOptionalOption("show-traceroute-hops", std::make_tuple(
+      ￼            "show-traceroute-hops",
+      ￼            NULL_SEMANTIC,
+      ￼            "Show hops found in traceroutes for devices")
+      ￼      );
     }
 
     int
@@ -363,6 +369,7 @@ class Tool : public nmdt::AbstractGraphTool
     useIconFolder = opts.exists("icon-folder");
     hideUnknown = opts.exists("no-unknown");
     removeEmptySubnets = opts.exists("no-empty-subnets");
+    showTracerouteHops = opts.exists("show-traceroute-hops");
 
     int layer = std::stoi(opts.getValue("layer"));
     switch (layer) {
@@ -393,6 +400,7 @@ class Tool : public nmdt::AbstractGraphTool
     boost::remove_edge_if(IsRedundantEdge(graph), graph);
 
     buildVirtualizationGraph(db);
+    buildTracerouteGraph(db);
 
     boost::write_graphviz
       (std::cout, graph,
@@ -675,10 +683,10 @@ class Tool : public nmdt::AbstractGraphTool
       label += "<td><font point-size=\"10\">" + name + "<br/>";
 
       }
-      
-      if (useIconFolder) {      
-      label += getUseIconsCustomPath(typeName); 
- 
+
+      if (useIconFolder) {
+      label += getUseIconsCustomPath(typeName);
+
       label += "<td><font point-size=\"10\">" + name + "<br/>";
 
       }
@@ -772,22 +780,22 @@ class Tool : public nmdt::AbstractGraphTool
 
       return label;
     }
-    
-   
-    std::string 
+
+
+    std::string
     getUseIconsCustomPath (std::string customPath)
     {
       if (!useIconFolder) {
 	return "";
       }
-      
+
       sfs::path imagePath {opts.getValue("icon-folder")};
       std::string iconPath {imagePath.string()};
       std::string label {
 	"<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
       };
-      
-      
+
+
       if(!customPath.empty()) {
 	for (auto& pathIter : sfs::recursive_directory_iterator(imagePath)) {
          std::string fileName {pathIter.path().filename()};
@@ -802,13 +810,13 @@ class Tool : public nmdt::AbstractGraphTool
 	 }
 	}
       }
-       
+
 	label += iconPath + "\" scale=\"true\"/></TD>";
-	
+
 	return label;
 
     }
-  
+
 
     void
     addBidirectionalEdge(std::string orig, std::string dest)
@@ -841,7 +849,7 @@ class Tool : public nmdt::AbstractGraphTool
 
 int
 main(int argc, char** argv)
-{	
+{
   Tool tool;
   return tool.start(argc, argv);
 }
