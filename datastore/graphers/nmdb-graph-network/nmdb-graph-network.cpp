@@ -167,8 +167,8 @@ class Tool : public nmdt::AbstractGraphTool
   private:
     std::map<std::string, Vertex> vertexLookup;
     NetworkGraph graph;
+    const nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     bool useIcons    {false};
-    bool useIconFolder {false};
     bool hideUnknown {false};
     bool removeEmptySubnets {false};
 
@@ -180,7 +180,6 @@ class Tool : public nmdt::AbstractGraphTool
 
     void addToolOptions() override
     {
-      
       opts.addRequiredOption("layer", std::make_tuple(
             "layer,L",
             po::value<std::string>()->required(),
@@ -199,7 +198,7 @@ class Tool : public nmdt::AbstractGraphTool
           );
       opts.addOptionalOption("icon-folder", std::make_tuple(
 	    "icon-folder",
-	    po::value<std::string>(),
+	    po::value<std::string>()->required()->default_value(nmfm.getConfPath()/"images"),
 	    "Set custom destination for alternate icons. ")
 	  );
       opts.addOptionalOption("no-unknown", std::make_tuple(
@@ -354,7 +353,6 @@ class Tool : public nmdt::AbstractGraphTool
 
 
     useIcons = opts.exists("icons");
-    useIconFolder = opts.exists("icon-folder");
     hideUnknown = opts.exists("no-unknown");
     removeEmptySubnets = opts.exists("no-empty-subnets");
 
@@ -629,13 +627,7 @@ class Tool : public nmdt::AbstractGraphTool
       label += "<td><font point-size=\"10\">" + name + "<br/>";
 
       }
-      
-      if (useIconFolder) {      
-      label += getUseIconsCustomPath(typeName); 
- 
-      label += "<td><font point-size=\"10\">" + name + "<br/>";
 
-      }
       return label;
     }
 
@@ -699,9 +691,7 @@ class Tool : public nmdt::AbstractGraphTool
         return "";
       }
 
-      auto& nmfm {nmcu::FileManager::getInstance()};
-      sfs::path imagePath {nmfm.getConfPath()/"images"};
-
+      sfs::path imagePath {opts.getValue("icon-folder")};
       std::string iconPath {imagePath.string() + "/unknown.svg"};
       std::string label {
         "<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
@@ -727,42 +717,6 @@ class Tool : public nmdt::AbstractGraphTool
       return label;
     }
     
-   
-    std::string 
-    getUseIconsCustomPath (std::string customPath)
-    {
-      if (!useIconFolder) {
-	return "";
-      }
-      
-      sfs::path imagePath {opts.getValue("icon-folder")};
-      std::string iconPath {imagePath.string()};
-      std::string label {
-	"<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
-      };
-      
-      
-      if(!customPath.empty()) {
-	for (auto& pathIter : sfs::recursive_directory_iterator(imagePath)) {
-         std::string fileName {pathIter.path().filename()};
-
-	 if (std::equal(customPath.begin(), customPath.end(),
-				 fileName.begin(), fileName.end(),
-				 [](auto a, auto b) {
-				 return std::tolower(a) == std::tolower(b);
-				 })) {
-		 iconPath = fileName;
-		 break;
-	 }
-	}
-      }
-       
-	label += iconPath + "\" scale=\"true\"/></TD>";
-	
-	return label;
-
-    }
-  
 
     void
     addBidirectionalEdge(std::string orig, std::string dest)
