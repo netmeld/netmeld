@@ -197,9 +197,10 @@ class Tool : public nmdt::AbstractGraphTool
           "Enable device icons in graph")
         );
       opts.addOptionalOption("icon-folder", std::make_tuple(
-	    "icon-folder",
-	    po::value<std::string>()->required()->default_value(nmfm.getConfPath()/"images"),
-	    "Set custom destination for alternate icons. ")
+          "icon-folder",
+          po::value<std::string>()->required()->
+            default_value(nmfm.getConfPath()/"images"),
+          "Set custom destination for alternate icons. ")
         );
       opts.addOptionalOption("no-unknown", std::make_tuple(
           "no-unknown",
@@ -223,7 +224,7 @@ class Tool : public nmdt::AbstractGraphTool
     {
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db{"dbname=" + dbName + " " + dbArgs};
+      pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
 
       db.prepare
         ("select_ip_nets_extra_weights",
@@ -364,7 +365,6 @@ class Tool : public nmdt::AbstractGraphTool
          " FROM raw_ip_traceroutes");
 
       useIcons = opts.exists("icons");
-      useIconFolder = opts.exists("icon-folder");
       hideUnknown = opts.exists("no-unknown");
       removeEmptySubnets = opts.exists("no-empty-subnets");
       showTracerouteHops = opts.exists("show-traceroute-hops");
@@ -381,29 +381,6 @@ class Tool : public nmdt::AbstractGraphTool
           break;
       }
 
-    useIcons = opts.exists("icons");
-    hideUnknown = opts.exists("no-unknown");
-    removeEmptySubnets = opts.exists("no-empty-subnets");
-
-    int layer = std::stoi(opts.getValue("layer"));
-    switch (layer) {
-    case 2:
-      buildLayer2Graph(db);
-      break;
-    case 3:
-      buildLayer3Graph(db);
-      break;
-    default:
-      break;
-    }
-
-    std::string const deviceId {nmcu::toLower(opts.getValue("device-id"))};
-    if (!vertexLookup.count(deviceId)) {
-      LOG_ERROR << "Specified device-id ("
-                << deviceId << ") not found in datastore"
-                << std::endl;
-      std::exit(nmcu::Exit::FAILURE);
-    }
       std::string const deviceId {nmcu::toLower(opts.getValue("device-id"))};
       if (!vertexLookup.count(deviceId)) {
         LOG_ERROR << "Specified device-id ("
@@ -703,10 +680,6 @@ class Tool : public nmdt::AbstractGraphTool
         label += "<td><font point-size=\"10\">" + name + "<br/>";
       }
 
-      if (useIconFolder) {
-        label += getUseIconsCustomPath(typeName);
-        label += "<td><font point-size=\"10\">" + name + "<br/>";
-      }
       return label;
     }
 
@@ -796,45 +769,6 @@ class Tool : public nmdt::AbstractGraphTool
       return label;
     }
     
-
-
-    std::string
-    getUseIconsCustomPath(std::string customPath)
-    {
-      if (!useIconFolder) {
-        return "";
-      }
-
-      sfs::path imagePath {opts.getValue("icon-folder")};
-      std::string iconPath {imagePath.string()};
-      std::string label {
-        "<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
-      };
-
-
-      if(!customPath.empty()) {
-        for (auto& pathIter : sfs::recursive_directory_iterator(imagePath)) {
-          std::string fileName {pathIter.path().filename()};
-          
-          if (std::equal(customPath.begin(), customPath.end(),
-              fileName.begin(), fileName.end(),
-              [](auto a, auto b)
-              {
-                return std::tolower(a) == std::tolower(b);
-              }))
-          {
-            iconPath = fileName;
-            break;
-          }
-        }
-      }
-
-      label += iconPath + "\" scale=\"true\"/></TD>";
-
-      return label;
-    }
-
-
     void
     addBidirectionalEdge(std::string orig, std::string dest)
     {
