@@ -24,6 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <regex>
+#include <yaml-cpp/yaml.h>
 
 #include <netmeld/core/objects/Uuid.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
@@ -31,6 +33,7 @@
 #include <netmeld/datastore/utils/QueriesCommon.hpp>
 
 #include <netmeld/playbook/utils/QueriesPlaybook.hpp>
+
 
 #include "CommandRunnerSingleton.hpp"
 #include "RaiiIpAddr.hpp"
@@ -99,7 +102,10 @@ class Tool : public nmdt::AbstractDatastoreTool
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     std::string pbDir;
 
+    nmpbu::QueriesPlaybook queriesPb;
     std::string dbConnectString;
+
+    std::string playsFile;
 
     bool execute  {false};
     bool headless {false};
@@ -113,15 +119,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     sfs::path scriptPath;
 
     std::string roeExcludedPath;
-    std::string roeExcludedIpv4Path;
-    std::string roeExcludedIpv6Path;
-
     std::string roeNetworksPath;
-    std::string roeNetworksIpv4Path;
-    std::string roeNetworksIpv6Path;
-
-    std::string respondingHostsIpv4Path;
-    std::string respondingHostsIpv6Path;
     std::string respondingHostsPath;
 
     std::string commandTitlePrefix;
@@ -167,9 +165,15 @@ class Tool : public nmdt::AbstractDatastoreTool
           );
       opts.addRequiredOption("capture-duration", std::make_tuple(
             "capture-duration",
-            po::value<uint16_t>()->required()->default_value(300),
+            po::value<size_t>()->required()->default_value(300),
             "Capture traffic for specified number of seconds when the physical"
             " interface is brought up")
+          );
+      const auto& savePathLoc {nmfm.getSavePath()/"playbook"};
+      opts.addRequiredOption("save-path", std::make_tuple(
+            "save-path",
+            po::value<std::string>()->required()->default_value(savePathLoc),
+            "Location to save output from playbook run")
           );
 
       opts.addOptionalOption("intra-network", std::make_tuple(
@@ -186,14 +190,15 @@ class Tool : public nmdt::AbstractDatastoreTool
             "stage",
             po::value<std::vector<size_t>>()->multitoken()->composing()->
               default_value(std::vector<size_t>{},"all"),
-            "Only process the specified, space separated, stage(s)")
+            "Only run the specified stages"
+            "; Space separated list")
           );
       opts.addOptionalOption("phase", std::make_tuple(
             "phase",
             po::value<std::vector<size_t>>()->multitoken()->composing()->
               default_value(std::vector<size_t>{},"all"),
-            "Only process the specified, space separated, phase(s) in a given"
-            "stage")
+            "For all stages, only run the specified phases"
+            "; Space separated list")
           );
       opts.addOptionalOption("execute", std::make_tuple(
             "execute",
@@ -208,157 +213,37 @@ class Tool : public nmdt::AbstractDatastoreTool
       opts.addOptionalOption("no-prompt", std::make_tuple(
             "no-prompt",
             NULL_SEMANTIC,
-            "Don't prompt user to complete manual testing before automatically"
-            " deconfiguring the network interface")
+            "Cycle stages without prompting user")
           );
-      opts.addOptionalOption("script", std::make_tuple(
-            "script",
-            po::value<std::string>(),
-            "During no-prompt run, call script in place of manual testing")
-          );
+
       opts.addAdvancedOption("exclude-command", std::make_tuple(
             "exclude-command",
             po::value<std::vector<size_t>>()->multitoken()->composing()->
               default_value(std::vector<size_t>{},"none"),
-            "Excluded specified, space separated, command ID(s); This can"
-            " break expected logic in some cases")
+            "Exclude specified command IDs"
+            "; Space separated list"
+            "; This can break expected logic in some cases")
           );
-
-      std::string confFileLoc = {NETMELD_CONF_DIR "/nmdb-playbook.conf"};
-      opts.addAdvancedOption("config-file", std::make_tuple(
-            "config-file",
-            po::value<std::string>()->required()->default_value(confFileLoc),
-            "Location of config file for non-command line options")
+      opts.addAdvancedOption("queries-file", std::make_tuple(
+            "queries-file",
+            po::value<std::string>()->required()
+              ->default_value(queriesPb.getDefaultQueryFilePath()),
+            "Location of queries file for playbook runs")
           );
-      opts.setConfFile(confFileLoc);
-
-      opts.addConfFileOption("ignore-scan-iface-state-change", std::make_tuple(
-            "ignore-scan-iface-state-change",
-            po::bool_switch()->required()->default_value(false),
-            "")
+      const auto& playsFileLoc {nmfm.getConfPath()/"playbook/plays.yaml"};
+      opts.addAdvancedOption("plays-file", std::make_tuple(
+            "plays-file",
+            po::value<std::string>()->required()->default_value(playsFileLoc),
+            "Location of plays file for stages, phases, and commands")
           );
-
-      opts.addConfFileOption("nmap-ipv4-host-discovery-opts", std::make_tuple(
-            "nmap-ipv4-host-discovery-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv6-host-discovery-opts", std::make_tuple(
-            "nmap-ipv6-host-discovery-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv4-protocol-scan-opts", std::make_tuple(
-            "nmap-ipv4-protocol-scan-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv6-protocol-scan-opts", std::make_tuple(
-            "nmap-ipv6-protocol-scan-opts",
-            po::value<std::string>()->required(),
-            "")
-          );
-      opts.addConfFileOption("nmap-ipv4-port-scan-opts", std::make_tuple(
-          "nmap-ipv4-port-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ipv6-port-scan-opts", std::make_tuple(
-          "nmap-ipv6-port-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ipv4-service-scan-opts", std::make_tuple(
-          "nmap-ipv4-service-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ipv6-service-scan-opts", std::make_tuple(
-          "nmap-ipv6-service-scan-opts",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-ps-ports", std::make_tuple(
-          "nmap-ps-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-pu-ports", std::make_tuple(
-          "nmap-pu-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-tcp-ports", std::make_tuple(
-          "nmap-tcp-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
-      opts.addConfFileOption("nmap-udp-ports", std::make_tuple(
-          "nmap-udp-ports",
-          po::value<std::string>()->required(),
-          "")
-        );
       }
 
     int
     runTool() override
     {
-      if (    (opts.exists("intra-network") && opts.exists("inter-network"))
-          || !(opts.exists("intra-network") || opts.exists("inter-network"))
-         )
-      {
-        LOG_ERROR << "Required option --intra-network or --inter-network"
-                  << std::endl;
-        std::exit(nmcu::Exit::FAILURE);
-      }
+      const auto& playbookScope {validatePlaybookScope()};
 
-      // Ensure some test type specified
-      PlaybookScope playbookScope {PlaybookScope::UNKNOWN};
-      if (opts.exists("inter-network")) {
-        playbookScope = PlaybookScope::INTER_NETWORK;
-      }
-      if (opts.exists("intra-network")) {
-        playbookScope = PlaybookScope::INTRA_NETWORK;
-      }
-      assert(playbookScope != PlaybookScope::UNKNOWN);
-
-      // Handle inclusion/exclusion of tests
-      auto stages {opts.getValueAs<std::vector<size_t>>("stage")};
-      if (!stages.empty()) {
-        enabledStages = std::set(stages.begin(), stages.end());
-      }
-      auto phases {opts.getValueAs<std::vector<size_t>>("phase")};
-      if (!phases.empty()) {
-        enabledPhases = std::set(phases.begin(), phases.end());
-      }
-      auto tests {opts.getValueAs<std::vector<size_t>>("exclude-command")};
-      if (!tests.empty()) {
-        cmdRunner.disableCommands(std::set(tests.begin(), tests.end()));
-      }
-
-      // Sanity check for script tests
-      if (opts.exists("script")) {
-        if (!opts.exists("no-prompt")) {
-          LOG_ERROR << "Option --no-prompt is required when using --script"
-                    << std::endl;
-          std::exit(nmcu::Exit::FAILURE);
-        }
-
-        scriptPath = opts.getValue("script");
-        if (!sfs::exists(scriptPath)) {
-          LOG_ERROR << "Script file does not exist: " << scriptPath
-                    << std::endl;
-          std::exit(nmcu::Exit::FAILURE);
-        }
-        // Get canonical path after ensuring file exists
-        scriptPath = sfs::canonical(scriptPath);
-
-        if (access(scriptPath.c_str(), X_OK)) {
-          LOG_ERROR << "Script file not executable by you: " << scriptPath
-                    << std::endl;
-          std::exit(nmcu::Exit::FAILURE);
-        }
-      }
+      validateEnabledTests();
 
       // Execute, or not
       execute = opts.exists("execute");
@@ -369,9 +254,12 @@ class Tool : public nmdt::AbstractDatastoreTool
       cmdRunner.setHeadless(headless);
 
       // Create directory for meta-data about and results from this tool run
-      sfs::path const saveDir {nmfm.getSavePath()/"playbook"};
+      sfs::path const saveDir {opts.getValue("save-path")};
       sfs::create_directories(saveDir);
-      pbDir = saveDir.string();
+      pbDir = sfs::canonical(saveDir).string();
+
+      sfs::path const playsPath = opts.getValue("plays-file");
+      playsFile = sfs::canonical(playsPath).string();
 
       Playbook playbook;
 
@@ -380,35 +268,32 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       dbConnectString = {std::string("dbname=") + dbName + " " + dbArgs};
       pqxx::connection db {dbConnectString};
-      nmpbu::dbPreparePlaybook(db);
+      queriesPb.init(opts.getValue("queries-file"));
+      queriesPb.dbPrepare(db);
 
       if (true) {
-        pqxx::read_transaction t {db};
-
-        pqxx::result playbookIpSourceRows;
+        std::string query;
         switch (playbookScope) {
           case PlaybookScope::INTRA_NETWORK:
-            {
-              playbookIpSourceRows =
-                t.exec_prepared("select_playbook_intra_network");
-              break;
-            }
+          {
+            query = "select_playbook_intra_network";
+            break;
+          }
           case PlaybookScope::INTER_NETWORK:
-            {
-              playbookIpSourceRows =
-                t.exec_prepared("select_playbook_inter_network");
-              break;
-            }
+          {
+            query = "select_playbook_inter_network";
+            break;
+          }
           case PlaybookScope::UNKNOWN:  // intentional fallthrough
           default:
-            {
-              break;
-            }
+          {
+            break;
+          }
         }
 
+        pqxx::read_transaction t {db};
+        pqxx::result playbookIpSourceRows {t.exec_prepared(query)};
         for (const auto& playbookIpSourceRow : playbookIpSourceRows) {
-          nmco::Uuid playbookSourceId;
-          playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);
           size_t playbookStage;
           playbookIpSourceRow.at("playbook_stage").to(playbookStage);
           std::string interfaceName;
@@ -420,7 +305,10 @@ class Tool : public nmdt::AbstractDatastoreTool
           std::string ipAddr;
           playbookIpSourceRow.at("ip_addr").to(ipAddr);
           std::string rtrIpAddr;
-          playbookIpSourceRow.at("rtr_ip_addr").to(rtrIpAddr);
+          playbookIpSourceRow.at("next_hop_ip_addr").to(rtrIpAddr);
+
+          nmco::Uuid playbookSourceId;
+          playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);
           std::string description;
           playbookIpSourceRow.at("description").to(description);
           int addrFamily;
@@ -443,9 +331,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
 
-      for (const auto& xStage : playbook) {
-        size_t const playbookStage {std::get<0>(xStage)};
-
+      for (const auto& [playbookStage, stageConfigs] : playbook) {
         if (!enabledStages.empty() && !enabledStages.count(playbookStage)) {
           continue;
         }
@@ -456,30 +342,24 @@ class Tool : public nmdt::AbstractDatastoreTool
                    << std::endl;
         }
 
-        for (const auto& xIface : std::get<1>(xStage)) {
-          std::string const& physIfaceName {std::get<0>(xIface)};
-
+        for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
           LOG_INFO << "# Disconnect target(s), if necessary, and connect "
-                   << physIfaceName << "." << std::endl
+                   << ifaceName << "." << std::endl
                    << "# This interface will cycle through settings:"
                    << std::endl;
 
-          for (const auto& xVlan : std::get<1>(xIface)) {
-            uint16_t const vlan {std::get<0>(xVlan)};
-            for (const auto& xMacAddr : std::get<1>(xVlan)) {
-              std::string const& macAddr {std::get<0>(xMacAddr)};
-              for (const auto& xIpAddr : std::get<1>(xMacAddr)) {
-                std::string const& ipAddr {std::get<0>(xIpAddr)};
-                SourceConfig const& srcConf {std::get<1>(xIpAddr)};
-                std::string const& description {srcConf.description};
+          for (const auto& [vlan, vlanConfigs] : ifaceConfigs) {
+            for (const auto& [macAddr, ipConfigs] : vlanConfigs) {
+              for (const auto& [ipAddr, srcConfig] : ipConfigs) {
+                const auto& description {srcConfig.description};
                 LOG_INFO << "#\tVLAN: " << vlan
                          << ", MAC: " << macAddr
                          << ", IP: " << ipAddr
                          << ", Desc: " << description
                          << std::endl;
-                if (srcConf.ipRouters.size()) {
+                if (srcConfig.ipRouters.size()) {
                   LOG_INFO << "#\t\tRouters:";
-                  for (const auto& rtrIpAddr : srcConf.ipRouters) {
+                  for (const auto& rtrIpAddr : srcConfig.ipRouters) {
                     LOG_INFO << " " << rtrIpAddr;
                   }
                   LOG_INFO << std::endl;
@@ -494,19 +374,16 @@ class Tool : public nmdt::AbstractDatastoreTool
           std::string userInput;
 
           // Sanity check, cycle all interfaces before aborting
-          for (const auto& stage : playbook) {
-            for (const auto& xIface : std::get<1>(stage)) {
-              std::string const& physIfaceName {std::get<0>(xIface)};
+          for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
 
-              // Ensure interface is down
-              if (!ifaceIsDown(physIfaceName)) {
-                LOG_WARN << physIfaceName << " link not down" << std::endl;
-              }
+            // Ensure interface is down
+            if (!ifaceIsDown(ifaceName)) {
+              LOG_WARN << ifaceName << " link not down" << std::endl;
+            }
 
-              // Ensure interface has no ipv4/6 address assigned
-              if (ifaceHasAddress(physIfaceName)) {
-                LOG_WARN << physIfaceName << " has an address" << std::endl;
-              }
+            // Ensure interface has no ipv4/6 address assigned
+            if (ifaceHasAddress(ifaceName)) {
+              LOG_WARN << ifaceName << " has an address" << std::endl;
             }
           }
 
@@ -527,14 +404,13 @@ class Tool : public nmdt::AbstractDatastoreTool
 
         std::map<std::string, std::thread> physIfaceThreads;
 
-        for (const auto& xIface : std::get<1>(xStage)) {
-          std::string const& physIfaceName {std::get<0>(xIface)};
+        for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
 
           // Start a thread to manage the configuration of this interface
-          physIfaceThreads[physIfaceName] =
+          physIfaceThreads[ifaceName] =
             std::thread(&Tool::physIfaceThreadActions, this,
                    playbookScope, playbookStage,
-                   physIfaceName, std::get<1>(xIface));
+                   ifaceName, ifaceConfigs);
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
@@ -549,8 +425,8 @@ class Tool : public nmdt::AbstractDatastoreTool
                 // Run interface threads serially (only one interface at a time)
 
                 // Wait for thread to complete before starting next thread.
-                physIfaceThreads[physIfaceName].join();
-                physIfaceThreads.erase(physIfaceName);
+                physIfaceThreads[ifaceName].join();
+                physIfaceThreads.erase(ifaceName);
 
                 break;
               }
@@ -558,8 +434,8 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         // Wait for interface threads (if any) to finish
-        for (auto& ifaceThread : physIfaceThreads) {
-          std::get<1>(ifaceThread).join();
+        for (auto& [_, ifaceThread] : physIfaceThreads) {
+          ifaceThread.join();
         }
         physIfaceThreads.clear();
 
@@ -572,6 +448,49 @@ class Tool : public nmdt::AbstractDatastoreTool
       return nmcu::Exit::SUCCESS;
     }
 
+    PlaybookScope
+    validatePlaybookScope()
+    {
+      if (    (opts.exists("intra-network") && opts.exists("inter-network"))
+          || !(opts.exists("intra-network") || opts.exists("inter-network"))
+         )
+      {
+        LOG_ERROR << "Required option --intra-network or --inter-network"
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
+
+      // Ensure some test type specified
+      PlaybookScope playbookScope {PlaybookScope::UNKNOWN};
+      if (opts.exists("inter-network")) {
+        playbookScope = PlaybookScope::INTER_NETWORK;
+      }
+      if (opts.exists("intra-network")) {
+        playbookScope = PlaybookScope::INTRA_NETWORK;
+      }
+      assert(playbookScope != PlaybookScope::UNKNOWN);
+
+      return playbookScope;
+    }
+
+    void
+    validateEnabledTests()
+    {
+      // Handle inclusion/exclusion of tests
+      auto stages {opts.getValueAs<std::vector<size_t>>("stage")};
+      if (!stages.empty()) {
+        enabledStages = std::set(stages.begin(), stages.end());
+      }
+      auto phases {opts.getValueAs<std::vector<size_t>>("phase")};
+      if (!phases.empty()) {
+        enabledPhases = std::set(phases.begin(), phases.end());
+      }
+      auto tests {opts.getValueAs<std::vector<size_t>>("exclude-command")};
+      if (!tests.empty()) {
+        cmdRunner.disableCommands(std::set(tests.begin(), tests.end()));
+      }
+    }
+
     void
     generateTargetFiles(std::string const& sessionId, bool const inScopeNeeded)
     {
@@ -580,7 +499,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       roeExcludedPath = oss.str();
 
       std::ostringstream dbPrefix;
-      dbPrefix << "psql -d " << opts.getValue("db-name") << " -A -t -c ";
+      dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
 
       std::vector<std::string> commands;
       std::ostringstream command;
@@ -642,7 +561,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       respondingHostsPath = oss.str();
 
       std::ostringstream dbPrefix;
-      dbPrefix << "psql -d " << opts.getValue("db-name") << " -A -t -c ";
+      dbPrefix << "psql \"" << dbConnectString << "\" -A -t -c ";
 
       std::vector<std::string> commands;
       std::ostringstream command;
@@ -823,42 +742,6 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     void
-    manualTesting(std::string const& linkName, std::string const& srcIpAddr)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " Manual Tests";
-      command << "echo 'Finish any manual testing that is using "
-                << linkName << " " << srcIpAddr << ".'; "
-              << "echo 'Close this xterm when manual testing is complete.'; "
-              << "echo 'When this xterm is closed, "
-                << linkName << " " << srcIpAddr << " will be deconfigured.'; "
-              << "while [[ 1 == 1 ]]; do sleep 600; done;";
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl << "## Manual Testing Prompt" << std::endl;
-
-        if (opts.exists("no-prompt") && opts.exists("script")) {
-          LOG_INFO << std::endl << "# Call custom script: " << std::endl;
-          cmdRunner.systemExec(scriptPath.string());
-        } else if (!opts.exists("no-prompt")) {
-          // behave normally
-          cmdRunner.threadExec(commands);
-        } else if (opts.exists("no-prompt")) {
-          // skip prompt
-          // NOTE 15NOV18 Making this skip the number may require reworking
-          //              the isEnabled logic, not worth it currently
-        }
-        commands.clear();
-      }
-    }
-
-    void
     updateNmapPrefix()
     {
       if (4 == family) {
@@ -868,269 +751,10 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
     }
 
-    // INTRA-NETWORK
-    void
-    intraNetworkHostDiscovery(std::string const& linkName,
-        std::string const& ipNet, std::string const& ipNetBcast)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      // IP pings
-      if (4 == family) {
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " network broadcast ping";
-        command << "clw ping -4 -n -I " << linkName
-                << " -L -c 4 -b " << ipNetBcast;
-        commands.emplace_back(cmdTitle.str(), command.str());
-
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " global broadcast ping";
-        command << "clw ping -4 -n -I " << linkName
-                << " -L -c 4 -b 255.255.255.255";
-        commands.emplace_back(cmdTitle.str(), command.str());
-      } else {
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " all-nodes multicast ping";
-        command << "clw ping -6 -n -I " << linkName
-                << " -L -c 4 -b ff02::1";
-        commands.emplace_back(cmdTitle.str(), command.str());
-
-        cmdTitle.str(std::string());
-        command.str(std::string());
-        cmdTitle << commandTitlePrefix << " all-routers multicast ping";
-        command << "clw ping -6 -n -I " << linkName
-                << " -L -c 4 -b ff02::2";
-        commands.emplace_back(cmdTitle.str(), command.str());
-      }
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Initial Host Discovery" << std::endl;
-        for (const auto& cmd : commands) {
-          std::vector<std::tuple<std::string, std::string>> cmds;
-          cmds.emplace_back(cmd);
-          cmdRunner.threadExec(cmds);
-        }
-        commands.clear();
-      }
-
-      // Nmap host discovery (ARP/NDP)
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " ARP host discovery";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sn -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-host-discovery-opts")
-              << " --script '(ip-forwarding)'"
-              ;
-      if (6 == family) {
-        command << " or (targets-ipv6-* or ipv6-node-info)'"
-                << " --script-args 'newtargets'"
-                ;
-        // TODO 27NOV18 We may want to update --script-args for
-        //              targets-ipv6-map4to6, targets-ipv6-wordlist
-        //              so they work
-      }
-      command << " --excludefile " << roeExcludedPath
-              << " " << ipNet;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap IP protocol scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               <<" IP protocol scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sO -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-protocol-scan-opts")
-              << " --excludefile " << roeExcludedPath
-              << " " << ipNet;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Host Discovery and IP Protocol Scans" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
-      }
-    }
-
-    void
-    intraNetworkPortScans(std::string const& linkName)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      // Nmap TCP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " TCP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sS -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-tcp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap UDP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " UDP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sU -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-udp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Port Scans (plus basic info gathering)" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
-      }
-
-      // Nmap service scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " service scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sS -PR "
-                << opts.getValue("nmap-ipv"+familyStr+"-service-scan-opts")
-              << " -p " << opts.getValue("nmap-tcp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Service Scans (most scripts enabled)" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
-      }
-
-    }
-
-    // INTER-NETWORK
-    void
-    interNetworkHostDiscovery(std::string const& linkName)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      // Nmap ICMP host discovery
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " ICMP host discovery";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sn "
-                << opts.getValue("nmap-ipv"+familyStr+"-host-discovery-opts")
-              << " -PE"
-              ;
-      if (4 == family) {
-        // ICMP Timestamp and Address Mask pings not valid for IPv6
-        command << " -PP -PM";
-      }
-      command << " -iL " << roeNetworksPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap port discovery
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " port discovery";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sn "
-                << opts.getValue("nmap-ipv"+familyStr+"-host-discovery-opts")
-              << " -PS" << opts.getValue("nmap-ps-ports")
-              << " -PA" << opts.getValue("nmap-ps-ports")
-              << " -PU" << opts.getValue("nmap-pu-ports")
-              << " -iL " << roeNetworksPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap protocol scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " IP protocol scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -sO "
-                << opts.getValue("nmap-ipv"+familyStr+"-protocol-scan-opts")
-              << " -iL " << roeNetworksPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Host Discovery and IP Protocol Scans" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
-      }
-    }
-
-    void
-    interNetworkPortScans(std::string const& linkName)
-    {
-      std::vector<std::tuple<std::string, std::string>> commands;
-      std::ostringstream cmdTitle, command;
-
-      // Nmap TCP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " TCP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -Pn -sS "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-tcp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      // Nmap UDP port scans
-      cmdTitle.str(std::string());
-      command.str(std::string());
-      cmdTitle << commandTitlePrefix << " nmap IPv" << family
-               << " UDP port scan";
-      command << nmapPrefix << " -n -e " << linkName
-              << " -Pn -sU "
-                << opts.getValue("nmap-ipv"+familyStr+"-port-scan-opts")
-              << " -p " << opts.getValue("nmap-udp-ports")
-              << " -iL " << respondingHostsPath
-              << " --excludefile " << roeExcludedPath;
-      commands.emplace_back(cmdTitle.str(), command.str());
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl
-                 << "## Port Scans (plus basic info gathering)" << std::endl;
-        cmdRunner.threadExec(commands);
-        commands.clear();
-      }
-    }
-
     void
     physIfaceThreadActions(PlaybookScope const playbookScope,
         size_t const playbookStage, std::string const& physIfaceName,
-        InterfaceConfig const& ifaceConfig)
+        InterfaceConfig const& ifaceConfigs)
     {
       // Bring up the physical interface only for:
       // - Passive network sniffing before sourcing any frames.
@@ -1140,7 +764,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       { // Block scope needed for proper RAII
         // Change the MAC address if necessary.
         std::string const& srcMacAddr
-          {(ifaceConfig.begin()->second).begin()->first};
+          {(ifaceConfigs.begin()->second).begin()->first};
         nmpb::RaiiMacAddr raiiMacAddr {physIfaceName, srcMacAddr};
 
         // Bring up the physical interface.
@@ -1152,9 +776,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         // Proceed with testing on VLANs.
         std::map<uint16_t, std::thread> vlanThreads;
 
-        for (const auto& xVlan : ifaceConfig) {
-          uint16_t const vlanId {std::get<0>(xVlan)};
-
+        for (const auto& [vlanId, vlanConfigs] : ifaceConfigs) {
           if (nmpb::VlanId::NONE == vlanId) {
             continue;
           }
@@ -1163,7 +785,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           vlanThreads[vlanId] =
             std::thread(&Tool::vlanIfaceThreadActions, this,
                    playbookScope, playbookStage,
-                   physIfaceName, vlanId, std::get<1>(xVlan));
+                   physIfaceName, vlanId, vlanConfigs);
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
@@ -1187,8 +809,8 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         // Wait for VLAN threads (if any) to finish.
-        for (auto& vlanThread : vlanThreads) {
-          std::get<1>(vlanThread).join();
+        for (auto& [_, vlanThread] : vlanThreads) {
+          vlanThread.join();
         }
         vlanThreads.clear();
 
@@ -1197,9 +819,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       // Perform any direct testing with the physical interface (non-VLAN).
 
-      for (const auto& xVlan : ifaceConfig) {
-        uint16_t const vlanId {std::get<0>(xVlan)};
-
+      for (const auto& [vlanId, vlanConfigs] : ifaceConfigs) {
         if (nmpb::VlanId::NONE != vlanId) {
           continue;
         }
@@ -1208,7 +828,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::thread vlanThread =
           std::thread(&Tool::vlanIfaceThreadActions, this,
                  playbookScope, playbookStage,
-                 physIfaceName, vlanId, std::get<1>(xVlan));
+                 physIfaceName, vlanId, vlanConfigs);
 
         vlanThread.join();
       }
@@ -1218,7 +838,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     void
     vlanIfaceThreadActions(PlaybookScope const playbookScope,
         size_t const playbookStage, std::string const& physIfaceName,
-        uint16_t const vlan, VlanConfig const& vlanConfig)
+        uint16_t const vlan, VlanConfig const& vlanConfigs)
     {
       nmpb::RaiiVlan raiiVlan {physIfaceName, vlan};
       if (nmpb::VlanId::RESERVED <= vlan && nmpb::VlanId::NONE != vlan) {
@@ -1229,9 +849,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       // Each named Linux interface can only have one MAC address,
       // so MAC addresses can't be parallelized and must be assigned serially.
 
-      for (const auto& xMacAddr : vlanConfig) {
-        std::string const& srcMacAddr {std::get<0>(xMacAddr)};
-
+      for (const auto& [srcMacAddr, ipConfigs] : vlanConfigs) {
         // Change the VLAN MAC address if necessary.
         nmpb::RaiiMacAddr raiiMacAddr {linkName, srcMacAddr};
 
@@ -1243,10 +861,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           captureTraffic(linkName, MIN_CAPTURE_DURATION);
         }
 
-        for (const auto& xIpAddr : std::get<1>(xMacAddr)) {
-          std::string const& srcIpAddr {std::get<0>(xIpAddr)};
-          SourceConfig const& srcConf {std::get<1>(xIpAddr)};
-
+        for (const auto& [srcIpAddr, srcConf] : ipConfigs) {
           // do IP addr specific stuff
           family = srcConf.addrFamily;
           familyStr = std::to_string(family);
@@ -1255,7 +870,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           nmpb::RaiiIpAddr raiiIpAddr {linkName, srcIpAddr};
 
           pqxx::connection db {dbConnectString};
-          nmpbu::dbPreparePlaybook(db);
+          queriesPb.dbPrepare(db);
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
@@ -1325,44 +940,9 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
       generateTargetFiles(sessionId.toString(), false);
-      for (size_t phase {1}; phase <= maxPhases; phase++) {
-        if (!enabledPhases.empty() && !enabledPhases.count(phase)) {
-          continue;
-        }
 
-        LOG_INFO << std::endl << "### Phase " << phase << std::endl;
-        if (   execute
-            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
-        {
-          LOG_WARN << "Disabling this phase execution" << std::endl;
-          cmdRunner.setExecute(false);
-        }
-        switch (phase) {
-          case 1:
-            {
-              intraNetworkHostDiscovery(linkName, ipNet, ipNetBcast);
-              break;
-            }
-          case 2:
-            {
-              generateRespondingHosts(sessionId.toString(), ipNet);
-              intraNetworkPortScans(linkName);
-              break;
-            }
-          case 3:
-            {
-              manualTesting(linkName, srcIpAddr);
-              break;
-            }
-          default:
-            {
-              break;
-            }
-        }
-
-        cmdRunner.setExecute(execute); // update in case of alternate logic
-        LOG_INFO << std::endl << "### End of phase " << phase << std::endl;
-      }
+      networkPhases(db, sessionId, playbookSourceId, srcIpAddr,
+                    linkName, ipNet, ipNetBcast, "intra-network");
 
       cmdRunner.setExecute(execute); // update in case of alternate logic
 
@@ -1401,44 +981,8 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
       generateTargetFiles(sessionId.toString(), true);
-      for (size_t phase {1}; phase <= maxPhases; phase++) {
-        if (!enabledPhases.empty() && !enabledPhases.count(phase)) {
-          continue;
-        }
-
-        LOG_INFO << std::endl << "### Phase " << phase << std::endl;
-        if (   execute
-            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
-        {
-          LOG_WARN << "Disabling this phase execution" << std::endl;
-          cmdRunner.setExecute(false);
-        }
-        switch (phase) {
-          case 1:
-            {
-              interNetworkHostDiscovery(linkName);
-              break;
-            }
-          case 2:
-            {
-              generateRespondingHosts(sessionId.toString());
-              interNetworkPortScans(linkName);
-              break;
-            }
-          case 3:
-            {
-              manualTesting(linkName, srcIpAddr);
-              break;
-            }
-          default:
-            {
-              break;
-            }
-        }
-
-        cmdRunner.setExecute(execute); // update in case of alternate logic
-        LOG_INFO << std::endl << "### End of phase " << phase << std::endl;
-      }
+      networkPhases(db, sessionId, playbookSourceId, srcIpAddr,
+                    linkName, "", "", "inter-network");
 
       cmdRunner.setExecute(execute); // update in case of alternate logic
 
@@ -1448,13 +992,127 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
     }
 
+    template<typename T>
+    bool
+    yIs(const YAML::Node& _node, const std::string& _key, T _value)
+    {
+      return (_node[_key].IsDefined())
+          && (_node[_key].as<T>() == _value)
+          ;
+    }
+
+    void
+    networkPhases(
+      pqxx::connection& db,
+      const nmco::Uuid& playbookSourceId,
+      const nmco::Uuid& sessionId,
+      const std::string& srcIpAddr,
+      const std::string& linkName,
+      const std::string& ipNet,
+      const std::string& ipNetBcast,
+      const std::string& target
+    )
+    {
+      std::vector<std::tuple<std::regex, std::string>> replacementMap {
+        {std::regex(R"(\{\{srcIpAddr\}\})"), srcIpAddr},
+        {std::regex(R"(\{\{linkName\}\})"), linkName},
+        {std::regex(R"(\{\{ipNet\}\})"), ipNet},
+        {std::regex(R"(\{\{ipNetBcast\}\})"), ipNetBcast},
+        {std::regex(R"(\{\{roeExcludedPath\}\})"), roeExcludedPath},
+        {std::regex(R"(\{\{roeNetworksPath\}\})"), roeNetworksPath},
+        {std::regex(R"(\{\{respondingHostsPath\}\})"), respondingHostsPath},
+      };
+
+      std::vector<std::tuple<std::string, std::string>> commands;
+      std::ostringstream cmdTitle, command;
+
+      YAML::Node yConfig {YAML::LoadFile(playsFile)};
+
+      const auto& yPhasesArray    {yConfig[target]["stage"]};
+      const auto& yRunOptionsMap  {yConfig["runtime-options"]};
+
+      size_t phaseId {1};
+
+      // In stage; Per phase configuration
+      for (const auto& yPhaseMap : yPhasesArray) {
+        LOG_INFO << std::endl << "### Phase " << phaseId << std::endl;
+        if (   yIs<bool>(yRunOptionsMap, "ignore-iface-state-change", true)
+            && isPhaseRuntimeError(db, playbookSourceId, linkName, srcIpAddr))
+        {
+          LOG_WARN << "Disabling this phase execution" << std::endl;
+          cmdRunner.setExecute(false);
+        }
+
+        if (!(!enabledPhases.empty() && !enabledPhases.count(phaseId))
+            && yIs<bool>(yPhaseMap, "generate-responding-hosts", true)) {
+          generateRespondingHosts(sessionId.toString(), ipNet);
+        }
+
+        // In phase; Per command-set configuration
+        for (const auto& yCmdSetMap : yPhaseMap["phase"]) {
+          if (!enabledPhases.empty() && !enabledPhases.count(phaseId)) {
+            continue;
+          }
+
+          const auto& cmdSetName {yCmdSetMap["name"].as<std::string>()}; 
+          std::string ipTarget {4 == family ? "ipv4" : "ipv6"};
+
+          // In command set; Per command configuration
+          for (const auto& yCmdMap : yCmdSetMap[ipTarget]) {
+            const auto& csCmdTitle {yCmdMap["title"].as<std::string>()};
+            const auto& csCmd      {yCmdMap["cmd"].as<std::string>()};
+
+            // In command; Per command option configuration
+            std::string allOpts {""};
+            for (const auto& yOpt : yCmdMap["opts"]) {
+              auto opt {yOpt.as<std::string>()};
+
+              // Replace keywords with values
+              for (const auto& [k,v] : replacementMap) {
+                opt = std::regex_replace(opt, k, v);
+              }
+
+              if (!allOpts.ends_with(" ")) {
+                allOpts.append(" ");
+              }
+              allOpts.append(opt);
+            }
+
+            // Add command to command set
+            cmdTitle.str(std::string());
+            command.str(std::string());
+            cmdTitle << commandTitlePrefix << " " << csCmdTitle;
+            command << csCmd << allOpts;
+            commands.emplace_back(cmdTitle.str(), command.str());
+          }
+          
+          { // Add command set to phase
+            std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+            LOG_INFO << std::endl
+                     << "## " << cmdSetName << std::endl;
+            for (const auto& cmd : commands) {
+              std::vector<std::tuple<std::string, std::string>> cmds;
+              cmds.emplace_back(cmd);
+              cmdRunner.threadExec(cmds);
+            }
+            commands.clear();
+          }
+        }
+
+        cmdRunner.setExecute(execute); // update in case of alternate logic
+        LOG_INFO << std::endl << "### End of phase " << phaseId << std::endl;
+
+        ++phaseId;
+      }
+    }
+
   bool
   isPhaseRuntimeError(pqxx::connection& db,
       const nmco::Uuid& playbookSourceId, const std::string& linkName,
       const std::string& ipAddr)
   {
-    // short-circuit, if commanded
-    if (opts.getValueAs<bool>("ignore-scan-iface-state-change")) {
+    // short-circuit, if not actually running
+    if (!execute) {
       return false;
     }
 

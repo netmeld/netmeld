@@ -93,7 +93,7 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_tool_run_ip_route",
        "INSERT INTO tool_run_ip_routes"
-       "  (tool_run_id, interface_name, dst_ip_net, rtr_ip_addr)"
+       "  (tool_run_id, interface_name, dst_ip_net, next_hop_ip_addr)"
        " VALUES ($1, $2, network(($3)::INET), host(($4)::INET)::INET)"
        " ON CONFLICT"
        " DO NOTHING");
@@ -474,7 +474,7 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_ip_traceroute",
        "INSERT INTO raw_ip_traceroutes"
-       "  (tool_run_id, hop_count, rtr_ip_addr, dst_ip_addr)"
+       "  (tool_run_id, hop_count, next_hop_ip_addr, dst_ip_addr)"
        " VALUES ($1, $2, host(($3)::INET)::INET, host(($4)::INET)::INET)"
        " ON CONFLICT"
        " DO NOTHING");

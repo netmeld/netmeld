@@ -24,3 +24,8 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
+foreach(ITEM
+    queries.yaml
+  )
+  nm_install_conf(${ITEM} "playbook")
+endforeach()

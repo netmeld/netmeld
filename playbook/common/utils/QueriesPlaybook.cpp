@@ -28,120 +28,51 @@
 
 namespace netmeld::playbook::utils {
 
+  QueriesPlaybook::QueriesPlaybook()
+  {}
+
   void
-  dbPreparePlaybook(pqxx::connection& db)
+  QueriesPlaybook::addQuery(const std::string& _name,
+                            const std::string& _query)
   {
-    // =========================================================================
-    // Common
-    // =========================================================================
+    queries[_name] = _query;
+    LOG_DEBUG << "PSQL query added: "
+              << _name << " -- " << _query
+              << "\n";
+  }
 
-    // =========================================================================
-    // Insert Router
-    // =========================================================================
-    db.prepare(
-        "insert_playbook_ip_router",
-        "INSERT INTO playbook_ip_routers"
-        " (rtr_ip_addr)"
-        " VALUES (host(($1)::INET)::INET)"
-        " ON CONFLICT"
-        " (rtr_ip_addr)"
-        " DO NOTHING"
-        );
+  void
+  QueriesPlaybook::dbPrepare(pqxx::connection& db)
+  {
+    for (const auto& [_name, _query] : queries) {
+      db.prepare(_name, _query);
+    }
+  }
 
+  void
+  QueriesPlaybook::init(const std::string& _queryFilePath)
+  {
+    YAML::Node yConfig {YAML::LoadFile(_queryFilePath)};
 
-    // =========================================================================
-    // Insert Source
-    // =========================================================================
-    db.prepare(
-        "insert_playbook_inter_network_source",
-        "INSERT INTO playbook_inter_network_sources"
-        " (playbook_source_id, is_completed, playbook_stage,"
-        "  interface_name, vlan, mac_addr,"
-        "  ip_addr, ptp_rtr_ip_addr, description)"
-        " VALUES ($1, $2, $3,"
-        "         $4, $5, NULLIF($6, '')::MACADDR,"
-        "         ($7)::INET, NULLIF($8, '')::INET, NULLIF($9, ''))"
-        " ON CONFLICT"
-        " (playbook_source_id)"
-        " DO NOTHING"
-        );
+    const auto& yQueries {yConfig["queries"]};
+    for (const auto& yQuery : yQueries) {
+      const auto& name  {yQuery["id"].as<std::string>()};
+      const auto& query {yQuery["psql"].as<std::string>()};
+      addQuery(name, query);
+    }
+  }
 
-    db.prepare(
-        "insert_playbook_intra_network_source",
-        "INSERT INTO playbook_intra_network_sources"
-        " (playbook_source_id, is_completed, playbook_stage,"
-        "  interface_name, vlan, mac_addr,"
-        "  ip_addr, description)"
-        " VALUES ($1, $2, $3,"
-        "         $4, $5, NULLIF($6, '')::MACADDR,"
-        "         ($7)::INET, NULLIF($8, ''))"
-        " ON CONFLICT"
-        " (playbook_source_id)"
-        " DO NOTHING"
-        );
-
-
-    // =========================================================================
-    // Playbook
-    // =========================================================================
-    db.prepare(
-        "select_playbook_intra_network",
-        "SELECT"
-        "   playbook_source_id,"
-        "   playbook_stage,"
-        "   interface_name,"
-        "   vlan,"
-        "   mac_addr,"
-        "   text(ip_addr) AS ip_addr,"
-        "   NULL AS rtr_ip_addr,"
-        "   description,"
-        "   family(ip_addr) AS addr_family"
-        " FROM playbook_intra_network_dashboard"
-        " WHERE (NOT is_completed)"
-        );
-    db.prepare(
-        "select_playbook_inter_network",
-        "SELECT"
-        "   playbook_source_id,"
-        "   playbook_stage,"
-        "   interface_name,"
-        "   vlan,"
-        "   mac_addr,"
-        "   text(ip_addr) AS ip_addr,"
-        "   rtr_ip_addr,"
-        "   description,"
-        "   family(ip_addr) AS addr_family"
-        " FROM playbook_inter_network_dashboard"
-        " WHERE (NOT is_completed)"
-        );
-
-    db.prepare(
-        "select_network_and_broadcast",
-        "SELECT"
-        "   network(($1)::INET)                AS ip_net,"
-        "   host(broadcast(($1)::INET))::INET  AS ip_net_bcast"
-        );
-
-    db.prepare(
-        "playbook_intra_network_set_completed",
-        "UPDATE playbook_intra_network_sources"
-        " SET is_completed = true"
-        " WHERE (playbook_source_id = $1)"
-        );
-
-    db.prepare(
-        "playbook_inter_network_set_completed",
-        "UPDATE playbook_inter_network_sources"
-        " SET is_completed = true"
-        " WHERE (playbook_source_id = $1)"
-        );
-
-    db.prepare(
-        "insert_playbook_runtime_error",
-        "INSERT INTO playbook_runtime_errors"
-        "  (playbook_source_id, error_type)"
-        " VALUES ($1, $2)"
-        " ON CONFLICT DO NOTHING"
-        );
+  std::string
+  QueriesPlaybook::getDefaultQueryFilePath()
+  {
+    std::ifstream file {queryFilePath.string()};
+    if (!file.good()) {
+      LOG_WARN << "Playbook queries file path ("
+               << queryFilePath
+               << ") does not exist or is inaccessible.\n"
+               << std::endl;
+               ;
+    }
+    return queryFilePath;
   }
 }
