@@ -32,4 +32,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: netmeld/netmeld-dev:${{ github.event.inputs.tags }}
+          tags: netmeld/netmeld-dev:${{ github.event.inputs.tags || 'latest' }}
