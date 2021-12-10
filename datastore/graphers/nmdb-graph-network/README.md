@@ -39,9 +39,9 @@ flag.
 During build, icons should be placed in the `nmdb-graph-network/images` folder,
 which is copied during build installation to the `NETMELD_IMAGE_DIR` directory
 specified in CMakeLists.txt.
-At runtime, the tool will recursively search the folder specified by the
+At run-time, the tool will recursively search the folder specified by the
 `icons-folder` option for a graphic file corresponding to the `device-type` and
-place the path in the graph.  For example, a `device-type` of cisco will look
+place the path in the graph.  For example, a `device-type` of Cisco will look
 for `images/cisco.*`.  If a match cannot be found, the default, a question
 mark, is used.
 
@@ -68,7 +68,7 @@ nmdb-graph-network --layer 3 --device-id core | dot -Tpng -o layer3.png
 ```
 
 Some versions of Graphviz have issues loading the plugin for SVG conversion.
-If using SVG icons, Inkscape can be used to output the graph in pdf or other
+If using SVG icons, Inkscape can be used to output the graph in PDF or other
 formats as such:
 
 ```
