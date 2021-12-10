@@ -27,6 +27,7 @@
 #include <regex>
 #include <yaml-cpp/yaml.h>
 
+#include <netmeld/core/objects/Time.hpp>
 #include <netmeld/core/objects/Uuid.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 #include <netmeld/core/utils/Exit.hpp>
@@ -91,9 +92,7 @@ struct PhaseConfig
   std::string linkName                {""};
   std::string ipNet                   {""};
   std::string ipNetBcast              {""};
-  std::string roeExcludedPath         {""};
-  std::string roeIncludedPath         {""};
-  std::string respondingHostsPath     {""};
+  std::string savePath                {""};
   std::string rtrIpAddr               {""};
   std::string family                  {""};
   std::string sessionId               {""};
@@ -103,16 +102,14 @@ struct PhaseConfig
   toDebugString() const
   {
     std::ostringstream oss;
-    oss << "{"
+    oss << "# {"
         << "\"playbookSourceId\": \"" << pbSourceId
         << "\", \"target\": \"" << target
         << "\", \"srcIpAddr\": \"" << srcIpAddr
         << "\", \"linkName\": \"" << linkName
         << "\", \"ipNet\": \"" << ipNet
         << "\", \"ipNetBcast\": \"" << ipNetBcast
-        << "\", \"roeExcludedPath\": \"" << roeExcludedPath
-        << "\", \"roeIncludedPath\": \"" << roeIncludedPath
-        << "\", \"respondingHostsPath\": \"" << respondingHostsPath
+        << "\", \"savePath\": \"" << savePath
         << "\", \"rtrIpAddr\": \"" << rtrIpAddr
         << "\", \"family\": \"" << family
         << "\", \"sessionId\": \"" << sessionId
@@ -136,9 +133,7 @@ struct PhaseConfig
       {std::regex(R"(\{\{linkName\}\})"), linkName},
       {std::regex(R"(\{\{ipNet\}\})"), ipNet},
       {std::regex(R"(\{\{ipNetBcast\}\})"), ipNetBcast},
-      {std::regex(R"(\{\{roeExcludedPath\}\})"), roeExcludedPath},
-      {std::regex(R"(\{\{roeIncludedPath\}\})"), roeIncludedPath},
-      {std::regex(R"(\{\{respondingHostsPath\}\})"), respondingHostsPath},
+      {std::regex(R"(\{\{savePath\}\})"), savePath},
       {std::regex(R"(\{\{rtrIpAddr\}\})"), rtrIpAddr},
       {std::regex(R"(\{\{family\}\})"), family},
       {std::regex(R"(\{\{sessionId\}\})"), sessionId},
@@ -155,31 +150,25 @@ struct PhaseConfig
   }
 
   void
-  filesPrime(const std::string& _pbDir)
+  updateSavePath(const std::string& _savePath, bool execute)
   {
-    std::ostringstream oss;
+    savePath = _savePath;
 
-    oss.str(std::string());
-    oss << _pbDir << "/ROE-Excluded-IPv" << family << "-" << sessionId;
-    roeExcludedPath = oss.str();
-
-    oss.str(std::string());
-    oss << _pbDir << "/ROE-Included-IPv" << family << "-" << sessionId;
-    roeIncludedPath = oss.str();
-
-    oss.str(std::string());
-    oss << _pbDir << "/Responding-Hosts-IPv" << family << "-" << sessionId;
-    respondingHostsPath = oss.str();
+    if (execute) {
+      if (!sfs::create_directories(savePath)) {
+        LOG_ERROR << "Could not create save path: " << savePath
+                  << "\nTerminating playsbook."
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
+    }
   }
 
   void
-  filesRemoveWrite()
+  removeWriteSavePath()
   {
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
-
-    nmfm.removeWrite(roeExcludedPath);
-    nmfm.removeWrite(roeIncludedPath);
-    nmfm.removeWrite(respondingHostsPath);
+    nmfm.removeWrite(savePath, true);
   }
 };
 
@@ -201,23 +190,26 @@ class Tool : public nmdt::AbstractDatastoreTool
     static size_t const MIN_CAPTURE_DURATION {90};
 
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
-    std::string pbDir;
 
     nmpbu::QueriesPlaybook queriesPb;
     std::string dbConnectString;
+
+    std::string pbRootSavePath;
 
     std::string playsFile;
 
     bool execute  {false};
     bool headless {false};
+    bool noPrompt {false};
 
     std::set<size_t> enabledStages;
     std::set<size_t> enabledPhases;
 
     std::string commandTitlePrefix;
 
-    nmpb::CommandRunnerSingleton& cmdRunner =
-      nmpb::CommandRunnerSingleton::getInstance();
+    nmpb::CommandRunnerSingleton& cmdRunner {
+        nmpb::CommandRunnerSingleton::getInstance()
+      };
 
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
@@ -249,84 +241,84 @@ class Tool : public nmdt::AbstractDatastoreTool
       opts.removeAdvancedOption("tool-run-metadata");
 
       opts.addRequiredOption("1", std::make_tuple(
-            "[intra-network|inter-network]",
-            NULL_SEMANTIC,
-            "One required for playbook generation.  See Optional Options"
-            " descriptions")
-          );
+          "[intra-network|inter-network]",
+          NULL_SEMANTIC,
+          "One required for playbook generation.  See Optional Options"
+          " descriptions")
+        );
       opts.addRequiredOption("capture-duration", std::make_tuple(
-            "capture-duration",
-            po::value<size_t>()->required()->default_value(300),
-            "Capture traffic for specified number of seconds when the physical"
-            " interface is brought up")
-          );
+          "capture-duration",
+          po::value<size_t>()->required()->default_value(300),
+          "Capture traffic for specified number of seconds when the physical"
+          " interface is brought up")
+        );
       const auto& savePathLoc {nmfm.getSavePath()/"playbook"};
       opts.addRequiredOption("save-path", std::make_tuple(
-            "save-path",
-            po::value<std::string>()->required()->default_value(savePathLoc),
-            "Location to save output from playbook run")
-          );
+          "save-path",
+          po::value<std::string>()->required()->default_value(savePathLoc),
+          "Location to save output from playbook run")
+        );
 
       opts.addOptionalOption("intra-network", std::make_tuple(
-            "intra-network",
-            NULL_SEMANTIC,
-            "Generate intra-network (local-area network) playbook")
-          );
+          "intra-network",
+          NULL_SEMANTIC,
+          "Generate intra-network (local-area network) playbook")
+        );
       opts.addOptionalOption("inter-network", std::make_tuple(
-            "inter-network",
-            NULL_SEMANTIC,
-            "Generate inter-network (across routers) playbook")
-          );
+          "inter-network",
+          NULL_SEMANTIC,
+          "Generate inter-network (across routers) playbook")
+        );
       opts.addOptionalOption("stage", std::make_tuple(
-            "stage",
-            po::value<std::vector<size_t>>()->multitoken()->composing()->
-              default_value(std::vector<size_t>{},"all"),
-            "Only run the specified stages"
-            "; Space separated list")
-          );
+          "stage",
+          po::value<std::vector<size_t>>()->multitoken()->composing()->
+            default_value(std::vector<size_t>{},"all"),
+          "Only run the specified stages"
+          "; Space separated list")
+        );
       opts.addOptionalOption("phase", std::make_tuple(
-            "phase",
-            po::value<std::vector<size_t>>()->multitoken()->composing()->
-              default_value(std::vector<size_t>{},"all"),
-            "For all stages, only run the specified phases"
-            "; Space separated list")
-          );
+          "phase",
+          po::value<std::vector<size_t>>()->multitoken()->composing()->
+            default_value(std::vector<size_t>{},"all"),
+          "For all stages, only run the specified phases"
+          "; Space separated list")
+        );
       opts.addOptionalOption("execute", std::make_tuple(
-            "execute",
-            NULL_SEMANTIC,
-            "Execute playbook (default: only display playbook)")
-          );
+          "execute",
+          NULL_SEMANTIC,
+          "Execute playbook (default: only display playbook)")
+        );
       opts.addOptionalOption("headless", std::make_tuple(
-            "headless",
-            NULL_SEMANTIC,
-            "Execute playbook in headless mode (default: run in GUI xterm)")
-          );
+          "headless",
+          NULL_SEMANTIC,
+          "Execute playbook in headless mode (default: run in GUI xterm)")
+        );
       opts.addOptionalOption("no-prompt", std::make_tuple(
-            "no-prompt",
-            NULL_SEMANTIC,
-            "Cycle stages without prompting user")
-          );
+          "no-prompt",
+          NULL_SEMANTIC,
+          "Cycle stages without prompting user")
+        );
 
       opts.addAdvancedOption("exclude-command", std::make_tuple(
-            "exclude-command",
-            po::value<std::vector<size_t>>()->multitoken()->composing()->
-              default_value(std::vector<size_t>{},"none"),
-            "Exclude specified command IDs"
-            "; Space separated list"
-            "; This can break expected logic in some cases")
-          );
+          "exclude-command",
+          po::value<std::vector<size_t>>()->multitoken()->composing()->
+            default_value(std::vector<size_t>{},"none"),
+          "Exclude specified command IDs"
+          "; Space separated list"
+          "; This can break expected logic in some cases")
+        );
       opts.addAdvancedOption("queries-file", std::make_tuple(
-            "queries-file",
-            po::value<std::string>()->required()
-              ->default_value(queriesPb.getDefaultQueryFilePath()),
-            "Location of queries file for playbook runs")
-          );
+          "queries-file",
+          po::value<std::string>()->required()
+            ->default_value(queriesPb.getDefaultQueryFilePath()),
+          "Location of queries file for playbook runs")
+        );
       const auto& playsFileLoc {nmfm.getConfPath()/"playbook/plays.yaml"};
       opts.addAdvancedOption("plays-file", std::make_tuple(
-            "plays-file",
-            po::value<std::string>()->required()->default_value(playsFileLoc),
-            "Location of plays file for stages, phases, and commands")
-          );
+          "plays-file",
+          po::value<std::string>()->required()->default_value(playsFileLoc),
+          "Location of plays file for stages, phases, and commands")
+        );
       }
 
     int
@@ -344,20 +336,25 @@ class Tool : public nmdt::AbstractDatastoreTool
       headless = opts.exists("headless");
       cmdRunner.setHeadless(headless);
 
-      // Create directory for meta-data about and results from this tool run
-      sfs::path const saveDir {opts.getValue("save-path")};
-      sfs::create_directories(saveDir);
-      pbDir = sfs::canonical(saveDir).string();
+      // Prompt, or not
+      noPrompt = opts.exists("no-prompt");
 
-      sfs::path const playsPath = opts.getValue("plays-file");
+      // Create directory for meta-data about and results from this tool run
+      const sfs::path saveDir {opts.getValue("save-path")};
+      // TODO can this be changed/fixed
+      pbRootSavePath = saveDir.string();
+
+      const sfs::path playsPath {opts.getValue("plays-file")};
       playsFile = sfs::canonical(playsPath).string();
 
       Playbook playbook;
 
-      const auto& dbName  {getDbName()};
-      const auto& dbArgs  {opts.getValue("db-args")};
+      dbConnectString = std::string("dbname=")
+                      + getDbName()
+                      + " "
+                      + opts.getValue("db-args")
+                      ;
 
-      dbConnectString   = {std::string("dbname=") + dbName + " " + dbArgs};
       pqxx::connection db {dbConnectString};
       queriesPb.init(opts.getValue("queries-file"));
       queriesPb.dbPrepare(db);
@@ -429,15 +426,14 @@ class Tool : public nmdt::AbstractDatastoreTool
 
         if (true) {
           std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << "#### Playbook: Stage " << playbookStage << " ####"
-                   << std::endl;
+          LOG_INFO << "#### Playbook: Stage " << playbookStage << " ####\n";
         }
 
         for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
           LOG_INFO << "# Disconnect target(s), if necessary, and connect "
-                   << ifaceName << "." << std::endl
-                   << "# This interface will cycle through settings:"
-                   << std::endl;
+                   << ifaceName << ".\n"
+                   << "# This interface will cycle through settings:\n"
+                   ;
 
           for (const auto& [vlan, vlanConfigs] : ifaceConfigs) {
             for (const auto& [macAddr, ipConfigs] : vlanConfigs) {
@@ -447,13 +443,13 @@ class Tool : public nmdt::AbstractDatastoreTool
                          << ", MAC: " << macAddr
                          << ", IP: " << ipAddr
                          << ", Desc: " << description
-                         << std::endl;
+                         << '\n';
                 if (srcConfig.ipRouters.size()) {
                   LOG_INFO << "#\t\tRouters:";
                   for (const auto& rtrIpAddr : srcConfig.ipRouters) {
                     LOG_INFO << " " << rtrIpAddr;
                   }
-                  LOG_INFO << std::endl;
+                  LOG_INFO << '\n';
                 }
               }
             }
@@ -478,7 +474,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             }
           }
 
-          while (!opts.exists("no-prompt")) {
+          while (!noPrompt) {
             LOG_INFO << "Enter 'Y' to continue or 'Q' to quit: ";
             std::cin >> userInput;
 
@@ -505,22 +501,22 @@ class Tool : public nmdt::AbstractDatastoreTool
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
-              {
-                // Run interface threads in parallel
-                break;
-              }
+            {
+              // Run interface threads in parallel
+              break;
+            }
             case PlaybookScope::INTER_NETWORK:  // intentional fallthrough
             case PlaybookScope::UNKNOWN:  // intentional fallthrough
             default:
-              {
-                // Run interface threads serially (only one interface at a time)
+            {
+              // Run interface threads serially (only one interface at a time)
 
-                // Wait for thread to complete before starting next thread.
-                physIfaceThreads[ifaceName].join();
-                physIfaceThreads.erase(ifaceName);
+              // Wait for thread to complete before starting next thread.
+              physIfaceThreads[ifaceName].join();
+              physIfaceThreads.erase(ifaceName);
 
-                break;
-              }
+              break;
+            }
           }
         }
 
@@ -616,7 +612,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       getifaddrs(&ifAddrStruct);
 
-      for (auto ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+      for (auto ifa {ifAddrStruct}; ifa != NULL; ifa = ifa->ifa_next) {
         // Skip invalid interfaces
         if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
           continue;
@@ -650,7 +646,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         ip = ip.substr(0, pos);
       }
 
-      for (auto ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+      for (auto ifa {ifAddrStruct}; ifa != NULL; ifa = ifa->ifa_next) {
         // Skip invalid interfaces
         if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
           continue;
@@ -660,12 +656,14 @@ class Tool : public nmdt::AbstractDatastoreTool
         char address[INET6_ADDRSTRLEN];
         if (addrFamily == AF_INET) {
           void* addrPtr {
-            &reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr)->sin_addr};
+              &reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr)->sin_addr
+            };
           inet_ntop(addrFamily, addrPtr, address, INET_ADDRSTRLEN);
         }
         if (addrFamily == AF_INET6) {
           void* addrPtr {
-            &reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr)->sin6_addr};
+              &reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr)->sin6_addr
+            };
           inet_ntop(addrFamily, addrPtr, address, INET6_ADDRSTRLEN);
         }
         if (ip.compare(std::string(address)) == 0) {
@@ -758,22 +756,22 @@ class Tool : public nmdt::AbstractDatastoreTool
 
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
-              {
-                // Run VLAN threads in parallel.
-                break;
-              }
+            {
+              // Run VLAN threads in parallel.
+              break;
+            }
             case PlaybookScope::INTER_NETWORK:  // intentional fallthrough
             case PlaybookScope::UNKNOWN:  // intentional fallthrough
             default:
-              {
-                // Run VLAN threads serially (only one VLAN active at a time).
+            {
+              // Run VLAN threads serially (only one VLAN active at a time).
 
-                // Wait for thread to complete before starting next thread.
-                vlanThreads[vlanId].join();
-                vlanThreads.erase(vlanId);
+              // Wait for thread to complete before starting next thread.
+              vlanThreads[vlanId].join();
+              vlanThreads.erase(vlanId);
 
-                break;
-              }
+              break;
+            }
           }
         }
 
@@ -845,94 +843,84 @@ class Tool : public nmdt::AbstractDatastoreTool
           pc.srcIpAddr        = srcIpAddr;
           pc.dbConnectString  = dbConnectString;
 
+          if (true) {
+            pqxx::read_transaction t {db};
+            pqxx::result rows {
+                t.exec_prepared("select_network_and_broadcast", pc.srcIpAddr)
+              };
+
+            for (const auto& row : rows) {
+              row.at("ip_net").to(pc.ipNet);
+              row.at("ip_net_bcast").to(pc.ipNetBcast);
+            }
+          }
+
           switch (playbookScope) {
             case PlaybookScope::INTRA_NETWORK:
-              {
-                pc.target = "intra-network";
-                setCommandTitlePrefix("Intra",
-                    playbookStage, pc.linkName, pc.srcIpAddr);
-                intraNetworkActions(db, pc);
+            {
+              pc.target = "intra-network";
+              setCommandTitlePrefix("Intra",
+                  playbookStage, pc.linkName, pc.srcIpAddr);
 
-                if (execute) {
-                  pqxx::work t {db};
-                  t.exec_prepared("playbook_intra_network_set_completed",
-                      pc.pbSourceId);
-                  t.commit();
-                }
+              networkActions(db, pc);
 
-                break;
+              if (execute) {
+                pqxx::work t {db};
+                t.exec_prepared("playbook_intra_network_set_completed",
+                    pc.pbSourceId);
+                t.commit();
               }
+
+              break;
+            }
             case PlaybookScope::INTER_NETWORK:
-              {
-                pc.target = "inter-network";
-                for (const auto& rtrIpAddr : srcConf.ipRouters) {
-                  setCommandTitlePrefix("Inter",
-                      playbookStage, pc.linkName, pc.srcIpAddr);
-                  pc.rtrIpAddr = rtrIpAddr;
-                  interNetworkActions(db, pc);
-                }
+            {
+              pc.target = "inter-network";
+              for (const auto& rtrIpAddr : srcConf.ipRouters) {
+                setCommandTitlePrefix("Inter",
+                    playbookStage, pc.linkName, pc.srcIpAddr);
 
-                if (execute) {
-                  pqxx::work t {db};
-                  t.exec_prepared("playbook_inter_network_set_completed",
-                      srcConf.playbookSourceId);
-                  t.commit();
-                }
+                pc.rtrIpAddr = rtrIpAddr;
+                nmpb::RaiiIpRoute raiiIpRoute {pc.linkName, pc.rtrIpAddr};
 
-                break;
+                networkActions(db, pc);
               }
+
+              if (execute) {
+                pqxx::work t {db};
+                t.exec_prepared("playbook_inter_network_set_completed",
+                    srcConf.playbookSourceId);
+                t.commit();
+              }
+
+              break;
+            }
             case PlaybookScope::UNKNOWN:  // intentional fallthrough
             default:
-              {
-                break;
-              }
+            {
+              break;
+            }
           }
         }
       }
     }
 
     void
-    intraNetworkActions(pqxx::connection& db, PhaseConfig& _pc)
+    networkActions(pqxx::connection& db, PhaseConfig& phaseConf)
     {
+      // TODO clean up
       nmco::Uuid const sessionId;
-      _pc.sessionId  = sessionId.toString();
+      phaseConf.sessionId = sessionId.toString();
 
-      if (true) {
-        pqxx::read_transaction t {db};
-        pqxx::result rows =
-               t.exec_prepared("select_network_and_broadcast",
-                   _pc.srcIpAddr);
+      std::ostringstream oss;
+      oss << pbRootSavePath
+          << "/" << nmco::Time().toIsoString()
+          << "_" << sessionId
+          ;
 
-        for (const auto& row : rows) {
-          row.at("ip_net").to(_pc.ipNet);
-          row.at("ip_net_bcast").to(_pc.ipNetBcast);
-        }
-      }
-
-      _pc.filesPrime(pbDir);
-      networkPhases(db, _pc);
-      _pc.filesRemoveWrite();
-
-      cmdRunner.setExecute(execute); // update in case of alternate logic
-
-      {
-        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_INFO << std::endl;
-      }
-    }
-
-    void
-    interNetworkActions(pqxx::connection& db, PhaseConfig& _pc)
-    {
-      nmco::Uuid const sessionId;
-      _pc.sessionId  = sessionId.toString();
-
-      nmpb::RaiiIpRoute raiiIpRoute
-      {_pc.linkName, _pc.rtrIpAddr};
-
-      _pc.filesPrime(pbDir);
-      networkPhases(db, _pc);
-      _pc.filesRemoveWrite();
+      phaseConf.updateSavePath(oss.str(), execute);
+      phaseActions(db, phaseConf);
+      phaseConf.removeWriteSavePath();
 
       cmdRunner.setExecute(execute); // update in case of alternate logic
 
@@ -944,34 +932,34 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     template<typename T>
     bool
-    yIs(const YAML::Node& _node, const std::string& _key, T _value)
+    yIs(const YAML::Node& node, const std::string& key, T value)
     {
-      return (_node[_key].IsDefined())
-          && (_node[_key].as<T>() == _value)
+      return (node[key].IsDefined())
+          && (node[key].as<T>() == value)
           ;
     }
 
     void
-    networkPhases(pqxx::connection& db, const PhaseConfig _pc)
+    phaseActions(pqxx::connection& db, const PhaseConfig phaseConf)
     {
       YAML::Node yConfig {YAML::LoadFile(playsFile)};
 
-      LOG_DEBUG << _pc.toDebugString() << std::endl;
+      LOG_DEBUG << phaseConf.toDebugString() << std::endl;
 
       const auto& yRunOptionsMap  {yConfig["runtime-options"]};
-      const auto& yStage          {yConfig[_pc.target]["stage"]};
+      const auto& yStage          {yConfig[phaseConf.target]["stage"]};
 
-      bool ignoreIfaceStageChange
-        {yIs<bool>(yRunOptionsMap, "ignore-iface-state-change", true)};
+      bool ignoreIfaceStateChange {
+          yIs<bool>(yRunOptionsMap, "ignore-iface-state-change", true)
+        };
 
-      size_t phaseId {1};
-
+      size_t phaseId    {1};
       bool stageEnabled {true};
 
       // In stage; Per phase configuration
       for (const auto& yPhases : yStage) {
-        LOG_INFO << std::endl << "### Phase " << phaseId << std::endl;
-        if (ignoreIfaceStageChange && isPhaseRuntimeError(db, _pc)) {
+        LOG_INFO << "\n### Phase " << phaseId << std::endl;
+        if (ignoreIfaceStateChange && isPhaseRuntimeError(db, phaseConf)) {
           LOG_WARN << "Disabling this phase execution" << std::endl;
           cmdRunner.setExecute(false);
         }
@@ -983,53 +971,18 @@ class Tool : public nmdt::AbstractDatastoreTool
             continue;
           }
 
-          const auto& cmdSetName {yCmdSet["name"].as<std::string>()}; 
+          auto addrFamily {phaseConf.familyTarget()};
 
           std::vector<std::tuple<std::string, std::string>> commands;
-          addPhaseCommands(commands, yCmdSet["always"], _pc);
-          addPhaseCommands(commands, yCmdSet[_pc.familyTarget()], _pc);
+          addPhaseCommands(commands, yCmdSet["always"], phaseConf);
+          addPhaseCommands(commands, yCmdSet[addrFamily], phaseConf);
 
-          const auto& yFailMap {yCmdSet["on-fail"]};
-          if (yFailMap.IsDefined())
-          { // Add commands to phase in serial
-            std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-            LOG_DEBUG << "Ran serially\n";
-            LOG_INFO << std::endl
-                     << "## " << cmdSetName << std::endl;
-
-            std::vector<std::tuple<std::string, std::string>> cmds;
-            for (const auto& [_, cmd] : commands) {
-              bool execSuccess {cmdRunner.systemExec(cmd)};
-              const auto& disableType {getDisableType(yFailMap)};
-              if (!execSuccess) {
-                if ("stage" == disableType) {
-                  stageEnabled = false;
-                }
-                LOG_WARN << std::endl
-                         << yFailMap["msg"].as<std::string>()
-                         << std::endl;
-                cmdRunner.setExecute(false); // disable to maintain count
-              }
-            }
-          }
-          else
-          { // Add commands to phase in parallel
-            std::vector<std::tuple<std::string, std::string>> cmds;
-            for (const auto& cmd : commands) {
-              cmds.emplace_back(cmd);
-            }
-
-            std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-            LOG_DEBUG << "Ran parallel\n";
-            LOG_INFO << std::endl
-                     << "## " << cmdSetName << std::endl;
-            cmdRunner.threadExec(cmds);
-          }
+          stageEnabled = runPhaseCommands(commands, yCmdSet);
         }
 
         // update in case of alternate logic
         cmdRunner.setExecute(execute && stageEnabled);
-        LOG_INFO << std::endl << "### End of phase " << phaseId << std::endl;
+        LOG_INFO << "\n### End of phase " << phaseId << std::endl;
 
         ++phaseId;
       }
@@ -1037,14 +990,14 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     void
     addPhaseCommands(
-      std::vector<std::tuple<std::string, std::string>>& _commands,
-      const YAML::Node& _yCmdSet, const PhaseConfig& _pc)
+      std::vector<std::tuple<std::string, std::string>>& commands,
+      const YAML::Node& yCmdSet, const PhaseConfig& phaseConf)
     {
-      for (const auto& yCmdMap : _yCmdSet) {
+      for (const auto& yCmdMap : yCmdSet) {
         // In command; Per command option configuration
         std::ostringstream ossOpts;
         for (const auto& yOpt : yCmdMap["opts"]) {
-          ossOpts << " " << _pc.regexReplace(yOpt.as<std::string>());
+          ossOpts << " " << phaseConf.regexReplace(yOpt.as<std::string>());
         }
 
         // Add command to command set
@@ -1053,14 +1006,67 @@ class Tool : public nmdt::AbstractDatastoreTool
                  << yCmdMap["title"].as<std::string>();
         ossCmd << yCmdMap["cmd"].as<std::string>()
                << ossOpts.str();
-        _commands.emplace_back(ossTitle.str(), ossCmd.str());
+        commands.emplace_back(ossTitle.str(), ossCmd.str());
       }
     }
 
-    std::string
-    getDisableType(const YAML::Node& _yFailMap)
+    bool
+    runPhaseCommands(
+      std::vector<std::tuple<std::string, std::string>>& commands,
+      const YAML::Node& yCmdSet)
     {
-      const auto& type {_yFailMap["disable"].as<std::string>()};
+      bool stageEnabled       {true};
+      const auto& cmdSetName  {yCmdSet["name"].as<std::string>()}; 
+      const auto& yFailMap    {yCmdSet["on-fail"]};
+      const auto& yNoPrompt   {yCmdSet["no-prompt"]};
+
+      if (noPrompt && yIs(yCmdSet, "no-prompt", std::string("skip"))) {
+        LOG_DEBUG << "Disabling phase execution as `--no-prompt` set\n";
+        cmdRunner.setExecute(false); // disable to maintain count
+      }
+
+      if (yFailMap.IsDefined())
+      { // Add commands to phase in serial
+        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+        LOG_DEBUG << "# Ran serially";
+        LOG_INFO << "\n## " << cmdSetName
+                 << std::endl;
+
+        std::vector<std::tuple<std::string, std::string>> cmds;
+        for (const auto& [_, cmd] : commands) {
+          bool execSuccess {cmdRunner.systemExec(cmd)};
+          const auto& disableType {getDisableType(yFailMap)};
+          if (!execSuccess) {
+            if ("stage" == disableType) {
+              stageEnabled = false;
+            }
+            LOG_WARN << '\n' << yFailMap["msg"].as<std::string>()
+                     << std::endl;
+            cmdRunner.setExecute(false); // disable to maintain count
+          }
+        }
+      }
+      else
+      { // Add commands to phase in parallel
+        std::vector<std::tuple<std::string, std::string>> cmds;
+        for (const auto& cmd : commands) {
+          cmds.emplace_back(cmd);
+        }
+
+        std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+        LOG_DEBUG << "# Ran parallel";
+        LOG_INFO << "\n## " << cmdSetName
+                 << std::endl;
+        cmdRunner.threadExec(cmds);
+      }
+
+      return stageEnabled;
+    }
+
+    std::string
+    getDisableType(const YAML::Node& yFailMap)
+    {
+      const auto& type {yFailMap["disable"].as<std::string>()};
       std::smatch t;
       std::regex validTypes(R"(stage|phase)");
 
@@ -1072,7 +1078,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
 
     bool
-    isPhaseRuntimeError(pqxx::connection& db, const PhaseConfig& _pc)
+    isPhaseRuntimeError(pqxx::connection& db, const PhaseConfig& phaseConf)
     {
       // short-circuit, if not actually running
       if (!execute) {
@@ -1082,25 +1088,25 @@ class Tool : public nmdt::AbstractDatastoreTool
       bool isError {false};
       pqxx::work t {db};
 
-      if (ifaceIsDown(_pc.linkName)) {
+      if (ifaceIsDown(phaseConf.linkName)) {
         isError = true;
         LOG_ERROR << "Interface in down state" << std::endl;
         t.exec_prepared(
           "insert_playbook_runtime_error",
-          _pc.pbSourceId,
+          phaseConf.pbSourceId,
           "Interface state changed (down) during execution"
         );
       }
 
-      if (   !ifaceHasAddress(_pc.linkName)
-          || !ifaceHasIp(_pc.linkName, _pc.srcIpAddr)
+      if (   !ifaceHasAddress(phaseConf.linkName)
+          || !ifaceHasIp(phaseConf.linkName, phaseConf.srcIpAddr)
          )
       {
         isError = true;
         LOG_ERROR << "Interface has no/incorrect IP address" << std::endl;
         t.exec_prepared(
           "insert_playbook_runtime_error",
-          _pc.pbSourceId,
+          phaseConf.pbSourceId,
           "Interface lost IP address during execution"
         );
       }
