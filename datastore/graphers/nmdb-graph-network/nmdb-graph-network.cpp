@@ -31,9 +31,9 @@
 namespace nmdt = netmeld::datastore::tools;
 namespace nmcu = netmeld::core::utils;
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Graphing Helpers
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 struct VertexProperties
 {
   std::string name;
@@ -42,8 +42,8 @@ struct VertexProperties
   std::string style;
   std::string fillcolor;
 
-  double distance = std::numeric_limits<double>::infinity();
-  double extraWeight = 0.0;
+  double distance     {std::numeric_limits<double>::infinity()};
+  double extraWeight  {0.0};
 };
 
 
@@ -56,7 +56,7 @@ struct EdgeProperties
   std::string arrowhead;
   std::string arrowtail;
 
-  double weight = 1.0;
+  double weight {1.0};
 };
 
 
@@ -65,110 +65,120 @@ boost::adjacency_list<
   boost::listS,         // OutEdgeList
   boost::vecS,          // VertexList
   boost::undirectedS,   // Directed/Undirected
-  VertexProperties,    // VertexProperties
-  EdgeProperties,      // EdgeProperties
+  VertexProperties,     // VertexProperties
+  EdgeProperties,       // EdgeProperties
   boost::no_property    // GraphProperties
-  >;
+>;
 
 using Vertex = NetworkGraph::vertex_descriptor;
 using Edge   = NetworkGraph::edge_descriptor;
 
 const std::string nodeShape {"box"};
-const std::string netShape {"oval"};
+const std::string netShape  {"oval"};
 
 class LabelWriter
 {
-private:
-  NetworkGraph const& g_;
-public:
-  explicit LabelWriter(NetworkGraph& g) : g_(g) { }
+  private:
+    const NetworkGraph& g_;
 
-  void operator()(std::ostream& os, Vertex const& v) const {
-    os << "[shape=\"" << g_[v].shape << "\", ";
+  public:
+    explicit LabelWriter(NetworkGraph& g) : g_(g) { }
 
-    if (!g_[v].style.empty()) {
-      os << "style=\"" << g_[v].style << "\", ";
+    void operator()(std::ostream& os, const Vertex& v) const
+    {
+      os << "[shape=\"" << g_[v].shape << "\", ";
+
+      if (!g_[v].style.empty()) {
+        os << "style=\"" << g_[v].style << "\", ";
+      }
+
+      if (!g_[v].fillcolor.empty()) {
+        os << "fillcolor=\"" << g_[v].fillcolor << "\", ";
+      }
+
+      os << "label=\"" << g_[v].label << "\"]";
     }
 
-    if (!g_[v].fillcolor.empty()) {
-      os << "fillcolor=\"" << g_[v].fillcolor << "\", ";
+    void operator()(std::ostream& os, const Edge& e) const
+    {
+      const Vertex s {boost::source(e, g_)};
+      const Vertex t {boost::target(e, g_)};
+
+      const double distanceRatio {(g_[s].distance / g_[t].distance)};
+
+      os << "[";
+
+      if ((0.999 < distanceRatio) && (distanceRatio < 1.001)) {
+        os << "constraint=\"false\", ";
+      }
+
+      if (!g_[e].style.empty()) {
+        os << "style=\"" << g_[e].style << "\", ";
+      }
+
+      if (!g_[e].direction.empty()) {
+        os << "dir=\"" << g_[e].direction << "\", ";
+      }
+
+      if (!g_[e].arrowhead.empty()) {
+        os << "arrowhead=\"" << g_[e].arrowhead << "\", ";
+      }
+
+      if (!g_[e].arrowtail.empty()) {
+        os << "arrowtail=\"" << g_[e].arrowtail << "\", ";
+      }
+
+      os << "label=\"" << g_[e].label << "\"]";
     }
-
-    os << "label=\"" << g_[v].label << "\"]";
-  }
-
-  void operator()(std::ostream& os, Edge const& e) const {
-    Vertex const s = boost::source(e, g_);
-    Vertex const t = boost::target(e, g_);
-
-    double const distanceRatio = (g_[s].distance / g_[t].distance);
-
-    os << "[";
-
-    if ((0.999 < distanceRatio) && (distanceRatio < 1.001)) {
-      os << "constraint=\"false\", ";
-    }
-
-    if (!g_[e].style.empty()) {
-      os << "style=\"" << g_[e].style << "\", ";
-    }
-
-    if (!g_[e].direction.empty()) {
-      os << "dir=\"" << g_[e].direction << "\", ";
-    }
-
-    if (!g_[e].arrowhead.empty()) {
-      os << "arrowhead=\"" << g_[e].arrowhead << "\", ";
-    }
-
-    if (!g_[e].arrowtail.empty()) {
-      os << "arrowtail=\"" << g_[e].arrowtail << "\", ";
-    }
-
-    os << "label=\"" << g_[e].label << "\"]";
-  }
 };
 
 class GraphWriter
 {
-public:
-  void operator()(std::ostream& os) const {
-    os << "splines=true;" << std::endl;
-    os << "nodesep=1.00;" << std::endl;
-    os << "ranksep=2.50;" << std::endl;
-    os << "overlap=false;" << std::endl;
-  }
+  public:
+    void operator()(std::ostream& os) const
+    {
+      os << "splines=true;\n"
+         << "nodesep=1.00;\n"
+         << "ranksep=2.50;\n"
+         << "overlap=false;\n"
+         ;
+    }
 };
 
 class IsRedundantEdge
 {
-private:
-  NetworkGraph const& g_;
-public:
-  explicit IsRedundantEdge(NetworkGraph& g) : g_(g) { }
+  private:
+    const NetworkGraph& g_;
+  public:
+    explicit IsRedundantEdge(NetworkGraph& g) : g_(g) { }
 
-  bool operator()(Edge const& e) const {
-    Vertex const s = boost::source(e, g_);
-    Vertex const t = boost::target(e, g_);
+    bool operator()(Edge const& e) const
+    {
+      Vertex const s {boost::source(e, g_)};
+      Vertex const t {boost::target(e, g_)};
 
-    return (get<1>(boost::edge(t, s, g_)) &&
-            ((g_[s].distance > g_[t].distance) ||
-             ((s > t) && (g_[s].distance >= g_[t].distance))));
-  }
+      return (get<1>(boost::edge(t, s, g_))
+          && (   (g_[s].distance > g_[t].distance)
+              || ((s > t) && (g_[s].distance >= g_[t].distance))
+             ));
+    }
 };
 
 
-// =============================================================================
+// ============================================================================
 // Main code
-// =============================================================================
-
+// ============================================================================
 class Tool : public nmdt::AbstractGraphTool
 {
   private:
     std::map<std::string, Vertex> vertexLookup;
+
     NetworkGraph graph;
-    bool useIcons    {false};
-    bool hideUnknown {false};
+
+    const nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+
+    bool useIcons           {false};
+    bool hideUnknown        {false};
     bool removeEmptySubnets {false};
     bool showTracerouteHops {false};
 
@@ -181,36 +191,42 @@ class Tool : public nmdt::AbstractGraphTool
     void addToolOptions() override
     {
       opts.addRequiredOption("layer", std::make_tuple(
-            "layer,L",
-            po::value<std::string>()->required(),
-            "Layer of the network stack to graph")
-          );
+          "layer,L",
+          po::value<std::string>()->required(),
+          "Layer of the network stack to graph")
+        );
       opts.addRequiredOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>()->required(),
-            "Device ID or subnet CIDR address to use as graph's root node")
-          );
+          "device-id",
+          po::value<std::string>()->required(),
+          "Device ID or subnet CIDR address to use as graph's root node")
+        );
 
       opts.addOptionalOption("icons", std::make_tuple(
-            "icons",
-            NULL_SEMANTIC,
-            "Enable device icons in graph")
-          );
+          "icons",
+          NULL_SEMANTIC,
+          "Enable device icons in graph")
+        );
+      opts.addOptionalOption("icons-folder", std::make_tuple(
+          "icons-folder",
+          po::value<std::string>()->required()->
+            default_value(nmfm.getConfPath()/"images"),
+          "Folder to search in for icons. ")
+        );
       opts.addOptionalOption("no-unknown", std::make_tuple(
-            "no-unknown",
-            NULL_SEMANTIC,
-            "Omit 'Unknown Device' graph nodes")
-          );
+          "no-unknown",
+          NULL_SEMANTIC,
+          "Omit 'Unknown Device' graph nodes")
+        );
       opts.addOptionalOption("no-empty-subnets", std::make_tuple(
-            "no-empty-subnets",
-            NULL_SEMANTIC,
-            "Omit empty subnet graph nodes")
-          );
+          "no-empty-subnets",
+          NULL_SEMANTIC,
+          "Omit empty subnet graph nodes")
+        );
       opts.addOptionalOption("show-traceroute-hops", std::make_tuple(
-            "show-traceroute-hops",
-            NULL_SEMANTIC,
-            "Show hops found in traceroutes for devices")
-      );
+          "show-traceroute-hops",
+          NULL_SEMANTIC,
+          "Show hops found in traceroutes for devices")
+        );
     }
 
     int
@@ -218,7 +234,7 @@ class Tool : public nmdt::AbstractGraphTool
     {
       const auto& dbName  {getDbName()};
       const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db{"dbname=" + dbName + " " + dbArgs};
+      pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
 
       db.prepare
         ("select_ip_nets_extra_weights",
@@ -358,61 +374,62 @@ class Tool : public nmdt::AbstractGraphTool
          "   hop_count"
          " FROM raw_ip_traceroutes");
 
+      useIcons = opts.exists("icons");
+      hideUnknown = opts.exists("no-unknown");
+      removeEmptySubnets = opts.exists("no-empty-subnets");
+      showTracerouteHops = opts.exists("show-traceroute-hops");
 
-    useIcons = opts.exists("icons");
-    hideUnknown = opts.exists("no-unknown");
-    removeEmptySubnets = opts.exists("no-empty-subnets");
-    showTracerouteHops = opts.exists("show-traceroute-hops");
+      int layer {std::stoi(opts.getValue("layer"))};
+      switch (layer) {
+        case 2:
+          buildLayer2Graph(db);
+          break;
+        case 3:
+          buildLayer3Graph(db);
+          break;
+        default:
+          break;
+      }
 
-    int layer = std::stoi(opts.getValue("layer"));
-    switch (layer) {
-    case 2:
-      buildLayer2Graph(db);
-      break;
-    case 3:
-      buildLayer3Graph(db);
-      break;
-    default:
-      break;
+      std::string const deviceId {nmcu::toLower(opts.getValue("device-id"))};
+      if (!vertexLookup.count(deviceId)) {
+        LOG_ERROR << "Specified device-id ("
+                  << deviceId << ") not found in datastore"
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
+
+      boost::dijkstra_shortest_paths(
+          graph, vertexLookup.at(deviceId),
+          weight_map(boost::get(&EdgeProperties::weight, graph)).
+          distance_map(boost::get(&VertexProperties::distance, graph))
+        );
+
+      // Remove all the "wrong direction" and redundant edges.
+      boost::remove_edge_if(IsRedundantEdge(graph), graph);
+
+      buildVirtualizationGraph(db);
+      buildTracerouteGraph(db);
+
+      boost::write_graphviz(
+          std::cout, graph,
+          LabelWriter(graph),   // VertexPropertyWriter
+          LabelWriter(graph),   // EdgePropertyWriter
+          GraphWriter(),        // GraphPropertyWriter
+          boost::get(&VertexProperties::name, graph)  // VertexID
+        );
+
+      return nmcu::Exit::SUCCESS;
     }
 
-    std::string const deviceId {nmcu::toLower(opts.getValue("device-id"))};
-    if (!vertexLookup.count(deviceId)) {
-      LOG_ERROR << "Specified device-id ("
-                << deviceId << ") not found in datastore"
-                << std::endl;
-      std::exit(nmcu::Exit::FAILURE);
-    }
-
-    boost::dijkstra_shortest_paths
-      (graph, vertexLookup.at(deviceId),
-       weight_map(boost::get(&EdgeProperties::weight, graph)).
-       distance_map(boost::get(&VertexProperties::distance, graph)));
-
-    // Remove all the "wrong direction" and redundant edges.
-    boost::remove_edge_if(IsRedundantEdge(graph), graph);
-
-    buildVirtualizationGraph(db);
-    buildTracerouteGraph(db);
-
-    boost::write_graphviz
-      (std::cout, graph,
-       LabelWriter(graph),   // VertexPropertyWriter
-       LabelWriter(graph),   // EdgePropertyWriter
-       GraphWriter(),        // GraphPropertyWriter
-       boost::get(&VertexProperties::name, graph));  // VertexID
-
-    return nmcu::Exit::SUCCESS;
-    }
-
-  // ===========================================================================
+  // ==========================================================================
   // Helpers
-  // ===========================================================================
+  // ==========================================================================
   private:
     void
     buildLayer2Graph(pqxx::connection& db)
     {
-      pqxx::work t{db};
+      pqxx::work t {db};
 
       // Create a graph vertex (and label)
       // for each device.
@@ -421,8 +438,7 @@ class Tool : public nmdt::AbstractGraphTool
       createVertexForUnassociated(t, "mac_addr");
 
       // Create graph edges that connect two physical ports.
-      pqxx::result physConnRows =
-        t.exec_prepared("select_device_connections");
+      pqxx::result physConnRows {t.exec_prepared("select_device_connections")};
       for (const auto& physConnRow : physConnRows) {
         std::string selfDeviceName;
         physConnRow.at("self_device_id").to(selfDeviceName);
@@ -438,7 +454,7 @@ class Tool : public nmdt::AbstractGraphTool
     void
     buildLayer3Graph(pqxx::connection& db)
     {
-      pqxx::work t{db};
+      pqxx::work t {db};
 
       // Create a graph vertex (and label)
       // for each device.
@@ -447,8 +463,7 @@ class Tool : public nmdt::AbstractGraphTool
       createVertexForUnassociated(t, "ip_addr");
 
       // Create a graph vertex for each IP network.
-      pqxx::result ipNetRows =
-        t.exec_prepared("select_ip_nets_extra_weights");
+      pqxx::result ipNetRows {t.exec_prepared("select_ip_nets_extra_weights")};
       for (const auto& ipNetRow : ipNetRows) {
         std::string ipNet;
         ipNetRow.at("ip_net").to(ipNet);
@@ -456,17 +471,19 @@ class Tool : public nmdt::AbstractGraphTool
         ipNetRow.at("extra_weight").to(extraWeight);
 
         // Skip empty subnets if requested
-        pqxx::result netConnection =
-          t.exec_prepared("select_devices_in_network", ipNet);
+        pqxx::result netConnection {
+            t.exec_prepared("select_devices_in_network", ipNet)
+          };
         if (removeEmptySubnets && netConnection.size() <= 1) {
           continue;
         }
 
-        std::string label = (ipNet + "\\n");
+        std::string label {(ipNet + "\\n")};
 
         // Add any VLAN tag information
-        pqxx::result vlanRows =
-          t.exec_prepared("select_vlan_by_ip_net", ipNet);
+        pqxx::result vlanRows {
+            t.exec_prepared("select_vlan_by_ip_net", ipNet)
+          };
         if (vlanRows.size()) {
           label += "VLAN:";
           for (const auto& vlanRow : vlanRows) {
@@ -478,8 +495,9 @@ class Tool : public nmdt::AbstractGraphTool
         }
 
         // Add any IP net description
-        pqxx::result descRows =
-          t.exec_prepared("select_network_descriptions", ipNet);
+        pqxx::result descRows {
+            t.exec_prepared("select_network_descriptions", ipNet)
+          };
         for (const auto& descRow : descRows) {
           std::string description;
           descRow.at("description").to(description);
@@ -490,21 +508,21 @@ class Tool : public nmdt::AbstractGraphTool
 
         // Create graph edges that connect the IP network to the devices and IP
         // addresses in that network.
-        pqxx::result ipAddrRows =
-          t.exec_prepared("select_ip_addrs_and_devices_in_network", ipNet);
+        pqxx::result ipAddrRows {
+            t.exec_prepared("select_ip_addrs_and_devices_in_network", ipNet)
+          };
         for (const auto& ipAddrRow : ipAddrRows) {
           std::string ipAddr;
           ipAddrRow.at("ip_addr").to(ipAddr);
           std::string deviceName;
           ipAddrRow.at("device_id").to(deviceName);
 
-          std::string const vertexName = deviceName.size()
-                                       ? (deviceName)
-                                       : (ipAddr);
+          std::string const vertexName {
+              deviceName.size() ? (deviceName) : (ipAddr)
+            };
 
           addBidirectionalEdge(ipNet, vertexName);
         }
-
       }
 
       t.commit();
@@ -514,18 +532,17 @@ class Tool : public nmdt::AbstractGraphTool
     void
     buildVirtualizationGraph(pqxx::connection& db)
     {
-      pqxx::work t{db};
+      pqxx::work t {db};
 
-      pqxx::result vmRows =
-        t.exec_prepared("select_device_virtualizations");
+      pqxx::result vmRows {t.exec_prepared("select_device_virtualizations")};
       for (const auto& vmRow : vmRows) {
         std::string hostDeviceName;
         vmRow.at("host_device_id").to(hostDeviceName);
         std::string guestDeviceName;
         vmRow.at("guest_device_id").to(guestDeviceName);
 
-        Vertex const u = vertexLookup.at(guestDeviceName);
-        Vertex const v = vertexLookup.at(hostDeviceName);
+        Vertex const u {vertexLookup.at(guestDeviceName)};
+        Vertex const v {vertexLookup.at(hostDeviceName)};
 
         Edge e;
         bool inserted;
@@ -546,10 +563,9 @@ class Tool : public nmdt::AbstractGraphTool
         return;
       }
 
-      pqxx::work t{db};
+      pqxx::work t {db};
 
-      pqxx::result tracerouteRows =
-        t.exec_prepared("select_traceroutes");
+      pqxx::result tracerouteRows {t.exec_prepared("select_traceroutes")};
       for (const auto& tracerouteRow : tracerouteRows) {
         std::string origin;
         tracerouteRow.at("next_hop_ip_addr").to(origin);
@@ -558,8 +574,8 @@ class Tool : public nmdt::AbstractGraphTool
         std::string hopNumber;
         tracerouteRow.at("hop_count").to(hopNumber);
 
-        Vertex const u = vertexLookup.at(origin);
-        Vertex const v = vertexLookup.at(destination);
+        Vertex const u {vertexLookup.at(origin)};
+        Vertex const v {vertexLookup.at(destination)};
 
         Edge e;
         bool inserted;
@@ -581,8 +597,7 @@ class Tool : public nmdt::AbstractGraphTool
     void
     createVertexForAssociated(pqxx::transaction_base& t)
     {
-      pqxx::result deviceRows =
-        t.exec_prepared("select_devices");
+      pqxx::result deviceRows {t.exec_prepared("select_devices")};
       for (const auto& deviceRow : deviceRows) {
         std::string deviceName;
         deviceRow.at("device_id").to(deviceName);
@@ -595,7 +610,7 @@ class Tool : public nmdt::AbstractGraphTool
         std::string model;
         deviceRow.at("model").to(model);
 
-        std::string label = initVertexLabel(deviceType, deviceName);
+        std::string label {initVertexLabel(deviceType, deviceName)};
 
         label += ((!vendor.empty())
                    ? "(" + vendor + ":" + model + ":" + deviceType + ")<br/>"
@@ -603,8 +618,9 @@ class Tool : public nmdt::AbstractGraphTool
                  "<br/>";
 
         // Add interface(s)
-        pqxx::result ifaceRows =
-          t.exec_prepared("select_device_ifaces", deviceName);
+        pqxx::result ifaceRows {
+            t.exec_prepared("select_device_ifaces", deviceName)
+          };
         for (const auto& ifaceRow : ifaceRows) {
           std::string ipAddr;
           ifaceRow.at("ip_addr").to(ipAddr);
@@ -628,14 +644,16 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    createVertexForUnassociated(pqxx::transaction_base& t, const std::string& type)
+    createVertexForUnassociated(pqxx::transaction_base& t,
+                                const std::string& type)
     {
       if (hideUnknown) { // short-circuit if we do not want unknowns
         return;
       }
 
-      pqxx::result addrRows =
-        t.exec_prepared("select_" + type + "s_without_devices");
+      pqxx::result addrRows {
+          t.exec_prepared("select_" + type + "s_without_devices")
+        };
       for (const auto& addrRow : addrRows) {
         std::string ipAddr;
         addrRow.at("ip_addr").to(ipAddr);
@@ -643,9 +661,9 @@ class Tool : public nmdt::AbstractGraphTool
         addrRow.at("mac_addr").to(macAddr);
         std::string vendor;
         addrRow.at("vendor_name").to(vendor);
-        std::string addr = ("ip_addr" == type ? ipAddr : macAddr);
+        std::string addr {("ip_addr" == type ? ipAddr : macAddr)};
 
-        std::string label = initVertexLabel("unknown", "Unknown Device");
+        std::string label {initVertexLabel("unknown", "Unknown Device")};
 
         label += "<br/>";
 
@@ -669,10 +687,9 @@ class Tool : public nmdt::AbstractGraphTool
     std::string
     initVertexLabel(const std::string& typeName, const std::string& name)
     {
-      std::string label = "\" + <<TABLE border=\"0\" cellborder=\"0\"><TR>";
+      std::string label {"\" + <<TABLE border=\"0\" cellborder=\"0\"><TR>"};
 
       label += getUseIconString(typeName);
-
       label += "<td><font point-size=\"10\">" + name + "<br/>";
 
       return label;
@@ -685,9 +702,10 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addNodeVertex(std::string name, const std::string& label, std::string fillcolor="")
+    addNodeVertex(std::string name, const std::string& label,
+                  std::string fillcolor="")
     {
-      Vertex v = boost::add_vertex(graph);
+      Vertex v {boost::add_vertex(graph)};
       vertexLookup[name] = v;
 
       graph[v].name  = name;
@@ -701,9 +719,10 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addNetVertex(std::string name, const std::string& label, double extraWeight=0.0)
+    addNetVertex(std::string name, const std::string& label,
+                 double extraWeight=0.0)
     {
-      Vertex v = boost::add_vertex(graph);
+      Vertex v {boost::add_vertex(graph)};
       vertexLookup[name] = v;
 
       graph[v].name  = name;
@@ -716,11 +735,12 @@ class Tool : public nmdt::AbstractGraphTool
     std::string
     getHostnames(pqxx::transaction_base& t, std::string ipAddr)
     {
-      std::string label{""};
+      std::string label {""};
 
       if (!ipAddr.empty()) {
-        pqxx::result hostnameRows =
-          t.exec_prepared("select_hostnames_by_ip_addr", ipAddr);
+        pqxx::result hostnameRows {
+            t.exec_prepared("select_hostnames_by_ip_addr", ipAddr)
+          };
         for (const auto& hostnameRow : hostnameRows) {
           std::string hostname;
           hostnameRow.at("hostname").to(hostname);
@@ -738,13 +758,11 @@ class Tool : public nmdt::AbstractGraphTool
         return "";
       }
 
-      auto& nmfm {nmcu::FileManager::getInstance()};
-      sfs::path imagePath {nmfm.getConfPath()/"images"};
-
+      sfs::path imagePath  {opts.getValue("icons-folder")};
       std::string iconPath {imagePath.string() + "/unknown.svg"};
       std::string label {
-        "<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
-      };
+          "<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
+        };
 
       if (!deviceType.empty()) {
         for (auto& pathIter : sfs::recursive_directory_iterator(imagePath)) {
@@ -765,7 +783,7 @@ class Tool : public nmdt::AbstractGraphTool
 
       return label;
     }
-
+    
     void
     addBidirectionalEdge(std::string orig, std::string dest)
     {
@@ -777,8 +795,8 @@ class Tool : public nmdt::AbstractGraphTool
         return;
       }
 
-      Vertex const u = vertexLookup.at(orig);
-      Vertex const v = vertexLookup.at(dest);
+      Vertex const u {vertexLookup.at(orig)};
+      Vertex const v {vertexLookup.at(dest)};
 
       // Add the edge in both "directions", "wrong direction" corrected later
       if (!(get<1>(boost::edge(u, v, graph)) &&
