@@ -20,12 +20,14 @@ alias such as hostname or DNS name.
 The *subnet* vertex will contain information (if it exists) such as:
 subnet, CIDR, VLAN ID, and network description.
 
-
 A solid edge between two vertices represents they are connected and can
 potentially communicate with each other (things like ACL rules are not
 considered here).
 A dashed edge represents one *device* is virtual and contained on another
 *device*, with the host being the vertex pointed to by the arrow.
+When the `--show-traceroute-hops` option is enabled, a dashed edge with a
+label `hop` will be applied to known routing paths as collected from
+traceroute activities.
 
 
 ICONS
@@ -34,11 +36,14 @@ ICONS
 Device icons are not enabled by default and can be enabled using the `--icons`
 flag.
 
-Icons should be placed in the `nmdb-graph-network/images` folder, which is copied
-during build installation to the `NETMELD_IMAGE_DIR` directory specified in
-CMakeLists.txt. At runtime, the tool will search this folder for an icon
-corresponding to the `device-type` and place it in the graph. For example, a
-`device-type` of cisco will look for `images/cisco.*`.
+During build, icons should be placed in the `nmdb-graph-network/images` folder,
+which is copied during build installation to the `NETMELD_IMAGE_DIR` directory
+specified in CMakeLists.txt.
+At run-time, the tool will recursively search the folder specified by the
+`icons-folder` option for a graphic file corresponding to the `device-type` and
+place the path in the graph.  For example, a `device-type` of Cisco will look
+for `images/cisco.*`.  If a match cannot be found, the default, a question
+mark, is used.
 
 
 EXAMPLES
@@ -63,7 +68,7 @@ nmdb-graph-network --layer 3 --device-id core | dot -Tpng -o layer3.png
 ```
 
 Some versions of Graphviz have issues loading the plugin for SVG conversion.
-If using SVG icons, Inkscape can be used to output the graph in pdf or other
+If using SVG icons, Inkscape can be used to output the graph in PDF or other
 formats as such:
 
 ```
