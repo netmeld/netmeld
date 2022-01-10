@@ -46,7 +46,6 @@
 namespace nmco = netmeld::core::objects;
 namespace nmcu = netmeld::core::utils;
 namespace nmdt = netmeld::datastore::tools;
-namespace nmdu = netmeld::datastore::utils;
 namespace nmpb = netmeld::playbook;
 namespace nmpbu = netmeld::playbook::utils;
 
@@ -157,7 +156,7 @@ struct PhaseConfig
     if (execute) {
       if (!sfs::create_directories(savePath)) {
         LOG_ERROR << "Could not create save path: " << savePath
-                  << "\nTerminating playsbook."
+                  << "\nTerminating playbook."
                   << std::endl;
         std::exit(nmcu::Exit::FAILURE);
       }
