@@ -67,11 +67,11 @@ namespace netmeld::playbook::utils {
   {
     std::ifstream file {queryFilePath.string()};
     if (!file.good()) {
-      LOG_WARN << "Playbook queries file path ("
-               << queryFilePath
-               << ") does not exist or is inaccessible.\n"
-               << std::endl;
-               ;
+      LOG_DEBUG << "Playbook queries file path ("
+                << queryFilePath
+                << ") does not exist or is inaccessible.\n"
+                << std::endl;
+                ;
     }
     return queryFilePath;
   }
