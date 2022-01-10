@@ -84,18 +84,18 @@ using Playbook            = std::map<size_t, PlaybookStageConfig>;
 
 struct PhaseConfig
 {
-  std::string pbSourceId              {""};
-  std::string target                  {""};
+  std::string pbSourceId        {""};
+  std::string target            {""};
 
-  std::string srcIpAddr               {""};
-  std::string linkName                {""};
-  std::string ipNet                   {""};
-  std::string ipNetBcast              {""};
-  std::string savePath                {""};
-  std::string rtrIpAddr               {""};
-  std::string family                  {""};
-  std::string sessionId               {""};
-  std::string dbConnectString         {""};
+  std::string srcIpAddr         {""};
+  std::string linkName          {""};
+  std::string ipNet             {""};
+  std::string ipNetBcast        {""};
+  std::string savePath          {""};
+  std::string rtrIpAddr         {""};
+  std::string family            {""};
+  std::string sessionId         {""};
+  std::string dbConnectString   {""};
 
   std::string
   toDebugString() const
@@ -137,6 +137,7 @@ struct PhaseConfig
       {std::regex(R"(\{\{family\}\})"), family},
       {std::regex(R"(\{\{sessionId\}\})"), sessionId},
       {std::regex(R"(\{\{dbConnectString\}\})"), dbConnectString},
+      //{std::regex(R"(\{\{\}\})"), },
     };
 
     // Replace keywords with values
@@ -164,7 +165,7 @@ struct PhaseConfig
   }
 
   void
-  removeWriteSavePath()
+  removeWriteSavePath() const
   {
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     nmfm.removeWrite(savePath, true);
@@ -344,115 +345,23 @@ class Tool : public nmdt::AbstractDatastoreTool
       const sfs::path playsPath {opts.getValue("plays-file")};
       playsFile = sfs::canonical(playsPath).string();
 
-      Playbook playbook;
-
+      queriesPb.init(opts.getValue("queries-file"));
       dbConnectString = std::string("dbname=")
                       + getDbName()
                       + " "
                       + opts.getValue("db-args")
                       ;
 
-      pqxx::connection db {dbConnectString};
-      queriesPb.init(opts.getValue("queries-file"));
-      queriesPb.dbPrepare(db);
-
-      if (true) {
-        std::string query;
-        switch (playbookScope) {
-          case PlaybookScope::INTRA_NETWORK:
-          {
-            query = "select_playbook_intra_network";
-            break;
-          }
-          case PlaybookScope::INTER_NETWORK:
-          {
-            query = "select_playbook_inter_network";
-            break;
-          }
-          case PlaybookScope::UNKNOWN:  // intentional fallthrough
-          default:
-          {
-            break;
-          }
-        }
-
-        pqxx::read_transaction t {db};
-        pqxx::result playbookIpSourceRows {t.exec_prepared(query)};
-        for (const auto& playbookIpSourceRow : playbookIpSourceRows) {
-          size_t playbookStage;
-          playbookIpSourceRow.at("playbook_stage").to(playbookStage);
-          std::string interfaceName;
-          playbookIpSourceRow.at("interface_name").to(interfaceName);
-          uint16_t vlan;
-          playbookIpSourceRow.at("vlan").to(vlan, static_cast<uint16_t>(0));
-          std::string macAddr;
-          playbookIpSourceRow.at("mac_addr").to(macAddr);
-          std::string ipAddr;
-          playbookIpSourceRow.at("ip_addr").to(ipAddr);
-          std::string rtrIpAddr;
-          playbookIpSourceRow.at("next_hop_ip_addr").to(rtrIpAddr);
-
-          nmco::Uuid playbookSourceId;
-          playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);
-          std::string description;
-          playbookIpSourceRow.at("description").to(description);
-          int addrFamily;
-          playbookIpSourceRow.at("addr_family").to(addrFamily);
-
-          // Create the source location for testing.
-          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-            .playbookSourceId = playbookSourceId;
-          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-            .description = description;
-          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-            .addrFamily = addrFamily;
-
-          if (opts.exists("inter-network") && !rtrIpAddr.empty()) {
-            // Add any routers for inter-network tests from this location.
-            playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
-              .ipRouters.insert(rtrIpAddr);
-          }
-        }
-      }
-
+      Playbook playbook {getPlaybookData(playbookScope)};
 
       for (const auto& [playbookStage, stageConfigs] : playbook) {
-        if (!enabledStages.empty() && !enabledStages.count(playbookStage)) {
+        if (   !enabledStages.empty()
+            && (enabledStages.count(playbookStage) == 0))
+        {
           continue;
         }
 
-        if (true) {
-          std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-          LOG_INFO << "#### Playbook: Stage " << playbookStage << " ####\n";
-        }
-
-        for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
-          LOG_INFO << "# Disconnect target(s), if necessary, and connect "
-                   << ifaceName << ".\n"
-                   << "# This interface will cycle through settings:\n"
-                   ;
-
-          for (const auto& [vlan, vlanConfigs] : ifaceConfigs) {
-            for (const auto& [macAddr, ipConfigs] : vlanConfigs) {
-              for (const auto& [ipAddr, srcConfig] : ipConfigs) {
-                const auto& description {srcConfig.description};
-                LOG_INFO << "#\tVLAN: " << vlan
-                         << ", MAC: " << macAddr
-                         << ", IP: " << ipAddr
-                         << ", Desc: " << description
-                         << '\n';
-                if (srcConfig.ipRouters.size()) {
-                  LOG_INFO << "#\t\tRouters:";
-                  for (const auto& rtrIpAddr : srcConfig.ipRouters) {
-                    LOG_INFO << " " << rtrIpAddr;
-                  }
-                  LOG_INFO << '\n';
-                }
-              }
-            }
-          }
-          LOG_INFO << std::endl;
-        }
+        printStageConfigs(playbookStage, stageConfigs);
 
         if (execute) {
           std::string userInput;
@@ -523,7 +432,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
         physIfaceThreads.clear();
 
-        if (true) {
+        {
           std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
           LOG_INFO << std::endl;
         }
@@ -575,6 +484,110 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
     }
 
+    Playbook
+    getPlaybookData(const PlaybookScope& playbookScope)
+    {
+      Playbook playbook;
+
+      pqxx::connection db {dbConnectString};
+      queriesPb.dbPrepare(db);
+
+      std::string query;
+      switch (playbookScope) {
+        case PlaybookScope::INTRA_NETWORK:
+        {
+          query = "select_playbook_intra_network";
+          break;
+        }
+        case PlaybookScope::INTER_NETWORK:
+        {
+          query = "select_playbook_inter_network";
+          break;
+        }
+        case PlaybookScope::UNKNOWN:  // intentional fallthrough
+        default:
+        {
+          break;
+        }
+      }
+
+      pqxx::read_transaction t {db};
+      pqxx::result playbookIpSourceRows {t.exec_prepared(query)};
+      for (const auto& playbookIpSourceRow : playbookIpSourceRows) {
+        size_t playbookStage;
+        playbookIpSourceRow.at("playbook_stage").to(playbookStage);
+        std::string interfaceName;
+        playbookIpSourceRow.at("interface_name").to(interfaceName);
+        uint16_t vlan;
+        playbookIpSourceRow.at("vlan").to(vlan, static_cast<uint16_t>(0));
+        std::string macAddr;
+        playbookIpSourceRow.at("mac_addr").to(macAddr);
+        std::string ipAddr;
+        playbookIpSourceRow.at("ip_addr").to(ipAddr);
+        std::string rtrIpAddr;
+        playbookIpSourceRow.at("next_hop_ip_addr").to(rtrIpAddr);
+
+        nmco::Uuid playbookSourceId;
+        playbookIpSourceRow.at("playbook_source_id").to(playbookSourceId);
+        std::string description;
+        playbookIpSourceRow.at("description").to(description);
+        int addrFamily;
+        playbookIpSourceRow.at("addr_family").to(addrFamily);
+
+        // Create the source location for testing.
+        playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+          .playbookSourceId = playbookSourceId;
+        playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+          .description = description;
+        playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+          .addrFamily = addrFamily;
+
+        if (opts.exists("inter-network") && !rtrIpAddr.empty()) {
+          // Add any routers for inter-network tests from this location.
+          playbook[playbookStage][interfaceName][vlan][macAddr][ipAddr]
+            .ipRouters.insert(rtrIpAddr);
+        }
+      }
+
+      return playbook;
+    }
+
+    void
+    printStageConfigs(const size_t stage,
+                      const PlaybookStageConfig& stageConfigs)
+    {
+      std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
+      LOG_INFO << "#### Playbook: Stage " << stage << " ####\n";
+
+      for (const auto& [ifaceName, ifaceConfigs] : stageConfigs) {
+        LOG_INFO << "# Disconnect target(s), if necessary, and connect "
+                 << ifaceName << ".\n"
+                 << "# This interface will cycle through settings:\n"
+                 ;
+
+        for (const auto& [vlan, vlanConfigs] : ifaceConfigs) {
+          for (const auto& [macAddr, ipConfigs] : vlanConfigs) {
+            for (const auto& [ipAddr, srcConfig] : ipConfigs) {
+              const auto& description {srcConfig.description};
+              LOG_INFO << "#\tVLAN: " << vlan
+                       << ", MAC: " << macAddr
+                       << ", IP: " << ipAddr
+                       << ", Desc: " << description
+                       << '\n';
+              if (!srcConfig.ipRouters.empty()) {
+                LOG_INFO << "#\t\tRouters:";
+                for (const auto& rtrIpAddr : srcConfig.ipRouters) {
+                  LOG_INFO << " " << rtrIpAddr;
+                }
+                LOG_INFO << '\n';
+              }
+            }
+          }
+        }
+        LOG_INFO << std::endl;
+      }
+    }
+
     // HELPERS
     bool
     ifaceIsDown(std::string const& ifaceName)
@@ -602,16 +615,16 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     bool
-    ifaceHasAddress(std::string const& ifaceName)
+    ifaceHasAddress(const std::string& ifaceName)
     {
       bool hasAddr {false};
       struct ifaddrs* ifAddrStruct {NULL};
 
       getifaddrs(&ifAddrStruct);
 
-      for (auto ifa {ifAddrStruct}; ifa != NULL; ifa = ifa->ifa_next) {
+      for (auto* ifa {ifAddrStruct}; ifa != NULL; ifa = ifa->ifa_next) {
         // Skip invalid interfaces
-        if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
+        if (ifaceName != ifa->ifa_name || ifa->ifa_addr == nullptr) {
           continue;
         }
 
@@ -630,22 +643,23 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     bool
-    ifaceHasIp(const std::string& ifaceName, const std::string& ipAddr)
+    ifaceHasIp(const PhaseConfig& phaseConf)
     {
       bool hasIp {false};
       struct ifaddrs* ifAddrStruct {NULL};
 
       getifaddrs(&ifAddrStruct);
 
-      auto ip  {ipAddr};
+      auto ip  {phaseConf.srcIpAddr};
       auto pos {ip.find_first_of('/')};
       if (pos != std::string::npos) {
         ip = ip.substr(0, pos);
       }
 
+      const auto& ifaceName {phaseConf.linkName};
       for (auto ifa {ifAddrStruct}; ifa != NULL; ifa = ifa->ifa_next) {
         // Skip invalid interfaces
-        if (ifaceName.compare(ifa->ifa_name) != 0 || !ifa->ifa_addr) {
+        if (ifaceName != ifa->ifa_name || ifa->ifa_addr == nullptr) {
           continue;
         }
 
@@ -663,7 +677,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             };
           inet_ntop(addrFamily, addrPtr, address, INET6_ADDRSTRLEN);
         }
-        if (ip.compare(std::string(address)) == 0) {
+        if (ip == std::string(address)) {
           hasIp = true;
         }
       }
@@ -840,16 +854,14 @@ class Tool : public nmdt::AbstractDatastoreTool
           pc.srcIpAddr        = srcIpAddr;
           pc.dbConnectString  = dbConnectString;
 
-          if (true) {
-            pqxx::read_transaction t {db};
-            pqxx::result rows {
-                t.exec_prepared("select_network_and_broadcast", pc.srcIpAddr)
-              };
+          pqxx::read_transaction t {db};
+          pqxx::result rows {
+              t.exec_prepared("select_network_and_broadcast", pc.srcIpAddr)
+            };
 
-            for (const auto& row : rows) {
-              row.at("ip_net").to(pc.ipNet);
-              row.at("ip_net_bcast").to(pc.ipNetBcast);
-            }
+          for (const auto& row : rows) {
+            row.at("ip_net").to(pc.ipNet);
+            row.at("ip_net_bcast").to(pc.ipNetBcast);
           }
 
           switch (playbookScope) {
@@ -935,7 +947,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     void
-    phaseActions(pqxx::connection& db, const PhaseConfig phaseConf)
+    phaseActions(pqxx::connection& db, const PhaseConfig& phaseConf)
     {
       YAML::Node yConfig {YAML::LoadFile(playsFile)};
 
@@ -1026,7 +1038,6 @@ class Tool : public nmdt::AbstractDatastoreTool
         LOG_INFO << "\n## " << cmdSetName
                  << std::endl;
 
-        std::vector<std::tuple<std::string, std::string>> cmds;
         for (const auto& [_, cmd] : commands) {
           bool execSuccess {cmdRunner.systemExec(cmd)};
           const auto& disableType {getDisableType(yFailMap)};
@@ -1042,16 +1053,11 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
       else
       { // Add commands to phase in parallel
-        std::vector<std::tuple<std::string, std::string>> cmds;
-        for (const auto& cmd : commands) {
-          cmds.emplace_back(cmd);
-        }
-
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
         LOG_DEBUG << "# Ran in parallel";
         LOG_INFO << "\n## " << cmdSetName
                  << std::endl;
-        cmdRunner.threadExec(cmds);
+        cmdRunner.threadExec(commands);
       }
 
       return stageEnabled;
@@ -1092,10 +1098,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         );
       }
 
-      if (   !ifaceHasAddress(phaseConf.linkName)
-          || !ifaceHasIp(phaseConf.linkName, phaseConf.srcIpAddr)
-         )
-      {
+      if (!ifaceHasIp(phaseConf)) {
         isError = true;
         LOG_ERROR << "Interface has no/incorrect IP address" << std::endl;
         t.exec_prepared(
