@@ -16,6 +16,7 @@ runtime-options:
 #     phase:
 #     - # Command set; multiple per phase; serial
 #       name: # Command set title
+#       no-prompt: skip # Skip when `no-prompt` option set for tool
 #       on-fail: # Signals failure will terminate further processing
 #         disable: stage|phase # What to disable
 #         msg: # The error message to emit
@@ -55,13 +56,13 @@ templates:
       msg: Could not ARP/NDP router.
            Skipping tests through router {{rtrIpAddr}}.
     ipv4:
-    - title:
+    - title: nmap IPv4 router reachablility
       cmd: clw nmap
       opts: &opts-nmap-router-reachability
       - -n -sn -e {{linkName}} {{rtrIpAddr}}
       - 2>&1 | grep 'Host is up'
     ipv6:
-    - title:
+    - title: nmap IPv6 router reachability
       cmd: clw nmap -6
       opts: *opts-nmap-router-reachability
 
@@ -71,7 +72,7 @@ templates:
       disable: phase
       msg: Could not generate responding hosts file(s).
     always:
-    - title: psql cmd
+    - title: psql generate intra-network responding hosts
       cmd: psql
       opts:
       - &psql-common
@@ -97,7 +98,7 @@ templates:
       disable: phase
       msg: Could not generate responding hosts file(s).
     always:
-    - title: psql cmd
+    - title: psql generate inter-network responding hosts
       cmd: psql
       opts:
       - *psql-common
@@ -125,7 +126,7 @@ templates:
       disable: stage
       msg: Could not generate ROE exclude file(s).
     always:
-    - title: psql cmd
+    - title: psql generate ROE excludes
       cmd: psql
       opts:
       - *psql-common
@@ -144,7 +145,7 @@ templates:
       disable: stage
       msg: Could not generate ROE include file(s).
     always:
-    - title: psql cmd
+    - title: psql generate ROE includes
       cmd: psql
       opts:
       - *psql-common
@@ -164,7 +165,7 @@ templates:
       disable: phase
       msg: Could not generate DNS server file(s).
     always:
-    - title: psql cmd
+    - title: psql generate potential discovered DNS server list
       cmd: psql
       opts:
       - -R,
