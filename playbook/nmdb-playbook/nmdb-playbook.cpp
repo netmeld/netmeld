@@ -340,9 +340,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       noPrompt = opts.exists("no-prompt");
 
       // Create directory for meta-data about and results from this tool run
-      const sfs::path saveDir {opts.getValue("save-path")};
-      // TODO can this be changed/fixed
-      pbRootSavePath = saveDir.string();
+      pbRootSavePath = opts.getValue("save-path");
 
       const sfs::path playsPath {opts.getValue("plays-file")};
       playsFile = sfs::canonical(playsPath).string();
@@ -908,14 +906,12 @@ class Tool : public nmdt::AbstractDatastoreTool
     void
     networkActions(pqxx::connection& db, PhaseConfig& phaseConf)
     {
-      // TODO clean up
-      nmco::Uuid const sessionId;
-      phaseConf.sessionId = sessionId.toString();
+      phaseConf.sessionId = nmco::Uuid().toString();
 
       std::ostringstream oss;
       oss << pbRootSavePath
           << "/" << nmco::Time().toIsoString()
-          << "_" << sessionId
+          << "_" << phaseConf.sessionId
           ;
 
       phaseConf.updateSavePath(oss.str(), execute);
@@ -1018,7 +1014,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       bool stageEnabled       {true};
       const auto& cmdSetName  {yCmdSet["name"].as<std::string>()}; 
       const auto& yFailMap    {yCmdSet["on-fail"]};
-      const auto& yNoPrompt   {yCmdSet["no-prompt"]};
 
       if (noPrompt && yIs(yCmdSet, "no-prompt", std::string("skip"))) {
         LOG_DEBUG << "Disabling phase execution as `--no-prompt` set\n";
@@ -1028,7 +1023,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       if (yFailMap.IsDefined())
       { // Add commands to phase in serial
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_DEBUG << "# Ran serially";
+        LOG_DEBUG << "# Ran in serial";
         LOG_INFO << "\n## " << cmdSetName
                  << std::endl;
 
@@ -1054,7 +1049,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         std::lock_guard<std::mutex> coutLock {nmpb::coutMutex};
-        LOG_DEBUG << "# Ran parallel";
+        LOG_DEBUG << "# Ran in parallel";
         LOG_INFO << "\n## " << cmdSetName
                  << std::endl;
         cmdRunner.threadExec(cmds);
