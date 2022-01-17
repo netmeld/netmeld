@@ -24,11 +24,6 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-/* TODO
-  - 2x check docs
-  - regen images
-*/
-
 #include <regex>
 #include <yaml-cpp/yaml.h>
 
