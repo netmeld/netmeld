@@ -24,6 +24,11 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+/* TODO
+  - 2x check docs
+  - regen images
+*/
+
 #include <regex>
 #include <yaml-cpp/yaml.h>
 
@@ -792,11 +797,9 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
         vlanThreads.clear();
 
-        // Closing this block scope brings down the physical interface.
-      }
+      } // Closing this block scope brings down the physical interface.
 
       // Perform any direct testing with the physical interface (non-VLAN).
-
       for (const auto& [vlanId, vlanConfigs] : ifaceConfigs) {
         if (nmpb::VlanId::NONE != vlanId) {
           continue;

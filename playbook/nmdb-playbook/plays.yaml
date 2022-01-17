@@ -29,8 +29,8 @@ runtime-options:
 
 templates:
 - filePaths:
-  - &path-roe-exclude-ips "{{savePath}}/ROE-Exclude-IPs"
-  - &path-roe-include-ips "{{savePath}}/ROE-Include-IPs"
+  - &path-roe-exclude-ips "{{savePath}}/RoE-Exclude-IPs"
+  - &path-roe-include-ips "{{savePath}}/RoE-Include-IPs"
   - &path-responding-host-ips "{{savePath}}/Responding-Host-IPs"
   - &path-possible-dns-servers "{{savePath}}/Possible-DNS-Servers"
 
@@ -114,19 +114,19 @@ templates:
           AND (roe.in_scope)
           AND (tr.tool_name = 'nmap')
           AND (tr.command_line LIKE
-               '%nmap %ROE-%-IPv{{family}}-{{sessionId}} %')
+               '%nmap %{{savePath}}%RoE-%-IPs %')
         ORDER BY ia.ip_addr
       - '"'
       - ">>"
       - *path-responding-host-ips
 
   - &generate-roe-exclude
-    name: Target Files (ROE excluded)
+    name: Target Files (RoE excluded)
     on-fail:
       disable: stage
-      msg: Could not generate ROE exclude file(s).
+      msg: Could not generate RoE exclude file(s).
     always:
-    - title: psql generate ROE excludes
+    - title: psql generate RoE excludes
       cmd: psql
       opts:
       - *psql-common
@@ -140,12 +140,12 @@ templates:
       - ">>"
       - *path-roe-exclude-ips
   - &generate-roe-include
-    name: Target Files (ROE included)
+    name: Target Files (RoE included)
     on-fail:
       disable: stage
-      msg: Could not generate ROE include file(s).
+      msg: Could not generate RoE include file(s).
     always:
-    - title: psql generate ROE includes
+    - title: psql generate RoE includes
       cmd: psql
       opts:
       - *psql-common
@@ -315,7 +315,7 @@ intra-network:
           - -T4 -n -e {{linkName}} -PR
           - -A --script
             '((default or discovery) and not (external or brute or dos))'
-          - -sS -p `nmdb-export-port-list --tcp-all`
+          - -sS -p `nmdb-export-port-list --from-db --tcp`
           - -iL
           - *path-responding-host-ips
           - --excludefile
@@ -325,6 +325,7 @@ intra-network:
             cmd: clw nmap -6
             opts: *opts-nmap-ipv4-tcp-service-scan
     - phase:
+      - *generate-dns-servers
       - name: Learned DNS Lookup With Nmap
         ipv4:
         - title: nmap IPv4 DNS lookup, via open port 53
@@ -485,6 +486,7 @@ inter-network:
           cmd: clw nmap -6
           opts: *inter-opts-nmap-ipv4-udp-port-scan
     - phase:
+      - *generate-dns-servers
       - name: Learned DNS Lookup With Nmap
         ipv4:
         - title: nmap IPv4 DNS lookup, via open port 53

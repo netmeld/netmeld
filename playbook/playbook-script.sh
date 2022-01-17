@@ -42,7 +42,7 @@ psql "${PSQL_ARGS}" -c "delete from playbook_ip_routers";
 
 
 ###
-# ROE
+# RoE
 ###
 roeOutScope="\
   10.0.0.0/8 \

@@ -61,13 +61,14 @@ For example:
 PHASES
 ------
 
-A phase is a logical grouping of commands which will execute in series or
-parallel within a stage.  Activities within a phase may feed data, via the data
-store, into other phases for that stage.  Phases are currently limited to being
-used for containing optional units of work within a stage.  As such, not all
-commands are located under a phase (e.g. interface set up and tear down).  The
-expectation is intensity, complexity, and *cost* of activities typically
-increase through phase progression.
+A phase is a logical grouping of commands which will execute within a stage.
+Activities within a phase may feed data into other phases for that stage and
+may execute in series or parallel (as decided by tooling logic).  Phases are
+currently limited to being used for containing optional units of work within a
+stage and, as such, not all commands executed by the tools are part of a
+numbered phase (e.g. interface set up and tear down).  The expectation is
+intensity, complexity, or cost of activities will typically increase through
+phase progression.
 
 
 COMMANDS
@@ -96,13 +97,13 @@ point.  The below discuses a topic which is not covered by a specific tool.
 
 DEFINE SCOPE (IN/OUT)
 ---------------------
-Abiding by what is in or out of scope, the Rules of Engagement (ROE), is very
+Abiding by what is in or out of scope, the Rules of Engagement (RoE), is very
 important during an assessment.  Thus, the Playbook tools will honor the scope
 defined in the data store.
 
-Currently, the `psql` tool is utilized to manipulate the ROE within the data
+Currently, the `psql` tool is utilized to manipulate the RoE within the data
 store.  For example:
-* Assume that the ROE authorizes the assessment team to target the IP address
+* Assume that the RoE authorizes the assessment team to target the IP address
   space 10.1.1.0/24 and 192.168.0.0/16 at the customer site;
   however, the subnet 192.168.2.0/24 is off-limits for any number of reasons.
 ```
