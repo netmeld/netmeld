@@ -52,7 +52,8 @@ WriterContext::addContextSetup() const
       << "  \\define\\DefaultFontSize{10pt}\n"
       << "}\n"
       << "\\doifundefined{PortionMark}{\n"
-      << "  \\define[2]\\PortionMark{(#1 - #2)}\n"
+      << "  %\\define[2]\\PortionMark{(#1 - #2)}\n"
+      << "  \\define[2]\\PortionMark{}\n"
       << "}\n"
       << "\\usetypescript[\\DefaultFontName]\n"
       << "\\setupbodyfont[\\DefaultFontName, \\DefaultFontSize]\n"
@@ -288,7 +289,7 @@ WriterContext::writeInterNetwork(const std::string& srcIp) const
         << "\\stopxcell\n";
 
     ipName = "{} {}";
-    if (lastIpName != std::string(row[2] + row[3])) {
+    if ("" != rowFrame || lastIpName != std::string(row[2] + row[3])) {
       ipName   = "\\type{" + row[2] + "} \\type{(" + row[3] + ")}";
     }
 
@@ -330,7 +331,7 @@ WriterContext::writeNessus() const
   for (const auto& row : rows) {
     // reference and title
     oss << "\\section[section:nessus-plugin-" << row[0] << "]\n"
-        << "{\\PortionMark{}{}\n"
+        << "{\\PortionMark{TODO--Caption Classification}{}\n"
         << " Plugin: " << row[0] << ";"
           << " Severity: " << row[1] << ";"
           << " " << row[2] << "\n"
@@ -345,12 +346,12 @@ WriterContext::writeNessus() const
     std::regex gt {"&gt;"};
     desc = std::regex_replace(desc, gt, ">");
     std::regex dnl {"\n\n"};
-    desc = std::regex_replace(desc, dnl, "\n\n\\PortionMark{}{}\n");
-    oss << "\\PortionMark{}{}\n"
+    desc = std::regex_replace(desc, dnl, "\n\n\\PortionMark{TODO--Caption Classification}{}\n");
+    oss << "\\PortionMark{TODO--Caption Classification}{}\n"
         << desc << "\n\n";
 
     // affected systems
-    oss << "\\PortionMark{}{}\n"
+    oss << "\\PortionMark{TODO--Caption Classification}{}\n"
         << "{\\bf Affected systems}: ";
 
     std::vector<std::string> rest(row.begin()+4, row.end());
@@ -388,7 +389,7 @@ WriterContext::writeSshAlgorithms() const
   // add table
   oss << "\\placetable[here,split][table:observed-ssh-algorithms]\n"
       << "{\n"
-      << "\\PortionMark{U}{}\n"
+      << "\\PortionMark{TODO--Caption Classification}{}\n"
       << "Supported SSH algorithms observed by the assessment team.\n"
       << "\\startmode[TabFigClassStmt]\n"
       << "Table is TODO--Overall Table Classification\n"
@@ -450,9 +451,11 @@ WriterContext::writeSshAlgorithms() const
 
     std::string rowFrame {""};
     std::string ipName   {"{} {}"};
+    bool newRow {false};
     if (lastServer != std::string(row[0] + row[1])) {
-      rowFrame = "[topframe=on]";
-      ipName   = "\\type{" + row[0] + "} \\type{(" + row[1] + ")}";
+      rowFrame  = "[topframe=on]";
+      ipName    = "\\type{" + row[0] + "} \\type{(" + row[1] + ")}";
+      newRow    = true;
     }
 
     oss << "\\startxrow" << rowFrame << "\n"
@@ -460,11 +463,12 @@ WriterContext::writeSshAlgorithms() const
         << ipName << "\n"
         << "\\stopxcell\n";
 
-    rowFrame = "[leftframe=on]";
-    ipName   = "{}";
-    if (lastAlgo != row[2]) {
-      rowFrame = "[topframe=on, leftframe=on]";
-      ipName   = "\\type{" + row[2] + "}";
+    rowFrame  = "[leftframe=on]";
+    ipName    = "{}";
+    if (newRow || lastAlgo != row[2]) {
+      rowFrame  = "[topframe=on, leftframe=on]";
+      ipName    = "\\type{" + row[2] + "}";
+      newRow    = true;
     }
 
     oss << "\\startxcell" << rowFrame << "\n"
@@ -472,7 +476,7 @@ WriterContext::writeSshAlgorithms() const
         << "\\stopxcell\n";
 
     rowFrame = "[leftframe=on, rightframe=on]";
-    if (lastAlgo != row[2]) {
+    if (newRow || lastAlgo != row[2]) {
       rowFrame = "[topframe=on, leftframe=on, rightframe=on]";
     }
 
