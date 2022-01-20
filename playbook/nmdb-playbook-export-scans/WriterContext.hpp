@@ -55,14 +55,13 @@ class WriterContext {
   // Methods
   // =========================================================================
   private: // Methods which should be hidden from API users
+    std::string addContextSetup() const;
+    std::string addContextTeardown() const;
 
   protected: // Methods part of subclass API
     std::string replaceAll(const std::string&, std::string, std::string) const;
 
   public: // Methods part of public API
-    std::string addContextSetup() const;
-    std::string addContextTeardown() const;
-
     void addRow(std::vector<std::string>);
 
     std::string writeIntraNetwork(const std::string&) const;
