@@ -2,10 +2,11 @@ DESCRIPTION
 ===========
 
 The `nmdb-playbook` tool is utilized to perform the actual playbook runs.
-It has several command line options and a configuration file which tune the
-behavior of this tool, however most have default values set.
-The configuration file explains the configuration file only options (see
-`--config-file` for default path).
+It has several command line options and leverages a YAML based plays file
+to control the phase and command execution portion.  While the plays file
+(see `--plays-file` for default path) controls many of the actual commands
+executed, the tool is responsible for the majority of the network
+interface control.
 
 In general, the playbook is broken into stages, phases, and commands as
 described in the Playbook module documentation.
@@ -30,18 +31,19 @@ INTERACTIVE OR NOT
 
 While the majority of the activities are automated, there are points during a
 stage where the user is required to provide some acknowledgment before the
-playbook will continue.  To date, this is to facilitate running manual,
-additional scans concurrently with the automated playbook activities.
+playbook will continue.  To date, this is for cycling stages (where a change
+to the physical wiring/connections may be needed) and to facilitate running
+manual, additional scans concurrently with the automated playbook activities.
 
-Specifically, the tool starts a window with a notice to
+Specifically for the latter, the tool starts a window with a notice to
 "Close this window when manual testing is complete."
 The tool will not deconfigure network interfaces until the playbook scans are
 complete and the window with the notice is closed.  To ignore this behavior,
 the `--no-prompt` option is provided.  It will automatically deconfigure
 network interfaces as soon as the relevant playbook scans are complete.
-However, if it is used in conjunction with the `--script` option, a script will
-be executed in lieu of the manual testing before the network interface is
-reconfigured.
+Alternatively the plays file can be updated to remove the manual plays,
+however the prompts for stage changing will persist if the `--no-prompt`
+option is not provided.
 
 
 EXAMPLES
@@ -94,10 +96,4 @@ which uses the `nmap` tool.
 nmdb-playbook --intra-network \
     --exclude-command $(nmdb-playbook --intra-network | grep nmap \
                         | cut -d ':' -f 1 | paste -sd ' ' -)
-```
-
-Execute a script instead of manual testing between stages of the playbook on
-the network.
-```
-nmdb-playbook --inter-network --no-prompt --script post-run-script
 ```
