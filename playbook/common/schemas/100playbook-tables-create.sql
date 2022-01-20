@@ -28,7 +28,7 @@ BEGIN TRANSACTION;
 
 -- ----------------------------------------------------------------------
 -- IP networks that are "in-scope" or "out-of-scope"
--- per the rules of engagement (ROE).
+-- per the rules of engagement (RoE).
 -- ----------------------------------------------------------------------
 
 CREATE TABLE playbook_roe_ip_nets (

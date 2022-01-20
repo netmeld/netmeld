@@ -35,7 +35,7 @@
 
 namespace po = boost::program_options;
 
-#define NULL_SEMANTIC (const po::value_semantic*)NULL
+#define NULL_SEMANTIC static_cast<const po::value_semantic*>(NULL)
 
 
 namespace netmeld::core::utils {
