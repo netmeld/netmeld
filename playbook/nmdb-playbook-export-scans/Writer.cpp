@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,46 +24,72 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef WRITER_CONTEXT_HPP
-#define WRITER_CONTEXT_HPP
+#include <regex>
+#include <ostream>
+#include <fstream>
+#include <sstream>
+
+#include <netmeld/core/utils/LoggerSingleton.hpp>
 
 #include "Writer.hpp"
 
 // =============================================================================
-// Primary object
+// Constructors
 // =============================================================================
-class WriterContext : public Writer{
-  // =========================================================================
-  // Variables
-  // =========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+Writer::Writer(bool _toFile) :
+  toFile(_toFile)
+{}
 
-  // =========================================================================
-  // Constructors
-  // =========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    WriterContext() = delete;
-    WriterContext(bool);
 
-  // =========================================================================
-  // Methods
-  // =========================================================================
-  private: // Methods which should be hidden from API users
-    std::string addContextSetup() const;
-    std::string addContextTeardown() const;
+// =============================================================================
+// Methods
+// =============================================================================
+void
+Writer::addRow(const std::vector<std::string>& _row)
+{
+  rows.push_back(_row);
+}
 
-  protected: // Methods part of subclass API
-    std::string getExtension() const override;
+void
+Writer::clearData()
+{
+  rows.clear();
+}
 
-  public: // Methods part of public API
-    std::string getIntraNetwork(const std::string&) const override;
-    std::string getInterNetwork(const std::string&) const override;
-    std::string getNessus() const override;
-    std::string getSshAlgorithms() const override;
-};
+std::string
+Writer::replaceAll(
+    const std::string& source, const std::string& from, const std::string& to
+  ) const
+{
+  std::string str {source};
+  for (auto pos {str.find(from)};
+       pos != std::string::npos;
+       pos = str.find(from, pos))
+  {
+    str.replace(pos, from.length(), to);
+    pos += to.length();
+  }
 
-#endif // WRITER_CONTEXT_HPP
+  return str;
+}
+
+void
+Writer::writeData(const std::string& filename, const std::string& data) const
+{
+  std::regex bs {"/"};
+  auto fullFilename {
+    std::regex_replace(filename, bs, "_") + getExtension()
+  };
+
+  if (toFile) {
+    LOG_DEBUG << "Writing to file: " << fullFilename << std::endl;
+    std::ofstream ofs
+      {filename, std::ios_base::binary | std::ios_base::trunc};
+
+    ofs << data << std::endl;
+    ofs.close();
+  } else {
+    LOG_INFO << "---START OF " << fullFilename << "---" << std::endl
+             << data << std::endl;
+  }
+}

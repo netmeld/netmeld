@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,46 +24,57 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef WRITER_CONTEXT_HPP
-#define WRITER_CONTEXT_HPP
-
-#include "Writer.hpp"
+#include "ExportScan.hpp"
 
 // =============================================================================
-// Primary object
+// Constructors
 // =============================================================================
-class WriterContext : public Writer{
-  // =========================================================================
-  // Variables
-  // =========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+ExportScan::ExportScan(const std::string& dbConnInfo) :
+  db(dbConnInfo)
+{
+  db.prepare
+    ("select_network_scan_name",
+     "SELECT DISTINCT string_agg(device_id, ', ') as device_id"
+     " FROM device_ip_addrs"
+     " WHERE ($1 = ip_addr)");
+}
 
-  // =========================================================================
-  // Constructors
-  // =========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    WriterContext() = delete;
-    WriterContext(bool);
 
-  // =========================================================================
-  // Methods
-  // =========================================================================
-  private: // Methods which should be hidden from API users
-    std::string addContextSetup() const;
-    std::string addContextTeardown() const;
+// =============================================================================
+// Methods
+// =============================================================================
+std::string
+ExportScan::getHostname(
+    pqxx::read_transaction& t, const std::string& targetIp
+  ) const
+{
+  std::string name {""};
 
-  protected: // Methods part of subclass API
-    std::string getExtension() const override;
+  pqxx::result nameRows
+    {t.exec_prepared("select_network_scan_name", targetIp)};
 
-  public: // Methods part of public API
-    std::string getIntraNetwork(const std::string&) const override;
-    std::string getInterNetwork(const std::string&) const override;
-    std::string getNessus() const override;
-    std::string getSshAlgorithms() const override;
-};
+  size_t count {nameRows.size()};
+  switch (count) {
+    case 0:
+    {
+      // do nothing
+      break;
+    }
+    case 1:
+    {
+      nameRows.begin().at("device_id").to(name);
+      break;
+    }
+    default:
+    {
+      LOG_WARN << "Query `select_network_scan_name`"
+               << " returned more than one row"
+               << " (" << count << ")."
+               << std::endl;
+      nameRows.begin().at("device_id").to(name);
+      break;
+    }
+  }
 
-#endif // WRITER_CONTEXT_HPP
+  return name;
+}

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,46 +24,48 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef WRITER_CONTEXT_HPP
-#define WRITER_CONTEXT_HPP
+#ifndef EXPORT_SCAN_HPP
+#define EXPORT_SCAN_HPP
+
+#include <pqxx/pqxx>
+
+#include <netmeld/core/utils/LoggerSingleton.hpp>
 
 #include "Writer.hpp"
 
-// =============================================================================
+// ============================================================================
 // Primary object
-// =============================================================================
-class WriterContext : public Writer{
-  // =========================================================================
+// ============================================================================
+class ExportScan {
+  // ========================================================================
   // Variables
-  // =========================================================================
+  // ========================================================================
   private: // Variables should generally be private
   protected: // Variables intended for internal/subclass API
+    pqxx::connection db;
+
   public: // Variables should rarely appear at this scope
 
-  // =========================================================================
+  // ========================================================================
   // Constructors
-  // =========================================================================
+  // ========================================================================
   private: // Constructors which should be hidden from API users
   protected: // Constructors part of subclass API
   public: // Constructors part of public API
-    WriterContext() = delete;
-    WriterContext(bool);
+    ExportScan() = delete;
+    ExportScan(const std::string&);
 
-  // =========================================================================
+    virtual ~ExportScan() = default;
+
+  // ========================================================================
   // Methods
-  // =========================================================================
+  // ========================================================================
   private: // Methods which should be hidden from API users
-    std::string addContextSetup() const;
-    std::string addContextTeardown() const;
-
   protected: // Methods part of subclass API
-    std::string getExtension() const override;
+    std::string getHostname(pqxx::read_transaction&, const std::string&) const;
 
   public: // Methods part of public API
-    std::string getIntraNetwork(const std::string&) const override;
-    std::string getInterNetwork(const std::string&) const override;
-    std::string getNessus() const override;
-    std::string getSshAlgorithms() const override;
+    virtual void exportScan(std::unique_ptr<Writer>&) = 0;
 };
 
-#endif // WRITER_CONTEXT_HPP
+#endif // EXPORT_SCAN_HPP

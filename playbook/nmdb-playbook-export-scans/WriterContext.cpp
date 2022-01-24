@@ -32,13 +32,20 @@
 // =============================================================================
 // Constructors
 // =============================================================================
-WriterContext::WriterContext()
+WriterContext::WriterContext(bool _toFile) :
+  Writer(_toFile)
 {}
 
 
 // =============================================================================
 // Methods
 // =============================================================================
+std::string
+WriterContext::getExtension() const
+{
+  return ".tex";
+}
+
 std::string
 WriterContext::addContextSetup() const
 {
@@ -47,18 +54,22 @@ WriterContext::addContextSetup() const
       | std::ios_base::trunc
       );
 
-	oss << "\\doifundefined{DefaultFontName}{\n"
-      << "  \\define\\DefaultFontName{modern}\n"
-      << "  \\define\\DefaultFontSize{10pt}\n"
-      << "}\n"
-      << "\\doifundefined{PortionMark}{\n"
-      << "  %\\define[2]\\PortionMark{(#1 - #2)}\n"
-      << "  \\define[2]\\PortionMark{}\n"
-      << "}\n"
-      << "\\usetypescript[\\DefaultFontName]\n"
-      << "\\setupbodyfont[\\DefaultFontName, \\DefaultFontSize]\n"
-      << "\\starttext\n"
-      ;
+	oss << R"(
+% pre-config
+\doifundefined{DefaultFontName}{
+  \define\DefaultFontName{modern}
+  \define\DefaultFontSize{10pt}
+}
+\doifundefined{PortionMark}{
+  %\define[2]\PortionMark{(#1 - #2)}
+  \define[2]\PortionMark{}
+}
+\usetypescript[\DefaultFontName]
+\setupbodyfont[\DefaultFontName, \DefaultFontSize]
+
+% start of document
+\starttext
+)";
 
   return oss.str();
 }
@@ -71,132 +82,137 @@ WriterContext::addContextTeardown() const
       | std::ios_base::trunc
       );
 
-  oss << "\\stoptext\n";
+  oss << R"(
+% end of document
+\stoptext
+)";
 
   return oss.str();
 }
 
-void
-WriterContext::addRow(std::vector<std::string> _row)
-{
-  rows.push_back(_row);
-}
-
 std::string
-WriterContext::writeIntraNetwork(const std::string& srcIp) const
+WriterContext::getIntraNetwork(const std::string& srcIp) const
 {
   std::ostringstream oss(
         std::ios_base::binary
       | std::ios_base::trunc
       );
 
-  oss << addContextSetup();
+  oss << addContextSetup()
+      << R"(
+% table
+\placetable[here,split]
+{
+  \PortionMark{TODO--Caption Classification}{}
+  Reachable ports from \type{)" << srcIp << R"(}.
+  \startmode[TabFigClassStmt]
+    Table is TODO--Overall Table Classification
+  \stopmode
+}
+{
+  \startxtable[frame=off, split=yes, header=repeat, option={stretch,width}]
+    \switchtobodyfont[7pt]
 
-  // add table
-  oss << "\\placetable[here,split]\n"
-      << "{\n"
-      << "\\PortionMark{TODO--Caption Classification}{}\n"
-      << "Reachable ports from \\type{" << srcIp << "}.\n"
-      << "\\startmode[TabFigClassStmt]\n"
-      << "Table is TODO--Overall Table Classification\n"
-      << "\\stopmode\n"
-      << "}\n"
-      << "{\n"
-      << "\\startxtable[frame=off, split=yes, header=repeat, "
-        << "option={stretch,width}]\n"
-      << "\\switchtobodyfont[7pt]\n"
+    % table header
+    \startxtablehead[topframe=on, bottomframe=on]
+      \startmode[PortMark]
+        \startxrow
+          \startxcell[nx=5, frame=on]
+            {\midaligned{\bf TODO--Overall Table Classification}}
+          \stopxcell
+        \stopxrow
+      \stopmode
 
-  // start of table header
-      << "\\startxtablehead[topframe=on, bottomframe=on]\n"
-      << "\\startmode[PortMark]\n"
-      << "\\startxrow\n"
-      << "\\startxcell[nx=5, frame=on]\n"
-      << "{\\midaligned{\\bf TODO--Overall Table Classification}}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopmode\n";
+      % table columns
+      \startxrow
+        \startxcell[width=0.27\makeupwidth, leftframe=on]
+          {\bf Destination IP (Name)}
+        \stopxcell
+        \startxcell[width=0.08\makeupwidth, leftframe=on]
+          {\bf Port}
+        \stopxcell
+        \startxcell[width=0.19\makeupwidth]
+          {\bf (State/Reason)}
+        \stopxcell
+        \startxcell[width=0.14\makeupwidth, leftframe=on]
+          {\bf Service}
+        \stopxcell
+        \startxcell[width=0.32\makeupwidth, rightframe=on]
+          {}
+        \stopxcell
+      \stopxrow
+    \stopxtablehead
 
-  // add columns
-  oss << "\\startxrow\n"
-      << "\\startxcell[width=0.27\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Destination IP (Name)}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.08\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Port}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.19\\makeupwidth]\n"
-      << "{\\bf (State/Reason)}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.14\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Service}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.32\\makeupwidth, rightframe=on]\n"
-      << "{}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopxtablehead\n";
+    % table footer
+    \startxtablefoot[topframe=on, bottomframe=on]
+      \startxrow[topframe=off]
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell\stopxcell
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell[rightframe=on]\stopxcell
+      \stopxrow
+      \startmode[PortMark]
+        \startxrow
+          \startxcell[nx=5, frame=on]
+            {\midaligned{\bf TODO--Overall Table Classification}}
+          \stopxcell
+        \stopxrow
+      \stopmode
+    \stopxtablefoot
 
-  // start of table footer
-  oss << "\\startxtablefoot[topframe=on, bottomframe=on]\n"
-      << "\\startxrow[topframe=off]\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell\\stopxcell\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell[rightframe=on]\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\startmode[PortMark]\n"
-      << "\\startxrow\n"
-      << "\\startxcell[nx=5, frame=on]\n"
-      << "{\\midaligned{\\bf TODO--Overall Table Classification}}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopmode\n"
-      << "\\stopxtablefoot\n";
+    % table rows
+    \startxtablebody
+)";
 
-  // add table rows
-  oss << "\\startxtablebody\n";
   std::string lastIpName;
   for (const auto& row : rows) {
-    std::string rowFrame {""};
-    std::string ipName {"{} {}"};
-    if (lastIpName != std::string(row[0] + row[1])) {
-      rowFrame = "[topframe=on]";
-      ipName   = "\\type{" + row[0] + "} \\type{(" + row[1] + ")}";
-    }
-    oss << "\\startxrow" << rowFrame << "\n"
-        // ip (name)
-        << "\\startxcell[leftframe=on]\n"
-        << ipName << "\n"
-        //<< "\\type{" << row[0] << "} \\type{(" << row[1] << ")} \n"
-        << "\\stopxcell\n"
-        // port/protocol
-        << "\\startxcell[leftframe=on]\n"
-        << "\\type{" << row[2] << "/" << row[3] << "}\n"
-        << "\\stopxcell\n";
+    std::string ip          {""}; // row[0]
+    std::string hostname    {""}; // row[1]
+    std::string portProto   {row[2] + '/' + row[3]};
+    std::string pps         {row[4] + '/' + row[5]};
+    std::string serviceName {row[6]};
+    std::string serviceDesc {row[7]};
 
-    std::string pps = row[4] + "/" + row[5];
+    std::string rowFrame    {""};
+    std::string nextIpName  {row[0] + row[1]};
+    if (lastIpName != nextIpName) {
+      rowFrame  = "[topframe=on]";
+      ip        = row[0];
+      hostname  = '(' + row[1] + ')';
+    }
+    lastIpName = nextIpName;
+
     pps = replaceAll(pps, "|", "\\|");
-        // port state/reason
-    oss << "\\startxcell\n"
-        << "{\\tt (" << pps << ")}\n"
-        << "\\stopxcell\n"
-        // service name
-        << "\\startxcell[leftframe=on]\n"
-        << "\\type{" << row[6] << "}\n"
-        << "\\stopxcell\n"
-        // service description
-        << "\\startxcell[rightframe=on]\n"
-        << "\\type{" << row[7] << "}\n"
-        << "\\stopxcell\n"
-        << "\\stopxrow\n";
-    lastIpName = std::string(row[0] + row[1]);
+
+    oss << R"(
+      % row
+      \startxrow)" << rowFrame << R"(
+        \startxcell[leftframe=on]   % ip (hostname)
+          \type{)" << ip << R"(} \type{)" << hostname << R"(}
+        \stopxcell
+        \startxcell[leftframe=on]   % port/protocol
+          \type{)" << portProto << R"(}
+        \stopxcell
+        \startxcell                 % port state/reason
+          {\tt ()" << pps << R"()}
+        \stopxcell
+        \startxcell[leftframe=on]   % service name
+          \type{)" << serviceName << R"(}
+        \stopxcell
+        \startxcell[rightframe=on]  % service description
+          \type{)" << serviceDesc << R"(}
+        \stopxcell
+      \stopxrow
+)";
   }
-  oss << "\\stopxtablebody\n"
-      << "\\switchtobodyfont[\\DefaultFontSize]\n"
-      << "\\stopxtable\n"
-      << "}\n"
-      ;
+
+  oss << R"(
+    \stopxtablebody
+    \switchtobodyfont[\DefaultFontSize]
+  \stopxtable
+}
+)";
 
   oss << addContextTeardown();
 
@@ -204,122 +220,139 @@ WriterContext::writeIntraNetwork(const std::string& srcIp) const
 }
 
 std::string
-WriterContext::writeInterNetwork(const std::string& srcIp) const
+WriterContext::getInterNetwork(const std::string& srcIp) const
 {
   std::ostringstream oss(
         std::ios_base::binary
       | std::ios_base::trunc
       );
 
-  oss << addContextSetup();
+  oss << addContextSetup()
+      << R"(
+% table
+\placetable[here,split]
+{
+  \PortionMark{TODO--Caption Classification}{}
+  Reachable ports from \type{)" << srcIp << R"(}.
+  \startmode[TabFigClassStmt]
+    Table is TODO--Overall Table Classification
+  \stopmode
+}
+{
+  \startxtable[frame=off, split=yes, header=repeat, option={stretch,width}]
+    \switchtobodyfont[7pt]
+    
+    % table header
+    \startxtablehead[topframe=on, bottomframe=on]
+      \startmode[PortMark]
+        \startxrow
+          \startxcell[nx=4, frame=on]
+            {\midaligned{\bf TODO--Overall Table Classification}}
+          \stopxcell
+        \stopxrow
+      \stopmode
 
-  // add table
-  oss << "\\placetable[here,split]\n"
-      << "{\n"
-      << "\\PortionMark{TODO--Caption Classification}{}\n"
-      << "Reachable ports from \\type{" << srcIp << "}.\n"
-      << "\\startmode[TabFigClassStmt]\n"
-      << "Table is TODO--Overall Table Classification\n"
-      << "\\stopmode\n"
-      << "}\n"
-      << "{\n"
-      << "\\startxtable[frame=off, split=yes, header=repeat, "
-        << "option={stretch,width}]\n"
-      << "\\switchtobodyfont[7pt]\n"
+      % table columns
+      \startxrow
+        \startxcell[width=0.34\makeupwidth, leftframe=on]
+          {\bf Gateway IP (Name)}
+        \stopxcell
+        \startxcell[width=0.34\makeupwidth, leftframe=on]
+          {\bf Destination IP (Name)}
+        \stopxcell
+        \startxcell[width=0.11\makeupwidth, leftframe=on]
+          {\bf Port}
+        \stopxcell
+        \startxcell[width=0.21\makeupwidth, rightframe=on]
+          {\bf (State/Reason)}
+        \stopxcell
+      \stopxrow
+    \stopxtablehead
 
-  // start of table header
-      << "\\startxtablehead[topframe=on, bottomframe=on]\n"
-      << "\\startmode[PortMark]\n"
-      << "\\startxrow\n"
-      << "\\startxcell[nx=4, frame=on]\n"
-      << "{\\midaligned{\\bf TODO--Overall Table Classification}}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopmode\n";
+    % table footer
+    \startxtablefoot[topframe=on, bottomframe=on]
+      \startxrow[topframe=off]
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell[rightframe=on]\stopxcell
+      \stopxrow
+      \startmode[PortMark]
+        \startxrow
+          \startxcell[nx=4, frame=on]
+            {\midaligned{\bf TODO--Overall Table Classification}}
+          \stopxcell
+        \stopxrow
+      \stopmode
+    \stopxtablefoot
 
-  // add columns
-  oss << "\\startxrow\n"
-      << "\\startxcell[width=0.34\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Gateway IP (Name)}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.34\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Destination IP (Name)}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.11\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Port}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.21\\makeupwidth, rightframe=on]\n"
-      << "{\\bf (State/Reason)}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopxtablehead\n";
+    % table rows
+    \startxtablebody
+)";
 
-  // start of table footer
-  oss << "\\startxtablefoot[topframe=on, bottomframe=on]\n"
-      << "\\startxrow[topframe=off]\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell[rightframe=on]\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\startmode[PortMark]\n"
-      << "\\startxrow\n"
-      << "\\startxcell[nx=4, frame=on]\n"
-      << "{\\midaligned{\\bf TODO--Overall Table Classification}}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopmode\n"
-      << "\\stopxtablefoot\n";
-
-  // add table rows
-  oss << "\\startxtablebody\n";
-  std::string lastRouter;
+  std::string lastHopIpName;
   std::string lastIpName;
   for (const auto& row : rows) {
+    std::string nextHopIp   {""}; // row[0]
+    std::string nextHopName {""}; // row[1]
+    std::string destIp      {""}; // row[2]
+    std::string destName    {""}; // row[3]
+    std::string portProto   {row[4] + '/' + row[5]};
+    std::string pps         {row[6] + '/' + row[7]};
+
     std::string rowFrame {""};
-    std::string ipName {"{} {}"};
-    if (lastRouter != std::string(row[0] + row[1])) {
-      rowFrame = "[topframe=on]";
-      ipName   = "\\type{" + row[0] + "} \\type{(" + row[1] + ")}";
-    }
-    oss << "\\startxrow" << rowFrame << "\n"
-        // gateway (name)
-        << "\\startxcell[leftframe=on]\n"
-        << ipName << "\n"
-        << "\\stopxcell\n";
 
-    ipName = "{} {}";
-    if ("" != rowFrame || lastIpName != std::string(row[2] + row[3])) {
-      ipName   = "\\type{" + row[2] + "} \\type{(" + row[3] + ")}";
+    std::string nextHopIpName {row[0] + row[1]};
+    if (lastHopIpName != nextHopIpName) {
+      rowFrame    = "[topframe=on]";
+      nextHopIp   = row[0];
+      nextHopName = '(' + row[1] + ')';
     }
+    lastHopIpName = nextHopIpName;
 
-        // desination (name)
-    oss << "\\startxcell[leftframe=on]\n"
-        << ipName << "\n"
-        << "\\stopxcell\n"
-        // port/protocol
-        << "\\startxcell[leftframe=on]\n"
-        << "\\type{" << row[4] << "/" << row[5] << "}\n"
-        << "\\stopxcell\n"
-        // port state/reason
-        << "\\startxcell[rightframe=on]\n"
-        << "\\type{(" << row[6] << "/" << row[7] << ")}\n"
-        << "\\stopxcell\n"
-        << "\\stopxrow\n";
-    lastRouter = std::string(row[0] + row[1]);
-    lastIpName = std::string(row[2] + row[3]);
+    std::string nextIpName {row[2] + row[3]};
+    if ("" != rowFrame || lastIpName != nextIpName) {
+      destIp    = row[2];
+      destName  ='(' + row[3] + ')';
+    }
+    lastIpName = nextIpName;
+
+    pps = replaceAll(pps, "|", "\\|");
+
+    oss << R"(
+      % row
+      \startxrow)" << rowFrame << R"(
+        \startxcell[leftframe=on]   % next hop ip (hostname)
+          \type{)" << nextHopIp << R"(} \type{)" << nextHopName << R"(}
+        \stopxcell
+        \startxcell[leftframe=on]   % destination ip (hostname)
+          \type{)" << destIp << R"(} \type{)" << destName << R"(}
+        \stopxcell
+        \startxcell[leftframe=on]   % port/protocol
+          \type{)" << portProto << R"(}
+        \stopxcell
+        \startxcell[rightframe=on]  % port state/reason
+          {\tt ()" << pps << R"()}
+        \stopxcell
+      \stopxrow
+)";
+
   }
-  oss << "\\stopxtablebody\n"
-      << "\\switchtobodyfont[\\DefaultFontSize]\n"
-      << "\\stopxtable\n"
-      << "}\n"
-      ;
+
+  oss << R"(
+    \stopxtablebody
+    \switchtobodyfont[\DefaultFontSize]
+  \stopxtable
+}
+)";
+
+  oss << addContextTeardown();
 
   return oss.str();
 }
 
 std::string
-WriterContext::writeNessus() const
+WriterContext::getNessus() const
 {
   std::ostringstream oss(
         std::ios_base::binary
@@ -328,47 +361,68 @@ WriterContext::writeNessus() const
   
   oss << addContextSetup();
 
+  // ConTeXt special characters
+  std::vector<std::pair<std::regex, std::string>> patterns {
+    // backslash replace
+    {std::regex(R"(\\)"), R"({\backslash})"},
+    // escape special characters
+    {std::regex(R"(#|_|\$|\|)"), R"(\$&)"},
+    // greater than
+    {std::regex(R"(&gt;)"), R"(>)"},
+    // less than
+    {std::regex(R"(&lt;)"), R"(<)"},
+    // new paragraph
+    {std::regex(R"(\n\n)"),
+     R"(\n\n\PortionMark{TODO--Caption Classification}{}\n)"},
+    //{R"()", R"()"},
+  };
+
   for (const auto& row : rows) {
-    // reference and title
-    oss << "\\section[section:nessus-plugin-" << row[0] << "]\n"
-        << "{\\PortionMark{TODO--Caption Classification}{}\n"
-        << " Plugin: " << row[0] << ";"
-          << " Severity: " << row[1] << ";"
-          << " " << row[2] << "\n"
-        << "}\n\n";
+    std::string pluginId        {row[0]};
+    std::string pluginSeverity  {row[1]};
+    std::string pluginName      {row[2]};
+    std::string pluginDesc      {row[3]};
 
-    // description
-    std::string desc = row[3];
-    std::regex bs {"\\\\"};
-    desc = std::regex_replace(desc, bs, "{\\backslash}");
-    std::regex escape {"#|_|\\$|\\|"};
-    desc = std::regex_replace(desc, escape, "\\$&");
-    std::regex gt {"&gt;"};
-    desc = std::regex_replace(desc, gt, ">");
-    std::regex dnl {"\n\n"};
-    desc = std::regex_replace(desc, dnl, "\n\n\\PortionMark{TODO--Caption Classification}{}\n");
-    oss << "\\PortionMark{TODO--Caption Classification}{}\n"
-        << desc << "\n\n";
+    // replace special characters in description
+    for (const auto& p : patterns) {
+      pluginDesc = std::regex_replace(pluginDesc, p.first, p.second);
+    }
 
-    // affected systems
-    oss << "\\PortionMark{TODO--Caption Classification}{}\n"
-        << "{\\bf Affected systems}: ";
+    oss << R"(
+% plugin data section
+\section[section:nessus-plugin-)" << pluginId << R"(]
+{
+  \PortionMark{TODO--Caption Classification}{}
+  Plugin: )" << pluginId << R"(;
+  Severity: )" << pluginSeverity << R"(;
+  )" << pluginName << R"(
+}
+
+\PortionMark{TODO--Caption Classification}{}
+)" << pluginDesc << R"(
+
+\PortionMark{TODO--Caption Classification}{}
+{\bf Affected systems}:
+)";
 
     std::vector<std::string> rest(row.begin()+4, row.end());
-    for (size_t i {0}; i < rest.size();) {
-      oss << "\\type{" << rest[i] << "}";
-      i++;
+    size_t count {rest.size()};
+    for (size_t i {0}; i < count;) {
+      std::string ip    {rest[i++]}; // intentional post increment
+      std::string name  {rest[i++]}; // intentional post increment
 
-      if (!rest[i].empty()) {
-        oss << " (\\type{" << rest[i] << "})";
+      oss << R"(  \type{)" << ip << '}';
+
+      if ("" != name) {
+        oss << R"( \type{()" << name << R"()})";
       }
-      i++;
 
-      if (i < rest.size()) {
-        oss << ", ";
+      if (i < count) {
+        oss << ",\n";
+      } else {
+        oss << ".\n\n";
       }
     }
-    oss << ".\n\n";
   }
 
   oss << addContextTeardown();
@@ -377,144 +431,134 @@ WriterContext::writeNessus() const
 }
 
 std::string
-WriterContext::writeSshAlgorithms() const
+WriterContext::getSshAlgorithms() const
 {
   std::ostringstream oss(
         std::ios_base::binary
       | std::ios_base::trunc
       );
 
-  oss << addContextSetup();
+  oss << addContextSetup()
+      << R"(
+% table
+\placetable[here,split][table:observed-ssh-algorithms]
+{
+  \PortionMark{TODO--Caption Classification}{}
+  Supported SSH algorithms observed by the assessment team.
+  \startmode[TabFigClassStmt]
+    Table is TODO--Overall Table Classification
+  \stopmode
+}
+{
+  \startxtable[frame=off, split=yes, header=repeat, option={stretch,width}]
+    \switchtobodyfont[7pt]
+    
+    % table header
+    \startxtablehead[topframe=on, bottomframe=on]
+      \startmode[PortMark]
+        \startxrow
+          \startxcell[nx=3, frame=on]
+            {\midaligned{\bf TODO--Overall Table Classification}}
+          \stopxcell
+        \stopxrow
+      \stopmode
 
-  // add table
-  oss << "\\placetable[here,split][table:observed-ssh-algorithms]\n"
-      << "{\n"
-      << "\\PortionMark{TODO--Caption Classification}{}\n"
-      << "Supported SSH algorithms observed by the assessment team.\n"
-      << "\\startmode[TabFigClassStmt]\n"
-      << "Table is TODO--Overall Table Classification\n"
-      << "\\stopmode\n"
-      << "}\n"
-      << "{\n"
-      << "\\startxtable[frame=off, split=yes, header=repeat, "
-        << "option={stretch,width}]\n"
-      << "\\switchtobodyfont[7pt]\n"
+      % table columns
+      \startxrow
+        \startxcell[width=0.40\makeupwidth, leftframe=on]
+          {\bf Server IP (Name)}
+        \stopxcell
+        \startxcell[width=0.25\makeupwidth, leftframe=on]
+          {\bf Algorithm Type}
+        \stopxcell
+        \startxcell[width=0.35\makeupwidth, leftframe=on, rightframe=on]
+          {\bf Algorithm}
+        \stopxcell
+      \stopxrow
+    \stopxtablehead
 
-  // start of table header
-      << "\\startxtablehead[topframe=on, bottomframe=on]\n"
-      << "\\startmode[PortMark]\n"
-      << "\\startxrow\n"
-      << "\\startxcell[nx=3, frame=on]\n"
-      << "{\\midaligned{\\bf TODO--Overall Table Classification}}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopmode\n";
+    % table footer
+    \startxtablefoot[topframe=on, bottomframe=on]
+      \startxrow[topframe=off]
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell[leftframe=on]\stopxcell
+        \startxcell[leftframe=on, rightframe=on]\stopxcell
+      \stopxrow
+      \startmode[PortMark]
+        \startxrow
+          \startxcell[nx=3, frame=on]
+            {\midaligned{\bf TODO--Overall Table Classification}}
+          \stopxcell
+        \stopxrow
+      \stopmode
+    \stopxtablefoot
 
-  // add columns
-  oss << "\\startxrow\n"
-      << "\\startxcell[width=0.40\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Server IP (Name)}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.25\\makeupwidth, leftframe=on]\n"
-      << "{\\bf Algorithm Type}\n"
-      << "\\stopxcell\n"
-      << "\\startxcell[width=0.35\\makeupwidth, leftframe=on, rightframe=on]\n"
-      << "{\\bf Algorithm}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopxtablehead\n";
+    % table rows
+    \startxtablebody
+)";
 
-  // start of table footer
-  oss << "\\startxtablefoot[topframe=on, bottomframe=on]\n"
-      << "\\startxrow[topframe=off]\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell[leftframe=on]\\stopxcell\n"
-      << "\\startxcell[leftframe=on, rightframe=on]\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\startmode[PortMark]\n"
-      << "\\startxrow\n"
-      << "\\startxcell[nx=3, frame=on]\n"
-      << "{\\midaligned{\\bf TODO--Overall Table Classification}}\n"
-      << "\\stopxcell\n"
-      << "\\stopxrow\n"
-      << "\\stopmode\n"
-      << "\\stopxtablefoot\n";
-
-  // add table rows
-  oss << "\\startxtablebody\n";
   std::string lastServer;
   std::string lastAlgo;
   for (const auto& row : rows) {
-    if (lastAlgo != row[2]) {
-      oss << "\n% " << row[0] << " -- " << row[2] << "\n";
+    std::string ip        {""}; // row[0]
+    std::string name      {""}; // row[1]
+    std::string algoType  {""}; // row[2]
+    std::string algoName  {row[3]};
+    std::string color     {row[4]};
+
+    std::string nextAlgoType {row[2]};
+    if (lastAlgo != nextAlgoType) {
+      oss << "\n% " << row[0] << " -- " << nextAlgoType << '\n';
     }
 
     std::string rowFrame {""};
     std::string ipName   {"{} {}"};
     bool newRow {false};
-    if (lastServer != std::string(row[0] + row[1])) {
+    std::string nextServer {row[0] + row[1]};
+    if (lastServer != nextServer) {
+      newRow    = true;
       rowFrame  = "[topframe=on]";
-      ipName    = "\\type{" + row[0] + "} \\type{(" + row[1] + ")}";
-      newRow    = true;
+      ip        = row[0];
+      name      = '(' + row[1] + ')';
     }
+    lastServer = nextServer;
 
-    oss << "\\startxrow" << rowFrame << "\n"
-        << "\\startxcell[leftframe=on]\n"
-        << ipName << "\n"
-        << "\\stopxcell\n";
-
-    rowFrame  = "[leftframe=on]";
-    ipName    = "{}";
-    if (newRow || lastAlgo != row[2]) {
-      rowFrame  = "[topframe=on, leftframe=on]";
-      ipName    = "\\type{" + row[2] + "}";
-      newRow    = true;
+    std::string cellFrameType {"[leftframe=on]"};
+    std::string cellFrameName {"[leftframe=on, rightframe=on]"};
+    if (newRow || lastAlgo != nextAlgoType) {
+      newRow        = true;
+      algoType      = nextAlgoType;
+      cellFrameType = "[topframe=on, leftframe=on]";
+      cellFrameName = "[topframe=on, leftframe=on, rightframe=on]";
     }
+    lastAlgo = nextAlgoType;
 
-    oss << "\\startxcell" << rowFrame << "\n"
-        << ipName << "\n"
-        << "\\stopxcell\n";
-
-    rowFrame = "[leftframe=on, rightframe=on]";
-    if (newRow || lastAlgo != row[2]) {
-      rowFrame = "[topframe=on, leftframe=on, rightframe=on]";
-    }
-
-    oss << "\\startxcell" << rowFrame << "\n"
-        << "\\startcolor[" << row[4] << "] "
-        << "\\type{" << row[3] << "} "
-        << "\\stopcolor\n"
-        << "\\stopxcell\n"
-        << "\\stopxrow\n";
-
-
-    lastServer = std::string(row[0] + row[1]);
-    lastAlgo   = row[2];
+    oss << R"(
+      % row
+      \startxrow)" << rowFrame << R"(
+        \startxcell[leftframe=on]   % server ip (hostname)
+          \type{)" << ip << R"(} \type{)" << name << R"(}
+        \stopxcell
+        \startxcell)" << cellFrameType << R"(   % algorithm type
+          \type{)" << algoType << R"(}
+        \stopxcell
+        \startxcell)" << cellFrameName << R"(   % algorithm name
+          \startcolor[)" << color << R"(]
+            \type{)" << algoName << R"(}
+          \stopcolor
+        \stopxcell
+      \stopxrow
+)";
   }
-  oss << "\\stopxtablebody\n"
-      << "\\switchtobodyfont[\\DefaultFontSize]\n"
-      << "\\stopxtable\n"
-      << "}\n"
-      ;
+
+  oss << R"(
+    \stopxtablebody
+    \switchtobodyfont[\DefaultFontSize]
+  \stopxtable
+}
+)";
 
   oss << addContextTeardown();
 
   return oss.str();
-}
-
-std::string
-WriterContext::replaceAll(
-    const std::string& source, std::string from, std::string to
-    ) const
-{
-  std::string str = source;
-  for (auto pos {str.find(from)};
-       pos != std::string::npos;
-       pos = str.find(from, pos))
-  {
-    str.replace(pos, from.length(), to);
-    pos += to.length();
-  }
-
-  return str;
 }

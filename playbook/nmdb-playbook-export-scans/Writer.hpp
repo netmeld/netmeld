@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,20 +24,25 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef WRITER_CONTEXT_HPP
-#define WRITER_CONTEXT_HPP
+#ifndef WRITER_HPP
+#define WRITER_HPP
 
-#include "Writer.hpp"
+#include <string>
+#include <vector>
 
 // =============================================================================
 // Primary object
 // =============================================================================
-class WriterContext : public Writer{
+class Writer {
   // =========================================================================
   // Variables
   // =========================================================================
   private: // Variables should generally be private
   protected: // Variables intended for internal/subclass API
+    bool toFile {false};
+
+    std::vector<std::vector<std::string>> rows;
+
   public: // Variables should rarely appear at this scope
 
   // =========================================================================
@@ -46,24 +51,31 @@ class WriterContext : public Writer{
   private: // Constructors which should be hidden from API users
   protected: // Constructors part of subclass API
   public: // Constructors part of public API
-    WriterContext() = delete;
-    WriterContext(bool);
+    Writer() = delete;
+    Writer(bool);
+    virtual ~Writer() = default;
 
   // =========================================================================
   // Methods
   // =========================================================================
   private: // Methods which should be hidden from API users
-    std::string addContextSetup() const;
-    std::string addContextTeardown() const;
-
   protected: // Methods part of subclass API
-    std::string getExtension() const override;
+    std::string replaceAll(
+        const std::string&, const std::string&, const std::string&
+      ) const;
+
+    virtual std::string getExtension() const = 0;
 
   public: // Methods part of public API
-    std::string getIntraNetwork(const std::string&) const override;
-    std::string getInterNetwork(const std::string&) const override;
-    std::string getNessus() const override;
-    std::string getSshAlgorithms() const override;
+    virtual void addRow(const std::vector<std::string>&);
+    virtual void clearData();
+
+    virtual void writeData(const std::string&, const std::string&) const;
+
+    virtual std::string getIntraNetwork(const std::string&) const = 0;
+    virtual std::string getInterNetwork(const std::string&) const = 0;
+    virtual std::string getNessus() const = 0;
+    virtual std::string getSshAlgorithms() const = 0;
 };
 
-#endif // WRITER_CONTEXT_HPP
+#endif // WRITER_HPP
