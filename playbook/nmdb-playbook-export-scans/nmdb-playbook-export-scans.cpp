@@ -30,18 +30,19 @@
 #include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/tools/AbstractExportTool.hpp>
 
-#include "Writer.hpp"
-#include "WriterContext.hpp"
-#include "WriterCsv.hpp"
-
-#include "ExportScanIntraNetwork.hpp"
-#include "ExportScanInterNetwork.hpp"
-#include "ExportScanNessus.hpp"
-#include "ExportScanSshAlgorithms.hpp"
+#include "exporters/InterNetwork.hpp"
+#include "exporters/IntraNetwork.hpp"
+#include "exporters/Nessus.hpp"
+#include "exporters/SshAlgorithms.hpp"
+#include "writers/Writer.hpp"
+#include "writers/Context.hpp"
+#include "writers/Csv.hpp"
 
 namespace nmcu = netmeld::core::utils;
 namespace nmdt = netmeld::datastore::tools;
 namespace nmdu = netmeld::datastore::utils;
+
+namespace nmpbes = netmeld::playbook::export_scans;
 
 
 // =============================================================================
@@ -128,28 +129,28 @@ class Tool : public nmdt::AbstractExportTool
 
       std::unique_ptr<Writer> writer;
       if ("context" == outFormat) {
-        writer = std::make_unique<WriterContext>(toFile);
+        writer = std::make_unique<nmpbes::Context>(toFile);
       } else if ("csv" == outFormat) {
-        writer = std::make_unique<WriterCsv>(toFile);
+        writer = std::make_unique<nmpbes::Csv>(toFile);
       } else {
         LOG_ERROR << "Invalid output format, quitting." << std::endl;
         return nmcu::Exit::FAILURE;
       }
 
       if (opts.exists("intra-network")) {
-        ExportScanIntraNetwork exporter {dbConInfo};
+        nmpbes::IntraNetwork exporter {dbConInfo};
         exporter.exportScan(writer);
       }
       if (opts.exists("inter-network")) {
-        ExportScanInterNetwork exporter {dbConInfo};
+        nmpbes::InterNetwork exporter {dbConInfo};
         exporter.exportScan(writer);
       }
       if (opts.exists("nessus")) {
-        ExportScanNessus exporter {dbConInfo};
+        nmpbes::Nessus exporter {dbConInfo};
         exporter.exportScan(writer);
       }
       if (opts.exists("ssh")) {
-        ExportScanSshAlgorithms exporter {dbConInfo};
+        nmpbes::SshAlgorithms exporter {dbConInfo};
         exporter.exportScan(writer);
       }
 

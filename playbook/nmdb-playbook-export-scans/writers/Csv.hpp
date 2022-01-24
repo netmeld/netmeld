@@ -29,40 +29,41 @@
 
 #include "Writer.hpp"
 
-// =============================================================================
-// Primary object
-// =============================================================================
-class WriterCsv : public Writer {
-  // =========================================================================
-  // Variables
-  // =========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+namespace netmeld::playbook::export_scans {
+  // ==========================================================================
+  // Primary object
+  // ==========================================================================
+  class Csv : public Writer {
+    // ======================================================================
+    // Variables
+    // ======================================================================
+    private: // Variables should generally be private
+    protected: // Variables intended for internal/subclass API
+    public: // Variables should rarely appear at this scope
 
-  // =========================================================================
-  // Constructors
-  // =========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    WriterCsv() = delete;
-    WriterCsv(bool);
+    // ======================================================================
+    // Constructors
+    // ======================================================================
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
+      Csv() = delete;
+      Csv(bool);
 
-  // =========================================================================
-  // Methods
-  // =========================================================================
-  private: // Methods which should be hidden from API users
-    void addRows(std::ostringstream&) const;
+    // ======================================================================
+    // Methods
+    // ======================================================================
+    private: // Methods which should be hidden from API users
+      void addRows(std::ostringstream&) const;
 
-  protected: // Methods part of subclass API
-    std::string getExtension() const override;
+    protected: // Methods part of subclass API
+      std::string getExtension() const override;
 
-  public: // Methods part of public API
-    std::string getIntraNetwork(const std::string&) const override;
-    std::string getInterNetwork(const std::string&) const override;
-    std::string getNessus() const override;
-    std::string getSshAlgorithms() const override;
-};
-
+    public: // Methods part of public API
+      std::string getIntraNetwork(const std::string&) const override;
+      std::string getInterNetwork(const std::string&) const override;
+      std::string getNessus() const override;
+      std::string getSshAlgorithms() const override;
+  };
+}
 #endif // WRITER_CSV_HPP

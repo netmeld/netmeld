@@ -26,55 +26,57 @@
 
 #include "ExportScan.hpp"
 
-// =============================================================================
-// Constructors
-// =============================================================================
-ExportScan::ExportScan(const std::string& dbConnInfo) :
-  db(dbConnInfo)
-{
-  db.prepare
-    ("select_network_scan_name",
-     "SELECT DISTINCT string_agg(device_id, ', ') as device_id"
-     " FROM device_ip_addrs"
-     " WHERE ($1 = ip_addr)");
-}
-
-
-// =============================================================================
-// Methods
-// =============================================================================
-std::string
-ExportScan::getHostname(
-    pqxx::read_transaction& t, const std::string& targetIp
-  ) const
-{
-  std::string name {""};
-
-  pqxx::result nameRows
-    {t.exec_prepared("select_network_scan_name", targetIp)};
-
-  size_t count {nameRows.size()};
-  switch (count) {
-    case 0:
-    {
-      // do nothing
-      break;
-    }
-    case 1:
-    {
-      nameRows.begin().at("device_id").to(name);
-      break;
-    }
-    default:
-    {
-      LOG_WARN << "Query `select_network_scan_name`"
-               << " returned more than one row"
-               << " (" << count << ")."
-               << std::endl;
-      nameRows.begin().at("device_id").to(name);
-      break;
-    }
+namespace netmeld::playbook::export_scans {
+  // ==========================================================================
+  // Constructors
+  // ==========================================================================
+  ExportScan::ExportScan(const std::string& dbConnInfo) :
+    db(dbConnInfo)
+  {
+    db.prepare
+      ("select_network_scan_name",
+       "SELECT DISTINCT string_agg(device_id, ', ') as device_id"
+       " FROM device_ip_addrs"
+       " WHERE ($1 = ip_addr)");
   }
 
-  return name;
+
+  // ==========================================================================
+  // Methods
+  // ==========================================================================
+  std::string
+  ExportScan::getHostname(
+      pqxx::read_transaction& t, const std::string& targetIp
+    ) const
+  {
+    std::string name {""};
+
+    pqxx::result nameRows
+      {t.exec_prepared("select_network_scan_name", targetIp)};
+
+    size_t count {nameRows.size()};
+    switch (count) {
+      case 0:
+      {
+        // do nothing
+        break;
+      }
+      case 1:
+      {
+        nameRows.begin().at("device_id").to(name);
+        break;
+      }
+      default:
+      {
+        LOG_WARN << "Query `select_network_scan_name`"
+                 << " returned more than one row"
+                 << " (" << count << ")."
+                 << std::endl;
+        nameRows.begin().at("device_id").to(name);
+        break;
+      }
+    }
+
+    return name;
+  }
 }

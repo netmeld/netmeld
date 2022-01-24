@@ -29,10 +29,11 @@
 
 #include "ExportScan.hpp"
 
+namespace netmeld::playbook::export_scans {
 // ============================================================================
 // Primary object
 // ============================================================================
-class ExportScanSshAlgorithms : public ExportScan {
+class SshAlgorithms : public ExportScan {
   // ========================================================================
   // Variables
   // ========================================================================
@@ -43,6 +44,7 @@ class ExportScanSshAlgorithms : public ExportScan {
     const std::string unk   {"black"};
 
     // algorithms: identified good/bad
+    // NOTE: separately called out for easier tracking
     const std::map<std::string, std::string> algoComp
     {
     };
@@ -114,6 +116,8 @@ class ExportScanSshAlgorithms : public ExportScan {
       {"ssh-dss-cert-v00@openssh.com", bad},
       {"ssh-dss-cert-v01@openssh.com", bad}
     };
+
+    // NOTE: container for easier searching
     const std::map<std::string, std::map<std::string, std::string>> algorithms
     {
       {"compression_algorithms", algoComp},
@@ -132,8 +136,8 @@ class ExportScanSshAlgorithms : public ExportScan {
   private: // Constructors which should be hidden from API users
   protected: // Constructors part of subclass API
   public: // Constructors part of public API
-    ExportScanSshAlgorithms() = delete;
-    ExportScanSshAlgorithms(const std::string&);
+    SshAlgorithms() = delete;
+    SshAlgorithms(const std::string&);
 
   // ========================================================================
   // Methods
@@ -146,5 +150,5 @@ class ExportScanSshAlgorithms : public ExportScan {
   public: // Methods part of public API
     void exportScan(std::unique_ptr<Writer>&);
 };
-
+}
 #endif // EXPORT_SCAN_SSH_ALGORITHMS_HPP

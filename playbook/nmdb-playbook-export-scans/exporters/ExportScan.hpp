@@ -31,41 +31,45 @@
 
 #include <netmeld/core/utils/LoggerSingleton.hpp>
 
-#include "Writer.hpp"
+#include "../writers/Writer.hpp"
 
-// ============================================================================
-// Primary object
-// ============================================================================
-class ExportScan {
-  // ========================================================================
-  // Variables
-  // ========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-    pqxx::connection db;
+namespace netmeld::playbook::export_scans {
 
-  public: // Variables should rarely appear at this scope
+  // ==========================================================================
+  // Primary object
+  // ==========================================================================
+  class ExportScan {
+    // ========================================================================
+    // Variables
+    // ========================================================================
+    private: // Variables should generally be private
+    protected: // Variables intended for internal/subclass API
+      pqxx::connection db;
 
-  // ========================================================================
-  // Constructors
-  // ========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    ExportScan() = delete;
-    ExportScan(const std::string&);
+    public: // Variables should rarely appear at this scope
 
-    virtual ~ExportScan() = default;
+    // ========================================================================
+    // Constructors
+    // ========================================================================
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
+      ExportScan() = delete;
+      ExportScan(const std::string&);
 
-  // ========================================================================
-  // Methods
-  // ========================================================================
-  private: // Methods which should be hidden from API users
-  protected: // Methods part of subclass API
-    std::string getHostname(pqxx::read_transaction&, const std::string&) const;
+      virtual ~ExportScan() = default;
 
-  public: // Methods part of public API
-    virtual void exportScan(std::unique_ptr<Writer>&) = 0;
-};
+    // ========================================================================
+    // Methods
+    // ========================================================================
+    private: // Methods which should be hidden from API users
+    protected: // Methods part of subclass API
+      std::string getHostname(
+          pqxx::read_transaction&, const std::string&
+        ) const;
 
+    public: // Methods part of public API
+      virtual void exportScan(std::unique_ptr<Writer>&) = 0;
+  };
+}
 #endif // EXPORT_SCAN_HPP

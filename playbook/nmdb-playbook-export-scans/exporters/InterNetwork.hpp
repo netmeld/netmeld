@@ -24,41 +24,42 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef EXPORT_SCAN_INTRA_NETWORK_HPP
-#define EXPORT_SCAN_INTRA_NETWORK_HPP
+#ifndef EXPORT_SCAN_INTER_NETWORK_HPP
+#define EXPORT_SCAN_INTER_NETWORK_HPP
 
 #include "ExportScan.hpp"
 
-// ============================================================================
-// Primary object
-// ============================================================================
-class ExportScanIntraNetwork : public ExportScan {
-  // ========================================================================
-  // Variables
-  // ========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+namespace netmeld::playbook::export_scans {
+  // ==========================================================================
+  // Primary object
+  // ==========================================================================
+  class InterNetwork : public ExportScan {
+    // ======================================================================
+    // Variables
+    // ======================================================================
+    private: // Variables should generally be private
+    protected: // Variables intended for internal/subclass API
+    public: // Variables should rarely appear at this scope
 
-  // ========================================================================
-  // Constructors
-  // ========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    ExportScanIntraNetwork() = delete;
-    ExportScanIntraNetwork(const std::string&);
+    // ======================================================================
+    // Constructors
+    // ======================================================================
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
+      InterNetwork() = delete;
+      InterNetwork(const std::string&);
 
-  // ========================================================================
-  // Methods
-  // ========================================================================
-  private: // Methods which should be hidden from API users
-    void exportTemplate(auto&) const;
-    void exportFromDb(auto&, const std::string&);
+    // ======================================================================
+    // Methods
+    // ======================================================================
+    private: // Methods which should be hidden from API users
+      void exportTemplate(auto&);
+      void exportFromDb(auto&, std::string&);
 
-  protected: // Methods part of subclass API
-  public: // Methods part of public API
-    void exportScan(std::unique_ptr<Writer>&);
-};
-
-#endif // EXPORT_SCAN_INTRA_NETWORK_HPP
+    protected: // Methods part of subclass API
+    public: // Methods part of public API
+      void exportScan(std::unique_ptr<Writer>&);
+  };
+}
+#endif // EXPORT_SCAN_INTER_NETWORK_HPP

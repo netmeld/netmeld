@@ -25,14 +25,14 @@
 # =============================================================================
 
 add_executable(${TGT_TOOL}
-    ExportScan.cpp
-    ExportScanInterNetwork.cpp
-    ExportScanIntraNetwork.cpp
-    ExportScanNessus.cpp
-    ExportScanSshAlgorithms.cpp
-    Writer.cpp
-    WriterContext.cpp
-    WriterCsv.cpp
+    exporters/ExportScan.cpp
+    exporters/InterNetwork.cpp
+    exporters/IntraNetwork.cpp
+    exporters/Nessus.cpp
+    exporters/SshAlgorithms.cpp
+    writers/Writer.cpp
+    writers/Context.cpp
+    writers/Csv.cpp
     ${TGT_TOOL}.cpp
   )
 

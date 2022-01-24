@@ -27,38 +27,252 @@
 #include <sstream>
 #include <regex>
 
-#include "WriterContext.hpp"
+#include "Context.hpp"
 
-// =============================================================================
-// Constructors
-// =============================================================================
-WriterContext::WriterContext(bool _toFile) :
-  Writer(_toFile)
-{}
+namespace netmeld::playbook::export_scans {
+  // ==========================================================================
+  // Constructors
+  // ==========================================================================
+  Context::Context(bool _toFile) :
+    Writer(_toFile)
+  {}
 
 
-// =============================================================================
-// Methods
-// =============================================================================
-std::string
-WriterContext::getExtension() const
-{
-  return ".tex";
-}
+  // ==========================================================================
+  // Methods
+  // ==========================================================================
+  std::string
+  Context::getExtension() const
+  {
+    return ".tex";
+  }
 
-std::string
-WriterContext::addContextSetup() const
-{
-  std::ostringstream oss(
-        std::ios_base::binary
-      | std::ios_base::trunc
-      );
+  std::string
+  Context::getIntraNetwork(const std::string& srcIp) const
+  {
+    std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
 
-	oss << R"(
+    codeSetup(oss);
+    codeTableIntra(oss, srcIp);
+
+    std::string lastIpName;
+    for (const auto& row : rows) {
+      std::string ip          {""}; // row[0]
+      std::string hostname    {""}; // row[1]
+      std::string portProto   {row[2] + '/' + row[3]};
+      std::string pps         {row[4] + '/' + row[5]};
+      std::string serviceName {row[6]};
+      std::string serviceDesc {row[7]};
+
+      std::string rowFrame    {""};
+      std::string nextIpName  {row[0] + row[1]};
+      if (lastIpName != nextIpName) {
+        rowFrame  = "[topframe=on]";
+        ip        = row[0];
+        hostname  = '(' + row[1] + ')';
+      }
+      lastIpName = nextIpName;
+
+      pps = replaceAll(pps, "|", "\\|");
+
+      codeRowIntra(oss,
+          rowFrame, ip, hostname, portProto, pps, serviceName, serviceDesc
+        );
+    }
+
+    codeTableClose(oss);
+    codeTeardown(oss);
+
+    return oss.str();
+  }
+
+  std::string
+  Context::getInterNetwork(const std::string& srcIp) const
+  {
+    std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
+
+    codeSetup(oss);
+    codeTableInter(oss, srcIp);
+
+    std::string lastHopIpName;
+    std::string lastIpName;
+    for (const auto& row : rows) {
+      std::string nextHopIp   {""}; // row[0]
+      std::string nextHopName {""}; // row[1]
+      std::string destIp      {""}; // row[2]
+      std::string destName    {""}; // row[3]
+      std::string portProto   {row[4] + '/' + row[5]};
+      std::string pps         {row[6] + '/' + row[7]};
+
+      std::string rowFrame {""};
+
+      std::string nextHopIpName {row[0] + row[1]};
+      if (lastHopIpName != nextHopIpName) {
+        rowFrame    = "[topframe=on]";
+        nextHopIp   = row[0];
+        nextHopName = '(' + row[1] + ')';
+      }
+      lastHopIpName = nextHopIpName;
+
+      std::string nextIpName {row[2] + row[3]};
+      if ("" != rowFrame || lastIpName != nextIpName) {
+        destIp    = row[2];
+        destName  ='(' + row[3] + ')';
+      }
+      lastIpName = nextIpName;
+
+      pps = replaceAll(pps, "|", "\\|");
+
+      codeRowInter(oss,
+          rowFrame, nextHopIp, nextHopName, destIp, destName, portProto, pps
+        );
+    }
+
+    codeTableClose(oss);
+    codeTeardown(oss);
+
+    return oss.str();
+  }
+
+  std::string
+  Context::getNessus() const
+  {
+    std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
+
+    codeSetup(oss);
+    
+    // ConTeXt special characters
+    std::vector<std::pair<std::regex, std::string>> patterns {
+      // backslash replace
+      {std::regex(R"(\\)"), R"({\backslash})"},
+      // escape special characters
+      {std::regex(R"(#|_|\$|\|)"), R"(\$&)"},
+      // greater than
+      {std::regex(R"(>)"), R"(&gt;)"},
+      // less than
+      {std::regex(R"(>)"), R"(&lt;)"},
+      // new paragraph
+      {std::regex(R"((\r\n|\r|\n){2})"),
+        "\n\n\\PortionMark{TODO--Caption Classification}{}\n"},
+      //{R"()", R"()"},
+    };
+
+    for (const auto& row : rows) {
+      std::string pluginId        {row[0]};
+      std::string pluginSeverity  {row[1]};
+      std::string pluginName      {row[2]};
+      std::string pluginDesc      {row[3]};
+
+      // replace special characters in description
+      for (const auto& p : patterns) {
+        pluginDesc = std::regex_replace(pluginDesc, p.first, p.second);
+      }
+
+      codeParagraphNessus(oss,
+          pluginId, pluginSeverity, pluginName, pluginDesc
+        );
+
+      std::vector<std::string> rest(row.begin()+4, row.end());
+      size_t count {rest.size()};
+      for (size_t i {0}; i < count;) {
+        std::string ip    {rest[i++]}; // intentional post increment
+        std::string name  {rest[i++]}; // intentional post increment
+
+        oss << R"(  \type{)" << ip << '}';
+
+        if ("" != name) {
+          oss << R"( \type{()" << name << R"()})";
+        }
+
+        if (i < count) {
+          oss << ",\n";
+        } else {
+          oss << ".\n\n";
+        }
+      }
+    }
+
+    codeTeardown(oss);
+
+    return oss.str();
+  }
+
+  std::string
+  Context::getSshAlgorithms() const
+  {
+    std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
+
+    codeSetup(oss);
+    codeTableSsh(oss);
+
+    std::string lastServer;
+    std::string lastAlgo;
+    for (const auto& row : rows) {
+      std::string ip        {""}; // row[0]
+      std::string name      {""}; // row[1]
+      std::string algoType  {""}; // row[2]
+      std::string algoName  {row[3]};
+      std::string color     {row[4]};
+
+      std::string nextAlgoType {row[2]};
+
+      // adds comment of `IP -- ALG_TYPE` to data for easier navigation
+      if (lastAlgo != nextAlgoType) {
+        oss << "\n% " << row[0] << " -- " << nextAlgoType << '\n';
+      }
+
+      std::string rowFrame {""};
+      std::string ipName   {"{} {}"};
+      bool newRow {false};
+      std::string nextServer {row[0] + row[1]};
+      if (lastServer != nextServer) {
+        newRow    = true;
+        rowFrame  = "[topframe=on]";
+        ip        = row[0];
+        name      = '(' + row[1] + ')';
+      }
+      lastServer = nextServer;
+
+      std::string cellFrameType {"[leftframe=on]"};
+      std::string cellFrameName {"[leftframe=on, rightframe=on]"};
+      if (newRow || lastAlgo != nextAlgoType) {
+        newRow        = true;
+        algoType      = nextAlgoType;
+        cellFrameType = "[topframe=on, leftframe=on]";
+        cellFrameName = "[topframe=on, leftframe=on, rightframe=on]";
+      }
+      lastAlgo = nextAlgoType;
+
+      codeRowSsh(oss,
+          rowFrame, ip, name, cellFrameType, algoType,
+          cellFrameName, color, algoName
+        );
+    }
+
+    codeTableClose(oss);
+    codeTeardown(oss);
+
+    return oss.str();
+  }
+
+  // ==========================================================================
+  // ConTeXt formatting code
+  // NOTE: keep raw string literal indentation (or lack of) for
+  //       cleaner output and easier editing
+  // ==========================================================================
+
+  // ------------------------------------------------------------
+  // General
+  // ------------------------------------------------------------
+  void
+  Context::codeSetup(auto& oss) const
+  {
+	  oss << R"(
 % pre-config
 \doifundefined{DefaultFontName}{
   \define\DefaultFontName{modern}
   \define\DefaultFontSize{10pt}
+  \setupwhitespace[big]
 }
 \doifundefined{PortionMark}{
   %\define[2]\PortionMark{(#1 - #2)}
@@ -70,36 +284,36 @@ WriterContext::addContextSetup() const
 % start of document
 \starttext
 )";
+  }
 
-  return oss.str();
-}
-
-std::string
-WriterContext::addContextTeardown() const
-{
-  std::ostringstream oss(
-        std::ios_base::binary
-      | std::ios_base::trunc
-      );
-
-  oss << R"(
+  void
+  Context::codeTeardown(auto& oss) const
+  {
+    oss << R"(
 % end of document
 \stoptext
 )";
+  }
 
-  return oss.str();
+  void
+  Context::codeTableClose(auto& oss) const
+  {
+    oss << R"(
+    % end of rows
+    \stopxtablebody
+    \switchtobodyfont[\DefaultFontSize]
+  \stopxtable
 }
+)";
+  }
 
-std::string
-WriterContext::getIntraNetwork(const std::string& srcIp) const
-{
-  std::ostringstream oss(
-        std::ios_base::binary
-      | std::ios_base::trunc
-      );
-
-  oss << addContextSetup()
-      << R"(
+  // ------------------------------------------------------------
+  // Intra-network
+  // ------------------------------------------------------------
+  void
+  Context::codeTableIntra(auto& oss, const auto& srcIp) const
+  {
+    oss << R"(
 % table
 \placetable[here,split]
 {
@@ -164,27 +378,16 @@ WriterContext::getIntraNetwork(const std::string& srcIp) const
     % table rows
     \startxtablebody
 )";
+  }
 
-  std::string lastIpName;
-  for (const auto& row : rows) {
-    std::string ip          {""}; // row[0]
-    std::string hostname    {""}; // row[1]
-    std::string portProto   {row[2] + '/' + row[3]};
-    std::string pps         {row[4] + '/' + row[5]};
-    std::string serviceName {row[6]};
-    std::string serviceDesc {row[7]};
-
-    std::string rowFrame    {""};
-    std::string nextIpName  {row[0] + row[1]};
-    if (lastIpName != nextIpName) {
-      rowFrame  = "[topframe=on]";
-      ip        = row[0];
-      hostname  = '(' + row[1] + ')';
-    }
-    lastIpName = nextIpName;
-
-    pps = replaceAll(pps, "|", "\\|");
-
+  void
+  Context::codeRowIntra(auto& oss,
+      const auto& rowFrame,
+      const auto& ip, const auto& hostname,
+      const auto& portProto, const auto& pps,
+      const auto& serviceName, const auto& serviceDesc
+    ) const
+  {
     oss << R"(
       % row
       \startxrow)" << rowFrame << R"(
@@ -207,28 +410,13 @@ WriterContext::getIntraNetwork(const std::string& srcIp) const
 )";
   }
 
-  oss << R"(
-    \stopxtablebody
-    \switchtobodyfont[\DefaultFontSize]
-  \stopxtable
-}
-)";
-
-  oss << addContextTeardown();
-
-  return oss.str();
-}
-
-std::string
-WriterContext::getInterNetwork(const std::string& srcIp) const
-{
-  std::ostringstream oss(
-        std::ios_base::binary
-      | std::ios_base::trunc
-      );
-
-  oss << addContextSetup()
-      << R"(
+  // ------------------------------------------------------------
+  // Inter-network
+  // ------------------------------------------------------------
+  void
+  Context::codeTableInter(auto& oss, const auto& srcIp) const
+  {
+    oss << R"(
 % table
 \placetable[here,split]
 {
@@ -289,36 +477,16 @@ WriterContext::getInterNetwork(const std::string& srcIp) const
     % table rows
     \startxtablebody
 )";
+  }
 
-  std::string lastHopIpName;
-  std::string lastIpName;
-  for (const auto& row : rows) {
-    std::string nextHopIp   {""}; // row[0]
-    std::string nextHopName {""}; // row[1]
-    std::string destIp      {""}; // row[2]
-    std::string destName    {""}; // row[3]
-    std::string portProto   {row[4] + '/' + row[5]};
-    std::string pps         {row[6] + '/' + row[7]};
-
-    std::string rowFrame {""};
-
-    std::string nextHopIpName {row[0] + row[1]};
-    if (lastHopIpName != nextHopIpName) {
-      rowFrame    = "[topframe=on]";
-      nextHopIp   = row[0];
-      nextHopName = '(' + row[1] + ')';
-    }
-    lastHopIpName = nextHopIpName;
-
-    std::string nextIpName {row[2] + row[3]};
-    if ("" != rowFrame || lastIpName != nextIpName) {
-      destIp    = row[2];
-      destName  ='(' + row[3] + ')';
-    }
-    lastIpName = nextIpName;
-
-    pps = replaceAll(pps, "|", "\\|");
-
+  void
+  Context::codeRowInter(auto& oss,
+      const auto& rowFrame,
+      const auto& nextHopIp, const auto& nextHopName,
+      const auto& destIp, const auto& destName,
+      const auto& portProto, const auto& pps
+    ) const
+  {
     oss << R"(
       % row
       \startxrow)" << rowFrame << R"(
@@ -336,58 +504,17 @@ WriterContext::getInterNetwork(const std::string& srcIp) const
         \stopxcell
       \stopxrow
 )";
-
   }
 
-  oss << R"(
-    \stopxtablebody
-    \switchtobodyfont[\DefaultFontSize]
-  \stopxtable
-}
-)";
-
-  oss << addContextTeardown();
-
-  return oss.str();
-}
-
-std::string
-WriterContext::getNessus() const
-{
-  std::ostringstream oss(
-        std::ios_base::binary
-      | std::ios_base::trunc
-      );
-  
-  oss << addContextSetup();
-
-  // ConTeXt special characters
-  std::vector<std::pair<std::regex, std::string>> patterns {
-    // backslash replace
-    {std::regex(R"(\\)"), R"({\backslash})"},
-    // escape special characters
-    {std::regex(R"(#|_|\$|\|)"), R"(\$&)"},
-    // greater than
-    {std::regex(R"(&gt;)"), R"(>)"},
-    // less than
-    {std::regex(R"(&lt;)"), R"(<)"},
-    // new paragraph
-    {std::regex(R"(\n\n)"),
-     R"(\n\n\PortionMark{TODO--Caption Classification}{}\n)"},
-    //{R"()", R"()"},
-  };
-
-  for (const auto& row : rows) {
-    std::string pluginId        {row[0]};
-    std::string pluginSeverity  {row[1]};
-    std::string pluginName      {row[2]};
-    std::string pluginDesc      {row[3]};
-
-    // replace special characters in description
-    for (const auto& p : patterns) {
-      pluginDesc = std::regex_replace(pluginDesc, p.first, p.second);
-    }
-
+  // ------------------------------------------------------------
+  // Nessus
+  // ------------------------------------------------------------
+  void
+  Context::codeParagraphNessus(auto& oss,
+      const auto& pluginId, const auto& pluginSeverity,
+      const auto& pluginName, const auto& pluginDesc
+    ) const
+  {
     oss << R"(
 % plugin data section
 \section[section:nessus-plugin-)" << pluginId << R"(]
@@ -404,42 +531,15 @@ WriterContext::getNessus() const
 \PortionMark{TODO--Caption Classification}{}
 {\bf Affected systems}:
 )";
-
-    std::vector<std::string> rest(row.begin()+4, row.end());
-    size_t count {rest.size()};
-    for (size_t i {0}; i < count;) {
-      std::string ip    {rest[i++]}; // intentional post increment
-      std::string name  {rest[i++]}; // intentional post increment
-
-      oss << R"(  \type{)" << ip << '}';
-
-      if ("" != name) {
-        oss << R"( \type{()" << name << R"()})";
-      }
-
-      if (i < count) {
-        oss << ",\n";
-      } else {
-        oss << ".\n\n";
-      }
-    }
   }
 
-  oss << addContextTeardown();
-
-  return oss.str();
-}
-
-std::string
-WriterContext::getSshAlgorithms() const
-{
-  std::ostringstream oss(
-        std::ios_base::binary
-      | std::ios_base::trunc
-      );
-
-  oss << addContextSetup()
-      << R"(
+  // ------------------------------------------------------------
+  // SSH
+  // ------------------------------------------------------------
+  void
+  Context::codeTableSsh(auto& oss) const
+  {
+    oss << R"(
 % table
 \placetable[here,split][table:observed-ssh-algorithms]
 {
@@ -496,43 +596,16 @@ WriterContext::getSshAlgorithms() const
     % table rows
     \startxtablebody
 )";
+  }
 
-  std::string lastServer;
-  std::string lastAlgo;
-  for (const auto& row : rows) {
-    std::string ip        {""}; // row[0]
-    std::string name      {""}; // row[1]
-    std::string algoType  {""}; // row[2]
-    std::string algoName  {row[3]};
-    std::string color     {row[4]};
-
-    std::string nextAlgoType {row[2]};
-    if (lastAlgo != nextAlgoType) {
-      oss << "\n% " << row[0] << " -- " << nextAlgoType << '\n';
-    }
-
-    std::string rowFrame {""};
-    std::string ipName   {"{} {}"};
-    bool newRow {false};
-    std::string nextServer {row[0] + row[1]};
-    if (lastServer != nextServer) {
-      newRow    = true;
-      rowFrame  = "[topframe=on]";
-      ip        = row[0];
-      name      = '(' + row[1] + ')';
-    }
-    lastServer = nextServer;
-
-    std::string cellFrameType {"[leftframe=on]"};
-    std::string cellFrameName {"[leftframe=on, rightframe=on]"};
-    if (newRow || lastAlgo != nextAlgoType) {
-      newRow        = true;
-      algoType      = nextAlgoType;
-      cellFrameType = "[topframe=on, leftframe=on]";
-      cellFrameName = "[topframe=on, leftframe=on, rightframe=on]";
-    }
-    lastAlgo = nextAlgoType;
-
+  void
+  Context::codeRowSsh(auto& oss,
+      const auto& rowFrame,
+      const auto& ip, const auto& name,
+      const auto& cellFrameType, const auto& algoType,
+      const auto& cellFrameName, const auto& color, const auto& algoName
+    ) const
+  {
     oss << R"(
       % row
       \startxrow)" << rowFrame << R"(
@@ -550,15 +623,4 @@ WriterContext::getSshAlgorithms() const
       \stopxrow
 )";
   }
-
-  oss << R"(
-    \stopxtablebody
-    \switchtobodyfont[\DefaultFontSize]
-  \stopxtable
-}
-)";
-
-  oss << addContextTeardown();
-
-  return oss.str();
 }
