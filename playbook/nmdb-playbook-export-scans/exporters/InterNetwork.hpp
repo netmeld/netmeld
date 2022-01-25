@@ -54,12 +54,12 @@ namespace netmeld::playbook::export_scans {
     // Methods
     // ======================================================================
     private: // Methods which should be hidden from API users
-      void exportTemplate(auto&);
-      void exportFromDb(auto&, std::string&);
+      void exportTemplate(const auto&) const;
+      void exportFromDb(const auto&, const std::string&);
 
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void exportScan(std::unique_ptr<Writer>&);
+      void exportScan(const std::unique_ptr<Writer>&);
   };
 }
 #endif // EXPORT_SCAN_INTER_NETWORK_HPP

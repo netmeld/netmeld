@@ -78,7 +78,7 @@ namespace netmeld::playbook::export_scans {
   // Methods
   // ========================================================================
   void
-  SshAlgorithms::exportTemplate(auto& writer)
+  SshAlgorithms::exportTemplate(const auto& writer) const
   {
     std::vector<std::vector<std::string>> data {
       { "IP", "HOSTNAME", "TYPE", "GOOD", good },
@@ -97,7 +97,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  SshAlgorithms::exportFromDb(auto& writer, pqxx::result& records)
+  SshAlgorithms::exportFromDb(const auto& writer, pqxx::result& records)
   {
     pqxx::read_transaction t {db};
 
@@ -131,7 +131,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  SshAlgorithms::exportScan(std::unique_ptr<Writer>& writer)
+  SshAlgorithms::exportScan(const std::unique_ptr<Writer>& writer)
   {
     pqxx::read_transaction t {db};
     pqxx::result sourceRows

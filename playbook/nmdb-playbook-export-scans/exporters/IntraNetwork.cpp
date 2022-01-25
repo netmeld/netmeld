@@ -83,7 +83,7 @@ namespace netmeld::playbook::export_scans {
   // Methods
   // ========================================================================
   void
-  IntraNetwork::exportTemplate(auto& writer) const
+  IntraNetwork::exportTemplate(const auto& writer) const
   {
     std::vector<std::vector<std::string>> data {
       { "IP_01", "HOSTNAME", "NUM", "PROTO", "STATE", "REASON",
@@ -105,7 +105,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  IntraNetwork::exportFromDb(auto& writer, const std::string& srcIp)
+  IntraNetwork::exportFromDb(const auto& writer, const std::string& srcIp)
   {
     pqxx::read_transaction t {db};
     pqxx::result destinationRows
@@ -168,7 +168,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  IntraNetwork::exportScan(std::unique_ptr<Writer>& writer)
+  IntraNetwork::exportScan(const std::unique_ptr<Writer>& writer)
   {
     pqxx::read_transaction t {db};
 

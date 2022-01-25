@@ -56,7 +56,7 @@ namespace netmeld::playbook::export_scans {
   // Methods
   // ========================================================================
   void
-  Nessus::exportTemplate(auto& writer) const
+  Nessus::exportTemplate(const auto& writer) const
   {
     std::vector<std::vector<std::string>> data {
       { "ID_01", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
@@ -79,7 +79,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  Nessus::exportFromDb(auto& writer, pqxx::result& plugins)
+  Nessus::exportFromDb(const auto& writer, pqxx::result& plugins)
   {
     pqxx::read_transaction t {db};
 
@@ -114,7 +114,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  Nessus::exportScan(std::unique_ptr<Writer>& writer)
+  Nessus::exportScan(const std::unique_ptr<Writer>& writer)
   {
     pqxx::read_transaction t {db};
     pqxx::result sourceRows

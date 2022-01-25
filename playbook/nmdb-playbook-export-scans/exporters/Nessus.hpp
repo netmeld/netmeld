@@ -54,12 +54,12 @@ class Nessus : public ExportScan {
   // Methods
   // ========================================================================
   private: // Methods which should be hidden from API users
-    void exportTemplate(auto&) const;
-    void exportFromDb(auto&, pqxx::result&);
+    void exportTemplate(const auto&) const;
+    void exportFromDb(const auto&, pqxx::result&);
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
-    void exportScan(std::unique_ptr<Writer>& writer);
+    void exportScan(const std::unique_ptr<Writer>&);
 };
 }
 #endif // EXPORT_SCAN_NESSUS_HPP

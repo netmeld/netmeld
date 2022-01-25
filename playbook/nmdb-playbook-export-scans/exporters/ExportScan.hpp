@@ -69,7 +69,7 @@ namespace netmeld::playbook::export_scans {
         ) const;
 
     public: // Methods part of public API
-      virtual void exportScan(std::unique_ptr<Writer>&) = 0;
+      virtual void exportScan(const std::unique_ptr<Writer>&) = 0;
   };
 }
 #endif // EXPORT_SCAN_HPP
