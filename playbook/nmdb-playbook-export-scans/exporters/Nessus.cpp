@@ -127,7 +127,7 @@ namespace netmeld::playbook::export_scans {
       exportFromDb(writer, sourceRows);
     }
 
-    std::string filename {"nessus-scan-results.tex"};
+    std::string filename {"nessus-scan-results"};
 
     writer->writeData(filename, writer->getNessus());
     writer->clearData();

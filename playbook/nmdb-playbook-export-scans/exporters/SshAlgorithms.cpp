@@ -144,7 +144,7 @@ namespace netmeld::playbook::export_scans {
       exportFromDb(writer, sourceRows);
     }
 
-    std::string filename {"observed-ssh-algorithms.tex"};
+    std::string filename {"observed-ssh-algorithms"};
 
     writer->writeData(filename, writer->getSshAlgorithms());
     writer->clearData();
