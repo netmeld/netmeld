@@ -7,6 +7,8 @@ The tool will generate, by default, the output to STDOUT and place a
 header between data blobs (if multiple).  However, the tool also accepts
 the `--to-file` flag which will force it to put the data into files with
 pre-defined names.
+In the case no data resides in the datastore for the selected type, the
+tool will generate an example (no actual values) template instead.
 
 The tool currently supports creating reports of the following type:
 * Intra-network scan results
