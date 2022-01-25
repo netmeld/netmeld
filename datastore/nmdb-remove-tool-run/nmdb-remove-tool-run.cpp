@@ -38,7 +38,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 {
   public:
     Tool() : nmdt::AbstractDatastoreTool
-      ("Remove tool run and all accosiated data",
+      ("Remove tool run and all associated data",
        PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
