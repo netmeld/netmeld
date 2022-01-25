@@ -140,7 +140,7 @@ namespace netmeld::playbook::export_scans {
     std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
 
     codeSetup(oss);
-    
+
     // ConTeXt special characters
     std::vector<std::pair<std::regex, std::string>> patterns {
       // backslash replace
@@ -429,7 +429,7 @@ namespace netmeld::playbook::export_scans {
 {
   \startxtable[frame=off, split=yes, header=repeat, option={stretch,width}]
     \switchtobodyfont[7pt]
-    
+
     % table header
     \startxtablehead[topframe=on, bottomframe=on]
       \startmode[PortMark]
@@ -552,7 +552,7 @@ namespace netmeld::playbook::export_scans {
 {
   \startxtable[frame=off, split=yes, header=repeat, option={stretch,width}]
     \switchtobodyfont[7pt]
-    
+
     % table header
     \startxtablehead[topframe=on, bottomframe=on]
       \startmode[PortMark]

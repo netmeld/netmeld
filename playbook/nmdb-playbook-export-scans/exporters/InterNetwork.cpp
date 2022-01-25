@@ -32,7 +32,7 @@ namespace netmeld::playbook::export_scans {
   // ========================================================================
   InterNetwork::InterNetwork(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
-  { 
+  {
     db.prepare(
       "select_internetwork_scan_source",
       R"(

@@ -32,7 +32,7 @@ namespace netmeld::playbook::export_scans {
   // ========================================================================
   Nessus::Nessus(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
-  { 
+  {
     db.prepare(
       "select_nessus_plugins",
       R"(

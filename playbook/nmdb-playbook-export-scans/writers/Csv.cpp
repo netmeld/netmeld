@@ -57,7 +57,7 @@ namespace netmeld::playbook::export_scans {
           oss << ',';
         }
         first = false;
-        auto ccol {replaceAll(col, "\"", "\\\"")};
+        auto ccol {replaceAll(col, R"(")", R"(\")")};
         oss << '"' << ccol << '"';
       }
       oss << '\n';
@@ -114,7 +114,7 @@ namespace netmeld::playbook::export_scans {
   Csv::getNessus() const
   {
     std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
-    
+
     // add column headers
     oss << R"("Plugin ID",)"
         << R"("Severity",)"
@@ -125,7 +125,6 @@ namespace netmeld::playbook::export_scans {
         ;
 
     // add table rows
-    addRows(oss);
     for (const auto& row : rows) {
       size_t count {row.size()};
       for (size_t i {0}; i < 4; i++) {
@@ -147,6 +146,7 @@ namespace netmeld::playbook::export_scans {
         }
       }
       oss << '"';
+      oss << '\n';
     }
 
     return oss.str();

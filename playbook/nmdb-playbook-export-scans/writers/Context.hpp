@@ -54,10 +54,23 @@ namespace netmeld::playbook::export_scans {
     // Methods
     // ======================================================================
     private: // Methods which should be hidden from API users
-      void codeSetup(auto&) const;
-      void codeTeardown(auto&) const;
+    protected: // Methods part of subclass API
+      std::string getExtension() const override;
 
-      void codeTableClose(auto&) const;
+    public: // Methods part of public API
+      std::string getIntraNetwork(const std::string&) const override;
+      std::string getInterNetwork(const std::string&) const override;
+      std::string getNessus() const override;
+      std::string getSshAlgorithms() const override;
+
+
+    // NOTE: The following `code` prefixed functions are helpers solely to
+    //       separate the ConTeXt code from the logic.
+    private:
+      void codeSetup(auto&) const;    // setup a ConTeXt document
+      void codeTeardown(auto&) const; // close a ConTeXt document
+
+      void codeTableClose(auto&) const; // generic close a ConTeXt table
 
       void codeTableIntra(auto&, const auto&) const;
       void codeRowIntra(auto&,
@@ -80,15 +93,6 @@ namespace netmeld::playbook::export_scans {
           const auto&, const auto&, const auto&, const auto&, const auto&,
           const auto&, const auto&, const auto&
         ) const;
-
-    protected: // Methods part of subclass API
-      std::string getExtension() const override;
-
-    public: // Methods part of public API
-      std::string getIntraNetwork(const std::string&) const override;
-      std::string getInterNetwork(const std::string&) const override;
-      std::string getNessus() const override;
-      std::string getSshAlgorithms() const override;
   };
 }
 #endif // WRITER_CONTEXT_HPP

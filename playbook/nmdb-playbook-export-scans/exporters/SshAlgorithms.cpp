@@ -36,7 +36,7 @@ namespace netmeld::playbook::export_scans {
   // ========================================================================
   SshAlgorithms::SshAlgorithms(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
-  { 
+  {
     db.prepare(
       "select_ssh_algorithms",
       R"(

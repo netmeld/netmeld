@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -82,9 +82,9 @@ Writer::writeData(const std::string& filename, const std::string& data) const
   };
 
   if (toFile) {
-    LOG_DEBUG << "Writing to file: " << fullFilename << std::endl;
+    LOG_INFO << "Writing to file: " << fullFilename << std::endl;
     std::ofstream ofs
-      {filename, std::ios_base::binary | std::ios_base::trunc};
+      {fullFilename, std::ios_base::binary | std::ios_base::trunc};
 
     ofs << data << std::endl;
     ofs.close();
