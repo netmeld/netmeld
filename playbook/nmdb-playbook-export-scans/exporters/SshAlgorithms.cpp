@@ -81,15 +81,15 @@ namespace netmeld::playbook::export_scans {
   SshAlgorithms::exportTemplate(auto& writer)
   {
     std::vector<std::vector<std::string>> data {
-      { "IP","HOSTNAME", "TYPE","GOOD", good },
-      { "IP","HOSTNAME", "TYPE","NO_DETERMINATION", unk },
-      { "IP","HOSTNAME", "TYPE","BAD", bad },
-      { "IP_01","HOSTNAME", "TYPE_01","ALG_01", unk },
-      { "IP_02","HOSTNAME", "TYPE_01","ALG_01", unk },
-      { "IP_02","HOSTNAME", "TYPE_02","ALG_01", unk },
-      { "IP_02","HOSTNAME", "TYPE_02","ALG_02", unk },
-      { "IP_02","HOSTNAME", "TYPE_03","ALG_02", unk },
-      { "IP_03","HOSTNAME", "TYPE_03","ALG_02", unk },
+      { "IP", "HOSTNAME", "TYPE", "GOOD", good },
+      { "IP", "HOSTNAME", "TYPE", "NO_DETERMINATION", unk },
+      { "IP", "HOSTNAME", "TYPE", "BAD", bad },
+      { "IP_01", "HOSTNAME", "TYPE_01", "ALG_01", unk },
+      { "IP_02", "HOSTNAME", "TYPE_01", "ALG_01", unk },
+      { "IP_02", "HOSTNAME", "TYPE_02", "ALG_01", unk },
+      { "IP_02", "HOSTNAME", "TYPE_02", "ALG_02", unk },
+      { "IP_02", "HOSTNAME", "TYPE_03", "ALG_02", unk },
+      { "IP_03", "HOSTNAME", "TYPE_03", "ALG_02", unk },
     };
     for (const auto& entry : data) {
       writer->addRow(entry);

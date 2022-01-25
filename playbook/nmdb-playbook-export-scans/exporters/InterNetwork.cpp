@@ -84,23 +84,23 @@ namespace netmeld::playbook::export_scans {
   InterNetwork::exportTemplate(auto& writer)
   {
     std::vector<std::vector<std::string>> data {
-      { "RTR_IP_01","HOSTNAME", "DST_IP_01","HOSTNAME",
-        "NUM","PROTO", "STATE","REASON"
+      { "RTR_IP_01", "HOSTNAME", "DST_IP_01", "HOSTNAME",
+        "NUM", "PROTO", "STATE", "REASON"
       },
-      { "RTR_IP_02","HOSTNAME", "DST_IP_02","HOSTNAME",
-        "NUM","PROTO", "STATE","REASON"
+      { "RTR_IP_02", "HOSTNAME", "DST_IP_02", "HOSTNAME",
+        "NUM", "PROTO", "STATE", "REASON"
       },
-      { "RTR_IP_02","HOSTNAME", "DST_IP_03","HOSTNAME",
-        "NUM","PROTO", "STATE","REASON"
+      { "RTR_IP_02", "HOSTNAME", "DST_IP_03", "HOSTNAME",
+        "NUM", "PROTO", "STATE", "REASON"
       },
-      { "RTR_IP_03","HOSTNAME", "DST_IP_04","HOSTNAME",
-        "NUM","PROTO", "STATE","REASON"
+      { "RTR_IP_03", "HOSTNAME", "DST_IP_04", "HOSTNAME",
+        "NUM", "PROTO", "STATE", "REASON"
       },
-      { "RTR_IP_03","HOSTNAME", "DST_IP_04","HOSTNAME",
-        "NUM","PROTO", "STATE","REASON"
+      { "RTR_IP_03", "HOSTNAME", "DST_IP_04", "HOSTNAME",
+        "NUM", "PROTO", "STATE", "REASON"
       },
-      { "RTR_IP_04","HOSTNAME", "DST_IP_04","HOSTNAME",
-        "NUM","PROTO", "STATE","REASON"
+      { "RTR_IP_04", "HOSTNAME", "DST_IP_04", "HOSTNAME",
+        "NUM", "PROTO", "STATE", "REASON"
       },
     };
     for (const auto& entry : data) {
@@ -112,6 +112,7 @@ namespace netmeld::playbook::export_scans {
   InterNetwork::exportFromDb(auto& writer, std::string& srcIp)
   {
     pqxx::read_transaction t {db};
+
     pqxx::result routerRows
       {t.exec_prepared("select_internetwork_scan_router", srcIp)};
     for (const auto& routerRow : routerRows) {
@@ -162,28 +163,28 @@ namespace netmeld::playbook::export_scans {
   InterNetwork::exportScan(std::unique_ptr<Writer>& writer)
   {
     pqxx::read_transaction t {db};
+
     pqxx::result sourceRows
       {t.exec_prepared("select_internetwork_scan_source")};
     t.abort();
 
-    if (0 == sourceRows.size()) {
-      std::string srcIp {"IP/CIDR"};
-      exportTemplate(writer);
+    auto fWrite = [&](const std::string& srcIp) {
       writer->writeData(
-          "inter-network-from-" + srcIp,
-          writer->getInterNetwork(srcIp)
+        "inter-network-from-" + srcIp,
+        writer->getInterNetwork(srcIp)
       );
       writer->clearData();
+    };
+
+    std::string srcIp {"IP/CIDR"};
+    if (0 == sourceRows.size()) {
+      exportTemplate(writer);
+      fWrite(srcIp);
     } else {
       for (const auto& sourceRow : sourceRows) {
-        std::string srcIp;
         sourceRow.at("src_ip_addr").to(srcIp);
         exportFromDb(writer, srcIp);
-        writer->writeData(
-            "inter-network-from-" + srcIp,
-            writer->getInterNetwork(srcIp)
-        );
-        writer->clearData();
+        fWrite(srcIp);
       }
     }
   }

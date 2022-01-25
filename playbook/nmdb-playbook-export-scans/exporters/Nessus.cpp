@@ -59,18 +59,18 @@ namespace netmeld::playbook::export_scans {
   Nessus::exportTemplate(auto& writer) const
   {
     std::vector<std::vector<std::string>> data {
-      { "ID_01","HIGH", "PLUGIN_NAME","DESCRIPTION",
-        "IP_01","HOSTNAME",
+      { "ID_01", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME",
       },
-      { "ID_02","HIGH", "PLUGIN_NAME","DESCRIPTION",
-        "IP_01","HOSTNAME", "IP_02","HOSTNAME",
-        "IP_03","HOSTNAME", "IP_04","HOSTNAME",
+      { "ID_02", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
+        "IP_03", "HOSTNAME", "IP_04", "HOSTNAME",
       },
-      { "ID_03","MODERATE", "PLUGIN_NAME","DESCRIPTION",
-        "IP_01","HOSTNAME", "IP_02","HOSTNAME",
+      { "ID_03", "MODERATE", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
       },
-      { "ID_04","LOW", "PLUGIN_NAME","DESCRIPTION",
-        "IP_01","HOSTNAME",
+      { "ID_04", "LOW", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME",
       },
     };
     for (const auto& entry : data) {

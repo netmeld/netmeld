@@ -86,17 +86,17 @@ namespace netmeld::playbook::export_scans {
   IntraNetwork::exportTemplate(auto& writer) const
   {
     std::vector<std::vector<std::string>> data {
-      { "IP_01","HOSTNAME", "NUM","PROTO", "STATE","REASON",
-        "NAME","DESCRIPTION"
+      { "IP_01", "HOSTNAME", "NUM", "PROTO", "STATE", "REASON",
+        "NAME", "DESCRIPTION"
       },
-      { "IP_02","HOSTNAME", "NUM","PROTO", "STATE","REASON",
-        "NAME","DESCRIPTION"
+      { "IP_02", "HOSTNAME", "NUM", "PROTO", "STATE", "REASON",
+        "NAME", "DESCRIPTION"
       },
-      { "IP_02","HOSTNAME", "NUM","PROTO", "STATE","REASON",
-        "NAME","DESCRIPTION"
+      { "IP_02", "HOSTNAME", "NUM", "PROTO", "STATE", "REASON",
+        "NAME", "DESCRIPTION"
       },
-      { "IP_03","HOSTNAME", "NUM","PROTO", "STATE","REASON",
-        "NAME","DESCRIPTION"
+      { "IP_03", "HOSTNAME", "NUM", "PROTO", "STATE", "REASON",
+        "NAME", "DESCRIPTION"
       },
     };
     for (const auto& entry : data) {
@@ -171,28 +171,28 @@ namespace netmeld::playbook::export_scans {
   IntraNetwork::exportScan(std::unique_ptr<Writer>& writer)
   {
     pqxx::read_transaction t {db};
+
     pqxx::result sourceRows
       {t.exec_prepared("select_intranetwork_scan_source")};
     t.abort();
 
-    if (0 == sourceRows.size()) {
-      std::string srcIp {"IP/CIDR"};
-      exportTemplate(writer);
+    auto fWrite = [&](const std::string& srcIp) {
       writer->writeData(
-          "intra-network-from-" + srcIp,
-          writer->getIntraNetwork(srcIp)
+        "intra-network-from-" + srcIp,
+        writer->getIntraNetwork(srcIp)
       );
       writer->clearData();
+    };
+
+    std::string srcIp {"IP/CIDR"};
+    if (0 == sourceRows.size()) {
+      exportTemplate(writer);
+      fWrite(srcIp);
     } else {
       for (const auto& sourceRow : sourceRows) {
-        std::string srcIp;
         sourceRow.at("src_ip_addr").to(srcIp);
         exportFromDb(writer, srcIp);
-        writer->writeData(
-            "intra-network-from-" + srcIp,
-            writer->getIntraNetwork(srcIp)
-        );
-        writer->clearData();
+        fWrite(srcIp);
       }
     }
   }

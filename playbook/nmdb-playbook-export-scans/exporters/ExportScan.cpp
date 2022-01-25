@@ -61,17 +61,16 @@ namespace netmeld::playbook::export_scans {
         // do nothing
         break;
       }
-      case 1:
-      {
-        nameRows.begin().at("device_id").to(name);
-        break;
-      }
       default:
       {
         LOG_WARN << "Query `select_network_scan_name`"
                  << " returned more than one row"
                  << " (" << count << ")."
                  << std::endl;
+        [[fallthrough]];
+      }
+      case 1:
+      {
         nameRows.begin().at("device_id").to(name);
         break;
       }
