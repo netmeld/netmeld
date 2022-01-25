@@ -1,17 +1,22 @@
 DESCRIPTION
 ===========
 
-This export tool is provided as a convenience to export scan results in a
-predefined `ConTeXt` format, typically leveraged during assessment
-reporting.
+This export tool is provided as a convenience to export common scan results
+in a formats, typically leveraged during assessment reporting.
+The tool will generate, by default, the output to STDOUT and place a
+header between data blobs (if multiple).  However, the tool also accepts
+the `--to-file` flag which will force it to put the data into files with
+pre-defined names.
 
-The command `nmdb-playbook-export-scans` currently supports creating reports
-of the following type:
+The tool currently supports creating reports of the following type:
 * Intra-network scan results
 * Inter-network scan results
 * SSH enabled algorithm results
 * Nessus scan results
 
+The tool currently supports creating reports in the following formats:
+* `ConTeXt`
+* CSV
 
 EXAMPLES
 ========
@@ -31,5 +36,10 @@ nmdb-playbook-export-scans --intra-network --nessus
 Generate `ConTeXt` page information to files for any intra-network and Nessus
 scan information contained in the data store (pre-defined file names).
 ```
-nmdb-playbook-export-scans --intra-network --nessus --toFile
+nmdb-playbook-export-scans --intra-network --nessus --to-file
+```
+
+Generate the same as prior, but to CSV format.
+```
+nmdb-playbook-export-scans --intra-network --nessus --to-file --out-format csv
 ```

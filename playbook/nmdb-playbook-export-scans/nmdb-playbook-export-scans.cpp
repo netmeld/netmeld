@@ -70,7 +70,7 @@ class Tool : public nmdt::AbstractExportTool
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractExportTool
-      ("predefined ConTeXt formatted scan results",
+      ("scan results in targeted formats",
        PROGRAM_NAME,
        PROGRAM_VERSION)
     {}
@@ -112,7 +112,7 @@ class Tool : public nmdt::AbstractExportTool
       opts.addOptionalOption("to-file", std::make_tuple(
             "to-file",
             NULL_SEMANTIC,
-            "Output to file (predefined naming) instead of stdout")
+            "Output to file (predefined naming) instead of STDOUT")
           );
     }
 
