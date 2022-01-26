@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -24,45 +24,13 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-set(MODULE_VERSION "2.0")
-
-target_as_library(common)
-
-foreach(ITEM
-    #general-tool-template
-    nmdb-convert-acls
-    nmdb-initialize
-    nmdb-remove-tool-run
-    nmdb-analyze-data
+add_executable(${TGT_TOOL}
+    ${TGT_TOOL}.cpp
   )
-  target_as_tool(${ITEM})
-endforeach()
 
-foreach(ITEM
-    exporters
-    graphers
-    importers
-    inserters
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+    ${YAML_CPP_LIBRARIES}
   )
-  target_as_module(${ITEM})
-endforeach()
 
-
-# ----------------------------------------------------------------------
-# Deb Creation
-# ----------------------------------------------------------------------
-set(desc "This package provides the Datastore module for the Netmeld \
-tool suite.  Included are the library and headers necessary to run \
-or expand capabilities through tool development, as well as the \
-binaries necessary to instantiate and manage a data store compatible \
-with the Netmeld tool suite.")
-nm_add_deb_description(${desc})
-set(deps "netmeld-core, \
-libc6 (>= 2.4), libgcc-s1 (>= 3.0), libpqxx-6.4 (>= 6.4), libstdc++6 (>= 9), \
-nlohmann-json3-dev (>= 3.9)")
-nm_add_deb_depends(${deps})
-set(deps "postgresql (>= 11), postgresql-client (>= 11)")
-nm_add_deb_recommends(${deps})
-set(deps "postgresql-contrib (>= 11), postgresql-autodoc (>= 11)")
-nm_add_deb_suggests(${deps})
-nm_add_deb_control_data(debian-control)
+nm_install_bin(${TGT_TOOL})

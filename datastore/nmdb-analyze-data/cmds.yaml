@@ -1,0 +1,22 @@
+procedures:
+- name: simple `ls`
+  cmds: ls
+- name: error cmd
+  cmds: ls /root
+- name: cmd "single line"
+  cmds:
+    whoami;
+    pwd;
+- name: cmd chain
+  cmds:
+  - whoami;
+  - pwd;
+- name: Datastore query
+  cmds:
+    psql "{{dbConnectString}}" -A -c "
+      SELECT
+        category, observation, tool_name, data_path
+      FROM tool_observations
+      ORDER BY 1,2,3,4
+      "
+    | head -n 5
