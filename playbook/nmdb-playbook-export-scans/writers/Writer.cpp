@@ -24,50 +24,72 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef WRITER_CONTEXT_HPP
-#define WRITER_CONTEXT_HPP
+#include <regex>
+#include <ostream>
+#include <fstream>
+#include <sstream>
 
-#include <string>
-#include <vector>
+#include <netmeld/core/utils/LoggerSingleton.hpp>
+
+#include "Writer.hpp"
 
 // =============================================================================
-// Primary object
+// Constructors
 // =============================================================================
-class WriterContext {
-  // =========================================================================
-  // Variables
-  // =========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-    std::vector<std::vector<std::string>> rows;
+Writer::Writer(bool _toFile) :
+  toFile(_toFile)
+{}
 
-  public: // Variables should rarely appear at this scope
 
-  // =========================================================================
-  // Constructors
-  // =========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    WriterContext();
+// =============================================================================
+// Methods
+// =============================================================================
+void
+Writer::addRow(const std::vector<std::string>& _row)
+{
+  rows.push_back(_row);
+}
 
-  // =========================================================================
-  // Methods
-  // =========================================================================
-  private: // Methods which should be hidden from API users
-    std::string addContextSetup() const;
-    std::string addContextTeardown() const;
+void
+Writer::clearData()
+{
+  rows.clear();
+}
 
-  protected: // Methods part of subclass API
-    std::string replaceAll(const std::string&, std::string, std::string) const;
+std::string
+Writer::replaceAll(
+    const std::string& source, const std::string& from, const std::string& to
+  ) const
+{
+  std::string str {source};
+  for (auto pos {str.find(from)};
+       pos != std::string::npos;
+       pos = str.find(from, pos))
+  {
+    str.replace(pos, from.length(), to);
+    pos += to.length();
+  }
 
-  public: // Methods part of public API
-    void addRow(std::vector<std::string>);
+  return str;
+}
 
-    std::string writeIntraNetwork(const std::string&) const;
-    std::string writeInterNetwork(const std::string&) const;
-    std::string writeNessus() const;
-    std::string writeSshAlgorithms() const;
-};
+void
+Writer::writeData(const std::string& filename, const std::string& data) const
+{
+  std::regex bs {"/"};
+  auto fullFilename {
+    std::regex_replace(filename, bs, "_") + getExtension()
+  };
 
-#endif // WRITER_CONTEXT_HPP
+  if (toFile) {
+    LOG_INFO << "Writing to file: " << fullFilename << std::endl;
+    std::ofstream ofs
+      {fullFilename, std::ios_base::binary | std::ios_base::trunc};
+
+    ofs << data << std::endl;
+    ofs.close();
+  } else {
+    LOG_INFO << "---START OF " << fullFilename << "---" << std::endl
+             << data << std::endl;
+  }
+}
