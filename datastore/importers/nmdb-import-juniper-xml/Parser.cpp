@@ -37,6 +37,8 @@
 #include <boost/lexical_cast.hpp>
 #include <cctype>
 #include <regex>
+#include <algorithm>
+#include <iterator>
 
 extern "C" {
 #include <netdb.h>
@@ -571,10 +573,14 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
   for (const auto& applicationMatch :
        applicationsNode.select_nodes("application[not(@inactive='inactive')]")) {
     const pugi::xml_node applicationNode{applicationMatch.node()};
-    for (const auto& aclService :
-         parseConfigApplicationOrTerm(applicationNode)) {
-      aclServices.emplace_back(aclService);
-    }
+
+    auto aclServicesToAdd =
+        parseConfigApplicationOrTerm(applicationNode);
+    std::copy(
+        aclServicesToAdd.begin(),
+        aclServicesToAdd.end(), 
+        std::back_inserter(aclServices)
+        );
   }
 
   for (const auto& applicationSetMatch :
@@ -694,9 +700,12 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
        policiesNode.select_nodes(
          "policy[not(@inactive='inactive')]/policy[not(@inactive='inactive')]")) {
     const pugi::xml_node policyNode{policyMatch.node()};
-    for (auto& aclRule : parseConfigPolicy(policyNode, ruleId)) {
-      aclRules.emplace_back(aclRule);
-    }
+    auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
+    std::copy(
+        aclRulesToAdd.begin(),
+        aclRulesToAdd.end(), 
+        std::back_inserter(aclRules)
+        );
     ++ruleId;
   }
 
@@ -704,9 +713,12 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
   for (const auto& policyMatch :
        policiesNode.select_nodes("global/policy[not(@inactive='inactive')]")) {
     const pugi::xml_node policyNode{policyMatch.node()};
-    for (auto& aclRule : parseConfigPolicy(policyNode, ruleId)) {
-      aclRules.emplace_back(aclRule);
-    }
+    auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
+    std::copy(
+        aclRulesToAdd.begin(),
+        aclRulesToAdd.end(), 
+        std::back_inserter(aclRules)
+        );
     ++ruleId;
   }
 
@@ -724,53 +736,55 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
   };
 
   std::vector<std::string> incomingZoneIds;
-  for (const auto& incomingZoneMatch :
-       policyNode.select_nodes
+
+  const auto &incomingZoneNodes = policyNode.select_nodes
        ("(../from-zone-name[not(@inactive='inactive')])|"
-        "(match[not(@inactive='inactive')]/from-zone[not(@inactive='inactive')])")) {
-    incomingZoneIds.emplace_back(incomingZoneMatch.node().text().as_string());
-  }
+        "(match[not(@inactive='inactive')]/from-zone[not(@inactive='inactive')])");
+  std::transform(incomingZoneNodes.begin(), incomingZoneNodes.end(),
+      std::back_inserter(incomingZoneIds),
+      [](auto& incomingZoneMatch){return incomingZoneMatch.node().text().as_string();});
   if (incomingZoneIds.empty()) {
     incomingZoneIds.emplace_back("any");
   }
 
   std::vector<std::string> outgoingZoneIds;
-  for (const auto& outgoingZoneMatch :
-       policyNode.select_nodes
+  const auto &outgoingZoneNodes = policyNode.select_nodes
        ("(../to-zone-name[not(@inactive='inactive')])|"
-        "(match[not(@inactive='inactive')]/to-zone[not(@inactive='inactive')])")) {
-    outgoingZoneIds.emplace_back(outgoingZoneMatch.node().text().as_string());
-  }
+        "(match[not(@inactive='inactive')]/to-zone[not(@inactive='inactive')])");
+  std::transform(outgoingZoneNodes.begin(), outgoingZoneNodes.end(),
+      std::back_inserter(outgoingZoneIds),
+      [](auto& outgoingZoneMatch){return outgoingZoneMatch.node().text().as_string();});
   if (outgoingZoneIds.empty()) {
     outgoingZoneIds.emplace_back("any");
   }
 
   std::vector<std::string> srcIpNetSetIds;
-  for (const auto& srcAddressMatch :
-       policyNode.select_nodes(
-         "match[not(@inactive='inactive')]/source-address[not(@inactive='inactive')]")) {
-    srcIpNetSetIds.emplace_back(srcAddressMatch.node().text().as_string());
-  }
+  const auto &srcAddressNodes = policyNode.select_nodes(
+      "match[not(@inactive='inactive')]/source-address[not(@inactive='inactive')]");
+  std::transform(srcAddressNodes.begin(), srcAddressNodes.end(),
+      std::back_inserter(srcIpNetSetIds),
+      [](auto& srcAddressMatch){return srcAddressMatch.node().text().as_string();});
   if (srcIpNetSetIds.empty()) {
     srcIpNetSetIds.emplace_back("any");
   }
 
   std::vector<std::string> dstIpNetSetIds;
-  for (const auto& dstAddressMatch :
-       policyNode.select_nodes(
-         "match[not(@inactive='inactive')]/destination-address[not(@inactive='inactive')]")) {
-    dstIpNetSetIds.emplace_back(dstAddressMatch.node().text().as_string());
-  }
+  const auto &dstAddressNodes = policyNode.select_nodes(
+         "match[not(@inactive='inactive')]/destination-address[not(@inactive='inactive')]");
+  std::transform(dstAddressNodes.begin(), dstAddressNodes.end(),
+      std::back_inserter(dstIpNetSetIds),
+      [](auto& dstAddressMatch){return dstAddressMatch.node().text().as_string();});
   if (dstIpNetSetIds.empty()) {
     dstIpNetSetIds.emplace_back("any");
   }
 
   std::vector<std::string> serviceIds;
-  for (const auto& applicationMatch :
-       policyNode.select_nodes(
-         "match[not(@inactive='inactive')]/application[not(@inactive='inactive')]")) {
-    serviceIds.emplace_back(applicationMatch.node().text().as_string());
-  }
+  const auto &serviceIdNodes = policyNode.select_nodes(
+         "match[not(@inactive='inactive')]/application[not(@inactive='inactive')]");
+  std::transform(serviceIdNodes.begin(), serviceIdNodes.end(),
+      std::back_inserter(serviceIds),
+      [](auto& serviceIdMatch){return serviceIdMatch.node().text().as_string();});
+
   if (serviceIds.empty()) {
     serviceIds.emplace_back("any");
   }
