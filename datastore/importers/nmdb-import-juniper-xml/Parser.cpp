@@ -798,7 +798,7 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
       else if (incomingZoneId != outgoingZoneId) {
         ruleIdBase = 3000000;  // Inter-Zone Policies
       }
-      else if (incomingZoneId == outgoingZoneId) {
+      else {
         ruleIdBase = 2000000;  // Intra-Zone Policies
       }
       for (const auto& srcIpNetSetId : srcIpNetSetIds) {
