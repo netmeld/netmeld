@@ -97,9 +97,9 @@ class Tool : public nmdt::AbstractDatastoreTool
       for (const auto& yProcedure : yProcedures) {
         // get procedure name
         const auto& name {yProcedure["name"].as<std::string>()};
-        // build command chaina
-        const auto& yCmds {yProcedure["cmds"]};
 
+        // build command chain
+        const auto& yCmds {yProcedure["cmds"]};
         std::ostringstream oss;
         if (yCmds.IsScalar()) {
           oss << yCmds.as<std::string>();
@@ -109,22 +109,25 @@ class Tool : public nmdt::AbstractDatastoreTool
           }
         }
 
+        // do command chain variable substitution
         const auto cmds {regexReplace(oss.str())};
 
-        LOG_INFO << "[*] Start of: `" << name << "`\n";
-        LOG_INFO << "[*] Executing: `" << cmds << "`\n";
+        LOG_INFO << "# Start -- " << name << '\n'
+                 << "# Executing: `" << cmds << "`\n";
 
+        // exec commands
         bool exec {true};
         if (exec) {
-          LOG_INFO << "[*] Results:\n";
+          LOG_INFO << "# Results:\n"
+                   << std::flush;
           int success {nmcu::cmdExecOrExit(cmds)};
           if (0 == success) {
             ++successes;
           }
         }
-        LOG_INFO << "[*] End of: `" << name << "`\n";
+        LOG_INFO << "# End -- " << name << "\n\n";
       }
-      LOG_INFO << "[*] Successes: "
+      LOG_INFO << "# Success counts: "
                << successes << '/' << totalProcedures
                << '\n';
     }

@@ -1,8 +1,11 @@
 procedures:
+# Examples for logic testing
 - name: simple `ls`
   cmds: ls
 - name: error cmd
   cmds: ls /root
+- name: # empty name
+  cmds: # empty cmds
 - name: cmd "single line"
   cmds:
     whoami;
@@ -11,12 +14,70 @@ procedures:
   cmds:
   - whoami;
   - pwd;
-- name: Datastore query
+- name: Datastore query (get responding IPs and Hostnames)
   cmds:
     psql "{{dbConnectString}}" -A -c "
+      SELECT * FROM ip_addrs LIMIT 5
+    "
+
+# Examples of sample queries
+- name: List Netmeld known observations
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
       SELECT
-        category, observation, tool_name, data_path
+        category, COUNT(data_path) AS counts, observation, tool_name
       FROM tool_observations
-      ORDER BY 1,2,3,4
-      "
-    | head -n 5
+      GROUP BY category, observation, tool_name
+      ORDER BY category, counts DESC, observation, tool_name
+    "
+- name: List responding IPs and Hostnames
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        via.ip_addr, string_agg(DISTINCT vh.hostname, ', ') AS hostnames
+      FROM ip_addrs AS via
+      LEFT JOIN (SELECT * FROM hostnames) AS vh
+        ON via.ip_addr = vh.ip_addr
+      WHERE via.is_responding = 't'
+      GROUP BY via.ip_addr
+      ORDER BY via.ip_addr;
+    "
+- name: List devices using VLAN 1 (probably native VLAN)
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        *
+      FROM device_interfaces_vlans
+      WHERE vlan = '1'
+        AND NOT (interface_name = '0' OR interface_name = 'cpu')
+    "
+- name: List devices with IPs using VLAN 1 (probably native VLAN)
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        dia.device_id, dia.interface_name, dia.ip_addr, dia.ip_net
+        , diav.vlan
+      FROM device_ip_addrs AS dia
+      JOIN (SELECT * FROM device_interfaces_vlans WHERE vlan = '1') AS diav
+        ON dia.device_id = diav.device_id
+        AND dia.interface_name = diav.interface_name;
+    "
+- name: List devices where Metasploit modules may be usable
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        ip_addr, protocol, port
+        , json_agg(distinct metasploit_name) metasploit_names
+      FROM nessus_results_metasploit_modules
+      GROUP BY ip_addr, protocol, port
+    "
+- name: NSE results by script ID
+  cmds:
+  - |
+    scripts=$(psql "{{dbConnectString}}" -A -t -c "SELECT DISTINCT script_id FROM nse_results");
+    echo "Recorded script IDs:\n$scripts";
+    for script in $scripts; do
+      echo "Results for NSE id: $script\n---";
+      psql "{{dbConnectString}}" -A -c "SELECT * FROM nse_results WHERE script_id = '$script' ORDER BY ip_addr, port, protocol, script_id";
+      echo "---";
+    done;

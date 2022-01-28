@@ -26,6 +26,7 @@
 
 add_executable(${TGT_TOOL}
     ${TGT_TOOL}.cpp
+#    GeneralObject.cpp
   )
 
 target_link_libraries(${TGT_TOOL}
@@ -34,3 +35,4 @@ target_link_libraries(${TGT_TOOL}
   )
 
 nm_install_bin(${TGT_TOOL})
+#nm_install_include(file dir)
