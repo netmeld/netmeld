@@ -442,7 +442,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         std::vector<std::string> serviceParts;
         boost::split(serviceParts, serviceData, boost::is_any_of(":"));
 
-        std::string protocol = serviceParts.at(0);
+        std::string serviceProtocol = serviceParts.at(0);
         std::string srcPortData;
         std::string dstPortData;
         if (3 <= serviceParts.size()) {
@@ -451,32 +451,32 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         std::vector<std::string> protocols;
-        if ("tcp-udp" == protocol) {
+        if ("tcp-udp" == serviceProtocol) {
           protocols.push_back("tcp");
           protocols.push_back("udp");
         }
-        else if (("tcp-ms-rpc" == protocol) || ("tcp-sun-rpc" == protocol)) {
+        else if (("tcp-ms-rpc" == serviceProtocol) || ("tcp-sun-rpc" == serviceProtocol)) {
           protocols.push_back("tcp");
         }
-        else if (("udp-ms-rpc" == protocol) || ("udp-sun-rpc" == protocol)) {
+        else if (("udp-ms-rpc" == serviceProtocol) || ("udp-sun-rpc" == serviceProtocol)) {
           protocols.push_back("udp");
         }
-        else if (!protocol.empty() && std::isdigit(protocol.at(0))) {
+        else if (!serviceProtocol.empty() && std::isdigit(serviceProtocol.at(0))) {
           try {
-            // If the protocol is a numeric string, look up the corresponding protocol name.
-            const int protoNumber{boost::lexical_cast<int>(protocol)};
+            // If the serviceProtocol is a numeric string, look up the corresponding protocol name.
+            const int protoNumber{boost::lexical_cast<int>(serviceProtocol)};
             const protoent* protoEntity{getprotobynumber(protoNumber)};
             if (protoEntity) {
               protocols.push_back(protoEntity->p_name);
             }
           }
           catch (boost::bad_lexical_cast&) {
-            // Consume the exception and continue with the non-numeric protocol string.
-            protocols.push_back(protocol);
+            // Consume the exception and continue with the non-numeric serviceProtocol string.
+            protocols.push_back(serviceProtocol);
           }
         }
         else {
-          protocols.push_back(protocol);
+          protocols.push_back(serviceProtocol);
         }
 
         auto const srcPortRange = convertToPortRange(srcPortData);
