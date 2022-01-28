@@ -182,7 +182,7 @@ template<typename Iter>
 void
 Parser<Iter>::setPacketData(const std::string& _key, const std::string& _val)
 {
-  if (0 == _key.find("\"dns.")) {
+  if (_key.starts_with("\"dns.")) {
     if (dnsRespName == _key) {
       tempDnsRespName = _val;
     } else {
@@ -204,7 +204,7 @@ Parser<Iter>::setPacketData(const std::string& _key, const std::string& _val)
       }
     }
     pd[_key] = _val;
-  } else if (   0 == _key.find("\"vlan.")
+  } else if (_key.starts_with("\"vlan.")
              || bootpOptionDomainNameServer == _key
              || bootpOptionTftpServerAddress == _key
             )
