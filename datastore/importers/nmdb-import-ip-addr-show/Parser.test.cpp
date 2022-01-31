@@ -37,7 +37,8 @@ namespace nmdp = netmeld::datastore::parsers;
 
 using qi::ascii::blank;
 
-class TestParser : public Parser {
+class TestParser : public Parser
+{
   public:
     using Parser::iface;
     using Parser::inetLine;
