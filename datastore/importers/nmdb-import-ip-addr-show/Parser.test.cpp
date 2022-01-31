@@ -115,48 +115,48 @@ BOOST_AUTO_TEST_CASE(testRules)
   }
 
   {
-      const auto& parserRule {tp.iface};
-      // OK
-      std::vector<std::string> testsOk {
-        {R"(1: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-                link/ether 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff
-                altname enp2s1
-                inet 1.1.1.1/24 scope global ens33
-                   valid_lft forever preferred_lft forever
-                inet6 fe80::1:1111:1:1/64 scope link 
-                   valid_lft forever preferred_lft forever
+    const auto& parserRule {tp.iface};
+    // OK
+    std::vector<std::string> testsOk {
+      {R"(1: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+              link/ether 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff
+              altname enp2s1
+              inet 1.1.1.1/24 scope global ens33
+                 valid_lft forever preferred_lft forever
+              inet6 fe80::1:1111:1:1/64 scope link 
+                 valid_lft forever preferred_lft forever
 )"},
-        {R"(255: t0: flags mtu 1 tokens
-                link/type 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff opt tokens
-                altname name1
-                altname name2
-                inet 1.1.1.1/24 scope host
-                inet 2.2.2.2/24 scope host
-                inet 3.3.3.3/24 scope host
+      {R"(255: t0: flags mtu 1 tokens
+              link/type 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff opt tokens
+              altname name1
+              altname name2
+              inet 1.1.1.1/24 scope host
+              inet 2.2.2.2/24 scope host
+              inet 3.3.3.3/24 scope host
 )"},
-        {R"(255: t0: flags mtu 1
-                link/type
+      {R"(255: t0: flags mtu 1
+              link/type
 )"},
-        {R"(255: t0: flags mtu 1
-                link/type brd ff:ff:ff:ff:ff:ff
+      {R"(255: t0: flags mtu 1
+              link/type brd ff:ff:ff:ff:ff:ff
 )"},
-        {R"(255: t0: flags mtu 1
-                link/type brd ff:ff:ff:ff:ff:ff opt tokens
+      {R"(255: t0: flags mtu 1
+              link/type brd ff:ff:ff:ff:ff:ff opt tokens
 )"},
-        {R"(255: t0: flags mtu 1
-                link/type
-                altname name1
+      {R"(255: t0: flags mtu 1
+              link/type
+              altname name1
 )"},
-        {R"(255: t0: flags mtu 1
-                link/type
-                inet 1.1.1.1/24 scope host
+      {R"(255: t0: flags mtu 1
+              link/type
+              inet 1.1.1.1/24 scope host
 )"},
-      };
-      for (const auto& test : testsOk) {
-        nmdo::Interface out;
-        BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-                   "Parse rule 'inetLine': " << test);
-        BOOST_TEST(out.isValid());
-      }
+    };
+    for (const auto& test : testsOk) {
+      nmdo::Interface out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                 "Parse rule 'inetLine': " << test);
+      BOOST_TEST(out.isValid());
+    }
   }
 }
