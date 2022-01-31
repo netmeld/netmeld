@@ -59,7 +59,7 @@ templates:
     - title: nmap IPv4 router reachablility
       cmd: clw nmap
       opts: &opts-nmap-router-reachability
-      - -n -sn -e {{linkName}} {{rtrIpAddr}}
+      - -d -n -sn -e {{linkName}} {{rtrIpAddr}}
       - 2>&1 | grep 'Host is up'
     ipv6:
     - title: nmap IPv6 router reachability
@@ -218,7 +218,7 @@ intra-network:
         - title: nmap IPv4 ARP host discovery
           cmd: clw nmap
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sn
           - --script '(ip-forwarding)'
           - "{{ipNet}}"
@@ -227,7 +227,7 @@ intra-network:
         - title: nmap IPv4 IP protocol scan
           cmd: clw nmap
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sO
           - "{{ipNet}}"
           - --excludefile
@@ -236,7 +236,7 @@ intra-network:
         - title: nmap IPv6 ARP host discovery
           cmd: clw nmap -6
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sn
           - --script
             '(ip-forwarding) or (targets-ipv6-* or ipv6-node-info)'
@@ -247,7 +247,7 @@ intra-network:
         - title: nmap IPv6 IP protocol scan
           cmd: clw nmap -6
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sO
           - --script '(targets-ipv6-* or ipv6-node-info)'
           - --script-args 'newtargets'
@@ -260,7 +260,7 @@ intra-network:
         - title: nmap IPv4 DNS lookup, default resolver
           cmd: clw nmap
           opts: &opts-nmap-ipv4-dns-intra
-          - -T4 -R -e {{linkName}} -sL --resolve-all
+          - -d -T4 -R -e {{linkName}} -sL --resolve-all
           - "{{ipNet}}"
           - --excludefile
           - *path-roe-exclude-ips
@@ -275,7 +275,8 @@ intra-network:
         - title: nmap IPv4 TCP port scan
           cmd: clw nmap
           opts: &opts-nmap-ipv4-tcp-port-scan
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
+          - --host-timeout 30m --script-timeout 5m
           - -Pn -O --script
             '(banner or dns-nsid or ntp-info or rpcinfo
               or ssh-hostkey or ssh2-enum-algos or ssl-cert
@@ -289,7 +290,8 @@ intra-network:
         - title: nmap IPv4 UDP port scan
           cmd: clw nmap
           opts: &opts-nmap-ipv4-udp-port-scan
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
+          - --host-timeout 30m --script-timeout 2m
           - -Pn -O --script
             '(banner or dns-nsid or ntp-info or rpcinfo
               or ssh-hostkey or ssh2-enum-algos or ssl-cert
@@ -312,7 +314,8 @@ intra-network:
         - title: nmap IPv4 TCP service scan
           cmd: clw nmap
           opts: &opts-nmap-ipv4-tcp-service-scan
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
+          - --host-timeout 30m --script-timeout 10m
           - -A --script
             '((default or discovery) and not (external or brute or dos))'
           - -sS -p `nmdb-export-port-list --from-db --tcp`
@@ -331,7 +334,7 @@ intra-network:
         - title: nmap IPv4 DNS lookup, via open port 53
           cmd: clw nmap
           opts: &opts-nmap-dns-scan-intra
-          - -T4 -R -e {{linkName}} -sL --resolve-all
+          - -d -T4 -R -e {{linkName}} -sL --resolve-all
           - --dns-servers
           - $(cat
           - *path-possible-dns-servers
@@ -358,7 +361,7 @@ inter-network:
         - title: nmap IPv4 ICMP host discovery
           cmd: clw nmap
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sn
           - -PE
           - -PP # ICMP Timestamp; not valid for IPv6
@@ -370,7 +373,7 @@ inter-network:
         - title: nmap IPv4 port discovery
           cmd: clw nmap
           opts: &opts-nmap-ipv4-port-discovery
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sn
           - "-PS\
             21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,\
@@ -398,7 +401,7 @@ inter-network:
         - title: nmap IPv4 IP protocol scan
           cmd: clw nmap
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sO
           - -iL
           - *path-roe-include-ips
@@ -408,7 +411,7 @@ inter-network:
         - title: nmap IPv6 ICMP host discovery
           cmd: clw nmap -6
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sn
           - -PE
           - -iL
@@ -421,7 +424,7 @@ inter-network:
         - title: nmap IPv6 IP protocol scan
           cmd: clw nmap -6
           opts:
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
           - -sO
           - --script '(targets-ipv6-* or ipv6-node-info)'
             --script-args 'newtargets'
@@ -435,7 +438,7 @@ inter-network:
         - title: nmap IPv4 DNS lookup, default resolver
           cmd: clw nmap
           opts: &opts-nmap-ipv4-dns-intra
-          - -T4 -R -e {{linkName}} -sL --resolve-all
+          - -d -T4 -R -e {{linkName}} -sL --resolve-all
           - -iL
           - *path-roe-include-ips
           - --excludefile
@@ -451,7 +454,8 @@ inter-network:
         - title: nmap IPv4 TCP port scan
           cmd: clw nmap
           opts: &inter-opts-nmap-ipv4-tcp-port-scan
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
+          - --host-timeout 30m --script-timeout 5m
           - -Pn -O
           - --script
             '(banner or dns-nsid or ntp-info or rpcinfo
@@ -466,7 +470,8 @@ inter-network:
         - title: nmap IPv4 UDP port scan
           cmd: clw nmap
           opts: &inter-opts-nmap-ipv4-udp-port-scan
-          - -T4 -n -e {{linkName}} -PR
+          - -d -T4 -n -e {{linkName}} -PR
+          - --host-timeout 30m --script-timeout 2m
           - -Pn -O
           - --script
             '(banner or dns-nsid or ntp-info or rpcinfo
@@ -480,7 +485,7 @@ inter-network:
           - *path-roe-exclude-ips
         ipv6:
         - title: nmap IPv6 TCP port scan
-          cmd: clw nmap -6
+          cmd:  clw nmap -6
           opts: *inter-opts-nmap-ipv4-tcp-port-scan
         - title: nmap IPv6 UDP port scan
           cmd: clw nmap -6
@@ -492,7 +497,7 @@ inter-network:
         - title: nmap IPv4 DNS lookup, via open port 53
           cmd: clw nmap
           opts: &opts-nmap-dns-scan-inter
-          - -T4 -R -e {{linkName}} -sL --resolve-all
+          - -d -T4 -R -e {{linkName}} -sL --resolve-all
           - --dns-servers
           - $(cat
           - *path-possible-dns-servers
