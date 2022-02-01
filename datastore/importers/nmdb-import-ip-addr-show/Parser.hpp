@@ -56,6 +56,10 @@ class Parser:
   // Variables
   // ===========================================================================
   private:
+    // Supporting data structures
+    Data d;
+
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -81,9 +85,6 @@ class Parser:
 
     nmdp::ParserIpAddress
       ipAddr;
-
-    // Supporting data structures
-    Data d;
 
   // ===========================================================================
   // Constructors

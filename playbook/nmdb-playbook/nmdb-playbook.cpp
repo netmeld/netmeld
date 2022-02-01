@@ -513,6 +513,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       pqxx::read_transaction t {db};
       pqxx::result playbookIpSourceRows {t.exec_prepared(query)};
+      t.commit();
       for (const auto& playbookIpSourceRow : playbookIpSourceRows) {
         size_t playbookStage;
         playbookIpSourceRow.at("playbook_stage").to(playbookStage);
@@ -856,6 +857,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           pqxx::result rows {
               t.exec_prepared("select_network_and_broadcast", pc.srcIpAddr)
             };
+          t.commit();
 
           for (const auto& row : rows) {
             row.at("ip_net").to(pc.ipNet);

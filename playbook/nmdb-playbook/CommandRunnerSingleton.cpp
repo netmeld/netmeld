@@ -88,7 +88,7 @@ namespace netmeld::playbook {
     if (isEnabled(++commandIdNumber)) {
       LOG_INFO << commandIdNumber << ": " << command << std::endl;
       if (execute) {
-        return nmcu::cmdExecOrExit(command);
+        return (0 == nmcu::cmdExecOrExit(command));
       }
     }
 

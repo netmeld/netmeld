@@ -487,19 +487,23 @@ namespace netmeld::playbook::export_scans {
       const auto& portProto, const auto& pps
     ) const
   {
+    std::string cellFrameDest {"[leftframe=on"};
+    if ("" != destIp) {
+      cellFrameDest = "[topframe=on, leftframe=on";
+    }
     oss << R"(
       % row
       \startxrow)" << rowFrame << R"(
         \startxcell[leftframe=on]   % next hop ip (hostname)
           \type{)" << nextHopIp << R"(} \type{)" << nextHopName << R"(}
         \stopxcell
-        \startxcell[leftframe=on]   % destination ip (hostname)
+        \startxcell)" << cellFrameDest << R"(]   % destination ip (hostname)
           \type{)" << destIp << R"(} \type{)" << destName << R"(}
         \stopxcell
-        \startxcell[leftframe=on]   % port/protocol
+        \startxcell)" << cellFrameDest << R"(]   % port/protocol
           \type{)" << portProto << R"(}
         \stopxcell
-        \startxcell[rightframe=on]  % port state/reason
+        \startxcell)" << cellFrameDest << R"(, rightframe=on]  % port state/reason
           {\tt ()" << pps << R"()}
         \stopxcell
       \stopxrow
