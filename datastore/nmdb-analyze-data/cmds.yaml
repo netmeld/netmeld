@@ -1,24 +1,24 @@
 procedures:
-# Examples for logic testing
-- name: simple `ls`
-  cmds: ls
-- name: error cmd
-  cmds: ls /root
-- name: # empty name
-  cmds: # empty cmds
-- name: cmd "single line"
-  cmds:
-    whoami;
-    pwd;
-- name: cmd chain
-  cmds:
-  - whoami;
-  - pwd;
-- name: Datastore query (get responding IPs and Hostnames)
-  cmds:
-    psql "{{dbConnectString}}" -A -c "
-      SELECT * FROM ip_addrs LIMIT 5
-    "
+## Examples for logic testing/support
+#- name: simple `ls`
+#  cmds: ls
+#- name: error cmd
+#  cmds: ls /root
+#- name: # empty name
+#  cmds: # empty cmds
+#- name: cmd "single line"
+#  cmds:
+#    whoami;
+#    pwd;
+#- name: cmd chain
+#  cmds:
+#  - whoami;
+#  - pwd;
+#- name: Datastore query (get responding IPs and Hostnames)
+#  cmds:
+#    psql "{{dbConnectString}}" -A -c "
+#      SELECT * FROM ip_addrs LIMIT 5
+#    "
 
 # Examples of sample queries
 - name: List Netmeld known observations
@@ -40,7 +40,7 @@ procedures:
         ON via.ip_addr = vh.ip_addr
       WHERE via.is_responding = 't'
       GROUP BY via.ip_addr
-      ORDER BY via.ip_addr;
+      ORDER BY via.ip_addr
     "
 - name: List devices using VLAN 1 (probably native VLAN)
   cmds:
@@ -60,7 +60,7 @@ procedures:
       FROM device_ip_addrs AS dia
       JOIN (SELECT * FROM device_interfaces_vlans WHERE vlan = '1') AS diav
         ON dia.device_id = diav.device_id
-        AND dia.interface_name = diav.interface_name;
+        AND dia.interface_name = diav.interface_name
     "
 - name: List devices where Metasploit modules may be usable
   cmds:
@@ -73,11 +73,175 @@ procedures:
     "
 - name: NSE results by script ID
   cmds:
-  - |
-    scripts=$(psql "{{dbConnectString}}" -A -t -c "SELECT DISTINCT script_id FROM nse_results");
+  - scripts=$(psql "{{dbConnectString}}" -A -t
+                -c "SELECT DISTINCT script_id FROM nse_results");
     echo "Recorded script IDs:\n$scripts";
     for script in $scripts; do
-      echo "Results for NSE id: $script\n---";
-      psql "{{dbConnectString}}" -A -c "SELECT * FROM nse_results WHERE script_id = '$script' ORDER BY ip_addr, port, protocol, script_id";
+      echo "Results for NSE id:\t$script\n---";
+      psql "{{dbConnectString}}" -A -c "
+        SELECT *
+        FROM nse_results
+        WHERE script_id = '$script'
+        ORDER BY ip_addr, port, protocol, script_id";
       echo "---";
     done;
+- name: Intra-network reachable 'open' servers and ports
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        src_ip_addr, protocol, port
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM intra_network_ports
+      WHERE port_state = 'open'
+      GROUP BY src_ip_addr, protocol, port
+    "
+- name: Intra-network reachable servers and ports, not 'open'
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        src_ip_addr, protocol, port, port_state
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM intra_network_ports
+      WHERE NOT port_state = 'open'
+      GROUP BY src_ip_addr, protocol, port, port_state
+    "
+- name: Inter-network reachable 'open' servers and ports through route
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        src_ip_addr, next_hop_ip_addr, protocol, port
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM inter_network_ports
+      WHERE port_state = 'open'
+      GROUP BY src_ip_addr, next_hop_ip_addr, protocol, port
+    "
+- name: Inter-network reachable servers and ports through route, not 'open'
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        src_ip_addr, next_hop_ip_addr, protocol, port, port_state
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM inter_network_ports
+      WHERE NOT port_state = 'open'
+      GROUP BY src_ip_addr, next_hop_ip_addr, protocol, port, port_state
+    "
+- name: Devices sharing a common IP
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT
+        ip_addr
+        , string_agg(DISTINCT device_id, ', ') AS device_ids
+      FROM device_ip_addrs
+      GROUP BY ip_addr
+      HAVING 1 < count(device_id)
+      ORDER BY ip_addr
+    "
+- name: Counts and listing of device(s) per IP per subnet (known in 'ip_net')
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      WITH
+        first AS (
+          SELECT DISTINCT
+            in1.ip_net
+            , count(DISTINCT dia1.ip_addr) AS uniq_ips
+            , count(DISTINCT dia2.device_id) AS uniq_dev_ids
+          FROM ip_nets AS in1
+          LEFT JOIN device_ip_addrs AS dia1
+            ON in1.ip_net >>= dia1.ip_addr
+          LEFT JOIN device_ip_addrs AS dia2
+            ON dia1.ip_addr = dia2.ip_addr
+          GROUP BY in1.ip_net
+        )
+      , second AS (
+          SELECT DISTINCT
+            ip_addr
+            , string_agg(DISTINCT device_id, ', ') AS device_ids
+          FROM device_ip_addrs
+          GROUP BY ip_addr
+        )
+      SELECT DISTINCT
+        first.ip_net AS ip_net
+        , first.uniq_ips AS uniq_ips
+        , first.uniq_dev_ids AS uniq_device_ids
+        , jsonb_agg(DISTINCT jsonb_build_object(
+            'ip_addr', second.ip_addr, 'device_ids', second.device_ids))
+          AS devices_per_ip
+      FROM first
+      LEFT JOIN second
+        ON first.ip_net >>= second.ip_addr
+      GROUP BY 1,2,3
+      ORDER BY 1
+    "
+- name: Subets in 'device_ip_addrs' but not in 'ip_nets'
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      SELECT ip_net
+      FROM device_ip_addrs AS dia1
+      WHERE NOT EXISTS (
+          SELECT 1
+          FROM ip_nets AS in1
+          WHERE in1.ip_net = dia1.ip_net
+        )
+      ORDER BY 1
+    "
+- name: Possible not (service) scanned ports (based on port scanning)
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      WITH sd1 AS (
+          SELECT DISTINCT *
+          FROM ports_services AS ps1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nse_results AS nr1
+              WHERE ps1.ip_addr = nr1.ip_addr
+                AND ps1.protocol = nr1.protocol
+                AND ps1.port = nr1.port
+            )
+          INTERSECT
+          SELECT DISTINCT *
+          FROM ports_services AS ps1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nessus_results AS nr2
+              WHERE ps1.ip_addr = nr2.ip_addr
+                AND ps1.protocol = nr2.protocol
+                AND ps1.port = nr2.port
+          )
+        )
+      SELECT DISTINCT
+        ip_addr, protocol, port, port_state, port_reason, service_reason
+      FROM sd1
+      WHERE NOT (port = '-1' OR protocol = 'ip')
+        AND NOT (port_state = 'closed' OR port_state = 'filtered')
+    "
+- name: Possible not (service) scanned ports (based on device configs)
+  cmds:
+  - psql "{{dbConnectString}}" -A -c "
+      WITH sd1 AS (
+          SELECT DISTINCT *
+          FROM device_ip_servers AS dis1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nse_results AS nr1
+              WHERE dis1.server_ip_addr = nr1.ip_addr
+                AND dis1.port = nr1.port
+            )
+          INTERSECT
+          SELECT DISTINCT *
+          FROM device_ip_servers AS dis1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nessus_results AS nr2
+              WHERE dis1.server_ip_addr = nr2.ip_addr
+                AND dis1.port = nr2.port
+          )
+        )
+      SELECT DISTINCT
+        server_ip_addr AS ip_addr,
+        NULL AS protocol,
+        port,
+        NULL AS port_state,
+        service_name AS port_reason,
+        'config ingest -- ' || description AS service_reason
+      FROM sd1
+    "
