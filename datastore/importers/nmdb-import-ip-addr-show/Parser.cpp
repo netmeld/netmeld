@@ -33,39 +33,42 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    config
-      [(qi::_val = pnx::bind(&Parser::getData, this))]
+    config [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   config =
-    *(  iface
-          [(pnx::bind(&Parser::addIface, this, qi::_1))]
+    *(  iface [(pnx::bind(&Parser::addIface, this, qi::_1))]
       | garbage
       | qi::eol
      )
     ;
 
   iface =
-    qi::omit[qi::ushort_] >> qi::lit(':') >>
-    ifaceName [(qi::_val = pnx::construct<nmdo::Interface>(qi::_1))] >>
-    qi::lit(':') >>
-    token [(pnx::bind(&nmdo::Interface::setFlags, &qi::_val, qi::_1))] >>
-    qi::lit("mtu") >>
-    qi::uint_ [(pnx::bind(&nmdo::Interface::setMtu, &qi::_val, qi::_1))] >>
-    qi::omit[*token] >> qi::eol >>
+    // interface def line
+    qi::omit[qi::ushort_] >> qi::lit(':')
+    >> ifaceName [(qi::_val = pnx::construct<nmdo::Interface>(qi::_1))]
+    > qi::lit(':')
+    > token [(pnx::bind(&nmdo::Interface::setFlags, &qi::_val, qi::_1))]
+    > qi::lit("mtu")
+    > qi::uint_ [(pnx::bind(&nmdo::Interface::setMtu, &qi::_val, qi::_1))]
+    > qi::omit[*token]
+    > qi::eol
 
-    qi::lit("link/") >>
-    token
-    [(pnx::bind(&nmdo::Interface::setMediaType, &qi::_val, qi::_1))] >>
-    -macAddr
-      [(pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1))] >>
-      -(qi::lit("brd") >> qi::omit[macAddr] >>
-          -((+token)[(pnx::bind(&Parser::addObservation, this, qi::_1, qi::_val))])) >>
-        qi::eol >>
+    // link line
+    > qi::lit("link/")
+    > token [(pnx::bind(&nmdo::Interface::setMediaType, &qi::_val, qi::_1))]
+    > -macAddr [(pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1))]
+    > -(qi::lit("brd") >> qi::omit[macAddr]
+        > -((+token) [(pnx::bind(&Parser::addObservation, this,
+                                 qi::_1, qi::_val))] ) )
+    > qi::eol
 
-        *(inetLine
-            [(pnx::bind(&nmdo::Interface::addIpAddress, &qi::_val, qi::_1))])
-        ;
+    // altname lines
+    > *(qi::lit("altname") > token > qi::eol)
+
+    // ip lines
+    > *(inetLine [(pnx::bind(&nmdo::Interface::addIpAddress, &qi::_val, qi::_1))])
+    ;
 
   ifaceName =
     +(qi::ascii::alnum | qi::ascii::char_("-_.@"))
@@ -73,16 +76,16 @@ Parser::Parser() : Parser::base_type(start)
 
   inetLine =
     // NOTE: keep verbatim, we don't want "inet 61.2.3.4" as "inet6 1.2.3.4"
-    (qi::lit("inet6") | qi::lit("inet")) >>
-    ipAddr >>
-    -(qi::lit("brd") >> qi::omit[ipAddr]) >>
-    qi::lit("scope") >> qi::omit[+token] >>
-    qi::eol >>
-    -(qi::lit("valid_lft") >> qi::omit[+token] >> qi::eol)
+    (qi::lit("inet6") | qi::lit("inet"))
+    > ipAddr
+    > -(qi::lit("brd") >> qi::omit[ipAddr])
+    > qi::lit("scope") >> qi::omit[+token]
+    > qi::eol
+    > -(qi::lit("valid_lft") > qi::omit[+token] > qi::eol)
     ;
 
   garbage =
-    +(qi::char_ - qi::eol) >> -qi::eol
+    +(qi::char_ - qi::eol) > -qi::eol
     ;
 
   token =
