@@ -34,7 +34,7 @@ templates:
   - &path-responding-host-ips "{{savePath}}/Responding-Host-IPs"
   - &path-possible-dns-servers "{{savePath}}/Possible-DNS-Servers"
 
-- phase:      
+- phase:
   - &manual-testing
     name: Manual Testing Prompt
     no-prompt: skip
@@ -165,16 +165,21 @@ templates:
       disable: phase
       msg: Could not generate DNS server file(s).
     always:
-    - title: psql generate potential discovered DNS server list
+    - title: psql generate possible DNS servers; open port 53, device configs
       cmd: psql
       opts:
       - -R,
       - *psql-common
       - '"'
-      - SELECT DISTINCT host(ip_addr)
+      - SELECT host(ip_addr)
         FROM ports_services
         WHERE port = '53'
           AND port_state = 'open'
+        UNION
+        SELECT host(server_ip_addr)
+        FROM device_ip_servers
+        WHERE service_name = 'DNS'
+        ORDER BY 1
       - '"'
       - ">>"
       - *path-possible-dns-servers
@@ -331,7 +336,7 @@ intra-network:
       - *generate-dns-servers
       - name: Learned DNS Lookup With Nmap
         ipv4:
-        - title: nmap IPv4 DNS lookup, via open port 53
+        - title: nmap IPv4 DNS lookup, via possible discovered servers
           cmd: clw nmap
           opts: &opts-nmap-dns-scan-intra
           - -d -T4 -R -e {{linkName}} -sL --resolve-all
@@ -494,7 +499,7 @@ inter-network:
       - *generate-dns-servers
       - name: Learned DNS Lookup With Nmap
         ipv4:
-        - title: nmap IPv4 DNS lookup, via open port 53
+        - title: nmap IPv4 DNS lookup, via possible discovered servers
           cmd: clw nmap
           opts: &opts-nmap-dns-scan-inter
           - -d -T4 -R -e {{linkName}} -sL --resolve-all
