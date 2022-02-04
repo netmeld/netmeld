@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,55 +24,58 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/playbook/utils/QueriesPlaybook.hpp>
+#include "ExportScan.hpp"
 
-namespace netmeld::playbook::utils {
-
-  QueriesPlaybook::QueriesPlaybook()
-  {}
-
-  void
-  QueriesPlaybook::addQuery(const std::string& _name,
-                            const std::string& _query)
+namespace netmeld::playbook::export_scans {
+  // ==========================================================================
+  // Constructors
+  // ==========================================================================
+  ExportScan::ExportScan(const std::string& dbConnInfo) :
+    db(dbConnInfo)
   {
-    queries[_name] = _query;
-    LOG_DEBUG << "PSQL query added: "
-              << _name << " -- " << _query
-              << "\n";
+    db.prepare
+      ("select_network_scan_name",
+       "SELECT DISTINCT string_agg(device_id, ', ') as device_id"
+       " FROM device_ip_addrs"
+       " WHERE ($1 = ip_addr)");
   }
 
-  void
-  QueriesPlaybook::dbPrepare(pqxx::connection& db)
-  {
-    for (const auto& [_name, _query] : queries) {
-      db.prepare(_name, _query);
-    }
-  }
 
-  void
-  QueriesPlaybook::init(const std::string& _queryFilePath)
-  {
-    YAML::Node yConfig {YAML::LoadFile(_queryFilePath)};
-
-    const auto& yQueries {yConfig["queries"]};
-    for (const auto& yQuery : yQueries) {
-      const auto& name  {yQuery["id"].as<std::string>()};
-      const auto& query {yQuery["psql"].as<std::string>()};
-      addQuery(name, query);
-    }
-  }
-
+  // ==========================================================================
+  // Methods
+  // ==========================================================================
   std::string
-  QueriesPlaybook::getDefaultQueryFilePath()
+  ExportScan::getHostname(
+      pqxx::read_transaction& t, const std::string& targetIp
+    ) const
   {
-    std::ifstream file {queryFilePath.string()};
-    if (!file.good()) {
-      LOG_DEBUG << "Playbook queries file path ("
-                << queryFilePath
-                << ") does not exist or is inaccessible.\n"
-                << std::endl;
-                ;
+    std::string name {""};
+
+    pqxx::result nameRows
+      {t.exec_prepared("select_network_scan_name", targetIp)};
+
+    size_t count {nameRows.size()};
+    switch (count) {
+      case 0:
+      {
+        // do nothing
+        break;
+      }
+      default:
+      {
+        LOG_WARN << "Query `select_network_scan_name`"
+                 << " returned more than one row"
+                 << " (" << count << ")."
+                 << std::endl;
+        [[fallthrough]];
+      }
+      case 1:
+      {
+        nameRows.begin().at("device_id").to(name);
+        break;
+      }
     }
-    return queryFilePath;
+
+    return name;
   }
 }

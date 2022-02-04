@@ -9,7 +9,7 @@ digraph G {
 
 
   node[shape="box"];
-  nmpbroe [label="ROE In-scope & Out-of-scope\l\
+  nmpbroe [label="RoE In-scope & Out-of-scope\l\
     psql site -c \"INSERT INTO playbook_roe_ip_nets VALUES (ipNet, true)\"\l\
     psql site -c \"INSERT INTO playbook_roe_ip_nets VALUES (ipNet, false)\""];
   nmpbis [label="nmdb-playbook-insert-source\l\
@@ -25,7 +25,7 @@ digraph G {
       --ptp-rtr-ip-addr arg\l\
       --vlan arg (=65535)\l"];
   nmpbir [label="nmdb-playbook-insert-router\l\
-    Required:\l\
+    Required Options:\l\
       --db-name arg (=site)\l\
       --ip-addr arg\l"];
   nmpb [label="nmdb-playbook\l\

@@ -1,132 +1,517 @@
 digraph G {
-  rankdir=LR;
-  nodesep=0.75;
+  rankdir=TB;
+  nodesep=1.50;
   ranksep=0.75;
   newrank=true;
   splines=spline;
+  compound=true;
 
-  label="Playbook Inter-Network Execution Process\n
-Assume:\l\
-  psql site -c \"insert into playbook_roe_ip_nets values ('1.2.3.0/24', true)\"\l\
-  psql site -c \"insert into playbook_roe_ip_nets values ('1.2.4.0/24', true)\"\l\
-  psql site -c \"insert into playbook_roe_ip_nets values ('1.2.5.0/24', false)\"\l\
-  nmdb-playbook-insert-source --inter-network --interface eth0 --ip-addr 1.2.3.4/24 --stage 1\l\
-  nmdb-playbook-insert-router --ip-addr 1.2.3.1\l\
-Execution:\l\
-  nmdb-playbook --inter-network --execute\l";
+  labelloc="top";
+  label=<
+<table border="0" cellborder="0" cellspacing="1" cellpadding="1">
+<tr><td><b>Example: Playbook Inter-Network Execution Process (Default)</b></td></tr>
+<tr><td align="left">Assume:</td></tr>
+<tr><td balign="left"><font face="liberation mono">
+  psql site -c "insert into playbook_roe_ip_nets values ('1.2.3.0/24', true)"
+<br/>
+  psql site -c "insert into playbook_roe_ip_nets values ('1.2.4.0/24', true)"
+<br/>
+  psql site -c "insert into playbook_roe_ip_nets values ('1.2.5.0/24', true)"
+<br/>
+  nmdb-playbook-insert-source --inter-network --interface eth0 --ip-addr 1.2.3.4/24 --stage 1
+<br/>
+  nmdb-playbook-insert-router --ip-addr 1.2.3.1
+<br/>
+</font></td></tr>
+<tr><td align="left">Execution:</td></tr>
+<tr><td align="left"><font face="liberation mono">
+  nmdb-playbook --inter-network --execute
+</font></td></tr>
+</table>
+  >;
 
-  node[shape="box"];
+  node[shape="box" style="rounded" fontname="liberation mono"];
 
-  subgraph cluster_initial {
-    label="Initial setup and passive listening";
-    rank="same";
+  pre_phase [
+    label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
 
-    passive [label="Passive network sniffing\n
-clw dumpcap -i eth0 -a duration:300\l"];
+<tr><td colspan="5"><b>Pre-Phase</b></td></tr>
 
-    portfast [label="Wait for switch port to enter forwarding state\n
-clw dumpcap -i eth0 -a duration:90\l"];
+<tr>
+<td valign="top" balign="left">
+<b>Configure NIC for stage; passive listen</b>
+<br align="center"/>
+<font face="liberation mono">
+sysctl -q -w net.ipv6.conf.eth0.autoconf=0
+<br/>
+sysctl -q -w net.ipv6.conf.eth0.accept_ra=0
+<br/>
+ip link set dev eth0 up
+<br/>
+sleep 1s
+<br/>
+clw dumpcap -i eth0 -a duration:300
+<br/>
+ip link set dev eth0 down
+<br/>
+sleep 0.5s
+<br/>
+</font>
+</td>
 
-    arpRouter [label="ARP-ping router\n
-clw nmap    -n -sn -e eth0 1.2.3.1 2>&1 | grep 'Host is up'\l"];
+<td><font point-size="100">&rarr;</font></td>
 
-    excludes [label="Target Files (ROE excluded)\n
-psql -d site -A -t -c\l\
-  \"SELECT DISTINCT ip_net FROM playbook_roe_ip_nets\l\
-      WHERE (NOT in_scope) AND (4 = family(ip_net))\l\
-      ORDER BY ip_net\" >> ~/.clw/ROE-Excluded-IPV4-${UUID}\l"];
+<td valign="top" balign="left">
+<b>Configure NIC for phases; non-portfast wait</b>
+<br align="center"/>
+<font face="liberation mono">
+sysctl -q -w net.ipv6.conf.eth0.autoconf=0
+<br/>
+sysctl -q -w net.ipv6.conf.eth0.accept_ra=0
+<br/>
+ip link set dev eth0 up
+<br/>
+sleep 1s
+<br/>
+clw dumpcap -i eth0 -a duration:90
+<br/>
+sysctl -q -w net.ipv6.conf.eth0.autoconf=1
+<br/>
+sysctl -q -w net.ipv6.conf.eth0.accept_ra=1
+<br/>
+ip addr add 1.2.3.4/24 dev eth0
+<br/>
+sleep 0.5s
+<br/>
+</font>
+</td>
 
-    includes [label="Target Files (ROE in-scope)\n
-psql -d site -A -t -c\l\
-  \"SELECT DISTINCT ip_net FROM playbook_roe_ip_nets\l\
-      WHERE (in_scope) AND (4 = family(ip_net))\l\
-      ORDER BY ip_net\" >> ~/.netmeld/playbook/ROE-Networks-IPv4-${UUID}\l"];
+<td><font point-size="100">&rarr;</font></td>
+
+<td valign="top" balign="left">
+<b>Configure routes</b>
+<br align="center"/>
+<font face="liberation mono">
+ip route add 1.2.3.1 dev eth0
+<br/>
+ip route add default via 1.2.3.1
+<br/>
+ip route flush cache
+<br/>
+sleep 0.5s
+<br/>
+</font>
+</td>
+</tr>
+</table>
+    >];
+
+  phase1 [label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
+
+<tr>
+<td></td>
+<td></td>
+<td><b>Phase 1</b></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td valign="top" balign="left">
+<b>Check Router Reachability</b>
+<br align="center"/>
+<font face="liberation mono">
+clw nmap -n -sn -e eth0 1.2.3.1 2&gt;&amp;1
+<br/>
+  | grep 'Host is up'
+<br/>
+</font>
+</td>
+
+<td><font point-size="100">&rarr;</font></td>
+
+<td valign="top" balign="left">
+<b>Target Files (RoE excluded)</b>
+<br align="center"/>
+<font face="liberation mono">
+psql "dbname=site " -A -t -c
+<br/>
+  " SELECT DISTINCT ip_net
+<br/>
+    FROM playbook_roe_ip_nets
+<br/>
+    WHERE (NOT in_scope)
+<br/>
+      AND (4 = family(ip_net))
+<br/>
+    ORDER BY ip_net "
+<br/>
+  &gt;&gt; ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+</font>
+</td>
+
+<td><font point-size="100">&rarr;</font></td>
+
+<td valign="top" balign="left">
+<b>Target Files (RoE included)</b>
+<br align="center"/>
+<font face="liberation mono">
+psql "dbname=site " -A -t -c
+<br/>
+  " SELECT DISTINCT ip_net
+<br/>
+    FROM playbook_roe_ip_nets
+<br/>
+    WHERE (in_scope)
+<br/>
+      AND (4 = family(ip_net))
+<br/>
+    ORDER BY ip_net "
+<br/>
+  &gt;&gt; ~/.netmeld/playbook/DTS_UUID/RoE-Include-IPs
+<br/>
+</font>
+</td>
+</tr>
+</table>
+    >];
+
+  phase2 [label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
+
+<tr>
+<td><b>Phase 2</b></td>
+</tr>
+
+<tr>
+<td valign="top" balign="left">
+<b>Host Discovery and IP Protocol Scans</b>
+<br align="center"/>
+<font face="liberation mono">
+clw nmap -T4 -n -e eth0 -PR -sn -PE -PP -PM
+<br/>
+  -iL ~/.netmeld/playbook/DTS_UUID/RoE-Include-IPs
+<br/>
+  --excludefile ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+<br/>
+clw nmap -T4 -n -e eth0 -PR -sn
+<br/>
+  -PS21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,427,
+<br/>
+      443,445,464,543-544,636,749-751,873,902,1645-1646,1812-1813,
+<br/>
+      2049,3260,3268-3269,3283,3306,3389,3868,4174,5353-5355,5432,
+<br/>
+      5900-5919,8000,8080-8089,8443,8888,9000-9010,9443,
+<br/>
+      10000-10010,10443,49152-49169,65530-65535
+<br/>
+  -PA21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,427,
+<br/>
+      443,445,464,543-544,636,749-751,873,902,1645-1646,1812-1813,
+<br/>
+      2049,3260,3268-3269,3283,3306,3389,3868,4174,5353-5355,5432,
+<br/>
+      5900-5919,8000,8080-8089,8443,8888,9000-9010,9443,
+<br/>
+      10000-10010,10443,49152-49169,65530-65535
+<br/>
+  -PU49,53,65-69,88,111,123,135-139,161-162,389,427,464,500,
+<br/>
+      543-544,546-547,749-751,902,1645-1646,1812-1813,1985,2049,
+<br/>
+      3268-3269,4174,5353-5355,49152-49169,65530-65535
+<br/>
+  -iL ~/.netmeld/playbook/DTS_UUID/RoE-Include-IPs
+<br/>
+  --excludefile ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+<br/>
+clw nmap -T4 -n -e eth0 -PR -sO
+<br/>
+  -iL ~/.netmeld/playbook/DTS_UUID/RoE-Include-IPs
+<br/>
+  --excludefile ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+</font>
+</td>
+</tr>
+
+</table>
+    >];
+
+  phase3 [label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
+
+<tr>
+<td><b>Phase 3</b></td>
+</tr>
+
+<tr>
+<td valign="top" balign="left">
+<b>Default DNS Lookup With Nmap</b>
+<br align="center"/>
+<font face="liberation mono">
+clw nmap -T4 -R -e eth0 -sL --resolve-all
+<br/>
+  -iL ~/.netmeld/playbook/DTS_UUID/RoE-Include-IPs
+<br/>
+  --excludefile ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+</font>
+</td>
+</tr>
+
+</table>
+    >];
+
+  phase4 [label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
+
+<tr>
+<td></td>
+<td><b>Phase 4</b></td>
+<td></td>
+</tr>
+
+<tr>
+<td valign="top" balign="left">
+<b>Target Files (Responding Hosts)</b>
+<br align="center"/>
+<font face="liberation mono">
+psql "dbname=site " -A -t -c
+<br/>
+  " SELECT DISTINCT ia.ip_addr
+<br/>
+    FROM raw_ip_addrs AS ia
+<br/>
+    JOIN tool_runs AS tr
+<br/>
+      ON (ia.tool_run_id = tr.id)
+<br/>
+    JOIN playbook_roe_ip_nets AS roe
+<br/>
+      ON (ia.ip_addr &lt;&lt;= roe.ip_net)
+<br/>
+    WHERE (ia.is_responding)
+<br/>
+      AND (4 = family(ia.ip_addr))
+<br/>
+      AND (roe.in_scope)
+<br/>
+      AND (tr.tool_name = 'nmap')
+<br/>
+      AND (tr.command_line LIKE
+<br/>
+            '%nmap %~/.netmeld/playbook/DTS_UUID/%RoE-%-IPs %')
+<br/>
+    ORDER BY ia.ip_addr "
+<br/>
+  &gt;&gt; ~/.netmeld/playbook/DTS_UUID/Responding-Host-IPs
+<br/>
+</font>
+</td>
+
+<td><font point-size="100">&rarr;</font></td>
+
+<td valign="top" balign="left">
+<b>Port Scans (plus basic info gathering)</b>
+<br align="center"/>
+<font face="liberation mono">
+clw nmap -T4 -n -e eth0 -PR -Pn -O
+<br/>
+  --script '(banner or dns-nsid or ntp-info or rpcinfo
+<br/>
+      or ssh-hostkey or ssh2-enum-algos or ssl-cert
+<br/>
+      or smtp-commands or smb-os-discovery or smbv2-enabled
+<br/>
+      or vnc-info)'
+<br/>
+  -sS -p `nmdb-export-port-list --tcp-all`
+<br/>
+  -iL ~/.netmeld/playbook/DTS_UUID/Responding-Host-IPs
+<br/>
+  --excludefile ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+<br/>
+clw nmap -T4 -n -e eth0 -PR -Pn -O
+<br/>
+  --script '(banner or dns-nsid or ntp-info or rpcinfo 
+<br/>
+      or ssh-hostkey or ssh2-enum-algos or ssl-cert
+<br/>
+      or smtp-commands or smb-os-discovery or smbv2-enabled
+<br/>
+      or vnc-info)'
+<br/>
+  -sU -p `nmdb-export-port-list --udp`
+<br/>
+  -iL ~/.netmeld/playbook/DTS_UUID/Responding-Host-IPs
+<br/>
+  --excludefile ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+</font>
+</td>
+</tr>
+
+</table>
+    >];
+
+  phase5 [label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
+
+<tr>
+<td></td>
+<td><b>Phase 5</b></td>
+<td></td>
+</tr>
+
+<tr>
+<td valign="top" balign="left">
+<b>Target Files (DNS servers)</b>
+<br align="center"/>
+<font face="liberation mono">
+psql -R, "dbname=site " -A -t -c
+<br/>
+  " SELECT DISTINCT host(ip_addr)
+<br/>
+    FROM ports_services
+<br/>
+    WHERE port = '53'
+<br/>
+      AND port_state = 'open' "
+<br/>
+  &gt;&gt; ~/.netmeld/playbook/DTS_UUID/Possible-DNS-Servers
+<br/>
+</font>
+</td>
+
+<td><font point-size="100">&rarr;</font></td>
+
+<td valign="top" balign="left">
+<b>Learned DNS Lookup With Nmap</b>
+<br align="center"/>
+<font face="liberation mono">
+clw nmap -T4 -R -e eth0 -sL --resolve-all
+<br/>
+  --dns-servers $(cat ~/.netmeld/playbook/DTS_UUID/Possible-DNS-Servers )
+<br/>
+  -iL ~/.netmeld/playbook/DTS_UUID/RoE-Include-IPs
+<br/>
+  --excludefile ~/.netmeld/playbook/DTS_UUID/RoE-Exclude-IPs
+<br/>
+</font>
+</td>
+</tr>
+
+</table>
+    >];
+
+  phase6 [label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
+
+<tr>
+<td><b>Phase 6</b></td>
+</tr>
+
+<tr>
+<td valign="top" balign="left">
+<b>Manual Testing Prompt</b>
+<br align="center"/>
+<font face="liberation mono">
+echo '';
+<br/>
+echo 'Finish any manual testing that is using eth0 1.2.3.4/24.';
+<br/>
+echo 'Close this xterm when manual testing is complete.';
+<br/>
+echo 'When this xterm is closed, eth0 1.2.3.4/24 will be deconfigured.';
+<br/>
+while [[ 1 == 1 ]]; do sleep 600; done;
+<br/>
+</font>
+</td>
+</tr>
+
+</table>
+    >];
+
+  post_phase [label=<
+<table border="0" cellborder="0" cellspacing="5" cellpadding="5">
+
+<tr>
+<td></td>
+<td></td>
+<td><b>Post-Phase</b></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td valign="top" balign="left">
+<b>Deconfigure routes</b>
+<br align="center"/>
+<font face="liberation mono">
+ip route del default via 1.2.3.1
+<br/>
+ip route del 1.2.3.1 dev eth0
+<br/>
+ip route flush cache
+<br/>
+sleep 0.5s
+<br/>
+</font>
+</td>
+
+<td><font point-size="100">&rarr;</font></td>
+
+<td valign="top" balign="left">
+<b>Deconfigure NIC for phase</b>
+<br align="center"/>
+<font face="liberation mono">
+ip addr del 1.2.3.4/24 dev eth0
+<br/>
+sysctl -q -w net.ipv6.conf.eth0.accept_ra=0
+<br/>
+sysctl -q -w net.ipv6.conf.eth0.autoconf=0
+<br/>
+sleep 0.5s
+<br/>
+</font>
+</td>
+
+<td><font point-size="100">&rarr;</font></td>
+
+<td valign="top" balign="left">
+<b>Deconfigure NIC for stage</b>
+<br align="center"/>
+<font face="liberation mono">
+ip link set dev eth0 down
+<br/>
+sleep 0.5s
+<br/>
+</font>
+</td>
+
+</tr>
+
+</table>
+    >];
+
+  {
+    pre_phase
+      ->phase1
+      ->phase2
+      ->phase3
+      ->phase4
+      ->phase5
+      ->phase6
+      ->post_phase
+    ;
   }
-
-  subgraph cluster_phase1 {
-    label="Phase 1";
-    rank="same";
-
-    discNmap [label="Host Discovery and IP Protocol Scans\n
-clw nmap    -n -e eth0 -sn -T4 -PE -PP -PM\l\
-  -iL ~/.netmeld/playbook/ROE-Networks-IPv4-${UUID}\l\
-  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l
-clw nmap    -n -e eth0 -sn -T4\l\
-  -PS21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,427,443,445,\l\
-  464,543-544,636,749-751,873,902,1645-1646,1812-1813,2049,3260,\l\
-  3268-3269,3283,3306,3389,3868,4174,5353-5355,5432,5900-5919,8000,\l\
-  8080-8089,8443,8888,9000-9010,9443,10000-10010,10443,49152-49169,\l\
-  65530-65535\l\
-  -PA21-25,49,53,65,80,88,111,123,135-139,161-162,179,389,427,443,445,\l\
-  464,543-544,636,749-751,873,902,1645-1646,1812-1813,2049,3260,\l\
-  3268-3269,3283,3306,3389,3868,4174,5353-5355,5432,5900-5919,8000,\l\
-  8080-8089,8443,8888,9000-9010,9443,10000-10010,10443,49152-49169,\l\
-  65530-65535\l\
-  -PU49,53,65-69,88,111,123,135-139,161-162,389,427,464,500,543-544,\l\
-  546-547,749-751,902,1645-1646,1812-1813,1985,2049,3268-3269,4174,\l\
-  5353-5355,49152-49169,65530-65535\l\
-  -iL ~/.netmeld/playbook/ROE-Networks-IPv4- ${UUID}\l\
-  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l
-clw nmap    -n -e eth0 -sO -T4\l\
-  -iL ~/.netmeld/playbook/ROE-Networks-IPv4-${UUID}\l\
-  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l"];
-  }
-
-  subgraph cluster_phase2 {
-    label="Phase 2";
-
-    targets [label="Target Files (Responding Hosts)\n
-psql -d site -A -t -c\l\
-  \"SELECT DISTINCT ia.ip_addr FROM raw_ip_addrs AS ia\l\
-    JOIN tool_runs AS tr\l\
-      ON (ia.tool_run_id = tr.id)\l\
-    JOIN playbook_roe_ip_nets AS roe\l\
-      ON (ia.ip_addr <<= roe.ip_net)\l\
-    WHERE (ia.is_responding)\l\
-      AND (4 = family(ia.ip_addr))\l\
-      AND (roe.in_scope)\l\
-      AND (tr.tool_name = 'nmap')\l\
-      AND (tr.command_line LIKE '%nmap %ROE-%-IPv4-${UUID} %')\l\
-    ORDER BY ia.ip_addr\"\l\
-    >> ~/.netmeld/playbook/Responding-Hosts-IPv4-${UUID}\l"];
-
-    scanPort [label="Port Scans (plus basic info gathering)\n
-clw nmap    -n -e eth0 -Pn -sS -T4 -O\l\
-  --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey\l\
-      or ssh2-enum-algos or ssl-cert or smtp-commands\l\
-      or smb-os-discovery or smbv2-enabled or vnc-info)'\l\
-  -p `nmdb-export-port-list --tcp-all`\l\
-  -iL ~/.netmeld/playbook/Responding-Hosts-IPv4-${UUID}\l\
-  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l
-clw nmap    -n -e eth0 -Pn -sU -T4 -O\l\
-  --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey\l\
-      or ssh2-enum-algos or ssl-cert or smtp-commands\l\
-      or smb-os-discovery or smbv2-enabled or vnc-info)'\l\
-  -p `nmdb-export-port-list --udp`\l\
-  -iL ~/.netmeld/playbook/Responding-Hosts-IPv4-${UUID}\l\
-  --excludefile ~/.netmeld/playbook/ROE-Excluded-IPv4-${UUID}\l"];
-  }
-
-  subgraph cluster_phase3 {
-    label="Phase 3";
-    manual [label="Manual testing\nor script"];
-  }
-
-  subgraph cluster_final{
-    label="Tear down";
-    destroy [label="Deconfigure interface"];
-  }
-
-  passive->portfast->arpRouter->excludes->includes [constraint="false"];
-
-  passive->discNmap [style="invisible", dir="none"];
-  includes->discNmap;
-
-  discNmap->targets;
-
-  targets->scanPort;
-
-  scanPort->manual;
-  manual->destroy;
-
 }
