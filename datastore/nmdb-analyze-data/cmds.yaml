@@ -21,16 +21,28 @@ procedures:
 #    "
 
 # Examples of sample queries
-- name: List Netmeld known observations
+- name: List Netmeld known observations (not otherwise grabbed later)
   cmds:
   - psql "{{dbConnectString}}" -c "
       SELECT
         category, COUNT(data_path) AS counts, observation, tool_name
       FROM tool_observations
+      WHERE NOT (observation LIKE 'AcRule (%) %')
       GROUP BY category, observation, tool_name
       ORDER BY category, counts DESC, observation, tool_name
     "
-- name: List responding IPs (grouped) and smallest possible subnet
+- name: Potential ACL rule issues
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        category, COUNT(data_path) AS counts, observation, tool_name
+      FROM tool_observations
+      WHERE observation LIKE 'AcRule (%) %'
+      GROUP BY category, observation, tool_name
+      ORDER BY category, counts DESC, observation, tool_name
+    "
+
+- name: List responding IPs (contiguous grouped) and smallest possible subnet
   cmds:
   # NOTE: refer to the Tabibitosan method for more details
   - psql "{{dbConnectString}}" -c "
@@ -44,13 +56,56 @@ procedures:
           ORDER BY ip_addr
         )
       SELECT
-        count(ip_addr) AS num_contiguous_ips
+        inet_merge(min(ip_addr), max(ip_addr)) AS min_subnet
+        , count(ip_addr) AS num_contiguous_ips
         , min(ip_addr) AS min_ip
         , NULLIF(max(ip_addr), min(ip_addr)) AS max_ip
-        , inet_merge(min(ip_addr), max(ip_addr)) AS min_subnet
       FROM ips
       GROUP BY ip_group
-      ORDER BY num_contiguous_ips DESC, min_ip, max_ip
+      ORDER BY min_subnet, num_contiguous_ips DESC, min_ip, max_ip
+    "
+- name: Possible subnet allocation based on responding IPs and overlap
+  cmds:
+  # NOTE: refer to the Tabibitosan method for more details
+  - psql "{{dbConnectString}}" -c "
+      WITH RECURSIVE t1 AS (
+          WITH ips AS (
+              SELECT
+                ip_addr
+                , row_number() OVER (ORDER BY ip_addr) AS row_num
+                , ip_addr - row_number() OVER (ORDER BY ip_addr) AS ip_group
+              FROM ip_addrs
+              WHERE is_responding = 't'
+              ORDER BY ip_addr
+            )
+          SELECT
+            inet_merge(min(ip_addr), max(ip_addr)) AS min_subnet
+            , count(ip_addr) AS num_contiguous_ips
+            , min(ip_addr) AS min_ip
+            , NULLIF(max(ip_addr), min(ip_addr)) AS max_ip
+          FROM ips
+          GROUP BY ip_group
+          ORDER BY min_subnet, num_contiguous_ips DESC, min_ip, max_ip
+        )
+      , t2 AS (
+          SELECT
+            st1.min_subnet AS larger
+            , st2.min_subnet AS smaller
+          FROM t1 AS st1
+             , t1 AS st2
+          WHERE st1.min_subnet >> st2.min_subnet
+          ORDER BY larger
+        )
+      SELECT
+        larger AS subnet
+        , count(DISTINCT ia1.ip_addr) AS uniq_ips
+        , array_agg(DISTINCT smaller) AS subnet_overlap
+      FROM t2
+      JOIN ip_addrs AS ia1
+        ON larger >>= ia1.ip_addr
+      WHERE larger NOT IN (SELECT smaller FROM t2)
+      GROUP BY larger
+      ORDER BY larger
     "
 - name: Hostname to IP(s) mapping
   cmds:
@@ -274,7 +329,7 @@ procedures:
              OR NOT (port_state = 'closed' OR port_state = 'filtered'))
       GROUP BY ip_addr, port_state, port_reason, protocol
   - '"'
-- name: nmap for prior
+- name: nmap for prior (possible not scanned ports)
 # Nmap commands from Playbook:
 #   TCP (short): clw nmap -d -T4 -n -e {{linkName}} -PR --host-timeout 30m --script-timeout 5m -Pn -O --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey or ssh2-enum-algos or ssl-cert or smtp-commands or smb-os-discovery or smbv2-enabled or vnc-info)' -sS -p `nmdb-export-port-list --tcp-all` -iL *path-responding-host-ips --excludefile *path-roe-exclude-ips
 #   TCP (long) : clw nmap -d -T4 -n -e {{linkName}} -PR --host-timeout 30m --script-timeout 10m -A --script '((default or discovery) and not (external or brute or dos))' -sS -p `nmdb-export-port-list --from-db --tcp` -iL *path-responding-host-ips --excludefile *path-roe-exclude-ips
