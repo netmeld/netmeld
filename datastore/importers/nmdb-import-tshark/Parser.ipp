@@ -259,7 +259,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
   // ===== VTP =====
   if (_pd.count(vtp)) {
     std::ostringstream oss;
-    oss << "VTP like traffic seen from: " << s1(ethSrc);
+    oss << "Probable VTP from MAC: " << s1(ethSrc);
     d.observations.addNotable(oss.str());
     status = true;
   }
@@ -267,7 +267,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
   // ===== DTP =====
   if (_pd.count(dtpSenderid)) {
     std::ostringstream oss;
-    oss << "DTP like traffic seen from: " << s1(ethSrc)
+    oss << "Probable DTP from MAC: " << s1(ethSrc)
         << " (Sender ID: " << s1(dtpSenderid)
         << ")";
     d.observations.addNotable(oss.str());
@@ -277,7 +277,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
   // ===== STP =====
   if (_pd.count(stpRootHw) | _pd.count(stpBridgeHw)) {
     std::ostringstream oss;
-    oss << "STP like traffic seen from: " << s1(ethSrc)
+    oss << "Probable STP from MAC: " << s1(ethSrc)
         << " (Root HW: " << s1(stpRootHw)
         << ", Bridge HW: " << s1(stpBridgeHw)
         << ")";
