@@ -58,16 +58,13 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
-      const auto& dbName {opts.getValue("db-name")};
-      const auto& dbArgs {opts.getValue("db-args")};
-
       if (!opts.exists("tool-run-id")) {
         LOG_WARN << "UUID not given.\n";
 
       } else {
         const auto& toolRunId {nmco::Uuid(opts.getValue("tool-run-id"))};
 
-        pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs};
+        pqxx::connection db {getDbConnectString()};
         db.prepare
         ("delete_tool_run",
          "DELETE FROM tool_runs"

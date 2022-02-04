@@ -79,16 +79,16 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
-      const auto& dbName  {opts.getValue("db-name")};
-      const auto& dbArgs  {opts.getValue("db-args")};
-      auto shouldDelete   {opts.exists("delete")};
+      const auto& dbConnectString {getDbConnectString()};
+      const auto shouldDelete     {opts.exists("delete")};
 
       // Initialize DB to consistent state
-      initDbState(dbName, dbArgs, shouldDelete);
+      initDbState(dbConnectString, shouldDelete);
 
-      LOG_DEBUG << "(runTool) db: " << dbName << " " << dbArgs << std::endl;
-      pqxx::connection db("dbname=" + dbName + " " + dbArgs);
-      pqxx::work work(db);
+      LOG_DEBUG << "(runTool) dbConnectString: " << dbConnectString
+                << std::endl;
+      pqxx::connection db {dbConnectString};
+      pqxx::work work     {db};
 
       // Populate target DB with schema(s)
       if (!shouldDelete) {
@@ -104,15 +104,20 @@ class Tool : public nmdt::AbstractDatastoreTool
     }
 
     void
-    initDbState(const std::string& dbName, const std::string& dbArgs, bool shouldDelete)
+    initDbState(const std::string& dbConnectString, bool shouldDelete)
     {
-      LOG_DEBUG << "postgresDb: " << POSTGRES_DB_NAME << " " << dbArgs << std::endl;
-      pqxx::connection postgresDb("dbname=" + POSTGRES_DB_NAME + " " + dbArgs);
+      const auto& dbName  {getDbName()};
+
+      const auto& pgDbConnectString
+        {"dbname=" + POSTGRES_DB_NAME + ' ' + getDbArgs()};
+
+      LOG_DEBUG << "postgresDb: " << pgDbConnectString << std::endl;
+      pqxx::connection postgresDb {pgDbConnectString};
 
       try {
         // If DB already exists, either quick or full erase
-        LOG_DEBUG << "existsDb: " << dbName << " " << dbArgs << std::endl;
-        pqxx::connection existsDb("dbname=" + dbName + " " + dbArgs);
+        LOG_DEBUG << "existsDb: " << dbConnectString << std::endl;
+        pqxx::connection existsDb {dbConnectString};
         existsDb.disconnect();
 
         LOG_INFO << "Database '" << dbName << "' already exists.\n"
@@ -125,9 +130,9 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
 
         if (shouldDelete) {
-          LOG_DEBUG << "db: " << dbName << " " << dbArgs << std::endl;
-          pqxx::connection db  {"dbname=" + dbName + " " + dbArgs};
-          pqxx::nontransaction ntWork{db};
+          LOG_DEBUG << "db: " << dbConnectString << std::endl;
+          pqxx::connection db         {dbConnectString};
+          pqxx::nontransaction ntWork {db};
 
           LOG_INFO << "Cleaning tool_runs\n";
           ntWork.exec("DELETE FROM tool_runs");
@@ -151,8 +156,9 @@ class Tool : public nmdt::AbstractDatastoreTool
           try {
             ntWork.exec("DROP DATABASE IF EXISTS " + dbName);
           } catch (std::exception& e) {
-            LOG_ERROR << "Failed to drop database: " << dbName << std::endl
-                      << e.what() << std::endl;
+            LOG_ERROR << "Failed to drop database: " << dbName
+                      << '\n' << e.what()
+                      << std::endl;
             std::exit(nmcu::Exit::FAILURE); // Can't delete DB, probaly open
           }
         }

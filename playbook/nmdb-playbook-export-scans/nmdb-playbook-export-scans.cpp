@@ -120,9 +120,7 @@ class Tool : public nmdt::AbstractExportTool
     int
     runTool() override
     {
-      const auto& dbName    {getDbName()};
-      const auto& dbArgs    {opts.getValue("db-args")};
-      const auto& dbConInfo {"dbname=" + dbName + " " + dbArgs};
+      const auto& dbConInfo {getDbConnectString()};
 
       const auto& toFile    {opts.exists("to-file")};
       const auto& outFormat {nmcu::toLower(opts.getValue("out-format"))};

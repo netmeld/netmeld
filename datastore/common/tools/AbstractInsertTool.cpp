@@ -52,9 +52,7 @@ namespace netmeld::datastore::tools {
   {
     setToolRunId();
 
-    const auto& dbName  {opts.getValue("db-name")};
-    const auto& dbArgs  {opts.getValue("db-args")};
-    pqxx::connection db{std::string("dbname=") + dbName + " " + dbArgs};
+    pqxx::connection db {getDbConnectString()};
     nmdu::dbPrepareCommon(db);
     pqxx::work t{db};
 

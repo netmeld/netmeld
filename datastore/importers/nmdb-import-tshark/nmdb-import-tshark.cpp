@@ -158,9 +158,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
       // Commit transaction, use tool run entry per data set transaction
       t.commit();
-      const auto& dbName  {this->opts.getValue("db-name")};
-      const auto& dbArgs  {this->opts.getValue("db-args")};
-      pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs };
+
+      pqxx::connection db {this->getDbConnectString()};
       nmdu::dbPrepareCommon(db);
 
       LOG_DEBUG << "Iterating over results\n";
