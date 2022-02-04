@@ -80,8 +80,8 @@ Parser::Parser() : Parser::base_type(start)
     > ipAddr
     > -(qi::lit("brd") >> qi::omit[ipAddr])
     > qi::lit("scope") >> qi::omit[+token]
-    > qi::eol
-    > -(qi::lit("valid_lft") > qi::omit[+token] > qi::eol)
+    > -qi::eol
+    > -(qi::lit("valid_lft") > qi::omit[+token] > -qi::eol)
     ;
 
   garbage =
