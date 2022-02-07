@@ -1,25 +1,5 @@
+---
 procedures:
-## Examples for logic testing/support
-#- name: simple `ls`
-#  cmds: ls
-#- name: error cmd
-#  cmds: ls /root
-#- name: # empty name
-#  cmds: # empty cmds
-#- name: cmd "single line"
-#  cmds:
-#    whoami;
-#    pwd;
-#- name: cmd chain
-#  cmds:
-#  - whoami;
-#  - pwd;
-#- name: Datastore query (get responding IPs and Hostnames)
-#  cmds:
-#    psql "{{dbConnectString}}" -A -c "
-#      SELECT * FROM ip_addrs LIMIT 5
-#    "
-
 # Examples of sample queries
 - name: List Netmeld known observations (not otherwise grabbed later)
   cmds:
@@ -448,3 +428,26 @@ procedures:
         'config ingest -- ' || description AS service_reason
       FROM sd1
     "
+- name: Extract known secret patterns (not exhaustive) from Netmeld Datalake
+        for examination
+  cmds:
+  - dlFiles=$(nmdl-list --by-tool | sort);
+    dlPrefix=~/.netmeld/datalake;
+    for dlFile in $dlFiles; do
+      case "$dlFile" in
+        nmdb-import-cisco:*
+        |nmdb-import-cisco-wireless:*
+        |nmdb-import-juniper-conf:*
+        |nmdb-import-juniper-set:*
+        )
+          dlPath=$(echo "$dlFile" | sed -e 's/^.*://g' -e 's/->/\//g');
+          fPath=${dlPrefix}/${dlPath};
+          echo "Checking $dlFile:\t$fPath\n---";
+          egrep '(^(username|enable))|(encrypted|secret)| (hash|md5|sha) ' $fPath;
+          echo "---";
+          ;;
+        *)
+          ;;
+      esac;
+    done;
+...
