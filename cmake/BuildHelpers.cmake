@@ -208,7 +208,7 @@ function(nm_add_deb_control_data tgt_dir)
        "${CMAKE_CURRENT_SOURCE_DIR}/${tgt_dir}/*")
   string(TOUPPER CPACK_DEBIAN_${TGT_MODULE}_PACKAGE_CONTROL_EXTRA tgt_var)
   nm_add_deb_generic(${tgt_var} "${tgt_files}")
-  nm_add_deb_generic(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION ON)
+  nm_add_deb_generic(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 endfunction()
 
 # General purpose helpers
