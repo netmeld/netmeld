@@ -72,7 +72,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     void
     addToolOptions() override
     {
-      const auto& cmdsFile {nmfm.getConfPath()/"cmds.yaml"};
+      const auto& cmdsFile {nmfm.getConfPath()/"analyze-cmds.yaml"};
       opts.addRequiredOption("cmds-file", std::make_tuple(
           "cmds-file",
           po::value<std::string>()->required()->default_value(cmdsFile),

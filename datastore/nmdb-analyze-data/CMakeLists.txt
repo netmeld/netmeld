@@ -35,4 +35,5 @@ target_link_libraries(${TGT_TOOL}
   )
 
 nm_install_bin(${TGT_TOOL})
+nm_install_conf(analyze-cmds.yaml "datastore")
 #nm_install_include(file dir)
