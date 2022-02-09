@@ -121,14 +121,14 @@ class Tool : public nmdt::AbstractDatastoreTool
             << YAML::EndMap
             ;
       };
-      auto lfkv = [&](auto& _name, auto& _cmds){
+      auto lfkv = [&](const auto& _name, const auto& _cmds){
         out << YAML::BeginMap
             << YAML::Key << NAME << YAML::Value << _name
             << YAML::Key << CMDS << YAML::Value << _cmds
             << YAML::EndMap
             ;
       };
-      auto lfseq = [&](auto& _name, auto& _cmds){
+      auto lfseq = [&](const auto& _name, const auto& _cmds){
         out << YAML::BeginMap
             << YAML::Key << NAME << YAML::Value << _name
             << YAML::Key << CMDS << YAML::Value << YAML::BeginSeq
@@ -138,7 +138,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
         out << YAML::EndSeq << YAML::EndMap;
       };
-      auto lflit = [&](auto& _name, auto& _cmds){
+      auto lflit = [&](const auto& _name, const auto& _cmds){
         out << YAML::BeginMap
             << YAML::Key << NAME << YAML::Value << _name
             << YAML::Key << CMDS << YAML::Value << YAML::BeginSeq
