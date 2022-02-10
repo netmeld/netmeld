@@ -850,7 +850,6 @@ Parser::parseRouteInfo(const pugi::xml_node& routeInfoNode)
 
   auto& logicalSystem{data.logicalSystems[logicalSystemName]};
 
-  nmdo::RoutingTable routes; 
   for (const auto& routeTableMatch :
        routeInfoNode.select_nodes("route-table[not(@inactive='inactive')]")) {
     const pugi::xml_node routeTableNode{routeTableMatch.node()};
