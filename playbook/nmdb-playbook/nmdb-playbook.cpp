@@ -192,7 +192,6 @@ class Tool : public nmdt::AbstractDatastoreTool
     nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
 
     nmpbu::QueriesPlaybook queriesPb;
-    std::string dbConnectString;
 
     std::string pbRootSavePath;
 
@@ -346,11 +345,6 @@ class Tool : public nmdt::AbstractDatastoreTool
       playsFile = sfs::canonical(playsPath).string();
 
       queriesPb.init(opts.getValue("queries-file"));
-      dbConnectString = std::string("dbname=")
-                      + getDbName()
-                      + " "
-                      + opts.getValue("db-args")
-                      ;
 
       Playbook playbook {getPlaybookData(playbookScope)};
 
@@ -489,7 +483,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     {
       Playbook playbook;
 
-      pqxx::connection db {dbConnectString};
+      pqxx::connection db {getDbConnectString()};
       queriesPb.dbPrepare(db);
 
       std::string query;
@@ -843,6 +837,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
           nmpb::RaiiIpAddr raiiIpAddr {linkName, srcIpAddr};
 
+          const auto& dbConnectString {getDbConnectString()};
           pqxx::connection db {dbConnectString};
           queriesPb.dbPrepare(db);
 

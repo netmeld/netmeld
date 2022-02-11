@@ -232,9 +232,7 @@ class Tool : public nmdt::AbstractGraphTool
     int
     runTool() override
     {
-      const auto& dbName  {getDbName()};
-      const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
+      pqxx::connection db {getDbConnectString()};
 
       db.prepare
         ("select_ip_nets_extra_weights",

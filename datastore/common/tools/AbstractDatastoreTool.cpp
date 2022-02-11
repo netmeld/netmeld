@@ -87,9 +87,29 @@ namespace netmeld::datastore::tools {
         );
   }
 
-  std::string const
+  const std::string
   AbstractDatastoreTool::getDbName() const
   {
     return opts.getValue("db-name");
+  }
+
+  const std::string
+  AbstractDatastoreTool::getDbArgs() const
+  {
+    return opts.getValue("db-args");
+  }
+
+  const std::string
+  AbstractDatastoreTool::getDbConnectString() const
+  {
+    std::ostringstream oss;
+
+    oss << "dbname=" << getDbName();
+
+    const auto dbArgs {getDbArgs()};
+    if ("" != dbArgs) {
+      oss << " " << dbArgs;
+    }
+    return oss.str();
   }
 }

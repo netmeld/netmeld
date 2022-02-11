@@ -311,29 +311,55 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
   }
 
   {
-    pugi::xml_document doc;
-    doc.load_string(
-      R"STR(
-      <host> <address addr="1.2.3.4" addrtype="ipv4"/>
-      <ports> <port>
-      <service name="microsoft-ds" hostname="some_host" />
-      </port> </ports> </host>
-      )STR");
-    const pugi::xml_node testNode {doc.document_element().root()};
+    {
+      pugi::xml_document doc;
+      doc.load_string(
+        R"STR(
+        <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+        <ports> <port>
+        <service name="microsoft-ds" hostname="some_host" />
+        </port> </ports> </host>
+        )STR");
+      const pugi::xml_node testNode {doc.document_element().root()};
 
-    Data d;
-    tnxp.extractHostnames(testNode, d);
+      Data d;
+      tnxp.extractHostnames(testNode, d);
 
-    BOOST_TEST(1 == d.ipAddrs.size());
-    for (const auto& ipa : d.ipAddrs) {
-      BOOST_TEST("1.2.3.4/32" == ipa.toString());
-      const auto aliases {ipa.getAliases()};
-      BOOST_TEST(1 == aliases.size());
-      BOOST_TEST(1 == aliases.count("some_host"));
+      BOOST_TEST(1 == d.ipAddrs.size());
+      for (const auto& ipa : d.ipAddrs) {
+        BOOST_TEST("1.2.3.4/32" == ipa.toString());
+        const auto aliases {ipa.getAliases()};
+        BOOST_TEST(1 == aliases.size());
+        BOOST_TEST(1 == aliases.count("some_host"));
+      }
+      BOOST_TEST(d.ipAddrs[0].toDebugString() ==
+          "[1.2.3.4/32, 0, nmap microsoft-ds, 0, [some_host], ]"
+          );
     }
-    BOOST_TEST(d.ipAddrs[0].toDebugString() ==
-        "[1.2.3.4/32, 0, nmap microsoft-ds, 0, [some_host], ]"
-        );
+    {
+      pugi::xml_document doc;
+      doc.load_string(
+        R"STR(
+        <host> <address addr="1.2.3.4" addrtype="ipv4"/>
+        <ports> <port>
+        <service name="other" hostname="1.2.3.4" />
+        </port> </ports> </host>
+        )STR");
+      const pugi::xml_node testNode {doc.document_element().root()};
+
+      Data d;
+      tnxp.extractHostnames(testNode, d);
+
+      BOOST_TEST(0 == d.ipAddrs.size());
+      //BOOST_TEST(1 == d.observations.size());
+      BOOST_TEST(d.observations.toDebugString() ==
+          "[[ NOTABLES: ["
+          "Nmap service scan: other"
+          "\n  From IP: 1.2.3.4/32"
+          "\n  Potential alias: 1.2.3.4]"
+          ", ][ UNSUPPORTED FEATURES: [], ]]"
+          );
+    }
   }
 
   {
