@@ -131,6 +131,7 @@ SELECT DISTINCT
     rit.tool_run_id             AS tool_run_id,
     rit.next_hop_ip_addr        AS ip_addr
 FROM raw_ip_traceroutes AS rit
+WHERE (rit.next_hop_ip_addr != rit.dst_ip_addr)
 ;
 
 
