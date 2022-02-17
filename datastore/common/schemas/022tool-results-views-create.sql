@@ -337,6 +337,20 @@ ORDER BY vlan, ip_net
 
 -- ----------------------------------------------------------------------
 
+CREATE VIEW ip_traceroutes AS
+SELECT DISTINCT
+  rd1.device_id AS origin,
+  rit1.dst_ip_addr AS last_hop,
+  rit1.hop_count,
+  rit1.next_hop_ip_addr
+FROM raw_ip_traceroutes AS rit1
+LEFT JOIN raw_devices AS rd1
+  ON rit1.tool_run_id = rd1.tool_run_id
+ORDER BY origin, last_hop, hop_count
+;
+
+-- ----------------------------------------------------------------------
+
 CREATE VIEW ports AS
 SELECT DISTINCT
     ip_addr                     AS ip_addr,
