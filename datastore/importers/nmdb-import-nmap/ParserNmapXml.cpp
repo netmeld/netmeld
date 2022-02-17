@@ -244,16 +244,18 @@ ParserNmapXml::extractTraceRoutes(const pugi::xml_node& nmapNode, Data& data)
 { // This code block identifies ip_addrs of routers along a route.
   // The routers may or may not be in the target address space,
   // so might need to be inserted into the ip_addrs table.
+  const std::string nmapTraceReason {"nmap trace"};
   for (const auto& xHop : nmapNode.select_nodes("host/trace/hop")) {
     pugi::xml_node nodeHop {xHop.node()};
 
+    nmdo::IpAddress nextHop {nodeHop.attribute("ipaddr").as_string()};
+    nextHop.setResponding(true);
+    nextHop.addAlias(nodeHop.attribute("host").as_string(), nmapTraceReason);
+
     nmdo::TracerouteHop hop;
-    hop.hopCount = nodeHop.attribute("ttl").as_int();
-
-    hop.rtrIpAddr = nmdo::IpAddress(nodeHop.attribute("ipaddr").as_string());
-    hop.rtrIpAddr.setResponding(true);
-
-    hop.dstIpAddr = extractHostIpAddr(nodeHop.parent().parent());
+    hop.setHopCount(nodeHop.attribute("ttl").as_uint());
+    hop.setHopIp(nextHop);
+    hop.setDstIp(extractHostIpAddr(nodeHop.parent().parent()));
 
     data.tracerouteHops.push_back(hop);
   }

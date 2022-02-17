@@ -447,7 +447,8 @@ BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
       R"STR(
       <host> <address addr="1.2.3.4" addrtype="ipv4"/>
       <trace>
-      <hop ttl="1" ipaddr="4.3.2.1", rtt="20.49"/>
+      <hop ttl="1" ipaddr="4.3.2.1" rtt="20.49"/>
+      <hop ttl="2" ipaddr="4.3.2.2" rtt="1.23" host="rtr1.tld"/>
       </trace>
       </host>
       )STR");
@@ -456,10 +457,14 @@ BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
     Data d;
     tnxp.extractTraceRoutes(testNode, d);
 
-    const auto hop {d.tracerouteHops[0]};
-    BOOST_TEST(hop.toString() ==
+    BOOST_TEST(2 == d.tracerouteHops.size());
+    BOOST_TEST(d.tracerouteHops[0].toDebugString() ==
         "[[4.3.2.1/32, 1, , 0, [], ], [1.2.3.4/32, 0, , 0, [], ], 1]"
-        );
+      );
+    BOOST_TEST(d.tracerouteHops[1].toDebugString() ==
+        "[[4.3.2.2/32, 1, nmap trace, 0, [rtr1.tld], ],"
+        " [1.2.3.4/32, 0, , 0, [], ], 2]"
+      );
   }
 }
 
