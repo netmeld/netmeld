@@ -96,7 +96,7 @@ namespace netmeld::core::utils {
       void addRequiredOption(const std::string&, const OptionsValue&);
       void addOptionalOption(const std::string&, const OptionsValue&);
       void addAdvancedOption(const std::string&, const OptionsValue&);
-      void addConfFileOption(const std::string&, const OptionsValue&);
+      //void addConfFileOption(const std::string&, const OptionsValue&);
       void addPositionalOption(const std::string&, int loc);
 
       void removeOption(const std::string&, const std::string&);
@@ -104,7 +104,7 @@ namespace netmeld::core::utils {
       void removeOptionalOption(const std::string&);
       void removeAdvancedOption(const std::string&);
 
-      void setConfFile(const std::string&);
+      //void setConfFile(const std::string&);
 
       bool exists(const std::string&) const;
       std::string getCommandLine() const;

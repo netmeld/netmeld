@@ -60,8 +60,8 @@ namespace netmeld::datastore::objects {
     private:
     protected:
     public:
-      void setIface(const std::string&);
-      void setScopeDomain(const std::string&);
+      //void setIface(const std::string&);
+      //void setScopeDomain(const std::string&);
       void setSrcAddress(const IpAddress&);
       void setDstAddress(const IpAddress&);
       void setDstPort(const uint16_t);
