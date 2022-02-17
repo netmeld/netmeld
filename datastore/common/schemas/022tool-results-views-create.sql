@@ -120,7 +120,7 @@ SELECT DISTINCT
     ia.is_responding            AS is_responding
 FROM raw_ip_addrs AS ia
 JOIN tool_runs AS tr
-ON (ia.tool_run_id = tr.id)
+  ON (ia.tool_run_id = tr.id)
 WHERE ((tr.tool_name = 'ping6') AND (tr.command_line LIKE '% ff02::2'))
 UNION
 SELECT DISTINCT
@@ -129,7 +129,15 @@ SELECT DISTINCT
     ia.is_responding            AS is_responding
 FROM raw_device_ip_routes AS dir
 JOIN ip_addrs AS ia
-ON (dir.next_hop_ip_addr = ia.ip_addr)
+  ON (dir.next_hop_ip_addr = ia.ip_addr)
+UNION
+SELECT DISTINCT
+    rit.tool_run_id             AS tool_run_id,
+    rit.next_hop_ip_addr        AS ip_addr,
+    ia.is_responding            AS is_responding
+FROM raw_ip_traceroutes AS rit
+JOIN raw_ip_addrs AS ia
+  ON (rit.tool_run_id = ia.tool_run_id) AND (rit.next_hop_ip_addr = ia.ip_addr)
 ;
 
 
