@@ -116,8 +116,7 @@ GROUP BY ip_addr
 CREATE VIEW raw_router_ip_addrs AS
 SELECT DISTINCT
     ia.tool_run_id              AS tool_run_id,
-    ia.ip_addr                  AS ip_addr,
-    ia.is_responding            AS is_responding
+    ia.ip_addr                  AS ip_addr
 FROM raw_ip_addrs AS ia
 JOIN tool_runs AS tr
   ON (ia.tool_run_id = tr.id)
@@ -125,19 +124,13 @@ WHERE ((tr.tool_name = 'ping6') AND (tr.command_line LIKE '% ff02::2'))
 UNION
 SELECT DISTINCT
     dir.tool_run_id             AS tool_run_id,
-    dir.next_hop_ip_addr        AS ip_addr,
-    ia.is_responding            AS is_responding
+    dir.next_hop_ip_addr        AS ip_addr
 FROM raw_device_ip_routes AS dir
-JOIN ip_addrs AS ia
-  ON (dir.next_hop_ip_addr = ia.ip_addr)
 UNION
 SELECT DISTINCT
     rit.tool_run_id             AS tool_run_id,
-    rit.next_hop_ip_addr        AS ip_addr,
-    ia.is_responding            AS is_responding
+    rit.next_hop_ip_addr        AS ip_addr
 FROM raw_ip_traceroutes AS rit
-JOIN raw_ip_addrs AS ia
-  ON (rit.tool_run_id = ia.tool_run_id) AND (rit.next_hop_ip_addr = ia.ip_addr)
 ;
 
 
@@ -145,10 +138,12 @@ JOIN raw_ip_addrs AS ia
 
 CREATE VIEW router_ip_addrs AS
 SELECT DISTINCT
-    ip_addr                     AS ip_addr,
-    BOOL_OR(is_responding)      AS is_responding
-FROM raw_router_ip_addrs
-GROUP BY ip_addr
+    rria.ip_addr                AS ip_addr,
+    BOOL_OR(ia.is_responding)   AS is_responding
+FROM raw_router_ip_addrs AS rria
+JOIN ip_addrs AS ia
+  ON rria.ip_addr = ia.ip_addr
+GROUP BY rria.ip_addr
 ;
 
 
