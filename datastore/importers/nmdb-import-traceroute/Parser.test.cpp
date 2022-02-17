@@ -40,22 +40,76 @@ class TestParser : public Parser {
     public:
       using Parser::windowsHeader;
       using Parser::windowsHop;
+      using Parser::windowsDomainIp;
       using Parser::linuxHeader;
       using Parser::linuxHop;
+      using Parser::linuxDomainIp;
+      using Parser::getData;
 };
 
 BOOST_AUTO_TEST_CASE(testParts)
 {
-  TestParser tp;
+  { // windowsDomainIp
+    TestParser tp;
+    const auto& parserRule {tp.windowsDomainIp};
+
+    std::vector<std::string> testsOk {
+      R"(1.2.3.4)",
+      R"(router1.site.domain [1.2.3.4])",
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                 "Parse rule 'windowsDomainIp': " << test);
+    }
+    std::string dbgStr;
+    const auto tr {tp.getData()};
+    BOOST_TEST(2 == tr.size());
+    dbgStr = R"([[1.2.3.4/32, 1, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    BOOST_TEST(dbgStr == tr[0].toDebugString());
+    dbgStr = R"([[1.2.3.4/32, 1, from traceroute import, 0, )"
+             R"([router1.site.domain], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    BOOST_TEST(dbgStr == tr[1].toDebugString());
+    for (const auto& d : tr) {
+      BOOST_TEST(!d.isValid());
+    }
+
+    std::vector<std::string> testsBad {
+      R"(1.2.3.4 [1.2.3.4])", // IP success, but leaves chars unprocessed
+      R"([1.2.3.4])",
+    };
+    for (const auto& test : testsBad) {
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
+                 "Parse rule 'windowsDomainIp': " << test);
+    }
+  }
+
+  { // windowsHop
+    TestParser tp;
+    const auto& parserRule {tp.windowsHop};
+
+    std::vector<std::string> testsOk {
+      R"(  1    <1 ms    10 ms    100 ms  1.2.3.4 )",
+      R"(2 <1 ms 1 ms 100 ms 1.2.3.4)",
+      R"(3    <1 ms    10 ms    100 ms  domain.domain.tld [1.2.3.4])",
+      R"(4    <1 ms    1 ms     *       domain.domain.tld [1.2.3.4])",
+      R"(99    *        *        *     Request timed out.)",
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                 "Parse rule 'windowsHop': " << test);
+    }
+    // entry "99" has zero, rest have one
+    BOOST_TEST((testsOk.size() - 1) == tp.getData().size());
+  }
 
   { // windowsHeader
+    TestParser tp;
     const auto& parserRule {tp.windowsHeader};
-    std::vector<std::string> testsOk {
 
-      R"STR(Tracing route to google.com [142.250.72.46]
-over a maximum of 30 hops:)STR",
-      R"STR(Tracing route to 142.250.72.46
-over a maximum of 30 hops:)STR"
+    std::vector<std::string> testsOk {
+      {"Tracing route to site.domain [1.2.3.4]\n"
+       "over a maximum of 30 hops:"},
+      {"Tracing route to 1.2.3.4 over a maximum of 30 hops"},
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -63,50 +117,75 @@ over a maximum of 30 hops:)STR"
     }
   }
 
-  { // windowsHop
-    const auto& parserRule {tp.windowsHop};
-    std::vector<std::string> testsOk {
+  { // linuxDomainIp
+    TestParser tp;
+    const auto& parserRule {tp.linuxDomainIp};
 
-      R"STR(  1    <1 ms    10 ms    100 ms  192.168.1.2 )STR",
-      R"STR(  2    <1 ms    1 ms    100 ms  192.168.1.3 )STR",
-      R"STR(  1    <1 ms    10 ms    100 ms  domain.domain.tld [192.168.1.2] )STR",
-      R"STR(  2    <1 ms    1 ms    100 ms  domain.domain.tld [192.168.1.3] )STR"
+    std::vector<std::string> testsOk {
+      R"(1.2.3.4)",
+      R"(1.2.3.4 (1.2.3.4))",
+      R"(router1.site.domain (1.2.3.4))",
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'windowsHop': " << test);
+                 "Parse rule 'linuxDomainIp': " << test);
+    }
+    std::string dbgStr;
+    const auto tr {tp.getData()};
+    BOOST_TEST(3 == tr.size());
+    dbgStr = R"([[1.2.3.4/32, 1, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    BOOST_TEST(dbgStr == tr[0].toDebugString());
+    BOOST_TEST(dbgStr == tr[1].toDebugString());
+    dbgStr = R"([[1.2.3.4/32, 1, from traceroute import, 0, )"
+             R"([router1.site.domain], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    BOOST_TEST(dbgStr == tr[2].toDebugString());
+    for (const auto& d : tr) {
+      BOOST_TEST(!d.isValid());
+    }
+
+    std::vector<std::string> testsBad {
+      R"((1.2.3.4))",
+    };
+    for (const auto& test : testsBad) {
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
+                 "Parse rule 'linuxDomainIp': " << test);
     }
   }
 
-  { // linuxHeader
-    const auto& parserRule {tp.linuxHeader};
-    std::vector<std::string> testsOk {
+  { // linuxHop
+    TestParser tp;
+    const auto& parserRule {tp.linuxHop};
 
-      R"STR(traceroute to google.com (142.250.69.238), 30 hops max, 60 byte packets)STR",
-      R"STR(traceroute to 142.250.69.238 (142.250.69.238), 30 hops max, 60 byte packets)STR"
+    std::vector<std::string> testsOk {
+      R"( 1  1.2.3.4 (1.2.3.4)  0.138 ms  0.061 ms  0.190 ms )",
+      R"(2  router1.site.domain (1.2.3.4)  0.138 ms  0.061 ms  0.190 ms)",
+      R"(3 * r1.site.domain (1.2.3.4) 2 ms 1.2.3.5 (1.2.3.5) 3 ms)",
+      R"(4  1.2.3.4  1.000 ms  2.000 ms  3.000 ms)",
+      R"(99  * * *)",
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                 "Parse rule 'linuxHop': " << test);
+    }
+    // entry "3" has two routes, "99" has zero, rest have one
+    BOOST_TEST(testsOk.size() == tp.getData().size());
+  }
+
+  { // linuxHeader
+    TestParser tp;
+    const auto& parserRule {tp.linuxHeader};
+
+    std::vector<std::string> testsOk {
+      {R"(traceroute to site.domain (1.2.3.4),)"
+       R"( 30 hops max, 60 byte packets)"},
+      {R"(traceroute to 1.2.3.4 (1.2.3.4),)"
+       R"( 1 hops max, 1 byte packets)"},
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "Parse rule 'linuxHeader': " << test);
     }
   }
-
-  { // linuxHop
-    const auto& parserRule {tp.linuxHop};
-    std::vector<std::string> testsOk {
-
-      R"STR( 1  192.168.2.3 (192.168.2.3)  0.138 ms  0.061 ms  0.190 ms)STR",
-      R"STR( 10  domain.domain.tld (192.168.2.3)  0.138 ms  0.061 ms  0.190 ms )STR",
-      R"STR( 2  * domain.domain.tld (192.168.2.3)  2 ms domain2.domain.tld (192.168.2.5)  3 ms)STR",
-      R"STR( 5  * * 192.168.2.3 (192.168.2.3)  0.061 ms)STR",
-      R"STR( 7  * * *)STR"
-    };
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'linuxHop': " << test);
-    }
-  }
-
 }
 
 BOOST_AUTO_TEST_CASE(testWhole)
@@ -116,7 +195,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
   const auto& parserRule {tp};
   std::vector<std::string> testsOk {
 
-    R"STR(
+    R"(
 Tracing route to google.com [142.250.72.46]
 over a maximum of 30 hops:
 
@@ -134,9 +213,9 @@ over a maximum of 30 hops:
  12    20 ms    18 ms    23 ms  domain.test6.tld [142.250.72.46] 
 
 Trace complete.
-)STR",
+)",
 
-R"STR(
+R"(
 Tracing route to 142.250.72.46 over a maximum of 30 hops:
 
   1    <1 ms    <1 ms    <1 ms  192.168.92.68 
@@ -153,9 +232,9 @@ Tracing route to 142.250.72.46 over a maximum of 30 hops:
  12    20 ms    18 ms    23 ms  142.250.72.46 
 
 Trace complete.
-)STR",
+)",
 
-R"STR(traceroute to google.com (142.250.69.238), 30 hops max, 60 byte packets
+R"(traceroute to google.com (142.250.69.238), 30 hops max, 60 byte packets
  1  192.168.92.68 (192.168.92.68)  0.138 ms  0.061 ms  0.190 ms
  2  10.0.0.1 (10.0.0.1)  2.762 ms  2.655 ms  2.607 ms
  3  99.99.99.99 (99.99.99.99)  15.195 ms  25.852 ms  25.791 ms
@@ -175,9 +254,9 @@ R"STR(traceroute to google.com (142.250.69.238), 30 hops max, 60 byte packets
 17  33.99.133.199 (33.99.133.199)  61.693 ms  54.472 ms 221.221.221.221 (221.221.221.221)  53.461 ms
 18  142.251.61.183 (142.251.61.183)  61.280 ms  58.059 ms  58.304 ms
 19  domain.test10.tld (142.250.69.238)  57.871 ms  56.099 ms  59.306 ms
-)STR",
+)",
 
-R"STR(traceroute to google.com (142.250.72.46), 30 hops max, 60 byte packets
+R"(traceroute to google.com (142.250.72.46), 30 hops max, 60 byte packets
  1  192.168.92.68  0.236 ms  0.264 ms  0.155 ms
  2  10.0.0.1  2.113 ms  2.009 ms  3.800 ms
  3  99.99.99.99  14.065 ms  24.768 ms  24.636 ms
@@ -190,7 +269,7 @@ R"STR(traceroute to google.com (142.250.72.46), 30 hops max, 60 byte packets
 10  83.84.5.86  26.980 ms * 21.55.99.128  32.185 ms
 11  44.38.33.48  30.477 ms 42.99.11.1  30.402 ms 53.85.33.115  33.578 ms
 12  142.250.72.46  27.107 ms 18.19.20.21  28.758 ms 142.250.72.46  33.128 ms
-)STR"
+)"
   };
   
   for (const auto& test : testsOk) {
