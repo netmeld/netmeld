@@ -36,7 +36,6 @@ namespace nmdo = netmeld::datastore::objects;
 class TestTracerouteHop : public nmdo::TracerouteHop {
   public:
     TestTracerouteHop() : TracerouteHop() {};
-
 };
 
 BOOST_AUTO_TEST_CASE(testValidity)
@@ -47,44 +46,45 @@ BOOST_AUTO_TEST_CASE(testValidity)
   }
 
   {
-    int n = 1;
     TestTracerouteHop hop;
-    hop.hopCount = n;
+    hop.setHopCount(0);
+    BOOST_CHECK(!hop.isValid());
+    hop.setHopCount(1);
     BOOST_CHECK(!hop.isValid());
   }
 
   {
-    nmdo::IpAddress origin {"10.0.0.1/24"};
+    nmdo::IpAddress nextHop {"10.0.0.1/24"};
     TestTracerouteHop hop;
-    hop.rtrIpAddr = origin;
+    hop.setHopIp(nextHop);
     BOOST_CHECK(!hop.isValid());
   }
 
   {
     nmdo::IpAddress destination {"100.0.0.1/24"};
     TestTracerouteHop hop;
-    hop.dstIpAddr = destination;
+    hop.setDstIp(destination);
     BOOST_CHECK(!hop.isValid());
   }
 
   {
-    nmdo::IpAddress origin {"10.0.0.1/24"};
+    nmdo::IpAddress nextHop     {"10.0.0.1/24"};
     nmdo::IpAddress destination {"100.0.0.1/24"};
     TestTracerouteHop hop;
-    hop.rtrIpAddr = origin;
-    hop.dstIpAddr = destination;
+    hop.setHopIp(nextHop);
+    hop.setDstIp(destination);
+    BOOST_CHECK(!hop.isValid());
+    hop.setHopCount(0);
     BOOST_CHECK(!hop.isValid());
   }
 
   {
-    int n = 1;
-    nmdo::IpAddress origin {"10.0.0.1/24"};
+    nmdo::IpAddress nextHop     {"10.0.0.1/24"};
     nmdo::IpAddress destination {"100.0.0.1/24"};
     TestTracerouteHop hop;
-    hop.rtrIpAddr = origin;
-    hop.dstIpAddr = destination;
-    hop.hopCount = n;
+    hop.setHopCount(1);
+    hop.setHopIp(nextHop);
+    hop.setDstIp(destination);
     BOOST_CHECK(hop.isValid());
   }
-
 }
