@@ -51,12 +51,11 @@ class Parser :
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    Data d;
-    Result r;
+    const std::string TRACE_REASON {"from traceroute import"};
 
-    std::set<nmdo::IpAddress> prevDests;
-    std::vector<nmdo::TracerouteHop> curHops;
-    int currentHopNumber;
+    Result          curHops;
+    uint32_t        hopCount  {0};
+    nmdo::IpAddress dstIpAddr;
 
   protected:
     // Rules
@@ -64,13 +63,13 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter>
-      ignore;
+      garbageLine;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      windowsTrace, windowsHeader, windowsHop, windowsDomainIP;
-      
+      windowsTrace, windowsHeader, windowsHop, windowsDomainIp;
+
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      linuxTrace, linuxHeader, linuxHop, linuxDomainIP;
+      linuxTrace, linuxHeader, linuxHop, linuxDomainIp;
 
     nmdp::ParserDomainName  fqdn;
     nmdp::ParserIpAddress   ipAddr;
@@ -85,15 +84,9 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
+    void addHop(nmdo::IpAddress&);
 
-    void recordHopNumber(int);
-
-    void recordHopDestination(const nmdo::IpAddress&);
-
-    void recordHopDestinationWithAlias(const nmdo::IpAddress&, const std::string&);
-
-    void flushHops();
-
+  protected:
     Result getData();
 };
 #endif // PARSER_HPP
