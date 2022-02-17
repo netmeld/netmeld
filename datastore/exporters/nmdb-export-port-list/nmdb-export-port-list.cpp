@@ -136,11 +136,8 @@ class Tool : public nmdt::AbstractExportTool
       std::bitset<65536> sctpPorts;
 
       if (opts.exists("from-db")) {
-        const auto& dbName  {opts.getValue("db-name")};
-        const auto& dbArgs  {opts.getValue("db-args")};
-        pqxx::connection db{std::string("dbname=") + dbName + " " + dbArgs};
-
-        pqxx::read_transaction t {db};
+        pqxx::connection db       {getDbConnectString()};
+        pqxx::read_transaction t  {db};
 
         pqxx::result portRows =
           t.exec("SELECT DISTINCT protocol, port"

@@ -92,11 +92,9 @@ class Tool : public nmdt::AbstractExportTool
     int
     runTool() override
     {
-      const auto& dbName  {getDbName()};
-      const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
-      pqxx::read_transaction t {db};
-      pqxx::result records = t.exec(opts.getValue("query"));
+      pqxx::connection db       {getDbConnectString()};
+      pqxx::read_transaction t  {db};
+      pqxx::result records      {t.exec(opts.getValue("query"))};
 
       // Populate column width and sanity check
       std::vector<float> sizes;

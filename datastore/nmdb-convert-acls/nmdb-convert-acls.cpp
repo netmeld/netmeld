@@ -79,10 +79,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
-      const auto& dbName{opts.getValue("db-name")};
-      const auto& dbArgs{opts.getValue("db-args")};
-
-      pqxx::connection db{std::string("dbname=") + dbName + " " + dbArgs};
+      pqxx::connection db {getDbConnectString()};
 
       db.prepare(
         "select_raw_devices",

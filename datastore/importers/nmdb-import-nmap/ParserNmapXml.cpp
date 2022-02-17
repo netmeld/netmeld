@@ -202,16 +202,16 @@ ParserNmapXml::extractHostnames(const pugi::xml_node& nmapNode, Data& data)
     std::string hostname {nodeService.attribute("hostname").value()};
 
     if (!hostname.empty()) {
-      std::set<std::string> validatedServices {
-        "microsoft-ds",
-      };
-      if (validatedServices.count(idValue)) {
+      std::ostringstream oss;
+      oss << hostname << '/' << static_cast<uint16_t>(ipAddr.getPrefix());
+      if (oss.str() != ipAddr.toString()) {
         ipAddr.addAlias(hostname, reason);
         data.ipAddrs.push_back(ipAddr);
       } else {
         std::string note {
           "Nmap service scan: " + idValue
-          + "\n  Potential hostname: " + hostname
+          + "\n  From IP: " + ipAddr.toString()
+          + "\n  Potential alias: " + hostname
         };
         data.observations.addNotable(note);
       }

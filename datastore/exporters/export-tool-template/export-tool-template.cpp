@@ -110,10 +110,7 @@ class Tool : public nmdt::AbstractExportTool
     runTool() override
     {
       // Contains tool's primary logic
-
-      const auto& dbName  {getDbName()};
-      const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
+      pqxx::connection db {getDbConnectString()};
 
       db.prepare
         ("select_tool_runs",

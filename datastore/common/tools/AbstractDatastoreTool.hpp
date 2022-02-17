@@ -66,7 +66,9 @@ namespace netmeld::datastore::tools {
 
       void addRequiredDeviceId();
 
-      std::string const getDbName() const;
+      const std::string getDbName() const;
+      const std::string getDbArgs() const;
+      const std::string getDbConnectString() const;
 
     public:
   };

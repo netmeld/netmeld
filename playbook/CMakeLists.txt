@@ -51,7 +51,8 @@ collect data in a standardized way for futher processing with the \
 Netmeld tool suite.")
 nm_add_deb_description(${desc})
 set(deps "netmeld-core, netmeld-datastore, \
-arping, nmap, macchanger, wireshark-common, libyaml-cpp0.6")
+arping, nmap, macchanger, wireshark-common, \
+libyaml-cpp0.6 | libyaml-cpp0.7")
 nm_add_deb_depends(${deps})
 set(deps "xterm | tmux")
 nm_add_deb_recommends(${deps})

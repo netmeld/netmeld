@@ -85,9 +85,7 @@ class Tool : public nmdt::AbstractDatastoreTool
     int
     runTool() override
     {
-      const auto& dbName  {getDbName()};
-      const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db {"dbname=" + dbName + " " + dbArgs};
+      pqxx::connection db {getDbConnectString()};
       queriesPb.init(opts.getValue("queries-file"));
       queriesPb.dbPrepare(db);
 

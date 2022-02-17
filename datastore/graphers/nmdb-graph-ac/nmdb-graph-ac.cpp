@@ -100,9 +100,7 @@ class Tool : public nmdt::AbstractGraphTool
     int
     runTool() override
     {
-      const auto& dbName  {getDbName()};
-      const auto& dbArgs  {opts.getValue("db-args")};
-      pqxx::connection db {std::string("dbname=") + dbName + " " + dbArgs};
+      pqxx::connection db {getDbConnectString()};
       nmdu::dbPrepareCommon(db);
 
       std::string rulesTarget {"device_ac_rules_known_applied"};

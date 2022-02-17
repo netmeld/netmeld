@@ -1,0 +1,453 @@
+---
+procedures:
+# Examples of sample queries
+- name: List Netmeld known observations (not otherwise grabbed later)
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        category, COUNT(data_path) AS counts, observation, tool_name
+      FROM tool_observations
+      WHERE NOT (observation LIKE 'AcRule (%) %')
+      GROUP BY category, observation, tool_name
+      ORDER BY category, counts DESC, observation, tool_name
+    "
+- name: Potential ACL rule issues
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        category, COUNT(data_path) AS counts, observation, tool_name
+      FROM tool_observations
+      WHERE observation LIKE 'AcRule (%) %'
+      GROUP BY category, observation, tool_name
+      ORDER BY category, counts DESC, observation, tool_name
+    "
+
+- name: List responding IPs (contiguous grouped) and smallest possible subnet
+  cmds:
+  # NOTE: refer to the Tabibitosan method for more details
+  - psql "{{dbConnectString}}" -c "
+      WITH ips AS (
+          SELECT
+            ip_addr
+            , row_number() OVER (ORDER BY ip_addr) AS row_num
+            , ip_addr - row_number() OVER (ORDER BY ip_addr) AS ip_group
+          FROM ip_addrs
+          WHERE is_responding = 't'
+          ORDER BY ip_addr
+        )
+      SELECT
+        inet_merge(min(ip_addr), max(ip_addr)) AS min_subnet
+        , count(ip_addr) AS num_contiguous_ips
+        , min(ip_addr) AS min_ip
+        , NULLIF(max(ip_addr), min(ip_addr)) AS max_ip
+      FROM ips
+      GROUP BY ip_group
+      ORDER BY min_subnet, num_contiguous_ips DESC, min_ip, max_ip
+    "
+- name: Possible subnet allocation based on responding IPs and overlap
+  cmds:
+  # NOTE: refer to the Tabibitosan method for more details
+  - psql "{{dbConnectString}}" -c "
+      WITH RECURSIVE t1 AS (
+          WITH ips AS (
+              SELECT
+                ip_addr
+                , row_number() OVER (ORDER BY ip_addr) AS row_num
+                , ip_addr - row_number() OVER (ORDER BY ip_addr) AS ip_group
+              FROM ip_addrs
+              WHERE is_responding = 't'
+              ORDER BY ip_addr
+            )
+          SELECT
+            inet_merge(min(ip_addr), max(ip_addr)) AS min_subnet
+            , count(ip_addr) AS num_contiguous_ips
+            , min(ip_addr) AS min_ip
+            , NULLIF(max(ip_addr), min(ip_addr)) AS max_ip
+          FROM ips
+          GROUP BY ip_group
+          ORDER BY min_subnet, num_contiguous_ips DESC, min_ip, max_ip
+        )
+      , t2 AS (
+          SELECT
+            st1.min_subnet AS larger
+            , st2.min_subnet AS smaller
+          FROM t1 AS st1
+             , t1 AS st2
+          WHERE st1.min_subnet >> st2.min_subnet
+          ORDER BY larger
+        )
+      SELECT
+        larger AS subnet
+        , count(DISTINCT ia1.ip_addr) AS uniq_ips
+        , array_agg(DISTINCT smaller) AS subnet_overlap
+      FROM t2
+      JOIN ip_addrs AS ia1
+        ON larger >>= ia1.ip_addr
+      WHERE larger NOT IN (SELECT smaller FROM t2)
+      GROUP BY larger
+      ORDER BY larger
+    "
+- name: Hostname to IP(s) mapping
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      WITH fqdn_no_dot AS (
+          SELECT DISTINCT
+            h2.hostname
+          FROM hostnames AS h1
+             , hostnames AS h2
+          WHERE h1.hostname = concat(h2.hostname, '.')
+          ORDER BY hostname
+        )
+      SELECT
+        hostname
+        , count(DISTINCT ip_addr) AS count_mapped_ips
+        , array_agg(DISTINCT ip_addr) AS ip_addrs
+      FROM hostnames AS h1
+      WHERE NOT EXISTS (SELECT 1 FROM fqdn_no_dot WHERE h1.hostname = hostname)
+      GROUP BY hostname
+      ORDER BY hostname
+    "
+- name: IP to hostname(s) mapping
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      WITH fqdn_no_dot AS (
+          SELECT DISTINCT
+            h2.hostname
+          FROM hostnames AS h1
+             , hostnames AS h2
+          WHERE h1.hostname = concat(h2.hostname, '.')
+          ORDER BY hostname
+        )
+      SELECT
+        ip_addr
+        , count(DISTINCT hostname) AS count_mapped_hostnames
+        , array_agg(DISTINCT hostname) AS hostnames
+      FROM hostnames AS h1
+      WHERE NOT EXISTS (SELECT 1 FROM fqdn_no_dot WHERE h1.hostname = hostname)
+      GROUP BY ip_addr
+      ORDER BY count_mapped_hostnames DESC
+    "
+- name: List devices using VLAN 1 (probably native VLAN)
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        *
+      FROM device_interfaces_vlans
+      WHERE vlan = '1'
+        AND NOT (interface_name = '0' OR interface_name = 'cpu')
+    "
+- name: List devices with IPs using VLAN 1 (probably native VLAN)
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        dia.device_id, dia.interface_name, dia.ip_addr, dia.ip_net
+        , diav.vlan
+      FROM device_ip_addrs AS dia
+      JOIN (SELECT * FROM device_interfaces_vlans WHERE vlan = '1') AS diav
+        ON dia.device_id = diav.device_id
+        AND dia.interface_name = diav.interface_name
+    "
+- name: List devices where Metasploit modules may be usable
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        ip_addr, protocol, port
+        , json_agg(distinct metasploit_name) metasploit_names
+      FROM nessus_results_metasploit_modules
+      GROUP BY ip_addr, protocol, port
+    "
+- name: NSE results by script ID
+  cmds:
+  - scripts=$(psql "{{dbConnectString}}" -t
+                -c "SELECT DISTINCT script_id FROM nse_results");
+    echo "Recorded script IDs:\n$scripts";
+    for script in $scripts; do
+      echo "Results for NSE id:\t$script\n---";
+      psql "{{dbConnectString}}" -c "
+        SELECT *
+        FROM nse_results
+        WHERE script_id = '$script'
+        ORDER BY ip_addr, port, protocol, script_id";
+      echo "---";
+    done;
+- name: Intra-network reachable 'open' servers and ports
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        src_ip_addr, protocol, port
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM intra_network_ports
+      WHERE port_state = 'open'
+      GROUP BY src_ip_addr, protocol, port
+    "
+- name: Intra-network reachable servers and ports, not 'open'
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        src_ip_addr, protocol, port, port_state
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM intra_network_ports
+      WHERE NOT port_state = 'open'
+      GROUP BY src_ip_addr, protocol, port, port_state
+    "
+- name: Inter-network reachable 'open' servers and ports through route
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        src_ip_addr, next_hop_ip_addr, protocol, port
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM inter_network_ports
+      WHERE port_state = 'open'
+      GROUP BY src_ip_addr, next_hop_ip_addr, protocol, port
+    "
+- name: Inter-network reachable servers and ports through route, not 'open'
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        src_ip_addr, next_hop_ip_addr, protocol, port, port_state
+        , json_agg(DISTINCT dst_ip_addr ORDER BY dst_ip_addr) as dst_ip_addrs
+      FROM inter_network_ports
+      WHERE NOT port_state = 'open'
+      GROUP BY src_ip_addr, next_hop_ip_addr, protocol, port, port_state
+    "
+- name: Devices sharing a common IP
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT
+        ip_addr
+        , string_agg(DISTINCT device_id, ', ') AS device_ids
+      FROM device_ip_addrs
+      GROUP BY ip_addr
+      HAVING 1 < count(device_id)
+      ORDER BY ip_addr
+    "
+- name: Counts and listing of device(s) per IP per subnet (known in 'ip_nets')
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      WITH
+        first AS (
+          SELECT DISTINCT
+            in1.ip_net
+            , count(DISTINCT dia1.ip_addr) AS uniq_ips
+            , count(DISTINCT dia2.device_id) AS uniq_dev_ids
+          FROM ip_nets AS in1
+          LEFT JOIN device_ip_addrs AS dia1
+            ON in1.ip_net >>= dia1.ip_addr
+          LEFT JOIN device_ip_addrs AS dia2
+            ON dia1.ip_addr = dia2.ip_addr
+          GROUP BY in1.ip_net
+        )
+      , second AS (
+          SELECT DISTINCT
+            ip_addr
+            , string_agg(DISTINCT device_id, ', ') AS device_ids
+          FROM device_ip_addrs
+          GROUP BY ip_addr
+        )
+      SELECT DISTINCT
+        first.ip_net AS ip_net
+        , first.uniq_ips AS uniq_ips
+        , first.uniq_dev_ids AS uniq_device_ids
+        , jsonb_agg(DISTINCT jsonb_build_object(
+            'ip_addr', second.ip_addr, 'device_ids', second.device_ids))
+          AS devices_per_ip
+      FROM first
+      LEFT JOIN second
+        ON first.ip_net >>= second.ip_addr
+      GROUP BY 1,2,3
+      ORDER BY 1
+    "
+- name: Subets in 'device_ip_addrs' but not in 'ip_nets'
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      SELECT ip_net
+      FROM device_ip_addrs AS dia1
+      WHERE NOT EXISTS (
+          SELECT 1
+          FROM ip_nets AS in1
+          WHERE in1.ip_net = dia1.ip_net
+        )
+      ORDER BY 1
+    "
+- name: Possible not (service) scanned ports;
+        based on port scanning and descriptive configs
+  cmds:
+  - psql "{{dbConnectString}}" -c 
+  - '"'
+  - &missed_ports
+      WITH sd1 AS (
+          SELECT DISTINCT *
+          FROM ports_services AS ps1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nse_results AS nr1
+              WHERE ps1.ip_addr = nr1.ip_addr
+                AND ps1.protocol = nr1.protocol
+                AND ps1.port = nr1.port
+            )
+          INTERSECT
+          SELECT DISTINCT *
+          FROM ports_services AS ps1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nessus_results AS nr2
+              WHERE ps1.ip_addr = nr2.ip_addr
+                AND ps1.protocol = nr2.protocol
+                AND ps1.port = nr2.port
+          )
+        )
+      SELECT DISTINCT
+        ip_addr
+        , port_state
+        , port_reason
+        , protocol
+        , array_agg(DISTINCT port) AS ports1
+        , string_agg(DISTINCT port::TEXT, ',') AS ports2
+      FROM sd1
+      WHERE NOT (port = '-1' OR protocol = 'ip')
+        AND (port_state IS NULL
+             OR NOT (port_state = 'closed' OR port_state = 'filtered'))
+      GROUP BY ip_addr, port_state, port_reason, protocol
+  - '"'
+- name: nmap for prior (possible not scanned ports)
+# Nmap commands from Playbook:
+#   TCP (short): clw nmap -d -T4 -n -e {{linkName}} -PR --host-timeout 30m --script-timeout 5m -Pn -O --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey or ssh2-enum-algos or ssl-cert or smtp-commands or smb-os-discovery or smbv2-enabled or vnc-info)' -sS -p `nmdb-export-port-list --tcp-all` -iL *path-responding-host-ips --excludefile *path-roe-exclude-ips
+#   TCP (long) : clw nmap -d -T4 -n -e {{linkName}} -PR --host-timeout 30m --script-timeout 10m -A --script '((default or discovery) and not (external or brute or dos))' -sS -p `nmdb-export-port-list --from-db --tcp` -iL *path-responding-host-ips --excludefile *path-roe-exclude-ips
+#   UDP        : clw nmap -d -T4 -n -e {{linkName}} -PR --host-timeout 30m --script-timeout 2m -Pn -O --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey or ssh2-enum-algos or ssl-cert or smtp-commands or smb-os-discovery or smbv2-enabled or vnc-info)' -sU -p `nmdb-export-port-list --udp` -iL *path-responding-host-ips --excludefile *path-roe-exclude-ips
+  cmds:
+  - psql "{{dbConnectString}}" -c 
+  - '"'
+  - WITH missed_ports AS (
+  - *missed_ports
+  - )
+    # IPv4, TCP
+  - SELECT
+      concat(
+          'clw nmap -d -T4 -n -PR'
+          , ' --host-timeout 30m --script-timeout 5m'
+          , ' -Pn -O'
+          , ' --script (banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey
+                        or ssh2-enum-algos or ssl-cert or smtp-commands
+                        or smb-os-discovery or smbv2-enabled or vnc-info)'
+          , ' -sS -p '
+          , ports2
+          , ' '
+          , string_agg(DISTINCT host(ip_addr)::TEXT, ',')
+        ) AS nmap_cmd
+    FROM missed_ports
+    WHERE 4 = family(ip_addr)
+      AND 'tcp' = protocol
+    GROUP BY ports2
+  - " UNION "
+    # IPv4, UDP
+  - SELECT
+      concat(
+          'clw nmap -d -T4 -n -PR'
+          , ' --host-timeout 30m --script-timeout 2m'
+          , ' -Pn -O'
+          , ' --script (banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey
+                        or ssh2-enum-algos or ssl-cert or smtp-commands
+                        or smb-os-discovery or smbv2-enabled or vnc-info)'
+          , ' -sU -p '
+          , ports2
+          , ' '
+          , string_agg(DISTINCT host(ip_addr)::TEXT, ',')
+        ) AS nmap_cmd
+    FROM missed_ports
+    WHERE 4 = family(ip_addr)
+      AND 'udp' = protocol
+    GROUP BY ports2
+  - " UNION "
+    # IPv6, TCP
+  - SELECT
+      concat(
+          'clw nmap -6 -d -T4 -n -PR'
+          , ' --host-timeout 30m --script-timeout 5m'
+          , ' -Pn -O'
+          , ' --script (banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey
+                        or ssh2-enum-algos or ssl-cert or smtp-commands
+                        or smb-os-discovery or smbv2-enabled or vnc-info)'
+          , ' -sS -p '
+          , ports2
+          , ' '
+          , string_agg(DISTINCT host(ip_addr)::TEXT, ',')
+        ) AS nmap_cmd
+    FROM missed_ports
+    WHERE 6 = family(ip_addr)
+      AND 'tcp' = protocol
+    GROUP BY ports2
+  - " UNION "
+    # IPv6, UDP
+  - SELECT
+      concat(
+          'clw nmap -6 -d -T4 -n -PR'
+          , ' --host-timeout 30m --script-timeout 2m'
+          , ' -Pn -O'
+          , ' --script (banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey
+                        or ssh2-enum-algos or ssl-cert or smtp-commands
+                        or smb-os-discovery or smbv2-enabled or vnc-info)'
+          , ' -sU -p '
+          , ports2
+          , ' '
+          , string_agg(DISTINCT host(ip_addr)::TEXT, ',')
+        ) AS nmap_cmd
+    FROM missed_ports
+    WHERE 6 = family(ip_addr)
+      AND 'udp' = protocol
+    GROUP BY ports2
+  - '"'
+- name: Possible not (service) scanned ports;
+        based on non-descriptive configs
+  cmds:
+  - psql "{{dbConnectString}}" -c "
+      WITH sd1 AS (
+          SELECT DISTINCT *
+          FROM device_ip_servers AS dis1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nse_results AS nr1
+              WHERE dis1.server_ip_addr = nr1.ip_addr
+                AND dis1.port = nr1.port
+            )
+          INTERSECT
+          SELECT DISTINCT *
+          FROM device_ip_servers AS dis1
+          WHERE NOT EXISTS (
+              SELECT 1
+              FROM nessus_results AS nr2
+              WHERE dis1.server_ip_addr = nr2.ip_addr
+                AND dis1.port = nr2.port
+          )
+        )
+      SELECT DISTINCT
+        server_ip_addr AS ip_addr,
+        NULL AS protocol,
+        port,
+        NULL AS port_state,
+        service_name AS port_reason,
+        'config ingest -- ' || description AS service_reason
+      FROM sd1
+    "
+- name: Extract known secret patterns (not exhaustive) from Netmeld Datalake
+        for examination
+  cmds:
+  - dlFiles=$(nmdl-list --by-tool | sort);
+    dlPrefix=~/.netmeld/datalake;
+    for dlFile in $dlFiles; do
+      case "$dlFile" in
+        nmdb-import-cisco:*
+        |nmdb-import-cisco-wireless:*
+        |nmdb-import-juniper-conf:*
+        |nmdb-import-juniper-set:*
+        )
+          dlPath=$(echo "$dlFile" | sed -e 's/^.*://g' -e 's/->/\//g');
+          fPath=${dlPrefix}/${dlPath};
+          echo "Checking $dlFile:\t$fPath\n---";
+          egrep '(^(username|enable))|(encrypted|secret)| (hash|md5|sha) ' $fPath;
+          echo "---";
+          ;;
+        *)
+          ;;
+      esac;
+    done;
+...
