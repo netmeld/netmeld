@@ -137,7 +137,7 @@ class SshAlgorithms : public ExportScan {
   protected: // Constructors part of subclass API
   public: // Constructors part of public API
     SshAlgorithms() = delete;
-    SshAlgorithms(const std::string&);
+    explicit SshAlgorithms(const std::string&);
 
   // ========================================================================
   // Methods
@@ -148,7 +148,7 @@ class SshAlgorithms : public ExportScan {
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
-    void exportScan(const std::unique_ptr<Writer>&);
+    void exportScan(const std::unique_ptr<Writer>&) override;
 };
 }
 #endif // EXPORT_SCAN_SSH_ALGORITHMS_HPP

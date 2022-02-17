@@ -167,7 +167,7 @@ struct PhaseConfig
   void
   removeWriteSavePath() const
   {
-    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+    const nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
     nmfm.removeWrite(savePath, true);
   }
 };
@@ -853,11 +853,11 @@ class Tool : public nmdt::AbstractDatastoreTool
           pc.srcIpAddr        = srcIpAddr;
           pc.dbConnectString  = dbConnectString;
 
-          pqxx::read_transaction t {db};
+          pqxx::read_transaction readT {db};
           pqxx::result rows {
-              t.exec_prepared("select_network_and_broadcast", pc.srcIpAddr)
+              readT.exec_prepared("select_network_and_broadcast", pc.srcIpAddr)
             };
-          t.commit();
+          readT.commit();
 
           for (const auto& row : rows) {
             row.at("ip_net").to(pc.ipNet);
@@ -1019,7 +1019,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
     bool
     runPhaseCommands(
-      std::vector<std::tuple<std::string, std::string>>& commands,
+      const std::vector<std::tuple<std::string, std::string>>& commands,
       const YAML::Node& yCmdSet)
     {
       bool stageEnabled       {true};

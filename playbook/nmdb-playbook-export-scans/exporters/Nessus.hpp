@@ -48,7 +48,7 @@ class Nessus : public ExportScan {
   protected: // Constructors part of subclass API
   public: // Constructors part of public API
     Nessus() = delete;
-    Nessus(const std::string&);
+    explicit Nessus(const std::string&);
 
   // ========================================================================
   // Methods
@@ -59,7 +59,7 @@ class Nessus : public ExportScan {
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
-    void exportScan(const std::unique_ptr<Writer>&);
+    void exportScan(const std::unique_ptr<Writer>&)override;
 };
 }
 #endif // EXPORT_SCAN_NESSUS_HPP
