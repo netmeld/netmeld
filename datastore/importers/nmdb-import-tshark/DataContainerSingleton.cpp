@@ -46,7 +46,7 @@ DataContainerSingleton::getInstance()
 }
 
 void
-DataContainerSingleton::insert(Data& d)
+DataContainerSingleton::insert(const Data& d)
 {
   data.push(d);
 }
