@@ -144,7 +144,7 @@ class SshAlgorithms : public ExportScan {
   // ========================================================================
   private: // Methods which should be hidden from API users
     void exportTemplate(const auto&) const;
-    void exportFromDb(const auto&, pqxx::result&);
+    void exportFromDb(const auto&, const pqxx::result&);
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
