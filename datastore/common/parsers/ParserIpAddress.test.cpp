@@ -39,6 +39,8 @@ BOOST_AUTO_TEST_CASE(testWellformedWithPrefix)
 {
   std::vector<std::string> ips =
   {
+    "0.0.0.0/0",
+    "::/0",
     "1.2.3.4/1",
     "255.255.255.255/32",
     "1.12.255.0/24",
