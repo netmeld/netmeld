@@ -62,9 +62,6 @@ class Parser :
     qi::rule<nmdp::IstreamIter, nmdo::Route(), qi::ascii::blank_type>
       defaultRoute, route, nullRoute;
 
-//    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-//      nullRoute;
-
     qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
       dstIpNet, nextHopIp;
 

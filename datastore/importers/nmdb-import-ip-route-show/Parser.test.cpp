@@ -207,14 +207,3 @@ BOOST_AUTO_TEST_CASE(testWhole)
     }
   }
 }
-/*
-
-2000:beef:cafe::/64 dev sixxs metric 256 mtu 1280 advmss 1220
-2000:dead:beef:1::/64 dev br-lan metric 256 mtu 1500 advmss 1440
-fe80::/64 dev br-lan metric 256 mtu 1500 advmss 1440
-ff00::/8 dev br-lan metric 256 mtu 1500 advmss 1440
-2000:dead:beaf:1::/64 dev wlan0 proto kernel metric 256 mtu 1500 advmss 1440
-fe80::/64 dev wlan0 proto kernel metric 256 mtu 1500 advmss 1440
-2000:dead:beef:a::/64 dev eth0 proto kernel metric 256 mtu 1500 advmss 1440
-fe80::/64 dev eth0 proto kernel metric 256 mtu 1500 advmss 1440
-*/
