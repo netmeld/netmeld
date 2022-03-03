@@ -32,10 +32,7 @@ namespace nmcu = netmeld::core::utils;
 
 
 namespace netmeld::datastore::objects {
-  Route::Route() :
-    adminDistance(0),
-    metric(0),
-    isActive(true)
+  Route::Route()
   {}
 
   void
@@ -54,6 +51,15 @@ namespace netmeld::datastore::objects {
   Route::setDstIpNet(const IpAddress& _dstIpNet)
   {
     dstIpNet = _dstIpNet;
+
+    if (nextHopIpAddr.isDefault() && !dstIpNet.isDefault()) {
+      if (dstIpNet.isV4()) {
+        nextHopIpAddr.setAddress(defaultIpv4Addr);
+      } else {
+        nextHopIpAddr.setAddress(defaultIpv6Addr);
+      }
+      nextHopIpAddr.setReason("Netmeld route default used");
+    }
   }
 
   void
@@ -72,6 +78,16 @@ namespace netmeld::datastore::objects {
   Route::setNextHopIpAddr(const IpAddress& _nextHopIpAddr)
   {
     nextHopIpAddr = _nextHopIpAddr;
+
+    if (dstIpNet.isDefault() && !nextHopIpAddr.isDefault()) {
+      if (nextHopIpAddr.isV4()) {
+        dstIpNet.setAddress(defaultIpv4Addr);
+      } else {
+        dstIpNet.setAddress(defaultIpv6Addr);
+      }
+      dstIpNet.setPrefix(defaultIpPrefix);
+      dstIpNet.setReason("Netmeld route default used");
+    }
   }
 
   void
@@ -105,9 +121,26 @@ namespace netmeld::datastore::objects {
   }
 
   void
+  Route::setNullRoute(bool _isNullRoute)
+  {
+    isNullRoute = _isNullRoute;
+  }
+
+  void
   Route::setDescription(const std::string& _description)
   {
     description = _description;
+  }
+
+  std::string
+  Route::getNextHopIpAddrString() const
+  {
+    std::string nextHopIpAddrString;
+    if (!isNullRoute) {
+      nextHopIpAddrString = nextHopIpAddr.toString();
+    }
+
+    return nextHopIpAddrString;
   }
 
   bool
@@ -129,26 +162,6 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Route::updateForSave(const bool isMetadataSave)
-  {
-    if (nextHopIpAddr.isDefault() && !dstIpNet.isDefault()) {
-      if (isMetadataSave && dstIpNet.isV6()) {
-        nextHopIpAddr = IpAddress::getIpv6Default();
-      } else {
-        // Always use IPv4 default for datastore as only one null case
-        nextHopIpAddr = IpAddress::getIpv4Default();
-      }
-    }
-    else if (!nextHopIpAddr.isDefault() && dstIpNet.isDefault()) {
-      if (nextHopIpAddr.isV4()) {
-        dstIpNet = IpNetwork::getIpv4Default();
-      } else {
-        dstIpNet = IpNetwork::getIpv6Default();
-      }
-    }
-  }
-
-  void
   Route::save(pqxx::transaction_base& t,
               const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
@@ -157,26 +170,26 @@ namespace netmeld::datastore::objects {
                 << std::endl;
       return;
     }
-    updateForSave(false);
 
     dstIpNet.save(t, toolRunId, deviceId);
     nextHopIpAddr.save(t, toolRunId, deviceId);
 
-    t.exec_prepared("insert_raw_device_ip_route",
-        toolRunId,
-        deviceId, // insert converts to lower
-        vrfId,
-        tableId,
-        isActive,
-        dstIpNet.toString(),
-        nextVrfId, // insert converts '' to null
-        nextTableId, // insert converts '' to null
-        nextHopIpAddr.toString(), // insert converts 0.0.0.0/0 to null
-        ifaceName, // insert converts '' to null
-        protocol, // insert converts to lower and '' to null
-        adminDistance,
-        metric,
-        description); // insert converts '' to null
+    t.exec_prepared("insert_raw_device_ip_route"
+      , toolRunId
+      , deviceId // insert converts to lower
+      , vrfId
+      , tableId
+      , isActive
+      , dstIpNet.toString()
+      , nextVrfId // insert converts '' to null
+      , nextTableId // insert converts '' to null
+      , getNextHopIpAddrString() // insert converts '' to null
+      , ifaceName // insert converts '' to null
+      , protocol // insert converts to lower and '' to null
+      , adminDistance
+      , metric
+      , description // insert converts '' to null
+      );
   }
 
   void
@@ -187,13 +200,13 @@ namespace netmeld::datastore::objects {
                 << std::endl;
       return;
     }
-    updateForSave(true);
 
-    t.exec_prepared("insert_tool_run_ip_route",
-        toolRunId,
-        ifaceName,
-        dstIpNet.toString(),
-        nextHopIpAddr.toString());
+    t.exec_prepared("insert_tool_run_ip_route"
+      , toolRunId
+      , ifaceName
+      , dstIpNet.toString()
+      , getNextHopIpAddrString()
+      );
   }
 
   std::string
@@ -205,10 +218,10 @@ namespace netmeld::datastore::objects {
         % vrfId
         % tableId
         % isActive
-        % dstIpNet.toString()
+        % dstIpNet.toDebugString()
         % nextVrfId
         % nextTableId
-        % nextHopIpAddr.toString()
+        % nextHopIpAddr.toDebugString()
         % ifaceName
         % protocol
         % adminDistance

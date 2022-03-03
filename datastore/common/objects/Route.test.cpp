@@ -38,9 +38,6 @@ class TestRoute : public nmdo::Route {
     TestRoute() : Route() {};
 
   public:
-    void ufs(bool isMetadata)
-    { updateForSave(isMetadata); }
-
     std::string getVrfId() const
     { return vrfId; }
 
@@ -158,86 +155,86 @@ BOOST_AUTO_TEST_CASE(testSetters)
     BOOST_CHECK_EQUAL(1000, route.getMetric());
   }
 
-  {
-    TestRoute r0;
-    nmdo::IpAddress ipAddr   {"1.2.3.4/24"};
-    nmdo::IpAddress dIpAddr = nmdo::IpAddress::getIpv4Default();
-    {
-      TestRoute r1, r2;
+  //{
+  //  TestRoute r0;
+  //  nmdo::IpAddress ipAddr   {"1.2.3.4/24"};
+  //  nmdo::IpAddress dIpAddr = nmdo::IpAddress::getIpv4Default();
+  //  {
+  //    TestRoute r1, r2;
 
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r1.setNextHopIpAddr(ipAddr);
-      r2.setNextHopIpAddr(ipAddr);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(dIpAddr, r2.getDstIpNet());
-    }
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r1.setNextHopIpAddr(ipAddr);
+  //    r2.setNextHopIpAddr(ipAddr);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_NE(r1, r2);
+  //    BOOST_CHECK_EQUAL(dIpAddr, r2.getDstIpNet());
+  //  }
 
-    nmdo::IpAddress rIpAddr = nmdo::IpAddress::getIpv4Default();
-    {
-      TestRoute r1, r2;
+  //  nmdo::IpAddress rIpAddr = nmdo::IpAddress::getIpv4Default();
+  //  {
+  //    TestRoute r1, r2;
 
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r1.setDstIpNet(ipAddr);
-      r2.setDstIpNet(ipAddr);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(rIpAddr, r2.getNextHopIpAddr());
-    }
-  }
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r1.setDstIpNet(ipAddr);
+  //    r2.setDstIpNet(ipAddr);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_NE(r1, r2);
+  //    BOOST_CHECK_EQUAL(rIpAddr, r2.getNextHopIpAddr());
+  //  }
+  //}
 
-  {
-    TestRoute r0;
-    nmdo::IpAddress ipAddr   {"1234::1234/64"};
-    nmdo::IpAddress dIpAddr = nmdo::IpAddress::getIpv6Default();
-    {
-      TestRoute r1, r2;
+  //{
+  //  TestRoute r0;
+  //  nmdo::IpAddress ipAddr   {"1234::1234/64"};
+  //  nmdo::IpAddress dIpAddr = nmdo::IpAddress::getIpv6Default();
+  //  {
+  //    TestRoute r1, r2;
 
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r1.setNextHopIpAddr(ipAddr);
-      r2.setNextHopIpAddr(ipAddr);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(dIpAddr, r2.getDstIpNet());
-    }
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r1.setNextHopIpAddr(ipAddr);
+  //    r2.setNextHopIpAddr(ipAddr);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_NE(r1, r2);
+  //    BOOST_CHECK_EQUAL(dIpAddr, r2.getDstIpNet());
+  //  }
 
-    nmdo::IpAddress rIpAddr = nmdo::IpAddress::getIpv4Default();
-    {
-      TestRoute r1, r2;
+  //  nmdo::IpAddress rIpAddr = nmdo::IpAddress::getIpv4Default();
+  //  {
+  //    TestRoute r1, r2;
 
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r1.setDstIpNet(ipAddr);
-      r2.setDstIpNet(ipAddr);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(false);
-      BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(rIpAddr, r2.getNextHopIpAddr());
-    }
-    {
-      TestRoute r1, r2;
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r1.setDstIpNet(ipAddr);
+  //    r2.setDstIpNet(ipAddr);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(false);
+  //    BOOST_CHECK_NE(r1, r2);
+  //    BOOST_CHECK_EQUAL(rIpAddr, r2.getNextHopIpAddr());
+  //  }
+  //  {
+  //    TestRoute r1, r2;
 
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(true);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r1.setDstIpNet(ipAddr);
-      r2.setDstIpNet(ipAddr);
-      BOOST_CHECK_EQUAL(r1, r2);
-      r2.ufs(true);
-      BOOST_CHECK_NE(r1, r2);
-      BOOST_CHECK_EQUAL(dIpAddr, r2.getNextHopIpAddr());
-    }
-  }
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(true);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r1.setDstIpNet(ipAddr);
+  //    r2.setDstIpNet(ipAddr);
+  //    BOOST_CHECK_EQUAL(r1, r2);
+  //    r2.updateForSave(true);
+  //    BOOST_CHECK_NE(r1, r2);
+  //    BOOST_CHECK_EQUAL(dIpAddr, r2.getNextHopIpAddr());
+  //  }
+  //}
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)

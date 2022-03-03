@@ -43,21 +43,28 @@ namespace netmeld::datastore::objects {
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
+      inline static const std::string defaultIpv4Addr {"0.0.0.0"};
+      inline static const std::string defaultIpv6Addr {"::"};
+      inline static const uint8_t     defaultIpPrefix {0};
+
     protected: // Variables intended for internal/subclass API
-      std::string  vrfId;
-      std::string  tableId;
-      IpNetwork    dstIpNet;
-      std::string  nextVrfId;
-      std::string  nextTableId;
-      IpAddress    nextHopIpAddr;
-      std::string  ifaceName;
-      std::string  protocol;
-      std::string  description;
-      size_t adminDistance;
-      size_t metric;
-      bool isActive;
+      std::string vrfId;
+      std::string tableId;
+      IpNetwork   dstIpNet;
+      std::string nextVrfId;
+      std::string nextTableId;
+      IpAddress   nextHopIpAddr;
+      std::string ifaceName;
+      std::string protocol;
+      std::string description;
+
+      size_t      adminDistance {0};
+      size_t      metric        {0};
+      bool        isActive      {true};
+      bool        isNullRoute   {false};
 
     public: // Variables should rarely appear at this scope
+
 
     // =========================================================================
     // Constructors
@@ -72,9 +79,9 @@ namespace netmeld::datastore::objects {
     // =========================================================================
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
-      void updateForSave(const bool);
-
     public: // Methods part of public API
+      std::string getNextHopIpAddrString() const;
+
       void setVrfId(const std::string&);
       void setTableId(const std::string&);
       void setDstIpNet(const IpAddress&);
@@ -87,6 +94,7 @@ namespace netmeld::datastore::objects {
       void setAdminDistance(size_t);
       void setMetric(size_t);
       void setActive(bool);
+      void setNullRoute(bool);
 
       bool isValid() const override;
       bool isV4() const;
