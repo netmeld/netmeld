@@ -48,14 +48,14 @@ typedef std::vector<nmdo::Route>  Result;
 class Parser :
   public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
-	// ===========================================================================
+  // ===========================================================================
   // Variables
   // ===========================================================================
-	private:
-	protected:
+  private:
+  protected:
     const std::string IP_REASON {"ip route show"};
 
-		// Rules
+    // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
@@ -76,17 +76,17 @@ class Parser :
 
   public:
 
-	// ===========================================================================
-	// Constructors
-	// ===========================================================================
-	public: // Constructor is only default and must be public
-		Parser();
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  public: // Constructor is only default and must be public
+    Parser();
 
-	// ===========================================================================
-	// Methods
-	// ===========================================================================
-	private:
-	protected:
-	public:
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private:
+  protected:
+  public:
 };
 #endif // PARSER_HPP

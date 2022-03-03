@@ -32,20 +32,20 @@
 // =============================================================================
 Parser::Parser() : Parser::base_type(start)
 {
-	start =
-		*(defaultRoute | route | nullRoute)
-		;
+  start =
+    *(defaultRoute | route | nullRoute)
+    ;
 
-	defaultRoute =
-		dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
-		>> qi::lit("via")
-		>> nextHopIp [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
+  defaultRoute =
+    dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
+    >> qi::lit("via")
+    >> nextHopIp [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
     >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
-		>> qi::omit[*token]
-		>> qi::eol
-		;
+    >> qi::omit[*token]
+    >> qi::eol
+    ;
 
-	route =
+  route =
     dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
     >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
     // IPv6 doesn't seem to do this, so needs to be optional
@@ -53,20 +53,20 @@ Parser::Parser() : Parser::base_type(start)
         [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
     >> qi::omit[*token]
     >> qi::eol
-		;
+    ;
 
-	nullRoute =
-		( qi::lit("unreachable") | "blackhole" | "prohibit" )
+  nullRoute =
+    ( qi::lit("unreachable") | "blackhole" | "prohibit" )
     > dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
     > qi::omit[*token]
     > qi::eol [(pnx::bind(&nmdo::Route::setNullRoute, &qi::_val, true))]
-		;
+    ;
 
-	dstIpNet =
-		( qi::lit("default")
+  dstIpNet =
+    ( qi::lit("default")
     | ipAddr [(qi::_val = qi::_1)]
     ) [(pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON))]
-		;
+    ;
 
   nextHopIp =
     ipAddr
@@ -74,19 +74,19 @@ Parser::Parser() : Parser::base_type(start)
           pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON))]
     ;
 
-	ifaceName =
-		qi::lit("dev ") > token
-		;
+  ifaceName =
+    qi::lit("dev ") > token
+    ;
 
-	token =
-		+qi::ascii::graph
-		;
+  token =
+    +qi::ascii::graph
+    ;
 
-	BOOST_SPIRIT_DEBUG_NODES(
-			(start)
-			(defaultRoute) (route)
-			(dstIpNet) (nextHopIp)
-			(ifaceName)
-			//(token)
+  BOOST_SPIRIT_DEBUG_NODES(
+      (start)
+      (defaultRoute) (route)
+      (dstIpNet) (nextHopIp)
+      (ifaceName)
+      //(token)
     );
 }
