@@ -88,7 +88,7 @@ namespace netmeld::datastore::objects {
 
       std::string getServiceName() const;
 
-      void setDstFqdn(const std::string&);
+      //void setDstFqdn(const std::string&);
       void setDstAddress(const IpAddress&);
       void setSrcAddress(const IpAddress&);
       void setInterfaceName(const std::string&);

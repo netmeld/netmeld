@@ -36,7 +36,7 @@ namespace nmdo = netmeld::datastore::objects;
 class TestVrf : public nmdo::Vrf {
   public:
     TestVrf() : Vrf() {};
-    TestVrf(const std::string& _vrfId) : Vrf(_vrfId) {};
+    explicit TestVrf(const std::string& _vrfId) : Vrf(_vrfId) {};
 
   public:
     std::vector<std::string> getIfaces()

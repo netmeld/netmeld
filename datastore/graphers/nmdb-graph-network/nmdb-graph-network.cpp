@@ -82,7 +82,7 @@ class LabelWriter
     const NetworkGraph& g_;
 
   public:
-    explicit LabelWriter(NetworkGraph& g) : g_(g) { }
+    explicit LabelWriter(const NetworkGraph& g) : g_(g) { }
 
     void operator()(std::ostream& os, const Vertex& v) const
     {
@@ -150,7 +150,7 @@ class IsRedundantEdge
   private:
     const NetworkGraph& g_;
   public:
-    explicit IsRedundantEdge(NetworkGraph& g) : g_(g) { }
+    explicit IsRedundantEdge(const NetworkGraph& g) : g_(g) { }
 
     bool operator()(Edge const& e) const
     {

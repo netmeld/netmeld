@@ -60,7 +60,7 @@ namespace netmeld::datastore::objects {
     public: // Methods part of public API
       bool isValid() const override;
       void setId(const std::string&);
-      void addPortRange(const PortRange&);
+      //void addPortRange(const PortRange&);
       void addIncludedId(const std::string&);
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;

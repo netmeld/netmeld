@@ -53,11 +53,13 @@ namespace netmeld::datastore::objects {
     id = _id;
   }
 
+  /*
   void
   AclPortSet::addPortRange(const PortRange& _portRange)
   {
     portRanges.emplace_back(_portRange);
   }
+  */
 
   void
   AclPortSet::addIncludedId(const std::string& _includedId)

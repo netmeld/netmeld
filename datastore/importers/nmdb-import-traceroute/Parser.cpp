@@ -25,6 +25,7 @@
 // =============================================================================
 
 #include "Parser.hpp"
+#include <algorithm>
 #include <iostream>
 
 // =============================================================================
@@ -141,9 +142,7 @@ Parser::Parser() : Parser::base_type(start)
   Parser::flushHops() {
     if (!curHops.empty()) {
       if (curHops.back().rtrIpAddr.isValid()){
-        for (auto& hop: curHops) {
-          r.emplace_back(hop);
-        }
+        std::copy(curHops.begin(), curHops.end(), std::back_inserter(r));
       }
       prevDests.clear();
       for (auto& hop: curHops) {

@@ -62,11 +62,13 @@ namespace netmeld::datastore::objects {
     return serviceName;
   }
 
+  /*
   void
   Service::setDstFqdn(const std::string& _fqdn)
   {
     dstFqdn = _fqdn;
   }
+  */
 
   void
   Service::setDstAddress(const IpAddress& _addr)

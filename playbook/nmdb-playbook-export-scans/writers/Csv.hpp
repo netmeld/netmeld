@@ -48,7 +48,7 @@ namespace netmeld::playbook::export_scans {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       Csv() = delete;
-      Csv(bool);
+      explicit Csv(bool);
 
     // ======================================================================
     // Methods

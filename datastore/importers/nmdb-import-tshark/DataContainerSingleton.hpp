@@ -80,7 +80,7 @@ typedef std::vector<Data> Result;
     public: // Methods part of public API
       static DataContainerSingleton& getInstance();
 
-      void insert(Data&);
+      void insert(const Data&);
       bool hasData() const;
 
       Result getData();

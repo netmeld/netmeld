@@ -79,7 +79,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  Nessus::exportFromDb(const auto& writer, pqxx::result& plugins)
+  Nessus::exportFromDb(const auto& writer, const pqxx::result& plugins)
   {
     pqxx::read_transaction t {db};
 

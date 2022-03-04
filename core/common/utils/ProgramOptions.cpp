@@ -82,12 +82,14 @@ namespace netmeld::core::utils {
     }
   }
 
+  /*
   void
   ProgramOptions::addConfFileOption(const std::string& key,
                                     const OptionsValue& value)
   {
     addOption(CONFIG, key, value);
   }
+  */
 
   void
   ProgramOptions::addRequiredOption(const std::string& key,
@@ -116,11 +118,13 @@ namespace netmeld::core::utils {
     positionalOptionsLocation.add(key.c_str(), loc);
   }
 
+  /*
   void
   ProgramOptions::setConfFile(const std::string& _confFile)
   {
     confFile = _confFile;
   }
+  */
 
   bool
   ProgramOptions::exists(const std::string& key) const

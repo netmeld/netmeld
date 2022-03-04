@@ -42,17 +42,21 @@ namespace netmeld::datastore::objects {
   // ===========================================================================
   // Methods
   // ===========================================================================
+  /*
   void
   DnsResolver::setIface(const std::string& _ifaceName)
   {
     ifaceName = _ifaceName;
   }
+  */
 
+  /*
   void
   DnsResolver::setScopeDomain(const std::string& _scopeDomain)
   {
     scopeDomain = _scopeDomain;
   }
+  */
 
   void
   DnsResolver::setSrcAddress(const IpAddress& _srcIpAddr)
@@ -66,11 +70,13 @@ namespace netmeld::datastore::objects {
     dstIpAddr = _dstIpAddr;
   }
 
+  /*
   void
   DnsResolver::setDstPort(const uint16_t _dstPort)
   {
     dstPort = _dstPort;
   }
+  */
 
   void
   DnsResolver::save(pqxx::transaction_base& t,
