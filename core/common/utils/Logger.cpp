@@ -84,7 +84,6 @@ namespace netmeld::core::utils {
   // Friends
   // ===========================================================================
   std::ostream&
-  // cppcheck-suppress constParameter
   operator<<(const Logger& l, std::ostream& (*F)(std::ostream&))
   {
     std::lock_guard<std::mutex> lock(nmLogMutex);

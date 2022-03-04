@@ -102,13 +102,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         // NOTE: Vlan before Interface as they may contain descriptions
         //       which are NULL-able (not part of PK) in the datastore
         LOG_DEBUG << "Iterating over vlans\n";
-        for (auto& [name, result] : results.vlans) {
+        for (auto& [_, result] : results.vlans) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over interfaces\n";
-        for (auto& [name, result] : results.ifaces) {
+        for (auto& [_, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
@@ -138,8 +138,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           }
         }
         LOG_DEBUG << "Iterating over ruleBooks\n";
-        for (auto& [name, book] : results.ruleBooks) {
-          for (auto& [id, rule] : book) {
+        for (auto& [_, book] : results.ruleBooks) {
+          for (auto& [_, rule] : book) {
             rule.save(t, toolRunId, deviceId);
             LOG_DEBUG << rule.toDebugString() << '\n';
           }

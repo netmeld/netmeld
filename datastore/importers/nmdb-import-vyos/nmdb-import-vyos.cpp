@@ -74,7 +74,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
       for (auto& results : this->tResults) {
         LOG_DEBUG << "Iterating over interfaces\n";
-        for (auto& [name, result] : results.ifaces) {
+        for (auto& [_, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
@@ -97,7 +97,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         LOG_DEBUG << "Iterating over ruleBooks\n";
         for (auto& [name, book] : results.ruleBooks) {
           LOG_DEBUG << "Zone: " << name << '\n';
-          for (auto& [id, rule] : book) {
+          for (auto& [_, rule] : book) {
             rule.save(t, toolRunId, deviceId);
             LOG_DEBUG << rule.toDebugString() << '\n';
           }

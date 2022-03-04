@@ -43,6 +43,7 @@ struct VertexProperties
   std::string fillcolor;
 
   double distance     {std::numeric_limits<double>::infinity()};
+  // cppcheck-suppress unusedStructMember
   double extraWeight  {0.0};
 };
 
@@ -722,8 +723,8 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addNodeVertex(std::string name, const std::string& label,
-                  std::string fillcolor="")
+    addNodeVertex(const std::string& name, const std::string& label,
+                  const std::string& fillcolor="")
     {
       Vertex v {boost::add_vertex(graph)};
       vertexLookup[name] = v;

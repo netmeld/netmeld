@@ -48,13 +48,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       for (auto& results : this->tResults) {
 
         LOG_DEBUG << "Iterating over devInfos\n";
-        for (auto& [name, result] : results.devInfos) {
+        for (auto& [_, result] : results.devInfos) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over ifaces\n";
-        for (auto& [name, result] : results.ifaces) {
+        for (auto& [_, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }

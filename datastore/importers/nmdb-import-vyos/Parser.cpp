@@ -302,7 +302,7 @@ Parser::ruleInit(size_t _ruleId)
 void
 Parser::ruleAddDstIface(const std::string& _tgtZone)
 {
-  for (auto& [ruleId, rule] : d.ruleBooks[_tgtZone]) {
+  for (auto& [_, rule] : d.ruleBooks[_tgtZone]) {
     rule.addDstIface(tgtIface->getName());
   }
 }
@@ -310,7 +310,7 @@ Parser::ruleAddDstIface(const std::string& _tgtZone)
 void
 Parser::ruleAddSrcIface(const std::string& _tgtZone)
 {
-  for (auto& [ruleId, rule] : d.ruleBooks[_tgtZone]) {
+  for (auto& [_, rule] : d.ruleBooks[_tgtZone]) {
     rule.addSrcIface(tgtIface->getName());
   }
 }

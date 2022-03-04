@@ -94,6 +94,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         }
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
+        first = false;
 
 
         // Process the rest of the results

@@ -82,13 +82,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       LOG_DEBUG << "Iterating over results\n";
       for (auto& results : this->tResults) {
         LOG_DEBUG << "Iterating over interfaces\n";
-        for (auto& [name, result] : results.ifaces) {
+        for (auto& [_, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over routes\n";
-        for (auto& [name, result] : results.routes) {
+        for (auto& [_, result] : results.routes) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
@@ -112,8 +112,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           }
         }
         LOG_DEBUG << "Iterating over ruleBooks\n";
-        for (auto& [name, book] : results.ruleBooks) {
-          for (auto& [id, rule] : book) {
+        for (auto& [_, book] : results.ruleBooks) {
+          for (auto& [_, rule] : book) {
             rule.save(t, toolRunId, deviceId);
             LOG_DEBUG << rule.toDebugString() << '\n';
           }

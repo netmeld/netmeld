@@ -161,6 +161,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       R"(2  router1.site.domain (1.2.3.4)  0.138 ms  0.061 ms  0.190 ms)",
       R"(3 * r1.site.domain (1.2.3.4) 2 ms 1.2.3.5 (1.2.3.5) 3 ms)",
       R"(4  1.2.3.4  1.000 ms  2.000 ms  3.000 ms)",
+//      R"(1::2%eth0 (1::2%eth0)  1.000 ms !H  1.000 ms !H  1.000 ms !H)",
       R"(99  * * *)",
     };
     for (const auto& test : testsOk) {

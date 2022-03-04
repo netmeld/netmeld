@@ -40,9 +40,11 @@ DataContainerSingleton&
 DataContainerSingleton::getInstance()
 {
   std::mutex tmp;
-  std::lock_guard<std::mutex> lock(tmp);
-  static DataContainerSingleton instance;
-  return instance;
+  {
+    std::lock_guard<std::mutex> lock(tmp);
+    static DataContainerSingleton instance;
+    return instance;
+  }
 }
 
 void

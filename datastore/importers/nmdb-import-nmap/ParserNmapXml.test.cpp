@@ -304,7 +304,6 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     BOOST_TEST(1 == d.ipAddrs.size());
     const auto ipa {d.ipAddrs[0]};
     BOOST_TEST("1.2.3.4/32" == ipa.toString());
-    const auto aliases {ipa.getAliases()};
     BOOST_TEST(ipa.toDebugString() ==
         "[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_fqdn, some_host], ]"
         );

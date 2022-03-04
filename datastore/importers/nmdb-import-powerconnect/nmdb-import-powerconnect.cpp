@@ -94,15 +94,16 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         }
         devInfo.save(t, toolRunId);
         LOG_DEBUG << devInfo.toDebugString() << '\n';
+        first = false;
 
         LOG_DEBUG << "Iterating over ifaces\n";
-        for (auto& [name, result] : results.ifaces) {
+        for (auto& [_, result] : results.ifaces) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
 
         LOG_DEBUG << "Iterating over routes\n";
-        for (auto& [name, result] : results.routes) {
+        for (auto& [_, result] : results.routes) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }

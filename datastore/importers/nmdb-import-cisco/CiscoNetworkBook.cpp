@@ -56,7 +56,6 @@ namespace netmeld::datastore::importers::cisco {
 
     objectNetwork =
       qi::lit("object network ") > bookName > qi::eol
-      // cppcheck-suppress compareBoolExpressionWithInt
       > *(indent
           > (  objectNetworkHostLine
              | objectNetworkSubnetLine
@@ -87,7 +86,6 @@ namespace netmeld::datastore::importers::cisco {
 
     objectGroupNetwork =
       qi::lit("object-group network ") > bookName > qi::eol
-      // cppcheck-suppress compareBoolExpressionWithInt
       > *(indent
           > (  networkObjectLine
              | groupObjectLine

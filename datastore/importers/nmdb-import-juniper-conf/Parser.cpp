@@ -677,12 +677,12 @@ Parser::addZoneIface(const std::string& _ifaceName)
     const auto& suffix {name.substr(delimPos+2)};
 
     if (prefix == tgtZone) {
-      for (auto& [id, rule] : book) {
+      for (auto& [_, rule] : book) {
         rule.addSrcIface(_ifaceName);
       }
     }
     if (suffix == tgtZone) {
-      for (auto& [id, rule] : book) {
+      for (auto& [_, rule] : book) {
         rule.addDstIface(_ifaceName);
       }
     }
