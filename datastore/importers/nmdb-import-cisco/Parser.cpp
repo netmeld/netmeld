@@ -596,7 +596,7 @@ Parser::expandVlanNumberRangeList(
 }
 
 void
-Parser::vlansAdd(std::vector<nmdo::Vlan>& vlans)
+Parser::vlansAdd(const std::vector<nmdo::Vlan>& vlans)
 {
   for (auto vlan : vlans) {
     vlanAdd(vlan);
@@ -604,7 +604,7 @@ Parser::vlansAdd(std::vector<nmdo::Vlan>& vlans)
 }
 
 void
-Parser::vlanAdd(nmdo::Vlan& vlan)
+Parser::vlanAdd(const nmdo::Vlan& vlan)
 {
   d.vlans.push_back(vlan);
 }

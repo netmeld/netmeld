@@ -47,17 +47,21 @@ namespace netmeld::datastore::objects {
     protocol = nmcu::toLower(_protocol);
   }
 
+  /*
   void
   AclRulePort::setSrcPortSetId(const std::string& _srcPortSetId)
   {
     srcPortSetId = _srcPortSetId;
   }
+  */
 
+  /*
   void
   AclRulePort::setDstPortSetId(const std::string& _dstPortSetId)
   {
     dstPortSetId = _dstPortSetId;
   }
+  */
 
   void
   AclRulePort::save(pqxx::transaction_base& t,

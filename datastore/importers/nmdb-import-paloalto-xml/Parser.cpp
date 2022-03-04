@@ -32,6 +32,7 @@
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/utils/ServiceFactory.hpp>
 
+#include <algorithm>
 #include <regex>
 
 
@@ -566,16 +567,22 @@ Parser::parseConfigRulebase(const pugi::xml_node& rulebaseNode,
 
   for (const auto& rulesMatch : rulebaseNode.select_nodes("security/rules")) {
     const pugi::xml_node rulesNode{rulesMatch.node()};
-    for (const auto& aclRule : parseConfigRules(rulesNode, 1000000, logicalSystem)) {
-      aclRules.emplace_back(aclRule);
-    }
+    auto aclRulesToAdd = parseConfigRules(rulesNode, 1000000, logicalSystem);
+    std::copy(
+        aclRulesToAdd.begin(),
+        aclRulesToAdd.end(), 
+        std::back_inserter(aclRules)
+        );
   }
 
   for (const auto& rulesMatch : rulebaseNode.select_nodes("default-security-rules/rules")) {
     const pugi::xml_node rulesNode{rulesMatch.node()};
-    for (const auto& aclRule : parseConfigRules(rulesNode, 2000000, logicalSystem)) {
-      aclRules.emplace_back(aclRule);
-    }
+    auto aclRulesToAdd = parseConfigRules(rulesNode, 2000000, logicalSystem);
+    std::copy(
+        aclRulesToAdd.begin(),
+        aclRulesToAdd.end(), 
+        std::back_inserter(aclRules)
+        );
   }
 
   //for (const auto& rulesMatch : rulebaseNode.select_nodes("pbf/rules")) {
@@ -677,28 +684,32 @@ Parser::parseConfigRules(const pugi::xml_node& rulesNode, const size_t ruleIdBas
     }
 
     std::vector<std::string> srcIpNetSetIds;
-    for (const auto& sourceMatch :
-         rulesEntryNode.select_nodes("source/member")) {
-      srcIpNetSetIds.emplace_back(sourceMatch.node().text().as_string());
-    }
+    const auto sourceMatches = rulesEntryNode.select_nodes("source/member");
+    std::transform(sourceMatches.begin(), sourceMatches.end(),
+        std::back_inserter(srcIpNetSetIds),
+        [](const auto& sourceMatch){return sourceMatch.node().text().as_string();}
+    
+    );
     if (srcIpNetSetIds.empty()) {
       srcIpNetSetIds.emplace_back("any");
     }
 
     std::vector<std::string> dstIpNetSetIds;
-    for (const auto& destinationMatch :
-         rulesEntryNode.select_nodes("destination/member")) {
-      dstIpNetSetIds.emplace_back(destinationMatch.node().text().as_string());
-    }
+    const auto&destinationMatches = rulesEntryNode.select_nodes("destination/member");
+    std::transform(destinationMatches.begin(), destinationMatches.end(),
+        std::back_inserter(dstIpNetSetIds),
+        [](const auto& destinationMatch){return destinationMatch.node().text().as_string();}
+    );
     if (dstIpNetSetIds.empty()) {
       dstIpNetSetIds.emplace_back("any");
     }
 
     std::vector<std::string> serviceIds;
-    for (const auto& serviceMatch :
-         rulesEntryNode.select_nodes("service/member")) {
-      serviceIds.emplace_back(serviceMatch.node().text().as_string());
-    }
+    const auto& serviceMatches = rulesEntryNode.select_nodes("service/member");
+    std::transform(serviceMatches.begin(), serviceMatches.end(),
+        std::back_inserter(serviceIds),
+        [](const auto& serviceMatch){return serviceMatch.node().text().as_string();}
+    );    
     if (serviceIds.empty()) {
       serviceIds.emplace_back("any");
     }

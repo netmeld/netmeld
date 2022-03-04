@@ -58,8 +58,8 @@ namespace netmeld::datastore::objects {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setProtocol(const std::string&);
-      void setSrcPortSetId(const std::string&);
-      void setDstPortSetId(const std::string&);
+      //void setSrcPortSetId(const std::string&);
+      //void setDstPortSetId(const std::string&);
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
   };

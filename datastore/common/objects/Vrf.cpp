@@ -26,6 +26,8 @@
 
 #include <netmeld/datastore/objects/Vrf.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
+#include <algorithm>
+#include <iterator>
 
 namespace nmcu = netmeld::core::utils;
 
@@ -72,13 +74,17 @@ namespace netmeld::datastore::objects {
   void
   Vrf::merge(const Vrf& other)
   {
-    for (auto& iface : other.ifaces) {
-      ifaces.emplace_back(iface);
-    }
+    std::copy(
+        other.ifaces.begin(),
+        other.ifaces.end(), 
+        std::back_inserter(ifaces)
+        );
 
-    for (auto& route : other.routes) {
-      routes.emplace_back(route);
-    }
+    std::copy(
+        other.routes.begin(),
+        other.routes.end(), 
+        std::back_inserter(routes)
+        );
   }
 
   void

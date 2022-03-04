@@ -48,7 +48,7 @@ namespace netmeld::playbook::export_scans {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       InterNetwork() = delete;
-      InterNetwork(const std::string&);
+      explicit InterNetwork(const std::string&);
 
     // ======================================================================
     // Methods
@@ -59,7 +59,7 @@ namespace netmeld::playbook::export_scans {
 
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void exportScan(const std::unique_ptr<Writer>&);
+      void exportScan(const std::unique_ptr<Writer>&) override;
   };
 }
 #endif // EXPORT_SCAN_INTER_NETWORK_HPP

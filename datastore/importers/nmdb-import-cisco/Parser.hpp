@@ -214,8 +214,8 @@ class Parser :
     std::vector<nmdo::Vlan> expandVlanNumberRangeList(
         const std::vector<std::tuple<uint16_t, uint16_t>>&,
         const nmdo::Vlan&) const;
-    void vlansAdd(std::vector<nmdo::Vlan>&);
-    void vlanAdd(nmdo::Vlan&);
+    void vlansAdd(const std::vector<nmdo::Vlan>&);
+    void vlanAdd(const nmdo::Vlan&);
     void vlanAddIfaceData();
 
     // Policy Related

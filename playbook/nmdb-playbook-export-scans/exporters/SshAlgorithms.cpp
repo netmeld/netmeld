@@ -97,7 +97,7 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  SshAlgorithms::exportFromDb(const auto& writer, pqxx::result& records)
+  SshAlgorithms::exportFromDb(const auto& writer, const pqxx::result& records)
   {
     pqxx::read_transaction t {db};
 
