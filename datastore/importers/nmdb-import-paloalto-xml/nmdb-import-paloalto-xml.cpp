@@ -96,13 +96,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           deviceInfo.save(t, toolRunId);
 
           LOG_DEBUG << "Iterating over interfaces:" << std::endl;
-          for (auto& [ifaceName, iface] : logicalSystem.ifaces) {
+          for (auto& [_, iface] : logicalSystem.ifaces) {
             LOG_DEBUG << iface.toDebugString() << std::endl;
             iface.save(t, toolRunId, deviceId);
           }
 
           LOG_DEBUG << "Iterating over VRFs:" << std::endl;
-          for (auto& [vrfName, vrf] : logicalSystem.vrfs) {
+          for (auto& [_, vrf] : logicalSystem.vrfs) {
             LOG_DEBUG << vrf.toDebugString() << std::endl;
             vrf.save(t, toolRunId, deviceId);
           }
@@ -130,13 +130,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           }
 
           LOG_DEBUG << "Iterating over ACL zones:" << std::endl;
-          for (auto& [aclZoneName, aclZone] : logicalSystem.aclZones) {
+          for (auto& [_, aclZone] : logicalSystem.aclZones) {
             LOG_DEBUG << aclZone.toDebugString() << std::endl;
             aclZone.save(t, toolRunId, deviceId);
           }
 
           LOG_DEBUG << "Iterating over ACL ipNets:" << std::endl;
-          for (auto& [aclIpNetSetName, aclIpNetSet] : logicalSystem.aclIpNetSets) {
+          for (auto& [_, aclIpNetSet] : logicalSystem.aclIpNetSets) {
             LOG_DEBUG << aclIpNetSet.toDebugString() << std::endl;
             aclIpNetSet.save(t, toolRunId, deviceId);
           }

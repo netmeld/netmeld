@@ -67,7 +67,6 @@ namespace netmeld::datastore::importers::cisco {
     iosStandard =
       (  (ipv46 >> qi::lit("access-list standard ")
           > bookName > qi::eol
-          // cppcheck-suppress compareBoolExpressionWithInt
           > *(indent > (  iosRemarkRuleLine
                         | iosStandardRuleLine
                         | ignoredRuleLine

@@ -27,7 +27,6 @@
 set(MODULE_VERSION "2.0")
 
 foreach(ITEM
-    nm-fetch-rpcclient
     nm-fetch-ssh
     nm-fetch-ansible
   )
@@ -46,5 +45,5 @@ processing with the Netmeld tool suite.")
 nm_add_deb_description(${desc})
 set(deps "bash")
 nm_add_deb_depends(${deps})
-set(deps "openssh-client, smbclient, ansible")
+set(deps "openssh-client, ansible")
 nm_add_deb_recommends(${deps})

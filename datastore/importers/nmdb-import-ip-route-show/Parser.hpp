@@ -24,70 +24,69 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/utils/Logger.hpp>
+#ifndef PARSER_HPP
+#define PARSER_HPP
+
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/Route.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
 
-namespace netmeld::core::utils {
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
+
+
+// =============================================================================
+// Data containers
+// =============================================================================
+typedef std::vector<nmdo::Route>  Result;
+
+
+// =============================================================================
+// Parser definition
+// =============================================================================
+class Parser :
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+{
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private:
+  protected:
+    const std::string IP_REASON {"ip route show"};
+
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      start;
+
+    qi::rule<nmdp::IstreamIter, nmdo::Route(), qi::ascii::blank_type>
+      defaultRoute, route, nullRoute;
+
+    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
+      dstIpNet, nextHopIp;
+
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+      ifaceName;
+
+    qi::rule<nmdp::IstreamIter, std::string()>
+      token;
+
+    nmdp::ParserIpAddress
+      ipAddr;
+
+  public:
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  Logger::Logger(const Severity& _value,
-                 std::ostream& _stream,
-                 const std::string& _prefix,
-                 bool _enabled) :
-    value(_value),
-    stream(_stream),
-    prefix(_prefix),
-    enabled(_enabled)
-  { }
-
+  public: // Constructor is only default and must be public
+    Parser();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
-  void
-  Logger::enable()
-  {
-    std::lock_guard<std::mutex> lock(nmLogMutex);
-    enabled = true;
-  }
-
-  void
-  Logger::disable()
-  {
-    std::lock_guard<std::mutex> lock(nmLogMutex);
-    enabled = false;
-  }
-
-  std::ostream&
-  Logger::getStream() const
-  {
-    if (enabled) {
-      return stream.get();
-    } else {
-      return getBadStream();
-    }
-  }
-
-  std::ostream&
-  Logger::getBadStream()
-  {
-    static std::ostringstream badStream;
-    badStream.setstate(std::ios_base::badbit);
-
-    return badStream;
-  }
-
-
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
-  std::ostream&
-  operator<<(const Logger& l, std::ostream& (*F)(std::ostream&))
-  {
-    std::lock_guard<std::mutex> lock(nmLogMutex);
-    // only really handles cases like Logger << std::endl;
-    return F(l.getStream());
-  }
-}
+  private:
+  protected:
+  public:
+};
+#endif // PARSER_HPP

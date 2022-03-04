@@ -73,6 +73,7 @@ struct SourceConfig
   nmco::Uuid             playbookSourceId;
   std::string            description;
   std::set<std::string>  ipRouters;
+  // cppcheck-suppress unusedStructMember
   int                    addrFamily;
 };
 

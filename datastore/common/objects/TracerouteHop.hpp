@@ -30,24 +30,46 @@
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
 
-namespace nmdo = netmeld::datastore::objects;
-
 namespace netmeld::datastore::objects {
 
-class TracerouteHop : public nmdo::AbstractDatastoreObject
-{
-  public :
-    nmdo::IpAddress  rtrIpAddr;
-    nmdo::IpAddress  dstIpAddr;
-    int              hopCount {-1};
+  class TracerouteHop : public AbstractDatastoreObject {
+    // =========================================================================
+    // Variables
+    // =========================================================================
+    private: // Variables will probably rarely appear at this scope
+    protected: // Variables intended for internal/subclass API
+      IpAddress  hopIpAddr;
+      IpAddress  dstIpAddr;
 
-    bool isValid() const override;
-    void save(pqxx::transaction_base&,
-              const nmco::Uuid&, const std::string&) override;
-    std::string toDebugString() const override;
-    std::string toString() const;
-};
+      uint32_t   hopCount {0}; // hop 0 == ttl 0; meaning the local interface
 
+    public: // Variables should rarely appear at this scope
+
+
+    // =========================================================================
+    // Constructors and Destructors
+    // =========================================================================
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors and destructors part of public API
+      TracerouteHop() = default;
+
+
+    // =========================================================================
+    // Methods
+    // =========================================================================
+    private: // Methods which should be hidden from API users
+    protected: // Methods part of subclass API
+    public: // Methods part of public API
+      void setHopCount(const uint32_t);
+      void setHopIp(const IpAddress&);
+      void setDstIp(const IpAddress&);
+
+      bool isValid() const override;
+      void save(pqxx::transaction_base&,
+                const nmco::Uuid&, const std::string&) override;
+
+      std::string toDebugString() const override;
+  };
 }
-
 #endif //TRACEROUTE_HOP

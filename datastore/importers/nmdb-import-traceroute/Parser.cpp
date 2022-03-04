@@ -34,126 +34,110 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-      *qi::eol > (windowsTrace | linuxTrace)[qi::_val = pnx::bind(&Parser::getData, this)]
+    +( (windowsTrace | linuxTrace)
+        [qi::_val = pnx::bind(&Parser::getData, this)]
+    | (garbageLine)
+    )
     ;
 
-  windowsTrace = 
-    windowsHeader >> +qi::eol >> +(windowsHop[pnx::bind(&Parser::flushHops, this)] > qi::eol) >> *qi::eol >> "Trace complete." >> *qi::eol
+  windowsTrace =
+    windowsHeader > +qi::eol
+    > +(windowsHop > qi::eol) > *qi::eol
+    > "Trace complete." > *qi::eol
     ;
 
   windowsHeader =
-    "Tracing route to" >> (ipAddr | (fqdn > "[" > ipAddr > "]")) >> -qi::eol >
-      "over a maximum of" > qi::uint_ > "hops:"
+    "Tracing route to"
+    > (ipAddr | (qi::omit[fqdn] > "[" > ipAddr > "]"))
+        [pnx::bind(&Parser::dstIpAddr, this) = qi::_1]
+    > -qi::eol
+    > "over a maximum of" > qi::uint_ > "hops" > -qi::lit(':')
     ;
 
-  windowsHop = 
-    qi::int_[pnx::bind(&Parser::recordHopNumber, this, qi::_1)] >>
-        +(
-        qi::string("*") | 
-        qi::string("<1 ms") |
-        (qi::int_ >> "ms")
-        ) 
-      >> windowsDomainIP
+  windowsHop =
+    qi::uint_ [(pnx::bind(&Parser::hopCount, this) = qi::_1)]
+    > +(qi::lit('*') | ((qi::lit("<1") | qi::uint_) >> "ms"))
+    > ("Request timed out." | windowsDomainIp)
     ;
 
-  windowsDomainIP =
-    ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)] | 
-        (fqdn > "[" >
-        ipAddr > "]")[pnx::bind(&Parser::recordHopDestinationWithAlias, this, qi::_2, qi::_1)]
+  windowsDomainIp =
+    ( ipAddr
+      [(pnx::bind(&Parser::addHop, this, qi::_1))]
+    | (fqdn > "[" > ipAddr > "]")
+        [(pnx::bind(&nmdo::IpAddress::addAlias, qi::_2, qi::_1, TRACE_REASON),
+          pnx::bind(&Parser::addHop, this, qi::_2))]
+    )
     ;
 
-  linuxTrace = 
-    linuxHeader >> +qi::eol >> +(linuxHop[pnx::bind(&Parser::flushHops, this)] >> qi::eol) >> *qi::eol
+  linuxTrace =
+    linuxHeader > +qi::eol
+    > +(linuxHop > qi::eol)
+    > *qi::eol
     ;
 
-  linuxHeader = 
-    "traceroute to" >> (fqdn | ipAddr) > "(" > ipAddr > ")," >
-      qi::uint_ > "hops max, " > qi::uint_ > "byte packets" 
+  linuxHeader =
+    "traceroute to" >> (fqdn | ipAddr)
+    > "(" > ipAddr [(pnx::bind(&Parser::dstIpAddr, this) = qi::_1)] > "),"
+    > qi::uint_ > "hops max, " > qi::uint_ > "byte packets"
     ;
 
-  linuxHop = 
-    qi::int_[pnx::bind(&Parser::recordHopNumber, this, qi::_1)] >> 
-      *qi::string("*") >>
-      -(linuxDomainIP >> qi::double_ > "ms" >>
-        *((-linuxDomainIP >> qi::double_ > "ms") | "*")
-      )
+  linuxHop =
+    qi::uint_ [(pnx::bind(&Parser::hopCount, this) = qi::_1)]
+    > +(qi::lit('*') | (qi::double_ >> "ms") | linuxDomainIp)
     ;
 
-  linuxDomainIP =
-    (ipAddr[pnx::bind(&Parser::recordHopDestination, this, qi::_1)] >> -("(" >> ipAddr >> ")")) |
-    (fqdn >> "(" >
-    ipAddr > ")")[pnx::bind(&Parser::recordHopDestinationWithAlias, this, qi::_2, qi::_1)]
+  linuxDomainIp =
+    ( (ipAddr > -("(" > ipAddr > ")"))
+        [pnx::bind(&Parser::addHop, this, qi::_1)]
+    | (fqdn > "(" > ipAddr > ")")
+        [(pnx::bind(&nmdo::IpAddress::addAlias, qi::_2, qi::_1, TRACE_REASON),
+          pnx::bind(&Parser::addHop, this, qi::_2))]
+    )
+    ;
+
+  garbageLine =
+    (+qi::eol | (+(qi::char_ - qi::eol) > -qi::eol))
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      
+
       (windowsTrace)
       (windowsHeader)
       (windowsHop)
-      (windowsDomainIP)
+      (windowsDomainIp)
 
       (linuxTrace)
       (linuxHeader)
       (linuxHop)
-      (linuxDomainIP)
+      (linuxDomainIp)
 
-      );
+      (garbageLine)
+    );
 }
 
 
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-  void
-  Parser::recordHopNumber(int hopNumber) {
-    currentHopNumber = hopNumber;
-  }
+void
+Parser::addHop(nmdo::IpAddress& _hop)
+{
+  _hop.setResponding(true);
 
-  void
-  Parser::recordHopDestination(const nmdo::IpAddress& destination) {
-    std::string alias;
-    recordHopDestinationWithAlias(destination, alias);
-    LOG_DEBUG << "RECORDING HOP DEST" << std::endl;
-  }
+  Data trHop;
+  trHop.setHopCount(hopCount);
+  trHop.setHopIp(_hop);
+  trHop.setDstIp(dstIpAddr);
 
-  void
-  Parser::recordHopDestinationWithAlias(const nmdo::IpAddress& destination, const std::string& alias) {
-    nmdo::IpAddress dest{destination};
-    std::string reason;
-    if (!alias.empty()) {
-      dest.addAlias(alias, reason);
-    }
-    if (!prevDests.empty()) {
-      for (auto& prevDest : prevDests) {
-        curHops.emplace_back();
-        curHops.back().rtrIpAddr = prevDest;
-        curHops.back().dstIpAddr = dest;
-        curHops.back().hopCount = currentHopNumber;
-      }
-    } else {
-      curHops.emplace_back();
-      curHops.back().dstIpAddr = dest;
-      curHops.back().hopCount = currentHopNumber;
-    }
-  }
+  curHops.emplace_back(trHop);
 
-  void
-  Parser::flushHops() {
-    if (!curHops.empty()) {
-      if (curHops.back().rtrIpAddr.isValid()){
-        std::copy(curHops.begin(), curHops.end(), std::back_inserter(r));
-      }
-      prevDests.clear();
-      for (auto& hop: curHops) {
-        prevDests.emplace(hop.dstIpAddr);
-      }
-      curHops.clear();
-    }
-  }
+  // reset variable data
+  hopCount = 0;
+}
 
-  Result
-  Parser::getData()
-  {
-    return r;
-  }
+Result
+Parser::getData()
+{
+  return curHops;
+}

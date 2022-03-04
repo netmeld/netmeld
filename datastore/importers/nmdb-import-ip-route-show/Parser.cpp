@@ -24,60 +24,69 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "DataContainerSingleton.hpp"
-
-// =============================================================================
-// Constructors
-// =============================================================================
-DataContainerSingleton::DataContainerSingleton()
-{}
+#include "Parser.hpp"
 
 
 // =============================================================================
-// Methods
+// Parser logic
 // =============================================================================
-DataContainerSingleton&
-DataContainerSingleton::getInstance()
+Parser::Parser() : Parser::base_type(start)
 {
-  std::mutex tmp;
-  {
-    std::lock_guard<std::mutex> lock(tmp);
-    static DataContainerSingleton instance;
-    return instance;
-  }
+  start =
+    *(defaultRoute | route | nullRoute)
+    ;
+
+  defaultRoute =
+    dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
+    >> qi::lit("via")
+    >> nextHopIp [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
+    >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+    >> qi::omit[*token]
+    >> qi::eol
+    ;
+
+  route =
+    dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
+    >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+    // IPv6 doesn't seem to do this, so needs to be optional
+    >> -(qi::lit("proto kernel scope link src") >> nextHopIp)
+        [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
+    >> qi::omit[*token]
+    >> qi::eol
+    ;
+
+  nullRoute =
+    ( qi::lit("unreachable") | "blackhole" | "prohibit" )
+    > dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
+    > qi::omit[*token]
+    > qi::eol [(pnx::bind(&nmdo::Route::setNullRoute, &qi::_val, true))]
+    ;
+
+  dstIpNet =
+    ( qi::lit("default")
+    | ipAddr [(qi::_val = qi::_1)]
+    ) [(pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON))]
+    ;
+
+  nextHopIp =
+    ipAddr
+        [(qi::_val = qi::_1,
+          pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON))]
+    ;
+
+  ifaceName =
+    qi::lit("dev ") > token
+    ;
+
+  token =
+    +qi::ascii::graph
+    ;
+
+  BOOST_SPIRIT_DEBUG_NODES(
+      (start)
+      (defaultRoute) (route)
+      (dstIpNet) (nextHopIp)
+      (ifaceName)
+      //(token)
+    );
 }
-
-void
-DataContainerSingleton::insert(const Data& d)
-{
-  data.push(d);
-}
-
-bool
-DataContainerSingleton::hasData() const
-{
-  return !data.isEmpty();
-}
-
-Result
-DataContainerSingleton::getData()
-{
-  Result r;
-  if (data.isEmpty()) {
-    return r;
-  }
-
-  for (size_t cnt {0}, dataCnt{data.size()};
-       hasData() && cnt < dataCnt;
-       ++cnt)
-  {
-    r.push_back(data.front());
-    data.pop();
-  }
-  return r;
-}
-
-
-// =============================================================================
-// Friends
-// =============================================================================

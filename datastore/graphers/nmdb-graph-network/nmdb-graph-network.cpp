@@ -43,6 +43,7 @@ struct VertexProperties
   std::string fillcolor;
 
   double distance     {std::numeric_limits<double>::infinity()};
+  // cppcheck-suppress unusedStructMember
   double extraWeight  {0.0};
 };
 
@@ -154,8 +155,8 @@ class IsRedundantEdge
 
     bool operator()(Edge const& e) const
     {
-      Vertex const s {boost::source(e, g_)};
-      Vertex const t {boost::target(e, g_)};
+      const Vertex s {boost::source(e, g_)};
+      const Vertex t {boost::target(e, g_)};
 
       return (get<1>(boost::edge(t, s, g_))
           && (   (g_[s].distance > g_[t].distance)
@@ -368,9 +369,8 @@ class Tool : public nmdt::AbstractGraphTool
       db.prepare
         ("select_traceroutes",
          "SELECT DISTINCT"
-         "   next_hop_ip_addr, dst_ip_addr,"
-         "   hop_count"
-         " FROM raw_ip_traceroutes");
+         "   origin, last_hop, hop_count, next_hop_ip_addr"
+         " FROM ip_traceroutes");
 
       useIcons = opts.exists("icons");
       hideUnknown = opts.exists("no-unknown");
@@ -539,15 +539,24 @@ class Tool : public nmdt::AbstractGraphTool
         std::string guestDeviceName;
         vmRow.at("guest_device_id").to(guestDeviceName);
 
-        Vertex const u {vertexLookup.at(guestDeviceName)};
-        Vertex const v {vertexLookup.at(hostDeviceName)};
+        if (!verticesExist(guestDeviceName, hostDeviceName)) {
+          LOG_DEBUG << "buildVirtualizationGraph: Adding edge without vertex: "
+                    << guestDeviceName << " -- " << hostDeviceName
+                    << std::endl;
+          continue;
+        }
+
+        const Vertex u {vertexLookup.at(guestDeviceName)};
+        const Vertex v {vertexLookup.at(hostDeviceName)};
 
         Edge e;
         bool inserted;
 
         tie(e, inserted) = boost::add_edge(u, v, graph);
-        graph[e].style = "dashed";
-        graph[e].direction = "forward";
+        if (inserted) {
+          graph[e].style = "dashed";
+          graph[e].direction = "forward";
+        }
       }
 
       t.commit();
@@ -566,27 +575,41 @@ class Tool : public nmdt::AbstractGraphTool
       pqxx::result tracerouteRows {t.exec_prepared("select_traceroutes")};
       for (const auto& tracerouteRow : tracerouteRows) {
         std::string origin;
-        tracerouteRow.at("next_hop_ip_addr").to(origin);
+        tracerouteRow.at("origin").to(origin);
         std::string destination;
-        tracerouteRow.at("dst_ip_addr").to(destination);
+        tracerouteRow.at("last_hop").to(destination);
         std::string hopNumber;
         tracerouteRow.at("hop_count").to(hopNumber);
+        std::string nextHop;
+        tracerouteRow.at("next_hop_ip_addr").to(nextHop);
 
-        Vertex const u {vertexLookup.at(origin)};
-        Vertex const v {vertexLookup.at(destination)};
+        if (!verticesExist(origin, nextHop)) {
+          LOG_DEBUG << "buildTracerouteGraph: Adding edge without vertex: "
+                    << origin << " -- " << nextHop
+                    << std::endl;
+          continue;
+        }
+
+        const Vertex u {vertexLookup.at(origin)};
+        const Vertex v {vertexLookup.at(nextHop)};
 
         Edge e;
         bool inserted;
 
         tie(e, inserted) = boost::add_edge(u, v, graph);
-        graph[e].style = "dashed";
-        graph[e].direction = "forward";
-        if (graph[e].label.empty()) {
-          graph[e].label = std::string("hop ") + hopNumber;
-        } else {
-          graph[e].label += std::string("\nhop ") + hopNumber;
+        if (inserted) {
+          graph[e].style = "dashed";
+          graph[e].direction = "forward";
+
+          const std::string hopLabel
+              {"hop " + hopNumber + " to " + destination};
+          if (graph[e].label.empty()) {
+            graph[e].label = hopLabel;
+          } else {
+            graph[e].label += '\n' + hopLabel;
+          }
+          graph[e].weight = 2.0;
         }
-        graph[e].weight = 2.0;
       }
 
       t.commit();
@@ -700,8 +723,8 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addNodeVertex(std::string name, const std::string& label,
-                  std::string fillcolor="")
+    addNodeVertex(const std::string& name, const std::string& label,
+                  const std::string& fillcolor="")
     {
       Vertex v {boost::add_vertex(graph)};
       vertexLookup[name] = v;
@@ -785,16 +808,16 @@ class Tool : public nmdt::AbstractGraphTool
     void
     addBidirectionalEdge(std::string orig, std::string dest)
     {
-      if (   vertexLookup.find(orig) == vertexLookup.end()
-          || vertexLookup.find(dest) == vertexLookup.end()) {
+
+      if (!verticesExist(orig, dest)) {
         LOG_DEBUG << "addBidirectionalEdge: Adding edge without vertex: "
                   << orig << " -- " << dest
                   << std::endl;
         return;
       }
 
-      Vertex const u {vertexLookup.at(orig)};
-      Vertex const v {vertexLookup.at(dest)};
+      const Vertex u {vertexLookup.at(orig)};
+      const Vertex v {vertexLookup.at(dest)};
 
       // Add the edge in both "directions", "wrong direction" corrected later
       if (!(get<1>(boost::edge(u, v, graph)) &&
@@ -808,6 +831,23 @@ class Tool : public nmdt::AbstractGraphTool
         tie(e, inserted) = boost::add_edge(v, u, graph);
         graph[e].weight += graph[u].extraWeight;
       }
+    }
+
+    template <class... Vs>
+    bool
+    verticesExist(const std::string& vert, const Vs&... rest)
+    {
+      bool exist {true};
+      if (vertexLookup.end() == vertexLookup.find(vert)) {
+        LOG_DEBUG << "Missing vertex: " << vert << '\n';
+        exist = false;
+      }
+
+      if constexpr (sizeof...(rest) > 0) {
+        exist = exist && verticesExist(rest...);
+      }
+
+      return exist;
     }
 };
 

@@ -58,6 +58,28 @@ namespace netmeld::datastore::parsers {
   typedef boost::spirit::istream_iterator  IstreamIter;
   typedef const char*                      ConstIter;
 
+  inline void
+  testFileStream(std::ifstream& dataStream)
+  {
+    int a {dataStream.get()};
+    int b {dataStream.get()};
+    int c {dataStream.get()};
+
+    if ((a == 0xFE && b == 0xFF) || (a == 0xFF && b == 0xFE)) {
+      LOG_ERROR << "Expected input to be ASCII encoded."
+                << " Probable UTF-16 encoding detected."
+                << " Parsing will most likely fail (maybe silently)."
+                << std::endl;
+    } else if (a == 0xEF && b == 0xBB && c == 0xBF) {
+      LOG_WARN << "Expected input to be ASCII encoded."
+               << " Probable UTF-8 encoding detected."
+               << " Parsing may fail."
+               << std::endl;
+    } else {
+      dataStream.seekg(0);
+    }
+  }
+
   template<class P, class R>
   R fromStdIn()
   {
@@ -65,9 +87,10 @@ namespace netmeld::datastore::parsers {
     std::cin.tie(nullptr);
 
     R result;
-    IstreamIter i(std::cin >> std::noskipws), e;
+    IstreamIter i {std::cin >> std::noskipws};
+    IstreamIter e;
 
-    bool const success = qi::phrase_parse(i, e, P(), qi::ascii::blank, result);
+    bool const success {qi::phrase_parse(i, e, P(), qi::ascii::blank, result)};
     std::ios::sync_with_stdio(true);
 
     if ((!success) || (i != e)) {
@@ -87,11 +110,13 @@ namespace netmeld::datastore::parsers {
   bool matchString(const std::string& data)
   {
     R temp;
-    std::istringstream dataStream(data);
+    std::istringstream dataStream {data};
     dataStream.unsetf(std::ios::skipws); // disable skipping whitespace
-    IstreamIter i(dataStream), e;
 
-    bool const success = qi::parse(i, e, P(), temp);
+    IstreamIter i {dataStream};
+    IstreamIter e;
+
+    bool const success {qi::parse(i, e, P(), temp)};
 
     return ((success) && (i == e));
   }
@@ -100,11 +125,13 @@ namespace netmeld::datastore::parsers {
   R fromString(const std::string& data)
   {
     R result;
-    std::istringstream dataStream(data);
+    std::istringstream dataStream {data};
     dataStream.unsetf(std::ios::skipws); // disable skipping whitespace
-    IstreamIter i(dataStream), e;
 
-    bool const success = qi::parse(i, e, P(), result);
+    IstreamIter i {dataStream};
+    IstreamIter e;
+
+    bool const success {qi::parse(i, e, P(), result)};
 
     if ((!success) || (i != e)) {
       LOG_ERROR << "Parser failed around:\n";
@@ -123,11 +150,15 @@ namespace netmeld::datastore::parsers {
   R fromFilePath(const std::string& data)
   {
     R result;
-    std::ifstream dataStream(data);
-    dataStream.unsetf(std::ios::skipws); // disable skipping whitespace
-    IstreamIter i(dataStream), e;
+    std::ifstream dataStream {data};
+    testFileStream(dataStream);
 
-    bool const success = qi::phrase_parse(i, e, P(), qi::ascii::blank, result);
+    dataStream.unsetf(std::ios::skipws); // disable skipping whitespace
+
+    IstreamIter i {dataStream};
+    IstreamIter e;
+
+    bool const success {qi::phrase_parse(i, e, P(), qi::ascii::blank, result)};
 
     if ((!success) || (i != e)) {
       LOG_ERROR << "Parser failed around:\n";
@@ -146,12 +177,12 @@ namespace netmeld::datastore::parsers {
   R fromFilePathMM(const std::string& data)
   {
     R result;
-    boost::iostreams::mapped_file_source mmap(data);
+    boost::iostreams::mapped_file_source mmap {data};
 
-    auto i = mmap.begin();
-    auto e = mmap.end();
+    auto i {mmap.begin()};
+    auto e {mmap.end()};
 
-    bool const success = qi::phrase_parse(i, e, P(), qi::ascii::blank, result);
+    bool const success {qi::phrase_parse(i, e, P(), qi::ascii::blank, result)};
 
     if ((!success) || (i != e)) {
       LOG_ERROR << "Parser failed around:\n";

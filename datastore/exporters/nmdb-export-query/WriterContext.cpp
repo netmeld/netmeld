@@ -77,7 +77,8 @@ WriterContext::addContextTeardown() const
 }
 
 void
-WriterContext::addQueryInfo(std::string _queryInfo, std::string _query)
+WriterContext::addQueryInfo(const std::string& _queryInfo,
+                            const std::string& _query)
 {
   std::size_t start = _queryInfo.find(_query);
   queryInfo = _queryInfo;
@@ -86,14 +87,14 @@ WriterContext::addQueryInfo(std::string _queryInfo, std::string _query)
 }
 
 void
-WriterContext::addColumn(std::string _colName, double _width)
+WriterContext::addColumn(const std::string& _colName, const double _width)
 {
   columns.push_back(_colName);
   columnWidths.emplace(_colName, _width);
 }
 
 void
-WriterContext::addRow(std::vector<std::string> _row)
+WriterContext::addRow(const std::vector<std::string>& _row)
 {
   rows.push_back(_row);
 }

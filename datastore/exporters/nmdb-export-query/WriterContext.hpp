@@ -64,9 +64,9 @@ class WriterContext {
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
-    void addQueryInfo(std::string, std::string);
-    void addColumn(std::string, double);
-    void addRow(std::vector<std::string>);
+    void addQueryInfo(const std::string&, const std::string&);
+    void addColumn(const std::string&, const double);
+    void addRow(const std::vector<std::string>&);
     std::string write() const;
 };
 

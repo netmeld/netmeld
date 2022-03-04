@@ -24,115 +24,51 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/IpAddress.hpp>
-#include <netmeld/datastore/objects/Route.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include "Parser.hpp"
 
-namespace nmdo = netmeld::datastore::objects;
-namespace nmdp = netmeld::datastore::parsers;
 namespace nmdt = netmeld::datastore::tools;
 
-typedef std::vector<nmdo::Route>  Result;
 
-
-class Parser :
-  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-{
-  public:
-    Parser() : Parser::base_type(start)
-    {
-      start =
-        *(defaultRoute | route | unreachable)
-        ;
-
-      defaultRoute =
-        dstIpNet
-          [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
-        qi::lit("via") >>
-        ipAddr
-          [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))] >>
-        ifaceName
-          [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))] >>
-        qi::omit[*token] >> qi::eol
-        ;
-
-      route =
-        dstIpNet
-          [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
-        ifaceName
-          [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))] >>
-        // IPv6 doesn't seem to do this, so needs to be optional
-        -(qi::lit("proto kernel scope link src") >>
-          ipAddr
-            [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
-         ) >>
-        qi::omit[*token] >> qi::eol
-        ;
-
-      unreachable =
-        qi::lit("unreachable") >> *token >> qi::eol
-        ;
-
-      dstIpNet =
-        (qi::lit("default") | ipAddr [(qi::_val = qi::_1)])
-          [(pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, "ip route show"))]
-        ;
-
-      ifaceName =
-        qi::lit("dev") >> token
-        ;
-
-      token =
-        +qi::ascii::graph
-        ;
-
-      BOOST_SPIRIT_DEBUG_NODES(
-          (start)
-          (defaultRoute) (route)
-          (dstIpNet) (rtrIpAddr)
-          (ifaceName)
-          //(token)
-          );
-    }
-
-    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start;
-
-    qi::rule<nmdp::IstreamIter, nmdo::Route(), qi::ascii::blank_type>
-      defaultRoute, route;
-
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      unreachable;
-
-    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
-      dstIpNet, rtrIpAddr;
-
-    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-      ifaceName;
-
-    qi::rule<nmdp::IstreamIter, std::string()>
-      token;
-
-    nmdp::ParserIpAddress
-      ipAddr;
-};
-
-
+// =============================================================================
+// Import tool definition
+// =============================================================================
 template<typename P, typename R>
 class Tool : public nmdt::AbstractImportTool<P,R>
 {
-  public:
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private: // Variables should generally be private
+  protected: // Variables intended for internal/subclass API
+  public: // Variables should rarely appear at this scope
+
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  private: // Constructors should rarely appear at this scope
+  protected: // Constructors intended for internal/subclass API
+  public: // Constructors should generally be public
     Tool() : nmdt::AbstractImportTool<P,R>
-      ("ip route show", PROGRAM_NAME, PROGRAM_VERSION)
+      (
+       "ip route show",    // command line tool imports data from
+       PROGRAM_NAME,       // program name (set in CMakeLists.txt)
+       PROGRAM_VERSION     // program version (set in CMakeLists.txt)
+      )
     {}
 
+
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private: // Methods part of internal API
+    // Overriden from AbstractImportTool
     void toolRunMetadataInserts(pqxx::transaction_base& t) override
     {
       const auto& toolRunId {this->getToolRunId()};
-      auto& results         {this->tResults};
 
-      for (auto& result : results) {
+      for (auto& result : this->tResults) {
         result.saveAsMetadata(t, toolRunId);
         LOG_DEBUG << "[TRM] " << result.toDebugString() << std::endl;
       }
@@ -141,17 +77,22 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     void specificInserts(pqxx::transaction_base& t) override
     {
       const auto& toolRunId {this->getToolRunId()};
-      const auto& deviceId  {this->devInfo.getDeviceId()};
-      auto& results         {this->tResults};
+      const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& result : results) {
+      for (auto& result : this->tResults) {
         result.save(t, toolRunId, deviceId);
         LOG_DEBUG << result.toDebugString() << std::endl;
       }
     }
+
+  protected: // Methods part of subclass API
+  public: // Methods part of public API
 };
 
 
+// =============================================================================
+// Program entry point
+// =============================================================================
 int
 main(int argc, char** argv)
 {

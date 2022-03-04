@@ -27,52 +27,65 @@
 #include "TracerouteHop.hpp"
 
 namespace netmeld::datastore::objects {
-
-bool
-TracerouteHop::isValid() const
-{
-  return rtrIpAddr.isValid()
-      && dstIpAddr.isValid()
-      && (hopCount != -1);
-}
-
-void
-TracerouteHop::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string& deviceId)
-{
-  if (!isValid()) {
-    LOG_DEBUG << "TracerouteHop object is not saving: " << toDebugString()
-              << std::endl;
-    return;
+  // =========================================================================
+  // Methods
+  // =========================================================================
+  void
+  TracerouteHop::setHopCount(const uint32_t _hop)
+  {
+    hopCount = _hop;
   }
 
-  rtrIpAddr.save(t, toolRunId, deviceId);
-  dstIpAddr.save(t, toolRunId, deviceId);
+  void
+  TracerouteHop::setHopIp(const IpAddress& _ip)
+  {
+    hopIpAddr = _ip;
+  }
 
-  t.exec_prepared("insert_raw_ip_traceroute",
-      toolRunId,
-      hopCount,
-      rtrIpAddr.toString(),
-      dstIpAddr.toString());
-}
+  void
+  TracerouteHop::setDstIp(const IpAddress& _ip)
+  {
+    dstIpAddr = _ip;
+  }
 
-std::string
-TracerouteHop::toDebugString() const
-{
-  std::ostringstream oss;
-  oss << "[";
-  oss << rtrIpAddr << ", "
-      << dstIpAddr << ", "
-      << hopCount;
-  oss << "]";
+  bool
+  TracerouteHop::isValid() const
+  {
+    return hopIpAddr.isValid()
+        && dstIpAddr.isValid()
+        && (hopCount > 0);
+  }
 
-  return oss.str();
-}
+  void
+  TracerouteHop::save(pqxx::transaction_base& t,
+                      const nmco::Uuid& toolRunId, const std::string& deviceId)
+  {
+    if (!isValid()) {
+      LOG_DEBUG << "TracerouteHop object is not saving: " << toDebugString()
+                << std::endl;
+      return;
+    }
 
-std::string
-TracerouteHop::toString() const
-{
-  return this->toDebugString();
-}
+    hopIpAddr.save(t, toolRunId, deviceId);
+    dstIpAddr.save(t, toolRunId, deviceId);
 
+    t.exec_prepared("insert_raw_ip_traceroute",
+        toolRunId,
+        hopCount,
+        hopIpAddr.toString(),
+        dstIpAddr.toString());
+  }
+
+  std::string
+  TracerouteHop::toDebugString() const
+  {
+    std::ostringstream oss;
+    oss << "[";
+    oss << hopIpAddr << ", "
+        << dstIpAddr << ", "
+        << hopCount;
+    oss << "]";
+
+    return oss.str();
+  }
 }

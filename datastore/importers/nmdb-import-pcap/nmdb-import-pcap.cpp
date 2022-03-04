@@ -73,15 +73,15 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& results : this->tResults) {
-        for (auto& [id, result]: results.macAddrs) {
+        for (auto& [_, result]: results.macAddrs) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
-        for (auto& [id, result] : results.ipAddrs) {
+        for (auto& [_, result] : results.ipAddrs) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
-        for (auto& [id, result] : results.vlans) {
+        for (auto& [_, result] : results.vlans) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }

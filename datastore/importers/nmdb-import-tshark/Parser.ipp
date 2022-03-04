@@ -128,7 +128,6 @@ real        0.255       0.007       0.244       0.254       0.267
 
   jsonEob =
     (  (qi::lit("},") > +qi::eol)
-       // cppcheck-suppress compareBoolExpressionWithInt
      | ((qi::lit('}') > +qi::eol) > -(qi::lit(',') > +qi::eol))
     )
     ;
