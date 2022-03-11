@@ -21,13 +21,22 @@ The *subnet* vertex will contain information (if it exists) such as:
 subnet, CIDR, VLAN ID, and network description.
 
 A solid edge between two vertices represents they are connected and can
-potentially communicate with each other (things like ACL rules are not
-considered here).
+potentially communicate with each other (concepts like ACL rules are not
+considered here).  In general, this solid edge represents that the device
+has a responding IP address within the connected subnet.  However, when
+the `responding-state` option is set to either `true` or `false` then
+the this does not hold and simply represents containment as responsive
+state is as asked for by the value of `responding-state`.
+
 A dashed edge represents one *device* is virtual and contained on another
 *device*, with the host being the vertex pointed to by the arrow.
 When the `--show-traceroute-hops` option is enabled, a dashed edge with a
-label `hop` will be applied to known routing paths as collected from
-traceroute activities.
+label `hop X to IP` (where `X` is a hop count; `IP` is an IP address)
+will be applied to known routing paths as collected from traceroute
+activities.
+
+IP or MAC addresses are color coded *green* in the cases where the Datasore
+shows them as responsive.
 
 
 ICONS
@@ -55,11 +64,19 @@ store, and rooted at the subnet `10.0.0.0/8`.
 nmdb-graph-network --layer 3 --device-id '10.0.0.0/8'
 ```
 
+Same as prior, but only show devices with a responding IP or MAC.  Note
+that, for a device, this will remove any IP and MAC pair which is not
+responding from the listing on the device as well.
+```
+nmdb-graph-network --layer 3 --device-id '10.0.0.0/8' --responding-state true
+```
+
 Generate `.dot` format output, with Layer-2 information contained in the data
 store, and rooted at the device with ID `core`.
 ```
 nmdb-graph-network --layer 2 --device-id core
 ```
+
 
 Directly produce a PDF or PNG version of a graph.
 ```
