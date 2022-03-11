@@ -183,6 +183,13 @@ class Tool : public nmdt::AbstractGraphTool
     bool removeEmptySubnets {false};
     bool showTracerouteHops {false};
 
+    std::string respondingState;
+    bool        passRespondingState;
+
+    // naively colorblind safe:
+    // - (use paul tol) https://davidmathlogic.com/colorblind/
+    std::string green {"#117733"};
+
   public:
     Tool() : nmdt::AbstractGraphTool
       ("--layer information",
@@ -228,6 +235,12 @@ class Tool : public nmdt::AbstractGraphTool
           NULL_SEMANTIC,
           "Show hops found in traceroutes for devices")
         );
+      opts.addOptionalOption("responding-state", std::make_tuple(
+          "responding-state",
+          po::value<std::string>()->required()->default_value("any"),
+          "Only graph devices whose IP or MAC responding state is:"
+          " any, true, or false")
+        );
     }
 
     int
@@ -235,147 +248,202 @@ class Tool : public nmdt::AbstractGraphTool
     {
       pqxx::connection db {getDbConnectString()};
 
-      db.prepare
-        ("select_ip_nets_extra_weights",
-         "SELECT DISTINCT"
-         "   n.ip_net AS ip_net,"
-         "   COALESCE(w.extra_weight, 0.0) AS extra_weight"
-         " FROM ip_nets AS n"
-         " LEFT OUTER JOIN ip_nets_extra_weights AS w"
-         "  ON (n.ip_net = w.ip_net)"
-         " WHERE NOT (n.ip_net <<= '169.254.0.0/16')"
-         "   AND NOT (n.ip_net <<= 'fe80::/10')"
-         " ORDER BY ip_net");
+      db.prepare ("select_ip_nets_extra_weights"
+        , R"(
+          SELECT DISTINCT
+              n.ip_net                      AS ip_net
+            , COALESCE(w.extra_weight, 0.0) AS extra_weight
+          FROM ip_nets AS n
+          LEFT OUTER JOIN ip_nets_extra_weights AS w
+            ON (n.ip_net = w.ip_net)
+          WHERE NOT (n.ip_net <<= '169.254.0.0/16')
+            AND NOT (n.ip_net <<= 'fe80::/10')
+          ORDER BY ip_net
+          )"
+        );
 
-      db.prepare
-        ("select_network_descriptions",
-         "SELECT DISTINCT (LOWER(TRIM(description))) AS description"
-         " FROM ("
-         "  SELECT DISTINCT ip_net, description FROM ip_nets"
-         "  UNION"
-         "  SELECT DISTINCT ip_net, description FROM vlans_summaries"
-         "  UNION"
-         "  SELECT DISTINCT ip_net, description FROM device_vlans_summaries"
-         " ) AS foo"
-         " WHERE ($1 = ip_net) AND (description IS NOT NULL)"
-         );
+      db.prepare("select_network_descriptions"
+        , R"(
+          SELECT DISTINCT
+              (LOWER(TRIM(description))) AS description
+          FROM (
+            SELECT DISTINCT ip_net, description FROM ip_nets
+            UNION
+            SELECT DISTINCT ip_net, description FROM vlans_summaries
+            UNION
+            SELECT DISTINCT ip_net, description FROM device_vlans_summaries
+          ) AS foo
+          WHERE ($1 = ip_net) AND (description IS NOT NULL)
+          )"
+        );
 
-      db.prepare
-        ("select_vlan_by_ip_net",
-         "SELECT DISTINCT vlan AS vlan"
-         " FROM ("
-         "  SELECT vlan, ip_net FROM vlans_ip_nets"
-         "  UNION"
-         "  SELECT vlan, ip_net FROM device_vlans_ip_nets"
-         " ) AS foo"
-         " WHERE ($1 = ip_net)");
+      db.prepare("select_vlan_by_ip_net"
+        , R"(
+          SELECT DISTINCT
+              vlan AS vlan
+          FROM (
+            SELECT vlan, ip_net FROM vlans_ip_nets
+            UNION
+            SELECT vlan, ip_net FROM device_vlans_ip_nets
+          ) AS foo
+          WHERE ($1 = ip_net)
+          )"
+        );
 
-      db.prepare
-        ("select_devices",
-         "SELECT DISTINCT"
-         "    d.device_id AS device_id,"
-         "    dc.color AS device_color,"
-         "    dhi.device_type AS device_type,"
-         "    dhi.vendor AS vendor,"
-         "    COALESCE(dhi.model, '?') AS model"
-         " FROM devices AS d"
-         " LEFT OUTER JOIN device_colors AS dc"
-         "  ON (d.device_id = dc.device_id)"
-         " LEFT OUTER JOIN device_hardware_information AS dhi"
-         "  ON (d.device_id = dhi.device_id)"
-         " ORDER BY d.device_id");
+      db.prepare("select_devices"
+        , R"(
+          SELECT DISTINCT
+              d.device_id               AS device_id
+            , dc.color                  AS device_color
+            , dhi.device_type           AS device_type
+            , dhi.vendor                AS vendor
+            , COALESCE(dhi.model, '?')  AS model
+          FROM devices AS d
+          LEFT OUTER JOIN device_colors AS dc
+            ON (d.device_id = dc.device_id)
+          LEFT OUTER JOIN device_hardware_information AS dhi
+            ON (d.device_id = dhi.device_id)
+          ORDER BY d.device_id
+          )"
+        );
 
-      db.prepare
-        ("select_device_ifaces",
-         "SELECT DISTINCT"
-         "   dia.interface_name AS interface_name,"
-         "   dia.ip_addr        AS ip_addr,"
-         "   dmaip.mac_addr     AS mac_addr"
-         " FROM device_ip_addrs AS dia"
-         " LEFT OUTER JOIN device_mac_addrs_ip_addrs AS dmaip"
-         "  ON (dia.device_id = dmaip.device_id)"
-         "  AND (dia.interface_name = dmaip.interface_name)"
-         " WHERE ($1 = dia.device_id)"
-         " ORDER BY dia.ip_addr");
+      db.prepare("select_device_ifaces"
+        , R"(
+          SELECT DISTINCT
+              dia.interface_name  AS interface_name
+            , dia.ip_addr         AS ip_addr
+            , ia.is_responding    AS ip_responding
+            , dmaip.mac_addr      AS mac_addr
+            , ma.is_responding    AS mac_responding
+          FROM device_ip_addrs AS dia
+          LEFT OUTER JOIN device_mac_addrs_ip_addrs AS dmaip
+            ON (dia.device_id = dmaip.device_id)
+            AND (dia.interface_name = dmaip.interface_name)
+          LEFT OUTER JOIN ip_addrs AS ia
+            ON (ia.ip_addr = dia.ip_addr)
+          LEFT OUTER JOIN mac_addrs AS ma
+            ON (ma.mac_addr = dmaip.mac_addr)
+          WHERE ($1 = dia.device_id)
+            AND (ia.is_responding = ANY($2) OR ma.is_responding = ANY($2))
+          ORDER BY dia.ip_addr
+          )"
+        );
 
-      db.prepare
-        ("select_devices_in_network",
-         "SELECT DISTINCT dia.device_id AS device_id"
-         " FROM device_ip_addrs AS dia"
-         " JOIN ip_nets AS n"
-         "  ON (dia.ip_addr <<= n.ip_net)"
-         " WHERE ($1 = n.ip_net)"
-         " ORDER BY dia.device_id");
+      db.prepare("select_devices_in_network"
+        , R"(
+          SELECT DISTINCT
+              dia.device_id AS device_id
+          FROM device_ip_addrs AS dia
+          JOIN ip_nets AS n
+            ON (dia.ip_addr <<= n.ip_net)
+          JOIN ip_addrs AS ia
+            ON (dia.ip_addr = ia.ip_addr)
+          WHERE ($1 = n.ip_net)
+            AND (ia.is_responding = ANY($2))
+          ORDER BY dia.device_id
+          )"
+        );
 
-      db.prepare
-        ("select_mac_addrs_without_devices",
-         "SELECT DISTINCT "
-         "  maia.ip_addr AS ip_addr,"
-         "  mawd.mac_addr AS mac_addr,"
-         "  mav.vendor_name as vendor_name"
-         " FROM mac_addrs_without_devices AS mawd"
-         " LEFT OUTER JOIN mac_addrs_ip_addrs AS maia"
-         "  ON (mawd.mac_addr = maia.mac_addr)"
-         " LEFT OUTER JOIN mac_addrs_vendors AS mav"
-         "  ON (mawd.mac_addr = mav.mac_addr)"
-         " ORDER BY mac_addr");
+      db.prepare("select_mac_addrs_without_devices"
+        , R"(
+          SELECT DISTINCT
+              maia.ip_addr    AS ip_addr
+            , mawd.mac_addr   AS mac_addr
+            , mav.vendor_name AS vendor_name
+          FROM mac_addrs_without_devices AS mawd
+          LEFT OUTER JOIN mac_addrs_ip_addrs AS maia
+            ON (mawd.mac_addr = maia.mac_addr)
+          LEFT OUTER JOIN mac_addrs_vendors AS mav
+            ON (mawd.mac_addr = mav.mac_addr)
+          WHERE (mawd.is_responding = ANY($1))
+          ORDER BY mac_addr
+          )"
+        );
 
-      db.prepare
-        ("select_ip_addrs_without_devices",
-         "SELECT DISTINCT "
-         "  iawd.ip_addr AS ip_addr,"
-         "  maia.mac_addr AS mac_addr,"
-         "  mav.vendor_name as vendor_name"
-         " FROM ip_addrs_without_devices AS iawd"
-         " LEFT OUTER JOIN mac_addrs_ip_addrs AS maia"
-         "  ON (iawd.ip_addr = maia.ip_addr)"
-         " LEFT OUTER JOIN mac_addrs_vendors AS mav"
-         "  ON (maia.mac_addr = mav.mac_addr)"
-         " ORDER BY ip_addr");
+      db.prepare("select_ip_addrs_without_devices"
+        , R"(
+          SELECT DISTINCT
+              iawd.ip_addr    AS ip_addr
+            , maia.mac_addr   AS mac_addr
+            , mav.vendor_name AS vendor_name
+          FROM ip_addrs_without_devices AS iawd
+          LEFT OUTER JOIN mac_addrs_ip_addrs AS maia
+            ON (iawd.ip_addr = maia.ip_addr)
+          LEFT OUTER JOIN mac_addrs_vendors AS mav
+            ON (maia.mac_addr = mav.mac_addr)
+          WHERE (iawd.is_responding = ANY($1))
+          ORDER BY ip_addr
+          )"
+        );
 
-      db.prepare
-        ("select_hostnames_by_ip_addr",
-         "SELECT DISTINCT hostname"
-         " FROM hostnames"
-         " WHERE (ip_addr = host(($1)::INET)::INET)"
-         " ORDER BY hostname");
+      db.prepare("select_hostnames_by_ip_addr"
+        , R"(
+          SELECT DISTINCT
+              hostname
+          FROM hostnames
+          WHERE (ip_addr = host(($1)::INET)::INET)
+          ORDER BY hostname
+          )"
+        );
 
-      db.prepare
-        ("select_ip_addrs_and_devices_in_network",
-         "SELECT DISTINCT"
-         "   ia.ip_addr    AS ip_addr,"
-         "   dia.device_id AS device_id"
-         " FROM ip_addrs AS ia"
-         " LEFT OUTER JOIN device_ip_addrs AS dia"
-         "  ON (ia.ip_addr = dia.ip_addr)"
-         " JOIN ip_nets AS n"
-         "  ON (ia.ip_addr <<= n.ip_net)"
-         " WHERE ($1 = n.ip_net) AND (ia.is_responding)"
-         " ORDER BY ia.ip_addr");
+      db.prepare("select_ip_addrs_and_devices_in_network"
+        , R"(
+          SELECT DISTINCT
+              ia.ip_addr    AS ip_addr
+            , dia.device_id AS device_id
+          FROM ip_addrs AS ia
+          LEFT OUTER JOIN device_ip_addrs AS dia
+            ON (ia.ip_addr = dia.ip_addr)
+          JOIN ip_nets AS n
+            ON (ia.ip_addr <<= n.ip_net)
+          WHERE ($1 = n.ip_net) AND (ia.is_responding = ANY($2))
+          ORDER BY ia.ip_addr
+          )"
+        );
 
-      db.prepare
-        ("select_device_connections",
-         "SELECT DISTINCT"
-         "   self_device_id, self_interface_name,"
-         "   peer_device_id, peer_interface_name"
-         " FROM device_connections");
+      db.prepare("select_device_connections"
+        , R"(
+          SELECT DISTINCT
+              self_device_id, self_interface_name
+            , peer_device_id, peer_interface_name
+          FROM device_connections
+          )"
+        );
 
-      db.prepare
-        ("select_device_virtualizations",
-         "SELECT DISTINCT"
-         "   host_device_id, guest_device_id"
-         " FROM device_virtualizations");
+      db.prepare("select_device_virtualizations"
+        , R"(
+          SELECT DISTINCT
+              host_device_id, guest_device_id
+          FROM device_virtualizations
+          )"
+        );
 
-      db.prepare
-        ("select_traceroutes",
-         "SELECT DISTINCT"
-         "   origin, last_hop, hop_count, next_hop_ip_addr"
-         " FROM ip_traceroutes");
+      db.prepare("select_traceroutes"
+        , R"(
+          SELECT DISTINCT
+              origin   , last_hop
+            , hop_count, next_hop_ip_addr
+          FROM ip_traceroutes
+          )"
+        );
 
       useIcons = opts.exists("icons");
       hideUnknown = opts.exists("no-unknown");
       removeEmptySubnets = opts.exists("no-empty-subnets");
       showTracerouteHops = opts.exists("show-traceroute-hops");
+
+      // "... = any($1)" -- '{t,f}', '{t}', '{f}'
+      std::string state {opts.getValue("responding-state")};
+      if ("0" == state || "true" == state) {
+        respondingState = "{t}";
+        passRespondingState = false;
+      } else if ("1" == state || "false" == state) {
+        respondingState = "{f}";
+        passRespondingState = false;
+      } else {
+        respondingState = "{t,f,NULL}";
+        passRespondingState = true;
+      }
 
       int layer {std::stoi(opts.getValue("layer"))};
       switch (layer) {
@@ -470,7 +538,7 @@ class Tool : public nmdt::AbstractGraphTool
 
         // Skip empty subnets if requested
         pqxx::result netConnection {
-            t.exec_prepared("select_devices_in_network", ipNet)
+            t.exec_prepared("select_devices_in_network", ipNet, respondingState)
           };
         if (removeEmptySubnets && netConnection.size() <= 1) {
           continue;
@@ -504,10 +572,17 @@ class Tool : public nmdt::AbstractGraphTool
 
         addNetVertex(ipNet, label, extraWeight);
 
+        // only connect responding IPs to subnets; unless want specific state
+        std::string state {"{t}"};
+        if (!passRespondingState) {
+          state = respondingState;
+        }
+
         // Create graph edges that connect the IP network to the devices and IP
         // addresses in that network.
         pqxx::result ipAddrRows {
-            t.exec_prepared("select_ip_addrs_and_devices_in_network", ipNet)
+            t.exec_prepared("select_ip_addrs_and_devices_in_network",
+                            ipNet, state)
           };
         for (const auto& ipAddrRow : ipAddrRows) {
           std::string ipAddr;
@@ -640,8 +715,9 @@ class Tool : public nmdt::AbstractGraphTool
 
         // Add interface(s)
         pqxx::result ifaceRows {
-            t.exec_prepared("select_device_ifaces", deviceName)
+            t.exec_prepared("select_device_ifaces", deviceName, respondingState)
           };
+        bool lPassRespondingState {passRespondingState};
         for (const auto& ifaceRow : ifaceRows) {
           std::string ipAddr;
           ifaceRow.at("ip_addr").to(ipAddr);
@@ -649,18 +725,39 @@ class Tool : public nmdt::AbstractGraphTool
           ifaceRow.at("mac_addr").to(macAddr);
           std::string interfaceName;
           ifaceRow.at("interface_name").to(interfaceName);
+          bool ipResponding;
+          ifaceRow.at("ip_responding").to(ipResponding); // pgxx: false if NULL
+          bool macResponding;
+          ifaceRow.at("mac_responding").to(macResponding); // pgxx: false if NULL
 
-          label += ipAddr + " "
-                 + "[" + macAddr + "] "
-                 + "(" + interfaceName + ")"
+          if (ipResponding && !ipAddr.empty()) {
+            label += R"(<font color=")" + green + R"(">)"
+                   + ipAddr
+                   + R"(</font> )";
+          } else {
+            label += ipAddr + " ";
+          }
+
+          if (macResponding && !macAddr.empty()) {
+            label += R"([<font color=")" + green + R"(">)"
+                   + macAddr
+                   + R"(</font>] )";
+          } else {
+            label += "[" + macAddr + "] ";
+          }
+
+          label += "(" + interfaceName + ")"
                  + "<br align=\"left\"/>";
 
           // Add hostname(s)
           label += getHostnames(t, ipAddr);
+          lPassRespondingState = true;
         }
         label += closeVertexLabel();
 
-        addNodeVertex(deviceName, label, deviceColor);
+        if (lPassRespondingState) {
+          addNodeVertex(deviceName, label, deviceColor);
+        }
       }
     }
 
@@ -673,7 +770,8 @@ class Tool : public nmdt::AbstractGraphTool
       }
 
       pqxx::result addrRows {
-          t.exec_prepared("select_" + type + "s_without_devices")
+          t.exec_prepared("select_" + type + "s_without_devices",
+                          respondingState)
         };
       for (const auto& addrRow : addrRows) {
         std::string ipAddr;
@@ -804,7 +902,7 @@ class Tool : public nmdt::AbstractGraphTool
 
       return label;
     }
-    
+
     void
     addBidirectionalEdge(std::string orig, std::string dest)
     {
