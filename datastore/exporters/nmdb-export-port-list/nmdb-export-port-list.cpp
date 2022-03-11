@@ -37,7 +37,7 @@ class Tool : public nmdt::AbstractExportTool
   protected:
     std::string portsStringFromBitset(std::bitset<65536> const& ports)
     {
-      std::string portsString;
+      std::ostringstream portsString;
 
       uint16_t portRangeFirst {0};
       uint16_t portRangeLast  {0};
@@ -58,17 +58,17 @@ class Tool : public nmdt::AbstractExportTool
             inPortRange = false;
 
             // Append the completed range onto the ports string.
-            portsString += std::to_string(static_cast<uint32_t>(portRangeFirst));
+            portsString << static_cast<uint32_t>(portRangeFirst);
             if (portRangeFirst < portRangeLast) {
-              portsString += "-";
-              portsString += std::to_string(static_cast<uint32_t>(portRangeLast));
+              portsString << "-";
+              portsString << static_cast<uint32_t>(portRangeLast);
             }
-            portsString += ",";
+            portsString << ",";
           }
         }
       }
 
-      return portsString;
+      return portsString.str();
     }
 
   public:
@@ -84,47 +84,48 @@ class Tool : public nmdt::AbstractExportTool
     void addToolOptions() override
     {
       opts.addOptionalOption("tcp", std::make_tuple(
-            "tcp,t",
-            NULL_SEMANTIC,
-            "Enable output of TCP ports from resource file or DB.")
-          );
+          "tcp,t",
+          NULL_SEMANTIC,
+          "Enable output of TCP ports from resource file or DB.")
+        );
       opts.addOptionalOption("tcp-all", std::make_tuple(
-            "tcp-all,T",
-            NULL_SEMANTIC,
-            "Enable output of TCP ports 0-65535.")
-          );
+          "tcp-all,T",
+          NULL_SEMANTIC,
+          "Enable output of TCP ports 0-65535.")
+        );
       opts.addOptionalOption("udp", std::make_tuple(
-            "udp,u",
-            NULL_SEMANTIC,
-            "Enable output of UDP ports from resource file or DB.")
-          );
+          "udp,u",
+          NULL_SEMANTIC,
+          "Enable output of UDP ports from resource file or DB.")
+        );
       opts.addOptionalOption("udp-all", std::make_tuple(
-            "udp-all,U",
-            NULL_SEMANTIC,
-            "Enable output of UDP ports 0-65535.")
-          );
+          "udp-all,U",
+          NULL_SEMANTIC,
+          "Enable output of UDP ports 0-65535.")
+        );
       opts.addOptionalOption("sctp", std::make_tuple(
-            "sctp,y",
-            NULL_SEMANTIC,
-            "Enable output of SCTP ports from resource file or DB.")
-          );
+          "sctp,y",
+          NULL_SEMANTIC,
+          "Enable output of SCTP ports from resource file or DB.")
+        );
       opts.addOptionalOption("stcp-all", std::make_tuple(
-            "sctp-all,Y",
-            NULL_SEMANTIC,
-            "Enable output of SCTP ports 0-65535.")
-          );
+          "sctp-all,Y",
+          NULL_SEMANTIC,
+          "Enable output of SCTP ports 0-65535.")
+        );
       opts.addOptionalOption("from-db", std::make_tuple(
-            "from-db,D",
-            NULL_SEMANTIC,
-            "Use ports from database instead of from resource file.")
-          );
+          "from-db,D",
+          NULL_SEMANTIC,
+          "Use ports from database instead of from resource file.")
+        );
 
       auto& nmfm {nmcu::FileManager::getInstance()};
       opts.addOptionalOption("config-path", std::make_tuple(
-            "config-path,c",
-            po::value<std::string>()->default_value(nmfm.getConfPath()/"port-list.conf"),
-            "Use specified port configuration file instead of the default.")
-          );
+          "config-path,c",
+          po::value<std::string>()
+            ->default_value(nmfm.getConfPath()/"port-list.conf"),
+          "Use specified port configuration file instead of the default.")
+        );
 
     }
 
@@ -235,16 +236,13 @@ class Tool : public nmdt::AbstractExportTool
 
       std::string nmapPorts;
       if (opts.exists("tcp") || opts.exists("tcp-all")) {
-        nmapPorts += "T:";
-        nmapPorts += portsStringFromBitset(tcpPorts);
+        nmapPorts += "T:" + portsStringFromBitset(tcpPorts);
       }
       if (opts.exists("udp") || opts.exists("udp-all")) {
-        nmapPorts += "U:";
-        nmapPorts += portsStringFromBitset(udpPorts);
+        nmapPorts += "U:" + portsStringFromBitset(udpPorts);
       }
       if (opts.exists("sctp") || opts.exists("sctp-all")) {
-        nmapPorts += "Y:";
-        nmapPorts += portsStringFromBitset(sctpPorts);
+        nmapPorts += "S:" + portsStringFromBitset(sctpPorts);
       }
       if (nmapPorts.size()) {
         nmapPorts.pop_back();  // Remove trailing ","
@@ -254,7 +252,6 @@ class Tool : public nmdt::AbstractExportTool
 
       return nmcu::Exit::SUCCESS;
     }
-
 };
 
 
