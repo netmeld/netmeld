@@ -56,13 +56,13 @@ Parser::Parser() : Parser::base_type(start)
 
     // link line
     > -(qi::lit("link/")
-			> token [(pnx::bind(&nmdo::Interface::setMediaType, &qi::_val, qi::_1))]
-			> -macAddr [(pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1))]
-			> -(qi::lit("brd") >> qi::omit[macAddr]
-					> -((+token) [(pnx::bind(&Parser::addObservation, this,
-																	 qi::_1, qi::_val))] ) )
-			> qi::eol
-		)
+      > token [(pnx::bind(&nmdo::Interface::setMediaType, &qi::_val, qi::_1))]
+      > -macAddr [(pnx::bind(&nmdo::Interface::setMacAddress, &qi::_val, qi::_1))]
+      > -(qi::lit("brd") >> qi::omit[macAddr]
+          > -((+token) [(pnx::bind(&Parser::addObservation, this,
+                                   qi::_1, qi::_val))] ) )
+      > qi::eol
+    )
 
     // altname lines
     > *(qi::lit("altname") > token > qi::eol)
