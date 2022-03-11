@@ -432,7 +432,6 @@ class Tool : public nmdt::AbstractGraphTool
       removeEmptySubnets = opts.exists("no-empty-subnets");
       showTracerouteHops = opts.exists("show-traceroute-hops");
 
-      // "... = any($1)" -- '{t,f}', '{t}', '{f}'
       std::string state {opts.getValue("responding-state")};
       if ("0" == state || "true" == state) {
         respondingState = "{t}";
