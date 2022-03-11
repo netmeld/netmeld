@@ -44,20 +44,20 @@ class Tool : public nmdt::AbstractInsertTool
     {
       //opts.addRequiredDeviceId();
       opts.addOptionalOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>(),
-            "Name of device.")
-          );
+          "device-id",
+          po::value<std::string>(),
+          "Name of device.")
+        );
       opts.addOptionalOption("device-color", std::make_tuple(
-            "device-color",
-            po::value<std::string>(),
-            "Graph color of device.")
-          );
+          "device-color",
+          po::value<std::string>(),
+          "Graph color of device.")
+        );
       opts.addOptionalOption("device-type", std::make_tuple(
-            "device-type",
-            po::value<std::string>(),
-            "Type of device, determines graph icon.")
-          );
+          "device-type",
+          po::value<std::string>(),
+          "Type of device, determines graph icon.")
+        );
 
       opts.addOptionalOption("mac-addr", std::make_tuple(
           "mac-addr",
@@ -69,12 +69,17 @@ class Tool : public nmdt::AbstractInsertTool
           po::value<std::string>(),
           "IP address")
         );
+      opts.addOptionalOption("hostname", std::make_tuple(
+          "hostname",
+          po::value<std::string>(),
+          "Hostname or FQDN associated with IP address")
+        );
 
       opts.addOptionalOption("responding", std::make_tuple(
-            "responding",
-            po::value<bool>()->default_value(true),
-            "Set address to responding or not")
-          );
+          "responding",
+          po::value<bool>()->default_value(true),
+          "Set address to responding or not")
+        );
     }
 
     void
@@ -92,6 +97,9 @@ class Tool : public nmdt::AbstractInsertTool
       nmdo::IpAddress ipAddr;
       if (opts.exists("ip-addr")) {
         ipAddr = nmdo::IpAddress(opts.getValue("ip-addr"));
+        if (opts.exists("hostname")) {
+          ipAddr.addAlias(opts.getValue("hostname"), "insert-address");
+        }
       }
 
       macAddr.setResponding(isResponding);

@@ -44,40 +44,45 @@ class Tool : public nmdt::AbstractInsertTool
       addRequiredDeviceId();
 
       opts.addOptionalOption("vm-host-device-id", std::make_tuple(
-            "vm-host-device-id",
-            po::value<std::string>(),
-            "Name of VM host device.")
-          );
+          "vm-host-device-id",
+          po::value<std::string>(),
+          "Name of VM host device.")
+        );
       opts.addOptionalOption("interface", std::make_tuple(
-            "interface",
-            po::value<std::string>(),
-            "Name of network interface.")
-          );
+          "interface",
+          po::value<std::string>(),
+          "Name of network interface.")
+        );
       opts.addOptionalOption("mediaType", std::make_tuple(
-            "mediaType",
-            po::value<std::string>()->default_value("ethernet"),
-            "Interface media type.")
-          );
+          "mediaType",
+          po::value<std::string>()->default_value("ethernet"),
+          "Interface media type.")
+        );
       opts.addOptionalOption("mac-addr", std::make_tuple(
-            "mac-addr",
-            po::value<std::string>(),
-            "MAC address of network interface.")
-          );
+          "mac-addr",
+          po::value<std::string>(),
+          "MAC address of network interface.")
+        );
       opts.addOptionalOption("ip-addr", std::make_tuple(
-            "ip-addr",
-            po::value<std::string>(),
-            "IP address of network interface.")
-          );
+          "ip-addr",
+          po::value<std::string>(),
+          "IP address of network interface.")
+        );
+      opts.addOptionalOption("hostname", std::make_tuple(
+          "hostname",
+          po::value<std::string>(),
+          "Hostname or FQDN associated with IP address")
+        );
       opts.addOptionalOption("responding", std::make_tuple(
-            "responding",
-            po::value<bool>()->default_value(true),
-            "Flag device as responding or not")
-          );
+          "responding",
+          po::value<bool>()->default_value(true),
+          "Flag device as responding or not")
+        );
       opts.addOptionalOption("low-graph-priority", std::make_tuple(
-            "low-graph-priority",
-            NULL_SEMANTIC,
-            "Device should be out-of-the-way (e.g. lower) in network graphs.")
-          );
+          "low-graph-priority",
+          NULL_SEMANTIC,
+          "Device should be out-of-the-way (e.g. lower) in network graphs.")
+        );
     }
 
     void
@@ -109,6 +114,9 @@ class Tool : public nmdt::AbstractInsertTool
       if (opts.exists("ip-addr")) {
         ipAddr = nmdo::IpAddress(opts.getValue("ip-addr"));
         ipAddr.setResponding(isResponding);
+        if (opts.exists("hostname")) {
+          ipAddr.addAlias(opts.getValue("hostname"), "insert-device");
+        }
 
         ipAddr.save(t, toolRunId, deviceId);
         LOG_DEBUG << ipAddr.toDebugString() << std::endl;
