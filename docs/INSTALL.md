@@ -41,7 +41,7 @@ As a privileged user install the following:
 apt update
 
 # Needed for complete tool set build
-apt install \
+sudo apt install \
   build-essential cmake \
   libpqxx-dev \
   libboost-date-time-dev libboost-iostreams-dev \
@@ -51,14 +51,14 @@ apt install \
   libpcap0.8-dev
 
 # Needed for complete tool set execution; assumes prior installed
-apt install \
+sudo apt install \
   postgresql postgresql-client \
   arping nmap macchanger wireshark-common \
   ansible \
   git
 
 # Useful, but not technically needed; assumes prior installed
-apt install \
+sudo apt install \
   help2man pandoc \
   graphviz \
   postgresql-contrib postgresql-autodoc
@@ -73,7 +73,7 @@ directory.
 * Building source:	`cmake --build ./build`
   * Build and run tests (example): `cmake --build ./build --target Test.netmeld`
   * Run test (example):	`(cd build/; ctest Test.netmeld)`
-* Installing (as a privileged user): `cmake --install build`
+* Installing (as a privileged user): `sudo cmake --install build`
 
 
 # Running the Tool Set
@@ -82,7 +82,7 @@ The following are steps needed specifically for installing from source.  The
 
 ## Library Linking
 On a fresh, bare install we may have to run (as a privileged user)
-the `ldconfig` command to configure the dynamic linker run time bindings.
+the `sudo ldconfig` command to configure the dynamic linker run time bindings.
 Basically, if you attempt to run a tool and it complains about not finding
 a Netmeld library this will more than likely resolve the issue.
 
@@ -105,19 +105,6 @@ modules) as it currently uses a PostgreSQL database back-end and needs some
 initial configuration.
 
 
-### Add a Database Admin/Superuser
-The tooling will attempt to add data to the database as the current user.
-While we can drastically limit permissions, the simple case of adding the
-current user as a superuser will be covered.  In this case, we will add `root`
-as a superuser.
-
-```
-su postgres
-createuser -s root
-exit
-```
-
-
 ### Enable and Start the Postgres Database Service
 Under the assumption we always want the service to be available to interact
 with the tool set without having to start it every time:
@@ -127,6 +114,15 @@ systemctl enable postgresql
 systemctl restart postgresql
 ```
 
+### Add a Database Admin/Superuser
+The tooling will attempt to add data to the database as the current user.
+While we can drastically limit permissions, the simple case of adding the
+current user as a superuser will be covered.  In this case, we will add `root`
+as a superuser.
+
+```
+sudo -u postgres createuser -s root
+```
 
 ### Initialize the Data Store
 The default database is named `site` and can be initialized with the following:
