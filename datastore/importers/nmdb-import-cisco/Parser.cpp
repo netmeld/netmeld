@@ -609,7 +609,7 @@ Parser::portChannelAddIface(uint16_t _portChannelId)
 
 // Encapsulation related
 void
-Parser::encapsulationDot1qAddVlan(uint16_t _vlanId)
+Parser::encapsulationDot1qAddVlan(uint16_t /*_vlanId*/)
 {
 
 }
