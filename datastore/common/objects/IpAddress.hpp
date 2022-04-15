@@ -43,7 +43,8 @@ namespace netmeld::datastore::objects {
     protected:
       bool isResponding  {false};
 
-      std::set<std::string> aliases;
+      // NOTE: allow adding aliases even if object const
+      mutable std::set<std::string> aliases;
 
     public:
 
@@ -67,7 +68,7 @@ namespace netmeld::datastore::objects {
       static IpAddress getIpv4Default();
       static IpAddress getIpv6Default();
 
-      void addAlias(const std::string&, const std::string&);
+      void addAlias(const std::string&, const std::string&) const;
       std::set<std::string> getAliases() const;
 
       void setResponding(const bool);

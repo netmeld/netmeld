@@ -65,7 +65,7 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  IpAddress::addAlias(const std::string& _alias, const std::string& _reason)
+  IpAddress::addAlias(const std::string& _alias, const std::string& _reason) const
   {
     if (_alias.empty()) return;
 
