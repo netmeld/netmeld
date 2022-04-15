@@ -41,7 +41,9 @@ namespace netmeld::datastore::objects {
       std::string action;
       std::string incomingZoneId;
       std::string outgoingZoneId;
+      std::string srcIpNetSetNamespace;
       std::string srcIpNetSetId;
+      std::string dstIpNetSetNamespace;
       std::string dstIpNetSetId;
       std::string description;
     public: // Variables should rarely appear at this scope
@@ -66,8 +68,8 @@ namespace netmeld::datastore::objects {
       void setAction(const std::string&);
       void setIncomingZoneId(const std::string&);
       void setOutgoingZoneId(const std::string&);
-      void setSrcIpNetSetId(const std::string&);
-      void setDstIpNetSetId(const std::string&);
+      void setSrcIpNetSetId(const std::string&, const std::string& = "");
+      void setDstIpNetSetId(const std::string&, const std::string& = "");
       void setDescription(const std::string&);
 
       void save(pqxx::transaction_base&,

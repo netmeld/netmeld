@@ -892,7 +892,7 @@ Parser::getData()
   }
 
   bool first {true};
-  auto& deviceRoot {devices[0]};
+  auto& deviceRoot {devices.at(0)};
   for (auto& device : devices) {
     if (first) { first = false; continue; }
 

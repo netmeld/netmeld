@@ -273,7 +273,7 @@ Parser::processArpHeader(const ArpHeader* _ah)
   auto ipAddr {ph.getSrcIpAddr(_ah)};
   ipAddr.setReason(PCAP_REASON);
 
-  d.macAddrs[macAddr].addIp(ipAddr);
+  d.macAddrs[macAddr].addIpAddress(ipAddr);
   LOG_DEBUG << macAddr << "--" << ipAddr << std::endl;
 }
 

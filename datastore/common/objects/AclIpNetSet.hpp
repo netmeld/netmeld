@@ -30,6 +30,10 @@
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/IpNetwork.hpp>
 
+#include <string>
+#include <tuple>
+#include <vector>
+
 namespace netmeld::datastore::objects {
 
   class AclIpNetSet : public AbstractDatastoreObject {
@@ -38,10 +42,11 @@ namespace netmeld::datastore::objects {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
+      std::string ns;
       std::string id;
       std::vector<IpNetwork> ipNets;
       std::vector<std::string> hostnames;
-      std::vector<std::string> includedIds;
+      std::vector<std::tuple<std::string, std::string>> includedIds;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -60,10 +65,10 @@ namespace netmeld::datastore::objects {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       bool isValid() const override;
-      void setId(const std::string&);
+      void setId(const std::string&, const std::string& = "");
       void addIpNet(const IpNetwork&);
       void addHostname(const std::string&);
-      void addIncludedId(const std::string&);
+      void addIncludedId(const std::string&, const std::string& = "");
 
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;

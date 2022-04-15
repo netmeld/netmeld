@@ -202,28 +202,28 @@ Addresses:
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
                 "Parse rule 'testWhole': " << test);
 //      BOOST_TEST(3 == out.size());
-      const auto& data {out[0]};
+      const auto& data {out.at(0)};
       BOOST_TEST_REQUIRE(4 == data.ipAddrs.size());
 
-      auto ipAddr {data.ipAddrs[0]};
+      auto ipAddr {data.ipAddrs.at(0)};
       auto aliases {ipAddr.getAliases()};
       BOOST_TEST("1.2.3.4/32" == ipAddr.toString());
       BOOST_TEST(1 == aliases.size());
       BOOST_TEST("abc-1234-4312" == *aliases.cbegin());
 
-      ipAddr = data.ipAddrs[1];
+      ipAddr = data.ipAddrs.at(1);
       aliases = ipAddr.getAliases();
       BOOST_TEST("1234::1234/128" == ipAddr.toString());
       BOOST_TEST(1 == aliases.size());
       BOOST_TEST("abc-1234-4312" == *aliases.cbegin());
 
-      ipAddr = data.ipAddrs[2];
+      ipAddr = data.ipAddrs.at(2);
       aliases = ipAddr.getAliases();
       BOOST_TEST("1.2.3.4/32" == ipAddr.toString());
       BOOST_TEST(1 == aliases.size());
       BOOST_TEST("abc-1234-4312.something.other" == *aliases.cbegin());
 
-      ipAddr = data.ipAddrs[3];
+      ipAddr = data.ipAddrs.at(3);
       aliases = ipAddr.getAliases();
       BOOST_TEST("1234::1234/128" == ipAddr.toString());
       BOOST_TEST(1 == aliases.size());

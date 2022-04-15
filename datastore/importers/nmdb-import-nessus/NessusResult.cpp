@@ -47,7 +47,7 @@ NessusResult::save(pqxx::transaction_base& t,
 
   t.exec_prepared("insert_raw_nessus_result",
       toolRunId,
-      port.getIpAddr(),
+      port.getIpAddress().toString(),
       port.getProtocol(),
       port.getPort(),
       pluginId,
@@ -65,7 +65,7 @@ NessusResult::toString() const
 {
   std::ostringstream oss;
   oss << "[";
-  oss << port.getIpAddr() << ", "
+  oss << port.getIpAddress().toString() << ", "
       << port.getProtocol() << ", "
       << port.getPort() << ", "
       << pluginId << ", "

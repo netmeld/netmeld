@@ -192,9 +192,9 @@ BOOST_AUTO_TEST_CASE(testExtractMacAndIpAddrs)
     Data d;
     tnxp.extractMacAndIpAddrs(testNode, d);
 
-    const auto mac {d.macAddrs[0]};
+    const auto mac {d.macAddrs.at(0)};
     BOOST_TEST("00:11:22:33:44:55" == mac.toString());
-    const auto ip {mac.getIpAddrs()[0]};
+    const auto ip {*mac.getIpAddresses().cbegin()};
     BOOST_TEST("1.2.3.4/32" == ip.toString());
   }
 
@@ -212,9 +212,9 @@ BOOST_AUTO_TEST_CASE(testExtractMacAndIpAddrs)
     Data d;
     tnxp.extractMacAndIpAddrs(testNode, d);
 
-    const auto mac {d.macAddrs[0]};
+    const auto mac {d.macAddrs.at(0)};
     BOOST_TEST("00:11:22:33:44:55" == mac.toString());
-    const auto ip {mac.getIpAddrs()[0]};
+    const auto ip {*mac.getIpAddresses().cbegin()};
     BOOST_TEST("1::2/128" == ip.toString());
   }
 }
@@ -245,10 +245,10 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       BOOST_TEST(1 == aliases.size());
       BOOST_TEST(1 == aliases.count("some_host"));
     }
-    BOOST_TEST(d.ipAddrs[0].toDebugString() ==
+    BOOST_TEST(d.ipAddrs.at(0).toDebugString() ==
         "[1.2.3.4/32, 0, nmap user, 0, [some_host], ]"
         );
-    BOOST_TEST(d.ipAddrs[1].toDebugString() ==
+    BOOST_TEST(d.ipAddrs.at(1).toDebugString() ==
         "[1.2.3.4/32, 0, nmap ptr, 0, [some_host], ]"
         );
   }
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     tnxp.extractHostnames(testNode, d);
 
     BOOST_TEST(1 == d.ipAddrs.size());
-    const auto ipa {d.ipAddrs[0]};
+    const auto ipa {d.ipAddrs.at(0)};
     BOOST_TEST("1.2.3.4/32" == ipa.toString());
     const auto aliases {ipa.getAliases()};
     BOOST_TEST(1 == aliases.size());
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     tnxp.extractHostnames(testNode, d);
 
     BOOST_TEST(1 == d.ipAddrs.size());
-    const auto ipa {d.ipAddrs[0]};
+    const auto ipa {d.ipAddrs.at(0)};
     BOOST_TEST("1.2.3.4/32" == ipa.toString());
     BOOST_TEST(ipa.toDebugString() ==
         "[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_fqdn, some_host], ]"
@@ -396,11 +396,11 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       BOOST_TEST("1.2.3.4/32" == ipa.toString());
     }
     // NOTE: not the best way...but no "easy" solution
-    BOOST_TEST(d.ipAddrs[0].toDebugString() ==
+    BOOST_TEST(d.ipAddrs.at(0).toDebugString() ==
         "[1.2.3.4/32, 0, nmap rdp-ntlm-info, 0,"
         " [some_dns_computer_name, some_netbios_computer_name], ]"
         );
-    BOOST_TEST(d.ipAddrs[1].toDebugString() ==
+    BOOST_TEST(d.ipAddrs.at(1).toDebugString() ==
         "[1.2.3.4/32, 0, nmap ms-sql-ntlm-info, 0,"
         " [some_dns_computer_name, some_netbios_computer_name, some_target], ]"
         );
@@ -428,7 +428,7 @@ BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
     Data d;
     tnxp.extractOperatingSystems(testNode, d);
 
-    const auto os {d.oses[0]};
+    const auto os {d.oses.at(0)};
     BOOST_TEST(os.toDebugString() ==
         "[[1.2.3.4/32, 0, , 0, [], ],"
         " some_vendor, some_osfamily, some_osgen, some_cpe, 1.23]"
@@ -489,7 +489,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     Data d;
     tnxp.extractPortsAndServices(testNode, d);
 
-    const auto port = d.ports[0];
+    const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
         "[-1, tcp, [1.2.3.4/32, 0, , 0, [], ], filtered, no-responses]"
         );
@@ -512,7 +512,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     Data d;
     tnxp.extractPortsAndServices(testNode, d);
 
-    const auto port = d.ports[0];
+    const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
         "[-1, udp, [1.2.3.4/32, 0, , 0, [], ], filtered, udp-responses]"
         );
@@ -535,7 +535,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     Data d;
     tnxp.extractPortsAndServices(testNode, d);
 
-    const auto port = d.ports[0];
+    const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
         "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]"
         );
@@ -560,12 +560,12 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
     Data d;
     tnxp.extractPortsAndServices(testNode, d);
 
-    const auto port = d.ports[0];
+    const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
         "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]"
         );
 
-    const auto service = d.services[0];
+    const auto service = d.services.at(0);
     BOOST_TEST(service.toDebugString() ==
         "[[1.2.3.4/32, 0, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ],"
         " 0, -, , ssh, OpenSSH, probed, tcp, [22], [], ]"
@@ -595,7 +595,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     Data d;
     tnxp.extractNseAndSsh(testNode, d);
 
-    const auto nseResult = d.nseResults[0];
+    const auto nseResult = d.nseResults.at(0);
     BOOST_TEST(nseResult.port.toDebugString() ==
         "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
         );
@@ -627,7 +627,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     Data d;
     tnxp.extractNseAndSsh(testNode, d);
 
-    const auto sshKey = d.sshKeys[0];
+    const auto sshKey = d.sshKeys.at(0);
     BOOST_TEST(sshKey.port.toDebugString() ==
         "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
         );
@@ -658,7 +658,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
     Data d;
     tnxp.extractNseAndSsh(testNode, d);
 
-    const auto sshAlgo = d.sshAlgorithms[0];
+    const auto sshAlgo = d.sshAlgorithms.at(0);
     BOOST_TEST(sshAlgo.port.toDebugString() ==
         "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
         );

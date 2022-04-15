@@ -62,7 +62,7 @@ namespace netmeld::datastore::objects {
     private:
     protected:
     public:
-      void addIp(const IpAddress&);
+      void addIpAddress(const IpAddress&);
 
       void setMac(const std::string&);
       void setMac(const std::vector<uint8_t>&);
@@ -71,7 +71,7 @@ namespace netmeld::datastore::objects {
 
       bool isValid() const override;
 
-      std::vector<IpAddress> getIpAddrs() const;
+      const std::set<IpAddress>& getIpAddresses() const;
 
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;

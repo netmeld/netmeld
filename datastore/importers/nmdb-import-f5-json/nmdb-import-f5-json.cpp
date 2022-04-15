@@ -55,9 +55,9 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       nlohmann::ordered_json doc = nlohmann::ordered_json::parse(f);
 
       Parser parser;
-      
+
       const std::string docKind{doc.at("kind").get<std::string>()};
-      
+
       if ("tm:ltm:virtual-address:virtual-addresscollectionstate" == docKind) {
         parser.parseLtmVirtualAddress(doc);
       }

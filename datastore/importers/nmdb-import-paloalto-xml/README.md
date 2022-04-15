@@ -15,7 +15,7 @@ device's configuration, the `--device-id` and `--data-path` options are required
 
 
 EXAMPLES
-======== 
-``` 
+========
+```
 nmdb-import-paloalto-xml --device-id firewall --data-path firewall_config.xml
 ```

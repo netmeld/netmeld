@@ -49,7 +49,7 @@ namespace netmeld::datastore::objects {
   void
   InterfaceNetwork::addIpAddress(const IpAddress& _ipAddr)
   {
-    macAddr.addIp(_ipAddr);
+    macAddr.addIpAddress(_ipAddr);
   }
 
   void
@@ -179,10 +179,16 @@ namespace netmeld::datastore::objects {
     return isUp;
   }
 
-  std::vector<IpAddress>
+  const std::set<IpAddress>&
   InterfaceNetwork::getIpAddresses() const
   {
-    return macAddr.getIpAddrs();
+    return macAddr.getIpAddresses();
+  }
+
+  const std::set<Vlan>&
+  InterfaceNetwork::getVlans() const
+  {
+    return vlans;
   }
 
   bool
@@ -290,7 +296,7 @@ namespace netmeld::datastore::objects {
         macAddr.toString());
     }
 
-    for (const auto& ipAddr : macAddr.getIpAddrs()) {
+    for (const auto& ipAddr : macAddr.getIpAddresses()) {
       if (!ipAddr.isValid()) { continue; }
       t.exec_prepared("insert_raw_device_ip_addr",
         toolRunId,

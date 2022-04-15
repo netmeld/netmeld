@@ -48,8 +48,9 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclIpNetSet::setId(const std::string& _id)
+  AclIpNetSet::setId(const std::string& _id, const std::string& _ns)
   {
+    ns = _ns;
     id = _id;
   }
 
@@ -66,9 +67,9 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclIpNetSet::addIncludedId(const std::string& _includedId)
+  AclIpNetSet::addIncludedId(const std::string& _includedId, const std::string& _includedNs)
   {
-    includedIds.emplace_back(_includedId);
+    includedIds.emplace_back(_includedNs, _includedId);
   }
 
   void
@@ -84,6 +85,7 @@ namespace netmeld::datastore::objects {
     t.exec_prepared("insert_raw_device_acl_ip_net_base",
         toolRunId,
         deviceId,
+        ns,
         id
         );
 
@@ -91,6 +93,7 @@ namespace netmeld::datastore::objects {
       t.exec_prepared("insert_raw_device_acl_ip_net_ip_net",
           toolRunId,
           deviceId,
+          ns,
           id,
           ipNet.toString()
           );
@@ -105,6 +108,7 @@ namespace netmeld::datastore::objects {
       t.exec_prepared("insert_raw_device_acl_ip_net_hostname",
           toolRunId,
           deviceId,
+          ns,
           id,
           hostname
           );
@@ -114,8 +118,10 @@ namespace netmeld::datastore::objects {
       t.exec_prepared("insert_raw_device_acl_ip_net_include",
           toolRunId,
           deviceId,
+          ns,
           id,
-          includedId
+          std::get<0>(includedId),  // ns
+          std::get<1>(includedId)   // id
           );
     }
   }
@@ -126,6 +132,8 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
+        << ns
+        << ", "
         << id
         << "]";
 

@@ -46,7 +46,7 @@ NseResult::save(pqxx::transaction_base& t,
 
   t.exec_prepared("insert_raw_nse_result",
       toolRunId,
-      port.getIpAddr(),
+      port.getIpAddress().toString(),
       port.getProtocol(),
       port.getPort(),
       scriptId,
@@ -58,7 +58,7 @@ NseResult::toString() const
 {
   std::ostringstream oss;
   oss << "[";
-  oss << port.getIpAddr() << ", "
+  oss << port.getIpAddress().toString() << ", "
       << port.getProtocol() << ", "
       << port.getPort() << ", "
       << scriptId << ", "

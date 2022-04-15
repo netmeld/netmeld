@@ -33,7 +33,9 @@
 #include <netmeld/datastore/objects/MacAddress.hpp>
 #include <netmeld/datastore/objects/OperatingSystem.hpp>
 #include <netmeld/datastore/objects/Port.hpp>
+#include <netmeld/datastore/objects/TracerouteHop.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "InterfaceHelper.hpp"
@@ -52,9 +54,10 @@ struct Data
   std::vector<nmdo::IpAddress>         ipAddrs;
   std::vector<nmdo::OperatingSystem>   oses;
   std::vector<nmdo::Port>              ports;
-  std::vector<NessusResult>           nessusResults;
+  std::vector<nmdo::TracerouteHop>     tracerouteHops;
+  std::vector<NessusResult>            nessusResults;
   std::vector<nmdo::Cve>               cves;
-  std::vector<MetasploitModule>       metasploitModules;
+  std::vector<MetasploitModule>        metasploitModules;
   std::map<nmdo::IpAddress, InterfaceHelper>     interfaces;
 };
 typedef std::vector<Data>             Results;
@@ -134,6 +137,11 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         }
 
         for (auto& result : results.ports) {
+          result.save(t, toolRunId, "");
+          LOG_DEBUG << result.toDebugString() << std::endl;
+        }
+
+        for (auto& result : results.tracerouteHops) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
@@ -360,6 +368,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         if (ipAddrStr.empty()) {
           continue;
         }
+        ipAddr.setAddress(ipAddrStr);
+        ipAddr.setResponding(isResponding);
 
         // Extract host FQND
         auto fqdnTags = reportHostNode.select_nodes
@@ -375,8 +385,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           ipAddr.addAlias(hostTag.node().text().as_string(), "nessus scan");
         }
 
-        ipAddr = nmdo::IpAddress(ipAddrStr);
-        ipAddr.setResponding(isResponding);
         data.ipAddrs.push_back(ipAddr);
       }
 
@@ -403,7 +411,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           }
 
           if (1 == macCount) { // If only one found, associate MAC-to-IP
-            data.macAddrs.back().addIp(ipAddr);
+            data.macAddrs.back().addIpAddress(ipAddr);
           }
         }
       }
@@ -424,6 +432,25 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           os.setAccuracy(1.0);
 
           data.oses.push_back(os);
+        }
+      }
+
+      // Extract traceroute hops
+      auto tracerouteHopTags = reportHostNode.select_nodes
+        ("HostProperties/tag[starts-with(@name, 'traceroute-hop-')]");
+      for (const auto& tracerouteHopTag : tracerouteHopTags) {
+        const pugi::xml_node tagNode{tracerouteHopTag.node()};
+        const std::string hopIpAddrStr{tagNode.text().as_string()};
+
+        if (nmdp::matchString<nmdp::ParserIpAddress, nmdo::IpAddress>(hopIpAddrStr)) {
+          nmdo::TracerouteHop tracerouteHop;
+          tracerouteHop.dstIpAddr = ipAddr;
+          tracerouteHop.rtrIpAddr = nmdo::IpAddress{hopIpAddrStr};
+          tracerouteHop.hopCount = static_cast<int>(std::stoul(
+            std::string{tagNode.attribute("name").as_string()}.substr(15)
+          ));
+
+          data.tracerouteHops.emplace_back(tracerouteHop);
         }
       }
 

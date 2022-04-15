@@ -43,5 +43,7 @@ namespace netmeld::core::utils {
 
   std::string getSrvcString(const std::string&,
                             const std::string&, const std::string&);
+
+  std::string expandCiscoIfaceName(const std::string&);
 }
 #endif  /* STRING_UTILITIES_HPP */

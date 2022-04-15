@@ -51,17 +51,21 @@
 #include <vector>
 
 
+typedef std::tuple<std::string, std::string> InterfaceHierarchy;
+
+
 struct LogicalSystem
 {
   std::string name;
   std::map<std::string, netmeld::datastore::objects::InterfaceNetwork> ifaces;
+  std::vector<InterfaceHierarchy> ifaceHierarchies;
   std::map<std::string, netmeld::datastore::objects::Vrf> vrfs;
   std::vector<netmeld::datastore::objects::Service> services;
   std::vector<netmeld::datastore::objects::DnsResolver> dnsResolvers;
   std::vector<std::string> dnsSearchDomains;
 
   std::map<std::string, netmeld::datastore::objects::AclZone> aclZones;
-  std::map<std::string, netmeld::datastore::objects::AclIpNetSet> aclIpNetSets;
+  std::map<std::string, std::map<std::string, netmeld::datastore::objects::AclIpNetSet>> aclIpNetSets;
   std::vector<netmeld::datastore::objects::AclService> aclServices;
   std::vector<netmeld::datastore::objects::AclRuleService> aclRules;
 };
@@ -101,8 +105,15 @@ class Parser
     void
     parseUnsupported(const pugi::xml_node& unsupportedNode);
 
+    void
+    parseError(const pugi::xml_node& errorNode);
+
+    void
+    parseWarning(const pugi::xml_node& warningNode);
+
   protected:
-    std::map<std::string, netmeld::datastore::objects::InterfaceNetwork>
+    std::tuple<std::map<std::string, netmeld::datastore::objects::InterfaceNetwork>,
+               std::vector<InterfaceHierarchy>>
     parseConfigInterfaces(const pugi::xml_node& interfacesNode);
 
     std::map<std::string, netmeld::datastore::objects::Vrf>
@@ -115,7 +126,7 @@ class Parser
     std::map<std::string, netmeld::datastore::objects::AclZone>
     parseConfigZones(const pugi::xml_node& zonesNode);
 
-    std::map<std::string, netmeld::datastore::objects::AclIpNetSet>
+    std::map<std::string, std::map<std::string, netmeld::datastore::objects::AclIpNetSet>>
     parseConfigAddressBook(const pugi::xml_node& addressBookNode);
 
     std::vector<netmeld::datastore::objects::AclService>
@@ -126,7 +137,7 @@ class Parser
 
     std::vector<netmeld::datastore::objects::AclRuleService>
     parseConfigPolicies(const pugi::xml_node& policiesNode);
-    
+
     std::vector<netmeld::datastore::objects::AclRuleService>
     parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId);
 

@@ -94,7 +94,7 @@ namespace netmeld::datastore::objects {
 
     t.exec_prepared("insert_raw_nessus_result_cve",
       toolRunId,
-      port.getIpAddr(),
+      port.getIpAddress().toString(),
       port.getProtocol(),
       port.getPort(),
       pluginId,

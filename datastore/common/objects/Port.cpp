@@ -68,10 +68,10 @@ namespace netmeld::datastore::objects {
     ipAddr = _ipAddr;
   }
 
-  std::string
-  Port::getIpAddr() const
+  const IpAddress&
+  Port::getIpAddress() const
   {
-    return ipAddr.toString();
+    return ipAddr;
   }
 
   std::string

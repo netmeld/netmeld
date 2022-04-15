@@ -72,7 +72,7 @@ namespace netmeld::datastore::objects {
   void
   Interface::addIpAddress(const IpAddress& ipAddr)
   {
-    macAddr.addIp(ipAddr);
+    macAddr.addIpAddress(ipAddr);
   }
 
   std::string
@@ -87,10 +87,10 @@ namespace netmeld::datastore::objects {
     return macAddr;
   }
 
-  std::vector<IpAddress>
+  const std::set<IpAddress>&
   Interface::getIpAddresses() const
   {
-    return macAddr.getIpAddrs();
+    return macAddr.getIpAddresses();
   }
 
   bool
@@ -138,7 +138,7 @@ namespace netmeld::datastore::objects {
     }
 
     // Tie interface to IP
-    for (auto& ipAddr : macAddr.getIpAddrs()) {
+    for (auto& ipAddr : macAddr.getIpAddresses()) {
       if (!ipAddr.isValid()) { continue; }
 
       t.exec_prepared("insert_raw_device_ip_addr",
@@ -172,7 +172,7 @@ namespace netmeld::datastore::objects {
         macAddr.toString());
     }
 
-    for (const auto& ipAddr : macAddr.getIpAddrs()) {
+    for (const auto& ipAddr : macAddr.getIpAddresses()) {
       if (!ipAddr.isValid()) { continue; }
 
       t.exec_prepared("insert_tool_run_ip_addr",

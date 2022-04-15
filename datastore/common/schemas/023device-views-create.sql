@@ -95,6 +95,17 @@ FROM raw_device_interfaces
 
 -- ----------------------------------------------------------------------
 
+CREATE VIEW device_interface_hierarchies AS
+SELECT DISTINCT
+    device_id                   AS device_id,
+    underlying_interface_name   AS underlying_interface_name,
+    virtual_interface_name      AS virtual_interface_name
+FROM raw_device_interface_hierarchies
+;
+
+
+-- ----------------------------------------------------------------------
+
 CREATE VIEW device_mac_addrs AS
 SELECT DISTINCT
     device_id                   AS device_id,
@@ -895,6 +906,7 @@ ON (acl_bases.device_id = acl_recur.device_id) AND
 CREATE VIEW device_acl_ip_nets AS
 WITH RECURSIVE device_acl_ip_nets_recursion(
     device_id,
+    ip_net_set_namespace,
     ip_net_set_id,
     hostname,
     fqdn,
@@ -902,17 +914,19 @@ WITH RECURSIVE device_acl_ip_nets_recursion(
 ) AS (
     -- Base case:
     SELECT DISTINCT
-        acl_ip_nets.device_id       AS device_id,
-        acl_ip_nets.ip_net_set_id   AS ip_net_set_id,
-        NULL::TEXT                  AS hostname,
-        NULL::TEXT                  AS fqdn,
-        acl_ip_nets.ip_net          AS ip_net
+        acl_ip_nets.device_id               AS device_id,
+        acl_ip_nets.ip_net_set_namespace    AS ip_net_set_namespace,
+        acl_ip_nets.ip_net_set_id           AS ip_net_set_id,
+        NULL::TEXT                          AS hostname,
+        NULL::TEXT                          AS fqdn,
+        acl_ip_nets.ip_net                  AS ip_net
     FROM raw_device_acl_ip_nets_ip_nets AS acl_ip_nets
     UNION
     SELECT DISTINCT
-        acl_hostnames.device_id     AS device_id,
-        acl_hostnames.ip_net_set_id AS ip_net_set_id,
-        acl_hostnames.hostname      AS hostname,
+        acl_hostnames.device_id             AS device_id,
+        acl_hostnames.ip_net_set_namespace  AS ip_net_set_namespace,
+        acl_hostnames.ip_net_set_id         AS ip_net_set_id,
+        acl_hostnames.hostname              AS hostname,
         COALESCE(dns_ip_addrs.fqdn, dns_required.query_fqdn) AS fqdn,
         dns_ip_addrs.ip_addr::CIDR  AS ip_net
     FROM raw_device_acl_ip_nets_hostnames AS acl_hostnames
@@ -925,26 +939,30 @@ WITH RECURSIVE device_acl_ip_nets_recursion(
     UNION
     -- Recursive case:
     SELECT DISTINCT
-        acl_includes.device_id      AS device_id,
-        acl_includes.ip_net_set_id  AS ip_net_set_id,
-        acl_recur.hostname          AS hostname,
-        acl_recur.fqdn              AS fqdn,
-        acl_recur.ip_net            AS ip_net
+        acl_includes.device_id              AS device_id,
+        acl_includes.ip_net_set_namespace   AS ip_net_set_namespace,
+        acl_includes.ip_net_set_id          AS ip_net_set_id,
+        acl_recur.hostname                  AS hostname,
+        acl_recur.fqdn                      AS fqdn,
+        acl_recur.ip_net                    AS ip_net
     FROM device_acl_ip_nets_recursion AS acl_recur
     JOIN raw_device_acl_ip_nets_includes AS acl_includes
-    ON (acl_recur.device_id     = acl_includes.device_id) AND
-       (acl_recur.ip_net_set_id = acl_includes.included_id)
+    ON (acl_recur.device_id             = acl_includes.device_id) AND
+       (acl_recur.ip_net_set_namespace  = acl_includes.included_namespace) AND
+       (acl_recur.ip_net_set_id         = acl_includes.included_id)
 )
 SELECT DISTINCT
-    acl_bases.device_id             AS device_id,
-    acl_bases.ip_net_set_id         AS ip_net_set_id,
-    acl_recur.hostname              AS hostname,
-    acl_recur.fqdn                  AS fqdn,
-    acl_recur.ip_net                AS ip_net
+    acl_bases.device_id                     AS device_id,
+    acl_bases.ip_net_set_namespace          AS ip_net_set_namespace,
+    acl_bases.ip_net_set_id                 AS ip_net_set_id,
+    acl_recur.hostname                      AS hostname,
+    acl_recur.fqdn                          AS fqdn,
+    acl_recur.ip_net                        AS ip_net
 FROM raw_device_acl_ip_nets_bases AS acl_bases
 LEFT OUTER JOIN device_acl_ip_nets_recursion AS acl_recur
-ON (acl_bases.device_id     = acl_recur.device_id) AND
-   (acl_bases.ip_net_set_id = acl_recur.ip_net_set_id)
+ON (acl_bases.device_id             = acl_recur.device_id) AND
+   (acl_bases.ip_net_set_namespace  = acl_recur.ip_net_set_namespace) AND
+   (acl_bases.ip_net_set_id         = acl_recur.ip_net_set_id)
 ;
 
 
@@ -1035,7 +1053,9 @@ SELECT DISTINCT
     action                      AS action,
     incoming_zone_id            AS incoming_zone_id,
     outgoing_zone_id            AS outgoing_zone_id,
+    src_ip_net_set_namespace    AS src_ip_net_set_namespace,
     src_ip_net_set_id           AS src_ip_net_set_id,
+    dst_ip_net_set_namespace    AS dst_ip_net_set_namespace,
     dst_ip_net_set_id           AS dst_ip_net_set_id,
     protocol                    AS protocol,
     src_port_set_id             AS src_port_set_id,
@@ -1052,7 +1072,9 @@ SELECT DISTINCT
     action                      AS action,
     incoming_zone_id            AS incoming_zone_id,
     outgoing_zone_id            AS outgoing_zone_id,
+    src_ip_net_set_namespace    AS src_ip_net_set_namespace,
     src_ip_net_set_id           AS src_ip_net_set_id,
+    dst_ip_net_set_namespace    AS dst_ip_net_set_namespace,
     dst_ip_net_set_id           AS dst_ip_net_set_id,
     service_id                  AS service_id,
     description                 AS description
@@ -1069,9 +1091,11 @@ SELECT DISTINCT
     acl_incoming_zones.interface_name   AS incoming_interface_name,
     acl_rules.outgoing_zone_id          AS outgoing_zone_id,
     acl_outgoing_zones.interface_name   AS outgoing_interface_name,
+    acl_rules.src_ip_net_set_namespace  AS src_ip_net_set_namespace,
     acl_rules.src_ip_net_set_id         AS src_ip_net_set_id,
     acl_src_ip_nets.fqdn                AS src_fqdn,
     acl_src_ip_nets.ip_net              AS src_ip_net,
+    acl_rules.dst_ip_net_set_namespace  AS dst_ip_net_set_namespace,
     acl_rules.dst_ip_net_set_id         AS dst_ip_net_set_id,
     acl_dst_ip_nets.fqdn                AS dst_fqdn,
     acl_dst_ip_nets.ip_net              AS dst_ip_net,
@@ -1090,11 +1114,13 @@ JOIN device_acl_zones AS acl_outgoing_zones
 ON (acl_rules.device_id         = acl_outgoing_zones.device_id) AND
    (acl_rules.outgoing_zone_id  = acl_outgoing_zones.zone_id)
 JOIN device_acl_ip_nets AS acl_src_ip_nets
-ON (acl_rules.device_id         = acl_src_ip_nets.device_id) AND
-   (acl_rules.src_ip_net_set_id = acl_src_ip_nets.ip_net_set_id)
+ON (acl_rules.device_id                 = acl_src_ip_nets.device_id) AND
+   (acl_rules.src_ip_net_set_namespace  = acl_src_ip_nets.ip_net_set_namespace) AND
+   (acl_rules.src_ip_net_set_id         = acl_src_ip_nets.ip_net_set_id)
 JOIN device_acl_ip_nets AS acl_dst_ip_nets
-ON (acl_rules.device_id         = acl_dst_ip_nets.device_id) AND
-   (acl_rules.dst_ip_net_set_id = acl_dst_ip_nets.ip_net_set_id) AND
+ON (acl_rules.device_id                 = acl_dst_ip_nets.device_id) AND
+   (acl_rules.dst_ip_net_set_namespace  = acl_dst_ip_nets.ip_net_set_namespace) AND
+   (acl_rules.dst_ip_net_set_id         = acl_dst_ip_nets.ip_net_set_id) AND
    (inet_same_family(acl_src_ip_nets.ip_net, acl_dst_ip_nets.ip_net))
 JOIN device_acl_ports AS acl_src_ports
 ON (acl_rules.device_id         = acl_src_ports.device_id) AND
@@ -1111,9 +1137,11 @@ SELECT DISTINCT
     acl_incoming_zones.interface_name   AS incoming_interface_name,
     acl_rules.outgoing_zone_id          AS outgoing_zone_id,
     acl_outgoing_zones.interface_name   AS outgoing_interface_name,
+    acl_rules.src_ip_net_set_namespace  AS src_ip_net_set_namespace,
     acl_rules.src_ip_net_set_id         AS src_ip_net_set_id,
     acl_src_ip_nets.fqdn                AS src_fqdn,
     acl_src_ip_nets.ip_net              AS src_ip_net,
+    acl_rules.dst_ip_net_set_namespace  AS dst_ip_net_set_namespace,
     acl_rules.dst_ip_net_set_id         AS dst_ip_net_set_id,
     acl_dst_ip_nets.fqdn                AS dst_fqdn,
     acl_dst_ip_nets.ip_net              AS dst_ip_net,
@@ -1132,11 +1160,13 @@ JOIN device_acl_zones AS acl_outgoing_zones
 ON (acl_rules.device_id         = acl_outgoing_zones.device_id) AND
    (acl_rules.outgoing_zone_id  = acl_outgoing_zones.zone_id)
 JOIN device_acl_ip_nets AS acl_src_ip_nets
-ON (acl_rules.device_id         = acl_src_ip_nets.device_id) AND
-   (acl_rules.src_ip_net_set_id = acl_src_ip_nets.ip_net_set_id)
+ON (acl_rules.device_id                 = acl_src_ip_nets.device_id) AND
+   (acl_rules.src_ip_net_set_namespace  = acl_src_ip_nets.ip_net_set_namespace) AND
+   (acl_rules.src_ip_net_set_id         = acl_src_ip_nets.ip_net_set_id)
 JOIN device_acl_ip_nets AS acl_dst_ip_nets
-ON (acl_rules.device_id         = acl_dst_ip_nets.device_id) AND
-   (acl_rules.dst_ip_net_set_id = acl_dst_ip_nets.ip_net_set_id) AND
+ON (acl_rules.device_id                 = acl_dst_ip_nets.device_id) AND
+   (acl_rules.dst_ip_net_set_namespace  = acl_dst_ip_nets.ip_net_set_namespace) AND
+   (acl_rules.dst_ip_net_set_id         = acl_dst_ip_nets.ip_net_set_id) AND
    (inet_same_family(acl_src_ip_nets.ip_net, acl_dst_ip_nets.ip_net))
 JOIN device_acl_services AS acl_services
 ON (acl_rules.device_id         = acl_services.device_id) AND

@@ -2,7 +2,7 @@ DESCRIPTION
 ===========
 
 Parses and imports the output from the `traceroute [-n]` command on Linux
-systems and the `tracert [-d]` command on Windows systems. 
+systems and the `tracert [-d]` command on Windows systems.
 
 EXAMPLES
 ========

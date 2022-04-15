@@ -24,10 +24,12 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "Parser.hpp"
 
+namespace nmcu = netmeld::core::utils;
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
 
@@ -74,8 +76,10 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
       LOG_DEBUG << "Iterating over interfaces\n";
       for (auto& iface : this->tResults) {
+        // Expand shortened names like "giX" to "gigabitethernetX"
+        iface.setName(nmcu::expandCiscoIfaceName(iface.getName()));
         iface.save(t, toolRunId, deviceId);
-        LOG_DEBUG << iface.toDebugString() << '\n';
+        LOG_DEBUG << iface.toDebugString() << std::endl;
       }
     }
 

@@ -199,6 +199,45 @@ ON raw_device_interfaces(device_id, interface_name);
 
 
 -- ----------------------------------------------------------------------
+-- Interface hierarchies from target devices.
+-- ----------------------------------------------------------------------
+
+CREATE TABLE raw_device_interface_hierarchies (
+    tool_run_id                 UUID            NOT NULL,
+    device_id                   TEXT            NOT NULL,
+    underlying_interface_name   TEXT            NOT NULL,
+    virtual_interface_name      TEXT            NOT NULL,
+    PRIMARY KEY (tool_run_id, device_id, underlying_interface_name, virtual_interface_name),
+    FOREIGN KEY (tool_run_id, device_id, underlying_interface_name)
+        REFERENCES raw_device_interfaces(tool_run_id, device_id, interface_name)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (tool_run_id, device_id, virtual_interface_name)
+        REFERENCES raw_device_interfaces(tool_run_id, device_id, interface_name)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- Partial indexes
+CREATE INDEX raw_device_interface_hierarchies_idx_tool_run_id
+ON raw_device_interface_hierarchies(tool_run_id);
+
+CREATE INDEX raw_device_interface_hierarchies_idx_device_id
+ON raw_device_interface_hierarchies(device_id);
+
+CREATE INDEX raw_device_interface_hierarchies_idx_underlying_interface_name
+ON raw_device_interface_hierarchies(underlying_interface_name);
+
+CREATE INDEX raw_device_interface_hierarchies_idx_virtual_interface_name
+ON raw_device_interface_hierarchies(virtual_interface_name);
+
+-- Index the primary key without tool_run_id (if not already indexed).
+-- Helps the views that ignore the tool_run_id.
+CREATE INDEX raw_device_interface_hierarchies_idx_views
+ON raw_device_interface_hierarchies(device_id, underlying_interface_name, virtual_interface_name);
+
+
+-- ----------------------------------------------------------------------
 -- MAC addresses from target devices.
 -- ----------------------------------------------------------------------
 
@@ -1257,8 +1296,9 @@ ON raw_device_acl_zones_includes(device_id, zone_id);
 CREATE TABLE raw_device_acl_ip_nets_bases (
     tool_run_id             UUID        NOT NULL,
     device_id               TEXT        NOT NULL,
+    ip_net_set_namespace    TEXT        NOT NULL,
     ip_net_set_id           TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_id),
+    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id),
     FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
@@ -1272,13 +1312,17 @@ ON raw_device_acl_ip_nets_bases(tool_run_id);
 CREATE INDEX raw_device_acl_ip_nets_idx_device_id
 ON raw_device_acl_ip_nets_bases(device_id);
 
+CREATE INDEX raw_device_acl_ip_nets_idx_ip_net_set_namespace
+ON raw_device_acl_ip_nets_bases(ip_net_set_namespace);
+
 CREATE INDEX raw_device_acl_ip_nets_idx_ip_net_set_id
 ON raw_device_acl_ip_nets_bases(ip_net_set_id);
 
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_ip_nets_idx_views
-ON raw_device_acl_ip_nets_bases(device_id, ip_net_set_id);
+ON raw_device_acl_ip_nets_bases
+    (device_id, ip_net_set_namespace, ip_net_set_id);
 
 
 -- ----------------------------------------------------------------------
@@ -1286,11 +1330,13 @@ ON raw_device_acl_ip_nets_bases(device_id, ip_net_set_id);
 CREATE TABLE raw_device_acl_ip_nets_ip_nets (
     tool_run_id             UUID        NOT NULL,
     device_id               TEXT        NOT NULL,
+    ip_net_set_namespace    TEXT        NOT NULL,
     ip_net_set_id           TEXT        NOT NULL,
     ip_net                  CIDR        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_id, ip_net),
-    FOREIGN KEY (tool_run_id, device_id, ip_net_set_id)
-        REFERENCES raw_device_acl_ip_nets_bases(tool_run_id, device_id, ip_net_set_id)
+    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id, ip_net),
+    FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
+        REFERENCES raw_device_acl_ip_nets_bases
+            (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1302,6 +1348,9 @@ ON raw_device_acl_ip_nets_ip_nets(tool_run_id);
 CREATE INDEX raw_device_acl_ip_nets_ip_nets_idx_device_id
 ON raw_device_acl_ip_nets_ip_nets(device_id);
 
+CREATE INDEX raw_device_acl_ip_nets_ip_nets_idx_ip_net_set_namespace
+ON raw_device_acl_ip_nets_ip_nets(ip_net_set_namespace);
+
 CREATE INDEX raw_device_acl_ip_nets_ip_nets_idx_ip_net_set_id
 ON raw_device_acl_ip_nets_ip_nets(ip_net_set_id);
 
@@ -1311,10 +1360,12 @@ ON raw_device_acl_ip_nets_ip_nets(ip_net);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_ip_nets_ip_nets_idx_views
-ON raw_device_acl_ip_nets_ip_nets(device_id, ip_net_set_id, ip_net);
+ON raw_device_acl_ip_nets_ip_nets
+    (device_id, ip_net_set_namespace, ip_net_set_id, ip_net);
 
 CREATE INDEX raw_device_acl_ip_nets_ip_nets_idx_views_fkey
-ON raw_device_acl_ip_nets_ip_nets(device_id, ip_net_set_id);
+ON raw_device_acl_ip_nets_ip_nets
+    (device_id, ip_net_set_namespace, ip_net_set_id);
 
 
 -- ----------------------------------------------------------------------
@@ -1322,15 +1373,18 @@ ON raw_device_acl_ip_nets_ip_nets(device_id, ip_net_set_id);
 CREATE TABLE raw_device_acl_ip_nets_hostnames (
     tool_run_id             UUID        NOT NULL,
     device_id               TEXT        NOT NULL,
+    ip_net_set_namespace    TEXT        NOT NULL,
     ip_net_set_id           TEXT        NOT NULL,
     hostname                TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_id, hostname),
-    FOREIGN KEY (tool_run_id, device_id, ip_net_set_id)
-        REFERENCES raw_device_acl_ip_nets_bases(tool_run_id, device_id, ip_net_set_id)
+    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id, hostname),
+    FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
+        REFERENCES raw_device_acl_ip_nets_bases
+            (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (tool_run_id, device_id, hostname)
-        REFERENCES raw_device_dns_references(tool_run_id, device_id, hostname)
+        REFERENCES raw_device_dns_references
+            (tool_run_id, device_id, hostname)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1342,6 +1396,9 @@ ON raw_device_acl_ip_nets_hostnames(tool_run_id);
 CREATE INDEX raw_device_acl_ip_nets_hostnames_idx_device_id
 ON raw_device_acl_ip_nets_hostnames(device_id);
 
+CREATE INDEX raw_device_acl_ip_nets_hostnames_idx_ip_net_set_namespace
+ON raw_device_acl_ip_nets_hostnames(ip_net_set_namespace);
+
 CREATE INDEX raw_device_acl_ip_nets_hostnames_idx_ip_net_set_id
 ON raw_device_acl_ip_nets_hostnames(ip_net_set_id);
 
@@ -1351,10 +1408,12 @@ ON raw_device_acl_ip_nets_hostnames(hostname);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_ip_nets_hostnames_idx_views
-ON raw_device_acl_ip_nets_hostnames(device_id, ip_net_set_id, hostname);
+ON raw_device_acl_ip_nets_hostnames
+    (device_id, ip_net_set_namespace, ip_net_set_id, hostname);
 
 CREATE INDEX raw_device_acl_ip_nets_hostnames_idx_views_fkey
-ON raw_device_acl_ip_nets_hostnames(device_id, ip_net_set_id);
+ON raw_device_acl_ip_nets_hostnames
+    (device_id, ip_net_set_namespace, ip_net_set_id);
 
 
 -- ----------------------------------------------------------------------
@@ -1362,11 +1421,15 @@ ON raw_device_acl_ip_nets_hostnames(device_id, ip_net_set_id);
 CREATE TABLE raw_device_acl_ip_nets_includes (
     tool_run_id             UUID        NOT NULL,
     device_id               TEXT        NOT NULL,
+    ip_net_set_namespace    TEXT        NOT NULL,
     ip_net_set_id           TEXT        NOT NULL,
+    included_namespace      TEXT        NOT NULL,
     included_id             TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_id, included_id),
-    FOREIGN KEY (tool_run_id, device_id, ip_net_set_id)
-        REFERENCES raw_device_acl_ip_nets_bases(tool_run_id, device_id, ip_net_set_id)
+    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id,
+                 included_namespace, included_id),
+    FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
+        REFERENCES raw_device_acl_ip_nets_bases
+            (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1378,8 +1441,14 @@ ON raw_device_acl_ip_nets_includes(tool_run_id);
 CREATE INDEX raw_device_acl_ip_nets_includes_idx_device_id
 ON raw_device_acl_ip_nets_includes(device_id);
 
+CREATE INDEX raw_device_acl_ip_nets_includes_idx_ip_net_set_namespace
+ON raw_device_acl_ip_nets_includes(ip_net_set_namespace);
+
 CREATE INDEX raw_device_acl_ip_nets_includes_idx_ip_net_set_id
 ON raw_device_acl_ip_nets_includes(ip_net_set_id);
+
+CREATE INDEX raw_device_acl_ip_nets_includes_idx_included_namespace
+ON raw_device_acl_ip_nets_includes(included_namespace);
 
 CREATE INDEX raw_device_acl_ip_nets_includes_idx_included_id
 ON raw_device_acl_ip_nets_includes(included_id);
@@ -1387,10 +1456,12 @@ ON raw_device_acl_ip_nets_includes(included_id);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_ip_nets_includes_idx_views
-ON raw_device_acl_ip_nets_includes(device_id, ip_net_set_id, included_id);
+ON raw_device_acl_ip_nets_includes
+    (device_id, ip_net_set_namespace, ip_net_set_id, included_namespace, included_id);
 
 CREATE INDEX raw_device_acl_ip_nets_includes_idx_views_fkey
-ON raw_device_acl_ip_nets_includes(device_id, ip_net_set_id);
+ON raw_device_acl_ip_nets_includes
+    (device_id, ip_net_set_namespace, ip_net_set_id);
 
 
 -- ----------------------------------------------------------------------
@@ -1644,44 +1715,53 @@ ON raw_device_acl_services_includes(device_id, service_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_rules_ports (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    priority                INT         NOT NULL,
-    action                  TEXT        NOT NULL,
-    incoming_zone_id        TEXT        NOT NULL,
-    outgoing_zone_id        TEXT        NOT NULL,
-    src_ip_net_set_id       TEXT        NOT NULL,
-    dst_ip_net_set_id       TEXT        NOT NULL,
-    protocol                TEXT        NOT NULL,
-    src_port_set_id         TEXT        NOT NULL,
-    dst_port_set_id         TEXT        NOT NULL,
-    description             TEXT        NULL,
+    tool_run_id                 UUID        NOT NULL,
+    device_id                   TEXT        NOT NULL,
+    priority                    INT         NOT NULL,
+    action                      TEXT        NOT NULL,
+    incoming_zone_id            TEXT        NOT NULL,
+    outgoing_zone_id            TEXT        NOT NULL,
+    src_ip_net_set_namespace    TEXT        NOT NULL,
+    src_ip_net_set_id           TEXT        NOT NULL,
+    dst_ip_net_set_namespace    TEXT        NOT NULL,
+    dst_ip_net_set_id           TEXT        NOT NULL,
+    protocol                    TEXT        NOT NULL,
+    src_port_set_id             TEXT        NOT NULL,
+    dst_port_set_id             TEXT        NOT NULL,
+    description                 TEXT        NULL,
     PRIMARY KEY (tool_run_id, device_id, priority, action,
                  incoming_zone_id, outgoing_zone_id,
-                 src_ip_net_set_id, dst_ip_net_set_id,
+                 src_ip_net_set_namespace, src_ip_net_set_id,
+                 dst_ip_net_set_namespace, dst_ip_net_set_id,
                  protocol, src_port_set_id, dst_port_set_id),
     FOREIGN KEY (tool_run_id, device_id, incoming_zone_id)
-        REFERENCES raw_device_acl_zones_bases(tool_run_id, device_id, zone_id)
+        REFERENCES raw_device_acl_zones_bases
+            (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (tool_run_id, device_id, outgoing_zone_id)
-        REFERENCES raw_device_acl_zones_bases(tool_run_id, device_id, zone_id)
+        REFERENCES raw_device_acl_zones_bases
+            (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, src_ip_net_set_id)
-        REFERENCES raw_device_acl_ip_nets_bases(tool_run_id, device_id, ip_net_set_id)
+    FOREIGN KEY (tool_run_id, device_id, src_ip_net_set_namespace, src_ip_net_set_id)
+        REFERENCES raw_device_acl_ip_nets_bases
+            (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, dst_ip_net_set_id)
-        REFERENCES raw_device_acl_ip_nets_bases(tool_run_id, device_id, ip_net_set_id)
+    FOREIGN KEY (tool_run_id, device_id, dst_ip_net_set_namespace, dst_ip_net_set_id)
+        REFERENCES raw_device_acl_ip_nets_bases
+            (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (tool_run_id, device_id, src_port_set_id)
-        REFERENCES raw_device_acl_ports_bases(tool_run_id, device_id, port_set_id)
+        REFERENCES raw_device_acl_ports_bases
+            (tool_run_id, device_id, port_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (tool_run_id, device_id, dst_port_set_id)
-        REFERENCES raw_device_acl_ports_bases(tool_run_id, device_id, port_set_id)
+        REFERENCES raw_device_acl_ports_bases
+            (tool_run_id, device_id, port_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1705,8 +1785,14 @@ ON raw_device_acl_rules_ports(incoming_zone_id);
 CREATE INDEX raw_device_acl_rules_ports_idx_outgoing_zone_id
 ON raw_device_acl_rules_ports(outgoing_zone_id);
 
+CREATE INDEX raw_device_acl_rules_ports_idx_src_ip_net_set_namespace
+ON raw_device_acl_rules_ports(src_ip_net_set_namespace);
+
 CREATE INDEX raw_device_acl_rules_ports_idx_src_ip_net_set_id
 ON raw_device_acl_rules_ports(src_ip_net_set_id);
+
+CREATE INDEX raw_device_acl_rules_ports_idx_dst_ip_net_set_namespace
+ON raw_device_acl_rules_ports(dst_ip_net_set_namespace);
 
 CREATE INDEX raw_device_acl_rules_ports_idx_dst_ip_net_set_id
 ON raw_device_acl_rules_ports(dst_ip_net_set_id);
@@ -1725,7 +1811,8 @@ ON raw_device_acl_rules_ports(dst_port_set_id);
 CREATE INDEX raw_device_acl_rules_ports_idx_views
 ON raw_device_acl_rules_ports(device_id, priority, action,
     incoming_zone_id, outgoing_zone_id,
-    src_ip_net_set_id, dst_ip_net_set_id,
+    src_ip_net_set_namespace, src_ip_net_set_id,
+    dst_ip_net_set_namespace, dst_ip_net_set_id,
     protocol, src_port_set_id, dst_port_set_id);
 
 CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_incoming_zone
@@ -1734,10 +1821,16 @@ ON raw_device_acl_rules_ports(device_id, incoming_zone_id);
 CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_outgoing_zone
 ON raw_device_acl_rules_ports(device_id, outgoing_zone_id);
 
-CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_src_ip_net
+CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_src_ip_net_set_namespace
+ON raw_device_acl_rules_ports(device_id, src_ip_net_set_namespace);
+
+CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_src_ip_net_set_id
 ON raw_device_acl_rules_ports(device_id, src_ip_net_set_id);
 
-CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_dst_ip_net
+CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_dst_ip_net_set_namespace
+ON raw_device_acl_rules_ports(device_id, dst_ip_net_set_namespace);
+
+CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_dst_ip_net_set_id
 ON raw_device_acl_rules_ports(device_id, dst_ip_net_set_id);
 
 CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_src_port
@@ -1752,34 +1845,41 @@ ON raw_device_acl_rules_ports(device_id, dst_port_set_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_rules_services (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    priority                INT         NOT NULL,
-    action                  TEXT        NOT NULL,
-    incoming_zone_id        TEXT        NOT NULL,
-    outgoing_zone_id        TEXT        NOT NULL,
-    src_ip_net_set_id       TEXT        NOT NULL,
-    dst_ip_net_set_id       TEXT        NOT NULL,
-    service_id              TEXT        NOT NULL,
-    description             TEXT        NULL,
+    tool_run_id                 UUID        NOT NULL,
+    device_id                   TEXT        NOT NULL,
+    priority                    INT         NOT NULL,
+    action                      TEXT        NOT NULL,
+    incoming_zone_id            TEXT        NOT NULL,
+    outgoing_zone_id            TEXT        NOT NULL,
+    src_ip_net_set_namespace    TEXT        NOT NULL,
+    src_ip_net_set_id           TEXT        NOT NULL,
+    dst_ip_net_set_namespace    TEXT        NOT NULL,
+    dst_ip_net_set_id           TEXT        NOT NULL,
+    service_id                  TEXT        NOT NULL,
+    description                 TEXT        NULL,
     PRIMARY KEY (tool_run_id, device_id, priority, action,
                  incoming_zone_id, outgoing_zone_id,
-                 src_ip_net_set_id, dst_ip_net_set_id,
+                 src_ip_net_set_namespace, src_ip_net_set_id,
+                 dst_ip_net_set_namespace, dst_ip_net_set_id,
                  service_id),
     FOREIGN KEY (tool_run_id, device_id, incoming_zone_id)
-        REFERENCES raw_device_acl_zones_bases(tool_run_id, device_id, zone_id)
+        REFERENCES raw_device_acl_zones_bases
+            (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (tool_run_id, device_id, outgoing_zone_id)
-        REFERENCES raw_device_acl_zones_bases(tool_run_id, device_id, zone_id)
+        REFERENCES raw_device_acl_zones_bases
+            (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, src_ip_net_set_id)
-        REFERENCES raw_device_acl_ip_nets_bases(tool_run_id, device_id, ip_net_set_id)
+    FOREIGN KEY (tool_run_id, device_id, src_ip_net_set_namespace, src_ip_net_set_id)
+        REFERENCES raw_device_acl_ip_nets_bases
+            (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, dst_ip_net_set_id)
-        REFERENCES raw_device_acl_ip_nets_bases(tool_run_id, device_id, ip_net_set_id)
+    FOREIGN KEY (tool_run_id, device_id, dst_ip_net_set_namespace, dst_ip_net_set_id)
+        REFERENCES raw_device_acl_ip_nets_bases
+            (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
     -- No foreign key for services yet.
@@ -1810,8 +1910,14 @@ ON raw_device_acl_rules_services(incoming_zone_id);
 CREATE INDEX raw_device_acl_rules_services_idx_outgoing_zone_id
 ON raw_device_acl_rules_services(outgoing_zone_id);
 
+CREATE INDEX raw_device_acl_rules_services_idx_src_ip_net_set_namespace
+ON raw_device_acl_rules_services(src_ip_net_set_namespace);
+
 CREATE INDEX raw_device_acl_rules_services_idx_src_ip_net_set_id
 ON raw_device_acl_rules_services(src_ip_net_set_id);
+
+CREATE INDEX raw_device_acl_rules_services_idx_dst_ip_net_set_namespace
+ON raw_device_acl_rules_services(dst_ip_net_set_namespace);
 
 CREATE INDEX raw_device_acl_rules_services_idx_dst_ip_net_set_id
 ON raw_device_acl_rules_services(dst_ip_net_set_id);
@@ -1824,7 +1930,8 @@ ON raw_device_acl_rules_services(service_id);
 CREATE INDEX raw_device_acl_rules_services_idx_views
 ON raw_device_acl_rules_services(device_id, priority, action,
     incoming_zone_id, outgoing_zone_id,
-    src_ip_net_set_id, dst_ip_net_set_id,
+    src_ip_net_set_namespace, src_ip_net_set_id,
+    dst_ip_net_set_namespace, dst_ip_net_set_id,
     service_id);
 
 CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_incoming_zone
@@ -1833,10 +1940,16 @@ ON raw_device_acl_rules_services(device_id, incoming_zone_id);
 CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_outgoing_zone
 ON raw_device_acl_rules_services(device_id, outgoing_zone_id);
 
-CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_src_ip_net
+CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_src_ip_net_set_namespace
+ON raw_device_acl_rules_services(device_id, src_ip_net_set_namespace);
+
+CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_src_ip_net_set_id
 ON raw_device_acl_rules_services(device_id, src_ip_net_set_id);
 
-CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_dst_ip_net
+CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_dst_ip_net_set_namespace
+ON raw_device_acl_rules_services(device_id, dst_ip_net_set_namespace);
+
+CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_dst_ip_net_set_id
 ON raw_device_acl_rules_services(device_id, dst_ip_net_set_id);
 
 CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_service
