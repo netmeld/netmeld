@@ -444,11 +444,11 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
         if (nmdp::matchString<nmdp::ParserIpAddress, nmdo::IpAddress>(hopIpAddrStr)) {
           nmdo::TracerouteHop tracerouteHop;
-          tracerouteHop.dstIpAddr = ipAddr;
-          tracerouteHop.rtrIpAddr = nmdo::IpAddress{hopIpAddrStr};
-          tracerouteHop.hopCount = static_cast<int>(std::stoul(
-            std::string{tagNode.attribute("name").as_string()}.substr(15)
-          ));
+          tracerouteHop.setDstIp(ipAddr);
+          tracerouteHop.setHopIp(nmdo::IpAddress{hopIpAddrStr});
+          tracerouteHop.setHopCount(static_cast<uint32_t>(std::stoul(
+              std::string{tagNode.attribute("name").as_string()}.substr(15)
+            )));
 
           data.tracerouteHops.emplace_back(tracerouteHop);
         }
