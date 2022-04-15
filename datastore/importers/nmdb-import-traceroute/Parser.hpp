@@ -71,6 +71,9 @@ class Parser :
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       linuxTrace, linuxHeader, linuxHop, linuxDomainIp;
 
+    qi::rule<nmdp::IstreamIter, nmdo::IpAddress()>
+      linuxIpAddr;
+
     nmdp::ParserDomainName  fqdn;
     nmdp::ParserIpAddress   ipAddr;
 
