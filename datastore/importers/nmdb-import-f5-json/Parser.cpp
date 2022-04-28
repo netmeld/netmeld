@@ -53,7 +53,7 @@ Parser::parseIpAddrVrfStr(const std::string& ipAddrVrfStr) const
 {
   std::string ipAddrStr;
   std::string vrfId;
-  
+
   const std::regex re("([^%]+)(%\\d+)?(.*)");
   std::smatch m;
   if (std::regex_match(ipAddrVrfStr, m, re)) {
@@ -149,7 +149,7 @@ Parser::parseNetArpNdp(const nlohmann::ordered_json& doc)
       itemJson.at("macAddress").get<std::string>()
     };
     peerMacAddr.setResponding(true);
-    peerMacAddr.addIp(peerIpAddr);
+    peerMacAddr.addIpAddress(peerIpAddr);
 
     logicalSystem.ifaces[ifaceName].addReachableMac(peerMacAddr);
     logicalSystem.vrfs[vrfId].setId(vrfId);

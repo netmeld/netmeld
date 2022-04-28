@@ -45,8 +45,10 @@ namespace netmeld::datastore::objects {
     protected:
       IpAddr       address;
       uint8_t      prefix      {UINT8_MAX};
-      std::string  reason;
       double       extraWeight {0.0};
+
+      // NOTE: see IpAddress; mutable in support of alias updates
+      mutable std::string  reason;
 
     public:
 

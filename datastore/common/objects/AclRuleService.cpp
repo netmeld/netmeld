@@ -59,7 +59,9 @@ namespace netmeld::datastore::objects {
         action,
         incomingZoneId,
         outgoingZoneId,
+        srcIpNetSetNamespace,
         srcIpNetSetId,
+        dstIpNetSetNamespace,
         dstIpNetSetId,
         serviceId,
         description

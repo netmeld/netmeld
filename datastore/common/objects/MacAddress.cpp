@@ -67,7 +67,7 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  MacAddress::addIp(const IpAddress& _ipAddr)
+  MacAddress::addIpAddress(const IpAddress& _ipAddr)
   {
     ipAddrs.insert(_ipAddr);
   }
@@ -84,10 +84,10 @@ namespace netmeld::datastore::objects {
     return 6 == macAddr.size();// || 8 == macAddr.size();
   }
 
-  std::vector<IpAddress>
-  MacAddress::getIpAddrs() const
+  const std::set<IpAddress>&
+  MacAddress::getIpAddresses() const
   {
-    return std::vector<IpAddress>(ipAddrs.begin(), ipAddrs.end());
+    return ipAddrs;
   }
 
   void
@@ -104,7 +104,7 @@ namespace netmeld::datastore::objects {
                 << std::endl;
     }
 
-    for (auto& ipAddr : getIpAddrs()) {
+    for (auto ipAddr : ipAddrs) {
       ipAddr.setResponding(isResponding);
 
       ipAddr.save(t, toolRunId, deviceId);

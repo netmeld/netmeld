@@ -78,14 +78,16 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclRule::setSrcIpNetSetId(const std::string& _srcIpNetSetId)
+  AclRule::setSrcIpNetSetId(const std::string& _srcIpNetSetId, const std::string& _srcIpNetSetNamespace)
   {
+    srcIpNetSetNamespace = _srcIpNetSetNamespace;
     srcIpNetSetId = _srcIpNetSetId;
   }
 
   void
-  AclRule::setDstIpNetSetId(const std::string& _dstIpNetSetId)
+  AclRule::setDstIpNetSetId(const std::string& _dstIpNetSetId, const std::string& _dstIpNetSetNamespace)
   {
+    dstIpNetSetNamespace = _dstIpNetSetNamespace;
     dstIpNetSetId = _dstIpNetSetId;
   }
 
@@ -96,40 +98,9 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclRule::save(pqxx::transaction_base& t,
-      const nmco::Uuid& toolRunId, const std::string& deviceId)
+  AclRule::save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&)
   {
-    // srcIpNetSetId or dstIpNetSetId may be an IP, CIDR, or hostname
-    // that isn't specified as a named network in the configuration.
-    // Create and save a corresponding AclIpNetSet for these cases.
 
-    if (nmdp::matchString<nmdp::ParserIpAddress, IpAddress>(srcIpNetSetId)) {
-      AclIpNetSet ipNetSet;
-      ipNetSet.setId(srcIpNetSetId);
-      ipNetSet.addIpNet(IpNetwork{srcIpNetSetId});
-      ipNetSet.save(t, toolRunId, deviceId);
-    }
-    else if ((std::string::npos != srcIpNetSetId.find(".")) &&
-             nmdp::matchString<nmdp::ParserDomainName, std::string>(srcIpNetSetId)) {
-      AclIpNetSet ipNetSet;
-      ipNetSet.setId(srcIpNetSetId);
-      ipNetSet.addHostname(srcIpNetSetId);
-      ipNetSet.save(t, toolRunId, deviceId);
-    }
-
-    if (nmdp::matchString<nmdp::ParserIpAddress, IpAddress>(dstIpNetSetId)) {
-      AclIpNetSet ipNetSet;
-      ipNetSet.setId(dstIpNetSetId);
-      ipNetSet.addIpNet(IpNetwork{dstIpNetSetId});
-      ipNetSet.save(t, toolRunId, deviceId);
-    }
-    else if ((std::string::npos != dstIpNetSetId.find(".")) &&
-             nmdp::matchString<nmdp::ParserDomainName, std::string>(dstIpNetSetId)) {
-      AclIpNetSet ipNetSet;
-      ipNetSet.setId(dstIpNetSetId);
-      ipNetSet.addHostname(dstIpNetSetId);
-      ipNetSet.save(t, toolRunId, deviceId);
-    }
   }
 
   std::string
@@ -141,7 +112,9 @@ namespace netmeld::datastore::objects {
         << action << ", "
         << incomingZoneId << ", "
         << outgoingZoneId << ", "
+        << srcIpNetSetNamespace << ", "
         << srcIpNetSetId << ", "
+        << dstIpNetSetNamespace << ", "
         << dstIpNetSetId << ", "
         << description
         << "]";

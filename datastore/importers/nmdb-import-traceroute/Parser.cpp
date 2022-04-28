@@ -83,17 +83,27 @@ Parser::Parser() : Parser::base_type(start)
 
   linuxHop =
     qi::uint_ [(pnx::bind(&Parser::hopCount, this) = qi::_1)]
-    > +(qi::lit('*') | (qi::double_ >> "ms") | linuxDomainIp)
+    > +( qi::lit('*')
+       | (qi::double_ >> "ms")
+         // NOTE: below is overly greedy, but we don't leverage the values yet
+       | (qi::lexeme[qi::lit('!') > +qi::alnum])
+       | linuxDomainIp
+      )
     ;
 
   linuxDomainIp =
-    ( (ipAddr > -("(" > ipAddr > ")"))
+    ( (linuxIpAddr > -("(" > linuxIpAddr > ")"))
         [pnx::bind(&Parser::addHop, this, qi::_1)]
-    | (fqdn > "(" > ipAddr > ")")
+    | (fqdn > "(" > linuxIpAddr > ")")
         [(pnx::bind(&nmdo::IpAddress::addAlias, qi::_2, qi::_1, TRACE_REASON),
           pnx::bind(&Parser::addHop, this, qi::_2))]
     )
     ;
+
+  linuxIpAddr =
+    ipAddr > -('%' > +(qi::ascii::alnum | qi::ascii::char_("-_.@")))
+    ;
+
 
   garbageLine =
     (+qi::eol | (+(qi::char_ - qi::eol) > -qi::eol))

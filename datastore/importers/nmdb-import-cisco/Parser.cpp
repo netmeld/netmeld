@@ -246,6 +246,8 @@ Parser::Parser() : Parser::base_type(start)
                         pnx::bind(&Parser::tgtIface, this), qi::_1))]
        /* END: No examples of these, cannot verify */
 
+       | channelGroup
+       | encapsulation
        | switchport
        | spanningTree
 
@@ -278,6 +280,21 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+  channelGroup =
+    (qi::lit("channel-group") >> qi::ushort_)
+      [(pnx::bind(&Parser::portChannelAddIface, this, qi::_1))] >>
+    (qi::lit("mode") >> token) >>
+    -(qi::lit("type") >> token)
+    ;
+
+  encapsulation =
+    ( qi::lit("encapsulation") >>
+      ( ((qi::lit("dot1q") | qi::lit("dot1Q")) >> qi::ushort_)
+          [(pnx::bind(&Parser::encapsulationDot1qAddVlan, this, qi::_1))]
+      )
+    )
+    ;
+
   switchport =
     qi::lit("switchport") >>
     (  ((qi::lit("mode") > token) | qi::string("nonegotiate"))
@@ -291,7 +308,14 @@ Parser::Parser() : Parser::base_type(start)
   switchportPortSecurity =
     qi::lit("port-security ") >
     (
-       (qi::lit("mac-address ")
+       ((-qi::lit("mac-address") >> (qi::lit("maximum") | qi::lit("max")) >> qi::ushort_)
+          [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
+                      pnx::bind(&Parser::tgtIface, this), qi::_1))]
+         > -(qi::lit("vlan") > qi::ushort_)
+          [(pnx::bind(&Parser::unsup, this,
+                      "switchport port-security maximum COUNT vlan ID"))]
+       )
+     | (qi::lit("mac-address ")
         > -qi::lit("sticky")
             [(pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);}))]
         > -macAddr
@@ -308,13 +332,6 @@ Parser::Parser() : Parser::base_type(start)
             [(pnx::bind(&Parser::unsup, this,
                         "switchport port-security sticky mac-address MAC vlan ID"))]
          )
-       )
-     | (((qi::lit("maximum") | qi::lit("max")) >> qi::ushort_)
-          [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
-                      pnx::bind(&Parser::tgtIface, this), qi::_1))]
-         > -(qi::lit("vlan") > qi::ushort_)
-          [(pnx::bind(&Parser::unsup, this,
-                      "switchport port-security maximum COUNT vlan ID"))]
        )
      | (qi::lit("violation") >> token)
           [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
@@ -356,20 +373,22 @@ Parser::Parser() : Parser::base_type(start)
     (  (qi::lit("bpduguard")
          [(pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
            pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard))] >
-        -(  qi::lit("enable")
+        -( qi::lit("enable")
              [(pnx::bind([&](){tgtIface->setBpduGuard(true);}))]
          | qi::lit("disable")
              [(pnx::bind([&](){tgtIface->setBpduGuard(false);}))]
-        )
+         | qi::lit("rate-limit")
+             [(pnx::bind(&Parser::unsup, this, "spanning-tree bpduguard rate-limit"))]
+         )
        )
      | (qi::lit("bpdufilter")
          [(pnx::bind([&](){tgtIface->setBpduFilter(!isNo);}),
            pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduFilter))] >
-        -(  qi::lit("enable")
+        -( qi::lit("enable")
              [(pnx::bind([&](){tgtIface->setBpduFilter(true);}))]
          | qi::lit("disable")
              [(pnx::bind([&](){tgtIface->setBpduFilter(false);}))]
-        )
+         )
        )
      | ((qi::lit("port type") | qi::lit("portfast")) >>
         (  qi::lit("edge")    // == portfast on
@@ -377,6 +396,7 @@ Parser::Parser() : Parser::base_type(start)
          | qi::lit("network") // == portfast off
              [(pnx::bind([&](){tgtIface->setPortfast(false);}))]
          | qi::lit("normal")  // == default
+         | qi::lit("auto")
         )
        )
      | (qi::lit("portfast"))
@@ -428,6 +448,8 @@ Parser::Parser() : Parser::base_type(start)
       (route)
       (vlanDef)
       (interface)
+        (channelGroup)
+        (encapsulation)
         (switchport)
           (switchportPortSecurity)
             (vlanRange)
@@ -574,6 +596,22 @@ Parser::ifaceAddAlias(const std::string& _alias, const nmdo::IpAddress& _mask)
     ip.setMask(_mask);
   }
   postIfaceAliasIpData.push_back(std::make_tuple(tgtIface, _alias, ip));
+}
+
+
+// Port-channel related
+void
+Parser::portChannelAddIface(uint16_t _portChannelId)
+{
+  d.portChannels[_portChannelId].insert(tgtIface->getName());
+}
+
+
+// Encapsulation related
+void
+Parser::encapsulationDot1qAddVlan(uint16_t /*_vlanId*/)
+{
+
 }
 
 

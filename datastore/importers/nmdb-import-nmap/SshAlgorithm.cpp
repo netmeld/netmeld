@@ -46,7 +46,7 @@ SshAlgorithm::save(pqxx::transaction_base& t,
 
   t.exec_prepared("insert_raw_ssh_host_algorithm",
       toolRunId,
-      port.getIpAddr(),
+      port.getIpAddress().toString(),
       port.getProtocol(),
       port.getPort(),
       type,
@@ -58,7 +58,7 @@ SshAlgorithm::toString() const
 {
   std::ostringstream oss;
   oss << "[";
-  oss << port.getIpAddr() << ", "
+  oss << port.getIpAddress().toString() << ", "
       << port.getProtocol() << ", "
       << port.getPort() << ", "
       << type << ", "

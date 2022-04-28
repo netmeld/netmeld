@@ -84,7 +84,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     {
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
-    
+
       for (auto& result : this->tResults) {
         // save
         result.save(t, toolRunId, deviceId);

@@ -141,6 +141,52 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           LOG_DEBUG << result.toDebugString() << '\n';
         }
 
+        const std::vector<std::string> vlanIfacePrefixes{
+            "Vlan", "Vlan ",
+            "vlan", "vlan ",
+            "VLAN", "VLAN "
+        };
+        for (auto& [name, iface] : results.ifaces) {
+          for (const auto& vlan : iface.getVlans()) {
+            const uint16_t vlanId{vlan.getVlanId()};
+            for (const auto& vlanIfacePrefix : vlanIfacePrefixes) {
+              const std::string vlanIfaceName{
+                vlanIfacePrefix + std::to_string(static_cast<unsigned int>(vlanId))
+              };
+              if (results.ifaces.contains(vlanIfaceName)) {
+                t.exec_prepared("insert_raw_device_interface_hierarchy",
+                    toolRunId,
+                    deviceId,
+                    iface.getName(),
+                    results.ifaces.at(vlanIfaceName).getName());
+              }
+            }
+          }
+        }
+
+        const std::vector<std::string> portChannelPrefixes{
+            "Port-channel", "Port-channel ",
+            "Port-Channel", "Port-Channel ",
+            "port-channel", "port-channel ",
+            "PORT-CHANNEL", "PORT-CHANNEL "
+        };
+        for (const auto& [portChannelId, ifaceNames] : results.portChannels) {
+          for (const auto& portChannelPrefix : portChannelPrefixes) {
+            const std::string portChannelIfaceName{
+              portChannelPrefix + std::to_string(static_cast<unsigned int>(portChannelId))
+            };
+            if (results.ifaces.contains(portChannelIfaceName)) {
+              for (const auto& ifaceName : ifaceNames) {
+                t.exec_prepared("insert_raw_device_interface_hierarchy",
+                    toolRunId,
+                    deviceId,
+                    ifaceName,
+                    results.ifaces.at(portChannelIfaceName).getName());
+              }
+            }
+          }
+        }
+
         LOG_DEBUG << "Iterating over networkBooks\n";
         for (auto& [zone, nets] : results.networkBooks) {
           for (auto& [name, book] : nets) {

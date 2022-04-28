@@ -490,7 +490,7 @@ Parser::parseConfigService(const pugi::xml_node& serviceNode)
        serviceNode.select_nodes("entry")) {
     const pugi::xml_node serviceEntryNode{serviceEntryMatch.node()};
     nmdo::AclService aclService;
-    
+
     const std::string serviceName{
       serviceEntryNode.attribute("name").value()
     };
@@ -538,7 +538,7 @@ Parser::parseConfigServiceGroup(const pugi::xml_node& serviceGroupNode)
        serviceGroupNode.select_nodes("entry")) {
     const pugi::xml_node serviceGroupEntryNode{serviceGroupEntryMatch.node()};
     nmdo::AclService aclService;
-    
+
     const std::string serviceGroupName{
       serviceGroupEntryNode.attribute("name").value()
     };

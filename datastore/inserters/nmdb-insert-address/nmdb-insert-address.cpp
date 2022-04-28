@@ -105,7 +105,7 @@ class Tool : public nmdt::AbstractInsertTool
       macAddr.setResponding(isResponding);
       ipAddr.setResponding(isResponding);
 
-      macAddr.addIp(ipAddr);
+      macAddr.addIpAddress(ipAddr);
 
       macAddr.save(t, toolRunId, deviceId);
       LOG_DEBUG << macAddr.toDebugString() << std::endl;

@@ -656,6 +656,14 @@ namespace netmeld::datastore::utils {
        " ON CONFLICT"
        " DO NOTHING");
 
+    db.prepare
+      ("insert_raw_device_interface_hierarchy",
+       "INSERT INTO raw_device_interface_hierarchies"
+       "  (tool_run_id, device_id, underlying_interface_name, virtual_interface_name)"
+       " VALUES ($1, $2, $3, $4)"
+       " ON CONFLICT"
+       " DO NOTHING");
+
     // ----------------------------------------------------------------------
     // TABLE: Ac*Book
     // ----------------------------------------------------------------------
@@ -740,8 +748,8 @@ namespace netmeld::datastore::utils {
     db.prepare(
       "insert_raw_device_acl_ip_net_base",
       "INSERT INTO raw_device_acl_ip_nets_bases"
-      "  (tool_run_id, device_id, ip_net_set_id)"
-      " VALUES ($1, $2, $3)"
+      "  (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)"
+      " VALUES ($1, $2, $3, $4)"
       " ON CONFLICT"
       " DO NOTHING"
     );
@@ -753,8 +761,8 @@ namespace netmeld::datastore::utils {
     db.prepare(
       "insert_raw_device_acl_ip_net_ip_net",
       "INSERT INTO raw_device_acl_ip_nets_ip_nets"
-      "  (tool_run_id, device_id, ip_net_set_id, ip_net)"
-      " VALUES ($1, $2, $3, network(($4)::INET))"
+      "  (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id, ip_net)"
+      " VALUES ($1, $2, $3, $4, network(($5)::INET))"
       " ON CONFLICT"
       " DO NOTHING"
     );
@@ -766,8 +774,8 @@ namespace netmeld::datastore::utils {
     db.prepare(
       "insert_raw_device_acl_ip_net_hostname",
       "INSERT INTO raw_device_acl_ip_nets_hostnames"
-      "  (tool_run_id, device_id, ip_net_set_id, hostname)"
-      " VALUES ($1, $2, $3, lower($4))"
+      "  (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id, hostname)"
+      " VALUES ($1, $2, $3, $4, lower($5))"
       " ON CONFLICT"
       " DO NOTHING"
     );
@@ -779,8 +787,9 @@ namespace netmeld::datastore::utils {
     db.prepare(
       "insert_raw_device_acl_ip_net_include",
       "INSERT INTO raw_device_acl_ip_nets_includes"
-      "  (tool_run_id, device_id, ip_net_set_id, included_id)"
-      " VALUES ($1, $2, $3, $4)"
+      "  (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id,"
+      "   included_namespace, included_id)"
+      " VALUES ($1, $2, $3, $4, $5, $6)"
       " ON CONFLICT"
       " DO NOTHING"
     );
@@ -887,9 +896,10 @@ namespace netmeld::datastore::utils {
       "INSERT INTO raw_device_acl_rules_ports"
       "  (tool_run_id, device_id, priority, action,"
       "   incoming_zone_id, outgoing_zone_id,"
-      "   src_ip_net_set_id, dst_ip_net_set_id,"
+      "   src_ip_net_set_namespace, src_ip_net_set_id,"
+      "   dst_ip_net_set_namespace, dst_ip_net_set_id,"
       "   protocol, src_port_set_id, dst_port_set_id, description)"
-      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
       " ON CONFLICT"
       " DO NOTHING"
     );
@@ -903,9 +913,10 @@ namespace netmeld::datastore::utils {
       "INSERT INTO raw_device_acl_rules_services"
       "  (tool_run_id, device_id, priority, action,"
       "   incoming_zone_id, outgoing_zone_id,"
-      "   src_ip_net_set_id, dst_ip_net_set_id,"
+      "   src_ip_net_set_namespace, src_ip_net_set_id,"
+      "   dst_ip_net_set_namespace, dst_ip_net_set_id,"
       "   service_id, description)"
-      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
       " ON CONFLICT"
       " DO NOTHING"
     );

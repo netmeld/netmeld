@@ -243,13 +243,6 @@ Parser::addService(const std::string& _name, const nmdo::IpAddress& _ipAddr)
 Result
 Parser::getData()
 {
-  for (auto& [name, iface] : d.ifaces) {
-    if (!dnsSuffix.count(name)) { continue; }
-    for (auto& ipAddr : iface.getIpAddresses()) {
-      ipAddr.addAlias(dnsSuffix[name], "ipconfig");
-    }
-  }
-
   Result r;
   r.push_back(d);
   return r;

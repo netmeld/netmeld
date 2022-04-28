@@ -31,6 +31,7 @@
 
 #include <netmeld/datastore/objects/PortRange.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
+#include <netmeld/datastore/utils/QueriesCommon.hpp>
 
 extern "C" {
 #include <netdb.h>
@@ -39,6 +40,7 @@ extern "C" {
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
+namespace nmdu = netmeld::datastore::utils;
 namespace nmcu = netmeld::core::utils;
 
 
@@ -80,6 +82,8 @@ class Tool : public nmdt::AbstractDatastoreTool
     runTool() override
     {
       pqxx::connection db {getDbConnectString()};
+
+      nmdu::dbPrepareCommon(db);
 
       db.prepare(
         "select_raw_devices",
@@ -141,111 +145,6 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       // INSERT queries against the new *_acl_* tables
 
-      db.prepare(
-        "insert_raw_device_acl_zone_base",
-        "INSERT INTO raw_device_acl_zones_bases"
-        " (tool_run_id, device_id, zone_id)"
-        " VALUES ($1, $2, $3)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, zone_id)"
-        " DO NOTHING"
-      );
-      db.prepare(
-        "insert_raw_device_acl_zone_interface",
-        "INSERT INTO raw_device_acl_zones_interfaces"
-        " (tool_run_id, device_id, zone_id, interface_name)"
-        " VALUES ($1, $2, $3, $4)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, zone_id, interface_name)"
-        " DO NOTHING"
-      );
-
-      db.prepare(
-        "insert_raw_device_acl_ip_net_base",
-        "INSERT INTO raw_device_acl_ip_nets_bases"
-        " (tool_run_id, device_id, ip_net_set_id)"
-        " VALUES ($1, $2, $3)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, ip_net_set_id)"
-        " DO NOTHING"
-      );
-      db.prepare(
-        "insert_raw_device_acl_ip_net_ip_net",
-        "INSERT INTO raw_device_acl_ip_nets_ip_nets"
-        " (tool_run_id, device_id, ip_net_set_id, ip_net)"
-        " VALUES ($1, $2, $3, network(($4)::INET))"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, ip_net_set_id, ip_net)"
-        " DO NOTHING"
-      );
-
-      db.prepare(
-        "insert_raw_device_acl_port_base",
-        "INSERT INTO raw_device_acl_ports_bases"
-        " (tool_run_id, device_id, port_set_id)"
-        " VALUES ($1, $2, $3)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, port_set_id)"
-        " DO NOTHING"
-      );
-      db.prepare(
-        "insert_raw_device_acl_port_port_range",
-        "INSERT INTO raw_device_acl_ports_ports"
-        " (tool_run_id, device_id, port_set_id, port_range)"
-        " VALUES ($1, $2, $3, $4::PortRange)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, port_set_id, port_range)"
-        " DO NOTHING"
-      );
-
-      db.prepare(
-        "insert_raw_device_acl_service_base",
-        "INSERT INTO raw_device_acl_services_bases"
-        " (tool_run_id, device_id, service_id)"
-        " VALUES ($1, $2, $3)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, service_id)"
-        " DO NOTHING"
-      );
-      db.prepare(
-        "insert_raw_device_acl_service_protocol",
-        "INSERT INTO raw_device_acl_services_protocols"
-        " (tool_run_id, device_id, service_id, protocol)"
-        " VALUES ($1, $2, $3, $4)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, service_id, protocol)"
-        " DO NOTHING"
-      );
-      db.prepare(
-        "insert_raw_device_acl_service_port_ranges",
-        "INSERT INTO raw_device_acl_services_ports"
-        " (tool_run_id, device_id, service_id, protocol,"
-        "  src_port_range, dst_port_range)"
-        " VALUES ($1, $2, $3, $4,"
-        "  $5::PortRange, $6::PortRange)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, service_id, protocol,"
-        "  src_port_range, dst_port_range)"
-        " DO NOTHING"
-      );
-
-      db.prepare(
-        "insert_raw_device_acl_rule_service",
-        "INSERT INTO raw_device_acl_rules_services"
-        " (tool_run_id, device_id, priority, action,"
-        "  incoming_zone_id, outgoing_zone_id,"
-        "  src_ip_net_set_id, dst_ip_net_set_id,"
-        "  service_id, description)"
-        " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
-        " ON CONFLICT"
-        " (tool_run_id, device_id, priority, action,"
-        "  incoming_zone_id, outgoing_zone_id,"
-        "  src_ip_net_set_id, dst_ip_net_set_id,"
-        "  service_id)"
-        " DO NOTHING"
-      );
-
-
       pqxx::work t{db};
 
       // Back-propagate guest device IDs into parent tool runs.
@@ -293,6 +192,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         deviceRow.at("tool_run_id").to(toolRunId);
         std::string deviceId;
         deviceRow.at("device_id").to(deviceId);
+        std::string ipNetSetNamespace{"global"};
 
         // Zone: any
         t.exec_prepared("insert_raw_device_acl_zone_base",
@@ -305,11 +205,13 @@ class Tool : public nmdt::AbstractDatastoreTool
         t.exec_prepared("insert_raw_device_acl_ip_net_base",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             "any-ipv4"
         );
         t.exec_prepared("insert_raw_device_acl_ip_net_ip_net",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             "any-ipv4",
             "0.0.0.0/0"
         );
@@ -318,11 +220,13 @@ class Tool : public nmdt::AbstractDatastoreTool
         t.exec_prepared("insert_raw_device_acl_ip_net_base",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             "any-ipv6"
         );
         t.exec_prepared("insert_raw_device_acl_ip_net_ip_net",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             "any-ipv6",
             "::/0"
         );
@@ -331,17 +235,20 @@ class Tool : public nmdt::AbstractDatastoreTool
         t.exec_prepared("insert_raw_device_acl_ip_net_base",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             "any"
         );
         t.exec_prepared("insert_raw_device_acl_ip_net_ip_net",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             "any",
             "0.0.0.0/0"
         );
         t.exec_prepared("insert_raw_device_acl_ip_net_ip_net",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             "any",
             "::/0"
         );
@@ -358,7 +265,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             "any-tcp",
             "tcp"
         );
-        t.exec_prepared("insert_raw_device_acl_service_port_ranges",
+        t.exec_prepared("insert_raw_device_acl_service_port",
             toolRunId,
             deviceId,
             "any-tcp",
@@ -379,7 +286,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             "any-udp",
             "udp"
         );
-        t.exec_prepared("insert_raw_device_acl_service_port_ranges",
+        t.exec_prepared("insert_raw_device_acl_service_port",
             toolRunId,
             deviceId,
             "any-udp",
@@ -400,7 +307,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             "any",
             "any"
         );
-        t.exec_prepared("insert_raw_device_acl_service_port_ranges",
+        t.exec_prepared("insert_raw_device_acl_service_port",
             toolRunId,
             deviceId,
             "any",
@@ -486,7 +393,7 @@ class Tool : public nmdt::AbstractDatastoreTool
               serviceId,
               protocol
           );
-          t.exec_prepared("insert_raw_device_acl_service_port_ranges",
+          t.exec_prepared("insert_raw_device_acl_service_port",
               toolRunId,
               deviceId,
               serviceId,
@@ -505,8 +412,8 @@ class Tool : public nmdt::AbstractDatastoreTool
         acNetRow.at("tool_run_id").to(toolRunId);
         std::string deviceId;
         acNetRow.at("device_id").to(deviceId);
-        std::string ipNetSetScope;
-        acNetRow.at("net_set_id").to(ipNetSetScope);
+        std::string ipNetSetNamespace;
+        acNetRow.at("net_set_id").to(ipNetSetNamespace);
         std::string ipNetSetId;
         acNetRow.at("net_set").to(ipNetSetId);
         std::string ipNet;
@@ -515,6 +422,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         t.exec_prepared("insert_raw_device_acl_ip_net_base",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             ipNetSetId
         );
 
@@ -531,6 +439,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         t.exec_prepared("insert_raw_device_acl_ip_net_ip_net",
             toolRunId,
             deviceId,
+            ipNetSetNamespace,
             ipNetSetId,
             ipNet
         );
@@ -631,7 +540,9 @@ class Tool : public nmdt::AbstractDatastoreTool
         "   'allow'                     AS action,"
         "   'any'                       AS incoming_zone_id,"
         "   'any'                       AS outgoing_zone_id,"
+        "   'global'                    AS src_ip_net_set_namespace,"
         "   'any'                       AS src_ip_net_set_id,"
+        "   'global'                    AS dst_ip_net_set_namespace,"
         "   'any'                       AS dst_ip_net_set_id,"
         "   'any'                       AS service_id,"
         "   'implicit default allow'    AS description"

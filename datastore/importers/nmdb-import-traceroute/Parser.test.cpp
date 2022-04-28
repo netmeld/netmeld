@@ -44,6 +44,7 @@ class TestParser : public Parser {
       using Parser::linuxHeader;
       using Parser::linuxHop;
       using Parser::linuxDomainIp;
+      using Parser::linuxIpAddr;
       using Parser::getData;
 };
 
@@ -117,6 +118,32 @@ BOOST_AUTO_TEST_CASE(testParts)
     }
   }
 
+  { // linuxIpAddr
+    TestParser tp;
+    const auto& parserRule {tp.linuxIpAddr};
+
+    { // v4
+      std::vector<std::string> testsOk {
+        R"(1.2.3.4)",
+      };
+      for (const auto& test : testsOk) {
+        nmdo::IpAddress out;
+        BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out),
+                   "Parse rule 'linuxIpAddr': " << test);
+      }
+    }
+    { // v6
+      std::vector<std::string> testsOk {
+        R"(1::2%eth0)",
+      };
+      for (const auto& test : testsOk) {
+        nmdo::IpAddress out;
+        BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out),
+                   "Parse rule 'linuxIpAddr': " << test);
+      }
+    }
+  }
+
   { // linuxDomainIp
     TestParser tp;
     const auto& parserRule {tp.linuxDomainIp};
@@ -125,6 +152,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       R"(1.2.3.4)",
       R"(1.2.3.4 (1.2.3.4))",
       R"(router1.site.domain (1.2.3.4))",
+      R"(1::2%eth0 (1::2%eth0))",
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -132,13 +160,15 @@ BOOST_AUTO_TEST_CASE(testParts)
     }
     std::string dbgStr;
     const auto tr {tp.getData()};
-    BOOST_TEST(3 == tr.size());
+    BOOST_TEST(testsOk.size() == tr.size());
     dbgStr = R"([[1.2.3.4/32, 1, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
     BOOST_TEST(dbgStr == tr[0].toDebugString());
     BOOST_TEST(dbgStr == tr[1].toDebugString());
     dbgStr = R"([[1.2.3.4/32, 1, from traceroute import, 0, )"
              R"([router1.site.domain], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
     BOOST_TEST(dbgStr == tr[2].toDebugString());
+    dbgStr = R"([[1::2/128, 1, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    BOOST_TEST(dbgStr == tr[3].toDebugString());
     for (const auto& d : tr) {
       BOOST_TEST(!d.isValid());
     }
@@ -161,7 +191,11 @@ BOOST_AUTO_TEST_CASE(testParts)
       R"(2  router1.site.domain (1.2.3.4)  0.138 ms  0.061 ms  0.190 ms)",
       R"(3 * r1.site.domain (1.2.3.4) 2 ms 1.2.3.5 (1.2.3.5) 3 ms)",
       R"(4  1.2.3.4  1.000 ms  2.000 ms  3.000 ms)",
-//      R"(1::2%eth0 (1::2%eth0)  1.000 ms !H  1.000 ms !H  1.000 ms !H)",
+      R"(5 1::2%eth0 (1::2%eth0)  1 ms !H  1 ms !N  1 ms !P)",
+      R"(5 1.2.3.4  1 ms !S  1 ms !F  1 ms !X)",
+      R"(6 1.2.3.4  1 ms !V  1 ms !C  1 ms !0)",
+      // https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+      R"(7 1.2.3.4  1 ms !0  1 ms !9  1 ms !15)", // Destination Unreachable
       R"(99  * * *)",
     };
     for (const auto& test : testsOk) {
@@ -195,23 +229,22 @@ BOOST_AUTO_TEST_CASE(testWhole)
 
   const auto& parserRule {tp};
   std::vector<std::string> testsOk {
-
     R"(
 Tracing route to google.com [142.250.72.46]
 over a maximum of 30 hops:
 
-  1    <1 ms    <1 ms    <1 ms  192.168.92.68 
-  2     4 ms     6 ms     3 ms  10.0.0.1 
-  3    13 ms    12 ms    13 ms  99.99.99.99 
-  4    12 ms    13 ms    11 ms  domain.test.tld [123.213.11.22] 
-  5    17 ms    10 ms    14 ms  domain.test2.tld [226.155.44.55] 
-  6    16 ms    12 ms    12 ms  111.111.111.111 
-  7    19 ms    18 ms    20 ms  domain.test3.tld [77.177.178.1] 
-  8    29 ms    19 ms    18 ms  domain.test4.tld [50.60.70.80] 
-  9    26 ms    18 ms    18 ms  domain.test5.tld [25.85.90.150] 
- 10    29 ms    25 ms    19 ms  13.26.42.84 
- 11    25 ms    20 ms    19 ms  1.2.3.4 
- 12    20 ms    18 ms    23 ms  domain.test6.tld [142.250.72.46] 
+  1    <1 ms    <1 ms    <1 ms  192.168.92.68
+  2     4 ms     6 ms     3 ms  10.0.0.1
+  3    13 ms    12 ms    13 ms  99.99.99.99
+  4    12 ms    13 ms    11 ms  domain.test.tld [123.213.11.22]
+  5    17 ms    10 ms    14 ms  domain.test2.tld [226.155.44.55]
+  6    16 ms    12 ms    12 ms  111.111.111.111
+  7    19 ms    18 ms    20 ms  domain.test3.tld [77.177.178.1]
+  8    29 ms    19 ms    18 ms  domain.test4.tld [50.60.70.80]
+  9    26 ms    18 ms    18 ms  domain.test5.tld [25.85.90.150]
+ 10    29 ms    25 ms    19 ms  13.26.42.84
+ 11    25 ms    20 ms    19 ms  1.2.3.4
+ 12    20 ms    18 ms    23 ms  domain.test6.tld [142.250.72.46]
 
 Trace complete.
 )",
@@ -219,18 +252,18 @@ Trace complete.
 R"(
 Tracing route to 142.250.72.46 over a maximum of 30 hops:
 
-  1    <1 ms    <1 ms    <1 ms  192.168.92.68 
-  2     4 ms     6 ms     3 ms  10.0.0.1 
-  3    13 ms    12 ms    13 ms  99.99.99.99 
-  4    12 ms    13 ms    11 ms  123.213.11.22 
-  5    17 ms    10 ms    14 ms  226.155.44.55 
-  6    16 ms    12 ms    12 ms  111.111.111.111 
-  7    19 ms    18 ms    20 ms  77.177.178.1 
-  8    29 ms    19 ms    18 ms  50.60.70.80 
-  9    26 ms    18 ms    18 ms  25.85.90.150 
- 10    29 ms    25 ms    19 ms  13.26.42.84 
- 11    25 ms    20 ms    19 ms  1.2.3.4 
- 12    20 ms    18 ms    23 ms  142.250.72.46 
+  1    <1 ms    <1 ms    <1 ms  192.168.92.68
+  2     4 ms     6 ms     3 ms  10.0.0.1
+  3    13 ms    12 ms    13 ms  99.99.99.99
+  4    12 ms    13 ms    11 ms  123.213.11.22
+  5    17 ms    10 ms    14 ms  226.155.44.55
+  6    16 ms    12 ms    12 ms  111.111.111.111
+  7    19 ms    18 ms    20 ms  77.177.178.1
+  8    29 ms    19 ms    18 ms  50.60.70.80
+  9    26 ms    18 ms    18 ms  25.85.90.150
+ 10    29 ms    25 ms    19 ms  13.26.42.84
+ 11    25 ms    20 ms    19 ms  1.2.3.4
+ 12    20 ms    18 ms    23 ms  142.250.72.46
 
 Trace complete.
 )",
@@ -270,12 +303,17 @@ R"(traceroute to google.com (142.250.72.46), 30 hops max, 60 byte packets
 10  83.84.5.86  26.980 ms * 21.55.99.128  32.185 ms
 11  44.38.33.48  30.477 ms 42.99.11.1  30.402 ms 53.85.33.115  33.578 ms
 12  142.250.72.46  27.107 ms 18.19.20.21  28.758 ms 142.250.72.46  33.128 ms
+)",
+
+R"(
+traceroute to www.google.com (2607:f8b0:400f:802::2004), 30 hops max, 80 byte packets
+ 1  fe80::bead%eth0 (fe80::bead%eth0)  1.263 ms !H  1.229 ms !H  1.367 ms !H
 )"
   };
-  
+
   for (const auto& test : testsOk) {
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                "Parse rule 'start': " << test);
   }
-  
+
 }

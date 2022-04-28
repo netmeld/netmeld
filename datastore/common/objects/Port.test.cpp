@@ -50,10 +50,10 @@ BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
     TestPort port;
-    std::string ip {nmdo::IpAddress().toString()};
+    std::string ipStr {nmdo::IpAddress().toString()};
 
     BOOST_CHECK_EQUAL(INT_MAX, port.getPort());
-    BOOST_CHECK_EQUAL(ip, port.getIpAddr());
+    BOOST_CHECK_EQUAL(ipStr, port.getIpAddress().toString());
     BOOST_CHECK_EQUAL("", port.getProtocol());
     BOOST_CHECK_EQUAL("", port.getState());
     BOOST_CHECK_EQUAL("", port.getReason());
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestPort port {ipAddr};
 
     BOOST_CHECK_EQUAL(INT_MAX, port.getPort());
-    BOOST_CHECK_EQUAL(ipAddr.toString(), port.getIpAddr());
+    BOOST_CHECK_EQUAL(ipAddr.toString(), port.getIpAddress().toString());
     BOOST_CHECK_EQUAL("", port.getProtocol());
     BOOST_CHECK_EQUAL("", port.getState());
     BOOST_CHECK_EQUAL("", port.getReason());
