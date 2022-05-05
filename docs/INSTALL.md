@@ -75,6 +75,9 @@ directory.
   * Run test (example):	`(cd build/; ctest Test.netmeld)`
 * Installing (as a privileged user): `sudo cmake --install build`
 
+![](docs/term/createMakes2x.svg)
+![](docs/term/buildingSrc4x.svg)
+![](docs/term/installSrc.svg)
 
 # Running the Tool Set
 The following are steps needed specifically for installing from source.  The
@@ -86,6 +89,8 @@ the `sudo ldconfig` command to configure the dynamic linker run time bindings.
 Basically, if you attempt to run a tool and it complains about not finding
 a Netmeld library this will more than likely resolve the issue.
 
+![](docs/term/ldconfig.svg)
+
 ## Datalake Module Specific
 These steps are needed if working on the Datalake module.
 
@@ -96,6 +101,7 @@ To accept these defaults:
 ```
 nmdl-initialize
 ```
+![](docs/term/nmdl-init.svg)
 
 If a different location is needed, `nmdl-initialize --lake-path LAKE_PATH`.
 
@@ -110,8 +116,8 @@ Under the assumption we always want the service to be available to interact
 with the tool set without having to start it every time:
 
 ```
-systemctl enable postgresql
-systemctl restart postgresql
+sudo systemctl enable postgresql
+sudo systemctl restart postgresql
 ```
 
 ### Add a Database Admin/Superuser
@@ -122,6 +128,7 @@ as a superuser.
 
 ```
 sudo -u postgres createuser -s root
+sudo -u postgres createuser -s kali
 ```
 
 ### Initialize the Data Store
@@ -129,6 +136,8 @@ The default database is named `site` and can be initialized with the following:
 ```
 nmdb-initialize
 ```
+
+![](docs/term/nmdb-init.svg)
 
 To create a non-default database, `nmdb-initialize --db-name DB_NAME`.
 
