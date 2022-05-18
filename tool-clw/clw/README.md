@@ -81,6 +81,7 @@ Wrap a nmap scan of localhost:
 ```
 clw nmap localhost
 ```
+![[docs/term/clwnmap.svg]]
 
 Wrap a ping of localhost:
 ```
