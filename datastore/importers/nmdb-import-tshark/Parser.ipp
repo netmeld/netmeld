@@ -32,8 +32,9 @@
 template<typename Iter>
 Parser<Iter>::Parser() : Parser::base_type(start)
 {
-  // snmp, wpad, netbios, etc
+  // packet data to consume
   dataLines.add
+    (frameNumber, &value)
     (ethSrc, &value)
     (sllSrc, &value)
     (vlanId, &value)
@@ -78,55 +79,35 @@ Parser<Iter>::Parser() : Parser::base_type(start)
     (bootpHwMacAddr, &value) // client mac
     (dhcp6IaprefixPrefAddr, &value) // "subnet" for c&s
     (dhcpv6DuidlltLinkLayerAddr, &value) // client&server
-    (ntpRefid, &value) // ntp source, bytes, see "not you"
+    // ===== NTP =====
+    //(ntpRefid, &value) // ntp source, bytes, see "not you"
+    (ntpMode, &value)
+    (ntpCtrlFlags2R, &value)
     ;
 
 
   start =
-    //+((+(qi::char_ - qi::eol) > qi::eol) | qi::eol)
-    qi::eps [(qi::_val = pnx::construct<Result>())] >
-    jsonBlock [(pnx::bind(&Parser::setDone, this))]
+    qi::eps [(qi::_val = pnx::construct<Result>())]
+    > packetArray [(pnx::bind(&Parser::setDone, this))]
     ;
-/*  multitime -q -n 10 nmdb-import-tshark tshark1.json
---blind slurp
-              Mean        Std.Dev.    Min         Median      Max
-real        0.579       0.010       0.568       0.578       0.600
---json,... (no skipper)
-             Mean        Std.Dev.    Min         Median      Max
-real        10.858      0.111       10.716      10.849      11.083
---json,packet,source,layers,frame
-            Mean        Std.Dev.    Min         Median      Max
-real        16.359      0.164       16.126      16.359      16.766
---json,... (blank skipper)
-            Mean        Std.Dev.    Min         Median      Max
-real        8.437       0.043       8.375       8.441       8.506
---json,... (symbol table)
-            Mean        Std.Dev.    Min         Median      Max
-real        7.514       0.055       7.447       7.500       7.607
---json,packet (symbol table)
-            Mean        Std.Dev.    Min         Median      Max
-real        0.457       0.014       0.446       0.453       0.497
---json,packet (symbol table, no debug)
-            Mean        Std.Dev.    Min         Median      Max
-real        0.255       0.007       0.244       0.254       0.267
- */
-  jsonBlock =
-    qi::lit("[") > +qi::eol >
-    *(packetBlock [(pnx::bind(&Parser::setNewPacket, this))]) >
-    qi::lit("]") > -qi::eol
+
+  packetArray =
+    qi::lit("[") > +qi::eol
+    > *(packetBlock [(pnx::bind(&Parser::setNewPacket, this))])
+    > qi::lit("]") > -qi::eol
     ;
 
   packetBlock =
-    qi::lit("{\n") >
-    +( (&qi::as_string[qi::raw[dataLines]] [(qi::_b = qi::_1)] >
-        dataLines [(qi::_a = qi::_1)] > qi::lazy(*qi::_a))
-         [(pnx::bind(&Parser::setPacketData, this, qi::_b, qi::_2))]
-     | (jsonEob)
-     | (iLine - (qi::lit('{') | jsonEob | qi::lit(']')))
-    )
+    qi::lit("{\n")
+    > +( (&qi::as_string[qi::raw[dataLines]] [(qi::_b = qi::_1)]
+          > dataLines [(qi::_a = qi::_1)] > qi::lazy(*qi::_a)
+         ) [(pnx::bind(&Parser::setPacketData, this, qi::_b, qi::_2))]
+       | (jsonEndOfObject)
+       | (iLine - (qi::lit('{') | jsonEndOfObject | qi::lit(']')))
+      )
     ;
 
-  jsonEob =
+  jsonEndOfObject =
     (  (qi::lit("},") > +qi::eol)
      | ((qi::lit('}') > +qi::eol) > -(qi::lit(',') > +qi::eol))
     )
@@ -135,13 +116,15 @@ real        0.255       0.007       0.244       0.254       0.267
   // helpers
   //  attribute generating
   value =
-    (  (qi::lit("\"\""))
-     | (qi::lit('"') >
-        +((qi::lit('\\') > qi::char_) | (qi::char_ - qi::lit('"'))) >
-        qi::lit('"'))
+    (  (qi::lit(R"("")"))
+     | (qi::lit('"')
+        > +((qi::lit('\\') > qi::char_) | (qi::char_ - qi::lit('"')))
+        > qi::lit('"')
+       )
      | (+qi::ascii::graph)
     ) > -qi::lit(',') > qi::eol
     ;
+
   //  non-attribute generating
   iLine =
     +(qi::char_ - qi::eol) > qi::eol;
@@ -149,8 +132,9 @@ real        0.255       0.007       0.244       0.254       0.267
 
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
-      (jsonBlock)(jsonEob)
+      (packetArray)
       (packetBlock)
+      (jsonEndOfObject)
       (value)
       (iLine)
       );
@@ -393,25 +377,39 @@ Parser<Iter>::processPacket(PacketData& _pd)
   }
 
   // ===== NTP =====
-  if (_pd.count(ntpRefid)) {
-    auto refidHex {s1(ntpRefid)};
-    std::replace(refidHex.begin(), refidHex.end(), ':', ' ');
-    int o1,o2,o3,o4;
-    std::istringstream(refidHex) >> std::hex >> o1 >> o2 >> o3 >> o4;
-    std::ostringstream oss;
-    oss << o1 << '.' << o2 << '.' << o3 << '.' << o4;
+  if (_pd.count(ntpMode)) {
+    auto mode {s1(ntpMode)};
+    std::string mode6Response =
+        _pd.count(ntpCtrlFlags2R) ? s1(ntpCtrlFlags2R) : "";
 
-    // ignore not you ips
-    if (!(127 == o1 && 127 == o2 && 127 == o3 && (127 == o4 || 128 == o4))) {
+    if (!("3" == mode || ("6" == mode && "1" != mode6Response))) { 
+      if ("6" == mode && "1" == mode6Response) {
+        std::ostringstream oss;
+        oss << "NTP control data present in frame: " << s1(frameNumber);
+        d.observations.addNotable(oss.str());
+      }
       nmdo::Service serv;
-      serv.addDstPort("123");
-      serv.setDstAddress(nmdo::IpAddress(oss.str(), TSHARK_REASON));
       serv.setServiceName("ntp");
-      serv.setServiceReason(TSHARK_REASON);
-      serv.setProtocol("udp");
+      serv.setProtocol("udp"); // check for protocol? frame.protocols
+      serv.addDstPort("123"); // udp.srcport
+      auto ipAddr = getSrcIp(_pd);
+      ipAddr.setReason(TSHARK_REASON);
+      serv.setDstAddress(ipAddr);
+      std::ostringstream oss;
+      oss << TSHARK_REASON;
+      if ("4" == mode) {
+        oss << "; client/server variant";
+      } else if ("1" == mode || "2" == mode) {
+        oss << "; symmetric variant";
+      } else if ("5" == mode || "6" == mode) {
+        oss << "; broadcast variant";
+      }
+      oss << " (" << mode << ")";
+      serv.setServiceReason(oss.str());
       d.services.insert(serv);
+
+      status = true;
     }
-    status = true;
   }
 
   // ===== CDP =====
@@ -470,4 +468,19 @@ Parser<Iter>::processPacket(PacketData& _pd)
   }
 
   return status;
+}
+
+template<typename Iter>
+nmdo::IpAddress
+Parser<Iter>::getSrcIp(PacketData& _pd) const
+{
+  std::string srcIp {""};
+
+  if (_pd.count(ipSrc)) {
+    srcIp = std::any_cast<std::string&>(_pd[ipSrc]);
+  } else if (_pd.count(ipv6Src)) {
+    srcIp = std::any_cast<std::string&>(_pd[ipv6Src]);
+  }
+  nmdo::IpAddress value {srcIp};
+  return value;
 }

@@ -66,7 +66,7 @@ class Parser :
       start;
 
     qi::rule<Iter, qi::ascii::blank_type>
-      jsonBlock, jsonEob;
+      packetArray, jsonEndOfObject;
 
     qi::rule<Iter, qi::ascii::blank_type,
              qi::locals<qi::rule<Iter, std::string()>*, std::string>>
@@ -80,7 +80,8 @@ class Parser :
 
     // Data
     const std::string
-        ethSrc {R"("eth.src": )"}
+        frameNumber {R"("frame.number": )"}
+      , ethSrc {R"("eth.src": )"}
       , sllSrc {R"("sll.src.eth": )"}
       , vlanId {R"("vlan.id": )"}
       , stpRootHw {R"("stp.root.hw": )"}
@@ -128,7 +129,10 @@ class Parser :
         // what to do with these two, macs and subnets
       , dhcp6IaprefixPrefAddr {R"("dhcp6.iaprefix.pref_addr": )"} // "subnet" for c&s
       , dhcpv6DuidlltLinkLayerAddr {R"("dhcpv6.duidllt.link_layer_addr": )"} // client&server
-      , ntpRefid {R"("ntp.refid": )"} // ntp source, bytes, see "not you"
+      // ===== NTP ===== see RFC5905
+      //, ntpRefid {R"("ntp.refid": )"} // ntp source, bytes, see "not you"
+      , ntpMode {R"("ntp.flags.mode": )"} // 1,2,4,5
+      , ntpCtrlFlags2R {R"("ntp.ctrl.flags2.r": )"}
     ;
     const std::map<std::string, std::string> ipProtoNums
     {
@@ -161,6 +165,8 @@ class Parser :
     void setNewPacket();
     void setPacketData(const std::string&, const std::string&);
     bool processPacket(PacketData&);
+
+    nmdo::IpAddress getSrcIp(PacketData&) const;
 
   public:
 };
