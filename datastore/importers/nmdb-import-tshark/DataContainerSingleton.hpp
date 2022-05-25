@@ -52,37 +52,37 @@ struct Data {
 };
 typedef std::vector<Data> Result;
 
-  class DataContainerSingleton {
-    // =========================================================================
-    // Variables
-    // =========================================================================
-    private: // Variables will probably rarely appear at this scope
-      nmcu::ThreadSafeQueue<Data> data;
+class DataContainerSingleton {
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private: // Variables will probably rarely appear at this scope
+    nmcu::ThreadSafeQueue<Data> data;
 
-    protected: // Variables intended for internal/subclass API
-    public: // Variables should rarely appear at this scope
+  protected: // Variables intended for internal/subclass API
+  public: // Variables should rarely appear at this scope
 
-    // =========================================================================
-    // Constructors
-    // =========================================================================
-    private: // Constructors which should be hidden from API users
-      DataContainerSingleton();
-    protected: // Constructors part of subclass API
-    public: // Constructors part of public API
-      DataContainerSingleton(const DataContainerSingleton&) = delete;
-      void operator=(const DataContainerSingleton&)         = delete;
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  private: // Constructors which should be hidden from API users
+    DataContainerSingleton();
+  protected: // Constructors part of subclass API
+  public: // Constructors part of public API
+    DataContainerSingleton(const DataContainerSingleton&) = delete;
+    void operator=(const DataContainerSingleton&)         = delete;
 
-    // =========================================================================
-    // Methods
-    // =========================================================================
-    private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-    public: // Methods part of public API
-      static DataContainerSingleton& getInstance();
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private: // Methods which should be hidden from API users
+  protected: // Methods part of subclass API
+  public: // Methods part of public API
+    static DataContainerSingleton& getInstance();
 
-      void insert(const Data&);
-      bool hasData() const;
+    void insert(const Data&);
+    bool hasData() const;
 
-      Result getData();
-  };
+    Result getData();
+};
 #endif // DATA_CONTAINER_SINGLETON_HPP
