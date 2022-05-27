@@ -35,6 +35,7 @@ foreach(ITEM
     nmdb-import-cisco-wireless
     nmdb-import-clw
     nmdb-import-dig
+    nmdb-import-dpkg
     nmdb-import-f5-json
     nmdb-import-hosts
     nmdb-import-ipconfig
