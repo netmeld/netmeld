@@ -54,7 +54,7 @@ Parser::Parser() : Parser::base_type(start)
   
 //keep going down the file till eof
 packages = 
-  headers > packageLine
+  headers > packageLine 
 ;
 
 headers = 
@@ -68,25 +68,33 @@ headers =
 ;
 // ii packageName version arch description
   packageLine = 
-    qi::lit("ii") > packageName > version > architecture > desc > qi::eol
+    qi::lit("ii") > packageName
+    > version 
+    > architecture 
+    > desc 
+    > qi::eol
     ;
 
   packageName = 
     +qi::graph
-      [(pnx::bind(&Parser::curpackage, this)) = qi::_1]
+      // [(pnx::bind(&Parser::addPackage, this)) = qi::_1]
     ;
   version = 
     +qi::ascii::graph
+      // [(pnx::bind(&Parser::setPackageVersion, this)) = qi::_1]
   ;
 
   architecture = 
     +qi::ascii::graph
+      // [(pnx::bind(&Parser::setPackageArch, this)) = qi::_1]
   ;
 
   desc = 
     +qi::ascii::print
+      // [(pnx::bind(&Parser::setPackageDesc, this)) = qi::_1]
   ;
 
+  //soaker 
   token =
     +qi::ascii::graph
     ;
@@ -94,25 +102,6 @@ headers =
   ignoredLine =
     (+token > -qi::eol) | +qi::eol
     ;
-  // packageLine = 
-  //   // each line that representes a package
-  // ;
-
-  // //General parsing
-
-  // packageName = 
-  // ;
-  // version =
-  // ;
-  // architecture = 
-  // ;
-  // description =
-  // ;
-
-  // // cppcheck-suppress useInitializationList
-  // ddata =
-  //   *(qi::omit[qi::char_] - qi::eol) % qi::eol
-  //   ;
 
   //Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
@@ -131,14 +120,45 @@ headers =
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-void
-Parser::finalize()
+void 
+Parser::addPackage(const std::string& _name)
 {
-  std::cout << curpackage;
+  //construct a pack object
+  nmdo::Package package;
+  package.setName(_name);
+  // package.setVersion(_version);
+  // package.setArch(_arch);
+  // package.setDesc(_desc);
+  curpackagename = package.getName();
+  //put it in our data map
+  data.packages[curpackagename] = package;
 }
+// void 
+// setPackageName(const std::string&);
+
+void 
+Parser::setPackageVersion(const std::string& _version)
+{
+  auto& package {data.packages[curpackagename]};
+  package.setVersion(_version);
+}
+void 
+Parser::setPackageArch(const std::string& _arch)
+{
+  auto& package {data.packages[curpackagename]};
+  package.setArch(_arch);
+}
+void 
+Parser::setPackageDesc(const std::string& _desc)
+{
+  auto& package {data.packages[curpackagename]};
+  package.setDesc(_desc);
+}
+
 Result
 Parser::getData()
 {
   Result r {data};
+  // std::cout << data["acl"].toDebugString();
   return r;
 }

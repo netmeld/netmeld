@@ -40,6 +40,9 @@
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 
+// =============================================================================
+// Data containers
+// =============================================================================
 struct Data {
   std::map<std::string, nmdo::DeviceInformation>  devInfos;
   std::map<std::string, nmdo::Interface>          ifaces;

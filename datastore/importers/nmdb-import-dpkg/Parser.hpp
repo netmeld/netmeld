@@ -45,8 +45,10 @@
 
 #include "Parser.hpp"
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+// #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
+#include <netmeld/datastore/objects/Package.hpp>
+#include <map>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
@@ -54,11 +56,12 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef nmdo::AbstractDatastoreObject  Data;
+// typedef nmdo::AbstractDatastoreObject  Data;
 
-// struct Data { 
-//   std::vector<
-// };
+// A struct of a map that contains packages and the key is the packagename
+struct Data { 
+  std::map<std::string, nmdo::Package> packages;
+};
 typedef std::vector<Data>    Result;
 
 
@@ -68,25 +71,22 @@ typedef std::vector<Data>    Result;
 class Parser :
   public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
+  
   // ===========================================================================
   // Variables
   // ===========================================================================
   private: // Variables are always private
     Data data;
 
-    const std::string REASON {"dpkg"};
-
     // variables for current package
-    std::string curpackage;
+
+  // Rules
+  protected:
+    std::string curpackagename;
     std::string curversion;
+    std::string curarch;
     std::string curdescription;
 
-
-    bool responsive {false};
-
-    // Rules
-
-    // blank skipper with result bank
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
@@ -98,9 +98,6 @@ class Parser :
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
     packages;
     //iterator with string skipper
-    // qi::rule<nmdp::IstreamIter, std::string()>
-      
-    //   ;
 
     // skipp white space iterator
     qi::rule<nmdp::IstreamIter>
@@ -121,7 +118,11 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void finalize();
+    void addPackage(const std::string&);
+    void setPackageName(const std::string&);
+    void setPackageVersion(const std::string&);
+    void setPackageArch(const std::string&);
+    void setPackageDesc(const std::string&);
 
   protected:
   public:

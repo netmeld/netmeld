@@ -120,40 +120,30 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& result : this->tResults) {
+      for (auto& results : this->tResults) {
         // muck
 
         // save
-        result.save(t, toolRunId, deviceId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
-
+        LOG_DEBUG << "Iterating over Packages";
+        LOG_DEBUG << "Iterating over PackageInfo";
+        for(auto& [_, result] : results.packages){
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
+        }
         // link
       }
     }
 
-  protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printVersion() const;
-    // Inherited from AbstractImportTool at this scope
-      // fs::path    const getDataPath() const;
-      // std::string const getDeviceId() const;
-      // nmco::Uuid   const getToolRunId() const;
-      // virtual void parseData();
-      // virtual void printHelp() const;
-      // virtual int  runTool();
-      // virtual void setToolRunId();
-      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
-  public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
+  protected: 
+  public:
 };
 
 
 // =============================================================================
 // Program entry point
 // =============================================================================
-int main(int argc, char** argv) {
+int 
+main(int argc, char** argv) {
   // Tool<nmdp::DummyParser, Result> tool; // if parser not needed
   Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
