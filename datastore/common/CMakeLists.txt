@@ -46,6 +46,7 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/IpNetwork.cpp
     ./objects/MacAddress.cpp
     ./objects/OperatingSystem.cpp
+    ./objects/Package.cpp
     ./objects/Port.cpp
     ./objects/PortRange.cpp
     ./objects/Route.cpp

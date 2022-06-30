@@ -61,6 +61,7 @@ namespace nmdp = netmeld::datastore::parsers;
 // A struct of a map that contains packages and the key is the packagename
 struct Data { 
   std::map<std::string, nmdo::Package> packages;
+  // nmdo::ToolObservations      observations;
 };
 typedef std::vector<Data>    Result;
 
@@ -90,7 +91,8 @@ class Parser :
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+    config;
     // blank skipper without eol
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       headers, packageLine, ignoredLine;
@@ -101,6 +103,7 @@ class Parser :
 
     // skipp white space iterator
     qi::rule<nmdp::IstreamIter>
+      packageStatus,
       packageName,
       version,
       architecture, 
@@ -119,6 +122,8 @@ class Parser :
   // ===========================================================================
   private:
     void addPackage(const std::string&);
+    void addObservation(const std::vector<std::string>&, const nmdo::Package&);
+    void setPackageStatus(const std::string&);
     void setPackageName(const std::string&);
     void setPackageVersion(const std::string&);
     void setPackageArch(const std::string&);
@@ -126,6 +131,6 @@ class Parser :
 
   protected:
   public:
-    Result getData();
+    Result getData(); 
 };
 #endif // PARSER_HPP

@@ -48,15 +48,10 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    *(packageLine | ignoredLine)
+    headers > *(packageLine | ignoredLine)
       [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
   
-//keep going down the file till eof
-packages = 
-  headers > packageLine 
-;
-
 headers = 
     // will get the first 4 lines of dpkg
     qi::lit("Desired") > +token > -qi::eol 
@@ -64,19 +59,30 @@ headers =
     > qi::lit("|/") > +token > -qi::eol
     > qi::lit("||/") > +token > -qi::eol
     > qi::lit("+++") > +token > -qi::eol
-    > packageLine >  -qi::eol
 ;
+
+//keep going down the file till eof
 // ii packageName version arch description
+//parse other statuses in dpkg instead of 'ii' there is 3 characters
+//flag as tool observ ( object), some error because its supposed to be ii
+  // https://linuxprograms.wordpress.com/2010/05/11/status-dpkg-list/
+
   packageLine = 
-    qi::lit("ii") > packageName
+    packageStatus 
+    > packageName
     > version 
     > architecture 
     > desc 
     > qi::eol
     ;
 
+  packageStatus = 
+    +qi::ascii::graph [(pnx::bind(&Parser::addPackage, this, qi::_1))]
+  ;
+
   packageName = 
-    +qi::graph
+    +qi::ascii::graph
+      // [std::cout << "," << qi::_1 << "," << std::endl]
       // [(pnx::bind(&Parser::addPackage, this)) = qi::_1]
     ;
   version = 
@@ -108,6 +114,7 @@ headers =
       (start)
       (headers)
       (packages)
+      (packageStatus)
       (packageName)
       (packageLine)
       (version)
@@ -121,20 +128,26 @@ headers =
 // Parser helper methods
 // =============================================================================
 void 
-Parser::addPackage(const std::string& _name)
+Parser::addPackage(const std::string& _status)
 {
+
   //construct a pack object
   nmdo::Package package;
-  package.setName(_name);
-  // package.setVersion(_version);
-  // package.setArch(_arch);
-  // package.setDesc(_desc);
+  package.setStatus(_status);
   curpackagename = package.getName();
+
   //put it in our data map
   data.packages[curpackagename] = package;
 }
 // void 
 // setPackageName(const std::string&);
+
+void
+Parser::setPackageStatus(const std::string& _status)
+{
+  auto& package {data.packages[curpackagename]};
+  package.setStatus(_status);
+}
 
 void 
 Parser::setPackageVersion(const std::string& _version)
@@ -158,7 +171,9 @@ Parser::setPackageDesc(const std::string& _desc)
 Result
 Parser::getData()
 {
-  Result r {data};
+  Result r;
+  std::cout << "====================";
+  r.push_back(data);
   // std::cout << data["acl"].toDebugString();
   return r;
 }

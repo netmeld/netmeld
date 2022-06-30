@@ -37,6 +37,7 @@ namespace netmeld::datastore::objects{
     // Variables
     // =========================================================================
     private: 
+        std::string packageStatus;
         std::string packageName;
         std::string packageVersion;
         std::string packageArch;
@@ -59,17 +60,19 @@ namespace netmeld::datastore::objects{
     protected:
     public:
     //Setters
+        void setStatus(const std::string&);
         void setName(const std::string&);
         void setVersion(const std::string&);
         void setArch(const std::string&);
         void setDesc(const std::string&);
 
         //Getters
+        std::string getStatus();
         std::string getName();
         std::string getVersion();
         std::string getArch();
         std::string getDesc();
-
+        virtual std::string toDebugString() const;
     
     };
 }

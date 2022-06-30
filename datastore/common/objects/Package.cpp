@@ -32,70 +32,78 @@ namespace netmeld::datastore::objects
     
     Package::Package()
     {}
+    //string constructor
+    // Package::Package(const std::string& _status) :
+    //     packageStatus(_status)
+    // {}
 
-    private: 
-        std::string packageName;
-        std::string packageVersion;
-        std::string packageArch;
-        std::string packageDesc;
-    protected:
-        void
-        Package::setName(const std::string& _name)
-        {
-        packageName = _name;
-        }
-        void
-        Package::setVersion(const std::string& _version)
-        {
-        packageVersion = _version;
-        }
-        void
-        Package::setArch(const std::string& _arch)
-        {
-        packageArch = _arch;
-        }
-        void
-        Package::setDesc(const std::string& _desc)
-        {
-        packageDesc = _desc;
-        }
+    void
+    Package::setStatus(const std::string& _status)
+    {
+        packageStatus = _status;
+    }
+    void
+    Package::setName(const std::string& _name)
+    {
+    packageName = _name;
+    }
+    void
+    Package::setVersion(const std::string& _version)
+    {
+    packageVersion = _version;
+    }
+    void
+    Package::setArch(const std::string& _arch)
+    {
+    packageArch = _arch;
+    }
+    void
+    Package::setDesc(const std::string& _desc)
+    {
+    packageDesc = _desc;
+    }
 
-        //getters
-        std::string
-        Package::getName() const
-        {
+    //getters
+    std::string
+    Package::getStatus()
+    {
+        return packageStatus;
+    }
+    std::string
+    Package::getName()
+    {
         return packageName;
-        }
-        std::string
-        Package::getVersion() const
-        {
+    }
+    std::string
+    Package::getVersion() 
+    {
         return packageVersion;
-        }
-        std::string
-        Package::getArch() const
-        {
+    }
+    std::string
+    Package::getArch() 
+    {
         return packageArch;
-        }
-        std::string
-        Package::getDesc() const
-        {
+    }
+    std::string
+    Package::getDesc() 
+    {
         return packageDesc;
-        }
+    }
 
-        //to string
-        Package::toDebugString() const
-        {
-            std::ostringstream oss;
+    //to string
+    std::string
+    Package::toDebugString() const
+    {
+        std::ostringstream oss;
 
-            oss << "["; // opening bracket
-            oss << packageName << ", "
-                << packageVersion << ", "
-                << packageArch << ", "
-                << PackageDesc;
-            oss << "]"; // closing bracket
+        oss << "["; // opening bracket
+        oss << packageStatus << ", "
+            << packageName << ", "
+            << packageVersion << ", "
+            << packageArch << ", "
+            << packageDesc;
+        oss << "]"; // closing bracket
 
-            return oss.str();
-        }
-    
-    };
+        return oss.str();
+    }
 }
