@@ -51,6 +51,7 @@ foreach(ITEM
     nmdb-import-pcap
     nmdb-import-ping
     nmdb-import-powerconnect
+    nmdb-import-prowler
     nmdb-import-show-cdp-neighbor
     nmdb-import-show-inventory
     nmdb-import-show-mac-address-table

@@ -821,4 +821,31 @@ ON raw_tool_observations(observation);
 
 -- ----------------------------------------------------------------------
 
+CREATE TABLE raw_prowler_checks (
+    tool_run_id                 UUID            NOT NULL,
+    account_number              TEXT            NOT NULL,
+    timestamp                   TEXT            NOT NULL,
+    region                      TEXT            NOT NULL,
+    control                     TEXT            NOT NULL,
+    severity                    TEXT            NOT NULL,
+    status                      TEXT            NOT NULL,
+    level                       TEXT            NOT NULL,
+    control_id                  TEXT            NOT NULL,
+    service                     TEXT            NOT NULL,
+    risk                        TEXT            NOT NULL,
+    remediation                 TEXT            NOT NULL,
+    documentation_link          TEXT            NOT NULL,
+    resource_id                 TEXT            NOT NULL,
+    PRIMARY KEY (tool_run_id, account_number, timestamp, region,
+                 control, severity, status, level, control_id, service,
+                 risk, remediation, documentation_link, resource_id),
+    FOREIGN KEY (tool_run_id)
+      REFERENCES tool_runs(id)
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
+);
+    
+
+-- ----------------------------------------------------------------------
+
 COMMIT TRANSACTION;
