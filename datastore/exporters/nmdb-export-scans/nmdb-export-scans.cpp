@@ -33,6 +33,7 @@
 #include "exporters/InterNetwork.hpp"
 #include "exporters/IntraNetwork.hpp"
 #include "exporters/Nessus.hpp"
+#include "exporters/Prowler.hpp"
 #include "exporters/SshAlgorithms.hpp"
 #include "writers/Writer.hpp"
 #include "writers/Context.hpp"
@@ -42,7 +43,7 @@ namespace nmcu = netmeld::core::utils;
 namespace nmdt = netmeld::datastore::tools;
 namespace nmdu = netmeld::datastore::utils;
 
-namespace nmpbes = netmeld::playbook::export_scans;
+namespace nmes = netmeld::export_scans;
 
 
 // =============================================================================
@@ -89,26 +90,33 @@ class Tool : public nmdt::AbstractExportTool
             po::value<std::string>()->default_value("context"),
             "Export data to the specified format (context|csv)")
           );
+
       opts.addOptionalOption("intra-network", std::make_tuple(
             "intra-network",
             NULL_SEMANTIC,
-            "Export intra-network scan information")
+            "Export Playbook intra-network scan information")
           );
       opts.addOptionalOption("inter-network", std::make_tuple(
             "inter-network",
             NULL_SEMANTIC,
-            "Export inter-network scan information")
+            "Export Playbook inter-network scan information")
           );
       opts.addOptionalOption("nessus", std::make_tuple(
             "nessus",
             NULL_SEMANTIC,
-            "Export nessus scan information")
+            "Export Nessus scan information")
+          );
+      opts.addOptionalOption("prowler", std::make_tuple(
+            "prowler",
+            NULL_SEMANTIC,
+            "Export Prowler scan information")
           );
       opts.addOptionalOption("ssh", std::make_tuple(
             "ssh",
             NULL_SEMANTIC,
             "Export SSH algorithm scan information")
           );
+
       opts.addOptionalOption("to-file", std::make_tuple(
             "to-file",
             NULL_SEMANTIC,
@@ -127,28 +135,32 @@ class Tool : public nmdt::AbstractExportTool
 
       std::unique_ptr<Writer> writer;
       if ("context" == outFormat) {
-        writer = std::make_unique<nmpbes::Context>(toFile);
+        writer = std::make_unique<nmes::Context>(toFile);
       } else if ("csv" == outFormat) {
-        writer = std::make_unique<nmpbes::Csv>(toFile);
+        writer = std::make_unique<nmes::Csv>(toFile);
       } else {
         LOG_ERROR << "Invalid output format, quitting." << std::endl;
         return nmcu::Exit::FAILURE;
       }
 
       if (opts.exists("intra-network")) {
-        nmpbes::IntraNetwork exporter {dbConInfo};
+        nmes::IntraNetwork exporter {dbConInfo};
         exporter.exportScan(writer);
       }
       if (opts.exists("inter-network")) {
-        nmpbes::InterNetwork exporter {dbConInfo};
+        nmes::InterNetwork exporter {dbConInfo};
         exporter.exportScan(writer);
       }
       if (opts.exists("nessus")) {
-        nmpbes::Nessus exporter {dbConInfo};
+        nmes::Nessus exporter {dbConInfo};
+        exporter.exportScan(writer);
+      }
+      if (opts.exists("prowler")) {
+        nmes::Prowler exporter {dbConInfo};
         exporter.exportScan(writer);
       }
       if (opts.exists("ssh")) {
-        nmpbes::SshAlgorithms exporter {dbConInfo};
+        nmes::SshAlgorithms exporter {dbConInfo};
         exporter.exportScan(writer);
       }
 

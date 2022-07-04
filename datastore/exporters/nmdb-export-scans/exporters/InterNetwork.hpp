@@ -24,16 +24,16 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef WRITER_CSV_HPP
-#define WRITER_CSV_HPP
+#ifndef EXPORT_SCAN_INTER_NETWORK_HPP
+#define EXPORT_SCAN_INTER_NETWORK_HPP
 
-#include "Writer.hpp"
+#include "ExportScan.hpp"
 
-namespace netmeld::playbook::export_scans {
+namespace netmeld::export_scans {
   // ==========================================================================
   // Primary object
   // ==========================================================================
-  class Csv : public Writer {
+  class InterNetwork : public ExportScan {
     // ======================================================================
     // Variables
     // ======================================================================
@@ -47,23 +47,19 @@ namespace netmeld::playbook::export_scans {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      Csv() = delete;
-      explicit Csv(bool);
+      InterNetwork() = delete;
+      explicit InterNetwork(const std::string&);
 
     // ======================================================================
     // Methods
     // ======================================================================
     private: // Methods which should be hidden from API users
-      void addRows(std::ostringstream&) const;
+      void exportTemplate(const auto&) const;
+      void exportFromDb(const auto&, const std::string&);
 
     protected: // Methods part of subclass API
-      std::string getExtension() const override;
-
     public: // Methods part of public API
-      std::string getIntraNetwork(const std::string&) const override;
-      std::string getInterNetwork(const std::string&) const override;
-      std::string getNessus() const override;
-      std::string getSshAlgorithms() const override;
+      void exportScan(const std::unique_ptr<Writer>&) override;
   };
 }
-#endif // WRITER_CSV_HPP
+#endif // EXPORT_SCAN_INTER_NETWORK_HPP

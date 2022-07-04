@@ -29,7 +29,7 @@
 
 #include "Writer.hpp"
 
-namespace netmeld::playbook::export_scans {
+namespace netmeld::export_scans {
   // ==========================================================================
   // Primary object
   // ==========================================================================
@@ -58,9 +58,10 @@ namespace netmeld::playbook::export_scans {
       std::string getExtension() const override;
 
     public: // Methods part of public API
-      std::string getIntraNetwork(const std::string&) const override;
       std::string getInterNetwork(const std::string&) const override;
+      std::string getIntraNetwork(const std::string&) const override;
       std::string getNessus() const override;
+      std::string getProwler() const override;
       std::string getSshAlgorithms() const override;
 
 
@@ -87,6 +88,13 @@ namespace netmeld::playbook::export_scans {
       void codeParagraphNessus(auto&,
           const auto&, const auto&, const auto&, const auto&
         ) const;
+
+      void codeSectionProwler(auto&, const auto&) const;
+      void codeSubsectionProwler(auto&,
+          const auto&, const auto&, const auto&, const auto&, const auto&,
+          const auto&, const auto&, const auto&
+        ) const;
+
 
       void codeTableSsh(auto&) const;
       void codeRowSsh(auto&,

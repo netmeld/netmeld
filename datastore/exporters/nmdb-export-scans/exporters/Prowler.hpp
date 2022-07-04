@@ -24,16 +24,16 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef EXPORT_SCAN_NESSUS_HPP
-#define EXPORT_SCAN_NESSUS_HPP
+#ifndef EXPORT_SCAN_PROWLER_HPP
+#define EXPORT_SCAN_PROWLER_HPP
 
 #include "ExportScan.hpp"
 
-namespace netmeld::playbook::export_scans {
+namespace netmeld::export_scans {
 // ============================================================================
 // Primary object
 // ============================================================================
-class Nessus : public ExportScan {
+class Prowler : public ExportScan {
   // ========================================================================
   // Variables
   // ========================================================================
@@ -47,8 +47,8 @@ class Nessus : public ExportScan {
   private: // Constructors which should be hidden from API users
   protected: // Constructors part of subclass API
   public: // Constructors part of public API
-    Nessus() = delete;
-    explicit Nessus(const std::string&);
+    Prowler() = delete;
+    explicit Prowler(const std::string&);
 
   // ========================================================================
   // Methods
@@ -62,4 +62,4 @@ class Nessus : public ExportScan {
     void exportScan(const std::unique_ptr<Writer>&)override;
 };
 }
-#endif // EXPORT_SCAN_NESSUS_HPP
+#endif // EXPORT_SCAN_PROWLER_HPP

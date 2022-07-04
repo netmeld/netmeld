@@ -24,53 +24,31 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "SshAlgorithms.hpp"
+#include "Nessus.hpp"
 
-#include <netmeld/core/utils/StringUtilities.hpp>
-
-namespace nmcu = netmeld::core::utils;
-
-namespace netmeld::playbook::export_scans {
+namespace netmeld::export_scans {
   // ========================================================================
   // Constructors
   // ========================================================================
-  SshAlgorithms::SshAlgorithms(const std::string& dbConnInfo) :
+  Nessus::Nessus(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
   {
     db.prepare(
-      "select_ssh_algorithms",
+      "select_nessus_plugins",
       R"(
       SELECT DISTINCT
-        ip_addr, ssh_algo_type, ssh_algo_name
-      FROM ssh_host_algorithms
-      ORDER BY 1,2,3
+        plugin_id, plugin_name, severity, description, solution
+      FROM nessus_results
+      ORDER BY severity desc, plugin_id asc
       )");
 
     db.prepare(
-      "select_ssh_servers",
+      "select_nessus_destinations",
       R"(
       SELECT DISTINCT ip_addr
-      FROM ssh_host_algorithms
+      FROM nessus_results
+      WHERE (plugin_id = $1)
       ORDER BY ip_addr
-      )");
-
-    db.prepare(
-      "select_ssh_algorithm_types",
-      R"(
-      SELECT DISTINCT ssh_algo_type
-      FROM ssh_host_algorithms
-      WHERE (ip_addr = ?)
-      ORDER BY ssh_algo_type
-      )");
-
-    db.prepare(
-      "select_ssh_algorithm_names",
-      R"(
-      SELECT DISTINCT ssh_algo_name
-      FROM ssh_host_algorithms
-      WHERE (ip_addr = ?)
-        AND (ssh_algo_type = ?)
-      ORDER BY ssh_algo_name
       )");
   }
 
@@ -78,18 +56,22 @@ namespace netmeld::playbook::export_scans {
   // Methods
   // ========================================================================
   void
-  SshAlgorithms::exportTemplate(const auto& writer) const
+  Nessus::exportTemplate(const auto& writer) const
   {
     std::vector<std::vector<std::string>> data {
-      { "IP", "HOSTNAME", "TYPE", "GOOD", good },
-      { "IP", "HOSTNAME", "TYPE", "NO_DETERMINATION", unk },
-      { "IP", "HOSTNAME", "TYPE", "BAD", bad },
-      { "IP_01", "HOSTNAME", "TYPE_01", "ALG_01", unk },
-      { "IP_02", "HOSTNAME", "TYPE_01", "ALG_01", unk },
-      { "IP_02", "HOSTNAME", "TYPE_02", "ALG_01", unk },
-      { "IP_02", "HOSTNAME", "TYPE_02", "ALG_02", unk },
-      { "IP_02", "HOSTNAME", "TYPE_03", "ALG_02", unk },
-      { "IP_03", "HOSTNAME", "TYPE_03", "ALG_02", unk },
+      { "ID_01", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME",
+      },
+      { "ID_02", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
+        "IP_03", "HOSTNAME", "IP_04", "HOSTNAME",
+      },
+      { "ID_03", "MODERATE", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
+      },
+      { "ID_04", "LOW", "PLUGIN_NAME", "DESCRIPTION",
+        "IP_01", "HOSTNAME",
+      },
     };
     for (const auto& entry : data) {
       writer->addRow(entry);
@@ -97,45 +79,46 @@ namespace netmeld::playbook::export_scans {
   }
 
   void
-  SshAlgorithms::exportFromDb(const auto& writer, const pqxx::result& records)
+  Nessus::exportFromDb(const auto& writer, const pqxx::result& plugins)
   {
     pqxx::read_transaction t {db};
 
-    for (const auto& record : records) {
-      std::string serverIp;
-      record.at("ip_addr").to(serverIp);
-      std::string algoType;
-      record.at("ssh_algo_type").to(algoType);
-      std::string algoName;
-      record.at("ssh_algo_name").to(algoName);
-
-      std::string hostname {getHostname(t, serverIp)};
-
-      std::string color {unk};
-      auto searchType {algorithms.find(nmcu::toLower(algoType))};
-      if (searchType != algorithms.end()) {
-        auto types {searchType->second};
-        auto searchName {types.find(algoName)};
-        if (searchName != types.end()) {
-          color = searchName->second;
-        }
-      }
+    for (const auto& plugin : plugins) {
+      std::string id;
+      plugin.at("plugin_id").to(id);
+      std::string name;
+      plugin.at("plugin_name").to(name);
+      std::string severity;
+      plugin.at("severity").to(severity);
+      std::string description;
+      plugin.at("description").to(description);
 
       std::vector<std::string> data
-        {serverIp, hostname, algoType, algoName, color};
+        {id, severity, name, description};
 
+      pqxx::result destinationRows
+        {t.exec_prepared("select_nessus_destinations", id)};
+
+      for (const auto& destinationRow : destinationRows) {
+        std::string ipAddr;
+        destinationRow.at("ip_addr").to(ipAddr);
+
+        std::string ipAddrName {getHostname(t, ipAddr)};
+
+        data.push_back(ipAddr);
+        data.push_back(ipAddrName);
+      }
       writer->addRow(data);
     }
-
     t.abort();
   }
 
   void
-  SshAlgorithms::exportScan(const std::unique_ptr<Writer>& writer)
+  Nessus::exportScan(const std::unique_ptr<Writer>& writer)
   {
     pqxx::read_transaction t {db};
     pqxx::result sourceRows
-      {t.exec_prepared("select_ssh_algorithms")};
+      {t.exec_prepared("select_nessus_plugins")};
     t.abort();
 
     if (0 == sourceRows.size()) {
@@ -144,9 +127,9 @@ namespace netmeld::playbook::export_scans {
       exportFromDb(writer, sourceRows);
     }
 
-    std::string filename {"observed-ssh-algorithms"};
+    std::string filename {"nessus-scan-results"};
 
-    writer->writeData(filename, writer->getSshAlgorithms());
+    writer->writeData(filename, writer->getNessus());
     writer->clearData();
   }
 }

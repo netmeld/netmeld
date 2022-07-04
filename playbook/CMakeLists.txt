@@ -32,7 +32,6 @@ foreach(ITEM
     cisco-type7-decode
     junos-type9-decode
     nmdb-playbook
-    nmdb-playbook-export-scans
     nmdb-playbook-insert-router
     nmdb-playbook-insert-source
     nmdb-playbook-nessus

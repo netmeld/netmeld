@@ -29,7 +29,7 @@
 
 #include "Csv.hpp"
 
-namespace netmeld::playbook::export_scans {
+namespace netmeld::export_scans {
   // ==========================================================================
   // Constructors
   // ==========================================================================
@@ -133,6 +133,52 @@ namespace netmeld::playbook::export_scans {
       }
       oss << '"';
       for (size_t i {4}; i < count;) {
+        oss << row[i];
+        i++;
+
+        if (!row[i].empty()) {
+          oss << " (" << row[i] << ")";
+        }
+        i++;
+
+        if (i < count) {
+          oss << ", ";
+        }
+      }
+      oss << '"';
+      oss << '\n';
+    }
+
+    return oss.str();
+  }
+
+  std::string
+  Csv::getProwler() const
+  {
+    std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
+
+    // add column headers
+    oss << R"("Service",)"
+        << R"("Severity",)"
+        << R"("Control ID",)"
+        << R"("Level",)"
+        << R"("Control",)"
+        << R"("Risk",)"
+        << R"("Remediation",)"
+        << R"("Documentation Link",)"
+        << R"("Affected Resources")"
+        << '\n'
+        ;
+
+    // add table rows
+    for (const auto& row : rows) {
+      size_t count {row.size()};
+      for (size_t i {0}; i < 8; i++) {
+        auto ccol {replaceAll(row[i], "\"", "\\\"")};
+        oss << '"' << ccol << '"' << ',';
+      }
+      oss << '"';
+      for (size_t i {8}; i < count;) {
         oss << row[i];
         i++;
 

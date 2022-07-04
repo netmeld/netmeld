@@ -26,7 +26,7 @@
 
 #include "IntraNetwork.hpp"
 
-namespace netmeld::playbook::export_scans {
+namespace netmeld::export_scans {
   // ========================================================================
   // Constructors
   // ========================================================================

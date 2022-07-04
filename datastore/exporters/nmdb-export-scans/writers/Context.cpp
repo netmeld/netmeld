@@ -29,7 +29,7 @@
 
 #include "Context.hpp"
 
-namespace netmeld::playbook::export_scans {
+namespace netmeld::export_scans {
   // ==========================================================================
   // Constructors
   // ==========================================================================
@@ -198,6 +198,76 @@ namespace netmeld::playbook::export_scans {
   }
 
   std::string
+  Context::getProwler() const
+  {
+    std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
+
+    codeSetup(oss);
+
+    // ConTeXt special characters
+    std::vector<std::pair<std::regex, std::string>> patterns {
+      // backslash replace
+      {std::regex(R"(\\)"), R"({\backslash})"},
+      // escape special characters
+      {std::regex(R"(#|_|\$|\|)"), R"(\$&)"},
+      // greater than
+      {std::regex(R"(>)"), R"(&gt;)"},
+      // less than
+      {std::regex(R"(>)"), R"(&lt;)"},
+      // new paragraph
+      {std::regex(R"((\r\n|\r|\n){2})"),
+        "\n\n\\PortionMark{TODO--Caption Classification}{}\n"},
+      //{R"()", R"()"},
+    };
+
+    std::string curService;
+    for (const auto& row : rows) {
+      std::string service     {row[0]};
+      std::string severity    {row[1]};
+      std::string controlId   {row[2]};
+      std::string level       {row[3]};
+      std::string control     {row[4]};
+      std::string risk        {row[5]};
+      std::string remediation {row[6]};
+      std::string docLink     {row[7]};
+
+      std::vector<std::string> rest(row.begin()+8, row.end());
+      size_t count {rest.size()};
+
+      if (curService != service) {
+        curService = service;
+        codeSectionProwler(oss, curService);
+      }
+
+      // replace special characters
+      for (const auto& p : patterns) {
+        docLink = std::regex_replace(docLink, p.first, p.second);
+      }
+    
+      codeSubsectionProwler(oss,
+          severity, controlId, level, control, risk, remediation, docLink, count
+        );
+
+      for (size_t i {0}; i < count;) {
+        std::string resource {rest[i++]}; // intentional post increment
+
+        //oss << R"(  \type{)" << resource << '}';
+        oss << R"(  )" << resource;
+
+        if (i < count) {
+          oss << ",\n";
+        } else {
+          oss << ".\n\n";
+        }
+      }
+    }
+
+    codeTeardown(oss);
+
+    return oss.str();
+  }
+
+  std::string
   Context::getSshAlgorithms() const
   {
     std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
@@ -255,6 +325,7 @@ namespace netmeld::playbook::export_scans {
     return oss.str();
   }
 
+
   // ==========================================================================
   // ConTeXt formatting code
   // NOTE: keep raw string literal indentation (or lack of) for
@@ -280,6 +351,7 @@ namespace netmeld::playbook::export_scans {
 }
 \usetypescript[\DefaultFontName]
 \setupbodyfont[\DefaultFontName, \DefaultFontSize]
+\setupinteraction[state=start, color=blue, style=\tf]
 
 % start of document
 \starttext
@@ -536,6 +608,57 @@ namespace netmeld::playbook::export_scans {
 {\bf Affected systems}:
 )";
   }
+
+  // ------------------------------------------------------------
+  // Prowler
+  // ------------------------------------------------------------
+  void
+  Context::codeSectionProwler(auto& oss,
+      const auto& service
+    ) const
+  {
+    oss << R"(
+% service section
+\section[section:prowler-service-)" << service << R"(]
+{
+  \PortionMark{TODO--Caption Classification}{}
+  AWS Service: )" << service << R"(
+})";
+  }
+
+  void
+  Context::codeSubsectionProwler(auto& oss,
+      const auto& severity, const auto& controlId, const auto& level,
+      const auto& control, const auto& risk, const auto& remediation,
+      const auto& docLink, const auto& count
+    ) const
+  {
+    oss << R"(
+\subsection[section:prowler-check-)" << controlId << R"(]
+{
+  \PortionMark{TODO--Caption Classification}{}
+  Severity: )" << severity << R"(;
+  Control ID: )" << controlId << R"(;
+  Level: )" << level << R"(
+}
+
+\PortionMark{TODO--Caption Classification}{}
+Check: )" << control << R"(
+
+\PortionMark{TODO--Caption Classification}{}
+Risk: )" << risk << R"(
+
+\PortionMark{TODO--Caption Classification}{}
+Remediation: )" << remediation << R"(
+
+\PortionMark{TODO--Caption Classification}{}
+\goto{)" << docLink << R"(}[url()" << docLink << R"()]
+
+\PortionMark{TODO--Caption Classification}{}
+{\bf )" << count << R"( affected resources}:
+)";
+  }
+
 
   // ------------------------------------------------------------
   // SSH

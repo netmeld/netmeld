@@ -29,6 +29,7 @@ add_executable(${TGT_TOOL}
     exporters/InterNetwork.cpp
     exporters/IntraNetwork.cpp
     exporters/Nessus.cpp
+    exporters/Prowler.cpp
     exporters/SshAlgorithms.cpp
     writers/Writer.cpp
     writers/Context.cpp

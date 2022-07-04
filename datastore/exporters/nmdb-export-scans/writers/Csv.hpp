@@ -24,42 +24,47 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef EXPORT_SCAN_INTRA_NETWORK_HPP
-#define EXPORT_SCAN_INTRA_NETWORK_HPP
+#ifndef WRITER_CSV_HPP
+#define WRITER_CSV_HPP
 
-#include "ExportScan.hpp"
+#include "Writer.hpp"
 
-namespace netmeld::playbook::export_scans {
-  // ============================================================================
+namespace netmeld::export_scans {
+  // ==========================================================================
   // Primary object
-  // ============================================================================
-  class IntraNetwork : public ExportScan {
-    // ========================================================================
+  // ==========================================================================
+  class Csv : public Writer {
+    // ======================================================================
     // Variables
-    // ========================================================================
+    // ======================================================================
     private: // Variables should generally be private
     protected: // Variables intended for internal/subclass API
     public: // Variables should rarely appear at this scope
 
-    // ========================================================================
+    // ======================================================================
     // Constructors
-    // ========================================================================
+    // ======================================================================
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      IntraNetwork() = delete;
-      explicit IntraNetwork(const std::string&);
+      Csv() = delete;
+      explicit Csv(bool);
 
-    // ========================================================================
+    // ======================================================================
     // Methods
-    // ========================================================================
+    // ======================================================================
     private: // Methods which should be hidden from API users
-      void exportTemplate(const auto&) const;
-      void exportFromDb(const auto&, const std::string&);
+      void addRows(std::ostringstream&) const;
 
     protected: // Methods part of subclass API
+      std::string getExtension() const override;
+
     public: // Methods part of public API
-      void exportScan(const std::unique_ptr<Writer>&) override;
+      std::string getIntraNetwork(const std::string&) const override;
+      std::string getInterNetwork(const std::string&) const override;
+      std::string getNessus() const override;
+      std::string getProwler() const override;
+      std::string getSshAlgorithms() const override;
   };
 }
-#endif // EXPORT_SCAN_INTRA_NETWORK_HPP
+#endif // WRITER_CSV_HPP

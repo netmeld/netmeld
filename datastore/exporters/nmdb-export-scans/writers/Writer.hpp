@@ -75,6 +75,7 @@ class Writer {
     virtual std::string getIntraNetwork(const std::string&) const = 0;
     virtual std::string getInterNetwork(const std::string&) const = 0;
     virtual std::string getNessus() const = 0;
+    virtual std::string getProwler() const = 0;
     virtual std::string getSshAlgorithms() const = 0;
 };
 

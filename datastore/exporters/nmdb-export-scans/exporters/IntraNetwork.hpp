@@ -24,28 +24,21 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef EXPORT_SCAN_HPP
-#define EXPORT_SCAN_HPP
+#ifndef EXPORT_SCAN_INTRA_NETWORK_HPP
+#define EXPORT_SCAN_INTRA_NETWORK_HPP
 
-#include <pqxx/pqxx>
+#include "ExportScan.hpp"
 
-#include <netmeld/core/utils/LoggerSingleton.hpp>
-
-#include "../writers/Writer.hpp"
-
-namespace netmeld::playbook::export_scans {
-
-  // ==========================================================================
+namespace netmeld::export_scans {
+  // ============================================================================
   // Primary object
-  // ==========================================================================
-  class ExportScan {
+  // ============================================================================
+  class IntraNetwork : public ExportScan {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables should generally be private
     protected: // Variables intended for internal/subclass API
-      pqxx::connection db;
-
     public: // Variables should rarely appear at this scope
 
     // ========================================================================
@@ -54,22 +47,19 @@ namespace netmeld::playbook::export_scans {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      ExportScan() = delete;
-      ExportScan(const std::string&);
-
-      virtual ~ExportScan() = default;
+      IntraNetwork() = delete;
+      explicit IntraNetwork(const std::string&);
 
     // ========================================================================
     // Methods
     // ========================================================================
     private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-      std::string getHostname(
-          pqxx::read_transaction&, const std::string&
-        ) const;
+      void exportTemplate(const auto&) const;
+      void exportFromDb(const auto&, const std::string&);
 
+    protected: // Methods part of subclass API
     public: // Methods part of public API
-      virtual void exportScan(const std::unique_ptr<Writer>&) = 0;
+      void exportScan(const std::unique_ptr<Writer>&) override;
   };
 }
-#endif // EXPORT_SCAN_HPP
+#endif // EXPORT_SCAN_INTRA_NETWORK_HPP
