@@ -73,7 +73,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       this->opts.removeRequiredOption("device-id");
       this->opts.addAdvancedOption("device-id", std::make_tuple(
             "device-id",
-            po::value<std::string>()->required(),
+            po::value<std::string>(),
             "(Not used) Name of device.")
           );
 
