@@ -76,6 +76,10 @@ namespace netmeld::datastore::objects {
       return; // Always short circuit if invalid object
     }
 
+    // NOTE: The following are the suspected minimum for unique:
+    //         accountNumber, timestamp, region, level, controlId, service,
+    //         resourceId
+    //       However, resourceId can be NULL so problematic for the DB
     t.exec_prepared("insert_raw_prowler_check",
           toolRunId
         , accountNumber
