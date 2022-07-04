@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -30,9 +30,11 @@
 #include <set>
 #include <nlohmann/json.hpp>
 
+#include <netmeld/core/objects/Time.hpp>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 
 using json = nlohmann::json;
+namespace nmco = netmeld::core::objects;
 
 namespace netmeld::datastore::objects {
 
@@ -43,7 +45,7 @@ namespace netmeld::datastore::objects {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       std::string accountNumber;
-      std::string timestamp;
+      nmco::Time  timestamp;
       std::string region;
       std::string control;
       std::string severity;
@@ -65,7 +67,7 @@ namespace netmeld::datastore::objects {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       ProwlerData() = default;
-      ProwlerData(const json);
+      ProwlerData(const json&);
 
     // =========================================================================
     // Methods

@@ -1,17 +1,28 @@
 DESCRIPTION
 ===========
 
-Description of what the tool parses.
+Parse and import Prowler's JSON output.  You must run Prowler with the `-M json`
+output format option in order to produce the correct JSON format (i.e., JSON
+lines).
 
-Various information about the tool.  Include any special considerations when
-using the tool.  Potentially explain option requirements more in depth.
+As the data file can contain information about multiple hosts, this tool will
+not honor usage of the `--device-id` option.  However, the tool still allows
+it to be passed, but ignored, to help facilitate automation.
 
 EXAMPLES
 ========
+
+Process the target data contained in the file `checks.json`.
 ```
-import-tool --device-id server tool-data.txt
-command |
-import-tool --pipe --device-id server tool-data.txt
+nmdb-import-prowler checks.json
 ```
 
-See Also: `related-tool (8)`
+Assuming `...` is some command chain which retrieves the target data from a
+remote host and displays the results locally, then the following would process
+it and save the data to a file called `result.xml` in the current working
+directory.
+```
+... | nmdb-import-nmap result.xml --pipe
+```
+
+See Also: `https://github.com/prowler-cloud/prowler`

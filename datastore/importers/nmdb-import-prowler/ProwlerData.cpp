@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,11 +31,11 @@ namespace netmeld::datastore::objects {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  ProwlerData::ProwlerData(const json jline)
+  ProwlerData::ProwlerData(const json& jline)
   {
     /*{"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""}*/
     accountNumber     = jline["Account Number"];
-    timestamp         = jline["Timestamp"];
+    timestamp.readFormatted(jline["Timestamp"], "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
     region            = jline["Region"];
     control           = jline["Control"];
     severity          = jline["Severity"];
@@ -56,7 +56,14 @@ namespace netmeld::datastore::objects {
   bool
   ProwlerData::isValid() const
   {
-    return !control.empty();
+    return !(
+           accountNumber.empty()
+        || timestamp.isNull()
+        || region.empty()
+        || level.empty()
+        || controlId.empty()
+        || service.empty()
+      );
   }
 
   void
@@ -70,20 +77,41 @@ namespace netmeld::datastore::objects {
     }
 
     t.exec_prepared("insert_raw_prowler_check",
-      toolRunId,
-      accountNumber,
-      timestamp,
-      region,
-      control,
-      severity,
-      status,
-      level,
-      controlId,
-      service,
-      risk,
-      remediation,
-      documentationLink,
-      resourceId);
+          toolRunId
+        , accountNumber
+        , timestamp
+        , region
+        , level
+        , controlId
+        , service
+      );
+
+    t.exec_prepared("insert_raw_prowler_check_detail",
+          toolRunId
+        , accountNumber
+        , timestamp
+        , region
+        , control
+        , severity
+        , status
+        , level
+        , controlId
+        , service
+        , risk
+        , remediation
+        , documentationLink
+      );
+
+    t.exec_prepared("insert_raw_prowler_check_resource",
+          toolRunId
+        , accountNumber
+        , timestamp
+        , region
+        , level
+        , controlId
+        , service
+        , resourceId
+      );
   }
 
   std::string
