@@ -84,32 +84,12 @@ namespace netmeld::datastore::objects {
         , level
         , controlId
         , service
-      );
-
-    t.exec_prepared("insert_raw_prowler_check_detail",
-          toolRunId
-        , accountNumber
-        , timestamp
-        , region
-        , control
-        , severity
         , status
-        , level
-        , controlId
-        , service
+        , severity
+        , control
         , risk
         , remediation
         , documentationLink
-      );
-
-    t.exec_prepared("insert_raw_prowler_check_resource",
-          toolRunId
-        , accountNumber
-        , timestamp
-        , region
-        , level
-        , controlId
-        , service
         , resourceId
       );
   }

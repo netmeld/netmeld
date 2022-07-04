@@ -941,36 +941,15 @@ namespace netmeld::datastore::utils {
     ("insert_raw_prowler_check", R"(
       INSERT INTO raw_prowler_checks
         (tool_run_id, account_number, timestamp, region,
-         level, control_id, service)
+         level, control_id, service,
+         status, severity, control, risk, remediation, documentation_link,
+         resource_id
+         )
       VALUES
         ($1, $2, $3, $4,
-         $5, $6, $7)
-      ON CONFLICT
-      DO NOTHING
-    )");
-
-    db.prepare
-    ("insert_raw_prowler_check_detail", R"(
-      INSERT INTO raw_prowler_check_details
-        (tool_run_id, account_number, timestamp, region,
-         control, severity, status, level, control_id, service,
-         risk, remediation, documentation_link)
-      VALUES
-        ($1, $2, $3, $4,
-         $5, $6, $7, $8, $9, $10,
-         $11, $12, $13)
-      ON CONFLICT
-      DO NOTHING
-    )");
-
-    db.prepare
-    ("insert_raw_prowler_check_resource", R"(
-      INSERT INTO raw_prowler_check_resources
-        (tool_run_id, account_number, timestamp, region,
-         level, control_id, service, resource_id)
-      VALUES
-        ($1, $2, $3, $4,
-         $5, $6, $7, $8)
+         $5, $6, $7,
+         $8, $9, $10, $11, $12, $13,
+         $14)
       ON CONFLICT
       DO NOTHING
     )");

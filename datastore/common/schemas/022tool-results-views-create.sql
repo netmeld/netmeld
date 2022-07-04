@@ -648,25 +648,25 @@ LEFT OUTER JOIN tool_runs AS tr
 
 CREATE VIEW prowler_checks AS
 SELECT DISTINCT
-    rpc.account_number          AS account_number
-  , rpc.timestamp               AS timestamp
-  , rpc.region                  AS region
-  , rpc.level                   AS level
-  , rpc.control_id              AS control_id
-  , rpc.service                 AS service
-  , rpcd.status                 AS status
-  , rpcd.severity               AS severity
-  , rpcd.control                AS control
-  , rpcd.risk                   AS risk
-  , rpcd.remediation            AS remediation
-  , rpcd.documentation_link     AS documentation_link
-  , rpcr.resource_id            AS resource_id
+    account_number              AS account_number
+  , timestamp                   AS timestamp
+  , region                      AS region
+  , level                       AS level
+  , control_id                  AS control_id
+  , service                     AS service
+  , status                      AS status
+  , severity                    AS severity
+  , control                     AS control
+  , risk                        AS risk
+  , remediation                 AS remediation
+  , documentation_link          AS documentation_link
+  , resource_id                 AS resource_id
 FROM raw_prowler_checks AS rpc
-NATURAL INNER JOIN raw_prowler_check_details AS rpcd
-NATURAL INNER JOIN raw_prowler_check_resources AS rpcr
 ORDER BY account_number, region, level, control_id, service,
          status, severity, resource_id
 ;
+
+
 
 -- ----------------------------------------------------------------------
 
