@@ -28,6 +28,7 @@ set(MODULE_VERSION "2.0")
 
 foreach(ITEM
     #import-tool-template
+    nmdb-import-aws-ec2-describe-instances
     nmdb-import-brocade
     nmdb-import-brocade-show-ip-route
     nmdb-import-cisco
