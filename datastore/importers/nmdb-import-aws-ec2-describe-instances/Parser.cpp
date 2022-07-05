@@ -37,7 +37,7 @@ Parser::fromJson(const json& _data)
 {
   try {
     for (const auto& reservation : _data.at("Reservations")) {
-      listInstances(reservation);
+      processInstances(reservation);
     }
   } catch (json::out_of_range& ex) {
     LOG_ERROR << "Parse error " << ex.what() << std::endl;
@@ -48,7 +48,7 @@ Parser::fromJson(const json& _data)
 // TODO https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html
 
 void
-Parser::listInstances(const json& _reservation)
+Parser::processInstances(const json& _reservation)
 {
   /* TODO
     "Architecture"
@@ -80,12 +80,12 @@ Parser::listInstances(const json& _reservation)
 
     d.devices.emplace_back(device);
 
-    listInterfaces(instance, deviceId);
+    processInterfaces(instance, deviceId);
   }
 }
 
 void
-Parser::listInterfaces(const json& _instance, const std::string& _deviceId)
+Parser::processInterfaces(const json& _instance, const std::string& _deviceId)
 {
   /* TODO
     "InterfaceType"
@@ -109,18 +109,18 @@ Parser::listInterfaces(const json& _instance, const std::string& _deviceId)
     nmdo::MacAddress macAddr;
     macAddr.setMac(interface.at("MacAddress").get<std::string>());
     iface.setMacAddress(macAddr);
-    listIps(interface, iface);
+    processIps(interface, iface);
 
     ifaces.emplace_back(iface);
 
     // TODO
-    //listSecurityGroups(interface);
+    //processSecurityGroups(interface);
   }
   d.interfaces.emplace(_deviceId, ifaces);
 }
 
 void
-Parser::listSecurityGroups(const json& _interface)
+Parser::processSecurityGroups(const json& _interface)
 {
   /* TODO
     "GroupName"
@@ -133,7 +133,7 @@ Parser::listSecurityGroups(const json& _interface)
 }
 
 void
-Parser::listIps(const json& _interface, nmdo::Interface& _iface)
+Parser::processIps(const json& _interface, nmdo::Interface& _iface)
 {
   // Handle IPv6 addresses
   if (_interface.at("Ipv6Addresses").size() > 0) {

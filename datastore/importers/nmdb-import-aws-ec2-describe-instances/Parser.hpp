@@ -74,10 +74,10 @@ class Parser
   // ===========================================================================
   private:
   protected:
-    void listInstances(const json&);
-    void listInterfaces(const json&, const std::string&);
-    void listSecurityGroups(const json&);
-    void listIps(const json&, nmdo::Interface&);
+    void processInstances(const json&);
+    void processInterfaces(const json&, const std::string&);
+    void processSecurityGroups(const json&);
+    void processIps(const json&, nmdo::Interface&);
 
   public:
     void fromJson(const json&);
