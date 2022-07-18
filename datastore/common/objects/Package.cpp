@@ -25,17 +25,20 @@
 // ======
 
 #include <netmeld/datastore/objects/Package.hpp>
-// #include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/utils/StringUtilities.hpp>
+
+namespace nmcu = netmeld::core::utils;
+
 
 namespace netmeld::datastore::objects 
 {
     
     Package::Package()
     {}
-    //string constructor
-    // Package::Package(const std::string& _status) :
-    //     packageStatus(_status)
-    // {}
+    // string constructor
+    Package::Package(const std::string& _status) :
+        packageStatus(nmcu::toLower(_status))
+    {}
 
     void
     Package::setStatus(const std::string& _status)
@@ -65,27 +68,27 @@ namespace netmeld::datastore::objects
 
     //getters
     std::string
-    Package::getStatus()
+    Package::getStatus() const
     {
         return packageStatus;
     }
     std::string
-    Package::getName()
+    Package::getName() const
     {
         return packageName;
     }
     std::string
-    Package::getVersion() 
+    Package::getVersion() const
     {
         return packageVersion;
     }
     std::string
-    Package::getArch() 
+    Package::getArch() const 
     {
         return packageArch;
     }
     std::string
-    Package::getDesc() 
+    Package::getDesc() const
     {
         return packageDesc;
     }

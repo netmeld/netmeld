@@ -35,6 +35,7 @@ foreach(ITEM
     IpNetwork
     MacAddress
     OperatingSystem
+    Package
     Port
     PortRange
     Route

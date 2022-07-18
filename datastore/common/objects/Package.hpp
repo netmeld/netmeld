@@ -37,12 +37,12 @@ namespace netmeld::datastore::objects{
     // Variables
     // =========================================================================
     private: 
+    protected:
         std::string packageStatus;
         std::string packageName;
         std::string packageVersion;
         std::string packageArch;
         std::string packageDesc;
-    protected:
     public:
     // =========================================================================
     // Constructors
@@ -67,12 +67,12 @@ namespace netmeld::datastore::objects{
         void setDesc(const std::string&);
 
         //Getters
-        std::string getStatus();
-        std::string getName();
-        std::string getVersion();
-        std::string getArch();
-        std::string getDesc();
-        virtual std::string toDebugString() const;
+        std::string getStatus() const;
+        std::string getName() const;
+        std::string getVersion() const;
+        std::string getArch() const;
+        std::string getDesc() const;
+        std::string toDebugString() const override;
     
     };
 }

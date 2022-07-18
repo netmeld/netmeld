@@ -45,12 +45,9 @@
 */
 
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
-// #include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
 #include "Parser.hpp"
 
-namespace nmdo = netmeld::datastore::objects;
-namespace nmdp = netmeld::datastore::parsers;
 namespace nmdt = netmeld::datastore::tools;
 
 
@@ -119,14 +116,14 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     {
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
-
+      
       for (auto& results : this->tResults) {
         // muck
 
         // save
         LOG_DEBUG << "Iterating over Packages";
         LOG_DEBUG << "Iterating over PackageInfo";
-        for(auto& [_, result] : results.packages){
+        for(auto& result : results.packages){
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }

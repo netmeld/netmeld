@@ -45,11 +45,16 @@
 // =============================================================================
 // Parser logic
 // =============================================================================
-Parser::Parser() : Parser::base_type(start)
+Parser::Parser() : Parser::base_type(prestart)
 {
+  prestart = start [(qi::_val = pnx::bind(&Parser::getData, this))];
+
   start =
-    headers > *(packageLine | ignoredLine)
-      [(qi::_val = pnx::bind(&Parser::getData, this))]
+    headers > 
+    *(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
+      | ignoredLine
+      | qi::eol
+    ) 
     ;
   
 headers = 
@@ -61,6 +66,7 @@ headers =
     > qi::lit("+++") > +token > -qi::eol
 ;
 
+//rpm set of states
 //keep going down the file till eof
 // ii packageName version arch description
 //parse other statuses in dpkg instead of 'ii' there is 3 characters
@@ -68,36 +74,34 @@ headers =
   // https://linuxprograms.wordpress.com/2010/05/11/status-dpkg-list/
 
   packageLine = 
-    packageStatus 
-    > packageName
-    > version 
-    > architecture 
-    > desc 
+    packageStatus [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
+    > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
+    > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
+    > architecture [(pnx::bind(&nmdo::Package::setArch, &qi::_val, qi::_1))]
+    > desc [(pnx::bind(&nmdo::Package::setDesc, &qi::_val, qi::_1))]
     > qi::eol
     ;
 
   packageStatus = 
-    +qi::ascii::graph [(pnx::bind(&Parser::addPackage, this, qi::_1))]
+    // +qi::ascii::graph 
+    // if status is anything except ii then add observation
+    *(+qi::lit("ii") 
+    | (+qi::ascii::graph)) 
   ;
 
   packageName = 
     +qi::ascii::graph
-      // [std::cout << "," << qi::_1 << "," << std::endl]
-      // [(pnx::bind(&Parser::addPackage, this)) = qi::_1]
     ;
   version = 
     +qi::ascii::graph
-      // [(pnx::bind(&Parser::setPackageVersion, this)) = qi::_1]
   ;
 
   architecture = 
     +qi::ascii::graph
-      // [(pnx::bind(&Parser::setPackageArch, this)) = qi::_1]
   ;
 
   desc = 
     +qi::ascii::print
-      // [(pnx::bind(&Parser::setPackageDesc, this)) = qi::_1]
   ;
 
   //soaker 
@@ -113,7 +117,6 @@ headers =
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
       (headers)
-      (packages)
       (packageStatus)
       (packageName)
       (packageLine)
@@ -127,53 +130,27 @@ headers =
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-void 
-Parser::addPackage(const std::string& _status)
-{
-
-  //construct a pack object
-  nmdo::Package package;
-  package.setStatus(_status);
-  curpackagename = package.getName();
-
-  //put it in our data map
-  data.packages[curpackagename] = package;
-}
-// void 
-// setPackageName(const std::string&);
-
 void
-Parser::setPackageStatus(const std::string& _status)
+Parser::addPackage(const nmdo::Package& packg)
 {
-  auto& package {data.packages[curpackagename]};
-  package.setStatus(_status);
+  data.packages.push_back(packg);
 }
-
-void 
-Parser::setPackageVersion(const std::string& _version)
+void
+Parser::addObservation(const std::vector<std::string>& observations,
+                       const nmdo::Package& package)
 {
-  auto& package {data.packages[curpackagename]};
-  package.setVersion(_version);
-}
-void 
-Parser::setPackageArch(const std::string& _arch)
-{
-  auto& package {data.packages[curpackagename]};
-  package.setArch(_arch);
-}
-void 
-Parser::setPackageDesc(const std::string& _desc)
-{
-  auto& package {data.packages[curpackagename]};
-  package.setDesc(_desc);
+  std::ostringstream oss;
+  oss << "Irregular package status " << package.getStatus() << ":";
+  for (auto& observation : observations) {
+    oss << " " << observation;
+  }
+  data.observations.addNotable(oss.str());
 }
 
 Result
 Parser::getData()
 {
   Result r;
-  std::cout << "====================";
   r.push_back(data);
-  // std::cout << data["acl"].toDebugString();
   return r;
 }

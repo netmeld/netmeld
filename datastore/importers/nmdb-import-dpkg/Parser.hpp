@@ -24,85 +24,59 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - If using a custom Parser
-     - Data ordering is different as the focus is the parsing logic, not rule
-       instantiation
-     - It occasionally is more reasonable to interact and place data with an
-       intermediary object
-       - The code can be collocated or a separate file, depending on complexity
-*/
-
 #ifndef PARSER_HPP
-#define PARSER_HPP //idk what this is
+#define PARSER_HPP
 
-#include "Parser.hpp"
-
-// #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 #include <netmeld/datastore/objects/Package.hpp>
-#include <map>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
-namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
+namespace nmdo = netmeld::datastore::objects;
 
 // =============================================================================
 // Data containers
 // =============================================================================
-// typedef nmdo::AbstractDatastoreObject  Data;
-
-// A struct of a map that contains packages and the key is the packagename
-struct Data { 
-  std::map<std::string, nmdo::Package> packages;
-  // nmdo::ToolObservations      observations;
+struct Data
+{
+  std::vector<nmdo::Package>  packages;
+  nmdo::ToolObservations        observations;
 };
-typedef std::vector<Data>    Result;
+typedef std::vector<Data> Result;
 
 
 // =============================================================================
 // Parser definition
 // =============================================================================
-class Parser :
+class Parser:
   public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
-  
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables are always private
+  private:
+    // Supporting data structures
     Data data;
 
-    // variables for current package
-
-  // Rules
   protected:
-    std::string curpackagename;
-    std::string curversion;
-    std::string curarch;
-    std::string curdescription;
-
+    // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      prestart;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       start;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-    config;
     // blank skipper without eol
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      headers, packageLine, ignoredLine;
+      headers, ignoredLine;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-    packages;
+    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
+      packageLine;
+
     //iterator with string skipper
 
     // skipp white space iterator
-    qi::rule<nmdp::IstreamIter>
+    qi::rule<nmdp::IstreamIter, std::string()>
       packageStatus,
       packageName,
       version,
@@ -110,7 +84,7 @@ class Parser :
       desc,
       token
     ;
-      // bring in already made parsers (ie version parser)
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -121,16 +95,8 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void addPackage(const std::string&);
     void addObservation(const std::vector<std::string>&, const nmdo::Package&);
-    void setPackageStatus(const std::string&);
-    void setPackageName(const std::string&);
-    void setPackageVersion(const std::string&);
-    void setPackageArch(const std::string&);
-    void setPackageDesc(const std::string&);
-
-  protected:
-  public:
-    Result getData(); 
+    void addPackage(const nmdo::Package&);
+    Result getData();
 };
 #endif // PARSER_HPP
