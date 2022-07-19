@@ -85,8 +85,7 @@ headers =
   packageStatus = 
     // +qi::ascii::graph 
     // if status is anything except ii then add observation
-    *(+qi::lit("ii") 
-    | (+qi::ascii::graph)) 
+    +qi::ascii::graph
   ;
 
   packageName = 

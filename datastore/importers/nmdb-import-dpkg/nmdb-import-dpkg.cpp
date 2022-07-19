@@ -96,19 +96,19 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // ===========================================================================
   private: // Methods part of internal API
     // Overriden from AbstractImportTool
-    void
-    addToolOptions() override
-    {
-      this->opts.removeRequiredOption("device-id");
-      // this->opts.addRequiredOption("tool-option", std::make_tuple(
-      //       "tool-option",
-      //       po::value<std::string>()->required(),
-      //       "Some tool option")
-      //     );
+    // void
+    // addToolOptions() override
+    // {
+    //   this->opts.removeRequiredOption("device-id");
+    //   // this->opts.addRequiredOption("tool-option", std::make_tuple(
+    //   //       "tool-option",
+    //   //       po::value<std::string>()->required(),
+    //   //       "Some tool option")
+    //   //     );
 
-      // this->opts.removeOptionalOption("pipe");
-      // this->opts.removeAdvancedOption("tool-run-metadata");
-    }
+    //   // this->opts.removeOptionalOption("pipe");
+    //   // this->opts.removeAdvancedOption("tool-run-metadata");
+    // }
 
     // Overriden from AbstractImportTool
     void
@@ -118,16 +118,14 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
       
       for (auto& results : this->tResults) {
-        // muck
-
-        // save
         LOG_DEBUG << "Iterating over Packages";
-        LOG_DEBUG << "Iterating over PackageInfo";
         for(auto& result : results.packages){
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
-        // link
+        LOG_DEBUG << "Iterating over Observations\n";
+        results.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.observations.toDebugString() << "\n";
       }
     }
 

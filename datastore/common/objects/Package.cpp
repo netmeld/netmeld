@@ -93,6 +93,24 @@ namespace netmeld::datastore::objects
         return packageDesc;
     }
 
+    //toolOverrides
+    bool 
+    Package::isValid() const
+    {
+        return !packageName.empty() && !packageVersion.empty();
+    }
+
+    void 
+    Package::save(pqxx::transaction_base& t, const nmco::Uuid& toolRunId, const std::string& deviceId)
+    {
+        if(!isValid() && !deviceId.empty()){
+            LOG_DEBUG << "Package object is not saving: " << toDebugString()
+                << std::endl;
+        return;
+        }
+        
+    }
+
     //to string
     std::string
     Package::toDebugString() const
