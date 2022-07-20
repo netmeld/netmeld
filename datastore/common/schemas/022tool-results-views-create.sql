@@ -354,7 +354,17 @@ ORDER BY origin, last_hop, hop_count
 ;
 
 -- ----------------------------------------------------------------------
+CREATE VIEW packages AS
+SELECT DISTINCT
+    package_status               AS package_status,
+    package_name                 AS package_name,
+    package_version              AS package_version,
+    package_arch                 AS package_arch,
+    package_desc                 AS package_desc
+FROM raw_packages
+;
 
+-- ----------------------------------------------------------------------
 CREATE VIEW ports AS
 SELECT DISTINCT
     ip_addr                     AS ip_addr,

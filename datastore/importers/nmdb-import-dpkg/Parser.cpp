@@ -82,15 +82,6 @@ headers =
     > qi::eol
     ;
 
-    //   packageLine = 
-    // packageStatus [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
-    // > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
-    // > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
-    // > architecture [(pnx::bind(&nmdo::Package::setArch, &qi::_val, qi::_1))]
-    // > desc [(pnx::bind(&nmdo::Package::setDesc, &qi::_val, qi::_1))]
-    // > qi::eol
-    // ;
-
   packageStatus = 
     // +qi::ascii::graph 
     // if status is anything except ii then add observation

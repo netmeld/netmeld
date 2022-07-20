@@ -360,6 +360,46 @@ ON raw_ip_traceroutes(dst_ip_addr);
 CREATE INDEX raw_ip_traceroutes_idx_views
 ON raw_ip_traceroutes(hop_count, next_hop_ip_addr, dst_ip_addr);
 
+-- ----------------------------------------------------------------------
+
+CREATE TABLE raw_packages (
+    tool_run_id                  UUID            NOT NULL,
+    package_status               TEXT            NOT NULL,
+    package_name                 TEXT            NOT NULL,
+    package_version              TEXT            NOT NULL,
+    package_arch                 TEXT            NOT NULL,
+    package_desc                 TEXT            NULL,
+    PRIMARY KEY (tool_run_id, package_status, package_name, package_arch),
+    FOREIGN KEY (tool_run_id) -- maybe need to add link to device?
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- Partial indexes
+CREATE INDEX raw_packages_idx_tool_run_id
+ON raw_packages(tool_run_id);
+
+CREATE INDEX raw_packages_idx_package_status
+ON raw_packages(package_status);
+
+CREATE INDEX raw_packages_idx_package_name
+ON raw_packages(package_name);
+
+CREATE INDEX raw_packages_idx_package_version
+ON raw_packages(package_version);
+
+CREATE INDEX raw_packages_idx_package_arch
+ON raw_packages(package_arch);
+
+CREATE INDEX raw_packages_idx_package_desc
+ON raw_packages(package_desc);
+
+-- Index the primary key without tool_run_id (if not already indexed).
+-- Helps the views that ignore the tool_run_id.
+CREATE INDEX raw_packages_idx_views
+ON raw_packages(package_status, package_name, package_arch);
+
 
 -- ----------------------------------------------------------------------
 
