@@ -108,6 +108,14 @@ namespace netmeld::datastore::objects
                 << std::endl;
         return;
         }
+
+        t.exec_prepared("insert_raw_packages",
+            toolRunId,
+            packageStatus,
+            packageName,
+            packageVersion,
+            packageArch,
+            packageDesc);
         
     }
 

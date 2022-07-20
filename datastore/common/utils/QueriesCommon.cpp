@@ -478,6 +478,17 @@ namespace netmeld::datastore::utils {
        " VALUES ($1, $2, host(($3)::INET)::INET, host(($4)::INET)::INET)"
        " ON CONFLICT"
        " DO NOTHING");
+    // ----------------------------------------------------------------------
+    // TABLE: raw_packages
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_packages",
+       "INSERT INTO raw_packages"
+       "  (tool_run_id, package_status, package_name, package_version, package_arch, package_desc)"
+       " VALUES ($1, $2, $3, $4, $5, $6)"
+       " ON CONFLICT"
+       " DO NOTHING");
 
     // ----------------------------------------------------------------------
     // TABLE: raw_ports
