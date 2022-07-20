@@ -74,7 +74,7 @@ headers =
   // https://linuxprograms.wordpress.com/2010/05/11/status-dpkg-list/
 
   packageLine = 
-    packageStatus [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
+    (packageStatus | token [(pnx::bind(&Parser::addObservation, this, qi::_1))]) [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
     > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
     > architecture [(pnx::bind(&nmdo::Package::setArch, &qi::_val, qi::_1))]
@@ -82,10 +82,19 @@ headers =
     > qi::eol
     ;
 
+    //   packageLine = 
+    // packageStatus [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
+    // > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
+    // > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
+    // > architecture [(pnx::bind(&nmdo::Package::setArch, &qi::_val, qi::_1))]
+    // > desc [(pnx::bind(&nmdo::Package::setDesc, &qi::_val, qi::_1))]
+    // > qi::eol
+    // ;
+
   packageStatus = 
     // +qi::ascii::graph 
     // if status is anything except ii then add observation
-    +qi::ascii::graph
+    qi::lit("ii")
   ;
 
   packageName = 
@@ -132,18 +141,14 @@ headers =
 void
 Parser::addPackage(const nmdo::Package& packg)
 {
+  
   data.packages.push_back(packg);
 }
 void
-Parser::addObservation(const std::vector<std::string>& observations,
-                       const nmdo::Package& package)
+Parser::addObservation(const std::string& val)
 {
-  std::ostringstream oss;
-  oss << "Irregular package status " << package.getStatus() << ":";
-  for (auto& observation : observations) {
-    oss << " " << observation;
-  }
-  data.observations.addNotable(oss.str());
+  // data.observations.addNotable(oss.str());
+  data.observations.addNotable("Irregular Package Status "+ val);
 }
 
 Result

@@ -95,7 +95,7 @@ class Parser:
   // Methods
   // ===========================================================================
   private:
-    void addObservation(const std::vector<std::string>&, const nmdo::Package&);
+    void addObservation(const std::string&);
     void addPackage(const nmdo::Package&);
     Result getData();
 };
