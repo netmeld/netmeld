@@ -39,7 +39,7 @@ namespace nmdo = netmeld::datastore::objects;
 // =============================================================================
 struct Data
 {
-  std::vector<nmdo::Package>  packages;
+  std::vector<nmdo::Package>    packages;
   nmdo::ToolObservations        observations;
 };
 typedef std::vector<Data> Result;
