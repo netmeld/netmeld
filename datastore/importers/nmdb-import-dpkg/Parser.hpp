@@ -77,7 +77,7 @@ class Parser:
         packageName,
         version,
         architecture, 
-        desc,
+        description,
         token
       ;
 

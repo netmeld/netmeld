@@ -33,137 +33,73 @@
 namespace nmdo = netmeld::datastore::objects;
 
 
-class TestInterface : public nmdo::Interface {
+class TestPackage : public nmdo::Package {
   public:
-    TestInterface() : Interface() {};
-    explicit TestInterface(const std::string& _name) :
-        Interface(_name) {};
+    TestPackage() : Package() {};
+    explicit TestPackage(const std::string& _status) :
+        Package(_status) {};
 
   public:
-    std::string getMediaType() const
-    { return mediaType; }
-
-    bool getIsUp() const
-    { return isUp; }
-
-    std::string getFlags() const
-    { return flags; }
-
-    uint32_t getMtu() const
-    { return mtu; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
-  nmdo::MacAddress macAddr;
   {
-    TestInterface interface;
+    TestPackage package {"ii"};
 
-    BOOST_CHECK(interface.getName().empty());
-    BOOST_CHECK_EQUAL("ethernet", interface.getMediaType());
-    BOOST_CHECK(!interface.getIsUp());
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddress());
-    BOOST_CHECK(interface.getFlags().empty());
-    BOOST_CHECK_EQUAL(0, interface.getMtu());
-  }
+    BOOST_CHECK_EQUAL("ii", package.getStatus());
+    BOOST_CHECK(package.getName().empty());
+    BOOST_CHECK(package.getVersion().empty());
+    BOOST_CHECK(package.getArchitecture().empty());
+    BOOST_CHECK(package.getDescription().empty());
 
-  {
-    TestInterface interface {"Name"};
-
-    BOOST_CHECK_EQUAL("name", interface.getName());
-    BOOST_CHECK_EQUAL("ethernet", interface.getMediaType());
-    BOOST_CHECK(!interface.getIsUp());
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddress());
-    BOOST_CHECK(interface.getFlags().empty());
-    BOOST_CHECK_EQUAL(0, interface.getMtu());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
-    TestInterface interface;
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
+    {
+    TestPackage package;
 
-    interface.addIpAddress(ipAddr);
-    auto ipAddrs = interface.getIpAddresses();
-    BOOST_CHECK_EQUAL(1, ipAddrs.size());
-    BOOST_CHECK_EQUAL(ipAddr, *ipAddrs.cbegin());
+    package.setStatus("ii");
+    BOOST_CHECK_EQUAL("ii", package.getStatus());
   }
-
   {
-    TestInterface interface;
+    TestPackage package;
 
-    interface.setName("Name");
-    BOOST_CHECK_EQUAL("name", interface.getName());
+    package.setName("packageName");
+    BOOST_CHECK_EQUAL("packageName", package.getName());
   }
+    {
+    TestPackage package;
 
-  {
-    TestInterface interface;
-
-    interface.setMediaType("MediaType");
-    BOOST_CHECK_EQUAL("mediatype", interface.getMediaType());
+    package.setVersion("1.1.0");
+    BOOST_CHECK_EQUAL("1.1.0", package.getVersion());
   }
+    {
+    TestPackage package;
 
-  {
-    TestInterface interface;
-    nmdo::MacAddress macAddr {"00:11:22:33:44:55"};
-
-    interface.setMacAddress(macAddr);
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddress());
+    package.setArchitecture("all");
+    BOOST_CHECK_EQUAL("all", package.getArchitecture());
   }
+    {
+    TestPackage package;
 
-  {
-    TestInterface interface;
-
-    BOOST_CHECK(!interface.getIsUp());
-    interface.setUp();
-    BOOST_CHECK(interface.getIsUp());
-  }
-
-  {
-    TestInterface interface;
-
-    BOOST_CHECK(!interface.getIsUp());
-    interface.setDown();
-    BOOST_CHECK(!interface.getIsUp());
-  }
-
-  {
-    TestInterface interface;
-
-    interface.setFlags("some flags up here");
-    BOOST_CHECK_EQUAL("some flags up here", interface.getFlags());
-    BOOST_CHECK(!interface.getIsUp());
-
-    interface.setDown();
-    interface.setFlags("flag,UP");
-    BOOST_CHECK(interface.getIsUp());
-
-    interface.setDown();
-    interface.setFlags("flag<UP");
-    BOOST_CHECK(interface.getIsUp());
-  }
-
-  {
-    TestInterface interface;
-
-    interface.setMtu(0);
-    BOOST_CHECK_EQUAL(0, interface.getMtu());
-    interface.setMtu(UINT32_MAX);
-    BOOST_CHECK_EQUAL(UINT32_MAX, interface.getMtu());
+    package.setDescription("some package.");
+    BOOST_CHECK_EQUAL("some package.", package.getDescription());
   }
 }
-
+}
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
-    TestInterface interface;
+    TestPackage package;
 
-    BOOST_CHECK(!interface.isValid());
-    interface.setName("name");
-    BOOST_CHECK(interface.isValid());
-    interface.setMediaType("loopback");
-    BOOST_CHECK(!interface.isValid());
+    BOOST_CHECK(!package.isValid());
+    package.setName("name");
+    BOOST_CHECK(!package.isValid());
+    package.setVersion("1.1");
+    BOOST_CHECK(package.isValid());
   }
 }

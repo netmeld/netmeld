@@ -56,14 +56,14 @@ namespace netmeld::datastore::objects
     packageVersion = _version;
     }
     void
-    Package::setArch(const std::string& _arch)
+    Package::setArchitecture(const std::string& _architecture)
     {
-    packageArch = _arch;
+    packageArchitecture = _architecture;
     }
     void
-    Package::setDesc(const std::string& _desc)
+    Package::setDescription(const std::string& _description)
     {
-    packageDesc = _desc;
+    packageDescription = _description;
     }
 
     //getters
@@ -83,14 +83,14 @@ namespace netmeld::datastore::objects
         return packageVersion;
     }
     std::string
-    Package::getArch() const 
+    Package::getArchitecture() const 
     {
-        return packageArch;
+        return packageArchitecture;
     }
     std::string
-    Package::getDesc() const
+    Package::getDescription() const
     {
-        return packageDesc;
+        return packageDescription;
     }
 
     //toolOverrides
@@ -114,8 +114,8 @@ namespace netmeld::datastore::objects
             packageStatus,
             packageName,
             packageVersion,
-            packageArch,
-            packageDesc);
+            packageArchitecture,
+            packageDescription);
         
     }
 
@@ -129,8 +129,8 @@ namespace netmeld::datastore::objects
         oss << packageStatus << ", "
             << packageName << ", "
             << packageVersion << ", "
-            << packageArch << ", "
-            << packageDesc;
+            << packageArchitecture << ", "
+            << packageDescription;
         oss << "]"; // closing bracket
 
         return oss.str();

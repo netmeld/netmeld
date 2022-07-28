@@ -41,8 +41,8 @@ namespace netmeld::datastore::objects{
         std::string packageStatus;
         std::string packageName;
         std::string packageVersion;
-        std::string packageArch;
-        std::string packageDesc;
+        std::string packageArchitecture;
+        std::string packageDescription;
     public:
     // =========================================================================
     // Constructors
@@ -66,16 +66,16 @@ namespace netmeld::datastore::objects{
         void setStatus(const std::string&);
         void setName(const std::string&);
         void setVersion(const std::string&);
-        void setArch(const std::string&);
-        void setDesc(const std::string&);
+        void setArchitecture(const std::string&);
+        void setDescription(const std::string&);
         // ===========================================================================
         // Getters
         // ===========================================================================
         std::string getStatus() const;
         std::string getName() const;
         std::string getVersion() const;
-        std::string getArch() const;
-        std::string getDesc() const;
+        std::string getArchitecture() const;
+        std::string getDescription() const;
         std::string toDebugString() const override;
     
         // ===========================================================================

@@ -54,8 +54,8 @@ headers =
     (packageStatus) [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
     > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
-    > architecture [(pnx::bind(&nmdo::Package::setArch, &qi::_val, qi::_1))]
-    > desc [(pnx::bind(&nmdo::Package::setDesc, &qi::_val, qi::_1))]
+    > architecture [(pnx::bind(&nmdo::Package::setArchitecture, &qi::_val, qi::_1))]
+    > description [(pnx::bind(&nmdo::Package::setDescription, &qi::_val, qi::_1))]
     > qi::eol
     ;
 
@@ -75,7 +75,7 @@ headers =
     +qi::ascii::graph
   ;
 
-  desc = 
+  description = 
     +qi::ascii::print
   ;
 
@@ -97,7 +97,7 @@ headers =
       (packageLine)
       (version)
       (architecture)
-      (desc)
+      (description)
       );
 }
 

@@ -52,10 +52,14 @@ BOOST_AUTO_TEST_CASE(testRules)
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected}
-      {"ii  acl                                              2.3.1-1                              amd64        access control list - utilities"}, // case
-      {"ii  adwaita-icon-theme                               42.0-2                               all          default icon theme of GNOME"}, //case
-      {"pn  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files"}, // case
-      {"ufR  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files"}, //case
+      {"ii  acl                                              2.3.1-1                              amd64        access control list - utilities", 
+        "ii  acl                                              2.3.1-1                              amd64        access control list - utilities"}, // case
+      {"ii  adwaita-icon-theme                               42.0-2                               all          default icon theme of GNOME",
+        "ii  adwaita-icon-theme                               42.0-2                               all          default icon theme of GNOME"}, //case
+      {"pn  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files",
+        "pn  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files"}, // case
+      {"ufR  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files",
+        "ufR  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files"}, //case
     };
     for (const auto& [test, expected] : testsOk) {
       std::string out;
@@ -75,92 +79,4 @@ BOOST_AUTO_TEST_CASE(testRules)
                  "Parse rule 'packageLine': " << test);
     }
   }
-
-//   {
-//     const auto& parserRule {tp.inetLine};
-//     // OK
-//     { // v4
-//       std::vector<std::string> testsOk {
-//         // {test}
-//         {"inet 1.1.1.1/24 brd 2.2.2.2/24 scope global dummy0\n"
-//          "valid_lft forever preferred_lft forever)\n"},
-//         {"inet 1.1.1.1/24 scope global dummy0\n"},
-//         {"inet 1.1.1.1/24 scope host\n"},
-//       };
-//       const auto& tip {nmdo::IpAddress("1.1.1.1/24")};
-//       for (const auto& test : testsOk) {
-//         nmdo::IpAddress out;
-//         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-//                    "Parse rule 'inetLine': " << test);
-//         BOOST_TEST(tip == out);
-//       }
-//     }
-//     { // v6
-//       std::vector<std::string> testsOk {
-//         // {test}
-//         {"inet6 1::1/64 brd 2::2/64 scope global dummy0\n"
-//          "valid_lft forever preferred_lft forever)\n"},
-//         {"inet6 1::1/64 scope global dummy0\n"},
-//         {"inet6 1::1/64 scope host\n"},
-//       };
-//       const auto& tip {nmdo::IpAddress("1::1/64")};
-//       for (const auto& test : testsOk) {
-//         nmdo::IpAddress out;
-//         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-//                    "Parse rule 'inetLine': " << test);
-//         BOOST_TEST(tip == out);
-//       }
-//     }
-//   }
-
-//   {
-//     const auto& parserRule {tp.iface};
-//     // OK
-//     std::vector<std::string> testsOk {
-//       {R"(1: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-//               link/ether 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff
-//               altname enp2s1
-//               inet 1.1.1.1/24 scope global ens33
-//                  valid_lft forever preferred_lft forever
-//               inet6 fe80::1:1111:1:1/64 scope link 
-//                  valid_lft forever preferred_lft forever
-// )"},
-//       // ex `ip -6 addr show` (i.e., no link line when specify v4/6)
-//       {R"(1: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
-//               inet6 1::2/64 scope link 
-//                  valid_lft forever preferred_lft forever
-// )"},
-//       {R"(255: t0: flags mtu 1 tokens
-//               link/type 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff opt tokens
-//               altname name1
-//               altname name2
-//               inet 1.1.1.1/24 scope host
-//               inet 2.2.2.2/24 scope host
-//               inet 3.3.3.3/24 scope host
-// )"},
-//       {R"(255: t0: flags mtu 1
-//               link/type
-// )"},
-//       {R"(255: t0: flags mtu 1
-//               link/type brd ff:ff:ff:ff:ff:ff
-// )"},
-//       {R"(255: t0: flags mtu 1
-//               link/type brd ff:ff:ff:ff:ff:ff opt tokens
-// )"},
-//       {R"(255: t0: flags mtu 1
-//               link/type
-//               altname name1
-// )"},
-//       {R"(255: t0: flags mtu 1
-//               link/type
-//               inet 1.1.1.1/24 scope host
-// )"},
-//     };
-//     for (const auto& test : testsOk) {
-//       nmdo::Interface out;
-//       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-//                  "Parse rule 'inetLine': " << test);
-//       BOOST_TEST(out.isValid());
-//     }
-//   }
 }
