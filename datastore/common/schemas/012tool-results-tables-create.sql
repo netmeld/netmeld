@@ -368,9 +368,9 @@ CREATE TABLE raw_packages (
     package_name                 TEXT            NOT NULL,
     package_version              TEXT            NOT NULL,
     package_arch                 TEXT            NOT NULL,
-    package_desc                 TEXT            NULL,
+    package_desc                 TEXT            NOT NULL,
     PRIMARY KEY (tool_run_id, package_status, package_name, package_arch),
-    FOREIGN KEY (tool_run_id) -- maybe need to add link to device?
+    FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE

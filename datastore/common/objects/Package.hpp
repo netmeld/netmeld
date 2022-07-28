@@ -59,14 +59,18 @@ namespace netmeld::datastore::objects{
     private:
     protected:
     public:
-        //Setters
+    
+        // ===========================================================================
+        // Setters
+        // ===========================================================================
         void setStatus(const std::string&);
         void setName(const std::string&);
         void setVersion(const std::string&);
         void setArch(const std::string&);
         void setDesc(const std::string&);
-
-        //Getters
+        // ===========================================================================
+        // Getters
+        // ===========================================================================
         std::string getStatus() const;
         std::string getName() const;
         std::string getVersion() const;
@@ -74,7 +78,9 @@ namespace netmeld::datastore::objects{
         std::string getDesc() const;
         std::string toDebugString() const override;
     
-        //toolOverride
+        // ===========================================================================
+        // toolOverride
+        // ===========================================================================
         bool isValid() const override;
 
         void save(pqxx::transaction_base&,

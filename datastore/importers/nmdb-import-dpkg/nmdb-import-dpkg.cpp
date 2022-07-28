@@ -24,26 +24,6 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - Base classes contain some implementation (even if NOOP) for every method
-     - Method overriding is intentional to alter behaviour, not scope hiding
-     - Final has not been used to facilitate new concepts
-       - This may change as code base matures
-   - Import tools are never "base" classes
-   - Data order
-     - 1st tier: Variables, Constructors, Methods
-     - 2nd tier: private, protected, public
-   - Section headers should generally be left to help code organization
-   - Parser logic should be separate
-*/
-
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "Parser.hpp"
@@ -60,28 +40,17 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
-    // Inhertied from AbstractImportTool at this scope
-      // TResults                 tResults;
-      // nmco::Uuid               toolRunId;
-      // nmco::Time               executionStart;
-      // nmco::Time               executionStop;
-      // nmco::DeviceInformation  devInfo;
-  public: // Variables should rarely appear at this scope
+  private:
+  protected:
+  public: 
 
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  private: // Constructors should rarely appear at this scope
-  protected: // Constructors intended for internal/subclass API
-  public: // Constructors should generally be public
+  private: 
+  protected:
+  public:
     Tool() : nmdt::AbstractImportTool<P,R>
       (
        "dpkg -l",  // command line tool imports data from
@@ -95,22 +64,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractImportTool
-    // void
-    // addToolOptions() override
-    // {
-    //   this->opts.removeRequiredOption("device-id");
-    //   // this->opts.addRequiredOption("tool-option", std::make_tuple(
-    //   //       "tool-option",
-    //   //       po::value<std::string>()->required(),
-    //   //       "Some tool option")
-    //   //     );
-
-    //   // this->opts.removeOptionalOption("pipe");
-    //   // this->opts.removeAdvancedOption("tool-run-metadata");
-    // }
-
-    // Overriden from AbstractImportTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -139,7 +92,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 // =============================================================================
 int 
 main(int argc, char** argv) {
-  // Tool<nmdp::DummyParser, Result> tool; // if parser not needed
-  Tool<Parser, Result> tool; // if parser needed
+  Tool<Parser, Result> tool;
   return tool.start(argc, argv);
 }

@@ -45,50 +45,46 @@ struct Data
 typedef std::vector<Data> Result;
 
 
-// =============================================================================
-// Parser definition
-// =============================================================================
+  // =============================================================================
+  // Parser definition
+  // =============================================================================
 class Parser:
   public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-{
-  // ===========================================================================
-  // Variables
-  // ===========================================================================
-  private:
-    // Supporting data structures
-    Data data;
+  {
+    // ===========================================================================
+    // Variables
+    // ===========================================================================
+    private:
+      // Supporting data structures
+      Data data;
 
-  protected:
-    // Rules
-    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      prestart;
+    protected:
+      // Rules
+      qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+        prestart;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      start;
+      qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+        start;
 
-    // blank skipper without eol
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      headers, ignoredLine;
+      qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+        headers, ignoredLine;
 
-    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
-      packageLine;
+      qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
+        packageLine;
 
-    //iterator with string skipper
-
-    // skipp white space iterator
-    qi::rule<nmdp::IstreamIter, std::string()>
-      packageStatus,
-      packageName,
-      version,
-      architecture, 
-      desc,
-      token
-    ;
+      qi::rule<nmdp::IstreamIter, std::string()>
+        packageStatus,
+        packageName,
+        version,
+        architecture, 
+        desc,
+        token
+      ;
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  public: // Constructor is only default and must be public
+  public: 
     Parser();
 
   // ===========================================================================
@@ -98,5 +94,5 @@ class Parser:
     void addObservation(const std::string&);
     void addPackage(const nmdo::Package&);
     Result getData();
-};
+  };
 #endif // PARSER_HPP

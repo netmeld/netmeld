@@ -23,23 +23,6 @@
 // =============================================================================
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
-
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - If using a custom Parser
-     - Data ordering is different as the focus is the parsing logic, not rule
-       instantiation
-     - It occasionally is more reasonable to interact and place data with an
-       intermediary object
-       - The code can be collocated or a separate file, depending on complexity
-*/
-
 #include "Parser.hpp"
 
 // =============================================================================
@@ -65,16 +48,10 @@ headers =
     > qi::lit("||/") > +token > -qi::eol
     > qi::lit("+++") > +token > -qi::eol
 ;
-
-//rpm set of states
-//keep going down the file till eof
-// ii packageName version arch description
-//parse other statuses in dpkg instead of 'ii' there is 3 characters
-//flag as tool observ ( object), some error because its supposed to be ii
   // https://linuxprograms.wordpress.com/2010/05/11/status-dpkg-list/
 
-  packageLine = 
-    (packageStatus | token [(pnx::bind(&Parser::addObservation, this, qi::_1))]) [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
+    packageLine = 
+    (packageStatus) [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
     > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
     > architecture [(pnx::bind(&nmdo::Package::setArch, &qi::_val, qi::_1))]
@@ -82,10 +59,9 @@ headers =
     > qi::eol
     ;
 
+
   packageStatus = 
-    // +qi::ascii::graph 
-    // if status is anything except ii then add observation
-    qi::lit("ii")
+    qi::lit("ii") | token [(pnx::bind(&Parser::addObservation, this, qi::_1))] 
   ;
 
   packageName = 
@@ -138,10 +114,8 @@ Parser::addPackage(const nmdo::Package& packg)
 void
 Parser::addObservation(const std::string& val)
 {
-  // data.observations.addNotable(oss.str());
   data.observations.addNotable("Irregular Package Status "+ val);
 }
-
 Result
 Parser::getData()
 {
