@@ -16,6 +16,5 @@ nmdb-import-dpkg --device-id <workstation> packageout.txt
 ```
 Assuming `...` is some command chain which retrieves the target data from a remote host and displays the results locally, then the following would process it and save the data to a file called packageout.txt in the current working directory.
 ```
-... |
-nmdb-import-dpkg --pipe --device-id <workstation> packageout.txt
+... | nmdb-import-dpkg --pipe --device-id <workstation> packageout.txt
 ```
