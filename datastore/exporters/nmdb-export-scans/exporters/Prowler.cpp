@@ -54,6 +54,7 @@ namespace netmeld::export_scans {
         AND service = $1
         AND severity = $2
         AND control_id = $3
+        AND NOT resource_id = ''
       ORDER BY resource_id
       )");
   }

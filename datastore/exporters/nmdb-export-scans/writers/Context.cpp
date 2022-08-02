@@ -248,6 +248,11 @@ namespace netmeld::export_scans {
           severity, controlId, level, control, risk, remediation, docLink, count
         );
 
+      oss << '\n' << R"(\startalignment[nothyphenated,hanging,table])"
+          << '\n' << R"(\startnarrower[0.15in])"
+          << '\n' << R"({\tt)"
+          << '\n'
+          ;
       for (size_t i {0}; i < count;) {
         std::string resource {rest[i++]}; // intentional post increment
 
@@ -257,9 +262,14 @@ namespace netmeld::export_scans {
         if (i < count) {
           oss << ",\n";
         } else {
-          oss << ".\n\n";
+          oss << "\n";
         }
       }
+      oss << R"(})"
+          << '\n' << R"(\stopnarrower)"
+          << '\n' << R"(\stopalignment)"
+          << "\n\n"
+          ;
     }
 
     codeTeardown(oss);
@@ -652,7 +662,9 @@ Risk: )" << risk << R"(
 Remediation: )" << remediation << R"(
 
 \PortionMark{TODO--Caption Classification}{}
+\startalignment[nothyphenated,hanging,table]
 \goto{)" << docLink << R"(}[url()" << docLink << R"()]
+\stopalignment
 
 \PortionMark{TODO--Caption Classification}{}
 {\bf )" << count << R"( affected resources}:
