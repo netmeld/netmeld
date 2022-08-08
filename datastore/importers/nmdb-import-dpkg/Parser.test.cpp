@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(testRules)
 
   {
     const auto& parserRule {tp.packageLine};
-    // OK
+    // OK 
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected}
       {"ii  acl                                              2.3.1-1                              amd64        access control list - utilities", 

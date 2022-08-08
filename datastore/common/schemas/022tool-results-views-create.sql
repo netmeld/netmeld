@@ -359,8 +359,8 @@ SELECT DISTINCT
     package_status               AS package_status,
     package_name                 AS package_name,
     package_version              AS package_version,
-    package_arch                 AS package_arch,
-    package_desc                 AS package_desc
+    package_architecture         AS package_architecture,
+    package_description          AS package_description
 FROM raw_packages
 ;
 
