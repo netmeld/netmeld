@@ -1,0 +1,19 @@
+FROM netmeld-test-base
+
+ENV NETMELD_DB netmeld_test_all
+
+USER root
+
+WORKDIR /home/netmeld/setup
+
+RUN apt install --quiet --quiet --assume-yes --option Dpkg::Use-Pty=0 \
+      --no-install-recommends --no-install-suggests \
+      ./netmeld-*.deb
+
+WORKDIR /home/netmeld
+
+RUN rm -rf ./setup
+
+USER netmeld
+
+RUN ./docker-testing/init.sh

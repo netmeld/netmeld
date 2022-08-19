@@ -1,0 +1,39 @@
+FROM debian:testing-slim                                                                                                
+
+RUN apt update --quiet --quiet --assume-yes --option Dpkg::Use-Pty=0 \
+ && apt install --quiet --quiet --assume-yes --option Dpkg::Use-Pty=0 \
+      unzip curl postgresql postgresql-client \
+      arping nmap macchanger wireshark-common \
+      ansible \
+      git \
+      help2man pandoc \
+      graphviz \
+      postgresql-contrib postgresql-autodoc \
+      python-is-python3
+      
+RUN groupadd -r netmeld \
+ && useradd -r -s /bin/bash -g netmeld netmeld
+
+WORKDIR /home/netmeld/setup
+
+RUN curl -k --silent --location \
+      `curl -k --silent \
+           https://api.github.com/repos/netmeld/netmeld/releases/latest \
+         | grep -oP '"browser_download_url": "\K(.*)(?=")'` \
+      --output netmeld-debs.zip \
+      && unzip -qq netmeld-debs.zip
+
+      
+RUN apt install --quiet --quiet --assume-yes --option Dpkg::Use-Pty=0 \
+      --no-install-recommends --no-install-suggests \
+      ./netmeld-*core.deb
+
+WORKDIR /home/netmeld/docker-testing
+
+COPY ./contents /home/netmeld/contents
+
+WORKDIR /home/netmeld
+
+ENV NETMELD_DB_HOST postgres
+ENV NETMELD_DB_USER postgres
+ENV NETMELD_DB_PASS example
