@@ -28,13 +28,14 @@
 #define PARSER_HPP
 
 #include <nlohmann/json.hpp>
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/Interface.hpp>
-#include <netmeld/datastore/objects/MacAddress.hpp>
+
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 
+//#include <netmeld/datastore/objects/AwsInstance.hpp>
+#include "AwsInstance.hpp"
+
 namespace nmdo = netmeld::datastore::objects;
+namespace nmdoa = netmeld::datastore::objects::aws;
 
 using json = nlohmann::json;
 
@@ -43,8 +44,7 @@ using json = nlohmann::json;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdo::DeviceInformation> devices;
-  std::map<std::string, std::vector<nmdo::Interface>> interfaces;
+  std::vector<nmdoa::Instance> instances;
 
   nmdo::ToolObservations observations;
 };
@@ -75,9 +75,10 @@ class Parser
   private:
   protected:
     void processInstances(const json&);
-    void processInterfaces(const json&, const std::string&);
-    void processSecurityGroups(const json&);
-    void processIps(const json&, nmdo::Interface&);
+    void processInterfaces(const json&, nmdoa::Instance&);
+    void processInterfaceAttachments(const json&, nmdoa::NetworkInterface&);
+    void processSecurityGroups(const json&, nmdoa::NetworkInterface&);
+    void processIps(const json&, nmdoa::NetworkInterface&);
 
   public:
     void fromJson(const json&);

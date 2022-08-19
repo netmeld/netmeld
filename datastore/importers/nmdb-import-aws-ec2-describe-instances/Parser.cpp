@@ -26,6 +26,8 @@
 
 #include "Parser.hpp"
 
+#include <netmeld/datastore/objects/IpAddress.hpp>
+
 // =============================================================================
 // Parser logic
 // =============================================================================
@@ -55,95 +57,98 @@ Parser::processInstances(const json& _reservation)
     "PlatformDetails"
     "SecurityGroups"
     "VpcId"
+    "LaunchTime" -- hardware revision?
   */
   for (const auto& instance : _reservation.at("Instances")) {
-    std::string deviceId {instance.at("InstanceId")};
+    std::string id {instance.at("InstanceId")};
 
-    if ("running" != instance.at("State").value("Name", "")) {
-      std::ostringstream oss;
-      oss << "Instance (" << deviceId
-          << ") not 'running'"
-          ;
-      d.observations.addNotable(oss.str());
-      continue;
-    }
+    nmdoa::Instance ai;
+    ai.setId(id);
+    ai.setType(instance.value("InstanceType", ""));
+    ai.setImageId(instance.value("ImageId", ""));
+    ai.setAvailabilityZone(
+        instance.at("Placement").value("AvailabilityZone", "")
+      );
+    ai.setStateCode(instance.at("State").at("Code").get<uint16_t>());
+    ai.setStateName(instance.at("State").value("Name", ""));
 
-    nmdo::DeviceInformation device;
-    device.setVendor("AWS");
-    device.setDeviceType("Cloud Instance");
-    device.setDeviceId(deviceId);
-    device.setDescription(instance.value("KeyName", ""));
+    processInterfaces(instance, ai);
 
-    device.setModel(instance.value("InstanceType", ""));
-    device.setHardwareRevision(instance.value("LaunchTime", ""));
-    device.setSerialNumber(instance.value("ImageId", ""));
-
-    d.devices.emplace_back(device);
-
-    processInterfaces(instance, deviceId);
+    d.instances.push_back(ai);
   }
 }
 
 void
-Parser::processInterfaces(const json& _instance, const std::string& _deviceId)
+Parser::processInterfaces(const json& _instance, nmdoa::Instance& _ai)
 {
-  /* TODO
-    "InterfaceType"
-    "SubnetId"
-    "VpcId"
-  */
-  std::vector<nmdo::Interface> ifaces;
   for (const auto& interface : _instance.at("NetworkInterfaces")) {
-    if ("attached" != interface.at("Attachment").value("Status", "")) {
-      LOG_WARN << "Interface not 'attached'" << std::endl;
-      continue;
+    nmdoa::NetworkInterface ani;
+    const std::string iid {interface.value("NetworkInterfaceId", "")};
+    ani.setId(iid);
+    ani.setDescription(interface.value("Description", ""));
+    ani.setStatus(interface.value("Status", ""));
+    ani.setType(interface.value("InterfaceType", ""));
+    ani.setMacAddress(interface.value("MacAddress", ""));
+    ani.setSubnetId(interface.value("SubnetId", ""));
+    ani.setVpcId(interface.value("VpcId", ""));
+
+    if (interface.value("SourceDestCheck", true)) {
+      ani.enableSourceDestinationCheck();
+    } else {
+      ani.disableSourceDestinationCheck();
     }
 
-    nmdo::Interface iface;
-    iface.setName(interface.at("NetworkInterfaceId"));
-    iface.setDescription(interface.value("Description", ""));
-    if ("in-use" == interface.value("Status", "")) {
-      iface.setUp();
+    try {
+      const auto& attachment {interface.at("Attachment")};
+      processInterfaceAttachments(attachment, ani);
+    } catch (const json::out_of_range& e) {
+      // TODO -- what to do if no attachment
+      LOG_WARN << "No attachment for interface: " << iid << '\n';
     }
+    processSecurityGroups(interface, ani);
+    processIps(interface, ani);
 
-    nmdo::MacAddress macAddr;
-    macAddr.setMac(interface.at("MacAddress").get<std::string>());
-    iface.setMacAddress(macAddr);
-    processIps(interface, iface);
-
-    ifaces.emplace_back(iface);
-
-    // TODO
-    //processSecurityGroups(interface);
+    _ai.addInterface(ani);
   }
-  d.interfaces.emplace(_deviceId, ifaces);
 }
 
 void
-Parser::processSecurityGroups(const json& _interface)
+Parser::processInterfaceAttachments(const json& _attachment,
+                                    nmdoa::NetworkInterface& _iface)
 {
-  /* TODO
-    "GroupName"
-  */
-  LOG_INFO << "\t\t";
-  for (const auto& sg : _interface.at("Groups")) {
-    LOG_INFO << sg.at("GroupId") << "; ";
+  nmdoa::NetworkInterfaceAttachment ania;
+  ania.setId(_attachment.value("AttachmentId", ""));
+  ania.setStatus(_attachment.value("Status", ""));
+  if (_attachment.at("DeleteOnTermination")) {
+    ania.enableDeleteOnTermination();
+  } else {
+    ania.disableDeleteOnTermination();
   }
-  LOG_INFO << "EOL" << std::endl;
+
+  _iface.setAttachment(ania);
 }
 
 void
-Parser::processIps(const json& _interface, nmdo::Interface& _iface)
+Parser::processSecurityGroups(const json& _interface,
+                              nmdoa::NetworkInterface& _iface)
+{
+  for (const auto& sg : _interface.at("Groups")) {
+    _iface.addSecurityGroup(sg.value("GroupId", ""));
+  }
+}
+
+void
+Parser::processIps(const json& _interface, nmdoa::NetworkInterface& _iface)
 {
   // Handle IPv6 addresses
-  if (_interface.at("Ipv6Addresses").size() > 0) {
-    for (const auto& ip : _interface.at("Ipv6Addresses")) {
-      nmdo::IpAddress ipAddr {
-          ip.at("Ipv6Addresses").get<std::string>(), REASON
-        };
-      _iface.addIpAddress(ipAddr);
-    }
+  //if (_interface.at("Ipv6Addresses").size() > 0) {
+  for (const auto& ip : _interface.at("Ipv6Addresses")) {
+    nmdo::IpAddress ipAddr {
+        ip.at("Ipv6Addresses").get<std::string>(), REASON
+      };
+    _iface.addIpAddress(ipAddr);
   }
+  //}
 
   // Handle IPv4 addresses
   for (const auto& ip : _interface.at("PrivateIpAddresses")) {

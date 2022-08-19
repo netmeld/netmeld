@@ -25,6 +25,7 @@
 # =============================================================================
 
 add_executable(${TGT_TOOL}
+    AwsInstance.cpp
     Parser.cpp
     ${TGT_TOOL}.cpp
   )

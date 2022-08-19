@@ -110,18 +110,10 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over Devices (AWS Instances)\n";
-        for (auto& result : results.devices) {
-          result.save(t, toolRunId);
+        LOG_DEBUG << "Iterating over AWS Instances\n";
+        for (auto& result : results.instances) {
+          result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
-        }
-
-        LOG_DEBUG << "Iterating over Interfaces\n";
-        for (auto& [devId, ifaces] : results.interfaces) {
-          for (auto& iface : ifaces) {
-            iface.save(t, toolRunId, devId);
-            LOG_DEBUG << devId << " -- " << iface.toDebugString() << std::endl;
-          }
         }
 
         LOG_DEBUG << "Iterating over Observations\n";
