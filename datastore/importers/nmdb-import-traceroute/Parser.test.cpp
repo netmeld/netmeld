@@ -65,10 +65,10 @@ BOOST_AUTO_TEST_CASE(testParts)
     std::string dbgStr;
     const auto tr {tp.getData()};
     BOOST_TEST(2 == tr.size());
-    dbgStr = R"([[1.2.3.4/32, 1, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    dbgStr = R"([[1.2.3.4/32, 1, , 0, []], [0.0.0.0/255, 0, , 0, []], 0])";
     BOOST_TEST(dbgStr == tr[0].toDebugString());
     dbgStr = R"([[1.2.3.4/32, 1, from traceroute import, 0, )"
-             R"([router1.site.domain], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+             R"([router1.site.domain]], [0.0.0.0/255, 0, , 0, []], 0])";
     BOOST_TEST(dbgStr == tr[1].toDebugString());
     for (const auto& d : tr) {
       BOOST_TEST(!d.isValid());
@@ -161,13 +161,13 @@ BOOST_AUTO_TEST_CASE(testParts)
     std::string dbgStr;
     const auto tr {tp.getData()};
     BOOST_TEST(testsOk.size() == tr.size());
-    dbgStr = R"([[1.2.3.4/32, 1, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    dbgStr = R"([[1.2.3.4/32, 1, , 0, []], [0.0.0.0/255, 0, , 0, []], 0])";
     BOOST_TEST(dbgStr == tr[0].toDebugString());
     BOOST_TEST(dbgStr == tr[1].toDebugString());
     dbgStr = R"([[1.2.3.4/32, 1, from traceroute import, 0, )"
-             R"([router1.site.domain], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+             R"([router1.site.domain]], [0.0.0.0/255, 0, , 0, []], 0])";
     BOOST_TEST(dbgStr == tr[2].toDebugString());
-    dbgStr = R"([[1::2/128, 1, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ], 0])";
+    dbgStr = R"([[1::2/128, 1, , 0, []], [0.0.0.0/255, 0, , 0, []], 0])";
     BOOST_TEST(dbgStr == tr[3].toDebugString());
     for (const auto& d : tr) {
       BOOST_TEST(!d.isValid());

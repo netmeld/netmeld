@@ -63,7 +63,7 @@ namespace netmeld::core::utils {
       }
     }
 
-    return os << "], ";
+    return os << "]";
   }
 
   template<typename K, typename V>
@@ -73,7 +73,7 @@ namespace netmeld::core::utils {
     for (const auto& [k, v] : map) {
       os << "{" << k << ", " << v << "}, ";
     }
-    return os << "], ";
+    return os << "]";
   }
 
   std::ostream& operator<<(std::ostream&, const std::any&);
