@@ -74,7 +74,7 @@ Parser::processInstances(const json& _reservation)
 
     processInterfaces(instance, ai);
 
-    d.instances.push_back(ai);
+    d.instances.emplace_back(ai);
   }
 }
 
@@ -141,14 +141,12 @@ void
 Parser::processIps(const json& _interface, nmdoa::NetworkInterface& _iface)
 {
   // Handle IPv6 addresses
-  //if (_interface.at("Ipv6Addresses").size() > 0) {
   for (const auto& ip : _interface.at("Ipv6Addresses")) {
     nmdo::IpAddress ipAddr {
         ip.at("Ipv6Addresses").get<std::string>(), REASON
       };
     _iface.addIpAddress(ipAddr);
   }
-  //}
 
   // Handle IPv4 addresses
   for (const auto& ip : _interface.at("PrivateIpAddresses")) {

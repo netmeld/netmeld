@@ -58,7 +58,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractImportTool<P,R>
       (
-       "aws ec2 describe-subnets",  // command line tool imports data from
+       "aws ec2 describe-route-tables",  // command line tool imports data from
        PROGRAM_NAME,           // program name (set in CMakeLists.txt)
        PROGRAM_VERSION         // program version (set in CMakeLists.txt)
       )
@@ -110,8 +110,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over AWS Subnets\n";
-        for (auto& result : results.subnets) {
+        LOG_DEBUG << "Iterating over AWS RouteTables\n";
+        for (auto& result : results.routeTables) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }

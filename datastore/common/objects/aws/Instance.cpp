@@ -24,13 +24,12 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "AwsInstance.hpp"
-
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/objects/Interface.hpp>
-#include <netmeld/datastore/objects/MacAddress.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/objects/aws/Instance.hpp>
 
 
 namespace netmeld::datastore::objects::aws {
@@ -113,7 +112,7 @@ namespace netmeld::datastore::objects::aws {
     //  return cmp;
     //}
 
-    return deleteOnTermination <=> deleteOnTermination;
+    return deleteOnTermination <=> rhs.deleteOnTermination;
   }
 
   bool
@@ -391,7 +390,7 @@ namespace netmeld::datastore::objects::aws {
       return cmp;
     }
 
-    return interfaces <=> interfaces;
+    return interfaces <=> rhs.interfaces;
   }
 
   bool

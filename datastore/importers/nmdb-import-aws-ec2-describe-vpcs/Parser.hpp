@@ -28,10 +28,12 @@
 #define PARSER_HPP
 
 #include <nlohmann/json.hpp>
-#include <netmeld/datastore/objects/IpNetwork.hpp>
+
 #include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/aws/Vpc.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
+namespace nmdoa = netmeld::datastore::objects::aws;
 
 using json = nlohmann::json;
 
@@ -40,7 +42,7 @@ using json = nlohmann::json;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdo::IpNetwork> ipNets;
+  std::vector<nmdoa::Vpc> vpcs;
 
   nmdo::ToolObservations observations;
 };
@@ -56,7 +58,6 @@ class Parser
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    const std::string REASON {"aws ec2 describe-vpcs"};
     Data d;
 
   // ===========================================================================
@@ -71,6 +72,7 @@ class Parser
   private:
   protected:
     void processVpcs(const json&);
+    void processCidrBlockAssociationSet(const json&, nmdoa::Vpc&);
 
   public:
     void fromJson(const json&);

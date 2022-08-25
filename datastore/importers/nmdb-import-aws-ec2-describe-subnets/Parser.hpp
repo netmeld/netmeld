@@ -28,10 +28,11 @@
 #define PARSER_HPP
 
 #include <nlohmann/json.hpp>
-#include <netmeld/datastore/objects/IpNetwork.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/aws/Subnet.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
+namespace nmdoa = netmeld::datastore::objects::aws;
 
 using json = nlohmann::json;
 
@@ -40,7 +41,7 @@ using json = nlohmann::json;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdo::IpNetwork> ipNets;
+  std::vector<nmdoa::Subnet> subnets;
 
   nmdo::ToolObservations observations;
 };
@@ -56,7 +57,6 @@ class Parser
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    const std::string REASON {"aws ec2 describe-subnets"};
     Data d;
 
   // ===========================================================================

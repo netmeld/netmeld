@@ -52,8 +52,6 @@ Parser::processSubnets(const json& _subnet)
 {
   /* TODO
     "SubnetArn"
-    "SubnetId"
-    "VpcId"
   */
   if ("available" != _subnet.at("State")) {
     std::ostringstream oss;
@@ -64,18 +62,17 @@ Parser::processSubnets(const json& _subnet)
     return;
   }
 
-  nmdo::IpNetwork ipNet {
-        _subnet.at("CidrBlock").get<std::string>(), REASON
-    };
-  std::string description {REASON};
-  for (const auto& tag : _subnet.at("Tags")) {
-    if ("Name" == tag.at("Key")) {
-      description = tag.at("Value");
-    }
-  }
-  ipNet.setReason(description);
+  nmdoa::Subnet subnet;
+  subnet.setId(_subnet.value("SubnetId", ""));
+  subnet.setVpcId(_subnet.value("VpcId", ""));
+  subnet.setAvailabilityZone(_subnet.value("AvailabilityZone", ""));
 
-  d.ipNets.emplace_back(ipNet);
+  subnet.addCidrBlock(_subnet.value("CidrBlock", ""));
+  for (const auto& cbas : _subnet.at("Ipv6CidrBlockAssociationSet")) {
+    subnet.addCidrBlock(cbas.value("CidrBlock", ""));
+  }
+
+  d.subnets.emplace_back(subnet);
 }
 
 

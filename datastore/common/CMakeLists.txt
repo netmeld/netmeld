@@ -54,6 +54,12 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/TracerouteHop.cpp
     ./objects/Vlan.cpp
     ./objects/Vrf.cpp
+
+    ./objects/aws/Instance.cpp
+    ./objects/aws/RouteTable.cpp
+    ./objects/aws/Subnet.cpp
+    ./objects/aws/Vpc.cpp
+
     ./tools/AbstractDatastoreTool.cpp
     ./tools/AbstractExportTool.cpp
     ./tools/AbstractGraphTool.cpp

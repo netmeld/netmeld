@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -24,15 +24,16 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-add_executable(${TGT_TOOL}
-    Parser.cpp
-    ${TGT_TOOL}.cpp
-  )
-
-target_link_libraries(${TGT_TOOL}
-    netmeld-datastore
-  )
-
-# The following is commented out as we don't want to actually install templates
-nm_install_bin(${TGT_TOOL})
-#nm_install_include(file dir)
+#foreach(ITEM
+#    Instance
+#    Nacl
+#    RouteTable
+#    SecurityGroup
+#    Subnet
+#    Vpc
+#  )
+#  nm_add_test(${ITEM})
+#  target_link_libraries(${TGT_TEST}
+#      netmeld-datastore
+#    )
+#endforeach()

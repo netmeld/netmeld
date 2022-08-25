@@ -31,8 +31,7 @@
 
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 
-//#include <netmeld/datastore/objects/AwsInstance.hpp>
-#include "AwsInstance.hpp"
+#include <netmeld/datastore/objects/aws/Instance.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdoa = netmeld::datastore::objects::aws;
@@ -60,7 +59,7 @@ class Parser
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    const std::string REASON {"aws ec2 describe-instances"};
+    const std::string REASON {"AWS EC2 IP"};
     Data d;
 
   // ===========================================================================

@@ -24,36 +24,30 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_INSTANCE_HPP
-#define AWS_INSTANCE_HPP
+#ifndef AWS_ROUTE_TABLE_HPP
+#define AWS_ROUTE_TABLE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/Interface.hpp>
-#include <netmeld/datastore/objects/MacAddress.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
-
+#include <netmeld/datastore/objects/IpNetwork.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 
 
 namespace netmeld::datastore::objects::aws {
 
-
-  // -------------------------------------------------------------------------
-
-
-  class NetworkInterfaceAttachment : public nmdo::AbstractDatastoreObject {
+  class Route : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string attachmentId;
-      std::string status;
-      std::string deleteOnTermination;
+      std::string routeId;
+      std::string state;
+
+      std::set<nmdo::IpNetwork> cidrBlocks;
 
     public: // Variables should rarely appear at this scope
+
 
     // ========================================================================
     // Constructors
@@ -61,7 +55,8 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      NetworkInterfaceAttachment();
+      Route();
+
 
     // ========================================================================
     // Methods
@@ -70,9 +65,8 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setId(const std::string&);
-      void setStatus(const std::string&);
-      void enableDeleteOnTermination();
-      void disableDeleteOnTermination();
+      void setState(const std::string&);
+      void addCidrBlock(const std::string&);
 
       bool isValid() const override;
 
@@ -81,37 +75,28 @@ namespace netmeld::datastore::objects::aws {
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const NetworkInterfaceAttachment&) const;
-      bool operator==(const NetworkInterfaceAttachment&) const;
+      std::partial_ordering operator<=>(const Route&) const;
+      bool operator==(const Route&) const;
   };
 
 
-  // -------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
 
 
-  class NetworkInterface : public nmdo::Interface {
+  class RouteTable : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string interfaceId;
-
-      std::string type;
-      std::string description;
-      bool sourceDestinationCheck {false};
-      std::string status;
-      std::string subnetId;
+      std::string routeTableId;
       std::string vpcId;
 
-      NetworkInterfaceAttachment attachment;
-
-      //std::string interfaceMacAddress;
-      //std::string interfaceIpAddress;
-      //std::string dnsName;
-      std::set<std::string> securityGroups;
+      std::set<std::string> associations;
+      std::set<Route> routes;
 
     public: // Variables should rarely appear at this scope
+
 
     // ========================================================================
     // Constructors
@@ -119,7 +104,8 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      NetworkInterface();
+      RouteTable();
+
 
     // ========================================================================
     // Methods
@@ -128,17 +114,9 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setId(const std::string&);
-      void setDescription(const std::string&);
-      void setType(const std::string&);
-      void setStatus(const std::string&);
-      void enableSourceDestinationCheck();
-      void disableSourceDestinationCheck();
-      void setAttachment(const NetworkInterfaceAttachment&);
-      void setMacAddress(const std::string&);
-      void addIpAddress(const nmdo::IpAddress&);
-      void setSubnetId(const std::string&);
       void setVpcId(const std::string&);
-      void addSecurityGroup(const std::string&);
+      void addAssociation(const std::string&);
+      void addRoute(const Route&);
 
       bool isValid() const override;
 
@@ -147,63 +125,8 @@ namespace netmeld::datastore::objects::aws {
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const NetworkInterface&) const;
-      bool operator==(const NetworkInterface&) const;
-  };
-
-
-  // -------------------------------------------------------------------------
-
-
-  class Instance : public nmdo::DeviceInformation {
-    // ========================================================================
-    // Variables
-    // ========================================================================
-    private: // Variables will probably rarely appear at this scope
-    protected: // Variables intended for internal/subclass API
-      std::string instanceId;
-
-      std::string type;
-      std::string imageId;
-      std::string availabilityZone;
-      uint16_t stateCode;
-      std::string stateName;
-
-      std::set<NetworkInterface> interfaces;
-
-    public: // Variables should rarely appear at this scope
-
-    // ========================================================================
-    // Constructors
-    // ========================================================================
-    private: // Constructors which should be hidden from API users
-    protected: // Constructors part of subclass API
-    public: // Constructors part of public API
-      Instance();
-
-    // ========================================================================
-    // Methods
-    // ========================================================================
-    private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-    public: // Methods part of public API
-      void setAvailabilityZone(const std::string&);
-      void setImageId(const std::string&);
-      void setId(const std::string&);
-      void setStateCode(const uint16_t);
-      void setStateName(const std::string&);
-      void setType(const std::string&);
-      void addInterface(const NetworkInterface&);
-
-      bool isValid() const override;
-
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-
-      std::string toDebugString() const override;
-
-      std::partial_ordering operator<=>(const Instance&) const;
-      bool operator==(const Instance&) const;
+      std::partial_ordering operator<=>(const RouteTable&) const;
+      bool operator==(const RouteTable&) const;
   };
 }
-#endif // AWS_INSTANCE_HPP
+#endif // AWS_ROUTE_TABLE_HPP

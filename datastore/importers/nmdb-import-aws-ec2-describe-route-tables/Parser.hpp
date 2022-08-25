@@ -24,70 +24,64 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "Parser.hpp"
+#ifndef PARSER_HPP
+#define PARSER_HPP
+
+#include <nlohmann/json.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/objects/aws/RouteTable.hpp>
+
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdoa = netmeld::datastore::objects::aws;
+
+using json = nlohmann::json;
+
 
 // =============================================================================
-// Parser logic
+// Data containers
 // =============================================================================
-Parser::Parser()
-{}
+struct Data {
+  //std::vector<nmdo::DeviceInformation> devices;
+  //std::map<std::string, std::vector<nmdo::Interface>> interfaces;
 
-void
-Parser::fromJson(const json& _data)
-{
-  try {
-    for (const auto& vpc : _data.at("Vpcs")) {
-      processVpcs(vpc);
-    }
-  } catch (json::out_of_range& ex) {
-    LOG_ERROR << "Parse error " << ex.what() << std::endl;
-  }
-}
+  std::vector<nmdoa::RouteTable> routeTables;
 
+  nmdo::ToolObservations observations;
+};
+typedef std::vector<Data>    Result;
 
-// TODO https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/describe-vpcs.html
-
-void
-Parser::processVpcs(const json& _vpc)
-{
-  nmdoa::Vpc avpc;
-  avpc.setId(_vpc.value("VpcId", ""));
-  avpc.setState(_vpc.value("State", ""));
-
-  processCidrBlockAssociationSet(_vpc, avpc);
-
-  d.vpcs.emplace_back(avpc);
-}
-
-void
-Parser::processCidrBlockAssociationSet(const json& _cbas, nmdoa::Vpc& _avpc)
-{
-  std::vector<std::string> blockNames {
-      "CidrBlockAssociationSet",
-      "Ipv6CidrBlockAssociationSet"
-    };
-  for (const auto& blockName : blockNames) {
-    if (!_cbas.contains(blockName)) {
-      continue;
-    }
-
-    for (const auto& cbas : _cbas.at(blockName)) {
-      nmdoa::VpcCidrBlock avcb;
-      avcb.setCidrBlock(cbas.value("CidrBlock", ""));
-      avcb.setState(cbas.at("CidrBlockState").value("State", ""));
-
-      _avpc.addCidrBlock(avcb);
-    }
-  }
-}
 
 // =============================================================================
-// Parser helper methods
+// Parser definition
 // =============================================================================
-Result
-Parser::getData()
+class Parser
 {
-  Result r;
-  r.emplace_back(d);
-  return r;
-}
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private: // Variables are always private
+    Data d;
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  public: // Constructor is only default and must be public
+    Parser();
+
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private:
+  protected:
+    void processRouteTable(const json&);
+    void processAssociations(const json&, nmdoa::RouteTable&);
+    void processRoutes(const json&, nmdoa::RouteTable&);
+
+    std::string getRouteId(const json&);
+
+
+  public:
+    void fromJson(const json&);
+    Result getData();
+};
+#endif // PARSER_HPP

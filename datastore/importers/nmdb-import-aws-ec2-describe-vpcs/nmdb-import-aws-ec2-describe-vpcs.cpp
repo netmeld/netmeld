@@ -110,8 +110,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over IpNetworks (AWS VPCs)\n";
-        for (auto& result : results.ipNets) {
+        LOG_DEBUG << "Iterating over AWS VPCs\n";
+        for (auto& result : results.vpcs) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
