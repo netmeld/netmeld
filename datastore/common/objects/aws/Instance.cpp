@@ -66,7 +66,7 @@ namespace netmeld::datastore::objects::aws {
   NetworkInterfaceAttachment::isValid() const
   {
     // TODO
-    return !attachmentId.empty();
+    return !(attachmentId.empty() || status.empty());
   }
 
   void
@@ -81,7 +81,13 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    t.exec_prepared("insert_raw_aws_network_interface_attachment"
+        , toolRunId
+        , deviceId
+        , attachmentId
+        , status
+        , deleteOnTermination
+      );
   }
 
   std::string
@@ -202,7 +208,12 @@ namespace netmeld::datastore::objects::aws {
   NetworkInterface::isValid() const
   {
     // TODO
-    return !interfaceId.empty();
+    return !(   interfaceId.empty()
+             || type.empty()
+             || status.empty()
+             || subnetId.empty()
+             || vpcId.empty()
+            );
   }
 
   void
@@ -217,7 +228,76 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    t.exec_prepared("insert_raw_aws_network_interface"
+        , toolRunId
+        , interfaceId
+      );
+
+    t.exec_prepared("insert_raw_aws_network_interface_detail"
+        , toolRunId
+        , interfaceId
+        , type
+        , sourceDestinationCheck
+        , status
+      );
+
+    attachment.save(t, toolRunId, interfaceId);
+
+    getMacAddress().save(t, toolRunId, deviceId);
+    t.exec_prepared("insert_raw_aws_network_interface_mac"
+        , toolRunId
+        , interfaceId
+        , getMacAddress().toString()
+      );
+
+    for (const auto& ip : getIpAddresses()) {
+      for (const auto& alias : ip.getAliases()) {
+        t.exec_prepared("insert_raw_aws_network_interface_ip"
+            , toolRunId
+            , interfaceId
+            , ip.toString()
+            , alias
+          );
+      }
+    }
+
+    t.exec_prepared("insert_raw_aws_subnet"
+        , toolRunId
+        , subnetId
+      );
+
+    t.exec_prepared("insert_raw_aws_vpc"
+        , toolRunId
+        , vpcId
+      );
+
+    t.exec_prepared("insert_raw_aws_network_interface_vpc_subnet"
+        , toolRunId
+        , interfaceId
+        , vpcId
+        , subnetId
+      );
+
+    for (const auto& sg : securityGroups) {
+      t.exec_prepared("insert_raw_aws_security_group"
+          , toolRunId
+          , sg
+        );
+
+      t.exec_prepared("insert_raw_aws_network_interface_security_group"
+          , toolRunId
+          , interfaceId
+          , sg
+        );
+    }
+
+    if (!deviceId.empty()) {
+      t.exec_prepared("insert_raw_aws_instance_network_interface"
+          , toolRunId
+          , deviceId
+          , interfaceId
+        );
+    }
   }
 
   std::string
@@ -269,9 +349,6 @@ namespace netmeld::datastore::objects::aws {
     if (auto cmp = attachment <=> rhs.attachment; 0 != cmp) {
       return cmp;
     }
-    //if (auto cmp = securityGroups <=> rhs.securityGroups; 0 != cmp) {
-    //  return cmp;
-    //}
 
     return securityGroups <=> rhs.securityGroups;
   }
@@ -332,13 +409,16 @@ namespace netmeld::datastore::objects::aws {
   bool
   Instance::isValid() const
   {
-    // TODO
-    return !instanceId.empty();
+    return !(instanceId.empty()
+             || type.empty()
+             || imageId.empty()
+             || stateName.empty()
+            );
   }
 
   void
   Instance::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string& deviceId)
+                 const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS Instance object is not saving: " << toDebugString()
@@ -346,7 +426,24 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    t.exec_prepared("insert_raw_aws_instance"
+        , toolRunId
+        , instanceId
+      );
+
+    t.exec_prepared("insert_raw_aws_instance_detail"
+        , toolRunId
+        , instanceId
+        , type
+        , imageId
+        , availabilityZone
+        , stateCode
+        , stateName
+      );
+
+    for (auto interface : interfaces) {
+      interface.save(t, toolRunId, instanceId);
+    }
   }
 
   std::string

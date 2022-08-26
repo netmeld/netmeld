@@ -57,6 +57,8 @@ add_library(${TGT_LIBRARY} SHARED
 
     ./objects/aws/Instance.cpp
     ./objects/aws/RouteTable.cpp
+    ./objects/aws/NetworkAcl.cpp
+    ./objects/aws/SecurityGroup.cpp
     ./objects/aws/Subnet.cpp
     ./objects/aws/Vpc.cpp
 

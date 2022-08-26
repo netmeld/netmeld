@@ -79,7 +79,37 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    t.exec_prepared("insert_raw_aws_subnet"
+        , toolRunId
+        , subnetId
+      );
+
+    t.exec_prepared("insert_raw_aws_subnet_detail"
+        , toolRunId
+        , subnetId
+        , availabilityZone
+      );
+
+    for (auto ip : cidrBlocks) {
+      ip.save(t, toolRunId, subnetId);
+
+      t.exec_prepared("insert_raw_aws_subnet_cidr_block"
+          , toolRunId
+          , subnetId
+          , ip.toString()
+        );
+    }
+
+    t.exec_prepared("insert_raw_aws_vpc"
+        , toolRunId
+        , vpcId
+      );
+
+    t.exec_prepared("insert_raw_aws_vpc_subnet"
+        , toolRunId
+        , vpcId
+        , subnetId
+      );
   }
 
   std::string

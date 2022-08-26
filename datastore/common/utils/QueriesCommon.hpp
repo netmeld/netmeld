@@ -35,5 +35,8 @@ namespace netmeld::datastore::utils {
   void
   dbPrepareCommon(pqxx::connection&);
 
+  void
+  dbPrepareAws(pqxx::connection&);
+
 }
 #endif  /* QUERIES_COMMON_HPP */

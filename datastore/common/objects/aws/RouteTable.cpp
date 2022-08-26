@@ -70,7 +70,17 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    for (auto ip : cidrBlocks) {
+      ip.save(t, toolRunId, deviceId);
+
+      t.exec_prepared("insert_raw_aws_route_table_route"
+          , toolRunId
+          , deviceId
+          , routeId
+          , state
+          , ip.toString()
+        );
+    }
   }
 
   std::string
@@ -153,7 +163,32 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    t.exec_prepared("insert_raw_aws_route_table"
+        , toolRunId
+        , routeTableId
+      );
+
+    for (const auto& association : associations) {
+      t.exec_prepared("insert_raw_aws_route_table_association"
+          , toolRunId
+          , routeTableId
+          , association
+        );
+    }
+
+    for (auto route : routes) {
+      route.save(t, toolRunId, routeTableId);
+    }
+    t.exec_prepared("insert_raw_aws_vpc"
+        , toolRunId
+        , vpcId
+      );
+
+    t.exec_prepared("insert_raw_aws_vpc_route_table"
+        , toolRunId
+        , vpcId
+        , routeTableId
+      );
   }
 
   std::string

@@ -70,7 +70,14 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    cidrBlock.save(t, toolRunId, deviceId);
+
+    t.exec_prepared("insert_raw_aws_vpc_cidr_block"
+        , toolRunId
+        , deviceId
+        , cidrBlock.toString()
+        , state
+      );
   }
 
   std::string
@@ -135,8 +142,7 @@ namespace netmeld::datastore::objects::aws {
 
   void
   Vpc::save(pqxx::transaction_base& t,
-                                   const nmco::Uuid& toolRunId,
-                                   const std::string& deviceId)
+            const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS Vpc object is not saving: "
@@ -145,7 +151,20 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
-    // TODO
+    t.exec_prepared("insert_raw_aws_vpc"
+        , toolRunId
+        , vpcId
+      );
+
+    t.exec_prepared("insert_raw_aws_vpc_detail"
+        , toolRunId
+        , vpcId
+        , state
+      );
+
+    for (auto cidr : cidrBlocks) {
+      cidr.save(t, toolRunId, vpcId);
+    }
   }
 
   std::string

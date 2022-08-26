@@ -46,7 +46,6 @@ namespace netmeld::datastore::objects::aws {
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      //std::string cidrBlock;
       nmdo::IpNetwork cidrBlock;
       std::string state;
       
