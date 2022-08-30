@@ -204,9 +204,11 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_aws_network_acl_rule_port", R"(
           INSERT INTO raw_aws_network_acl_rule_ports
-            (tool_run_id, network_acl_id, egress, rule_number, from, to)
+            (tool_run_id, network_acl_id, egress, rule_number, from_port,
+             to_port)
           VALUES
-            ($1, $2, $3, $4, $5, $6)
+            ($1, $2, $3, $4, $5,
+             $6)
           ON CONFLICT DO NOTHING
         )");
 

@@ -112,8 +112,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       for (auto& results : this->tResults) {
         LOG_DEBUG << "Iterating over AWS NetworkAcls\n";
         for (auto& result : results.networkAcls) {
-          result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
+          result.save(t, toolRunId, deviceId);
         }
 
         LOG_DEBUG << "Iterating over Observations\n";

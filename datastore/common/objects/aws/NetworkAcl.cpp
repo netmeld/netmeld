@@ -101,7 +101,8 @@ namespace netmeld::datastore::objects::aws {
                     const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AWS NetworkAclRule object is not saving: " << toDebugString()
+      LOG_DEBUG << "AWS NetworkAclRule object is not saving: "
+                << toDebugString()
                 << std::endl;
       return;
     }
@@ -263,7 +264,7 @@ namespace netmeld::datastore::objects::aws {
       rule.save(t, toolRunId, naclId);
     }
 
-    t.exec_prepared("insert_raw_vpc"
+    t.exec_prepared("insert_raw_aws_vpc"
         , toolRunId
         , vpcId
       );
@@ -275,6 +276,11 @@ namespace netmeld::datastore::objects::aws {
       );
 
     for (const auto& subnetId : subnetIds) {
+      t.exec_prepared("insert_raw_aws_subnet"
+          , toolRunId
+          , subnetId
+        );
+
       t.exec_prepared("insert_raw_aws_network_acl_subnet"
           , toolRunId
           , naclId
