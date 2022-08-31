@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -40,24 +40,21 @@ Parser::Parser() : Parser::base_type(prestart)
     ) 
     ;
   
-headers = 
-    // will get the first 4 lines of dpkg
-    qi::lit("Desired") > +token > -qi::eol 
-    > qi::lit("|") > +token > -qi::eol
-    > qi::lit("|/") > +token > -qi::eol
-    > qi::lit("||/") > +token > -qi::eol
-    > qi::lit("+++") > +token > -qi::eol
-;
-  // https://linuxprograms.wordpress.com/2010/05/11/status-dpkg-list/
-
-    packageLine = 
+  headers = 
+      qi::lit("Desired") > +token > -qi::eol 
+      > qi::lit("|") > +token > -qi::eol
+      > qi::lit("|/") > +token > -qi::eol
+      > qi::lit("||/") > +token > -qi::eol
+      > qi::lit("+++") > +token > -qi::eol
+  ;
+  packageLine = 
     (packageStatus) [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
     > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
     > architecture [(pnx::bind(&nmdo::Package::setArchitecture, &qi::_val, qi::_1))]
     > description [(pnx::bind(&nmdo::Package::setDescription, &qi::_val, qi::_1))]
     > qi::eol
-    ;
+  ;
 
 
   packageStatus = 
@@ -66,7 +63,7 @@ headers =
 
   packageName = 
     +qi::ascii::graph
-    ;
+  ;
   version = 
     +qi::ascii::graph
   ;
@@ -79,7 +76,6 @@ headers =
     +qi::ascii::print
   ;
 
-  //soaker 
   token =
     +qi::ascii::graph
     ;
