@@ -369,7 +369,7 @@ CREATE TABLE raw_packages (
     package_version              TEXT            NOT NULL,
     package_architecture         TEXT            NOT NULL,
     package_description          TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, package_status, package_name, package_architecture),
+    PRIMARY KEY (tool_run_id, package_status, package_name, package_version, package_architecture, package_description),
     FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE

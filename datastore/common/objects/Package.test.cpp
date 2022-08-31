@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     BOOST_CHECK(package.getVersion().empty());
     BOOST_CHECK(package.getArchitecture().empty());
     BOOST_CHECK(package.getDescription().empty());
-
+    BOOST_CHECK(!package.isValid());
   }
 }
 
