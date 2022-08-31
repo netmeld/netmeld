@@ -1,15 +1,22 @@
 DESCRIPTION
 ===========
 
-Parse and import the output of the `dpkg -l` command on modern Linux systems.
+Parse and import the output of the `dpkg -l` command on modern Linux systems into the Netmeld framework for later analysis. Import's package's based on device-id.
 
 TROUBLESHOOT
 ============
 
-Parser is not designed to parse Unicode characters. If a package contains unicode characters in it's description, you will have to convert your `dpkg -l` output to ascii using a tool like `uni2ascii` which can be installed with `apt`.
+The tool will not handle Unicode characters.
+If the output contains a Unicode character anywhere, the character will need to be converted to the ASCII equivalent, replace, or otherwise removed prior to processing.
+This could be accomplished manually, by using a tool (e.g., `uni2ascii`), or similar.
 
 EXAMPLES
 ========
+
+Gather package output from target with 
+```
+dpkg -l > package.out
+```
 Process the target data for the device workstation from a local file
 ```
 nmdb-import-dpkg --device-id <workstation> packageout.txt
