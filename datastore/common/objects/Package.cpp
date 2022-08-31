@@ -29,10 +29,8 @@
 
 namespace nmcu = netmeld::core::utils;
 
-
-namespace netmeld::datastore::objects 
+namespace netmeld::datastore::objects
 {
-    
     Package::Package()
     {}
     // string constructor
@@ -83,7 +81,7 @@ namespace netmeld::datastore::objects
         return packageVersion;
     }
     std::string
-    Package::getArchitecture() const 
+    Package::getArchitecture() const
     {
         return packageArchitecture;
     }
@@ -94,13 +92,13 @@ namespace netmeld::datastore::objects
     }
 
     //toolOverrides
-    bool 
+    bool
     Package::isValid() const
     {
         return !packageName.empty() && !packageVersion.empty();
     }
 
-    void 
+    void
     Package::save(pqxx::transaction_base& t, const nmco::Uuid& toolRunId, const std::string& deviceId)
     {
         if(!isValid() && !deviceId.empty()){
@@ -116,7 +114,6 @@ namespace netmeld::datastore::objects
             packageVersion,
             packageArchitecture,
             packageDescription);
-        
     }
 
     //to string

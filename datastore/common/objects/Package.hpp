@@ -36,7 +36,7 @@ namespace netmeld::datastore::objects{
     // =========================================================================
     // Variables
     // =========================================================================
-    private: 
+    private:
     protected:
         std::string packageStatus;
         std::string packageName;
@@ -59,7 +59,6 @@ namespace netmeld::datastore::objects{
     private:
     protected:
     public:
-    
         // ===========================================================================
         // Setters
         // ===========================================================================
@@ -77,7 +76,6 @@ namespace netmeld::datastore::objects{
         std::string getArchitecture() const;
         std::string getDescription() const;
         std::string toDebugString() const override;
-    
         // ===========================================================================
         // toolOverride
         // ===========================================================================

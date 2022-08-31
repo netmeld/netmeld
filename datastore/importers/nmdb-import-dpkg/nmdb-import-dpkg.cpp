@@ -42,13 +42,12 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // ===========================================================================
   private:
   protected:
-  public: 
-
+  public:
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  private: 
+  private:
   protected:
   public:
     Tool() : nmdt::AbstractImportTool<P,R>
@@ -59,7 +58,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       )
     {}
 
-
   // ===========================================================================
   // Methods
   // ===========================================================================
@@ -69,7 +67,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     {
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
-      
       for (auto& results : this->tResults) {
         LOG_DEBUG << "Iterating over Packages";
         for(auto& result : results.packages){
@@ -82,7 +79,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       }
     }
 
-  protected: 
+  protected:
   public:
 };
 
@@ -90,7 +87,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 // =============================================================================
 // Program entry point
 // =============================================================================
-int 
+int
 main(int argc, char** argv) {
   Tool<Parser, Result> tool;
   return tool.start(argc, argv);

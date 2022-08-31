@@ -13,7 +13,7 @@ This could be accomplished manually, by using a tool (e.g., `uni2ascii`), or sim
 EXAMPLES
 ========
 
-Gather package output from target with 
+Gather package output from target with
 ```
 dpkg -l > package.out
 ```

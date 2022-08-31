@@ -33,21 +33,21 @@ Parser::Parser() : Parser::base_type(prestart)
   prestart = start [(qi::_val = pnx::bind(&Parser::getData, this))];
 
   start =
-    headers > 
+    headers >
     *(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
       | ignoredLine
       | qi::eol
-    ) 
+    )
     ;
-  
-  headers = 
-      qi::lit("Desired") > +token > -qi::eol 
+  headers =
+      qi::lit("Desired") > +token > -qi::eol
       > qi::lit("|") > +token > -qi::eol
       > qi::lit("|/") > +token > -qi::eol
       > qi::lit("||/") > +token > -qi::eol
       > qi::lit("+++") > +token > -qi::eol
   ;
-  packageLine = 
+
+  packageLine =
     (packageStatus) [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
     > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
@@ -56,23 +56,22 @@ Parser::Parser() : Parser::base_type(prestart)
     > qi::eol
   ;
 
-
-  packageStatus = 
-    qi::lit("ii") | token [(pnx::bind(&Parser::addObservation, this, qi::_1))] 
+  packageStatus =
+    qi::lit("ii") | token [(pnx::bind(&Parser::addObservation, this, qi::_1))]
   ;
 
-  packageName = 
+  packageName =
     +qi::ascii::graph
   ;
-  version = 
-    +qi::ascii::graph
-  ;
-
-  architecture = 
+  version =
     +qi::ascii::graph
   ;
 
-  description = 
+  architecture =
+    +qi::ascii::graph
+  ;
+
+  description =
     +qi::ascii::print
   ;
 
@@ -104,7 +103,6 @@ Parser::Parser() : Parser::base_type(prestart)
 void
 Parser::addPackage(const nmdo::Package& packg)
 {
-  
   data.packages.push_back(packg);
 }
 void
