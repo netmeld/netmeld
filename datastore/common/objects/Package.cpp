@@ -35,7 +35,7 @@ namespace netmeld::datastore::objects
     {}
 
     Package::Package(const std::string& _status) :
-        packageStatus(nmcu::toLower(_status))
+        packageStatus(_status)
     {}
 
     void
