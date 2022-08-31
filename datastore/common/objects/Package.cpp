@@ -35,74 +35,74 @@ namespace netmeld::datastore::objects
     {}
 
     Package::Package(const std::string& _status) :
-        packageStatus(_status)
+        status(_status)
     {}
 
     void
     Package::setStatus(const std::string& _status)
     {
-        packageStatus = _status;
+        status = _status;
     }
 
     void
     Package::setName(const std::string& _name)
     {
-        packageName = _name;
+        name = _name;
     }
 
     void
     Package::setVersion(const std::string& _version)
     {
-        packageVersion = _version;
+        version = _version;
     }
 
     void
     Package::setArchitecture(const std::string& _architecture)
     {
-        packageArchitecture = _architecture;
+        architecture = _architecture;
     }
 
     void
     Package::setDescription(const std::string& _description)
     {
-        packageDescription = _description;
+        description = _description;
     }
 
     std::string
     Package::getStatus() const
     {
-        return packageStatus;
+        return status;
     }
 
     std::string
     Package::getName() const
     {
-        return packageName;
+        return name;
     }
 
     std::string
     Package::getVersion() const
     {
-        return packageVersion;
+        return version;
     }
 
     std::string
     Package::getArchitecture() const
     {
-        return packageArchitecture;
+        return architecture;
     }
 
     std::string
     Package::getDescription() const
     {
-        return packageDescription;
+        return description;
     }
 
     //toolOverrides
     bool
     Package::isValid() const
     {
-        return !packageName.empty() && !packageVersion.empty();
+        return !name.empty() && !version.empty();
     }
 
     void
@@ -116,11 +116,11 @@ namespace netmeld::datastore::objects
 
         t.exec_prepared("insert_raw_packages",
             toolRunId,
-            packageStatus,
-            packageName,
-            packageVersion,
-            packageArchitecture,
-            packageDescription);
+            status,
+            name,
+            version,
+            architecture,
+            description);
     }
 
     std::string
@@ -129,11 +129,11 @@ namespace netmeld::datastore::objects
         std::ostringstream oss;
 
         oss << "["; // opening bracket
-        oss << packageStatus << ", "
-            << packageName << ", "
-            << packageVersion << ", "
-            << packageArchitecture << ", "
-            << packageDescription;
+        oss << status << ", "
+            << name << ", "
+            << version << ", "
+            << architecture << ", "
+            << description;
         oss << "]"; // closing bracket
 
         return oss.str();

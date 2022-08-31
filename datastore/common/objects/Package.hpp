@@ -38,11 +38,11 @@ namespace netmeld::datastore::objects{
     // =========================================================================
     private:
     protected:
-        std::string packageStatus;
-        std::string packageName;
-        std::string packageVersion;
-        std::string packageArchitecture;
-        std::string packageDescription;
+        std::string status;
+        std::string name;
+        std::string version;
+        std::string architecture;
+        std::string description;
     public:
     // =========================================================================
     // Constructors
