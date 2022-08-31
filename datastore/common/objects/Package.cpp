@@ -33,7 +33,7 @@ namespace netmeld::datastore::objects
 {
     Package::Package()
     {}
-    // string constructor
+
     Package::Package(const std::string& _status) :
         packageStatus(nmcu::toLower(_status))
     {}
@@ -43,48 +43,55 @@ namespace netmeld::datastore::objects
     {
         packageStatus = _status;
     }
+
     void
     Package::setName(const std::string& _name)
     {
     packageName = _name;
     }
+
     void
     Package::setVersion(const std::string& _version)
     {
     packageVersion = _version;
     }
+
     void
     Package::setArchitecture(const std::string& _architecture)
     {
     packageArchitecture = _architecture;
     }
+
     void
     Package::setDescription(const std::string& _description)
     {
     packageDescription = _description;
     }
 
-    //getters
     std::string
     Package::getStatus() const
     {
         return packageStatus;
     }
+
     std::string
     Package::getName() const
     {
         return packageName;
     }
+
     std::string
     Package::getVersion() const
     {
         return packageVersion;
     }
+
     std::string
     Package::getArchitecture() const
     {
         return packageArchitecture;
     }
+
     std::string
     Package::getDescription() const
     {
@@ -116,7 +123,6 @@ namespace netmeld::datastore::objects
             packageDescription);
     }
 
-    //to string
     std::string
     Package::toDebugString() const
     {

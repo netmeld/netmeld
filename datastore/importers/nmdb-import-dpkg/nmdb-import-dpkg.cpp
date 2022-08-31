@@ -25,11 +25,9 @@
 // =============================================================================
 
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
-
 #include "Parser.hpp"
 
 namespace nmdt = netmeld::datastore::tools;
-
 
 // =============================================================================
 // Import tool definition
@@ -82,7 +80,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   protected:
   public:
 };
-
 
 // =============================================================================
 // Program entry point

@@ -38,7 +38,8 @@ Parser::Parser() : Parser::base_type(prestart)
       | ignoredLine
       | qi::eol
     )
-    ;
+  ;
+
   headers =
       qi::lit("Desired") > +token > -qi::eol
       > qi::lit("|") > +token > -qi::eol
@@ -96,7 +97,6 @@ Parser::Parser() : Parser::base_type(prestart)
       );
 }
 
-
 // =============================================================================
 // Parser helper methods
 // =============================================================================
@@ -105,11 +105,13 @@ Parser::addPackage(const nmdo::Package& packg)
 {
   data.packages.push_back(packg);
 }
+
 void
 Parser::addObservation(const std::string& val)
 {
   data.observations.addNotable("Irregular Package Status "+ val);
 }
+
 Result
 Parser::getData()
 {
