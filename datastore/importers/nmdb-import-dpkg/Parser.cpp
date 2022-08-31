@@ -38,7 +38,7 @@ Parser::Parser() : Parser::base_type(prestart)
       | ignoredLine
       | qi::eol
     )
-  ;
+;
 
   headers =
       qi::lit("Desired") > +token > -qi::eol

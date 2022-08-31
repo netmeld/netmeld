@@ -47,25 +47,25 @@ namespace netmeld::datastore::objects
     void
     Package::setName(const std::string& _name)
     {
-    packageName = _name;
+        packageName = _name;
     }
 
     void
     Package::setVersion(const std::string& _version)
     {
-    packageVersion = _version;
+        packageVersion = _version;
     }
 
     void
     Package::setArchitecture(const std::string& _architecture)
     {
-    packageArchitecture = _architecture;
+        packageArchitecture = _architecture;
     }
 
     void
     Package::setDescription(const std::string& _description)
     {
-    packageDescription = _description;
+        packageDescription = _description;
     }
 
     std::string

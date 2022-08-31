@@ -50,8 +50,8 @@ namespace netmeld::datastore::objects{
     private:
     protected:
     public:
-      Package();
-      explicit Package(const std::string&);
+        Package();
+        explicit Package(const std::string&);
 
     // =========================================================================
     // Methods
