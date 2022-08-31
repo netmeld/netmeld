@@ -41,11 +41,11 @@ Parser::Parser() : Parser::base_type(prestart)
 ;
 
   headers =
-      qi::lit("Desired") > +token > -qi::eol
-      > qi::lit("|") > +token > -qi::eol
-      > qi::lit("|/") > +token > -qi::eol
-      > qi::lit("||/") > +token > -qi::eol
-      > qi::lit("+++") > +token > -qi::eol
+    qi::lit("Desired") > +token > -qi::eol
+    > qi::lit("|") > +token > -qi::eol
+    > qi::lit("|/") > +token > -qi::eol
+    > qi::lit("||/") > +token > -qi::eol
+    > qi::lit("+++") > +token > -qi::eol
   ;
 
   packageLine =
@@ -78,11 +78,11 @@ Parser::Parser() : Parser::base_type(prestart)
 
   token =
     +qi::ascii::graph
-    ;
+  ;
 
   ignoredLine =
     (+token > -qi::eol) | +qi::eol
-    ;
+  ;
 
   //Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
