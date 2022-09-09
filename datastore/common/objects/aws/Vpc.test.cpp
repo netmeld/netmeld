@@ -24,104 +24,77 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
+
 #include <netmeld/datastore/objects/aws/Vpc.hpp>
 
+namespace nmdoa = netmeld::datastore::objects::aws;
 
-namespace netmeld::datastore::objects::aws {
 
-  Vpc::Vpc()
-  {}
+class TestVpc : public nmdoa::Vpc {
+  public:
+    TestVpc() : Vpc() {};
 
-  void
-  Vpc::setId(const std::string& _id)
+  public:
+    std::string getVpcId() const
+    { return vpcId; }
+
+    std::string getState() const
+    { return state; }
+
+    std::set<nmdoa::CidrBlock> getCidrBlocks() const
+    { return cidrBlocks; }
+};
+
+BOOST_AUTO_TEST_CASE(testConstructors)
+{
   {
-    vpcId = _id;
+    TestVpc tobj;
+
+    BOOST_TEST(tobj.getVpcId().empty());
+    BOOST_TEST(tobj.getState().empty());
+    BOOST_TEST(tobj.getCidrBlocks().empty());
   }
-  void
-  Vpc::setState(const std::string& _state)
+}
+
+BOOST_AUTO_TEST_CASE(testSetters)
+{
   {
-    state = _state;
+    TestVpc tobj;
+
+    const std::string tv1 {"aBc1@3"};
+    tobj.setId(tv1);
+    BOOST_TEST(tv1 == tobj.getVpcId());
   }
-  void
-  Vpc::addCidrBlock(const CidrBlock& _cidr)
   {
-    cidrBlocks.insert(_cidr);
+    TestVpc tobj;
+
+    const std::string tv1 {"aBc1@3"};
+    tobj.setState(tv1);
+    BOOST_TEST(tv1 == tobj.getState());
   }
-
-
-  bool
-  Vpc::isValid() const
   {
-    return !(vpcId.empty());
+    TestVpc tobj;
+
+    nmdoa::CidrBlock tv1;
+    tobj.addCidrBlock(tv1);
+    const auto cbs = tobj.getCidrBlocks();
+    BOOST_TEST(1 == cbs.size());
+    BOOST_TEST(cbs.contains(tv1));
   }
+}
 
-  void
-  Vpc::save(pqxx::transaction_base& t,
-            const nmco::Uuid& toolRunId, const std::string&)
+BOOST_AUTO_TEST_CASE(testValidity)
+{
   {
-    if (!isValid()) {
-      LOG_DEBUG << "AWS Vpc object is not saving: "
-                << toDebugString()
-                << std::endl;
-      return;
-    }
+    TestVpc tobj;
 
-    t.exec_prepared("insert_raw_aws_vpc"
-        , toolRunId
-        , vpcId
-      );
-
-    if (!state.empty()) {
-      t.exec_prepared("insert_raw_aws_vpc_detail"
-          , toolRunId
-          , vpcId
-          , state
-        );
-    }
-
-    for (auto cidr : cidrBlocks) {
-      cidr.save(t, toolRunId, vpcId);
-
-      t.exec_prepared("insert_raw_aws_vpc_cidr_block"
-          , toolRunId
-          , vpcId
-          , cidr.toString()
-          , state
-        );
-    }
-  }
-
-  std::string
-  Vpc::toDebugString() const
-  {
-    std::ostringstream oss;
-
-    oss << '['
-        << "vpcId: " << vpcId
-        << ", state: " << state
-        << ", cidrBlocks: " << cidrBlocks
-        << ']'
-        ;
-
-    return oss.str();
-  }
-
-  std::partial_ordering
-  Vpc::operator<=>(const Vpc& rhs) const
-  {
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
-      return cmp;
-    }
-
-    return cidrBlocks <=> rhs.cidrBlocks;
-  }
-
-  bool
-  Vpc::operator==(const Vpc& rhs) const
-  {
-    return 0 == operator<=>(rhs);
+    const std::string tv1 {"aBc1@3"};
+    
+    BOOST_TEST(!tobj.isValid());
+    tobj.setId(tv1);
+    BOOST_TEST(tobj.isValid());
   }
 }

@@ -28,60 +28,13 @@
 #define AWS_VPC_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/IpNetwork.hpp>
+#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
 
 
 namespace netmeld::datastore::objects::aws {
-
-
-  // -------------------------------------------------------------------------
-
-
-  class VpcCidrBlock : public nmdo::AbstractDatastoreObject {
-    // ========================================================================
-    // Variables
-    // ========================================================================
-    private: // Variables will probably rarely appear at this scope
-    protected: // Variables intended for internal/subclass API
-      nmdo::IpNetwork cidrBlock;
-      std::string state;
-      
-    public: // Variables should rarely appear at this scope
-
-    // ========================================================================
-    // Constructors
-    // ========================================================================
-    private: // Constructors which should be hidden from API users
-    protected: // Constructors part of subclass API
-    public: // Constructors part of public API
-      VpcCidrBlock();
-
-    // ========================================================================
-    // Methods
-    // ========================================================================
-    private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-    public: // Methods part of public API
-      void setCidrBlock(const std::string&);
-      void setState(const std::string&);
-
-      bool isValid() const override;
-
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-
-      std::string toDebugString() const override;
-
-      std::partial_ordering operator<=>(const VpcCidrBlock&) const;
-      bool operator==(const VpcCidrBlock&) const;
-  };
-
-
-  // -------------------------------------------------------------------------
-
 
   class Vpc : public nmdo::AbstractDatastoreObject {
     // ========================================================================
@@ -92,7 +45,7 @@ namespace netmeld::datastore::objects::aws {
       std::string vpcId;
       std::string state;
 
-      std::set<VpcCidrBlock> cidrBlocks;
+      std::set<CidrBlock> cidrBlocks;
 
     public: // Variables should rarely appear at this scope
 
@@ -112,12 +65,12 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setId(const std::string&);
       void setState(const std::string&);
-      void addCidrBlock(const VpcCidrBlock&);
+      void addCidrBlock(const CidrBlock&);
 
       bool isValid() const override;
 
       void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
+                const nmco::Uuid&, const std::string& = "") override;
 
       std::string toDebugString() const override;
 

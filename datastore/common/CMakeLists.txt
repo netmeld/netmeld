@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -55,9 +55,13 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/Vlan.cpp
     ./objects/Vrf.cpp
 
+    ./objects/aws/Attachment.cpp
+    ./objects/aws/CidrBlock.cpp
     ./objects/aws/Instance.cpp
-    ./objects/aws/RouteTable.cpp
     ./objects/aws/NetworkAcl.cpp
+    ./objects/aws/NetworkInterface.cpp
+    ./objects/aws/Route.cpp
+    ./objects/aws/RouteTable.cpp
     ./objects/aws/SecurityGroup.cpp
     ./objects/aws/Subnet.cpp
     ./objects/aws/Vpc.cpp

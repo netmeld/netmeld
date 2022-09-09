@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -48,4 +48,10 @@ foreach(ITEM
   target_link_libraries(${TGT_TEST}
       netmeld-datastore
     )
+endforeach()
+
+foreach(ITEM
+    aws
+  )
+  target_as_library(${ITEM}) # No extra lib create; solely for namespacing
 endforeach()

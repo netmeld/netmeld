@@ -24,11 +24,11 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_SUBNET_HPP
-#define AWS_SUBNET_HPP
+#ifndef AWS_CIDR_BLOCK_HPP
+#define AWS_CIDR_BLOCK_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
+#include <netmeld/datastore/objects/IpNetwork.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
@@ -36,20 +36,16 @@ namespace nmdo = netmeld::datastore::objects;
 
 namespace netmeld::datastore::objects::aws {
 
-  class Subnet : public nmdo::AbstractDatastoreObject {
+  class CidrBlock : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string subnetId;
-
-      std::set<CidrBlock> cidrBlocks;
-      std::string vpcId;
-      std::string availabilityZone;
-
+      std::string cidrBlock;
+      std::string state;
+      
     public: // Variables should rarely appear at this scope
-
 
     // ========================================================================
     // Constructors
@@ -57,8 +53,8 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      Subnet();
-
+      CidrBlock();
+      explicit CidrBlock(const std::string&);
 
     // ========================================================================
     // Methods
@@ -66,20 +62,19 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setAvailabilityZone(const std::string&);
-      void setId(const std::string&);
-      void setVpcId(const std::string&);
-      void addCidrBlock(const std::string&);
+      void setCidrBlock(const std::string&);
+      void setState(const std::string&);
 
       bool isValid() const override;
 
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string& = "") override;
 
+      std::string toString() const;
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const Subnet&) const;
-      bool operator==(const Subnet&) const;
+      std::partial_ordering operator<=>(const CidrBlock&) const;
+      bool operator==(const CidrBlock&) const;
   };
 }
-#endif // AWS_SUBNET_HPP
+#endif // AWS_CIDR_BLOCK_HPP

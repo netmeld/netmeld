@@ -29,10 +29,6 @@
 
 namespace netmeld::datastore::objects::aws {
 
-
-  // -------------------------------------------------------------------------
-
-
   Subnet::Subnet()
   {}
 
@@ -54,24 +50,19 @@ namespace netmeld::datastore::objects::aws {
   void
   Subnet::addCidrBlock(const std::string& _cidrBlock)
   {
-    nmdo::IpNetwork cb {_cidrBlock};
-    cb.setReason("AWS Subnet CidrBlock");
-
-    cidrBlocks.insert(cb);
+    cidrBlocks.emplace(_cidrBlock);
   }
 
   bool
   Subnet::isValid() const
   {
-    // TODO
-    return !(subnetId.empty() || vpcId.empty() || availabilityZone.empty())
-        && (cidrBlocks.size() > 0)
+    return !(subnetId.empty())
         ;
   }
 
   void
   Subnet::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string& deviceId)
+                    const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS Subnet object is not saving: " << toDebugString()
@@ -83,33 +74,41 @@ namespace netmeld::datastore::objects::aws {
         , toolRunId
         , subnetId
       );
+    
+    bool hasDetails {
+        !(availabilityZone.empty())
+      };
 
-    t.exec_prepared("insert_raw_aws_subnet_detail"
-        , toolRunId
-        , subnetId
-        , availabilityZone
-      );
+    if (hasDetails) {
+      t.exec_prepared("insert_raw_aws_subnet_detail"
+          , toolRunId
+          , subnetId
+          , availabilityZone
+        );
+    }
 
-    for (auto ip : cidrBlocks) {
-      ip.save(t, toolRunId, subnetId);
+    for (auto cb : cidrBlocks) {
+      cb.save(t, toolRunId, subnetId);
 
       t.exec_prepared("insert_raw_aws_subnet_cidr_block"
           , toolRunId
           , subnetId
-          , ip.toString()
+          , cb.toString()
         );
     }
 
-    t.exec_prepared("insert_raw_aws_vpc"
-        , toolRunId
-        , vpcId
-      );
+    if (!vpcId.empty()) {
+      t.exec_prepared("insert_raw_aws_vpc"
+          , toolRunId
+          , vpcId
+        );
 
-    t.exec_prepared("insert_raw_aws_vpc_subnet"
-        , toolRunId
-        , vpcId
-        , subnetId
-      );
+      t.exec_prepared("insert_raw_aws_vpc_subnet"
+          , toolRunId
+          , vpcId
+          , subnetId
+        );
+    }
   }
 
   std::string

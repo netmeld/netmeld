@@ -28,60 +28,12 @@
 #define AWS_ROUTE_TABLE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/IpNetwork.hpp>
+#include <netmeld/datastore/objects/aws/Route.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 
 
 namespace netmeld::datastore::objects::aws {
-
-  class Route : public nmdo::AbstractDatastoreObject {
-    // ========================================================================
-    // Variables
-    // ========================================================================
-    private: // Variables will probably rarely appear at this scope
-    protected: // Variables intended for internal/subclass API
-      std::string routeId;
-      std::string state;
-
-      std::set<nmdo::IpNetwork> cidrBlocks;
-
-    public: // Variables should rarely appear at this scope
-
-
-    // ========================================================================
-    // Constructors
-    // ========================================================================
-    private: // Constructors which should be hidden from API users
-    protected: // Constructors part of subclass API
-    public: // Constructors part of public API
-      Route();
-
-
-    // ========================================================================
-    // Methods
-    // ========================================================================
-    private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-    public: // Methods part of public API
-      void setId(const std::string&);
-      void setState(const std::string&);
-      void addCidrBlock(const std::string&);
-
-      bool isValid() const override;
-
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-
-      std::string toDebugString() const override;
-
-      std::partial_ordering operator<=>(const Route&) const;
-      bool operator==(const Route&) const;
-  };
-
-
-  // ------------------------------------------------------------------------
-
 
   class RouteTable : public nmdo::AbstractDatastoreObject {
     // ========================================================================
@@ -90,10 +42,11 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       std::string routeTableId;
+
       std::string vpcId;
 
       std::set<std::string> associations;
-      std::set<Route> routes;
+      std::set<Route>       routes;
 
     public: // Variables should rarely appear at this scope
 
@@ -121,7 +74,7 @@ namespace netmeld::datastore::objects::aws {
       bool isValid() const override;
 
       void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
+                const nmco::Uuid&, const std::string& = "") override;
 
       std::string toDebugString() const override;
 

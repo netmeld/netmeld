@@ -175,13 +175,7 @@ namespace netmeld::datastore::objects::aws {
   bool
   SecurityGroup::isValid() const
   {
-    // TODO
-    return !(   sgId.empty()
-             || name.empty()
-             || description.empty()
-             || vpcId.empty()
-            )
-        && (rules.size() > 0)
+    return !(sgId.empty())
         ;
   }
 
@@ -190,7 +184,8 @@ namespace netmeld::datastore::objects::aws {
                       const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AWS SecurityGroup object is not saving: " << toDebugString()
+      LOG_DEBUG << "AWS SecurityGroup object is not saving: "
+                << toDebugString()
                 << std::endl;
       return;
     }
@@ -200,27 +195,35 @@ namespace netmeld::datastore::objects::aws {
         , sgId
       );
 
-    t.exec_prepared("insert_raw_aws_security_group_detail"
-        , toolRunId
-        , sgId
-        , name
-        , description
-      );
+    bool hasDetails {
+        !(name.empty() || description.empty())
+      };
+
+    if (hasDetails) {
+      t.exec_prepared("insert_raw_aws_security_group_detail"
+          , toolRunId
+          , sgId
+          , name
+          , description
+        );
+    }
 
     for (auto rule : rules) {
       rule.save(t, toolRunId, sgId);
     }
 
-    t.exec_prepared("insert_raw_aws_vpc"
-        , toolRunId
-        , vpcId
-      );
+    if (!vpcId.empty()) {
+      t.exec_prepared("insert_raw_aws_vpc"
+          , toolRunId
+          , vpcId
+        );
 
-    t.exec_prepared("insert_raw_aws_vpc_security_group"
-        , toolRunId
-        , vpcId
-        , sgId
-      );
+      t.exec_prepared("insert_raw_aws_vpc_security_group"
+          , toolRunId
+          , vpcId
+          , sgId
+        );
+    }
   }
 
   std::string

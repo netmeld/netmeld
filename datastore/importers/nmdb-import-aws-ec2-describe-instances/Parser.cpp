@@ -27,6 +27,7 @@
 #include "Parser.hpp"
 
 #include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/aws/Attachment.hpp>
 
 // =============================================================================
 // Parser logic
@@ -116,7 +117,7 @@ void
 Parser::processInterfaceAttachments(const json& _attachment,
                                     nmdoa::NetworkInterface& _iface)
 {
-  nmdoa::NetworkInterfaceAttachment ania;
+  nmdoa::Attachment ania;
   ania.setId(_attachment.value("AttachmentId", ""));
   ania.setStatus(_attachment.value("Status", ""));
   if (_attachment.at("DeleteOnTermination")) {

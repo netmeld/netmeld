@@ -29,88 +29,67 @@
 
 namespace netmeld::datastore::objects::aws {
 
-  RouteTable::RouteTable()
+  Route::Route()
   {}
 
   void
-  RouteTable::setId(const std::string& _id)
+  Route::setId(const std::string& _id)
   {
-    routeTableId = _id;
+    typeId = _id;
   }
   void
-  RouteTable::setVpcId(const std::string& _id)
+  Route::setState(const std::string& _state)
   {
-    vpcId = _id;
+    state = _state;
   }
   void
-  RouteTable::addAssociation(const std::string& _association)
+  Route::addCidrBlock(const std::string& _cidrBlock)
   {
-    associations.insert(_association);
-  }
-  void
-  RouteTable::addRoute(const Route& _route)
-  {
-    routes.insert(_route);
+    nmdo::IpNetwork cb {_cidrBlock};
+    cb.setReason("AWS Route CidrBlock");
+
+    cidrBlocks.insert(cb);
   }
 
   bool
-  RouteTable::isValid() const
+  Route::isValid() const
   {
-    return !(routeTableId.empty())
+    return !(typeId.empty())
         ;
   }
 
   void
-  RouteTable::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string&)
+  Route::save(pqxx::transaction_base& t,
+                    const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AWS RouteTable object is not saving: " << toDebugString()
+      LOG_DEBUG << "AWS Route object is not saving: " << toDebugString()
                 << std::endl;
       return;
     }
 
-    t.exec_prepared("insert_raw_aws_route_table"
-        , toolRunId
-        , routeTableId
-      );
+    for (auto ip : cidrBlocks) {
+      ip.save(t, toolRunId, deviceId);
 
-    for (const auto& association : associations) {
-      t.exec_prepared("insert_raw_aws_route_table_association"
+      t.exec_prepared("insert_raw_aws_route_table_route"
           , toolRunId
-          , routeTableId
-          , association
-        );
-    }
-
-    for (auto route : routes) {
-      route.save(t, toolRunId, routeTableId);
-    }
-
-    if (!vpcId.empty()) {
-      t.exec_prepared("insert_raw_aws_vpc"
-          , toolRunId
-          , vpcId
-        );
-
-      t.exec_prepared("insert_raw_aws_vpc_route_table"
-          , toolRunId
-          , vpcId
-          , routeTableId
+          , deviceId
+          , typeId
+          , state
+          , ip.toString()
         );
     }
   }
 
   std::string
-  RouteTable::toDebugString() const
+  Route::toDebugString() const
   {
     std::ostringstream oss;
 
     oss << '['
-        << "routeTableId: " << routeTableId
-        << ", vpcId: " << vpcId
-        << ", associations: " << associations
-        << ", routes: " << routes
+        << "typeId: " << typeId
+        << ", state: " << state
+        << ", cidrBlocks: " << cidrBlocks
         << ']'
         ;
 
@@ -118,23 +97,20 @@ namespace netmeld::datastore::objects::aws {
   }
 
   std::partial_ordering
-  RouteTable::operator<=>(const RouteTable& rhs) const
+  Route::operator<=>(const Route& rhs) const
   {
-    if (auto cmp = routeTableId <=> rhs.routeTableId; 0 != cmp) {
+    if (auto cmp = typeId <=> rhs.typeId; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = associations <=> rhs.associations; 0 != cmp) {
+    if (auto cmp = state <=> rhs.state; 0 != cmp) {
       return cmp;
     }
 
-    return routes <=> rhs.routes;
+    return cidrBlocks <=> rhs.cidrBlocks;
   }
 
   bool
-  RouteTable::operator==(const RouteTable& rhs) const
+  Route::operator==(const Route& rhs) const
   {
     return 0 == operator<=>(rhs);
   }

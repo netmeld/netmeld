@@ -24,72 +24,72 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "Parser.hpp"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
 #include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
-// =============================================================================
-// Parser logic
-// =============================================================================
-Parser::Parser()
-{}
+namespace nmdoa = netmeld::datastore::objects::aws;
 
-void
-Parser::fromJson(const json& _data)
+
+class TestCidrBlock : public nmdoa::CidrBlock {
+  public:
+    TestCidrBlock() : CidrBlock() {};
+    TestCidrBlock(const std::string& _cidr) : CidrBlock(_cidr) {};
+
+  public:
+    std::string getCidrBlock() const
+    { return cidrBlock; }
+
+    std::string getState() const
+    { return state; }
+};
+
+BOOST_AUTO_TEST_CASE(testConstructors)
 {
-  try {
-    for (const auto& vpc : _data.at("Vpcs")) {
-      processVpcs(vpc);
-    }
-  } catch (json::out_of_range& ex) {
-    LOG_ERROR << "Parse error " << ex.what() << std::endl;
+  {
+    TestCidrBlock tobj;
+
+    BOOST_TEST(tobj.getCidrBlock().empty());
+    BOOST_TEST(tobj.getState().empty());
+  }
+  {
+    const std::string tv1 {"1.2.3.4/24"};
+    TestCidrBlock tobj {tv1};
+
+    BOOST_TEST(tv1 == tobj.getCidrBlock());
+    BOOST_TEST(tobj.getState().empty());
   }
 }
 
-
-// TODO https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/describe-vpcs.html
-
-void
-Parser::processVpcs(const json& _vpc)
+BOOST_AUTO_TEST_CASE(testSetters)
 {
-  nmdoa::Vpc avpc;
-  avpc.setId(_vpc.value("VpcId", ""));
-  avpc.setState(_vpc.value("State", ""));
+  {
+    TestCidrBlock tobj;
 
-  processCidrBlockAssociationSet(_vpc, avpc);
+    const std::string tv1 {"1.2.3.4/24"};
+    tobj.setCidrBlock(tv1);
+    BOOST_TEST(tv1 == tobj.getCidrBlock());
+  }
+  {
+    TestCidrBlock tobj;
 
-  d.vpcs.emplace_back(avpc);
-}
-
-void
-Parser::processCidrBlockAssociationSet(const json& _cbas, nmdoa::Vpc& _avpc)
-{
-  std::vector<std::string> blockNames {
-      "CidrBlockAssociationSet",
-      "Ipv6CidrBlockAssociationSet"
-    };
-  for (const auto& blockName : blockNames) {
-    if (!_cbas.contains(blockName)) {
-      continue;
-    }
-
-    for (const auto& cbas : _cbas.at(blockName)) {
-      nmdoa::CidrBlock avcb;
-      avcb.setCidrBlock(cbas.value("CidrBlock", ""));
-      avcb.setState(cbas.at("CidrBlockState").value("State", ""));
-
-      _avpc.addCidrBlock(avcb);
-    }
+    const std::string tv1 {"aBc1@3"};
+    tobj.setState(tv1);
+    BOOST_TEST(tv1 == tobj.getState());
   }
 }
 
-// =============================================================================
-// Parser helper methods
-// =============================================================================
-Result
-Parser::getData()
+BOOST_AUTO_TEST_CASE(testValidity)
 {
-  Result r;
-  r.emplace_back(d);
-  return r;
+  {
+    TestCidrBlock tobj;
+
+    const std::string tv1 {"1.2.3.4/24"};
+    
+    BOOST_TEST(!tobj.isValid());
+    tobj.setCidrBlock(tv1);
+    BOOST_TEST(tobj.isValid());
+  }
 }

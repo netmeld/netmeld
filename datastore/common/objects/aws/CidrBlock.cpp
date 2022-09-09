@@ -24,117 +24,93 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/aws/RouteTable.hpp>
+#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
 
 namespace netmeld::datastore::objects::aws {
 
-  RouteTable::RouteTable()
+  CidrBlock::CidrBlock()
   {}
 
-  void
-  RouteTable::setId(const std::string& _id)
+  CidrBlock::CidrBlock(const std::string& _cidr)
   {
-    routeTableId = _id;
-  }
-  void
-  RouteTable::setVpcId(const std::string& _id)
-  {
-    vpcId = _id;
-  }
-  void
-  RouteTable::addAssociation(const std::string& _association)
-  {
-    associations.insert(_association);
-  }
-  void
-  RouteTable::addRoute(const Route& _route)
-  {
-    routes.insert(_route);
+    setCidrBlock(_cidr);
   }
 
-  bool
-  RouteTable::isValid() const
+  void
+  CidrBlock::setCidrBlock(const std::string& _cidr)
   {
-    return !(routeTableId.empty())
+    cidrBlock = _cidr;
+//    cidrBlock = nmdo::IpNetwork(_cidr);
+//    cidrBlock.setReason("AWS CidrBlock");
+  }
+  void
+  CidrBlock::setState(const std::string& _state)
+  {
+    state = _state;
+  }
+
+
+  bool
+  CidrBlock::isValid() const
+  {
+    return !(cidrBlock.empty())
         ;
   }
 
   void
-  RouteTable::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string&)
+  CidrBlock::save(pqxx::transaction_base& t,
+                  const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AWS RouteTable object is not saving: " << toDebugString()
+      LOG_DEBUG << "AWS CidrBlock object is not saving: " << toDebugString()
                 << std::endl;
       return;
     }
 
-    t.exec_prepared("insert_raw_aws_route_table"
+    t.exec_prepared("insert_raw_aws_cidr_block"
         , toolRunId
-        , routeTableId
+        , cidrBlock
+        , state
       );
 
-    for (const auto& association : associations) {
-      t.exec_prepared("insert_raw_aws_route_table_association"
-          , toolRunId
-          , routeTableId
-          , association
-        );
-    }
+    // TODO save as IP-net/addr
+    //cidrBlock.save(t, toolRunId, deviceId);
 
-    for (auto route : routes) {
-      route.save(t, toolRunId, routeTableId);
-    }
-
-    if (!vpcId.empty()) {
-      t.exec_prepared("insert_raw_aws_vpc"
-          , toolRunId
-          , vpcId
-        );
-
-      t.exec_prepared("insert_raw_aws_vpc_route_table"
-          , toolRunId
-          , vpcId
-          , routeTableId
-        );
-    }
   }
 
   std::string
-  RouteTable::toDebugString() const
+  CidrBlock::toDebugString() const
   {
     std::ostringstream oss;
 
     oss << '['
-        << "routeTableId: " << routeTableId
-        << ", vpcId: " << vpcId
-        << ", associations: " << associations
-        << ", routes: " << routes
+        << "cidrBlock: " << cidrBlock
+        << ", state: " << state
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
-  RouteTable::operator<=>(const RouteTable& rhs) const
+  std::string
+  CidrBlock::toString() const
   {
-    if (auto cmp = routeTableId <=> rhs.routeTableId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = associations <=> rhs.associations; 0 != cmp) {
+    return cidrBlock;
+  }
+
+  std::partial_ordering
+  CidrBlock::operator<=>(const CidrBlock& rhs) const
+  {
+    if (auto cmp = cidrBlock <=> rhs.cidrBlock; 0 != cmp) {
       return cmp;
     }
 
-    return routes <=> rhs.routes;
+    return state <=> rhs.state;
   }
 
   bool
-  RouteTable::operator==(const RouteTable& rhs) const
+  CidrBlock::operator==(const CidrBlock& rhs) const
   {
     return 0 == operator<=>(rhs);
   }

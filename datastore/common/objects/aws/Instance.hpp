@@ -28,134 +28,15 @@
 #define AWS_INSTANCE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/Interface.hpp>
-#include <netmeld/datastore/objects/MacAddress.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/aws/NetworkInterface.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
 
 
-// TODO Rethink usage of base class choice over field usage
-
-
 namespace netmeld::datastore::objects::aws {
 
-
-  // -------------------------------------------------------------------------
-
-
-  class NetworkInterfaceAttachment : public nmdo::AbstractDatastoreObject {
-    // ========================================================================
-    // Variables
-    // ========================================================================
-    private: // Variables will probably rarely appear at this scope
-    protected: // Variables intended for internal/subclass API
-      std::string attachmentId;
-      std::string status;
-      bool deleteOnTermination  {false};
-
-    public: // Variables should rarely appear at this scope
-
-    // ========================================================================
-    // Constructors
-    // ========================================================================
-    private: // Constructors which should be hidden from API users
-    protected: // Constructors part of subclass API
-    public: // Constructors part of public API
-      NetworkInterfaceAttachment();
-
-    // ========================================================================
-    // Methods
-    // ========================================================================
-    private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-    public: // Methods part of public API
-      void setId(const std::string&);
-      void setStatus(const std::string&);
-      void enableDeleteOnTermination();
-      void disableDeleteOnTermination();
-
-      bool isValid() const override;
-
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-
-      std::string toDebugString() const override;
-
-      std::partial_ordering operator<=>(const NetworkInterfaceAttachment&) const;
-      bool operator==(const NetworkInterfaceAttachment&) const;
-  };
-
-
-  // -------------------------------------------------------------------------
-
-
-  class NetworkInterface : public nmdo::Interface {
-    // ========================================================================
-    // Variables
-    // ========================================================================
-    private: // Variables will probably rarely appear at this scope
-    protected: // Variables intended for internal/subclass API
-      std::string interfaceId;
-
-      std::string type;
-      std::string description;  // TODO
-      bool sourceDestinationCheck {false};
-      std::string status;
-      std::string subnetId;
-      std::string vpcId;
-
-      NetworkInterfaceAttachment attachment;
-
-      std::set<std::string> securityGroups;
-
-    public: // Variables should rarely appear at this scope
-
-    // ========================================================================
-    // Constructors
-    // ========================================================================
-    private: // Constructors which should be hidden from API users
-    protected: // Constructors part of subclass API
-    public: // Constructors part of public API
-      NetworkInterface();
-
-    // ========================================================================
-    // Methods
-    // ========================================================================
-    private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-    public: // Methods part of public API
-      void setId(const std::string&);
-      void setDescription(const std::string&);
-      void setType(const std::string&);
-      void setStatus(const std::string&);
-      void enableSourceDestinationCheck();
-      void disableSourceDestinationCheck();
-      void setAttachment(const NetworkInterfaceAttachment&);
-      void setMacAddress(const std::string&);
-      void addIpAddress(const nmdo::IpAddress&);
-      void setSubnetId(const std::string&);
-      void setVpcId(const std::string&);
-      void addSecurityGroup(const std::string&);
-
-      bool isValid() const override;
-
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-
-      std::string toDebugString() const override;
-
-      std::partial_ordering operator<=>(const NetworkInterface&) const;
-      bool operator==(const NetworkInterface&) const;
-  };
-
-
-  // -------------------------------------------------------------------------
-
-
-  class Instance : public nmdo::DeviceInformation {
+  class Instance : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
@@ -166,7 +47,7 @@ namespace netmeld::datastore::objects::aws {
       std::string type;
       std::string imageId;
       std::string availabilityZone;
-      uint16_t stateCode;
+      uint16_t stateCode  {0};
       std::string stateName;
 
       std::set<NetworkInterface> interfaces;

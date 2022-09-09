@@ -24,29 +24,27 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_SUBNET_HPP
-#define AWS_SUBNET_HPP
+#ifndef AWS_ROUTE_HPP
+#define AWS_ROUTE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
-
+#include <netmeld/datastore/objects/IpNetwork.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 
 
 namespace netmeld::datastore::objects::aws {
 
-  class Subnet : public nmdo::AbstractDatastoreObject {
+  class Route : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string subnetId;
+      std::string typeId;
+      std::string state;
 
-      std::set<CidrBlock> cidrBlocks;
-      std::string vpcId;
-      std::string availabilityZone;
+      std::set<nmdo::IpNetwork> cidrBlocks; // TODO can be a list
 
     public: // Variables should rarely appear at this scope
 
@@ -57,7 +55,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      Subnet();
+      Route();
 
 
     // ========================================================================
@@ -66,20 +64,19 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setAvailabilityZone(const std::string&);
       void setId(const std::string&);
-      void setVpcId(const std::string&);
+      void setState(const std::string&);
       void addCidrBlock(const std::string&);
 
       bool isValid() const override;
 
       void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string& = "") override;
+                const nmco::Uuid&, const std::string&) override;
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const Subnet&) const;
-      bool operator==(const Subnet&) const;
+      std::partial_ordering operator<=>(const Route&) const;
+      bool operator==(const Route&) const;
   };
 }
-#endif // AWS_SUBNET_HPP
+#endif // AWS_ROUTE_HPP

@@ -27,6 +27,14 @@
 BEGIN TRANSACTION;
 
 -- ----------------------------------------------------------------------
+-- AWS Logic
+-- ----------------------------------------------------------------------
+-- Generic view of data flow and guard points; for reference.
+--  Instance <-> Network Interface <-> Security Group <-> Network ACL <-> Route Table
+--               |- Subnet ->
+--  |- VPC -> (hooked at all levels)
+
+-- ----------------------------------------------------------------------
 -- AWS base service/components
 -- ----------------------------------------------------------------------
 
@@ -232,9 +240,8 @@ CREATE TABLE raw_aws_network_acl_rules (
     , action                        TEXT  NOT NULL
     , protocol                      TEXT  NOT NULL
     , cidr_block                    INET  NOT NULL
-    -- , PRIMARY KEY (tool_run_id, network_acl_id, egress, rule_number,
-    --                action, protocol, cidr_block)
     , PRIMARY KEY (tool_run_id, network_acl_id, egress, rule_number)
+    --                action, protocol, cidr_block) -- 
     , FOREIGN KEY (tool_run_id, network_acl_id)
         REFERENCES raw_aws_network_acls(tool_run_id, network_acl_id)
         ON DELETE CASCADE

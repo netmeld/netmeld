@@ -24,11 +24,13 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_SUBNET_HPP
-#define AWS_SUBNET_HPP
+#ifndef AWS_NETWORK_INTERFACE_HPP
+#define AWS_NETWORK_INTERFACE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/MacAddress.hpp>
+#include <netmeld/datastore/objects/aws/Attachment.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
@@ -36,20 +38,29 @@ namespace nmdo = netmeld::datastore::objects;
 
 namespace netmeld::datastore::objects::aws {
 
-  class Subnet : public nmdo::AbstractDatastoreObject {
+  class NetworkInterface : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string subnetId;
+      std::string interfaceId;
 
-      std::set<CidrBlock> cidrBlocks;
+      std::string type;
+      std::string description;  // TODO
+      bool sourceDestinationCheck {false};
+      std::string status;
+      bool isUp {false};
+      std::string subnetId;
       std::string vpcId;
-      std::string availabilityZone;
+
+      Attachment attachment;
+
+      std::set<std::string> securityGroups;
+
+      nmdo::MacAddress macAddr;
 
     public: // Variables should rarely appear at this scope
-
 
     // ========================================================================
     // Constructors
@@ -57,8 +68,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      Subnet();
-
+      NetworkInterface();
 
     // ========================================================================
     // Methods
@@ -66,20 +76,31 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setAvailabilityZone(const std::string&);
       void setId(const std::string&);
+      
+      void setAttachment(const Attachment&);
+      void setDescription(const std::string&);
+      void setMacAddress(const std::string&);
+      void setStatus(const std::string&);
+      void setSubnetId(const std::string&);
+      void setType(const std::string&);
       void setVpcId(const std::string&);
-      void addCidrBlock(const std::string&);
+      
+      void disableSourceDestinationCheck();
+      void enableSourceDestinationCheck();
+
+      void addIpAddress(const nmdo::IpAddress&);
+      void addSecurityGroup(const std::string&);
 
       bool isValid() const override;
 
       void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string& = "") override;
+                const nmco::Uuid&, const std::string&) override;
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const Subnet&) const;
-      bool operator==(const Subnet&) const;
+      std::partial_ordering operator<=>(const NetworkInterface&) const;
+      bool operator==(const NetworkInterface&) const;
   };
 }
-#endif // AWS_SUBNET_HPP
+#endif // AWS_NETWORK_INTERFACE_HPP
