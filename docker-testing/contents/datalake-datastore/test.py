@@ -29,7 +29,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-brocade", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-brocade", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input":  bytes("", "ascii")
         }
     )
@@ -37,9 +37,9 @@ def main():
 
     commands.append(
         {
-            "args": ["nmdb-import-brocade-show-ip-route", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-brocade-show-ip-route", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii"),
-            "return": [1]
+            "return": [0]
         }
     )
 
@@ -47,7 +47,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-cisco", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-cisco", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -55,7 +55,7 @@ def main():
     
     commands.append(
         {
-            "args": ["nmdb-import-cisco-show-ip-route", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-cisco-show-ip-route", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -64,37 +64,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-cisco-wireless", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-    
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-clw", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-dig", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-f5-json", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-cisco-wireless", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -104,7 +74,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-hosts", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-clw", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -114,7 +84,37 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-ipconfig", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-dig", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-f5-json", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+    
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-hosts", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-ipconfig", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -122,7 +122,7 @@ def main():
     
     commands.append(
         {
-            "args": ["nmdb-import-ip-addr-show", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-ip-addr-show", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -131,51 +131,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-ip-route-show", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-iptables-save", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-
-    commands.append(
-        {
-            "args": ["nmdb-import-juniper-conf", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-juniper-set", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-
-    commands.append(
-        {
-            "args": ["nmdb-import-juniper-show-route", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-juniper-xml", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-ip-route-show", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -185,7 +141,41 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-nessus", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-iptables-save", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+
+    commands.append(
+        {
+            "args": ["nmdb-import-juniper-conf", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-juniper-set", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+
+    commands.append(
+        {
+            "args": ["nmdb-import-juniper-show-route", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-juniper-xml", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -195,7 +185,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-nmap", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-nessus", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -205,7 +195,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-paloalto-xml", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-nmap", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -215,7 +205,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-pcap", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-paloalto-xml", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -225,7 +215,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-ping", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-pcap", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -235,7 +225,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-powerconnect", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-ping", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -245,7 +235,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-show-cdp-neighbor", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-powerconnect", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -255,41 +245,7 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-show-inventory", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-
-    commands.append(
-        {
-            "args": ["nmdb-import-show-mac-address-table", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-show-neighbor", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-    """
-
-    commands.append(
-        {
-            "args": ["nmdb-import-traceroute", db_args, db_name, device_id, blank_filename], 
-            "input": bytes("", "ascii")
-        }
-    )
-
-    """
-    Does not accept empty input
-    commands.append(
-        {
-            "args": ["nmdb-import-tshark", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-show-cdp-neighbor", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -299,7 +255,51 @@ def main():
     Does not accept empty input
     commands.append(
         {
-            "args": ["nmdb-import-vyos", db_args, db_name, device_id, blank_filename], 
+            "args": ["nmdb-import-show-inventory", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+
+    commands.append(
+        {
+            "args": ["nmdb-import-show-mac-address-table", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-show-neighbor", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+
+    commands.append(
+        {
+            "args": ["nmdb-import-traceroute", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-tshark", db_args, db_name, device_id, "--pipe", blank_filename], 
+            "input": bytes("", "ascii")
+        }
+    )
+    """
+
+    """
+    Does not accept empty input
+    commands.append(
+        {
+            "args": ["nmdb-import-vyos", db_args, db_name, device_id, "--pipe", blank_filename], 
             "input": bytes("", "ascii")
         }
     )
@@ -343,14 +343,13 @@ def main():
     res = True
 
     for command in commands:
-        with open(blank_filename, "w") as blank_file:
-            blank_file.write("")
-            blank_file.flush()
         print()
         res = run_command(**command) and res
         print()
-
-    os.remove(blank_filename)
+        try:
+            os.remove(blank_filename)
+        except OSError as error:
+            pass
 
     if res:
         print("All commands returned expected values")
