@@ -1,8 +1,6 @@
 FROM netmeld-test-base
 
-ENV NETMELD_DB netmeld_test_export
-
-USER root
+ENV NETMELD_DB netmeld_test_fetchers
 
 WORKDIR /home/netmeld/setup
 
@@ -14,4 +12,6 @@ WORKDIR /home/netmeld
 
 RUN rm -rf ./setup
 
-USER netmeld
+WORKDIR /home/netmeld/contents/fetchers
+
+CMD ["./test.py"]
