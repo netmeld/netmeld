@@ -28,7 +28,7 @@
 #define AWS_ROUTE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/IpNetwork.hpp>
+#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 
@@ -44,7 +44,8 @@ namespace netmeld::datastore::objects::aws {
       std::string typeId;
       std::string state;
 
-      std::set<nmdo::IpNetwork> cidrBlocks; // TODO can be a list
+      std::set<CidrBlock> cidrBlocks;
+      std::set<std::string> nonCidrBlocks;
 
     public: // Variables should rarely appear at this scope
 
@@ -67,6 +68,7 @@ namespace netmeld::datastore::objects::aws {
       void setId(const std::string&);
       void setState(const std::string&);
       void addCidrBlock(const std::string&);
+      void addNonCidrBlock(const std::string&);
 
       bool isValid() const override;
 

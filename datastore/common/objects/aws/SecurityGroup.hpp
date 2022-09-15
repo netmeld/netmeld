@@ -28,66 +28,13 @@
 #define AWS_SECURITY_GROUP_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/aws/SecurityGroupRule.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
 
 
 namespace netmeld::datastore::objects::aws {
-
-  class SecurityGroupRule : public nmdo::AbstractDatastoreObject {
-    // ========================================================================
-    // Variables
-    // ========================================================================
-    private: // Variables will probably rarely appear at this scope
-    protected: // Variables intended for internal/subclass API
-      std::string protocol;
-      std::int32_t fromPort {INT32_MIN};
-      std::int32_t toPort   {INT32_MIN};
-
-      std::set<nmdo::IpAddress> ipAddrs;
-
-      bool egress {false};
-
-    public: // Variables should rarely appear at this scope
-
-
-    // ========================================================================
-    // Constructors
-    // ========================================================================
-    private: // Constructors which should be hidden from API users
-    protected: // Constructors part of subclass API
-    public: // Constructors part of public API
-      SecurityGroupRule();
-
-
-    // ========================================================================
-    // Methods
-    // ========================================================================
-    private: // Methods which should be hidden from API users
-    protected: // Methods part of subclass API
-    public: // Methods part of public API
-      void setProtocol(const std::string&);
-      void setFromPort(std::int32_t);
-      void setToPort(std::int32_t);
-      void setEgress();
-      void addIpRange(const nmdo::IpAddress&);
-
-      bool isValid() const override;
-
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-
-      std::string toDebugString() const override;
-
-      std::partial_ordering operator<=>(const SecurityGroupRule&) const;
-      bool operator==(const SecurityGroupRule&) const;
-  };
-
-
-  // -------------------------------------------------------------------------
-
 
   class SecurityGroup : public nmdo::AbstractDatastoreObject {
     // ========================================================================

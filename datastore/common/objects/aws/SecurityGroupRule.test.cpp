@@ -28,87 +28,140 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/datastore/objects/aws/Route.hpp>
+#include <netmeld/datastore/objects/aws/SecurityGroupRule.hpp>
 
 namespace nmdoa = netmeld::datastore::objects::aws;
 
 
-class TestRoute : public nmdoa::Route {
+class TestSecurityGroupRule : public nmdoa::SecurityGroupRule {
   public:
-    TestRoute() : Route() {};
+    TestSecurityGroupRule() : SecurityGroupRule() {};
 
   public:
-    std::string getTypeId() const
-    { return typeId; }
+    std::string getProtocol() const
+    { return protocol; }
 
-    std::string getState() const
-    { return state; }
+    std::int32_t getFromPort() const
+    { return fromPort; }
+
+    std::int32_t getToPort() const
+    { return toPort; }
 
     std::set<nmdoa::CidrBlock> getCidrBlocks() const
     { return cidrBlocks; }
 
-    std::set<std::string> getNonCidrBlocks() const
-    { return nonCidrBlocks; }
+    std::set<std::string> getNonCidr() const
+    { return nonCidrs; }
+
+    bool getEgress() const
+    { return egress; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
-    TestRoute tobj;
+    TestSecurityGroupRule tobj;
 
-    BOOST_TEST(tobj.getTypeId().empty());
-    BOOST_TEST(tobj.getState().empty());
+    BOOST_TEST(tobj.getProtocol().empty());
+    BOOST_TEST(INT32_MIN == tobj.getFromPort());
+    BOOST_TEST(INT32_MIN == tobj.getToPort());
     BOOST_TEST(tobj.getCidrBlocks().empty());
-    BOOST_TEST(tobj.getNonCidrBlocks().empty());
+    BOOST_TEST(tobj.getNonCidr().empty());
+    BOOST_TEST(!tobj.getEgress());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
-    TestRoute tobj;
+    TestSecurityGroupRule tobj;
 
     const std::string tv1 {"aBc1@3"};
-    tobj.setId(tv1);
-    BOOST_TEST(tv1 == tobj.getTypeId());
+    tobj.setProtocol(tv1);
+    BOOST_TEST(tv1 == tobj.getProtocol());
   }
   {
-    TestRoute tobj;
+    TestSecurityGroupRule tobj;
 
-    const std::string tv1 {"aBc1@3"};
-    tobj.setState(tv1);
-    BOOST_TEST(tv1 == tobj.getState());
+    const std::int32_t tv1 {123};
+    tobj.setFromPort(tv1);
+    BOOST_TEST(tv1 == tobj.getFromPort());
   }
   {
-    TestRoute tobj;
-    
+    TestSecurityGroupRule tobj;
+
+    const std::int32_t tv1 {123};
+    tobj.setToPort(tv1);
+    BOOST_TEST(tv1 == tobj.getToPort());
+  }
+  {
+    TestSecurityGroupRule tobj;
+
+    tobj.addCidrBlock("");
+    auto trv1 = tobj.getCidrBlocks();
+    BOOST_TEST(0 == trv1.size());
+
     const std::string tv1 {"1.2.3.0/24"};
     nmdoa::CidrBlock tv2 {tv1};
     tobj.addCidrBlock(tv1);
-    const auto trv1 = tobj.getCidrBlocks();
+    trv1 = tobj.getCidrBlocks();
     BOOST_TEST(1 == trv1.size());
     BOOST_TEST(trv1.contains(tv2));
   }
   {
-    TestRoute tobj;
-    
+    TestSecurityGroupRule tobj;
+
+    tobj.addNonCidr("");
+    auto trv1 = tobj.getNonCidr();
+    BOOST_TEST(0 == trv1.size());
+
     const std::string tv1 {"aBc1@3"};
-    tobj.addNonCidrBlock(tv1);
-    const auto trv1 = tobj.getNonCidrBlocks();
+    tobj.addNonCidr(tv1);
+    trv1 = tobj.getNonCidr();
     BOOST_TEST(1 == trv1.size());
     BOOST_TEST(trv1.contains(tv1));
+  }
+  {
+    TestSecurityGroupRule tobj;
+
+    BOOST_TEST(!tobj.getEgress());
+    tobj.setEgress();
+    BOOST_TEST(tobj.getEgress());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
-    TestRoute tobj;
+    TestSecurityGroupRule tobj;
 
-    const std::string tv1 {"aBc1@3"};
+    const std::string v1 {"aBc1@3"};
+    std::int32_t v2 {0};
     
     BOOST_TEST(!tobj.isValid());
-    tobj.setId(tv1);
+    tobj.setProtocol(v1);
+    BOOST_TEST(!tobj.isValid());
+    tobj.setFromPort(v2);
+    BOOST_TEST(!tobj.isValid());
+    tobj.setToPort(v2);
+    BOOST_TEST(!tobj.isValid());
+    tobj.addCidrBlock("1.2.3.0/24");
+    BOOST_TEST(tobj.isValid());
+  }
+  {
+    TestSecurityGroupRule tobj;
+
+    const std::string v1 {"aBc1@3"};
+    std::int32_t v2 {0};
+    
+    BOOST_TEST(!tobj.isValid());
+    tobj.setProtocol(v1);
+    BOOST_TEST(!tobj.isValid());
+    tobj.setFromPort(v2);
+    BOOST_TEST(!tobj.isValid());
+    tobj.setToPort(v2);
+    BOOST_TEST(!tobj.isValid());
+    tobj.addCidrBlock(v1);
     BOOST_TEST(tobj.isValid());
   }
 }

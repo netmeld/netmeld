@@ -65,7 +65,7 @@ Parser::processEntries(const json& _entries, nmdoa::NetworkAcl& _anacl)
 {
   for (const auto& entry : _entries) {
     nmdoa::NetworkAclRule anaclr;
-    anaclr.setNumber(entry.value("RuleNumber", -1));
+    anaclr.setNumber(entry.value("RuleNumber", ANY));
     anaclr.setAction(entry.value("RuleAction", ""));
     anaclr.setProtocol(entry.value("Protocol", ""));
     
@@ -77,7 +77,7 @@ Parser::processEntries(const json& _entries, nmdoa::NetworkAcl& _anacl)
       if (!entry.contains(key)) {
         continue;
       }
-      anaclr.addIpRange(entry.value(key, ""));
+      anaclr.addCidrBlock(entry.value(key, ""));
     }
     if (entry.value("Egress", false)) {
       anaclr.setEgress();
@@ -85,24 +85,16 @@ Parser::processEntries(const json& _entries, nmdoa::NetworkAcl& _anacl)
 
     if (entry.contains("PortRange")) {
       const auto& range = entry.at("PortRange");
-      anaclr.setFromPort(range.value("From", -1));
-      anaclr.setToPort(range.value("To", -1));
+      anaclr.setFromPort(range.value("From", ANY));
+      anaclr.setToPort(range.value("To", ANY));
     }
 
     if (entry.contains("IcmpTypeCode")) {
       const auto& tc = entry.at("IcmpTypeCode");
-      anaclr.setFromPort(tc.value("Type", -1));
-      anaclr.setToPort(tc.value("Code", -1));
+      anaclr.setFromPort(tc.value("Type", ANY));
+      anaclr.setToPort(tc.value("Code", ANY));
     }
 
-/*
-IcmpTypeCode -> (structure)
-  Code -> (integer)
-  Type -> (integer)
-PortRange -> (structure)
-  From -> (integer)
-  To -> (integer)
-*/
     _anacl.addRule(anaclr);
   }
 }

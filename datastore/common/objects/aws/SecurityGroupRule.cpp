@@ -24,85 +24,105 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/aws/RouteTable.hpp>
+#include <netmeld/datastore/objects/aws/SecurityGroupRule.hpp>
 
 
 namespace netmeld::datastore::objects::aws {
 
-  Route::Route()
+  SecurityGroupRule::SecurityGroupRule()
   {}
 
   void
-  Route::setId(const std::string& _id)
+  SecurityGroupRule::setProtocol(const std::string& _proto)
   {
-    typeId = _id;
+    protocol = _proto;
   }
   void
-  Route::setState(const std::string& _state)
+  SecurityGroupRule::setFromPort(std::int32_t _port)
   {
-    state = _state;
+    fromPort = _port;
   }
   void
-  Route::addCidrBlock(const std::string& _cidrBlock)
+  SecurityGroupRule::setToPort(std::int32_t _port)
   {
-    CidrBlock cb {_cidrBlock};
+    toPort = _port;
+  }
+  void
+  SecurityGroupRule::setEgress()
+  {
+    egress = true;
+  }
+  void
+  SecurityGroupRule::addCidrBlock(const std::string& _cidr)
+  {
+    if (_cidr.empty()) { return; }
+    CidrBlock cb {_cidr};
     cidrBlocks.insert(cb);
   }
   void
-  Route::addNonCidrBlock(const std::string& _dest)
+  SecurityGroupRule::addNonCidr(const std::string& _target)
   {
-    nonCidrBlocks.insert(_dest);
+    if (_target.empty()) { return; }
+    nonCidrs.insert(_target);
   }
 
   bool
-  Route::isValid() const
+  SecurityGroupRule::isValid() const
   {
-    return !(typeId.empty())
+    return !(protocol.empty())
+        && !(fromPort == INT32_MIN || toPort == INT32_MIN)
+        && (cidrBlocks.size() > 0 || nonCidrs.size() > 0)
         ;
   }
 
   void
-  Route::save(pqxx::transaction_base& t,
+  SecurityGroupRule::save(pqxx::transaction_base& t,
                     const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AWS Route object is not saving: " << toDebugString()
+      LOG_DEBUG << "AWS SecurityGroupRule object is not saving: " << toDebugString()
                 << std::endl;
       return;
     }
 
     for (auto ip : cidrBlocks) {
       ip.save(t, toolRunId, deviceId);
-
-      t.exec_prepared("insert_raw_aws_route_table_route_cidr"
+      t.exec_prepared("insert_raw_aws_security_group_rule"
           , toolRunId
           , deviceId
-          , typeId
-          , state
+          , egress
+          , protocol
+          , fromPort
+          , toPort
           , ip.toString()
         );
     }
-    for (auto dest : nonCidrBlocks) {
-      t.exec_prepared("insert_raw_aws_route_table_route_non_cidr"
+
+    for (const auto& target : nonCidrs) {
+      t.exec_prepared("insert_raw_aws_security_group_rule_non_ip"
           , toolRunId
           , deviceId
-          , typeId
-          , state
-          , dest
+          , egress
+          , protocol
+          , fromPort
+          , toPort
+          , target
         );
     }
   }
 
   std::string
-  Route::toDebugString() const
+  SecurityGroupRule::toDebugString() const
   {
     std::ostringstream oss;
 
     oss << '['
-        << "typeId: " << typeId
-        << ", state: " << state
+        << "protocol: " << protocol
+        << ", fromPort: " << fromPort
+        << ", toPort: " << toPort
+        << ", egress: " << egress
         << ", cidrBlocks: " << cidrBlocks
-        << ", nonCidrBlocks: " << nonCidrBlocks
+        << ", nonCidrs: " << nonCidrs
         << ']'
         ;
 
@@ -110,20 +130,29 @@ namespace netmeld::datastore::objects::aws {
   }
 
   std::partial_ordering
-  Route::operator<=>(const Route& rhs) const
+  SecurityGroupRule::operator<=>(const SecurityGroupRule& rhs) const
   {
-    if (auto cmp = typeId <=> rhs.typeId; 0 != cmp) {
+    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
+    if (auto cmp = fromPort <=> rhs.fromPort; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = toPort <=> rhs.toPort; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = cidrBlocks <=> rhs.cidrBlocks; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = nonCidrs <=> rhs.nonCidrs; 0 != cmp) {
       return cmp;
     }
 
-    return cidrBlocks <=> rhs.cidrBlocks;
+    return egress <=> rhs.egress;
   }
 
   bool
-  Route::operator==(const Route& rhs) const
+  SecurityGroupRule::operator==(const SecurityGroupRule& rhs) const
   {
     return 0 == operator<=>(rhs);
   }

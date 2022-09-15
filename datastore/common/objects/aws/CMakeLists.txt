@@ -29,10 +29,12 @@ foreach(ITEM
     CidrBlock
     Instance
     NetworkAcl
+    NetworkAclRule
     NetworkInterface
     Route
     RouteTable
     SecurityGroup
+    SecurityGroupRule
     Subnet
     Vpc
   )

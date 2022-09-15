@@ -24,11 +24,11 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_NETWORK_ACL_HPP
-#define AWS_NETWORK_ACL_HPP
+#ifndef AWS_SECURITY_GROUP_RULE_HPP
+#define AWS_SECURITY_GROUP_RULE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/aws/NetworkAclRule.hpp>
+#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
@@ -36,17 +36,20 @@ namespace nmdo = netmeld::datastore::objects;
 
 namespace netmeld::datastore::objects::aws {
 
-  class NetworkAcl : public nmdo::AbstractDatastoreObject {
+  class SecurityGroupRule : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string naclId;
-      std::string vpcId;
+      std::string protocol;
+      std::int32_t fromPort {INT32_MIN};
+      std::int32_t toPort   {INT32_MIN};
 
-      std::set<std::string> subnetIds;
-      std::set<NetworkAclRule> rules;
+      std::set<CidrBlock> cidrBlocks;
+      std::set<std::string> nonCidrs;
+
+      bool egress {false};
 
     public: // Variables should rarely appear at this scope
 
@@ -57,7 +60,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      NetworkAcl();
+      SecurityGroupRule();
 
 
     // ========================================================================
@@ -66,20 +69,22 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setId(const std::string&);
-      void setVpcId(const std::string&);
-      void addSubnetId(const std::string&);
-      void addRule(const NetworkAclRule&);
+      void setProtocol(const std::string&);
+      void setFromPort(std::int32_t);
+      void setToPort(std::int32_t);
+      void setEgress();
+      void addCidrBlock(const std::string&);
+      void addNonCidr(const std::string&);
 
       bool isValid() const override;
 
       void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string& = "") override;
+                const nmco::Uuid&, const std::string&) override;
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const NetworkAcl&) const;
-      bool operator==(const NetworkAcl&) const;
+      std::partial_ordering operator<=>(const SecurityGroupRule&) const;
+      bool operator==(const SecurityGroupRule&) const;
   };
 }
-#endif // AWS_NETWORK_ACL_HPP
+#endif // AWS_SECURITY_GROUP_RULE_HPP

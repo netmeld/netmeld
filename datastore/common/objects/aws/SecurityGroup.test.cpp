@@ -57,66 +57,66 @@ class TestSecurityGroup : public nmdoa::SecurityGroup {
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
-    TestSecurityGroup tsg;
+    TestSecurityGroup tobj;
 
-    BOOST_TEST(tsg.getSecurityGroupId().empty());
-    BOOST_TEST(tsg.getName().empty());
-    BOOST_TEST(tsg.getDescription().empty());
-    BOOST_TEST(tsg.getVpcId().empty());
-    BOOST_TEST(tsg.getRules().empty());
+    BOOST_TEST(tobj.getSecurityGroupId().empty());
+    BOOST_TEST(tobj.getName().empty());
+    BOOST_TEST(tobj.getDescription().empty());
+    BOOST_TEST(tobj.getVpcId().empty());
+    BOOST_TEST(tobj.getRules().empty());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
-    TestSecurityGroup tsg;
+    TestSecurityGroup tobj;
 
-    const std::string tval {"aBc1@3"};
-    tsg.setId(tval);
-    BOOST_TEST(tval == tsg.getSecurityGroupId());
+    const std::string tv1 {"aBc1@3"};
+    tobj.setId(tv1);
+    BOOST_TEST(tv1 == tobj.getSecurityGroupId());
   }
   {
-    TestSecurityGroup tsg;
+    TestSecurityGroup tobj;
 
-    const std::string tval {"aBc1@3"};
-    tsg.setName(tval);
-    BOOST_TEST(tval == tsg.getName());
+    const std::string tv1 {"aBc1@3"};
+    tobj.setName(tv1);
+    BOOST_TEST(tv1 == tobj.getName());
   }
   {
-    TestSecurityGroup tsg;
+    TestSecurityGroup tobj;
 
-    const std::string tval {"aBc1@3"};
-    tsg.setDescription(tval);
-    BOOST_TEST(tval == tsg.getDescription());
+    const std::string tv1 {"aBc1@3"};
+    tobj.setDescription(tv1);
+    BOOST_TEST(tv1 == tobj.getDescription());
   }
   {
-    TestSecurityGroup tsg;
+    TestSecurityGroup tobj;
 
-    const std::string tval {"aBc1@3"};
-    tsg.setVpcId(tval);
-    BOOST_TEST(tval == tsg.getVpcId());
+    const std::string tv1 {"aBc1@3"};
+    tobj.setVpcId(tv1);
+    BOOST_TEST(tv1 == tobj.getVpcId());
   }
   {
-    TestSecurityGroup tsg;
+    TestSecurityGroup tobj;
 
-    const nmdoa::SecurityGroupRule tval;
-    tsg.addRule(tval);
-    const auto ras = tsg.getRules();
-    BOOST_TEST(1 == ras.size());
-    BOOST_TEST(ras.contains(tval));
+    const nmdoa::SecurityGroupRule tv1;
+    tobj.addRule(tv1);
+    const auto trv1 = tobj.getRules();
+    BOOST_TEST(1 == trv1.size());
+    BOOST_TEST(trv1.contains(tv1));
   }
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
-    TestSecurityGroup tsg;
+    TestSecurityGroup tobj;
 
     const std::string v1 {"aBc1@3"};
     
-    BOOST_TEST(!tsg.isValid());
-    tsg.setId(v1);
-    BOOST_TEST(tsg.isValid());
+    BOOST_TEST(!tobj.isValid());
+    tobj.setId(v1);
+    BOOST_TEST(tobj.isValid());
   }
 }

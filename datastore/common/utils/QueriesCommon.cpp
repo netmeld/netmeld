@@ -32,6 +32,29 @@ namespace netmeld::datastore::utils {
   void
   dbPrepareAws(pqxx::connection& db)
   {
+    // ----------------------------------------------------------------------
+    // TABLES: AWS CidrBlock related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_cidr_block", R"(
+          INSERT INTO raw_aws_cidr_blocks
+            (tool_run_id, cidr_block)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_cidr_block_detail", R"(
+          INSERT INTO raw_aws_cidr_block_details
+            (tool_run_id, cidr_block, state)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+
     
     // ----------------------------------------------------------------------
     // TABLES: AWS Instance related
@@ -75,10 +98,10 @@ namespace netmeld::datastore::utils {
       ("insert_raw_aws_network_interface_detail", R"(
           INSERT INTO raw_aws_network_interface_details
             (tool_run_id, interface_id, interface_type,
-             source_destination_check, status)
+             source_destination_check, status, description)
           VALUES
             ($1, $2, $3,
-             $4, $5)
+             $4, $5, $6)
           ON CONFLICT DO NOTHING
         )");
 
@@ -170,6 +193,17 @@ namespace netmeld::datastore::utils {
           INSERT INTO raw_aws_security_group_rules
             (tool_run_id, security_group_id, egress, protocol, from_port,
              to_port, cidr_block)
+          VALUES
+            ($1, $2, $3, $4, $5,
+             $6, $7)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rule_non_ip", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip
+            (tool_run_id, security_group_id, egress, protocol, from_port,
+             to_port, target)
           VALUES
             ($1, $2, $3, $4, $5,
              $6, $7)
@@ -277,10 +311,21 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
-      ("insert_raw_aws_route_table_route", R"(
-          INSERT INTO raw_aws_route_table_routes
+      ("insert_raw_aws_route_table_route_cidr", R"(
+          INSERT INTO raw_aws_route_table_routes_cidr
             (tool_run_id, route_table_id, destination_id, state,
              cidr_block)
+          VALUES
+            ($1, $2, $3, $4,
+             $5)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_route_table_route_non_cidr", R"(
+          INSERT INTO raw_aws_route_table_routes_non_cidr
+            (tool_run_id, route_table_id, destination_id, state,
+             destination)
           VALUES
             ($1, $2, $3, $4,
              $5)

@@ -133,6 +133,7 @@ namespace netmeld::datastore::objects::aws {
           , type
           , sourceDestinationCheck
           , status
+          , description
         );
     }
 

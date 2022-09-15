@@ -28,7 +28,6 @@
 #define AWS_CIDR_BLOCK_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/IpNetwork.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;

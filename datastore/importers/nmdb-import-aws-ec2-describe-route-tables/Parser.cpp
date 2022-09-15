@@ -95,21 +95,37 @@ Parser::processRoutes(const json& _routes, nmdoa::RouteTable& _routeTable)
     ar.setId(rId);
     ar.setState(route.value("State", ""));
 
-    std::set keys {
-          "DestinationCidrBlock"
-        , "DestinationIpv6CidrBlock"
-      };
-    for (const auto& key : keys) {
-      if (route.contains(key)) {
-        ar.addCidrBlock(route.value(key, ""));
+    bool routeDestinationFound {false};
+
+    {
+      std::set keys {
+            "DestinationCidrBlock"
+          , "DestinationIpv6CidrBlock"
+        };
+      for (const auto& key : keys) {
+        if (route.contains(key)) {
+          ar.addCidrBlock(route.value(key, ""));
+          routeDestinationFound = true;
+        }
       }
     }
-    if (route.contains("DestinationPrefixListId")) {
+    {
+      std::set keys {
+            "DestinationPrefixListId"
+        };
+      for (const auto& key : keys) {
+        if (route.contains(key)) {
+          ar.addNonCidrBlock(route.value(key, ""));
+          routeDestinationFound = true;
+        }
+      }
+    }
+
+    if (!routeDestinationFound) {
       std::ostringstream oss;
       oss << "Route (destination ID: "
           << rId
-          << ") contains prefix list: "
-          << route.at("DestinationPrefixListId")
+          << ") has no known destination type"
           ;
       d.observations.addUnsupportedFeature(oss.str());
     }
@@ -123,10 +139,7 @@ Parser::getRouteId(const json& _route)
 {
   std::set<std::string> keys {
         "GatewayId"
-      //,  "DestinationPrefixListId"
       , "EgressOnlyInternetGatewayId"
-      //, "InstanceId"
-      //, "InstanceOwnerId"
       , "NatGatewayId"
       , "TransitGatewayId"
       , "LocalGatewayId"
@@ -134,6 +147,10 @@ Parser::getRouteId(const json& _route)
       , "VpcPeeringConnectionId"
       , "CarrierGatewayId"
       , "CoreNetworkArn"
+      // NOTE The following two instance Ids seem to always appear together
+      // and when NetworkInterfaceId is present, prefer NetworkInterfaceId
+      //, "InstanceId"
+      //, "InstanceOwnerId"
     };
 
   std::string found;

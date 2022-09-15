@@ -59,10 +59,12 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/aws/CidrBlock.cpp
     ./objects/aws/Instance.cpp
     ./objects/aws/NetworkAcl.cpp
+    ./objects/aws/NetworkAclRule.cpp
     ./objects/aws/NetworkInterface.cpp
     ./objects/aws/Route.cpp
     ./objects/aws/RouteTable.cpp
     ./objects/aws/SecurityGroup.cpp
+    ./objects/aws/SecurityGroupRule.cpp
     ./objects/aws/Subnet.cpp
     ./objects/aws/Vpc.cpp
 

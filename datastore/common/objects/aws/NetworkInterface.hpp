@@ -47,7 +47,7 @@ namespace netmeld::datastore::objects::aws {
       std::string interfaceId;
 
       std::string type;
-      std::string description;  // TODO
+      std::string description;
       bool sourceDestinationCheck {false};
       std::string status;
       bool isUp {false};

@@ -90,21 +90,32 @@ Parser::getRule(const json& _permission)
   asgr.setFromPort(_permission.value("FromPort", -1));
   asgr.setToPort(_permission.value("ToPort", -1));
 
-  std::map<std::string, std::string> keys {
-        {"IpRanges", "CidrIp"}
-      , {"Ipv6Ranges", "CidrIpv6"}
-    };
-  for (const auto& [listKey, ipKey] : keys) {
-    for (const auto& ip : _permission.at(listKey)) {
-      const std::string desc {ip.value("Description", "")};
-      nmdo::IpAddress ipAddr {ip.value(ipKey, ""), desc};
-      asgr.addIpRange(ipAddr);
+  {
+    std::map<std::string, std::string> keys {
+          {"IpRanges", "CidrIp"}
+        , {"Ipv6Ranges", "CidrIpv6"}
+      };
+    for (const auto& [listKey, ipKey] : keys) {
+      for (const auto& ip : _permission.at(listKey)) {
+        // TODO what to do with description?
+        //const std::string desc {ip.value("Description", "")};
+        asgr.addCidrBlock(ip.value(ipKey, ""));
+      }
     }
   }
-  // TODO what to do if PrefixListIds not empty
-  //if (_permission.at("PrefixListIds").size() > 0) {
-  //}
-  // TODO what to do if UserIdGroupPairs not empty (deprecated feature)
+  {
+    std::set<std::string> keys {
+          "PrefixListIds"
+        , "UserIdGroupPairs"
+      };
+    for (const auto& key : keys) {
+      for (const auto& entry : _permission.at(key)) {
+        std::ostringstream oss;
+        oss << entry;
+        asgr.addNonCidr(oss.str());
+      }
+    }
+  }
 
   return asgr;
 }

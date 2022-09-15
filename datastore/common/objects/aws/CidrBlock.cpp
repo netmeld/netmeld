@@ -24,6 +24,9 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/datastore/objects/IpAddress.hpp>
+#include <netmeld/datastore/objects/IpNetwork.hpp>
+
 #include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
 
@@ -41,15 +44,12 @@ namespace netmeld::datastore::objects::aws {
   CidrBlock::setCidrBlock(const std::string& _cidr)
   {
     cidrBlock = _cidr;
-//    cidrBlock = nmdo::IpNetwork(_cidr);
-//    cidrBlock.setReason("AWS CidrBlock");
   }
   void
   CidrBlock::setState(const std::string& _state)
   {
     state = _state;
   }
-
 
   bool
   CidrBlock::isValid() const
@@ -71,12 +71,26 @@ namespace netmeld::datastore::objects::aws {
     t.exec_prepared("insert_raw_aws_cidr_block"
         , toolRunId
         , cidrBlock
-        , state
       );
 
-    // TODO save as IP-net/addr
-    //cidrBlock.save(t, toolRunId, deviceId);
+    nmdo::IpAddress ipa {cidrBlock};
+    if (ipa.isValid()) {
+      ipa.save(t, toolRunId, "");
+    } else {
+      nmdo::IpNetwork ipn {cidrBlock};
+      ipn.save(t, toolRunId, ""); 
+    }
 
+    bool hasDetails {
+        !(state.empty())
+      };
+    if (hasDetails) {
+      t.exec_prepared("insert_raw_aws_cidr_block_detail"
+          , toolRunId
+          , cidrBlock
+          , state
+        );
+    }
   }
 
   std::string
