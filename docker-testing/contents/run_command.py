@@ -10,9 +10,13 @@ def run_command(**kwargs):
     kwargs["capture_output"] = True
     
     r = subprocess.run(**kwargs)
+    output = str(r.stdout, "utf8")
+    err = str(r.stderr, "utf8")
+    print("======================")
     print(r.returncode)
-    print("OUT: " + str(r.stdout))
-    print("ERR: " + str(r.stderr))
+    print("OUT: " + output)
+    print("ERR: " + err)
+    print("======================")
     success = r.returncode in expected_return_codes
     if not success:
         print(f"Command returned unexpected status: {r.returncode}")

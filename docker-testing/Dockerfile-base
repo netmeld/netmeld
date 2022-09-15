@@ -34,6 +34,6 @@ COPY ./contents /home/netmeld/contents
 
 WORKDIR /home/netmeld
 
-ENV NETMELD_DB_HOST postgres
+ENV NETMELD_DB_HOST localhost
 ENV NETMELD_DB_USER postgres
 ENV NETMELD_DB_PASS example

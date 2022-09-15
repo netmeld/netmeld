@@ -20,8 +20,7 @@ def main():
     commands = [
         {
             "args": ["nmdb-initialize", db_args, db_name],
-            "input": bytes("n\n", "ascii"),
-            "return": [0, 80]
+            "input": bytes("y\n", "ascii")
         }
     ]
 
@@ -38,8 +37,7 @@ def main():
     commands.append(
         {
             "args": ["nmdb-import-brocade-show-ip-route", db_args, db_name, device_id, "--pipe", blank_filename], 
-            "input": bytes("", "ascii"),
-            "return": [0]
+            "input": bytes("", "ascii")
         }
     )
 
@@ -337,6 +335,44 @@ def main():
         {
             "args": ["nmdb-insert-network", db_args, db_name, device_id], 
             "input": bytes("", "ascii")
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdl-initialize", device_id], 
+            "input": bytes("y", "ascii")
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["git", "config", "--global", "user.email", "test@test.test"]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["git", "config", "--global", "user.name", "test"]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdl-insert", device_id, "--pipe", "--rename", "test"],
+            "input": bytes("", "ascii")
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdl-list", device_id]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdl-remove", device_id]
         }
     )
 

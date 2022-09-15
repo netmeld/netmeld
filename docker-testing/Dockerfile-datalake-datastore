@@ -8,6 +8,8 @@ RUN apt install --quiet --quiet --assume-yes --option Dpkg::Use-Pty=0 \
       --no-install-recommends --no-install-suggests \
       ./netmeld-*datalake.deb ./netmeld-*datastore*.deb
 
+RUN apt install --quiet --quiet --assume-yes git
+
 WORKDIR /home/netmeld
 
 RUN rm -rf ./setup
