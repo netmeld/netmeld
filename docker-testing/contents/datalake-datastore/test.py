@@ -376,6 +376,50 @@ def main():
         }
     )
 
+    commands.append(
+        {
+            "args": ["nmdb-export-port-list", device_id]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdb-export-query", device_id, "-q", "\"select * from ip_addrs\""]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdb-graph-ac", device_id]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdb-graph-network", "--layer", "3", device_id]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdb-analyze-data", "--example"]
+        }
+    )
+
+
+    commands.append(
+        {
+            "args": ["nmdb-convert-acls"]
+        }
+    )
+
+    commands.append(
+        {
+            "args": ["nmdb-remove-tool-run", "12345678-1234-1234-1234-123456789012"]
+        }
+    )
+
+
     res = True
 
     for command in commands:
