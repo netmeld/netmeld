@@ -48,7 +48,16 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_aws_cidr_block_detail", R"(
           INSERT INTO raw_aws_cidr_block_details
-            (tool_run_id, cidr_block, state)
+            (tool_run_id, cidr_block, state, description)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_cidr_block_fqdn", R"(
+          INSERT INTO raw_aws_cidr_block_fqdns
+            (tool_run_id, cidr_block, fqdn)
           VALUES
             ($1, $2, $3)
           ON CONFLICT DO NOTHING
@@ -132,9 +141,9 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_aws_network_interface_ip", R"(
           INSERT INTO raw_aws_network_interface_ips
-            (tool_run_id, interface_id, ip_address, dns_name)
+            (tool_run_id, interface_id, ip_address)
           VALUES
-            ($1, $2, $3, $4)
+            ($1, $2, $3)
           ON CONFLICT DO NOTHING
         )");
 

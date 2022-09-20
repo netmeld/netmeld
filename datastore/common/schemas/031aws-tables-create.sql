@@ -53,7 +53,18 @@ CREATE TABLE raw_aws_cidr_block_details (
       tool_run_id                   UUID  NOT NULL
     , cidr_block                    INET  NOT NULL
     , state                         TEXT  NOT NULL
+    , description                   TEXT  NULL
     , PRIMARY KEY (tool_run_id, cidr_block, state)
+    , FOREIGN KEY (tool_run_id, cidr_block)
+        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_cidr_block_fqdns (
+      tool_run_id                   UUID  NOT NULL
+    , cidr_block                    INET  NOT NULL
+    , fqdn                          TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, cidr_block, fqdn)
     , FOREIGN KEY (tool_run_id, cidr_block)
         REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
         ON DELETE CASCADE
@@ -141,17 +152,16 @@ CREATE TABLE raw_aws_network_interface_macs (
         REFERENCES raw_aws_network_interfaces(tool_run_id, interface_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
-    , FOREIGN KEY (tool_run_id, mac_address)
-        REFERENCES raw_mac_addrs(tool_run_id, mac_addr)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
+--    , FOREIGN KEY (tool_run_id, mac_address)
+--        REFERENCES raw_mac_addrs(tool_run_id, mac_addr)
+--        ON DELETE CASCADE
+--        ON UPDATE CASCADE
 );
 CREATE TABLE raw_aws_network_interface_ips (
       tool_run_id                   UUID      NOT NULL
     , interface_id                  TEXT      NOT NULL
     , ip_address                    INET      NOT NULL
-    , dns_name                      TEXT      NOT NULL
-    , PRIMARY KEY (tool_run_id, interface_id, ip_address, dns_name)
+    , PRIMARY KEY (tool_run_id, interface_id, ip_address)
     , FOREIGN KEY (tool_run_id, interface_id)
         REFERENCES raw_aws_network_interfaces(tool_run_id, interface_id)
         ON DELETE CASCADE

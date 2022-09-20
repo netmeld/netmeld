@@ -109,6 +109,15 @@ namespace netmeld::datastore::objects::aws {
           , toolRunId
           , cidrBlock
           , state
+          , description
+        );
+    }
+
+    for (const auto& alias : aliases) {
+      t.exec_prepared("insert_raw_aws_cidr_block_fqdn"
+          , toolRunId
+          , cidrBlock
+          , alias
         );
     }
   }
