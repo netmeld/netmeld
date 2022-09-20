@@ -60,6 +60,13 @@ namespace netmeld::datastore::objects::aws {
     cidrBlocks.insert(cb);
   }
   void
+  SecurityGroupRule::addCidrBlock(const CidrBlock& _cidr)
+  {
+    CidrBlock t;
+    if (t == _cidr) { return; }
+    cidrBlocks.insert(_cidr);
+  }
+  void
   SecurityGroupRule::addNonCidr(const std::string& _target)
   {
     if (_target.empty()) { return; }

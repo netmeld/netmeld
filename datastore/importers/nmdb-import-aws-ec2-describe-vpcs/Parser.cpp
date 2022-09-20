@@ -46,9 +46,6 @@ Parser::fromJson(const json& _data)
   }
 }
 
-
-// TODO https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/describe-vpcs.html
-
 void
 Parser::processVpcs(const json& _vpc)
 {
@@ -64,19 +61,20 @@ Parser::processVpcs(const json& _vpc)
 void
 Parser::processCidrBlockAssociationSet(const json& _cbas, nmdoa::Vpc& _avpc)
 {
-  std::vector<std::string> blockNames {
-      "CidrBlockAssociationSet",
-      "Ipv6CidrBlockAssociationSet"
+  const std::vector<std::string> prefixes {
+        ""
+      , "Ipv6"
     };
-  for (const auto& blockName : blockNames) {
-    if (!_cbas.contains(blockName)) {
+  for (const auto& prefix : prefixes) {
+    std::string tgtCidrBlockSet {prefix + "CidrBlockAssociationSet"};
+    if (!_cbas.contains(tgtCidrBlockSet)) {
       continue;
     }
 
-    for (const auto& cbas : _cbas.at(blockName)) {
+    for (const auto& cbas : _cbas.at(tgtCidrBlockSet)) {
       nmdoa::CidrBlock avcb;
-      avcb.setCidrBlock(cbas.value("CidrBlock", ""));
-      avcb.setState(cbas.at("CidrBlockState").value("State", ""));
+      avcb.setCidrBlock(cbas.value(prefix + "CidrBlock", ""));
+      avcb.setState(cbas.at(prefix + "CidrBlockState").value("State", ""));
 
       _avpc.addCidrBlock(avcb);
     }

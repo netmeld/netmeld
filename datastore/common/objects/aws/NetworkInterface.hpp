@@ -28,9 +28,10 @@
 #define AWS_NETWORK_INTERFACE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
-#include <netmeld/datastore/objects/MacAddress.hpp>
+//#include <netmeld/datastore/objects/IpAddress.hpp>
+//#include <netmeld/datastore/objects/MacAddress.hpp>
 #include <netmeld/datastore/objects/aws/Attachment.hpp>
+#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
@@ -53,12 +54,14 @@ namespace netmeld::datastore::objects::aws {
       bool isUp {false};
       std::string subnetId;
       std::string vpcId;
+      std::string macAddr;
 
       Attachment attachment;
 
       std::set<std::string> securityGroups;
+      std::set<CidrBlock> cidrBlocks;
 
-      nmdo::MacAddress macAddr;
+      //nmdo::MacAddress macAddr;
 
     public: // Variables should rarely appear at this scope
 
@@ -89,8 +92,10 @@ namespace netmeld::datastore::objects::aws {
       void disableSourceDestinationCheck();
       void enableSourceDestinationCheck();
 
-      void addIpAddress(const nmdo::IpAddress&);
+      void addCidrBlock(const CidrBlock&);
       void addSecurityGroup(const std::string&);
+
+      std::set<CidrBlock> getCidrBlocks() const;
 
       bool isValid() const override;
 

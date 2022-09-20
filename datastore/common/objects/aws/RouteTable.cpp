@@ -45,11 +45,14 @@ namespace netmeld::datastore::objects::aws {
   void
   RouteTable::addAssociation(const std::string& _association)
   {
+    if (_association.empty()) { return; }
     associations.insert(_association);
   }
   void
   RouteTable::addRoute(const Route& _route)
   {
+    Route t;
+    if (t == _route) { return; }
     routes.insert(_route);
   }
 

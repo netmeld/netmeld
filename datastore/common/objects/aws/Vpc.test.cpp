@@ -80,7 +80,12 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     nmdoa::CidrBlock tv1;
     tobj.addCidrBlock(tv1);
-    const auto cbs = tobj.getCidrBlocks();
+    auto cbs = tobj.getCidrBlocks();
+    BOOST_TEST(0 == cbs.size());
+
+    tv1.setCidrBlock("1.2.3.4/24");
+    tobj.addCidrBlock(tv1);
+    cbs = tobj.getCidrBlocks();
     BOOST_TEST(1 == cbs.size());
     BOOST_TEST(cbs.contains(tv1));
   }

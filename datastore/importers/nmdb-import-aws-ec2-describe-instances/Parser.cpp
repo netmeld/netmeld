@@ -47,19 +47,15 @@ Parser::fromJson(const json& _data)
   }
 }
 
-
-// TODO https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html
-
 void
 Parser::processInstances(const json& _reservation)
 {
-  /* TODO
-    "Architecture"
-    "PlatformDetails"
-    "SecurityGroups"
-    "VpcId"
-    "LaunchTime" -- hardware revision?
+  /* NOTE
+    Processing SecurityGroup and VpcId at this level is wrong as they are
+    only for the primary NetworkInterface.  We process this per
+    NetworkInterface later.
   */
+
   for (const auto& instance : _reservation.at("Instances")) {
     std::string id {instance.at("InstanceId")};
 
@@ -67,6 +63,9 @@ Parser::processInstances(const json& _reservation)
     ai.setId(id);
     ai.setType(instance.value("InstanceType", ""));
     ai.setImageId(instance.value("ImageId", ""));
+    ai.setArchitecture(instance.value("Architecture", ""));
+    ai.setPlatformDetails(instance.value("PlatformDetails", ""));
+    ai.setLaunchTime(instance.value("LaunchTime", ""));
     ai.setAvailabilityZone(
         instance.at("Placement").value("AvailabilityZone", "")
       );
@@ -103,7 +102,6 @@ Parser::processInterfaces(const json& _instance, nmdoa::Instance& _ai)
       const auto& attachment {interface.at("Attachment")};
       processInterfaceAttachments(attachment, ani);
     } catch (const json::out_of_range& e) {
-      // TODO -- what to do if no attachment
       LOG_WARN << "No attachment for interface: " << iid << '\n';
     }
     processSecurityGroups(interface, ani);
@@ -143,19 +141,15 @@ Parser::processIps(const json& _interface, nmdoa::NetworkInterface& _iface)
 {
   // Handle IPv6 addresses
   for (const auto& ip : _interface.at("Ipv6Addresses")) {
-    nmdo::IpAddress ipAddr {
-        ip.at("Ipv6Addresses").get<std::string>(), REASON
-      };
-    _iface.addIpAddress(ipAddr);
+    nmdoa::CidrBlock cb {ip.at("Ipv6Address").get<std::string>()};
+    _iface.addCidrBlock(cb);
   }
 
   // Handle IPv4 addresses
   for (const auto& ip : _interface.at("PrivateIpAddresses")) {
-    nmdo::IpAddress ipAddr {
-          ip.at("PrivateIpAddress").get<std::string>(), REASON
-      };
-    ipAddr.addAlias(ip.value("PrivateDnsName", ""), REASON);
-    _iface.addIpAddress(ipAddr);
+    nmdoa::CidrBlock cb {ip.at("PrivateIpAddress").get<std::string>()};
+    cb.addAlias(ip.value("PrivateDnsName", ""));
+    _iface.addCidrBlock(cb);
 
     // Handle public IPs
     if (ip.contains("Association")) {
@@ -164,13 +158,9 @@ Parser::processIps(const json& _interface, nmdoa::NetworkInterface& _iface)
       std::set keys {"CarrierIp", "CustomerOwnedIp", "PublicIp"};
       for (const auto& key : keys) {
         if (association.contains(key)) {
-          nmdo::IpAddress pubIpAddr {
-                association.at(key).get<std::string>(), REASON
-            };
-          if (!dnsName.empty()) {
-            pubIpAddr.addAlias(dnsName, REASON);
-          }
-          _iface.addIpAddress(pubIpAddr);
+          nmdoa::CidrBlock cb {association.value(key, "")};
+          cb.addAlias(dnsName);
+          _iface.addCidrBlock(cb);
         }
       }
     }

@@ -44,32 +44,31 @@ Parser::fromJson(const json& _data)
   }
 }
 
-
-// TODO https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/describe-subnets.html
-
 void
 Parser::processSubnets(const json& _subnet)
 {
-  /* TODO
-    "SubnetArn"
-  */
+  const std::string id {_subnet.value("SubnetId", "")};
+
   if ("available" != _subnet.at("State")) {
     std::ostringstream oss;
-    oss << "Subnet (" << _subnet
+    oss << "Subnet (" << id
         << ") not 'available'"
         ;
     d.observations.addNotable(oss.str());
-    return;
   }
 
   nmdoa::Subnet subnet;
-  subnet.setId(_subnet.value("SubnetId", ""));
+  subnet.setId(id);
   subnet.setVpcId(_subnet.value("VpcId", ""));
   subnet.setAvailabilityZone(_subnet.value("AvailabilityZone", ""));
+  subnet.setSubnetArn(_subnet.value("SubnetArn", ""));
 
   subnet.addCidrBlock(_subnet.value("CidrBlock", ""));
   for (const auto& cbas : _subnet.at("Ipv6CidrBlockAssociationSet")) {
-    subnet.addCidrBlock(cbas.value("CidrBlock", ""));
+    nmdoa::CidrBlock cb;
+    cb.setCidrBlock(cbas.value("Ipv6CidrBlock", ""));
+    cb.setState(cbas.at("Ipv6CidrBlockState").value("State", ""));
+    subnet.addCidrBlock(cb);
   }
 
   d.subnets.emplace_back(subnet);

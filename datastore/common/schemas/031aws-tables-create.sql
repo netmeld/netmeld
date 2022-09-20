@@ -76,11 +76,16 @@ CREATE TABLE raw_aws_instance_details (
     , instance_id                   TEXT  NOT NULL
     , instance_type                 TEXT  NOT NULL
     , image_id                      TEXT  NOT NULL
+    , architecture                  TEXT  NOT NULL
+    , platform_details              TEXT  NOT NULL
+    , launch_time                   TEXT  NOT NULL
     , availability_zone             TEXT  NOT NULL
     , state_code                    INT   NOT NULL
     , state_name                    TEXT  NOT NULL
-    , PRIMARY KEY (tool_run_id, instance_id, instance_type, image_id,
-                   availability_zone, state_code, state_name)
+    , PRIMARY KEY (tool_run_id, instance_id, instance_type, image_id
+                  , architecture, platform_details, launch_time
+                  , availability_zone, state_code, state_name
+                  )
     , FOREIGN KEY (tool_run_id, instance_id)
         REFERENCES raw_aws_instances(tool_run_id, instance_id)
         ON DELETE CASCADE
@@ -105,8 +110,9 @@ CREATE TABLE raw_aws_network_interface_details (
     , source_destination_check      BOOL  NOT NULL
     , status                        TEXT  NOT NULL
     , description                   TEXT  NOT NULL
-    , PRIMARY KEY (tool_run_id, interface_id, interface_type,
-                   source_destination_check, status)
+    , PRIMARY KEY (tool_run_id, interface_id, interface_type
+                  ,  source_destination_check, status
+                  )
     , FOREIGN KEY (tool_run_id, interface_id)
         REFERENCES raw_aws_network_interfaces(tool_run_id, interface_id)
         ON DELETE CASCADE
@@ -118,8 +124,9 @@ CREATE TABLE raw_aws_network_interface_attachments (
     , id                            TEXT  NOT NULL
     , status                        TEXT  NOT NULL
     , delete_on_termination         BOOL  NOT NULL
-    , PRIMARY KEY (tool_run_id, interface_id, id, status,
-                   delete_on_termination)
+    , PRIMARY KEY (tool_run_id, interface_id, id, status
+                  , delete_on_termination
+                  )
     , FOREIGN KEY (tool_run_id, interface_id)
         REFERENCES raw_aws_network_interfaces(tool_run_id, interface_id)
         ON DELETE CASCADE
@@ -188,13 +195,9 @@ CREATE TABLE raw_aws_vpc_cidr_blocks (
         ON DELETE CASCADE
         ON UPDATE CASCADE
     , FOREIGN KEY (tool_run_id, cidr_block)
-        REFERENCES raw_ip_nets(tool_run_id, ip_net)
+        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
         ON DELETE CASCADE
         ON UPDATE CASCADE
---    , FOREIGN KEY (tool_run_id, cidr_block)
---        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
---        ON DELETE CASCADE
---        ON UPDATE CASCADE
 );
 
 
@@ -227,8 +230,9 @@ CREATE TABLE raw_aws_security_group_rules (
     , from_port                     INT   NOT NULL
     , to_port                       INT   NOT NULL
     , cidr_block                    INET  NOT NULL
-    , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol,
-                   from_port, to_port, cidr_block)
+    , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol
+                  , from_port, to_port, cidr_block
+                  )
     , FOREIGN KEY (tool_run_id, security_group_id)
         REFERENCES raw_aws_security_groups(tool_run_id, security_group_id)
         ON DELETE CASCADE
@@ -246,8 +250,9 @@ CREATE TABLE raw_aws_security_group_rules_non_ip (
     , from_port                     INT   NOT NULL
     , to_port                       INT   NOT NULL
     , target                        JSONB NOT NULL
-    , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol,
-                   from_port, to_port, target)
+    , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol
+                  , from_port, to_port, target
+                  )
     , FOREIGN KEY (tool_run_id, security_group_id)
         REFERENCES raw_aws_security_groups(tool_run_id, security_group_id)
         ON DELETE CASCADE
@@ -284,15 +289,14 @@ CREATE TABLE raw_aws_network_acl_rules (
     , protocol                      TEXT  NOT NULL
     , cidr_block                    INET  NOT NULL
     , PRIMARY KEY (tool_run_id, network_acl_id, egress, rule_number)
-    --                action, protocol, cidr_block) -- 
     , FOREIGN KEY (tool_run_id, network_acl_id)
         REFERENCES raw_aws_network_acls(tool_run_id, network_acl_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
---    , FOREIGN KEY (tool_run_id, cidr_block)
---        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
---        ON DELETE CASCADE
---        ON UPDATE CASCADE
+    , FOREIGN KEY (tool_run_id, cidr_block)
+        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 CREATE TABLE raw_aws_network_acl_rule_ports (
       tool_run_id                   UUID  NOT NULL
@@ -301,8 +305,9 @@ CREATE TABLE raw_aws_network_acl_rule_ports (
     , rule_number                   INT   NOT NULL
     , from_port                     INT   NOT NULL
     , to_port                       INT   NOT NULL
-    , PRIMARY KEY (tool_run_id, network_acl_id, rule_number, from_port,
-                   to_port)
+    , PRIMARY KEY (tool_run_id, network_acl_id, rule_number, from_port
+                  , to_port
+                  )
     , FOREIGN KEY (tool_run_id, network_acl_id, egress, rule_number)
         REFERENCES raw_aws_network_acl_rules(
           tool_run_id, network_acl_id, egress, rule_number)
@@ -339,7 +344,8 @@ CREATE TABLE raw_aws_subnet_details (
       tool_run_id                   UUID  NOT NULL
     , subnet_id                     TEXT  NOT NULL
     , availability_zone             TEXT  NOT NULL
-    , PRIMARY KEY (tool_run_id, subnet_id, availability_zone)
+    , subnet_arn                    TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, subnet_id, availability_zone, subnet_arn)
     , FOREIGN KEY (tool_run_id, subnet_id)
         REFERENCES raw_aws_subnets(tool_run_id, subnet_id)
         ON DELETE CASCADE
@@ -355,13 +361,9 @@ CREATE TABLE raw_aws_subnet_cidr_blocks (
         ON DELETE CASCADE
         ON UPDATE CASCADE
     , FOREIGN KEY (tool_run_id, cidr_block)
-        REFERENCES raw_ip_nets(tool_run_id, ip_net)
+        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
         ON DELETE CASCADE
         ON UPDATE CASCADE
---    , FOREIGN KEY (tool_run_id, cidr_block)
---        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
---        ON DELETE CASCADE
---        ON UPDATE CASCADE
 );
 
 
@@ -378,7 +380,7 @@ CREATE TABLE raw_aws_route_tables (
 CREATE TABLE raw_aws_route_table_associations (
       tool_run_id                   UUID  NOT NULL
     , route_table_id                TEXT  NOT NULL
-    , association_id                TEXT  NOT NULL -- TODO subnet_id?
+    , association_id                TEXT  NOT NULL -- aka subnet_id
     , PRIMARY KEY (tool_run_id, route_table_id, association_id)
     , FOREIGN KEY (tool_run_id, route_table_id)
         REFERENCES raw_aws_route_tables(tool_run_id, route_table_id)
@@ -391,8 +393,9 @@ CREATE TABLE raw_aws_route_table_routes_cidr (
     , destination_id                TEXT  NOT NULL
     , state                         TEXT  NOT NULL
     , cidr_block                    CIDR  NOT NULL
-    , PRIMARY KEY (tool_run_id, route_table_id, destination_id, state,
-                   cidr_block)
+    , PRIMARY KEY (tool_run_id, route_table_id, destination_id, state
+                  , cidr_block
+                  )
     , FOREIGN KEY (tool_run_id, route_table_id)
         REFERENCES raw_aws_route_tables(tool_run_id, route_table_id)
         ON DELETE CASCADE
@@ -408,8 +411,9 @@ CREATE TABLE raw_aws_route_table_routes_non_cidr (
     , destination_id                TEXT  NOT NULL
     , state                         TEXT  NOT NULL
     , destination                   TEXT  NOT NULL
-    , PRIMARY KEY (tool_run_id, route_table_id, destination_id, state,
-                   destination)
+    , PRIMARY KEY (tool_run_id, route_table_id, destination_id, state
+                  , destination
+                  )
     , FOREIGN KEY (tool_run_id, route_table_id)
         REFERENCES raw_aws_route_tables(tool_run_id, route_table_id)
         ON DELETE CASCADE

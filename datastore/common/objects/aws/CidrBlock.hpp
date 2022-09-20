@@ -43,6 +43,10 @@ namespace netmeld::datastore::objects::aws {
     protected: // Variables intended for internal/subclass API
       std::string cidrBlock;
       std::string state;
+      std::string description;
+
+      std::set<std::string> aliases;
+
       
     public: // Variables should rarely appear at this scope
 
@@ -63,6 +67,11 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setCidrBlock(const std::string&);
       void setState(const std::string&);
+      void setDescription(const std::string&);
+
+      void addAlias(const std::string&);
+
+      std::string getCidrBlock() const;
 
       bool isValid() const override;
 

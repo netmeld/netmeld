@@ -74,6 +74,7 @@ namespace netmeld::datastore::objects::aws {
       void setToPort(std::int32_t);
       void setEgress();
       void addCidrBlock(const std::string&);
+      void addCidrBlock(const CidrBlock&);
       void addNonCidr(const std::string&);
 
       bool isValid() const override;

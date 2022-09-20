@@ -47,6 +47,15 @@ class TestInstance : public nmdoa::Instance {
     std::string getImageId() const
     { return imageId; }
 
+    std::string getArchitecture() const
+    { return architecture; }
+
+    std::string getPlatformDetails() const
+    { return platformDetails; }
+
+    std::string getLaunchTime() const
+    { return launchTime; }
+
     std::string getAvailabilityZone() const
     { return availabilityZone; }
 
@@ -68,6 +77,9 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     BOOST_TEST(tobj.getInstanceId().empty());
     BOOST_TEST(tobj.getType().empty());
     BOOST_TEST(tobj.getImageId().empty());
+    BOOST_TEST(tobj.getArchitecture().empty());
+    BOOST_TEST(tobj.getPlatformDetails().empty());
+    BOOST_TEST(tobj.getLaunchTime().empty());
     BOOST_TEST(tobj.getAvailabilityZone().empty());
     BOOST_TEST(0 == tobj.getStateCode());
     BOOST_TEST(tobj.getStateName().empty());
@@ -90,6 +102,27 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string tv1 {"aBc1@3"};
     tobj.setImageId(tv1);
     BOOST_TEST(tv1 == tobj.getImageId());
+  }
+  {
+    TestInstance tobj;
+
+    const std::string tv1 {"aBc1@3"};
+    tobj.setArchitecture(tv1);
+    BOOST_TEST(tv1 == tobj.getArchitecture());
+  }
+  {
+    TestInstance tobj;
+
+    const std::string tv1 {"aBc1@3"};
+    tobj.setPlatformDetails(tv1);
+    BOOST_TEST(tv1 == tobj.getPlatformDetails());
+  }
+  {
+    TestInstance tobj;
+
+    const std::string tv1 {"aBc1@3"};
+    tobj.setLaunchTime(tv1);
+    BOOST_TEST(tv1 == tobj.getLaunchTime());
   }
   {
     TestInstance tobj;
@@ -122,9 +155,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
   {
     TestInstance tobj;
 
-    const nmdoa::NetworkInterface tv1;
+    nmdoa::NetworkInterface tv1;
     tobj.addInterface(tv1);
-    const auto nis = tobj.getInterfaces();
+    auto nis = tobj.getInterfaces();
+    BOOST_TEST(0 == nis.size());
+    BOOST_TEST(!nis.contains(tv1));
+
+    tv1.setId("aBc1@3");
+    tobj.addInterface(tv1);
+    nis = tobj.getInterfaces();
     BOOST_TEST(1 == nis.size());
     BOOST_TEST(nis.contains(tv1));
   }

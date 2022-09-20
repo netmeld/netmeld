@@ -55,6 +55,8 @@ namespace netmeld::datastore::objects::aws {
   void
   SecurityGroup::addRule(const SecurityGroupRule& _rule)
   {
+    SecurityGroupRule t;
+    if (t == _rule) { return; }
     rules.insert(_rule);
   }
 

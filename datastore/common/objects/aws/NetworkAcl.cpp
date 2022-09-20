@@ -45,11 +45,14 @@ namespace netmeld::datastore::objects::aws {
   void
   NetworkAcl::addSubnetId(const std::string& _id)
   {
+    if (_id.empty()) { return; }
     subnetIds.insert(_id);
   }
   void
   NetworkAcl::addRule(const NetworkAclRule& _rule)
   {
+    NetworkAclRule t;
+    if (t == _rule) { return; }
     rules.insert(_rule);
   }
 

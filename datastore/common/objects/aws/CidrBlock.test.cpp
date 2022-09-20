@@ -39,11 +39,14 @@ class TestCidrBlock : public nmdoa::CidrBlock {
     TestCidrBlock(const std::string& _cidr) : CidrBlock(_cidr) {};
 
   public:
-    std::string getCidrBlock() const
-    { return cidrBlock; }
-
     std::string getState() const
     { return state; }
+
+    std::string getDescription() const
+    { return description; }
+
+    std::set<std::string> getAliases() const
+    { return aliases; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -78,6 +81,13 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string tv1 {"aBc1@3"};
     tobj.setState(tv1);
     BOOST_TEST(tv1 == tobj.getState());
+  }
+  {
+    TestCidrBlock tobj;
+
+    const std::string tv1 {"aBc1@3"};
+    tobj.setDescription(tv1);
+    BOOST_TEST(tv1 == tobj.getDescription());
   }
 }
 

@@ -74,7 +74,7 @@ class Parser
   protected:
     void processNetworkAcl(const json&);
     void processEntries(const json&, nmdoa::NetworkAcl&);
-    nmdoa::NetworkAclRule getRule(const json&);
+//    nmdoa::NetworkAclRule getRule(const json&);
 
 
   public:

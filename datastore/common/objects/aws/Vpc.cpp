@@ -45,6 +45,8 @@ namespace netmeld::datastore::objects::aws {
   void
   Vpc::addCidrBlock(const CidrBlock& _cidr)
   {
+    CidrBlock t;
+    if (t == _cidr) { return; }
     cidrBlocks.insert(_cidr);
   }
 

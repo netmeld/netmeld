@@ -46,6 +46,9 @@ namespace netmeld::datastore::objects::aws {
 
       std::string type;
       std::string imageId;
+      std::string architecture;
+      std::string platformDetails;
+      std::string launchTime;
       std::string availabilityZone;
       uint16_t stateCode  {0};
       std::string stateName;
@@ -70,6 +73,9 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setAvailabilityZone(const std::string&);
       void setImageId(const std::string&);
+      void setArchitecture(const std::string&);
+      void setPlatformDetails(const std::string&);
+      void setLaunchTime(const std::string&);
       void setId(const std::string&);
       void setStateCode(const uint16_t);
       void setStateName(const std::string&);

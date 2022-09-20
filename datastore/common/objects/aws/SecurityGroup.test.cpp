@@ -100,9 +100,14 @@ BOOST_AUTO_TEST_CASE(testSetters)
   {
     TestSecurityGroup tobj;
 
-    const nmdoa::SecurityGroupRule tv1;
+    nmdoa::SecurityGroupRule tv1;
     tobj.addRule(tv1);
-    const auto trv1 = tobj.getRules();
+    auto trv1 = tobj.getRules();
+    BOOST_TEST(0 == trv1.size());
+
+    tv1.setProtocol("a");
+    tobj.addRule(tv1);
+    trv1 = tobj.getRules();
     BOOST_TEST(1 == trv1.size());
     BOOST_TEST(trv1.contains(tv1));
   }

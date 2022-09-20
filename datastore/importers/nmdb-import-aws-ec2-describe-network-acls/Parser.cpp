@@ -55,15 +55,15 @@ Parser::processNetworkAcl(const json& _networkAcl)
     anacl.addSubnetId(association.value("SubnetId", ""));
   }
 
-  processEntries(_networkAcl.at("Entries"), anacl);
+  processEntries(_networkAcl, anacl);
 
   d.networkAcls.emplace_back(anacl);
 }
 
 void
-Parser::processEntries(const json& _entries, nmdoa::NetworkAcl& _anacl)
+Parser::processEntries(const json& _nacl, nmdoa::NetworkAcl& _anacl)
 {
-  for (const auto& entry : _entries) {
+  for (const auto& entry : _nacl.at("Entries")) {
     nmdoa::NetworkAclRule anaclr;
     anaclr.setNumber(entry.value("RuleNumber", ANY));
     anaclr.setAction(entry.value("RuleAction", ""));

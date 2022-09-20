@@ -47,6 +47,21 @@ namespace netmeld::datastore::objects::aws {
     imageId = _id;
   }
   void
+  Instance::setArchitecture(const std::string& _arch)
+  {
+    architecture = _arch;
+  }
+  void
+  Instance::setPlatformDetails(const std::string& _pd)
+  {
+    platformDetails = _pd;
+  }
+  void
+  Instance::setLaunchTime(const std::string& _lt)
+  {
+    launchTime = _lt;
+  }
+  void
   Instance::setStateCode(const uint16_t _code)
   {
     stateCode = _code;
@@ -64,6 +79,8 @@ namespace netmeld::datastore::objects::aws {
   void
   Instance::addInterface(const NetworkInterface& _ani)
   {
+    const NetworkInterface t;
+    if (t == _ani) { return; } // Don't add empty interface
     interfaces.insert(_ani);
   }
 
@@ -89,11 +106,15 @@ namespace netmeld::datastore::objects::aws {
       );
 
     bool hasDetails {
-        !(   type.empty()
-          || imageId.empty()
-          || availabilityZone.empty()
-          || stateName.empty()
-        )
+        true
+//        !(   type.empty()
+//          || imageId.empty()
+//          || architecture.empty()
+//          || platformDetails.empty()
+//          || launchTime.empty()
+//          || availabilityZone.empty()
+//          || stateName.empty()
+//        )
       };
 
     if (hasDetails) {
@@ -102,6 +123,9 @@ namespace netmeld::datastore::objects::aws {
           , instanceId
           , type
           , imageId
+          , architecture
+          , platformDetails
+          , launchTime
           , availabilityZone
           , stateCode
           , stateName
@@ -122,6 +146,9 @@ namespace netmeld::datastore::objects::aws {
         << "instanceId: " << instanceId
         << ", type: " << type
         << ", imageId: " << imageId
+        << ", architecture: " << architecture
+        << ", platformDetails: " << platformDetails
+        << ", launchTime: " << launchTime
         << ", availabilityZone: " << availabilityZone
         << ", stateCode: " << stateCode
         << ", stateName: " << stateName
@@ -142,6 +169,15 @@ namespace netmeld::datastore::objects::aws {
       return cmp;
     }
     if (auto cmp = imageId <=> rhs.imageId; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = architecture <=> rhs.architecture; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = platformDetails <=> rhs.platformDetails; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = launchTime <=> rhs.launchTime; 0 != cmp) {
       return cmp;
     }
     if (auto cmp = availabilityZone <=> rhs.availabilityZone; 0 != cmp) {

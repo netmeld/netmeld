@@ -50,6 +50,23 @@ namespace netmeld::datastore::objects::aws {
   {
     state = _state;
   }
+  void
+  CidrBlock::setDescription(const std::string& _desc)
+  {
+    description = _desc;
+  }
+  void
+  CidrBlock::addAlias(const std::string& _alias)
+  {
+    if (_alias.empty()) { return; }
+    aliases.insert(_alias);
+  }
+
+  std::string 
+  CidrBlock::getCidrBlock() const
+  {
+    return cidrBlock;
+  }
 
   bool
   CidrBlock::isValid() const
@@ -75,6 +92,9 @@ namespace netmeld::datastore::objects::aws {
 
     nmdo::IpAddress ipa {cidrBlock};
     if (ipa.isValid()) {
+      for (const auto& alias : aliases) {
+        ipa.addAlias(alias, "AWS CidrBlock");
+      }
       ipa.save(t, toolRunId, "");
     } else {
       nmdo::IpNetwork ipn {cidrBlock};
@@ -101,6 +121,8 @@ namespace netmeld::datastore::objects::aws {
     oss << '['
         << "cidrBlock: " << cidrBlock
         << ", state: " << state
+        << ", description: " << description
+        << ", aliases: " << aliases
         << ']'
         ;
 
@@ -117,6 +139,9 @@ namespace netmeld::datastore::objects::aws {
   CidrBlock::operator<=>(const CidrBlock& rhs) const
   {
     if (auto cmp = cidrBlock <=> rhs.cidrBlock; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = aliases <=> rhs.aliases; 0 != cmp) {
       return cmp;
     }
 

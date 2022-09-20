@@ -45,12 +45,14 @@ namespace netmeld::datastore::objects::aws {
   void
   Route::addCidrBlock(const std::string& _cidrBlock)
   {
+    if (_cidrBlock.empty()) { return; }
     CidrBlock cb {_cidrBlock};
     cidrBlocks.insert(cb);
   }
   void
   Route::addNonCidrBlock(const std::string& _dest)
   {
+    if (_dest.empty()) { return; }
     nonCidrBlocks.insert(_dest);
   }
 

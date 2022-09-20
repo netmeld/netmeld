@@ -44,10 +44,6 @@ Parser::fromJson(const json& _data)
   }
 }
 
-
-
-// TODO https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/describe-route-tables.html
-
 void
 Parser::processRouteTable(const json& _routeTable)
 {
@@ -55,14 +51,14 @@ Parser::processRouteTable(const json& _routeTable)
   art.setId(_routeTable.value("RouteTableId", ""));
   art.setVpcId(_routeTable.value("VpcId", ""));
 
-  processAssociations(_routeTable.at("Associations"), art);
-  processRoutes(_routeTable.at("Routes"), art);
+  processAssociations(_routeTable, art);
+  processRoutes(_routeTable, art);
 
   d.routeTables.emplace_back(art);
 }
 
 void
-Parser::processAssociations(const json& _associations,
+Parser::processAssociations(const json& _rt,
                             nmdoa::RouteTable& _routeTable)
 {
   std::set<std::string> keys {
@@ -70,12 +66,12 @@ Parser::processAssociations(const json& _associations,
       , "SubnetId"
     };
 
-  std::string_view found;
-
   for (const auto& key : keys) {
-    for (const auto& association : _associations) {
-      // TODO do we care about association state
+    for (const auto& association : _rt.at("Associations")) {
       if ("associated" != association.at("AssociationState").at("State")) {
+        LOG_DEBUG << "RouteTable not associated: "
+                  << _routeTable.toDebugString()
+                  ;
         continue;
       }
       if (association.contains(key)) {
@@ -86,9 +82,9 @@ Parser::processAssociations(const json& _associations,
 }
 
 void
-Parser::processRoutes(const json& _routes, nmdoa::RouteTable& _routeTable)
+Parser::processRoutes(const json& _rt, nmdoa::RouteTable& _routeTable)
 {
-  for (const auto& route : _routes) {
+  for (const auto& route : _rt.at("Routes")) {
     const std::string rId {getRouteId(route)};
 
     nmdoa::Route ar;
@@ -138,15 +134,15 @@ std::string
 Parser::getRouteId(const json& _route)
 {
   std::set<std::string> keys {
-        "GatewayId"
-      , "EgressOnlyInternetGatewayId"
-      , "NatGatewayId"
-      , "TransitGatewayId"
-      , "LocalGatewayId"
-      , "NetworkInterfaceId"
-      , "VpcPeeringConnectionId"
-      , "CarrierGatewayId"
+        "CarrierGatewayId"
       , "CoreNetworkArn"
+      , "EgressOnlyInternetGatewayId"
+      , "GatewayId"
+      , "LocalGatewayId"
+      , "NatGatewayId"
+      , "NetworkInterfaceId"
+      , "TransitGatewayId"
+      , "VpcPeeringConnectionId"
       // NOTE The following two instance Ids seem to always appear together
       // and when NetworkInterfaceId is present, prefer NetworkInterfaceId
       //, "InstanceId"

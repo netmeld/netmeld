@@ -82,18 +82,27 @@ BOOST_AUTO_TEST_CASE(testSetters)
   {
     TestRouteTable tobj;
 
+    tobj.addAssociation("");
+    auto trv1 = tobj.getAssociations();
+    BOOST_TEST(0 == trv1.size());
+
     const std::string tv1 {"aBc1@3"};
     tobj.addAssociation(tv1);
-    const auto trv1 = tobj.getAssociations();
+    trv1 = tobj.getAssociations();
     BOOST_TEST(1 == trv1.size());
     BOOST_TEST(trv1.contains(tv1));
   }
   {
     TestRouteTable tobj;
 
-    const nmdoa::Route tv1;
+    nmdoa::Route tv1;
     tobj.addRoute(tv1);
-    const auto trv1 = tobj.getRoutes();
+    auto trv1 = tobj.getRoutes();
+    BOOST_TEST(0 == trv1.size());
+
+    tv1.setId("aBc1@3");
+    tobj.addRoute(tv1);
+    trv1 = tobj.getRoutes();
     BOOST_TEST(1 == trv1.size());
     BOOST_TEST(trv1.contains(tv1));
   }

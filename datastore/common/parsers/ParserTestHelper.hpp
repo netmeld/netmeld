@@ -95,5 +95,15 @@ namespace netmeld::datastore::parsers {
     }
   }
 
+  void testInString(const std::string&, const std::string&);
+  void testInString(const std::string& _str, const std::string& _tv1)
+  {
+    const auto& trv1 = _str.find(_tv1);
+    const auto& trv2 = _str.rfind(_tv1);
+    BOOST_TEST(std::string::npos != trv1
+              , "Value '" + _tv1 + "' not found in '" + _str + "'"
+              );
+    BOOST_TEST(trv1 == trv2);
+  }
 }
 #endif // PARSER_TEST_HELPER_HPP

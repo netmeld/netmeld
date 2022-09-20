@@ -87,8 +87,8 @@ Parser::getRule(const json& _permission)
 {
   nmdoa::SecurityGroupRule asgr;
   asgr.setProtocol(_permission.value("IpProtocol", ""));
-  asgr.setFromPort(_permission.value("FromPort", -1));
-  asgr.setToPort(_permission.value("ToPort", -1));
+  asgr.setFromPort(_permission.value("FromPort", ANY));
+  asgr.setToPort(_permission.value("ToPort", ANY));
 
   {
     std::map<std::string, std::string> keys {
@@ -97,9 +97,9 @@ Parser::getRule(const json& _permission)
       };
     for (const auto& [listKey, ipKey] : keys) {
       for (const auto& ip : _permission.at(listKey)) {
-        // TODO what to do with description?
-        //const std::string desc {ip.value("Description", "")};
-        asgr.addCidrBlock(ip.value(ipKey, ""));
+        nmdoa::CidrBlock cb {ip.value(ipKey, "")};
+        cb.setDescription(ip.value("Description", ""));
+        asgr.addCidrBlock(cb);
       }
     }
   }

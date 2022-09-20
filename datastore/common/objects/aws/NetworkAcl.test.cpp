@@ -82,20 +82,29 @@ BOOST_AUTO_TEST_CASE(testSetters)
   {
     TestNetworkAcl tobj;
 
+    tobj.addSubnetId("");
+    auto trv1 = tobj.getSubnetIds();
+    BOOST_TEST(0 == trv1.size());
+    
     const std::string tv1 {"aBc1@3"};
     tobj.addSubnetId(tv1);
-    const auto sis = tobj.getSubnetIds();
-    BOOST_TEST(1 == sis.size());
-    BOOST_TEST(sis.contains(tv1));
+    trv1 = tobj.getSubnetIds();
+    BOOST_TEST(1 == trv1.size());
+    BOOST_TEST(trv1.contains(tv1));
   }
   {
     TestNetworkAcl tobj;
 
-    const nmdoa::NetworkAclRule tv1;
+    nmdoa::NetworkAclRule tv1;
     tobj.addRule(tv1);
-    const auto rs = tobj.getRules();
-    BOOST_TEST(1 == rs.size());
-    BOOST_TEST(rs.contains(tv1));
+    auto trv1 = tobj.getRules();
+    BOOST_TEST(0 == trv1.size());
+
+    tv1.setNumber(0);
+    tobj.addRule(tv1);
+    trv1 = tobj.getRules();
+    BOOST_TEST(1 == trv1.size());
+    BOOST_TEST(trv1.contains(tv1));
   }
 }
 

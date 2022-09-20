@@ -59,7 +59,6 @@ class Parser
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    const std::string REASON {"AWS EC2 IP"};
     Data d;
 
   // ===========================================================================

@@ -75,12 +75,12 @@ namespace netmeld::datastore::objects::aws {
   void
   NetworkInterface::setMacAddress(const std::string& _mac)
   {
-    macAddr.setMac(_mac);
+    macAddr = _mac;
   }
   void
-  NetworkInterface::addIpAddress(const nmdo::IpAddress& _ip)
+  NetworkInterface::addCidrBlock(const CidrBlock& _cidr)
   {
-    macAddr.addIpAddress(_ip);
+    cidrBlocks.insert(_cidr);
   }
   void
   NetworkInterface::setSubnetId(const std::string& _id)
@@ -96,6 +96,12 @@ namespace netmeld::datastore::objects::aws {
   NetworkInterface::addSecurityGroup(const std::string& _sg)
   {
     securityGroups.insert(_sg);
+  }
+
+  std::set<CidrBlock>
+  NetworkInterface::getCidrBlocks() const
+  {
+    return cidrBlocks;
   }
 
   bool
@@ -138,25 +144,22 @@ namespace netmeld::datastore::objects::aws {
     }
 
     attachment.save(t, toolRunId, interfaceId);
-   
-    if (macAddr.isValid()) {
-      macAddr.save(t, toolRunId, deviceId);
+
+    if (!macAddr.empty()) {
       t.exec_prepared("insert_raw_aws_network_interface_mac"
           , toolRunId
           , interfaceId
-          , macAddr.toString()
+          , macAddr
         );
     }
 
-    for (const auto& ip : macAddr.getIpAddresses()) {
-      for (const auto& alias : ip.getAliases()) {
-        t.exec_prepared("insert_raw_aws_network_interface_ip"
-            , toolRunId
-            , interfaceId
-            , ip.toString()
-            , alias
-          );
-      }
+    for (auto cb : cidrBlocks) {
+      cb.save(t, toolRunId, interfaceId);
+      t.exec_prepared("insert_raw_aws_network_interface_ip"
+          , toolRunId
+          , interfaceId
+          , cb.getCidrBlock()
+        );
     }
 
     if (!subnetId.empty()) {
@@ -219,8 +222,9 @@ namespace netmeld::datastore::objects::aws {
         << ", subnetId: " << subnetId
         << ", vpcId: " << vpcId
         << ", attachment: " << attachment.toDebugString()
-        << ", securityGroups: " << securityGroups.size()
-        << ", macAddr: " << macAddr.toDebugString()
+        << ", securityGroups: " << securityGroups
+        << ", macAddr: " << macAddr
+        << ", cidrBlocks: " << cidrBlocks
         << ']'
         ;
 

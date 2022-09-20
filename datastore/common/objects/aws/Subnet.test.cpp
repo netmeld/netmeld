@@ -44,6 +44,9 @@ class TestSubnet : public nmdoa::Subnet {
     std::string getAvailabilityZone() const
     { return availabilityZone; }
 
+    std::string getSubnetArn() const
+    { return subnetArn; }
+
     std::string getVpcId() const
     { return vpcId; }
 
@@ -58,6 +61,7 @@ BOOST_AUTO_TEST_CASE(testConstructors)
 
     BOOST_TEST(tobj.getSubnetId().empty());
     BOOST_TEST(tobj.getAvailabilityZone().empty());
+    BOOST_TEST(tobj.getSubnetArn().empty());
     BOOST_TEST(tobj.getVpcId().empty());
     BOOST_TEST(tobj.getCidrBlocks().empty());
   }
@@ -83,16 +87,37 @@ BOOST_AUTO_TEST_CASE(testSetters)
     TestSubnet tobj;
 
     const std::string tv1 {"aBc1@3"};
+    tobj.setSubnetArn(tv1);
+    BOOST_TEST(tv1 == tobj.getSubnetArn());
+  }
+  {
+    TestSubnet tobj;
+
+    const std::string tv1 {"aBc1@3"};
     tobj.setVpcId(tv1);
     BOOST_TEST(tv1 == tobj.getVpcId());
   }
   {
     TestSubnet tobj;
 
+    tobj.addCidrBlock("");
+    auto trv1 = tobj.getCidrBlocks();
+    BOOST_TEST(0 == trv1.size());
+
+    nmdoa::CidrBlock tv2;
+    tobj.addCidrBlock(tv2);
+    trv1 = tobj.getCidrBlocks();
+    BOOST_TEST(0 == trv1.size());
+
     const std::string tv1 {"1.2.3.4/24"};
-    nmdoa::CidrBlock tv2 {tv1};
     tobj.addCidrBlock(tv1);
-    const auto trv1 = tobj.getCidrBlocks();
+    trv1 = tobj.getCidrBlocks();
+    BOOST_TEST(1 == trv1.size());
+    tv2.setCidrBlock(tv1);
+    BOOST_TEST(trv1.contains(tv2));
+
+    tobj.addCidrBlock(tv2);
+    trv1 = tobj.getCidrBlocks();
     BOOST_TEST(1 == trv1.size());
     BOOST_TEST(trv1.contains(tv2));
   }

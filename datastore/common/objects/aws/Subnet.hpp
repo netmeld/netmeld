@@ -47,6 +47,7 @@ namespace netmeld::datastore::objects::aws {
       std::set<CidrBlock> cidrBlocks;
       std::string vpcId;
       std::string availabilityZone;
+      std::string subnetArn;
 
     public: // Variables should rarely appear at this scope
 
@@ -68,8 +69,11 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setAvailabilityZone(const std::string&);
       void setId(const std::string&);
+      void setSubnetArn(const std::string&);
       void setVpcId(const std::string&);
+
       void addCidrBlock(const std::string&);
+      void addCidrBlock(const CidrBlock&);
 
       bool isValid() const override;
 

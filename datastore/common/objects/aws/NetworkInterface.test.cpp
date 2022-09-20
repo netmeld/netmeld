@@ -68,7 +68,7 @@ class TestNetworkInterface : public nmdoa::NetworkInterface {
     std::set<std::string> getSecurityGroups() const
     { return securityGroups; }
 
-    nmdo::MacAddress getMacAddress() const
+    std::string getMacAddress() const
     { return macAddr; }
 };
 
@@ -87,7 +87,8 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     BOOST_TEST(tobj.getVpcId().empty());
     BOOST_TEST(!tobj.getAttachment().isValid());
     BOOST_TEST(tobj.getSecurityGroups().empty());
-    BOOST_TEST(!tobj.getMacAddress().isValid());
+    BOOST_TEST(tobj.getMacAddress().empty());
+    BOOST_TEST(tobj.getCidrBlocks().empty());
   }
 }
 
@@ -147,19 +148,18 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     const std::string tv1 {"00:11:22:33:44:55"};
     tobj.setMacAddress(tv1);
-    nmdo::MacAddress trv1 {tv1};
-    BOOST_TEST(trv1 == tobj.getMacAddress());
+    BOOST_TEST(tv1 == tobj.getMacAddress());
   }
   {
     TestNetworkInterface tobj;
 
     const std::string tv1 {"1.2.3.4/24"};
-    nmdo::IpAddress tv2 {tv1};
+    nmdoa::CidrBlock  tv2 {tv1};
 
-    tobj.addIpAddress(tv2);
-    auto trv2 = tobj.getMacAddress().getIpAddresses();
-    BOOST_TEST(1 == trv2.size());
-    BOOST_TEST(trv2.contains(tv2));
+    tobj.addCidrBlock(tv2);
+    auto trv1 = tobj.getCidrBlocks();
+    BOOST_TEST(1 == trv1.size());
+    BOOST_TEST(trv1.contains(tv2));
   }
   {
     TestNetworkInterface tobj;

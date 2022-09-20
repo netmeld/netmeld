@@ -43,6 +43,11 @@ namespace netmeld::datastore::objects::aws {
     availabilityZone = _az;
   }
   void
+  Subnet::setSubnetArn(const std::string& _sa)
+  {
+    subnetArn = _sa;
+  }
+  void
   Subnet::setVpcId(const std::string& _id)
   {
     vpcId = _id;
@@ -50,7 +55,15 @@ namespace netmeld::datastore::objects::aws {
   void
   Subnet::addCidrBlock(const std::string& _cidrBlock)
   {
+    if (_cidrBlock.empty()) { return; }
     cidrBlocks.emplace(_cidrBlock);
+  }
+  void
+  Subnet::addCidrBlock(const CidrBlock& _cidrBlock)
+  {
+    CidrBlock t;
+    if (t == _cidrBlock) { return; }
+    cidrBlocks.insert(_cidrBlock);
   }
 
   bool
@@ -76,7 +89,9 @@ namespace netmeld::datastore::objects::aws {
       );
     
     bool hasDetails {
-        !(availabilityZone.empty())
+        !(  availabilityZone.empty()
+         || subnetArn.empty()
+        )
       };
 
     if (hasDetails) {
@@ -84,6 +99,7 @@ namespace netmeld::datastore::objects::aws {
           , toolRunId
           , subnetId
           , availabilityZone
+          , subnetArn
         );
     }
 
@@ -120,6 +136,7 @@ namespace netmeld::datastore::objects::aws {
         << "subnetId: " << subnetId
         << ", vpcId: " << vpcId
         << ", availabilityZone: " << availabilityZone
+        << ", subnetArn: " << subnetArn
         << ", cidrBlocks: " << cidrBlocks
         << ']'
         ;
@@ -137,6 +154,9 @@ namespace netmeld::datastore::objects::aws {
       return cmp;
     }
     if (auto cmp = availabilityZone <=> rhs.availabilityZone; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = subnetArn <=> rhs.subnetArn; 0 != cmp) {
       return cmp;
     }
 
