@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestCidrBlock tobj;
 
     const std::string tv1 {"1.2.3.4/24"};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setCidrBlock(tv1);
     BOOST_TEST(tobj.isValid());

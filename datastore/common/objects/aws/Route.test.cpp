@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
   }
   {
     TestRoute tobj;
-    
+
     const std::string tv1 {"1.2.3.0/24"};
     nmdoa::CidrBlock tv2 {tv1};
     tobj.addCidrBlock(tv1);
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
   }
   {
     TestRoute tobj;
-    
+
     const std::string tv1 {"aBc1@3"};
     tobj.addNonCidrBlock(tv1);
     const auto trv1 = tobj.getNonCidrBlocks();
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestRoute tobj;
 
     const std::string tv1 {"aBc1@3"};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setId(tv1);
     BOOST_TEST(tobj.isValid());

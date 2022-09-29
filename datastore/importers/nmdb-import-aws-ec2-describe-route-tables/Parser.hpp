@@ -41,9 +41,6 @@ using json = nlohmann::json;
 // Data containers
 // =============================================================================
 struct Data {
-  //std::vector<nmdo::DeviceInformation> devices;
-  //std::map<std::string, std::vector<nmdo::Interface>> interfaces;
-
   std::vector<nmdoa::RouteTable> routeTables;
 
   nmdo::ToolObservations observations;

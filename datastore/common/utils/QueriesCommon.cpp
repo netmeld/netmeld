@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -64,7 +64,7 @@ namespace netmeld::datastore::utils {
         )");
 
 
-    
+
     // ----------------------------------------------------------------------
     // TABLES: AWS Instance related
     // ----------------------------------------------------------------------
@@ -196,7 +196,7 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_aws_security_group_detail", R"(
           INSERT INTO raw_aws_security_group_details
-            (tool_run_id, security_group_id, group_name, description) 
+            (tool_run_id, security_group_id, group_name, description)
           VALUES
             ($1, $2, $3, $4)
           ON CONFLICT DO NOTHING
@@ -1348,20 +1348,20 @@ namespace netmeld::datastore::utils {
 
     db.prepare
     ("insert_raw_prowler_check", R"(
-      INSERT INTO raw_prowler_checks
-        (tool_run_id, account_number, timestamp, region,
-         level, control_id, service,
-         status, severity, control, risk, remediation, documentation_link,
-         resource_id
-         )
-      VALUES
-        ($1, $2, $3, $4,
-         $5, $6, $7,
-         $8, $9, $10, $11, $12, $13,
-         $14)
-      ON CONFLICT
-      DO NOTHING
-    )");
+        INSERT INTO raw_prowler_checks
+          (tool_run_id, account_number, timestamp, region,
+           level, control_id, service,
+           status, severity, control, risk, remediation, documentation_link,
+           resource_id
+           )
+        VALUES
+          ($1, $2, $3, $4,
+           $5, $6, $7,
+           $8, $9, $10, $11, $12, $13,
+           $14)
+        ON CONFLICT
+        DO NOTHING
+      )");
 
 
     // ----------------------------------------------------------------------

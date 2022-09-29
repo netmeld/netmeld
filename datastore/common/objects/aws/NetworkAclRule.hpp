@@ -43,8 +43,10 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       std::int32_t  number      {INT32_MIN}; // Doc value range is 1-32766
+
       std::string   action;
       std::string   protocol;
+
       std::int32_t  fromOrType  {INT32_MIN};
       std::int32_t  toOrCode    {INT32_MIN};
 

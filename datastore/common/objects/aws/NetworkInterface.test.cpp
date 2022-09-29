@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestNetworkInterface tobj;
 
     const std::string tv1 {"aBc1@3"};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setId(tv1);
     BOOST_TEST(tobj.isValid());

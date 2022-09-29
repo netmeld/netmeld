@@ -129,13 +129,13 @@ BOOST_AUTO_TEST_CASE(testProcessIps)
           , "PrivateIpAddresses":
             [{ "Primary": true
             , "PrivateIpAddress": "10.2.3.4"
-            , "PrivateDnsName": "aB-1.c.D"
+            , "PrivateDnsName": "a1"
             , "Association":
               { "IpOwnerId": "1"
               , "CarrierIp": "1.2.3.4"
               , "CustomerOwnedIp": "1.2.3.5"
               , "PublicIp": "1.2.3.6"
-              , "PublicDnsName": "aB-2.c.D"
+              , "PublicDnsName": "a2"
               }
             }]
           }
@@ -144,11 +144,11 @@ BOOST_AUTO_TEST_CASE(testProcessIps)
     nmdoa::NetworkInterface tobj;
     tp.processIps(tv1, tobj);
     const std::vector<std::string> tevs {
-          R"([cidrBlock: 1.2.3.4, state: , description: , aliases: [aB-2.c.D]])"
-				, R"([cidrBlock: 1.2.3.5, state: , description: , aliases: [aB-2.c.D]])"
-				, R"([cidrBlock: 1.2.3.6, state: , description: , aliases: [aB-2.c.D]])"
-				, R"([cidrBlock: 10.2.3.4, state: , description: , aliases: [aB-1.c.D]])"
-				, R"([cidrBlock: 1::2, state: , description: , aliases: []])"
+          R"([cidrBlock: 1.2.3.4, state: , description: , aliases: [a2]])"
+        , R"([cidrBlock: 1.2.3.5, state: , description: , aliases: [a2]])"
+        , R"([cidrBlock: 1.2.3.6, state: , description: , aliases: [a2]])"
+        , R"([cidrBlock: 10.2.3.4, state: , description: , aliases: [a1]])"
+        , R"([cidrBlock: 1::2, state: , description: , aliases: []])"
       };
     for (const auto& tev : tevs) {
       nmdp::testInString(tobj.toDebugString(), tev);
@@ -218,8 +218,8 @@ BOOST_AUTO_TEST_CASE(testProcessInterfaceAttachments)
     tp.processInterfaceAttachments(tv1, tobj);
     const std::vector<std::string> tevs {
           R"(attachmentId: aB1-2c,)"
-				, R"(status: aB1-2c,)"
-				, R"(deleteOnTermination: 1])"
+        , R"(status: aB1-2c,)"
+        , R"(deleteOnTermination: 1])"
       };
     for (const auto& tev : tevs) {
       nmdp::testInString(tobj.toDebugString(), tev);
@@ -309,13 +309,13 @@ BOOST_AUTO_TEST_CASE(testProcessInterfaces)
     tp.processInterfaces(tv1, tobj);
     const std::vector<std::string> tevs {
           R"(interfaceId: a B-c 1 2.3,)"
-				, R"(type: a B-c 1 2.3,)"
-				, R"(description: a B-c 1 2.3,)"
-				, R"(sourceDestinationCheck: 1,)"
-				, R"(status: aBc-1@3,)"
-				, R"(subnetId: a B-c 1 2.3,)"
-				, R"(vpcId: a B-c 1 2.3,)"
-				, R"(macAddr: a B-c 1 2.3,)"
+        , R"(type: a B-c 1 2.3,)"
+        , R"(description: a B-c 1 2.3,)"
+        , R"(sourceDestinationCheck: 1,)"
+        , R"(status: aBc-1@3,)"
+        , R"(subnetId: a B-c 1 2.3,)"
+        , R"(vpcId: a B-c 1 2.3,)"
+        , R"(macAddr: a B-c 1 2.3,)"
       };
     for (const auto& tev : tevs) {
       nmdp::testInString(tobj.toDebugString(), tev);
@@ -509,14 +509,14 @@ BOOST_AUTO_TEST_CASE(testProcessInstance)
 
     const std::vector<std::string> tevs {
           R"(instanceId: a B-c 1 2.3,)"
-				, R"(type: a B-c 1 2.3,)"
-				, R"(imageId: a B-c 1 2.3,)"
-				, R"(architecture: a B-c 1 2.3,)"
-				, R"(platformDetails: a B-c 1 2.3,)"
-				, R"(launchTime: 1234-12-12T12:12:12.123Z,)"
-				, R"(availabilityZone: a B-c 1 2.3,)"
-				, R"(stateCode: 255,)"
-				, R"(stateName: a B-c 1 2.3,)"
+        , R"(type: a B-c 1 2.3,)"
+        , R"(imageId: a B-c 1 2.3,)"
+        , R"(architecture: a B-c 1 2.3,)"
+        , R"(platformDetails: a B-c 1 2.3,)"
+        , R"(launchTime: 1234-12-12T12:12:12.123Z,)"
+        , R"(availabilityZone: a B-c 1 2.3,)"
+        , R"(stateCode: 255,)"
+        , R"(stateName: a B-c 1 2.3,)"
       };
     for (const auto& tev : tevs) {
       nmdp::testInString(tobj[0].toDebugString(), tev);

@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
 
     const std::string v1 {"aBc1@3"};
     std::int32_t v2 {0};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setProtocol(v1);
     BOOST_TEST(!tobj.isValid());
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
 
     const std::string v1 {"aBc1@3"};
     std::int32_t v2 {0};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setProtocol(v1);
     BOOST_TEST(!tobj.isValid());

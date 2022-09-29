@@ -45,14 +45,14 @@ namespace netmeld::datastore::objects::aws {
   void
   RouteTable::addAssociation(const std::string& _association)
   {
-    if (_association.empty()) { return; }
+    if (_association.empty()) { return; } // Don't add empties
     associations.insert(_association);
   }
   void
   RouteTable::addRoute(const Route& _route)
   {
     Route t;
-    if (t == _route) { return; }
+    if (t == _route) { return; } // Don't add empties
     routes.insert(_route);
   }
 
@@ -65,7 +65,7 @@ namespace netmeld::datastore::objects::aws {
 
   void
   RouteTable::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string&)
+                   const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS RouteTable object is not saving: " << toDebugString()

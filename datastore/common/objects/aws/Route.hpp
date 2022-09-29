@@ -67,6 +67,7 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setId(const std::string&);
       void setState(const std::string&);
+
       void addCidrBlock(const std::string&);
       void addNonCidrBlock(const std::string&);
 

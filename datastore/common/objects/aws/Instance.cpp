@@ -80,7 +80,7 @@ namespace netmeld::datastore::objects::aws {
   Instance::addInterface(const NetworkInterface& _ani)
   {
     const NetworkInterface t;
-    if (t == _ani) { return; } // Don't add empty interface
+    if (t == _ani) { return; } // Don't add empties
     interfaces.insert(_ani);
   }
 
@@ -106,15 +106,7 @@ namespace netmeld::datastore::objects::aws {
       );
 
     bool hasDetails {
-        true
-//        !(   type.empty()
-//          || imageId.empty()
-//          || architecture.empty()
-//          || platformDetails.empty()
-//          || launchTime.empty()
-//          || availabilityZone.empty()
-//          || stateName.empty()
-//        )
+        true // NOTE Let datastore logic handle existance or not
       };
 
     if (hasDetails) {

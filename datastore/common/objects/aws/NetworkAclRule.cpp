@@ -95,7 +95,7 @@ namespace netmeld::datastore::objects::aws {
 
   void
   NetworkAclRule::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string& deviceId)
+                       const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS NetworkAclRule object is not saving: "

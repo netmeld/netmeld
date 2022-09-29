@@ -55,7 +55,7 @@ namespace netmeld::datastore::objects::aws {
   void
   SecurityGroupRule::addCidrBlock(const std::string& _cidr)
   {
-    if (_cidr.empty()) { return; }
+    if (_cidr.empty()) { return; } // Don't add empties
     CidrBlock cb {_cidr};
     cidrBlocks.insert(cb);
   }
@@ -63,13 +63,13 @@ namespace netmeld::datastore::objects::aws {
   SecurityGroupRule::addCidrBlock(const CidrBlock& _cidr)
   {
     CidrBlock t;
-    if (t == _cidr) { return; }
+    if (t == _cidr) { return; } // Don't add empties
     cidrBlocks.insert(_cidr);
   }
   void
   SecurityGroupRule::addNonCidr(const std::string& _target)
   {
-    if (_target.empty()) { return; }
+    if (_target.empty()) { return; } // Don't add empties
     nonCidrs.insert(_target);
   }
 
@@ -84,10 +84,12 @@ namespace netmeld::datastore::objects::aws {
 
   void
   SecurityGroupRule::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string& deviceId)
+      const nmco::Uuid& toolRunId, const std::string& deviceId
+    )
   {
     if (!isValid()) {
-      LOG_DEBUG << "AWS SecurityGroupRule object is not saving: " << toDebugString()
+      LOG_DEBUG << "AWS SecurityGroupRule object is not saving: "
+                << toDebugString()
                 << std::endl;
       return;
     }

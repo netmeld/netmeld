@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestSecurityGroup tobj;
 
     const std::string v1 {"aBc1@3"};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setId(v1);
     BOOST_TEST(tobj.isValid());

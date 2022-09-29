@@ -28,8 +28,6 @@
 #define AWS_NETWORK_INTERFACE_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-//#include <netmeld/datastore/objects/IpAddress.hpp>
-//#include <netmeld/datastore/objects/MacAddress.hpp>
 #include <netmeld/datastore/objects/aws/Attachment.hpp>
 #include <netmeld/datastore/objects/aws/CidrBlock.hpp>
 
@@ -49,17 +47,18 @@ namespace netmeld::datastore::objects::aws {
 
       std::string type;
       std::string description;
-      bool sourceDestinationCheck {false};
       std::string status;
-      bool isUp {false};
       std::string subnetId;
       std::string vpcId;
       std::string macAddr;
 
+      bool sourceDestinationCheck {false};
+      bool isUp                   {false};
+
       Attachment attachment;
 
       std::set<std::string> securityGroups;
-      std::set<CidrBlock> cidrBlocks;
+      std::set<CidrBlock>   cidrBlocks;
 
       //nmdo::MacAddress macAddr;
 
@@ -79,16 +78,15 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setId(const std::string&);
-      
       void setAttachment(const Attachment&);
       void setDescription(const std::string&);
+      void setId(const std::string&);
       void setMacAddress(const std::string&);
       void setStatus(const std::string&);
       void setSubnetId(const std::string&);
       void setType(const std::string&);
       void setVpcId(const std::string&);
-      
+
       void disableSourceDestinationCheck();
       void enableSourceDestinationCheck();
 

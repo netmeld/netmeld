@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
 
     const std::int32_t tv1 {123};
     const std::string  tv2 {"aBc1@3"};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setNumber(tv1);
     BOOST_TEST(!tobj.isValid());

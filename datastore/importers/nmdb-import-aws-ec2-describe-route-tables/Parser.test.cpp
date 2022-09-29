@@ -116,10 +116,10 @@ BOOST_AUTO_TEST_CASE(testProcessRoutes)
     tp.processRoutes(tv1, tobj);
     const std::vector<std::string> tevs {
           R"(typeId: ab11)"
-				, R"(state: b5)"
-				, R"(cidrBlock: 1.2.3.4/24,)"
-				, R"(cidrBlock: 1::2/24,)"
-				, R"(nonCidrBlocks: [a5])"
+        , R"(state: b5)"
+        , R"(cidrBlock: 1.2.3.4/24,)"
+        , R"(cidrBlock: 1::2/24,)"
+        , R"(nonCidrBlocks: [a5])"
       };
     for (const auto& tev : tevs) {
       nmdp::testInString(tobj.toDebugString(), tev);

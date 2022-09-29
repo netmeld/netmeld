@@ -71,15 +71,16 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setAvailabilityZone(const std::string&);
-      void setImageId(const std::string&);
       void setArchitecture(const std::string&);
-      void setPlatformDetails(const std::string&);
-      void setLaunchTime(const std::string&);
+      void setAvailabilityZone(const std::string&);
       void setId(const std::string&);
+      void setImageId(const std::string&);
+      void setLaunchTime(const std::string&);
+      void setPlatformDetails(const std::string&);
       void setStateCode(const uint16_t);
       void setStateName(const std::string&);
       void setType(const std::string&);
+
       void addInterface(const NetworkInterface&);
 
       bool isValid() const override;

@@ -43,6 +43,7 @@ namespace netmeld::datastore::objects::aws {
     protected: // Variables intended for internal/subclass API
       std::string attachmentId;
       std::string status;
+
       bool deleteOnTermination  {false};
 
     public: // Variables should rarely appear at this scope
@@ -63,8 +64,9 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setId(const std::string&);
       void setStatus(const std::string&);
-      void enableDeleteOnTermination();
+
       void disableDeleteOnTermination();
+      void enableDeleteOnTermination();
 
       bool isValid() const override;
 

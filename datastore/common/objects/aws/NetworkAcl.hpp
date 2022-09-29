@@ -68,8 +68,9 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setId(const std::string&);
       void setVpcId(const std::string&);
-      void addSubnetId(const std::string&);
+
       void addRule(const NetworkAclRule&);
+      void addSubnetId(const std::string&);
 
       bool isValid() const override;
 

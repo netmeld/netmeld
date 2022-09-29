@@ -47,7 +47,7 @@ namespace netmeld::datastore::objects::aws {
 
       std::set<std::string> aliases;
 
-      
+
     public: // Variables should rarely appear at this scope
 
     // ========================================================================
@@ -66,8 +66,8 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setCidrBlock(const std::string&);
-      void setState(const std::string&);
       void setDescription(const std::string&);
+      void setState(const std::string&);
 
       void addAlias(const std::string&);
 

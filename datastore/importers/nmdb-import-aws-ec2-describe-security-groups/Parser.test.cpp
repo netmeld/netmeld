@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(testProcessPermissions)
     nmdoa::SecurityGroupRule tev2;
     tev2.setEgress();
     tev1.addRule(tev2);
-    
+
     BOOST_TEST(tev1 == tobj);
   }
 }

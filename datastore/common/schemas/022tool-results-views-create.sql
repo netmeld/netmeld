@@ -635,10 +635,10 @@ FROM raw_operating_systems
 
 CREATE VIEW tool_observations AS
 SELECT DISTINCT
-    tr.tool_name                AS tool_name,
-    tr.data_path                AS data_path,
-    rto.category                AS category,
-    rto.observation             AS observation
+    tr.tool_name                AS tool_name
+  , tr.data_path                AS data_path
+  , rto.category                AS category
+  , rto.observation             AS observation
 FROM raw_tool_observations AS rto
 LEFT OUTER JOIN tool_runs AS tr
    ON (rto.tool_run_id = tr.id)

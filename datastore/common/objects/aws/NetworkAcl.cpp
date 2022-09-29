@@ -45,14 +45,14 @@ namespace netmeld::datastore::objects::aws {
   void
   NetworkAcl::addSubnetId(const std::string& _id)
   {
-    if (_id.empty()) { return; }
+    if (_id.empty()) { return; } // Don't add empties
     subnetIds.insert(_id);
   }
   void
   NetworkAcl::addRule(const NetworkAclRule& _rule)
   {
     NetworkAclRule t;
-    if (t == _rule) { return; }
+    if (t == _rule) { return; } // Don't add empties
     rules.insert(_rule);
   }
 
@@ -64,7 +64,7 @@ namespace netmeld::datastore::objects::aws {
 
   void
   NetworkAcl::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string&)
+                   const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS NetworkAcl object is not saving: " << toDebugString()

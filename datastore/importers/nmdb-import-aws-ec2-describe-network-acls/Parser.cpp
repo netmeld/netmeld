@@ -68,7 +68,7 @@ Parser::processEntries(const json& _nacl, nmdoa::NetworkAcl& _anacl)
     anaclr.setNumber(entry.value("RuleNumber", ANY));
     anaclr.setAction(entry.value("RuleAction", ""));
     anaclr.setProtocol(entry.value("Protocol", ""));
-    
+
     std::set<std::string> keys {
           "CidrBlock"
         , "Ipv6CidrBlock"

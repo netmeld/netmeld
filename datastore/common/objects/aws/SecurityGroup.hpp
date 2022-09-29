@@ -43,6 +43,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       std::string sgId;
+
       std::string name;
       std::string description;
       std::string vpcId;
@@ -67,10 +68,11 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
+      void setDescription(const std::string&);
       void setId(const std::string&);
       void setName(const std::string&);
-      void setDescription(const std::string&);
       void setVpcId(const std::string&);
+
       void addRule(const SecurityGroupRule&);
 
       bool isValid() const override;

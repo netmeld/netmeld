@@ -58,11 +58,11 @@ namespace netmeld::datastore::objects::aws {
   void
   CidrBlock::addAlias(const std::string& _alias)
   {
-    if (_alias.empty()) { return; }
+    if (_alias.empty()) { return; } // Don't add empties
     aliases.insert(_alias);
   }
 
-  std::string 
+  std::string
   CidrBlock::getCidrBlock() const
   {
     return cidrBlock;
@@ -98,7 +98,7 @@ namespace netmeld::datastore::objects::aws {
       ipa.save(t, toolRunId, "");
     } else {
       nmdo::IpNetwork ipn {cidrBlock};
-      ipn.save(t, toolRunId, ""); 
+      ipn.save(t, toolRunId, "");
     }
 
     bool hasDetails {
@@ -150,11 +150,14 @@ namespace netmeld::datastore::objects::aws {
     if (auto cmp = cidrBlock <=> rhs.cidrBlock; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = aliases <=> rhs.aliases; 0 != cmp) {
+    if (auto cmp = state <=> rhs.state; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = description <=> rhs.description; 0 != cmp) {
       return cmp;
     }
 
-    return state <=> rhs.state;
+    return aliases <=> aliases;
   }
 
   bool

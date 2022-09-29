@@ -68,6 +68,7 @@ namespace netmeld::datastore::objects::aws {
     public: // Methods part of public API
       void setId(const std::string&);
       void setVpcId(const std::string&);
+
       void addAssociation(const std::string&);
       void addRoute(const Route&);
 

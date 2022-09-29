@@ -28,7 +28,7 @@
 
 
 namespace netmeld::datastore::objects::aws {
-  
+
   NetworkInterface::NetworkInterface()
   {}
 
@@ -113,8 +113,8 @@ namespace netmeld::datastore::objects::aws {
 
   void
   NetworkInterface::save(pqxx::transaction_base& t,
-                         const nmco::Uuid& toolRunId,
-                         const std::string& deviceId)
+      const nmco::Uuid& toolRunId, const std::string& deviceId
+    )
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS NetworkInterface object is not saving: "
@@ -243,7 +243,9 @@ namespace netmeld::datastore::objects::aws {
     if (auto cmp = description <=> rhs.description; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = sourceDestinationCheck <=> rhs.sourceDestinationCheck; 0 != cmp) {
+    if (auto cmp = sourceDestinationCheck <=> rhs.sourceDestinationCheck;
+        0 != cmp)
+    {
       return cmp;
     }
     if (auto cmp = status <=> rhs.status; 0 != cmp) {
@@ -262,6 +264,9 @@ namespace netmeld::datastore::objects::aws {
       return cmp;
     }
     if (auto cmp = securityGroups <=> rhs.securityGroups; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = cidrBlocks <=> rhs.cidrBlocks; 0 != cmp) {
       return cmp;
     }
 

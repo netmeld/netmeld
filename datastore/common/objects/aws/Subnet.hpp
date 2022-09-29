@@ -45,6 +45,7 @@ namespace netmeld::datastore::objects::aws {
       std::string subnetId;
 
       std::set<CidrBlock> cidrBlocks;
+
       std::string vpcId;
       std::string availabilityZone;
       std::string subnetArn;

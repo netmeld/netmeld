@@ -43,6 +43,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       std::string protocol;
+
       std::int32_t fromPort {INT32_MIN};
       std::int32_t toPort   {INT32_MIN};
 
@@ -69,12 +70,13 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setProtocol(const std::string&);
-      void setFromPort(std::int32_t);
-      void setToPort(std::int32_t);
       void setEgress();
-      void addCidrBlock(const std::string&);
+      void setFromPort(std::int32_t);
+      void setProtocol(const std::string&);
+      void setToPort(std::int32_t);
+
       void addCidrBlock(const CidrBlock&);
+      void addCidrBlock(const std::string&);
       void addNonCidr(const std::string&);
 
       bool isValid() const override;

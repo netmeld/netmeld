@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     tobj.addSubnetId("");
     auto trv1 = tobj.getSubnetIds();
     BOOST_TEST(0 == trv1.size());
-    
+
     const std::string tv1 {"aBc1@3"};
     tobj.addSubnetId(tv1);
     trv1 = tobj.getSubnetIds();
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestNetworkAcl tobj;
 
     const std::string tv1  {"aBc1@3"};
-    
+
     BOOST_TEST(!tobj.isValid());
     tobj.setId(tv1);
     BOOST_TEST(tobj.isValid());

@@ -55,14 +55,14 @@ namespace netmeld::datastore::objects::aws {
   void
   Subnet::addCidrBlock(const std::string& _cidrBlock)
   {
-    if (_cidrBlock.empty()) { return; }
+    if (_cidrBlock.empty()) { return; } // Don't add empties
     cidrBlocks.emplace(_cidrBlock);
   }
   void
   Subnet::addCidrBlock(const CidrBlock& _cidrBlock)
   {
     CidrBlock t;
-    if (t == _cidrBlock) { return; }
+    if (t == _cidrBlock) { return; } // Don't add empties
     cidrBlocks.insert(_cidrBlock);
   }
 
@@ -75,7 +75,7 @@ namespace netmeld::datastore::objects::aws {
 
   void
   Subnet::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string&)
+               const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS Subnet object is not saving: " << toDebugString()
@@ -87,11 +87,9 @@ namespace netmeld::datastore::objects::aws {
         , toolRunId
         , subnetId
       );
-    
+
     bool hasDetails {
-        !(  availabilityZone.empty()
-         || subnetArn.empty()
-        )
+        !(availabilityZone.empty() || subnetArn.empty())
       };
 
     if (hasDetails) {

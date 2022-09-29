@@ -45,14 +45,14 @@ namespace netmeld::datastore::objects::aws {
   void
   Route::addCidrBlock(const std::string& _cidrBlock)
   {
-    if (_cidrBlock.empty()) { return; }
+    if (_cidrBlock.empty()) { return; } // Don't add empties
     CidrBlock cb {_cidrBlock};
     cidrBlocks.insert(cb);
   }
   void
   Route::addNonCidrBlock(const std::string& _dest)
   {
-    if (_dest.empty()) { return; }
+    if (_dest.empty()) { return; } // Don't add empties
     nonCidrBlocks.insert(_dest);
   }
 
@@ -65,7 +65,7 @@ namespace netmeld::datastore::objects::aws {
 
   void
   Route::save(pqxx::transaction_base& t,
-                    const nmco::Uuid& toolRunId, const std::string& deviceId)
+              const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
       LOG_DEBUG << "AWS Route object is not saving: " << toDebugString()
@@ -118,6 +118,9 @@ namespace netmeld::datastore::objects::aws {
       return cmp;
     }
     if (auto cmp = state <=> rhs.state; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = nonCidrBlocks <=> rhs.nonCidrBlocks; 0 != cmp) {
       return cmp;
     }
 
