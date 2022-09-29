@@ -50,8 +50,9 @@ namespace netmeld::datastore::objects::aws {
       std::string platformDetails;
       std::string launchTime;
       std::string availabilityZone;
-      uint16_t stateCode  {0};
       std::string stateName;
+
+      uint16_t stateCode  {0};
 
       std::set<NetworkInterface> interfaces;
 
