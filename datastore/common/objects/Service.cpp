@@ -232,7 +232,7 @@ namespace netmeld::datastore::objects {
         << serviceDescription << ", "
         << serviceReason << ", "
         << protocol << ", "
-        << dstPorts
+        << dstPorts << ", "
         << srcPorts
         // End of formatting
         << "]";

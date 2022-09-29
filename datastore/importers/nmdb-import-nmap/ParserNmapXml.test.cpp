@@ -246,10 +246,10 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       BOOST_TEST(1 == aliases.count("some_host"));
     }
     BOOST_TEST(d.ipAddrs.at(0).toDebugString() ==
-        "[1.2.3.4/32, 0, nmap user, 0, [some_host], ]"
+        "[1.2.3.4/32, 0, nmap user, 0, [some_host]]"
         );
     BOOST_TEST(d.ipAddrs.at(1).toDebugString() ==
-        "[1.2.3.4/32, 0, nmap ptr, 0, [some_host], ]"
+        "[1.2.3.4/32, 0, nmap ptr, 0, [some_host]]"
         );
   }
 
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     BOOST_TEST(1 == aliases.size());
     BOOST_TEST(1 == aliases.count("some_host"));
     BOOST_TEST(ipa.toDebugString() ==
-        "[1.2.3.4/32, 0, nmap nbstat, 0, [some_host], ]"
+        "[1.2.3.4/32, 0, nmap nbstat, 0, [some_host]]"
         );
   }
 
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     const auto ipa {d.ipAddrs.at(0)};
     BOOST_TEST("1.2.3.4/32" == ipa.toString());
     BOOST_TEST(ipa.toDebugString() ==
-        "[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_fqdn, some_host], ]"
+        "[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_fqdn, some_host]]"
         );
   }
 
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
         BOOST_TEST(1 == aliases.count("some_host"));
       }
       BOOST_TEST(d.ipAddrs[0].toDebugString() ==
-          "[1.2.3.4/32, 0, nmap microsoft-ds, 0, [some_host], ]"
+          "[1.2.3.4/32, 0, nmap microsoft-ds, 0, [some_host]]"
           );
     }
     {
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
           "Nmap service scan: other"
           "\n  From IP: 1.2.3.4/32"
           "\n  Potential alias: 1.2.3.4]"
-          ", ][ UNSUPPORTED FEATURES: [], ]]"
+          "][ UNSUPPORTED FEATURES: []]]"
           );
     }
   }
@@ -398,11 +398,11 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     // NOTE: not the best way...but no "easy" solution
     BOOST_TEST(d.ipAddrs.at(0).toDebugString() ==
         "[1.2.3.4/32, 0, nmap rdp-ntlm-info, 0,"
-        " [some_dns_computer_name, some_netbios_computer_name], ]"
+        " [some_dns_computer_name, some_netbios_computer_name]]"
         );
     BOOST_TEST(d.ipAddrs.at(1).toDebugString() ==
         "[1.2.3.4/32, 0, nmap ms-sql-ntlm-info, 0,"
-        " [some_dns_computer_name, some_netbios_computer_name, some_target], ]"
+        " [some_dns_computer_name, some_netbios_computer_name, some_target]]"
         );
   }
 }
@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
 
     const auto os {d.oses.at(0)};
     BOOST_TEST(os.toDebugString() ==
-        "[[1.2.3.4/32, 0, , 0, [], ],"
+        "[[1.2.3.4/32, 0, , 0, []],"
         " some_vendor, some_osfamily, some_osgen, some_cpe, 1.23]"
         );
   }
@@ -458,11 +458,11 @@ BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
 
     BOOST_TEST(2 == d.tracerouteHops.size());
     BOOST_TEST(d.tracerouteHops[0].toDebugString() ==
-        "[[4.3.2.1/32, 1, , 0, [], ], [1.2.3.4/32, 0, , 0, [], ], 1]"
+        "[[4.3.2.1/32, 1, , 0, []], [1.2.3.4/32, 0, , 0, []], 1]"
       );
     BOOST_TEST(d.tracerouteHops[1].toDebugString() ==
-        "[[4.3.2.2/32, 1, nmap trace, 0, [rtr1.tld], ],"
-        " [1.2.3.4/32, 0, , 0, [], ], 2]"
+        "[[4.3.2.2/32, 1, nmap trace, 0, [rtr1.tld]],"
+        " [1.2.3.4/32, 0, , 0, []], 2]"
       );
   }
 }
@@ -491,7 +491,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[-1, tcp, [1.2.3.4/32, 0, , 0, [], ], filtered, no-responses]"
+        "[-1, tcp, [1.2.3.4/32, 0, , 0, []], filtered, no-responses]"
         );
   }
 
@@ -514,7 +514,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[-1, udp, [1.2.3.4/32, 0, , 0, [], ], filtered, udp-responses]"
+        "[-1, udp, [1.2.3.4/32, 0, , 0, []], filtered, udp-responses]"
         );
   }
 
@@ -537,7 +537,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]"
+        "[22, tcp, [1.2.3.4/32, 0, , 0, []], open, syn-ack]"
         );
   }
 
@@ -562,13 +562,13 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], open, syn-ack]"
+        "[22, tcp, [1.2.3.4/32, 0, , 0, []], open, syn-ack]"
         );
 
     const auto service = d.services.at(0);
     BOOST_TEST(service.toDebugString() ==
-        "[[1.2.3.4/32, 0, , 0, [], ], [0.0.0.0/255, 0, , 0, [], ],"
-        " 0, -, , ssh, OpenSSH, probed, tcp, [22], [], ]"
+        "[[1.2.3.4/32, 0, , 0, []], [0.0.0.0/255, 0, , 0, []]"
+        ", 0, -, , ssh, OpenSSH, probed, tcp, [22], []]"
         );
   }
 }
@@ -597,7 +597,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 
     const auto nseResult = d.nseResults.at(0);
     BOOST_TEST(nseResult.port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
+        "[22, tcp, [1.2.3.4/32, 0, , 0, []], , ]"
         );
     BOOST_TEST("ssh-hostkey" == nseResult.scriptId);
     BOOST_TEST("2048 aa:bb::cc::dd (RSA)" == nseResult.scriptOutput);
@@ -629,7 +629,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 
     const auto sshKey = d.sshKeys.at(0);
     BOOST_TEST(sshKey.port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
+        "[22, tcp, [1.2.3.4/32, 0, , 0, []], , ]"
         );
     BOOST_TEST("ssh-rsa" == sshKey.type);
     BOOST_TEST(2048 == sshKey.bits);
@@ -660,7 +660,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 
     const auto sshAlgo = d.sshAlgorithms.at(0);
     BOOST_TEST(sshAlgo.port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, [], ], , ]"
+        "[22, tcp, [1.2.3.4/32, 0, , 0, []], , ]"
         );
     BOOST_TEST("ssh-rsa" == sshAlgo.type);
     BOOST_TEST("AAABBBCCC" == sshAlgo.name);

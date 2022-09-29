@@ -46,6 +46,12 @@ namespace netmeld::datastore::objects {
   }
 
   void
+  Interface::setDescription(const std::string& _description)
+  {
+    description = _description;
+  }
+
+  void
   Interface::setMediaType(const std::string& _mediaType)
   {
     mediaType = nmcu::toLower(_mediaType);
@@ -119,7 +125,7 @@ namespace netmeld::datastore::objects {
       name,
       mediaType,
       isUp,
-      nullptr);
+      description);
 
     macAddr.setResponding(isUp);
     macAddr.save(t, toolRunId, deviceId);
@@ -189,10 +195,11 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << name << ", "
-        << std::boolalpha << isUp << ", "
-        << mediaType << ", "
-        << macAddr.toDebugString() << ", "
+    oss << name
+        << ", " << description
+        << ", " << std::boolalpha << isUp
+        << ", " << mediaType
+        << ", " << macAddr.toDebugString()
         ;
 
     oss << "]"; // closing bracket

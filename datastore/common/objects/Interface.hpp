@@ -41,6 +41,8 @@ namespace netmeld::datastore::objects {
     private:
     protected:
       std::string  name;
+      std::string  description;
+
       std::string  mediaType {"ethernet"};
       bool         isUp      {false};
       MacAddress   macAddr;
@@ -71,6 +73,7 @@ namespace netmeld::datastore::objects {
       void addIpAddress(const IpAddress&);
 
       void setName(const std::string&);
+      void setDescription(const std::string&);
       void setMediaType(const std::string&);
       void setMacAddress(const MacAddress&);
       void setUp();

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -818,6 +818,31 @@ ON raw_tool_observations(category);
 CREATE INDEX raw_tool_observations_idx_observation
 ON raw_tool_observations(observation);
 
+
+-- ----------------------------------------------------------------------
+
+
+CREATE TABLE raw_prowler_checks (
+      tool_run_id                 UUID            NOT NULL
+    , account_number              TEXT            NULL
+    , timestamp                   TIMESTAMP       NULL
+    , region                      TEXT            NULL
+    , level                       TEXT            NULL
+    , control_id                  TEXT            NULL
+    , service                     TEXT            NULL
+    , status                      TEXT            NULL
+    , severity                    ProwlerSeverity NULL
+    , control                     TEXT            NULL
+    , risk                        TEXT            NULL
+    , remediation                 TEXT            NULL
+    , documentation_link          TEXT            NULL
+    , resource_id                 TEXT            NULL
+    , FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+    
 
 -- ----------------------------------------------------------------------
 

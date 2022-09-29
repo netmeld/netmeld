@@ -633,17 +633,40 @@ FROM raw_operating_systems
 
 -- ----------------------------------------------------------------------
 
-
 CREATE VIEW tool_observations AS
 SELECT DISTINCT
-  tr.tool_name                  AS tool_name,
-  tr.data_path                  AS data_path,
-  rto.category                  AS category,
-  rto.observation               AS observation
+    tr.tool_name                AS tool_name
+  , tr.data_path                AS data_path
+  , rto.category                AS category
+  , rto.observation             AS observation
 FROM raw_tool_observations AS rto
 LEFT OUTER JOIN tool_runs AS tr
    ON (rto.tool_run_id = tr.id)
 ;
+
+-- ----------------------------------------------------------------------
+
+CREATE VIEW prowler_checks AS
+SELECT DISTINCT
+    account_number              AS account_number
+  , timestamp                   AS timestamp
+  , region                      AS region
+  , level                       AS level
+  , control_id                  AS control_id
+  , service                     AS service
+  , status                      AS status
+  , severity                    AS severity
+  , control                     AS control
+  , risk                        AS risk
+  , remediation                 AS remediation
+  , documentation_link          AS documentation_link
+  , resource_id                 AS resource_id
+FROM raw_prowler_checks AS rpc
+ORDER BY account_number, region, level, control_id, service,
+         status, severity, resource_id
+;
+
+
 
 -- ----------------------------------------------------------------------
 

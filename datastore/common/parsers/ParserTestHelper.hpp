@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -95,5 +95,17 @@ namespace netmeld::datastore::parsers {
     }
   }
 
+  void testInString(const std::string&, const std::string&);
+  void testInString(const std::string& _str, const std::string& _tv1)
+  {
+    const auto& trv1 = _str.find(_tv1);
+    const auto& trv2 = _str.rfind(_tv1);
+    BOOST_TEST(std::string::npos != trv1
+              , "Value '" + _tv1 + "' not found in '" + _str + "'"
+              );
+    BOOST_TEST(trv1 == trv2
+              , "Value '" + _tv1 + "' found in multiple locations in '"
+                + _str + "'");
+  }
 }
 #endif // PARSER_TEST_HELPER_HPP
