@@ -35,6 +35,7 @@ foreach(ITEM
     022tool-results-views-create.sql
     023device-views-create.sql
     024tool-results-views-create.sql
+    031aws-tables-create.sql
   )
   nm_install_conf(${ITEM} "${NETMELD_SCHEMA_DIR}")
 endforeach()
