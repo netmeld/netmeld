@@ -24,93 +24,136 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/IpAddress.hpp>
-#include <netmeld/datastore/parsers/ParserDomainName.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+/* Notes:
+   - This unit is part of the complilation process to help ensure consistency
+     between templates and the actual data
+   - Various data is included and most is commented solely for educational
+     purposes
+     - In non-template, remove data as makes sense
+
+   Guidelines:
+   - Base classes contain some implementation (even if NOOP) for every method
+     - Method overriding is intentional to alter behaviour, not scope hiding
+     - Final has not been used to facilitate new concepts
+       - This may change as code base matures
+   - Import tools are never "base" classes
+   - Data order
+     - 1st tier: Variables, Constructors, Methods
+     - 2nd tier: private, protected, public
+   - Section headers should generally be left to help code organization
+   - Parser logic should be separate
+*/
+
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
+
+#include "Parser.hpp"
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdt = netmeld::datastore::tools;
 
-typedef std::vector<nmdo::IpAddress>      Result;
 
-
-class Parser :
-  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-{
-  public:
-    Parser() : Parser::base_type(start)
-    {
-      start =
-        *(line)
-        ;
-
-      line =
-        (ipAddr
-           [(qi::_val = qi::_1)] >>
-         +hostname
-           [(pnx::bind(&nmdo::IpAddress::addAlias,
-                       &qi::_val, qi::_1, "hosts file"))] >>
-         -comment >> qi::eol
-        )
-        | (comment >> qi::eol)
-        | (qi::eol)
-        ;
-
-      comment
-        = (qi::lit('#') >> *(qi::ascii::graph | qi::ascii::blank))
-        ;
-
-      BOOST_SPIRIT_DEBUG_NODES(
-          (start)
-          (line)
-          (comment)
-          );
-    }
-
-    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start;
-
-    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
-      line;
-
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      comment;
-
-    nmdp::ParserIpAddress
-      ipAddr;
-
-    nmdp::ParserDomainName
-      hostname;
-};
-
+// =============================================================================
+// Import tool definition
+// =============================================================================
 template<typename P, typename R>
 class Tool : public nmdt::AbstractImportTool<P,R>
 {
-  public:
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private: // Variables should generally be private
+  protected: // Variables intended for internal/subclass API
+    // Inhertied from AbstractTool at this scope
+      // std::string            helpBlurb;
+      // std::string            programName;
+      // std::string            version;
+      // ProgramOptions         opts;
+    // Inhertied from AbstractImportTool at this scope
+      // TResults                 tResults;
+      // nmco::Uuid               toolRunId;
+      // nmco::Time               executionStart;
+      // nmco::Time               executionStop;
+      // nmco::DeviceInformation  devInfo;
+  public: // Variables should rarely appear at this scope
+
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  private: // Constructors should rarely appear at this scope
+  protected: // Constructors intended for internal/subclass API
+  public: // Constructors should generally be public
     Tool() : nmdt::AbstractImportTool<P,R>
-      ("/etc/hosts", PROGRAM_NAME, PROGRAM_VERSION)
+      (
+       "cat /etc/hosts",  // command line tool imports data from
+       PROGRAM_NAME,           // program name (set in CMakeLists.txt)
+       PROGRAM_VERSION         // program version (set in CMakeLists.txt)
+      )
     {}
 
+
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private: // Methods part of internal API
+    // Overriden from AbstractImportTool
+    void
+    addToolOptions() override
+    {// TODO device-id ?
+      this->opts.addRequiredOption("tool-option", std::make_tuple(
+            "tool-option",
+            po::value<std::string>()->required(),
+            "Some tool option")
+          );
+
+      this->opts.removeOptionalOption("pipe");
+      this->opts.removeAdvancedOption("tool-run-metadata");
+    }
+
+    // Overriden from AbstractImportTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {
-      auto toolRunId {this->getToolRunId()};
-      auto deviceId  {this->getDeviceId()};
-      auto results   {this->tResults};
+      const auto& toolRunId {this->getToolRunId()};
+      const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& result : results) {
+      for (auto& result : this->tResults) {
+        // muck
+
+        // save
         result.save(t, toolRunId, deviceId);
         LOG_DEBUG << result.toDebugString() << std::endl;
+
+        // link
       }
     }
+
+  protected: // Methods part of subclass API
+    // Inherited from AbstractTool at this scope
+      // std::string const getDbName() const;
+      // virtual void printVersion() const;
+    // Inherited from AbstractImportTool at this scope
+      // fs::path    const getDataPath() const;
+      // std::string const getDeviceId() const;
+      // nmco::Uuid   const getToolRunId() const;
+      // virtual void parseData();
+      // virtual void printHelp() const;
+      // virtual int  runTool();
+      // virtual void setToolRunId();
+      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
+  public: // Methods part of public API
+    // Inherited from AbstractTool, don't override as primary tool entry point
+      // int start(int, char**) noexcept;
 };
 
 
-int
-main(int argc, char** argv)
-{
-  Tool<Parser, Result> tool;
+// =============================================================================
+// Program entry point
+// =============================================================================
+int main(int argc, char** argv) {
+  Tool<nmdp::DummyParser, Result> tool; // if parser not needed
+  //Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
 }
