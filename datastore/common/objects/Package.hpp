@@ -38,7 +38,7 @@ namespace netmeld::datastore::objects{
     // =========================================================================
     private:
     protected:
-        std::string status;
+        std::string state;
         std::string name;
         std::string version;
         std::string architecture;
@@ -62,7 +62,7 @@ namespace netmeld::datastore::objects{
         // ===========================================================================
         // Setters
         // ===========================================================================
-        void setStatus(const std::string&);
+        void setState(const std::string&);
         void setName(const std::string&);
         void setVersion(const std::string&);
         void setArchitecture(const std::string&);
@@ -70,7 +70,7 @@ namespace netmeld::datastore::objects{
         // ===========================================================================
         // Getters
         // ===========================================================================
-        std::string getStatus() const;
+        std::string getState() const;
         std::string getName() const;
         std::string getVersion() const;
         std::string getArchitecture() const;

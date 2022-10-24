@@ -486,7 +486,7 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_packages",
        "INSERT INTO raw_packages"
-       "  (tool_run_id, package_status, package_name, package_version, package_architecture, package_description)"
+       "  (tool_run_id, package_state, package_name, package_version, package_architecture, package_description)"
        " VALUES ($1, $2, $3, $4, $5, $6)"
        " ON CONFLICT"
        " DO NOTHING");

@@ -34,14 +34,15 @@ namespace netmeld::datastore::objects
     Package::Package()
     {}
 
-    Package::Package(const std::string& _status) :
-        status(_status)
-    {}
+    // might not need this constructor because it is already return an object
+    // Package::Package(const std::string& _state) :
+    //     state(_state)
+    // {}
 
     void
-    Package::setStatus(const std::string& _status)
+    Package::setState(const std::string& _state)
     {
-        status = _status;
+        state = _state;
     }
 
     void
@@ -69,9 +70,9 @@ namespace netmeld::datastore::objects
     }
 
     std::string
-    Package::getStatus() const
+    Package::getState() const
     {
-        return status;
+        return state;
     }
 
     std::string
@@ -116,7 +117,7 @@ namespace netmeld::datastore::objects
 
         t.exec_prepared("insert_raw_packages",
             toolRunId,
-            status,
+            state,
             name,
             version,
             architecture,
@@ -129,7 +130,7 @@ namespace netmeld::datastore::objects
         std::ostringstream oss;
 
         oss << "["; // opening bracket
-        oss << status << ", "
+        oss << state << ", "
             << name << ", "
             << version << ", "
             << architecture << ", "

@@ -72,7 +72,7 @@ class Parser:
         packageLine;
 
       qi::rule<nmdp::IstreamIter, std::string()>
-        packageStatus,
+        packageState,
         packageName,
         version,
         architecture,

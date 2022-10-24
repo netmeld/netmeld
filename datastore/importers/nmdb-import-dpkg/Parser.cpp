@@ -41,15 +41,15 @@ Parser::Parser() : Parser::base_type(prestart)
 ;
 
   headers =
-    qi::lit("Desired") > +token > -qi::eol
-    > qi::lit("|") > +token > -qi::eol
-    > qi::lit("|/") > +token > -qi::eol
-    > qi::lit("||/") > +token > -qi::eol
-    > qi::lit("+++") > +token > -qi::eol
+    qi::lit("Desired") > ignoredLine
+    > qi::lit("|") > ignoredLine
+    > qi::lit("|/") > ignoredLine
+    > qi::lit("||/") > ignoredLine
+    > qi::lit("+++") > ignoredLine
   ;
 
   packageLine =
-    (packageStatus) [(qi::_val = pnx::construct<nmdo::Package>(qi::_1))]
+    (packageState) [(pnx::bind(&nmdo::Package::setState, &qi::_val, qi::_1))]
     > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
     > architecture [(pnx::bind(&nmdo::Package::setArchitecture, &qi::_val, qi::_1))]
@@ -57,8 +57,8 @@ Parser::Parser() : Parser::base_type(prestart)
     > qi::eol
   ;
 
-  packageStatus =
-    qi::lit("ii") | token [(pnx::bind(&Parser::addObservation, this, qi::_1))]
+  packageState =
+    qi::string("ii") | token [(pnx::bind(&Parser::addObservation, this, qi::_1))]
   ;
 
   packageName =
@@ -88,7 +88,7 @@ Parser::Parser() : Parser::base_type(prestart)
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
       (headers)
-      (packageStatus)
+      (packageState)
       (packageName)
       (packageLine)
       (version)
@@ -109,7 +109,7 @@ Parser::addPackage(const nmdo::Package& packg)
 void
 Parser::addObservation(const std::string& val)
 {
-  data.observations.addNotable("Irregular Package Status "+ val);
+  data.observations.addNotable("Irregular Package State "+ val);
 }
 
 Result

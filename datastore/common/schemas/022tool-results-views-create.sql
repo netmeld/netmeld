@@ -356,7 +356,7 @@ ORDER BY origin, last_hop, hop_count
 -- ----------------------------------------------------------------------
 CREATE VIEW packages AS
 SELECT DISTINCT
-    package_status               AS package_status,
+    package_state               AS package_state,
     package_name                 AS package_name,
     package_version              AS package_version,
     package_architecture         AS package_architecture,
