@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import subprocess
@@ -22,6 +22,7 @@ def main():
     commands.append(
         {
             "args": ["nm-fetch-ansible"], 
+            "input": bytes("y\n", encoding="utf-8")
         }
     )
     

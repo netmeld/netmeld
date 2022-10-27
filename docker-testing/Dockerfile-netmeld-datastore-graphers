@@ -1,0 +1,23 @@
+FROM netmeld-core
+
+WORKDIR /home/netmeld/setup
+
+USER root
+
+RUN apt install --quiet --quiet --assume-yes --option Dpkg::Use-Pty=0 \
+      --no-install-suggests \
+      ./netmeld-*datastore-graphers.deb
+
+WORKDIR /home/netmeld
+
+RUN rm -rf ./setup
+
+RUN apt install sudo
+RUN echo "netmeld ALL=(root) NOPASSWD:/usr/sbin/service postgresql start" > /etc/sudoers.d/psql
+RUN echo "netmeld ALL=(root) NOPASSWD:/usr/sbin/service postgresql restart" >> /etc/sudoers.d/psql
+RUN echo "netmeld ALL=(root) NOPASSWD:/usr/sbin/service postgresql stop" >> /etc/sudoers.d/psql
+RUN echo "netmeld ALL=(root) NOPASSWD:/usr/sbin/service postgresql status" >> /etc/sudoers.d/psql
+
+USER netmeld
+
+CMD ["/bin/bash"]
