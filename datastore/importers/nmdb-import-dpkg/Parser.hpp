@@ -90,7 +90,7 @@ class Parser:
   // Methods
   // ===========================================================================
   private:
-    void addObservation(const std::string&);
+    void addStateNote(const std::string&);
     void addPackage(const nmdo::Package&);
     Result getData();
   };

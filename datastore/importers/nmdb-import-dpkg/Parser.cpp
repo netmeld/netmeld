@@ -38,7 +38,7 @@ Parser::Parser() : Parser::base_type(prestart)
       | ignoredLine
       | qi::eol
     )
-;
+  ;
 
   headers =
     qi::lit("Desired") > ignoredLine
@@ -49,7 +49,7 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageLine =
-    (packageState) [(pnx::bind(&nmdo::Package::setState, &qi::_val, qi::_1))]
+    (packageState [(pnx::bind(&nmdo::Package::setState, &qi::_val, qi::_1))])
     > packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
     > architecture [(pnx::bind(&nmdo::Package::setArchitecture, &qi::_val, qi::_1))]
@@ -58,7 +58,7 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageState =
-    qi::string("ii") | token [(pnx::bind(&Parser::addObservation, this, qi::_1))]
+    token [(pnx::bind(&Parser::addStateNote, this, qi::_1), qi::_val = qi::_1)]
   ;
 
   packageName =
@@ -94,6 +94,7 @@ Parser::Parser() : Parser::base_type(prestart)
       (version)
       (architecture)
       (description)
+      (token)
       );
 }
 
@@ -107,9 +108,13 @@ Parser::addPackage(const nmdo::Package& packg)
 }
 
 void
-Parser::addObservation(const std::string& val)
+Parser::addStateNote(const std::string& val)
 {
-  data.observations.addNotable("Irregular Package State "+ val);
+  if (val != "ii")
+  {
+    data.observations.addNotable("Unexpected package state "+ val);
+  }
+  //else do nothing
 }
 
 Result
