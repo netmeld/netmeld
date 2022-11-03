@@ -47,14 +47,26 @@
 // =============================================================================
 Parser::Parser() : Parser::base_type(start)
 {
+  // any line followed by an end of line
   start =
-    *(line)
+    *(line > qi::eol)
     ;
 
-  // (IP address [save to _val] >> domain name [add an alias for the IP in _val that is the result of the parsed ParserDomainName with the reason "hosts file"] >> not a comment >> end of line) | (comment >> end of line) | (end of line)
-  line = (ipAddr [(qi::_val = qi::_1)] >> +domainName[(pnx::bind(&nmdo::IpAddress::addAlias, &qi::_val, qi::_1, "hosts file"))] >> -comment >> qi::eol) | (comment >> qi::eol) | (qi::eol);
+  line =
+    (
+      // (IP address [save to _val]
+      ipAddr [(qi::_val = qi::_1)]
+      // domain name [add an alias for the IP in _val that is the result of
+      // the parsed ParserDomainName with the reason "hosts file"]
+      > +domainName [(pnx::bind(&nmdo::IpAddress::addAlias,
+                                            &qi::_val, qi::_1, "hosts file"))]
+      // optional comment
+      > -comment
+    )
+    // || (comment)
+    | (comment);
 
-  comment = (qi::lit('#') >> *(qi::ascii::graph | qi::ascii::blank));
+  comment = (qi::lit('#') > *(qi::ascii::graph | qi::ascii::blank));
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
