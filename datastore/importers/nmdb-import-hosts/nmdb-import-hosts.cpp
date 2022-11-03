@@ -77,19 +77,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractImportTool
-    void
-    addToolOptions() override
-    {// TODO device-id ?
-      this->opts.addRequiredOption("tool-option", std::make_tuple(
-            "tool-option",
-            po::value<std::string>()->required(),
-            "Some tool option")
-          );
-
-      this->opts.removeOptionalOption("pipe");
-      this->opts.removeAdvancedOption("tool-run-metadata");
-    }
 
     // Overriden from AbstractImportTool
     void
