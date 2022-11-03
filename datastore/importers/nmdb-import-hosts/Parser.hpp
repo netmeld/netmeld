@@ -46,7 +46,6 @@
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
