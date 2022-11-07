@@ -1,0 +1,13 @@
+FROM netmeld-toolsuite
+
+COPY ./contents ./contents
+
+WORKDIR /home/netmeld/contents
+
+USER root
+
+RUN chown -R netmeld:netmeld /home/netmeld
+
+USER netmeld
+
+CMD ["./toolsuite.sh"]
