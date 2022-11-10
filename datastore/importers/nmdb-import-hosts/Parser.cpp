@@ -49,22 +49,26 @@ Parser::Parser() : Parser::base_type(start)
 {
   // any line followed by an end of line
   start =
-    *(line > qi::eol)
+    *(line)
     ;
 
   line =
     (
       // (IP address [save to _val]
       ipAddr [(qi::_val = qi::_1)]
-      // domain name [add an alias for the IP in _val that is the result of
-      // the parsed ParserDomainName with the reason "hosts file"]
+      // one or more domain name [add an alias for the IP in _val that is the result
+      // of the parsed ParserDomainName with the reason "hosts file"]
       > +domainName [(pnx::bind(&nmdo::IpAddress::addAlias,
                                             &qi::_val, qi::_1, "hosts file"))]
       // optional comment
       > -comment
+      // end of line
+      > qi::eol
     )
-    // || (comment)
-    | (comment);
+    // | (comment > end of line)
+    | (comment > qi::eol)
+    // | empty line
+    | qi::eol;
 
   comment = (qi::lit('#') > *(qi::ascii::graph | qi::ascii::blank));
 
