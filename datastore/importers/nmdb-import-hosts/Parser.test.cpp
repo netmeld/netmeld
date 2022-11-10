@@ -54,6 +54,8 @@ BOOST_AUTO_TEST_CASE(testParts)
       "127.0.0.1 view-localhost localhost ip4-localhost\n",
       // ip hostname comment
       "143.124.3.216 program.url.com # host added by Another Program\n",
+      // ip hostname alias1 comment
+      "130.140.150.160 myvpn.routing.com myvpn # Added by MyVPN\n",
       // comment
       "# The following lines are desirable for IPv6 capable hosts\n",
       // Blank line
