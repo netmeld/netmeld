@@ -48,19 +48,19 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // ubuntuHost
     const auto& parserRule {tp.line};
     std::vector<std::string> testsOk {
-      "127.0.0.1 view-localhost\n",
-      "# BEGIN hosts added by Another Program\n",
-      "143.124.3.216  program.url.com\n",
-      "# END hosts added by Another Program\n",
-      "127.0.0.1	localhost\n",
-      "127.0.1.1	MyComputer\n",
-      "\n",
+      // ip hostname
+      "127.0.0.1 my-localhost\n",
+      // ip hostname alias1 alias2 alias3
+      "127.0.0.1 view-localhost localhost ip4-localhost\n",
+      // ip hostname comment
+      "143.124.3.216 program.url.com # host added by Another Program\n",
+      // comment
       "# The following lines are desirable for IPv6 capable hosts\n",
+      // Blank line
+      "\n",
+      // ipv6 hostname
       "::1     ip6-localhost ip6-loopback\n",
-      "fe00::0 ip6-localnet\n",
-      "ff00::0 ip6-mcastprefix\n",
-      "ff02::1 ip6-allnodes\n",
-      "ff02::2 ip6-allrouters\n"
+      "ff00::0 ip6-mcastprefix\n"
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
@@ -76,20 +76,21 @@ BOOST_AUTO_TEST_CASE(testWhole)
   const auto& parserRule {tp};
   std::vector<std::string> testsOk {
       // Taken from the man page for /etc/hosts (man7.org)
-       "# The following lines are desirable for IPv4 capable hosts\n",
-       "127.0.0.1       localhost\n",
-       "\n",
-       "# 127.0.1.1 is often used for the FQDN of the machine\n",
-       "127.0.1.1       thishost.mydomain.org  thishost\n",
-       "192.168.1.10    foo.mydomain.org       foo\n",
-       "192.168.1.13    bar.mydomain.org       bar\n",
-       "146.82.138.7    master.debian.org      master\n",
-       "209.237.226.90  www.opensource.org\n",
-        "\n",
-       "# The following lines are desirable for IPv6 capable hosts\n",
-       "::1             localhost ip6-localhost ip6-loopback\n",
-       "ff02::1         ip6-allnodes\n",
-       "ff02::2         ip6-allrouters\n"
+       R"(# The following lines are desirable for IPv4 capable hosts
+127.0.0.1       localhost
+
+# 127.0.1.1 is often used for the FQDN of the machine
+127.0.1.1       thishost.mydomain.org  thishost
+192.168.1.10    foo.mydomain.org       foo
+192.168.1.13    bar.mydomain.org       bar
+146.82.138.7    master.debian.org      master
+209.237.226.90  www.opensource.org
+
+# The following lines are desirable for IPv6 capable hosts
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+)"
   };
   for (const auto& test : testsOk) {
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
