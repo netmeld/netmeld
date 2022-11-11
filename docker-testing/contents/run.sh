@@ -1,0 +1,51 @@
+#!/bin/bash --
+
+function create_test_data()
+{
+  # empty file; 2x space; newline terminated
+  echo '  ' > d1;
+
+  # xml tags
+  cat << EOF > d2
+<config></config>
+<rpc-reply></rpc-reply>
+EOF
+
+  # json array
+  cat << EOF > d3
+[
+]
+EOF
+
+  # empty packet capture
+  cat << EOF | base64 -d > d4
+Cg0NCrQAAABNPCsaAQAAAP//////////AgA3AEludGVsKFIpIFhlb24oUikgQ1BVIEU1LTE2MjAg
+djQgQCAzLjUwR0h6ICh3aXRoIFNTRTQuMikAAwATAExpbnV4IDYuMC4wLTItYW1kNjQABAA6AER1
+bXBjYXAgKFdpcmVzaGFyaykgNC4wLjEgKEdpdCB2NC4wLjEgcGFja2FnZWQgYXMgNC4wLjEtMSkA
+AAAAAAC0AAAAAQAAAEAAAAABAAAAAAAEAAIAAgBsbwAACQABAAkAAAAMABMATGludXggNi4wLjAt
+Mi1hbWQ2NAAAAAAAQAAAAAUAAABsAAAAAAAAACLtBQA0Wfh+AQAcAENvdW50ZXJzIHByb3ZpZGVk
+IGJ5IGR1bXBjYXACAAgAIu0FAEUF6X4DAAgAIu0FAFpY+H4EAAgAAAAAAAAAAAAFAAgAAAAAAAAA
+AAAAAAAAbAAAAA==
+EOF
+
+}
+
+
+function run_tests()
+{
+  cd "$1";
+
+  sudo service postgresql restart;
+  create_test_data;
+  python3 test.py;
+  sudo service postgresql stop;
+}
+
+
+if [ "run" = "$1" ]; then
+  dir="$(dirname $0)";
+  run_tests "${dir}";
+  exit 0;
+fi;
+
+exec "$@";
