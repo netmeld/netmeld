@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(testParts)
 {
   TestParser tp;
 
-  { // ubuntuHost
+  {
     const auto& parserRule {tp.line};
     std::vector<std::string> testsOk {
       // ip hostname
@@ -77,8 +77,8 @@ BOOST_AUTO_TEST_CASE(testWhole)
 
   const auto& parserRule {tp};
   std::vector<std::string> testsOk {
-      // Taken from the man page for /etc/hosts (man7.org)
-       R"(# The following lines are desirable for IPv4 capable hosts
+    // Taken from the man page for /etc/hosts (man7.org)
+    R"(# The following lines are desirable for IPv4 capable hosts
 127.0.0.1       localhost
 
 # 127.0.1.1 is often used for the FQDN of the machine

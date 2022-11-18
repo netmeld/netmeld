@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -67,8 +67,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     Tool() : nmdt::AbstractImportTool<P,R>
       (
        "cat /etc/hosts",  // command line tool imports data from
-       PROGRAM_NAME,           // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION         // program version (set in CMakeLists.txt)
+       PROGRAM_NAME,      // program name (set in CMakeLists.txt)
+       PROGRAM_VERSION    // program version (set in CMakeLists.txt)
       )
     {}
 
@@ -86,13 +86,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& result : this->tResults) {
-        // muck
-
-        // save
         result.save(t, toolRunId, deviceId);
         LOG_DEBUG << result.toDebugString() << std::endl;
-
-        // link
       }
     }
 

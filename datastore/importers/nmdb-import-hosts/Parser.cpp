@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,22 +24,6 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - If using a custom Parser
-     - Data ordering is different as the focus is the parsing logic, not rule
-       instantiation
-     - It occasionally is more reasonable to interact and place data with an
-       intermediary object
-       - The code can be collocated or a separate file, depending on complexity
-*/
-
 #include "Parser.hpp"
 
 // =============================================================================
@@ -56,10 +40,11 @@ Parser::Parser() : Parser::base_type(start)
     (
       // (IP address [save to _val]
       ipAddr [(qi::_val = qi::_1)]
-      // one or more domain name [add an alias for the IP in _val that is the result
-      // of the parsed ParserDomainName with the reason "hosts file"]
+      // one or more domain name [add an alias for the IP in _val that is
+      // the result of the parsed ParserDomainName with the reason
+      // "hosts file"]
       > +domainName [(pnx::bind(&nmdo::IpAddress::addAlias,
-                                            &qi::_val, qi::_1, "hosts file"))]
+                                &qi::_val, qi::_1, "hosts file"))]
       // optional comment
       > -comment
       // end of line
@@ -68,7 +53,8 @@ Parser::Parser() : Parser::base_type(start)
     // | (comment > end of line)
     | (comment > qi::eol)
     // | empty line
-    | qi::eol;
+    | qi::eol
+    ;
 
   comment = (qi::lit('#') > *(qi::ascii::graph | qi::ascii::blank));
 

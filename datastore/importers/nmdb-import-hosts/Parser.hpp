@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -23,22 +23,6 @@
 // =============================================================================
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
-
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - If using a custom Parser
-     - Data ordering is different as the focus is the parsing logic, not rule
-       instantiation
-     - It occasionally is more reasonable to interact and place data with an
-       intermediary object
-       - The code can be collocated or a separate file, depending on complexity
-*/
 
 #ifndef PARSER_HPP
 #define PARSER_HPP
@@ -66,7 +50,6 @@ class Parser :
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    //Data d;
 
   protected:
     // Rules
@@ -74,10 +57,10 @@ class Parser :
 
     qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type> line;
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type> comment;
+
     nmdp::ParserIpAddress ipAddr;
     nmdp::ParserDomainName domainName;
 
-    //qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type> hosts;
 
   // ===========================================================================
   // Constructors
