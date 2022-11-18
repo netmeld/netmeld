@@ -30,21 +30,16 @@ EOF
 
 }
 
-
 function run_tests()
 {
-  cd "$1";
-
   sudo service postgresql restart;
   create_test_data;
   python3 test.py;
   sudo service postgresql stop;
 }
 
-
 if [ "run" = "$1" ]; then
-  dir="$(dirname $0)";
-  run_tests "${dir}";
+  run_tests;
   exit 0;
 fi;
 
