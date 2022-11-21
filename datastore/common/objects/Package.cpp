@@ -22,7 +22,7 @@
 // SOFTWARE.
 // =============================================================================
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
-// ======
+// =============================================================================
 
 #include <netmeld/datastore/objects/Package.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
@@ -33,11 +33,6 @@ namespace netmeld::datastore::objects
 {
     Package::Package()
     {}
-
-    // might not need this constructor because it is already return an object
-    // Package::Package(const std::string& _state) :
-    //     state(_state)
-    // {}
 
     void
     Package::setState(const std::string& _state)
@@ -103,7 +98,7 @@ namespace netmeld::datastore::objects
     bool
     Package::isValid() const
     {
-        return !name.empty() && !version.empty();
+        return !name.empty() && !version.empty() && !state.empty() && !version.empty() && !architecture.empty() && !description.empty();
     }
 
     void

@@ -356,13 +356,26 @@ ORDER BY origin, last_hop, hop_count
 -- ----------------------------------------------------------------------
 CREATE VIEW packages AS
 SELECT DISTINCT
-    package_state               AS package_state,
+    package_state                AS package_state,
     package_name                 AS package_name,
     package_version              AS package_version,
     package_architecture         AS package_architecture,
     package_description          AS package_description
 FROM raw_packages
 ;
+
+
+-- ----------------------------------------------------------------------
+CREATE VIEW device_packages AS
+SELECT DISTINCT
+    rd.device_id                 AS device_id,
+    rp.package_name              AS package_name,
+    rp.package_version           AS package_version
+FROM raw_devices AS rd
+LEFT OUTER JOING raw_packages AS rp
+    ON (rd.tool_run_id = rp.tool_run_id)
+;
+
 
 -- ----------------------------------------------------------------------
 CREATE VIEW ports AS

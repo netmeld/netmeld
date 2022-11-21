@@ -22,7 +22,7 @@
 // SOFTWARE.
 // =============================================================================
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
-// ======
+// =============================================================================
 
 #ifndef PACKAGE_HPP
 #define PACKAGE_HPP

@@ -32,7 +32,6 @@
 
 #include "Parser.hpp"
 
-namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 
 using qi::ascii::blank;
@@ -40,43 +39,67 @@ using qi::ascii::blank;
 class TestParser : public Parser
 {
   public:
+    using Parser::start;
     using Parser::packageLine;
 };
 
-BOOST_AUTO_TEST_CASE(testRules)
+BOOST_AUTO_TEST_CASE(testPackageLine)
 {
   TestParser tp;
 
   {
     const auto& parserRule {tp.packageLine};
-    // OK 
-    std::vector<std::tuple<std::string, std::string>> testsOk {
-      // {test, expected}
-      {"ii  acl                                              2.3.1-1                              amd64        access control list - utilities", 
-        "ii  acl                                              2.3.1-1                              amd64        access control list - utilities"}, // case
-      {"ii  adwaita-icon-theme                               42.0-2                               all          default icon theme of GNOME",
-        "ii  adwaita-icon-theme                               42.0-2                               all          default icon theme of GNOME"}, //case
-      {"pn  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files",
-        "pn  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files"}, // case
-      {"ufR  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files",
-        "ufR  alsa-topology-conf                               1.2.5.1-2                            all          ALSA topology configuration files"}, //case
+    // OK
+    std::vector<std::string> testsOk {
+      R"STR(ii  adduser                                3.118                            all          add and remove users and groups
+      )STR",
+      R"STR(ii  adwaita-icon-theme                     3.38.0-1                         all          default icon theme of GNOME
+      )STR",
+      R"STR(ii  alsa-topology-conf                     1.2.4-1                          all          ALSA topology configuration files
+      )STR"
     };
-    for (const auto& [test, expected] : testsOk) {
-      std::string out;
-      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out),
+
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                  "Parse rule 'packageLine': " << test);
-      BOOST_TEST(expected == out);
     }
-    std::vector<std::string> testsBad {
-      // {test}
-      {" lo"}, // rule doesn't handle spaces
-      {"lo "},
-      {"lo:"}, // rule doesn't fully parse, important for iface rule
+
+    std::vector<std::string> testsFail {
+      {" name v1.2-3 arch32-64 some description"},
+      {"abc  v1.2-3 arch32-64 some description"},
+      {"abc name  arch32-64 some description"},
+      {"abc name v1.2-3 some description"},
+      {"abc name v1.2-3 arch32-64 "}
     };
-    for (const auto& test : testsBad) {
-      std::string out;
-      BOOST_TEST(!nmdp::testAttr(test.c_str(), parserRule, out),
+
+    for (const auto& test : testsFail) {
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
                  "Parse rule 'packageLine': " << test);
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(testWhole)
+{ // whole output
+    TestParser tp;
+    const auto &parserRule {tp};
+    std::vector<std::string> testsOk {
+      // dpkg -l | head
+      R"STR(Desired=Unknown/Install/Remove/Purge/Hold
+      | Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+      |/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+      ||/ Name                                   Version                          Architecture Description
+      +++-======================================-================================-============-==================================================================================
+      ii  adduser                                3.118                            all          add and remove users and groups
+      ii  adwaita-icon-theme                     3.38.0-1                         all          default icon theme of GNOME
+      ii  alsa-topology-conf                     1.2.4-1                          all          ALSA topology configuration files
+      ii  alsa-ucm-conf                          1.2.4-2                          all          ALSA Use Case Manager configuration files
+      ii  ansible                                2.10.7+merged+base+2.10.8+dfsg-1 all          Configuration management, deployment, and task execution system
+      )STR"
+    };
+
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'start': " << test);
+    }
+  }

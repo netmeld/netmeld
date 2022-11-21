@@ -62,14 +62,14 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageName =
-    +qi::ascii::graph
+    +token
   ;
   version =
-    +qi::ascii::graph
+    +token
   ;
 
   architecture =
-    +qi::ascii::graph
+    +token
   ;
 
   description =

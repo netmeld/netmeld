@@ -34,8 +34,6 @@ namespace nmdo = netmeld::datastore::objects;
 class TestPackage : public nmdo::Package {
   public:
     TestPackage() : Package() {};
-    explicit TestPackage(const std::string& _status) :
-        Package(_status) {};
 
   public:
 };
@@ -43,9 +41,9 @@ class TestPackage : public nmdo::Package {
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
-    TestPackage package {"ii"};
+    TestPackage package;
 
-    BOOST_CHECK_EQUAL("ii", package.getStatus());
+    BOOST_CHECK(package.getState().empty());
     BOOST_CHECK(package.getName().empty());
     BOOST_CHECK(package.getVersion().empty());
     BOOST_CHECK(package.getArchitecture().empty());
@@ -58,35 +56,59 @@ BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
     {
-    TestPackage package;
+      TestPackage package;
 
-    package.setStatus("ii");
-    BOOST_CHECK_EQUAL("ii", package.getStatus());
-  }
-  {
-    TestPackage package;
-
-    package.setName("packageName");
-    BOOST_CHECK_EQUAL("packageName", package.getName());
-  }
+      package.setState("abc");
+      BOOST_CHECK_EQUAL("abc", package.getState());
+    }
     {
-    TestPackage package;
+      TestPackage package;
 
-    package.setVersion("1.1.0");
-    BOOST_CHECK_EQUAL("1.1.0", package.getVersion());
-  }
+      package.setState("ABC");
+      BOOST_CHECK_EQUAL("ABC", package.getState());
+    }
     {
-    TestPackage package;
+      TestPackage package;
 
-    package.setArchitecture("all");
-    BOOST_CHECK_EQUAL("all", package.getArchitecture());
-  }
+      package.setName("packageName");
+      BOOST_CHECK_EQUAL("packageName", package.getName());
+    }
     {
-    TestPackage package;
+      TestPackage package;
 
-    package.setDescription("some package.");
-    BOOST_CHECK_EQUAL("some package.", package.getDescription());
-  }
+      package.setVersion("1.1.0");
+      BOOST_CHECK_EQUAL("1.1.0", package.getVersion());
+    }
+    {
+      TestPackage package;
+
+      package.setVersion("1");
+      BOOST_CHECK_EQUAL("1", package.getVersion());
+    }
+    {
+      TestPackage package;
+
+      package.setArchitecture("all");
+      BOOST_CHECK_EQUAL("all", package.getArchitecture());
+    }
+    {
+      TestPackage package;
+
+      package.setArchitecture("amd64");
+      BOOST_CHECK_EQUAL("amd64", package.getArchitecture());
+    }
+    {
+      TestPackage package;
+
+      package.setDescription("some package.");
+      BOOST_CHECK_EQUAL("some package.", package.getDescription());
+    }
+    {
+      TestPackage package;
+
+      package.setDescription("somepackage.");
+      BOOST_CHECK_EQUAL("somepackage.", package.getDescription());
+    }
 }
 }
 BOOST_AUTO_TEST_CASE(testValidity)
@@ -95,9 +117,15 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestPackage package;
 
     BOOST_CHECK(!package.isValid());
+    package.setState("abc");
+    BOOST_CHECK(!package.isValid());
     package.setName("name");
     BOOST_CHECK(!package.isValid());
     package.setVersion("1.1");
+    BOOST_CHECK(!package.isValid());
+    package.setArchitecture("amd64");
+    BOOST_CHECK(!package.isValid());
+    package.setDescription("some description");
     BOOST_CHECK(package.isValid());
   }
 }
