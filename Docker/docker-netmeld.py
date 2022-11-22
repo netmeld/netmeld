@@ -271,29 +271,29 @@ def main():
 
   global config
   config = vars(args)
-  match config['module']:
-    case 'all':
-      buildAll()
-    case 'clw':
-      buildClw()
-    case 'datalake':
-      buildDatalake()
-    case 'datastore-all':
-      buildDatastoreAll()
-    case 'datastore-db':
-      buildDatastoreDB()
-    case 'datastore-tools':
-      buildDatastoreTools()
-    case 'development':
-      buildDevelopment()
-    case 'fetchers':
-      buildFetchers()
-    case 'playbook-nodb':
-      buildPlaybookNoDB()
-    case 'tester':
-      buildTester()
-    case _:
-      parser.print_help()
+  val = config['module']
+  if    val == 'all':
+    buildAll()
+  elif  val == 'clw':
+    buildClw()
+  elif  val == 'datalake':
+    buildDatalake()
+  elif  val == 'datastore-all':
+    buildDatastoreAll()
+  elif  val == 'datastore-db':
+    buildDatastoreDB()
+  elif  val == 'datastore-tools':
+    buildDatastoreTools()
+  elif  val == 'development':
+    buildDevelopment()
+  elif  val == 'fetchers':
+    buildFetchers()
+  elif  val == 'playbook-nodb':
+    buildPlaybookNoDB()
+  elif  val == 'tester':
+    buildTester()
+  else:
+    parser.print_help()
 
   return 0
 
