@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,31 +27,22 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <map>
+#include <netmeld/datastore/objects/Package.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
-#include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/Interface.hpp>
-#include <netmeld/datastore/objects/Route.hpp>
-#include <netmeld/datastore/objects/Service.hpp>
-#include <netmeld/datastore/parsers/ParserDomainName.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
-
-namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
+namespace nmdo = netmeld::datastore::objects;
 
 // =============================================================================
 // Data containers
 // =============================================================================
-struct Data {
-  std::map<std::string, nmdo::DeviceInformation>  devInfos;
-  std::map<std::string, nmdo::Interface>          ifaces;
-
-  std::vector<nmdo::Route>    routes;
-  std::vector<nmdo::Service>  services;
+struct Data
+{
+  std::vector<nmdo::Package>    packages;
+  nmdo::ToolObservations        observations;
 };
-typedef std::vector<Data>  Result;
-
+typedef std::vector<Data> Result;
 
 // =============================================================================
 // Parser definition
@@ -63,63 +54,44 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
-
-    nmdp::ParserDomainName  fqdn;
-    nmdp::ParserIpAddress   ipAddr;
-    nmdp::ParserMacAddress  macAddr;
-
-    // Helpers
-    Data d;
-
-    std::string curHostname;
-    std::string curIfaceName;
-
-    std::map<std::string, std::string> dnsSuffix;
+    // Supporting data structures
+    Data data;
 
   protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      prestart;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      hostData, compartmentHeader;
+      headers, ignoredLine;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      adapter, ifaceTypeName,
-      servers;
-
-    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
-      ipLine,
-      getIp;
+    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
+      packageLine;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      token, ifaceType;
-
-    qi::rule<nmdp::IstreamIter>
-      dots,
-      ignoredLine;
+      packageState,
+      packageName,
+      version,
+      architecture,
+      description,
+      token
+    ;
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  public: // Constructor is only default and must be public
+  public:
     Parser();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
   private:
-    void addDevInfo(const std::string&);
-
-    void addIface(const std::string&, const std::string&);
-    void addIfaceMac(nmdo::MacAddress&);
-    void addIfaceIp(nmdo::IpAddress&);
-    void setIfaceDown();
-    void setIfaceDnsSuffix(const std::string&);
-
-    void addRoute(const nmdo::IpAddress&);
-
-    void addService(const std::string&, const nmdo::IpAddress&);
+    void addStateNote(const std::string&);
+    void addPackage(const nmdo::Package&);
 
     Result getData();
 };

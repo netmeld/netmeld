@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,15 +27,9 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <map>
-
-#include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/Interface.hpp>
-#include <netmeld/datastore/objects/Route.hpp>
-#include <netmeld/datastore/objects/Service.hpp>
+#include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
@@ -43,14 +37,7 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 // Data containers
 // =============================================================================
-struct Data {
-  std::map<std::string, nmdo::DeviceInformation>  devInfos;
-  std::map<std::string, nmdo::Interface>          ifaces;
-
-  std::vector<nmdo::Route>    routes;
-  std::vector<nmdo::Service>  services;
-};
-typedef std::vector<Data>  Result;
+typedef std::vector<nmdo::IpAddress>    Result;
 
 
 // =============================================================================
@@ -62,42 +49,18 @@ class Parser :
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private:
-
-    nmdp::ParserDomainName  fqdn;
-    nmdp::ParserIpAddress   ipAddr;
-    nmdp::ParserMacAddress  macAddr;
-
-    // Helpers
-    Data d;
-
-    std::string curHostname;
-    std::string curIfaceName;
-
-    std::map<std::string, std::string> dnsSuffix;
+  private: // Variables are always private
 
   protected:
     // Rules
-    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start;
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type> start;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      hostData, compartmentHeader;
+    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type> line;
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type> comment;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      adapter, ifaceTypeName,
-      servers;
+    nmdp::ParserIpAddress ipAddr;
+    nmdp::ParserDomainName domainName;
 
-    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
-      ipLine,
-      getIp;
-
-    qi::rule<nmdp::IstreamIter, std::string()>
-      token, ifaceType;
-
-    qi::rule<nmdp::IstreamIter>
-      dots,
-      ignoredLine;
 
   // ===========================================================================
   // Constructors
@@ -109,18 +72,5 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void addDevInfo(const std::string&);
-
-    void addIface(const std::string&, const std::string&);
-    void addIfaceMac(nmdo::MacAddress&);
-    void addIfaceIp(nmdo::IpAddress&);
-    void setIfaceDown();
-    void setIfaceDnsSuffix(const std::string&);
-
-    void addRoute(const nmdo::IpAddress&);
-
-    void addService(const std::string&, const nmdo::IpAddress&);
-
-    Result getData();
 };
 #endif // PARSER_HPP
