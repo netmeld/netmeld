@@ -372,7 +372,7 @@ SELECT DISTINCT
     rp.package_name              AS package_name,
     rp.package_version           AS package_version
 FROM raw_devices AS rd
-LEFT OUTER JOING raw_packages AS rp
+LEFT OUTER JOIN raw_packages AS rp
     ON (rd.tool_run_id = rp.tool_run_id)
 ;
 
