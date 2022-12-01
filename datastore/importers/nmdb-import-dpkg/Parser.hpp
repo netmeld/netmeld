@@ -47,38 +47,38 @@ typedef std::vector<Data> Result;
 // =============================================================================
 // Parser definition
 // =============================================================================
-class Parser:
+class Parser :
   public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-  {
-    // ===========================================================================
-    // Variables
-    // ===========================================================================
-    private:
-      // Supporting data structures
-      Data data;
+{
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private:
+    // Supporting data structures
+    Data data;
 
-    protected:
-      // Rules
-      qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-        prestart;
+  protected:
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      prestart;
 
-      qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-        start;
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      start;
 
-      qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-        headers, ignoredLine;
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      headers, ignoredLine;
 
-      qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
-        packageLine;
+    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
+      packageLine;
 
-      qi::rule<nmdp::IstreamIter, std::string()>
-        packageState,
-        packageName,
-        version,
-        architecture,
-        description,
-        token
-      ;
+    qi::rule<nmdp::IstreamIter, std::string()>
+      packageState,
+      packageName,
+      version,
+      architecture,
+      description,
+      token
+    ;
 
   // ===========================================================================
   // Constructors
@@ -92,6 +92,7 @@ class Parser:
   private:
     void addStateNote(const std::string&);
     void addPackage(const nmdo::Package&);
+
     Result getData();
-  };
+};
 #endif // PARSER_HPP

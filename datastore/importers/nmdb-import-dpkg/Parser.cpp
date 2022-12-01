@@ -58,7 +58,9 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageState =
-    token [(pnx::bind(&Parser::addStateNote, this, qi::_1), qi::_val = qi::_1)]
+    qi::as_string[qi::char_("uihrp") > qi::char_("ncHUFWti") > qi::char_(" R")]
+      [(pnx::bind(&Parser::addStateNote, this, qi::_1), qi::_val = qi::_1)]
+    > +qi::ascii::blank
   ;
 
   packageName =
@@ -84,7 +86,7 @@ Parser::Parser() : Parser::base_type(prestart)
     (+token > -qi::eol) | +qi::eol
   ;
 
-  //Allows for error handling and debugging of qi.
+  // Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
       (headers)
@@ -110,7 +112,7 @@ Parser::addPackage(const nmdo::Package& packg)
 void
 Parser::addStateNote(const std::string& val)
 {
-  if (val != "ii")
+  if (val != "ii ")
   {
     data.observations.addNotable("Unexpected package state "+ val);
   }
