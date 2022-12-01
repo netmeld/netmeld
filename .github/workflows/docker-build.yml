@@ -27,7 +27,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           logout: true
 
-      - name: Generate target Dockerfile
+      - name: Generate Dockerfile for development container
         run: |
           cd Docker
           python3 docker-netmeld.py development > Dockerfile
