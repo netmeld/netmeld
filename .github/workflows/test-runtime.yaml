@@ -1,0 +1,21 @@
+name: DockerBuild
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  docker:
+    if: github.repository == 'netmeld/netmeld'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Docker build and test
+        run: |
+          python3 docker-netmeld.py tester | docker build --no-cache --tag "netmeld-tester" -f- .
+          docker run --rm -it netmeld-tester
+          docker image rm netmeld-tester
