@@ -8,9 +8,9 @@ jobs:
   BuildTest:
     runs-on: ubuntu-latest
     container: netmeld/netmeld-dev:latest
-    
+
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Configure
       run: cmake -S . -B build
@@ -30,33 +30,34 @@ jobs:
       run: |
         cd build
         cpack
-        
+
     - name: Upload Deb Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: netmeld-debs
         path: build/*.deb
-        
+
   Package:
     needs: [BuildTest]
-    
+
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Download All Artifacts
-      uses: actions/download-artifact@v2
-      
+      uses: actions/download-artifact@v3
+
     - name: Prepare For Packaging
       run: |
         echo "DATETIME=$(date +%Y%m%d.%H%M%S)" >> $GITHUB_ENV
         find . -iname "*.deb" -print | zip --junk-paths artifacts -@
-    
+
     - name: Upload All Debs Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: all-debs
         path: artifacts.zip
-        
+
+# TODO This action is no longer maintained by GitHub
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -67,7 +68,8 @@ jobs:
         release_name: CI build - ${{ env.DATETIME }}
         draft: false
         prerelease: false
-    
+
+# TODO This action is no longer maintained by GitHub
     - name: Upload Release Asset
       id: upload_release_asset
       uses: actions/upload-release-asset@v1
