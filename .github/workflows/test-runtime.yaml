@@ -17,6 +17,7 @@ jobs:
 
       - name: Docker build and test
         run: |
+          cd Docker
           python3 docker-netmeld.py tester | docker build --no-cache --tag "netmeld-tester" -f- .
           docker run --rm -it netmeld-tester
           docker image rm netmeld-tester
