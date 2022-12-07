@@ -38,7 +38,8 @@ general developer case.
 
 As a privileged user install the following:
 ```
-apt update
+# Update Package Information
+sudo apt update
 
 # Needed for complete tool set build
 sudo apt install \
