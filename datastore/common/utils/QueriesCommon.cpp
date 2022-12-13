@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -28,6 +28,415 @@
 
 
 namespace netmeld::datastore::utils {
+
+  void
+  dbPrepareAws(pqxx::connection& db)
+  {
+    // ----------------------------------------------------------------------
+    // TABLES: AWS CidrBlock related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_cidr_block", R"(
+          INSERT INTO raw_aws_cidr_blocks
+            (tool_run_id, cidr_block)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_cidr_block_detail", R"(
+          INSERT INTO raw_aws_cidr_block_details
+            (tool_run_id, cidr_block, state, description)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_cidr_block_fqdn", R"(
+          INSERT INTO raw_aws_cidr_block_fqdns
+            (tool_run_id, cidr_block, fqdn)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS Instance related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_instance", R"(
+          INSERT INTO raw_aws_instances
+            (tool_run_id, instance_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_instance_detail", R"(
+          INSERT INTO raw_aws_instance_details
+            (tool_run_id, instance_id, instance_type, image_id
+            , architecture, platform_details, launch_time
+            , availability_zone, state_code, state_name
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5, $6, $7
+            , $8, $9, $10
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS Network Interface related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_network_interface", R"(
+          INSERT INTO raw_aws_network_interfaces
+            (tool_run_id, interface_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_interface_detail", R"(
+          INSERT INTO raw_aws_network_interface_details
+            (tool_run_id, interface_id, interface_type
+            , source_destination_check, status, description
+            )
+          VALUES
+            ($1, $2, $3
+            , $4, $5, $6
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_interface_attachment", R"(
+          INSERT INTO raw_aws_network_interface_attachments
+            (tool_run_id, interface_id, id, status, delete_on_termination)
+          VALUES
+            ($1, $2, $3, $4, $5)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_interface_mac", R"(
+          INSERT INTO raw_aws_network_interface_macs
+            (tool_run_id, interface_id, mac_address)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_interface_ip", R"(
+          INSERT INTO raw_aws_network_interface_ips
+            (tool_run_id, interface_id, ip_address)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS VPC related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_vpc", R"(
+          INSERT INTO raw_aws_vpcs
+            (tool_run_id, vpc_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_detail", R"(
+          INSERT INTO raw_aws_vpc_details
+            (tool_run_id, vpc_id, state)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_cidr_block", R"(
+          INSERT INTO raw_aws_vpc_cidr_blocks
+            (tool_run_id, vpc_id, cidr_block, state)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS Security Group related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_security_group", R"(
+          INSERT INTO raw_aws_security_groups
+            (tool_run_id, security_group_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_detail", R"(
+          INSERT INTO raw_aws_security_group_details
+            (tool_run_id, security_group_id, group_name, description)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rule", R"(
+          INSERT INTO raw_aws_security_group_rules
+            (tool_run_id, security_group_id, egress, protocol, from_port
+            , to_port, cidr_block
+            )
+          VALUES
+            ($1, $2, $3, $4, $5
+            , $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rule_non_ip", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip
+            (tool_run_id, security_group_id, egress, protocol, from_port
+            , to_port, target
+            )
+          VALUES
+            ($1, $2, $3, $4, $5
+            , $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS Network ACL related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_network_acl", R"(
+          INSERT INTO raw_aws_network_acls
+            (tool_run_id, network_acl_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_acl_rule", R"(
+          INSERT INTO raw_aws_network_acl_rules
+            (tool_run_id, network_acl_id, egress, rule_number, action
+            , protocol, cidr_block
+            )
+          VALUES
+            ($1, $2, $3, $4, $5
+            , $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_acl_rule_port", R"(
+          INSERT INTO raw_aws_network_acl_rule_ports
+            (tool_run_id, network_acl_id, egress, rule_number, from_port
+            , to_port
+            )
+          VALUES
+            ($1, $2, $3, $4, $5
+            , $6
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_acl_rule_type_code", R"(
+          INSERT INTO raw_aws_network_acl_rule_type_codes
+            (tool_run_id, network_acl_id, egress, rule_number, type, code)
+          VALUES
+            ($1, $2, $3, $4, $5, $6)
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS Subnet related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_subnet", R"(
+          INSERT INTO raw_aws_subnets
+            (tool_run_id, subnet_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_subnet_detail", R"(
+          INSERT INTO raw_aws_subnet_details
+            (tool_run_id, subnet_id, availability_zone, subnet_arn)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_subnet_cidr_block", R"(
+          INSERT INTO raw_aws_subnet_cidr_blocks
+            (tool_run_id, subnet_id, cidr_block)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS Route Table related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_route_table", R"(
+          INSERT INTO raw_aws_route_tables
+            (tool_run_id, route_table_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_route_table_association", R"(
+          INSERT INTO raw_aws_route_table_associations
+            (tool_run_id, route_table_id, association_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_route_table_route_cidr", R"(
+          INSERT INTO raw_aws_route_table_routes_cidr
+            (tool_run_id, route_table_id, destination_id, state
+            , cidr_block
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_route_table_route_non_cidr", R"(
+          INSERT INTO raw_aws_route_table_routes_non_cidr
+            (tool_run_id, route_table_id, destination_id, state
+            , destination
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS multi-service/component related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_instance_network_interface", R"(
+          INSERT INTO raw_aws_instance_network_interfaces
+            (tool_run_id, instance_id, interface_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_interface_vpc_subnet", R"(
+          INSERT INTO raw_aws_network_interface_vpc_subnet
+            (tool_run_id, interface_id, vpc_id, subnet_id)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_interface_security_group", R"(
+          INSERT INTO raw_aws_network_interface_security_groups
+            (tool_run_id, interface_id, security_group_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_subnet", R"(
+          INSERT INTO raw_aws_vpc_subnets
+            (tool_run_id, vpc_id, subnet_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_security_group", R"(
+          INSERT INTO raw_aws_vpc_security_groups
+            (tool_run_id, vpc_id, security_group_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_network_acl", R"(
+          INSERT INTO raw_aws_vpc_network_acls
+            (tool_run_id, vpc_id, network_acl_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_route_table", R"(
+          INSERT INTO raw_aws_vpc_route_tables
+            (tool_run_id, vpc_id, route_table_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_network_acl_subnet", R"(
+          INSERT INTO raw_aws_network_acl_subnets
+            (tool_run_id, network_acl_id, subnet_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    // ----------------------------------------------------------------------
+  }
 
   void
   dbPrepareCommon(pqxx::connection& db)
@@ -476,6 +885,18 @@ namespace netmeld::datastore::utils {
        "INSERT INTO raw_ip_traceroutes"
        "  (tool_run_id, hop_count, next_hop_ip_addr, dst_ip_addr)"
        " VALUES ($1, $2, host(($3)::INET)::INET, host(($4)::INET)::INET)"
+       " ON CONFLICT"
+       " DO NOTHING");
+
+    // ----------------------------------------------------------------------
+    // TABLE: raw_packages
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_packages",
+       "INSERT INTO raw_packages"
+       "  (tool_run_id, package_state, package_name, package_version, package_architecture, package_description)"
+       " VALUES ($1, $2, $3, $4, $5, $6)"
        " ON CONFLICT"
        " DO NOTHING");
 
@@ -934,6 +1355,28 @@ namespace netmeld::datastore::utils {
        " DO NOTHING");
 
     // ----------------------------------------------------------------------
+    // TABLE: Prowler*
+    // ----------------------------------------------------------------------
+
+    db.prepare
+    ("insert_raw_prowler_check", R"(
+        INSERT INTO raw_prowler_checks
+          (tool_run_id, account_number, timestamp, region,
+           level, control_id, service,
+           status, severity, control, risk, remediation, documentation_link,
+           resource_id
+           )
+        VALUES
+          ($1, $2, $3, $4,
+           $5, $6, $7,
+           $8, $9, $10, $11, $12, $13,
+           $14)
+        ON CONFLICT
+        DO NOTHING
+      )");
+
+
+    // ----------------------------------------------------------------------
     // SELECT statements
     // ----------------------------------------------------------------------
 
@@ -944,6 +1387,9 @@ namespace netmeld::datastore::utils {
        "    AND ($2 = device_id)"
        "    AND ($3 = interface_name)"
       );
+
+
+    dbPrepareAws(db);
 
     // ----------------------------------------------------------------------
     // Ensure that certain table entries are present (create them if absent)
@@ -965,5 +1411,4 @@ namespace netmeld::datastore::utils {
 
     // ----------------------------------------------------------------------
   }
-
 }

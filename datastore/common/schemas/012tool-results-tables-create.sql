@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -359,6 +359,46 @@ ON raw_ip_traceroutes(dst_ip_addr);
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_ip_traceroutes_idx_views
 ON raw_ip_traceroutes(hop_count, next_hop_ip_addr, dst_ip_addr);
+
+-- ----------------------------------------------------------------------
+
+CREATE TABLE raw_packages (
+    tool_run_id                  UUID            NOT NULL,
+    package_state               TEXT            NOT NULL,
+    package_name                 TEXT            NOT NULL,
+    package_version              TEXT            NOT NULL,
+    package_architecture         TEXT            NOT NULL,
+    package_description          TEXT            NOT NULL,
+    PRIMARY KEY (tool_run_id, package_state, package_name, package_version, package_architecture, package_description),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- Partial indexes
+CREATE INDEX raw_packages_idx_tool_run_id
+ON raw_packages(tool_run_id);
+
+CREATE INDEX raw_packages_idx_package_state
+ON raw_packages(package_state);
+
+CREATE INDEX raw_packages_idx_package_name
+ON raw_packages(package_name);
+
+CREATE INDEX raw_packages_idx_package_version
+ON raw_packages(package_version);
+
+CREATE INDEX raw_packages_idx_package_architecture
+ON raw_packages(package_architecture);
+
+CREATE INDEX raw_packages_idx_package_description
+ON raw_packages(package_description);
+
+-- Index the primary key without tool_run_id (if not already indexed).
+-- Helps the views that ignore the tool_run_id.
+CREATE INDEX raw_packages_idx_views
+ON raw_packages(package_state, package_name, package_architecture);
 
 
 -- ----------------------------------------------------------------------
@@ -818,6 +858,31 @@ ON raw_tool_observations(category);
 CREATE INDEX raw_tool_observations_idx_observation
 ON raw_tool_observations(observation);
 
+
+-- ----------------------------------------------------------------------
+
+
+CREATE TABLE raw_prowler_checks (
+      tool_run_id                 UUID            NOT NULL
+    , account_number              TEXT            NULL
+    , timestamp                   TIMESTAMP       NULL
+    , region                      TEXT            NULL
+    , level                       TEXT            NULL
+    , control_id                  TEXT            NULL
+    , service                     TEXT            NULL
+    , status                      TEXT            NULL
+    , severity                    ProwlerSeverity NULL
+    , control                     TEXT            NULL
+    , risk                        TEXT            NULL
+    , remediation                 TEXT            NULL
+    , documentation_link          TEXT            NULL
+    , resource_id                 TEXT            NULL
+    , FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+    
 
 -- ----------------------------------------------------------------------
 

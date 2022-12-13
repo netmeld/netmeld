@@ -28,6 +28,12 @@ set(MODULE_VERSION "2.0")
 
 foreach(ITEM
     #import-tool-template
+    nmdb-import-aws-ec2-describe-instances
+    nmdb-import-aws-ec2-describe-network-acls
+    nmdb-import-aws-ec2-describe-route-tables
+    nmdb-import-aws-ec2-describe-security-groups
+    nmdb-import-aws-ec2-describe-subnets
+    nmdb-import-aws-ec2-describe-vpcs
     nmdb-import-brocade
     nmdb-import-brocade-show-ip-route
     nmdb-import-cisco
@@ -35,6 +41,7 @@ foreach(ITEM
     nmdb-import-cisco-wireless
     nmdb-import-clw
     nmdb-import-dig
+    nmdb-import-dpkg
     nmdb-import-f5-json
     nmdb-import-hosts
     nmdb-import-ipconfig
@@ -51,6 +58,7 @@ foreach(ITEM
     nmdb-import-pcap
     nmdb-import-ping
     nmdb-import-powerconnect
+    nmdb-import-prowler
     nmdb-import-show-cdp-neighbor
     nmdb-import-show-inventory
     nmdb-import-show-mac-address-table

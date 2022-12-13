@@ -30,6 +30,7 @@ foreach(ITEM
     #export-tool-template
     nmdb-export-port-list
     nmdb-export-query
+    nmdb-export-scans
   )
   target_as_tool(${ITEM})
 endforeach()

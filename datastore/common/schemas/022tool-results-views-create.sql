@@ -354,7 +354,30 @@ ORDER BY origin, last_hop, hop_count
 ;
 
 -- ----------------------------------------------------------------------
+CREATE VIEW packages AS
+SELECT DISTINCT
+    package_state                AS package_state,
+    package_name                 AS package_name,
+    package_version              AS package_version,
+    package_architecture         AS package_architecture,
+    package_description          AS package_description
+FROM raw_packages
+;
 
+
+-- ----------------------------------------------------------------------
+CREATE VIEW device_packages AS
+SELECT DISTINCT
+    rd.device_id                 AS device_id,
+    rp.package_name              AS package_name,
+    rp.package_version           AS package_version
+FROM raw_devices AS rd
+LEFT OUTER JOIN raw_packages AS rp
+    ON (rd.tool_run_id = rp.tool_run_id)
+;
+
+
+-- ----------------------------------------------------------------------
 CREATE VIEW ports AS
 SELECT DISTINCT
     ip_addr                     AS ip_addr,
@@ -633,17 +656,40 @@ FROM raw_operating_systems
 
 -- ----------------------------------------------------------------------
 
-
 CREATE VIEW tool_observations AS
 SELECT DISTINCT
-  tr.tool_name                  AS tool_name,
-  tr.data_path                  AS data_path,
-  rto.category                  AS category,
-  rto.observation               AS observation
+    tr.tool_name                AS tool_name
+  , tr.data_path                AS data_path
+  , rto.category                AS category
+  , rto.observation             AS observation
 FROM raw_tool_observations AS rto
 LEFT OUTER JOIN tool_runs AS tr
    ON (rto.tool_run_id = tr.id)
 ;
+
+-- ----------------------------------------------------------------------
+
+CREATE VIEW prowler_checks AS
+SELECT DISTINCT
+    account_number              AS account_number
+  , timestamp                   AS timestamp
+  , region                      AS region
+  , level                       AS level
+  , control_id                  AS control_id
+  , service                     AS service
+  , status                      AS status
+  , severity                    AS severity
+  , control                     AS control
+  , risk                        AS risk
+  , remediation                 AS remediation
+  , documentation_link          AS documentation_link
+  , resource_id                 AS resource_id
+FROM raw_prowler_checks AS rpc
+ORDER BY account_number, region, level, control_id, service,
+         status, severity, resource_id
+;
+
+
 
 -- ----------------------------------------------------------------------
 

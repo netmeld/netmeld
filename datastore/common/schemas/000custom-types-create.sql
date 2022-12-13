@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -93,6 +93,17 @@ CREATE TYPE RouteHop AS (
     outgoing_ip_net             CIDR
 );
 
+
+-- ----------------------------------------------------------------------
+-- Prowler severity enum to aid in sorting.
+-- ----------------------------------------------------------------------
+CREATE TYPE ProwlerSeverity AS ENUM (
+  'Critical',
+  'High',
+  'Medium',
+  'Low',
+  'Informational'
+);
 
 -- ----------------------------------------------------------------------
 

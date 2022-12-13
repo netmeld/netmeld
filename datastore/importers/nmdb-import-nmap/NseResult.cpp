@@ -57,13 +57,14 @@ std::string
 NseResult::toString() const
 {
   std::ostringstream oss;
-  oss << "[";
-  oss << port.getIpAddress().toString() << ", "
-      << port.getProtocol() << ", "
-      << port.getPort() << ", "
-      << scriptId << ", "
-      << scriptOutput;
-  oss << "]";
+  oss << "["
+      << port.getIpAddress().toString()
+      << ", " << port.getProtocol()
+      << ", " << port.getPort()
+      << ", " << scriptId
+      << ", " << scriptOutput
+      << "]"
+      ;
 
   return oss.str();
 }
