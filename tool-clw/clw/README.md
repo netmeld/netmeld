@@ -81,21 +81,25 @@ Wrap a nmap scan of localhost:
 ```
 clw nmap localhost
 ```
+![](../docs/term/clwnmap.svg)
 
 Wrap a ping of localhost:
 ```
 clw ping localhost
 ```
+![](../docs/term/clwping.svg)
 
 Wrap a traceroute to localhost:
 ```
 clw traceroute localhost
 ```
+![](../docs/term/clwtr.svg)
 
 Wrap a netcat session listening on port 8080:
 ```
 clw nc -nvlp 8080
 ```
+![](../docs/term/clwnc.svg)
 
 Wrap a bash session:
 ```

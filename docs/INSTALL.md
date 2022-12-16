@@ -38,10 +38,11 @@ general developer case.
 
 As a privileged user install the following:
 ```
-apt update
+# Update Package Information
+sudo apt update
 
 # Needed for complete tool set build
-apt install \
+sudo apt install \
   build-essential cmake \
   libpqxx-dev \
   libboost-date-time-dev libboost-iostreams-dev \
@@ -51,14 +52,14 @@ apt install \
   libpcap0.8-dev
 
 # Needed for complete tool set execution; assumes prior installed
-apt install \
+sudo apt install \
   postgresql postgresql-client \
   arping nmap macchanger wireshark-common \
   ansible \
   git
 
 # Useful, but not technically needed; assumes prior installed
-apt install \
+sudo apt install \
   help2man pandoc \
   graphviz \
   postgresql-contrib postgresql-autodoc
@@ -70,11 +71,27 @@ Ensure we have cloned the Netmeld repository and are in the `netmeld`
 directory.
 
 * Create makefiles: `cmake -S . -B ./build`
+  <details>
+    <summary>Graphical Example</summary>
+  
+    ![](term/createMakes2x.svg)
+  </details>
+  
 * Building source:	`cmake --build ./build`
   * Build and run tests (example): `cmake --build ./build --target Test.netmeld`
   * Run test (example):	`(cd build/; ctest Test.netmeld)`
-* Installing (as a privileged user): `cmake --install build`
+  <details>
+    <summary>Graphical Example</summary>
+  
+    ![](term/buildingSrc4x.svg)
+  </details>
 
+* Installing (as a privileged user): `sudo cmake --install build`
+  <details>
+    <summary>Graphical Example</summary>
+  
+    ![](term/installSrc.svg)
+  </details>
 
 # Running the Tool Set
 The following are steps needed specifically for installing from source.  The
@@ -82,9 +99,16 @@ The following are steps needed specifically for installing from source.  The
 
 ## Library Linking
 On a fresh, bare install we may have to run (as a privileged user)
-the `ldconfig` command to configure the dynamic linker run time bindings.
+the `sudo ldconfig` command to configure the dynamic linker run time bindings.
 Basically, if you attempt to run a tool and it complains about not finding
 a Netmeld library this will more than likely resolve the issue.
+
+<details>
+  <summary>Graphical Example</summary>
+  
+  ![](term/ldconfig.svg)
+</details>
+
 
 ## Datalake Module Specific
 These steps are needed if working on the Datalake module.
@@ -96,6 +120,12 @@ To accept these defaults:
 ```
 nmdl-initialize
 ```
+<details>
+  <summary>Graphical Example</summary>
+  
+  ![](term/nmdl-init.svg)
+</details>
+
 
 If a different location is needed, `nmdl-initialize --lake-path LAKE_PATH`.
 
@@ -105,6 +135,15 @@ modules) as it currently uses a PostgreSQL database back-end and needs some
 initial configuration.
 
 
+### Enable and Start the Postgres Database Service
+Under the assumption we always want the service to be available to interact
+with the tool set without having to start it every time:
+
+```
+sudo systemctl enable postgresql
+sudo systemctl restart postgresql
+```
+
 ### Add a Database Admin/Superuser
 The tooling will attempt to add data to the database as the current user.
 While we can drastically limit permissions, the simple case of adding the
@@ -112,27 +151,21 @@ current user as a superuser will be covered.  In this case, we will add `root`
 as a superuser.
 
 ```
-su postgres
-createuser -s root
-exit
+sudo -u postgres createuser -s root
+sudo -u postgres createuser -s kali
 ```
-
-
-### Enable and Start the Postgres Database Service
-Under the assumption we always want the service to be available to interact
-with the tool set without having to start it every time:
-
-```
-systemctl enable postgresql
-systemctl restart postgresql
-```
-
 
 ### Initialize the Data Store
 The default database is named `site` and can be initialized with the following:
 ```
 nmdb-initialize
 ```
+<details>
+  <summary>Graphical Example</summary>
+  
+  ![](term/nmdb-init.svg)
+</details>
+
 
 To create a non-default database, `nmdb-initialize --db-name DB_NAME`.
 
