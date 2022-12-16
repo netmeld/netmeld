@@ -71,14 +71,27 @@ Ensure we have cloned the Netmeld repository and are in the `netmeld`
 directory.
 
 * Create makefiles: `cmake -S . -B ./build`
+  <details>
+    <summary>Graphical Example</summary>
+  
+    ![](term/createMakes2x.svg)
+  </details>
+  
 * Building source:	`cmake --build ./build`
   * Build and run tests (example): `cmake --build ./build --target Test.netmeld`
   * Run test (example):	`(cd build/; ctest Test.netmeld)`
-* Installing (as a privileged user): `sudo cmake --install build`
+  <details>
+    <summary>Graphical Example</summary>
+  
+    ![](term/buildingSrc4x.svg)
+  </details>
 
-![](term/createMakes2x.svg)
-![](term/buildingSrc4x.svg)
-![](term/installSrc.svg)
+* Installing (as a privileged user): `sudo cmake --install build`
+  <details>
+    <summary>Graphical Example</summary>
+  
+    ![](term/installSrc.svg)
+  </details>
 
 # Running the Tool Set
 The following are steps needed specifically for installing from source.  The
@@ -90,7 +103,12 @@ the `sudo ldconfig` command to configure the dynamic linker run time bindings.
 Basically, if you attempt to run a tool and it complains about not finding
 a Netmeld library this will more than likely resolve the issue.
 
-![](term/ldconfig.svg)
+<details>
+  <summary>Graphical Example</summary>
+  
+  ![](term/ldconfig.svg)
+</details>
+
 
 ## Datalake Module Specific
 These steps are needed if working on the Datalake module.
@@ -102,7 +120,12 @@ To accept these defaults:
 ```
 nmdl-initialize
 ```
-![](term/nmdl-init.svg)
+<details>
+  <summary>Graphical Example</summary>
+  
+  ![](term/nmdl-init.svg)
+</details>
+
 
 If a different location is needed, `nmdl-initialize --lake-path LAKE_PATH`.
 
@@ -137,8 +160,12 @@ The default database is named `site` and can be initialized with the following:
 ```
 nmdb-initialize
 ```
+<details>
+  <summary>Graphical Example</summary>
+  
+  ![](term/nmdb-init.svg)
+</details>
 
-![](term/nmdb-init.svg)
 
 To create a non-default database, `nmdb-initialize --db-name DB_NAME`.
 
