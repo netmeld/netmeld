@@ -66,7 +66,7 @@ class Parser :
       start;
 
     qi::rule<Iter, qi::ascii::blank_type>
-      jsonBlock, jsonEob;
+      packetArray, jsonEndOfObject;
 
     qi::rule<Iter, qi::ascii::blank_type,
              qi::locals<qi::rule<Iter, std::string()>*, std::string>>
@@ -80,55 +80,59 @@ class Parser :
 
     // Data
     const std::string
-      ethSrc {"\"eth.src\": "},
-      sllSrc {"\"sll.src.eth\": "},
-      vlanId {"\"vlan.id\": "},
-      stpRootHw {"\"stp.root.hw\": "},
-      stpBridgeHw {"\"stp.bridge.hw\": "},
-      dtpSenderid {"\"dtp.senderid\": "},
-      vtp {"\"vtp\": "},
-      arpSrcHwMac {"\"arp.src.hw_mac\": "},
-      arpSrcProtoIpv4 {"\"arp.src.proto_ipv4\": "},
-      cdpDeviceid {"\"cdp.deviceid\": "},
-      cdpPlatform {"\"cdp.platform\": "},
-      cdpSoftwareVersion {"\"cdp.software_version\": "},
-      cdpNrgyzIpAddress {"\"cdp.nrgyz.ip_address\": "},
-      cdpPortid {"\"cdp.portid\": "},
-      cdpNativeVlan {"\"cdp.native_vlan\": "},
-      lldpChassisIdMac {"\"lldp.chassis.id.mac\": "},
-      lldpTlvSystemName {"\"lldp.tlv.system.name\": "},
-      lldpTlvSystemDesc {"\"lldp.tlv.system.desc\": "},
-      lldpPortId {"\"lldp.port.id\": "},
-      lldpPortDesc {"\"lldp.port.desc\": "},
-      lldpIeee8021PortVlanId {"\"lldp.ieee.802_1.port_vlan.id\": "},
-      ipSrc {"\"ip.src\": "},
-      //ipProto {"\"ip.proto\": "},
-      ipv6Src {"\"ipv6.src\": "},
-      ipv6SrcSaMac {"\"ipv6.src_sa_mac\": "},
-      //ipv6Nxt {"\"ipv6.nxt\": "},
-      //udpSrcPort {"\"udp.srcport\": "},
-      dnsRespName {"\"dns.resp.name\": "},
-      dnsAaaa {"\"dns.aaaa\": "},
-      dnsA {"\"dns.a\": "},
-      dnsCname {"\"dns.cname\": "},
-      dnsNs {"\"dns.ns\": "},
-      dnsSoaMname {"\"dns.soa.mname\": "},
-      dnsSoaRname {"\"dns.soa.rname\": "},
-      bootpOptionSubnetMask {"\"bootp.option.subnet_mask\": "},
-      bootpOptionDomainNameServer {"\"bootp.option.domain_name_server\": "},
-      bootpOptionDhcpServerId {"\"bootp.option.dhcp_server_id\": "},
-      bootpOptionRouter {"\"bootp.option.router\": "},
-      bootpOptionDomainName {"\"bootp.option.domain_name\": "},
-      bootpOptionTftpServerAddress {"\"bootp.option.tftp_server_address\": "},
-      bootpOptionSipServerAddress {"\"bootp.option.sip_server.address\": "},
-      bootpOptionHostname {"\"bootp.option.hostname\": "}, // client name
-      bootpIpYour {"\"bootp.ip.your\": "}, // client ip
-      bootpIpRelay {"\"bootp.ip.relay\": "}, // tricky
-      bootpHwMacAddr {"\"bootp.hw.mac_addr\": "}, // client mac
-      // what to do with these two, macs and subnets
-      dhcp6IaprefixPrefAddr {"\"dhcp6.iaprefix.pref_addr\": "}, // "subnet" for c&s
-      dhcpv6DuidlltLinkLayerAddr {"\"dhcpv6.duidllt.link_layer_addr\": "}, // client&server
-      ntpRefid {"\"ntp.refid\": "} // ntp source, bytes, see "not you"
+        frameNumber {R"("frame.number": )"}
+      , ethSrc {R"("eth.src": )"}
+      , sllSrc {R"("sll.src.eth": )"}
+      , vlanId {R"("vlan.id": )"}
+      , stpRootHw {R"("stp.root.hw": )"}
+      , stpBridgeHw {R"("stp.bridge.hw": )"}
+      , dtpSenderid {R"("dtp.senderid": )"}
+      , vtp {R"("vtp": )"}
+      , arpSrcHwMac {R"("arp.src.hw_mac": )"}
+      , arpSrcProtoIpv4 {R"("arp.src.proto_ipv4": )"}
+      , cdpDeviceid {R"("cdp.deviceid": )"}
+      , cdpPlatform {R"("cdp.platform": )"}
+      , cdpSoftwareVersion {R"("cdp.software_version": )"}
+      , cdpNrgyzIpAddress {R"("cdp.nrgyz.ip_address": )"}
+      , cdpPortid {R"("cdp.portid": )"}
+      , cdpNativeVlan {R"("cdp.native_vlan": )"}
+      , lldpChassisIdMac {R"("lldp.chassis.id.mac": )"}
+      , lldpTlvSystemName {R"("lldp.tlv.system.name": )"}
+      , lldpTlvSystemDesc {R"("lldp.tlv.system.desc": )"}
+      , lldpPortId {R"("lldp.port.id": )"}
+      , lldpPortDesc {R"("lldp.port.desc": )"}
+      , lldpIeee8021PortVlanId {R"("lldp.ieee.802_1.port_vlan.id": )"}
+      , ipSrc {R"("ip.src": )"}
+      //, ipProto {R"("ip.proto": )"}
+      , ipv6Src {R"("ipv6.src": )"}
+      , ipv6SrcSaMac {R"("ipv6.src_sa_mac": )"}
+      //, ipv6Nxt {R"("ipv6.nxt": )"}
+      //, udpSrcPort {R"("udp.srcport": )"}
+      , dnsRespName {R"("dns.resp.name": )"}
+      , dnsAaaa {R"("dns.aaaa": )"}
+      , dnsA {R"("dns.a": )"}
+      , dnsCname {R"("dns.cname": )"}
+      , dnsNs {R"("dns.ns": )"}
+      , dnsSoaMname {R"("dns.soa.mname": )"}
+      , dnsSoaRname {R"("dns.soa.rname": )"}
+      , bootpOptionSubnetMask {R"("bootp.option.subnet_mask": )"}
+      , bootpOptionDomainNameServer {R"("bootp.option.domain_name_server": )"}
+      , bootpOptionDhcpServerId {R"("bootp.option.dhcp_server_id": )"}
+      , bootpOptionRouter {R"("bootp.option.router": )"}
+      , bootpOptionDomainName {R"("bootp.option.domain_name": )"}
+      , bootpOptionTftpServerAddress {R"("bootp.option.tftp_server_address": )"}
+      , bootpOptionSipServerAddress {R"("bootp.option.sip_server.address": )"}
+      , bootpOptionHostname {R"("bootp.option.hostname": )"} // client name
+      , bootpIpYour {R"("bootp.ip.your": )"} // client ip
+      , bootpIpRelay {R"("bootp.ip.relay": )"} // tricky
+      , bootpHwMacAddr {R"("bootp.hw.mac_addr": )"} // client mac
+        // what to do with these two, macs and subnets
+      , dhcp6IaprefixPrefAddr {R"("dhcp6.iaprefix.pref_addr": )"} // "subnet" for c&s
+      , dhcpv6DuidlltLinkLayerAddr {R"("dhcpv6.duidllt.link_layer_addr": )"} // client&server
+      // ===== NTP ===== see RFC5905
+      //, ntpRefid {R"("ntp.refid": )"} // ntp source, bytes, see "not you"
+      , ntpMode {R"("ntp.flags.mode": )"} // 1,2,4,5
+      , ntpCtrlFlags2R {R"("ntp.ctrl.flags2.r": )"}
     ;
     const std::map<std::string, std::string> ipProtoNums
     {
@@ -161,6 +165,8 @@ class Parser :
     void setNewPacket();
     void setPacketData(const std::string&, const std::string&);
     bool processPacket(PacketData&);
+
+    nmdo::IpAddress getSrcIp(PacketData&) const;
 
   public:
 };
