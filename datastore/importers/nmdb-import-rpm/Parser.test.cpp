@@ -41,7 +41,6 @@ class TestParser : public Parser
   public:
     using Parser::start;
     using Parser::packageLine;
-    using Parser::packageState;
 };
 
 BOOST_AUTO_TEST_CASE(testPackageLine)
@@ -49,50 +48,13 @@ BOOST_AUTO_TEST_CASE(testPackageLine)
   TestParser tp;
 
   {
-    const auto& parserRule {tp.packageState};
-
-    // OK
-    std::vector<char> desiredActions  = {'u','i','h','r','p'};
-    std::vector<char> packageStatuses = {'n','c','H','U','F','W','t','i'};
-    std::vector<char> errorFlags      = {' ','R'};
-
-    std::ostringstream oss;
-    std::string test;
-    for (const auto i : desiredActions) {
-      for (const auto j : packageStatuses) {
-        for (const auto k : errorFlags) {
-          oss << i << j << k << ' ';
-          test = oss.str();
-          BOOST_TEST(nmdp::test(test.c_str(), parserRule),
-                     "Parse rule 'packageState': " << test);
-          oss.str(std::string());
-        }
-      }
-    }
-
-    // BAD
-    std::vector<std::string> testsFail {
-      "un ",    // less than four valid chars
-      " un  ",  // start with space
-      "an  ",   // invalid char, start
-      "ua  ",   // invalid char, middle
-      "una ",   // invalid char, end
-    };
-
-    for (const auto& test : testsFail) {
-      BOOST_TEST(!nmdp::test(test.c_str(), parserRule),
-                 "Parse rule 'packageState': " << test);
-    }
-  }
-
-  {
     const auto& parserRule {tp.packageLine};
 
     // OK
     std::vector<std::string> testsOk {
-      "ii  pkg        1.0         all     some description\n",
-      "ii  pkg-other  1.1.99.0-5  amd64   more des-cript -- ion\n",
-      "ii  pkg-o12    1.0+v1      x86_64  description\n",
+      "pkg        1.0         all     some description\n",
+      "pkg-other  1.1.99.0-5  amd64   more des-cript -- ion\n",
+      "pkg-o12    1.0+v1      x86_64  description\n",
     };
 
     for (const auto& test : testsOk) {
@@ -109,16 +71,16 @@ BOOST_AUTO_TEST_CASE(testWhole)
 
   std::vector<std::string> testsOk {
     // dpkg -l | head
-    R"STR(Desired=Unknown/Install/Remove/Purge/Hold
-| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
-|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
-||/ Name                                   Version                          Architecture Description
-+++-======================================-================================-============-==================================================================================
-ii  adduser                                3.118                            all          add and remove users and groups
-ii  adwaita-icon-theme                     3.38.0-1                         all          default icon theme of GNOME
-ii  alsa-topology-conf                     1.2.4-1                          all          ALSA topology configuration files
-ii  alsa-ucm-conf                          1.2.4-2                          all          ALSA Use Case Manager configuration files
-ii  ansible                                2.10.7+merged+base+2.10.8+dfsg-1 all          Configuration management, deployment, and task execution system
+    R"STR(polkit-libs                                            0.115-11.el8              x86_64              Libraries for polkit
+          geolite2-country                                    20180605-1.el8               noarch              Free IP geolocation country database
+          libevent                                               2.1.8-5.el8               x86_64              Abstract asynchronous event notification library
+          hwdata                                                 0.314-8.8.el8             noarch              Hardware identification and configuration data
+          libsolv                                               0.7.16-2.el8               x86_64              Package dependency solver
+          xkeyboard-config                                        2.28-1.el8               noarch              X Keyboard Extension configuration data
+          kernel-core                                           4.18.0-305.3.1.el8         x86_64              The Linux kernel
+          ncurses-base                                             6.1-7.20180224.el8      noarch              Descriptions of common terminals
+          initscripts                                         10.00.15-1.el8               x86_64              Basic support for legacy System V init scripts
+          dnf-data                                               4.4.2-11.el8              noarch              Common data and configuration files for DNF
     )STR"
   };
 
