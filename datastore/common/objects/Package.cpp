@@ -98,7 +98,7 @@ namespace netmeld::datastore::objects
     bool
     Package::isValid() const
     {
-        return !name.empty() && !version.empty() && !state.empty() && !version.empty() && !architecture.empty() && !description.empty();
+        return !name.empty() && !version.empty() && !version.empty() && !architecture.empty() && !description.empty();
     }
 
     void
