@@ -123,7 +123,7 @@ namespace netmeld::datastore::objects::aws {
     }
 
     if (portRange) {
-      t.exec_prepared("insert_raw_aws_network_acl_rule_port"
+      t.exec_prepared("insert_raw_aws_network_acl_rules_port"
           , toolRunId
           , deviceId
           , egress
@@ -134,7 +134,7 @@ namespace netmeld::datastore::objects::aws {
     }
 
     if (typeCode) {
-      t.exec_prepared("insert_raw_aws_network_acl_rule_type_code"
+      t.exec_prepared("insert_raw_aws_network_acl_rules_type_code"
           , toolRunId
           , deviceId
           , egress
@@ -178,12 +178,6 @@ namespace netmeld::datastore::objects::aws {
     if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = portRange <=> rhs.portRange; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = typeCode <=> rhs.typeCode; 0 != cmp) {
-      return cmp;
-    }
     if (auto cmp = fromOrType <=> rhs.fromOrType; 0 != cmp) {
       return cmp;
     }
@@ -191,6 +185,12 @@ namespace netmeld::datastore::objects::aws {
       return cmp;
     }
     if (auto cmp = egress <=> rhs.egress; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = portRange <=> rhs.portRange; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = typeCode <=> rhs.typeCode; 0 != cmp) {
       return cmp;
     }
 

@@ -49,6 +49,11 @@ namespace netmeld::datastore::objects::aws {
     associations.insert(_association);
   }
   void
+  RouteTable::makeVpcDefault()
+  {
+    isDefault = true;
+  }
+  void
   RouteTable::addRoute(const Route& _route)
   {
     Route t;
@@ -100,6 +105,7 @@ namespace netmeld::datastore::objects::aws {
           , toolRunId
           , vpcId
           , routeTableId
+          , isDefault
         );
     }
   }
@@ -113,6 +119,7 @@ namespace netmeld::datastore::objects::aws {
         << "routeTableId: " << routeTableId
         << ", vpcId: " << vpcId
         << ", associations: " << associations
+        << ", isDefault: " << isDefault
         << ", routes: " << routes
         << ']'
         ;
@@ -130,6 +137,9 @@ namespace netmeld::datastore::objects::aws {
       return cmp;
     }
     if (auto cmp = associations <=> rhs.associations; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = isDefault <=> rhs.isDefault; 0 != cmp) {
       return cmp;
     }
 

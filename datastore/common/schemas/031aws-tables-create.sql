@@ -232,7 +232,7 @@ CREATE TABLE raw_aws_security_group_details (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE TABLE raw_aws_security_group_rules (
+CREATE TABLE raw_aws_security_group_rules_ports (
       tool_run_id                   UUID  NOT NULL
     , security_group_id             TEXT  NOT NULL
     , egress                        BOOL  NOT NULL
@@ -252,16 +252,68 @@ CREATE TABLE raw_aws_security_group_rules (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE TABLE raw_aws_security_group_rules_non_ip (
+CREATE TABLE raw_aws_security_group_rules_type_codes (
+      tool_run_id                   UUID  NOT NULL
+    , security_group_id             TEXT  NOT NULL
+    , egress                        BOOL  NOT NULL
+    , protocol                      TEXT  NOT NULL
+    , type                          INT   NOT NULL
+    , code                          INT   NOT NULL
+    , cidr_block                    INET  NOT NULL
+    , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol
+                  , type, code, cidr_block
+                  )
+    , FOREIGN KEY (tool_run_id, security_group_id)
+        REFERENCES raw_aws_security_groups(tool_run_id, security_group_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    , FOREIGN KEY (tool_run_id, cidr_block)
+        REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_security_group_rules_non_ip_details (
       tool_run_id                   UUID  NOT NULL
     , security_group_id             TEXT  NOT NULL
     , egress                        BOOL  NOT NULL
     , protocol                      TEXT  NOT NULL
     , from_port                     INT   NOT NULL
     , to_port                       INT   NOT NULL
-    , target                        JSONB NOT NULL
+    , detail                        JSONB NOT NULL
+    , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol
+                  , from_port, to_port, detail
+                  )
+    , FOREIGN KEY (tool_run_id, security_group_id)
+        REFERENCES raw_aws_security_groups(tool_run_id, security_group_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_security_group_rules_non_ip_ports (
+      tool_run_id                   UUID  NOT NULL
+    , security_group_id             TEXT  NOT NULL
+    , egress                        BOOL  NOT NULL
+    , protocol                      TEXT  NOT NULL
+    , from_port                     INT   NOT NULL
+    , to_port                       INT   NOT NULL
+    , target                        TEXT  NOT NULL
     , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol
                   , from_port, to_port, target
+                  )
+    , FOREIGN KEY (tool_run_id, security_group_id)
+        REFERENCES raw_aws_security_groups(tool_run_id, security_group_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_security_group_rules_non_ip_type_codes (
+      tool_run_id                   UUID  NOT NULL
+    , security_group_id             TEXT  NOT NULL
+    , egress                        BOOL  NOT NULL
+    , protocol                      TEXT  NOT NULL
+    , type                          INT   NOT NULL
+    , code                          INT   NOT NULL
+    , target                        TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, security_group_id, egress, protocol
+                  , type, code, target
                   )
     , FOREIGN KEY (tool_run_id, security_group_id)
         REFERENCES raw_aws_security_groups(tool_run_id, security_group_id)
@@ -308,15 +360,15 @@ CREATE TABLE raw_aws_network_acl_rules (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE TABLE raw_aws_network_acl_rule_ports (
+CREATE TABLE raw_aws_network_acl_rules_ports (
       tool_run_id                   UUID  NOT NULL
     , network_acl_id                TEXT  NOT NULL
     , egress                        BOOL  NOT NULL
     , rule_number                   INT   NOT NULL
     , from_port                     INT   NOT NULL
     , to_port                       INT   NOT NULL
-    , PRIMARY KEY (tool_run_id, network_acl_id, rule_number, from_port
-                  , to_port
+    , PRIMARY KEY (tool_run_id, network_acl_id, egress, rule_number
+                  , from_port, to_port
                   )
     , FOREIGN KEY (tool_run_id, network_acl_id, egress, rule_number)
         REFERENCES raw_aws_network_acl_rules(
@@ -324,14 +376,15 @@ CREATE TABLE raw_aws_network_acl_rule_ports (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE TABLE raw_aws_network_acl_rule_type_codes (
+CREATE TABLE raw_aws_network_acl_rules_type_codes (
       tool_run_id                   UUID  NOT NULL
     , network_acl_id                TEXT  NOT NULL
     , egress                        BOOL  NOT NULL
     , rule_number                   INT   NOT NULL
     , type                          INT   NOT NULL
     , code                          INT   NOT NULL
-    , PRIMARY KEY (tool_run_id, network_acl_id, rule_number, type, code)
+    , PRIMARY KEY (tool_run_id, network_acl_id, egress, rule_number
+                  , type, code)
     , FOREIGN KEY (tool_run_id, network_acl_id, egress, rule_number)
         REFERENCES raw_aws_network_acl_rules(
           tool_run_id, network_acl_id, egress, rule_number)
@@ -541,7 +594,8 @@ CREATE TABLE raw_aws_vpc_route_tables (
       tool_run_id                   UUID  NOT NULL
     , vpc_id                        TEXT  NOT NULL
     , route_table_id                TEXT  NOT NULL
-    , PRIMARY KEY (tool_run_id, vpc_id, route_table_id)
+    , is_default                    BOOL  NOT NULL
+    , PRIMARY KEY (tool_run_id, vpc_id, route_table_id, is_default)
     , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE

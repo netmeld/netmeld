@@ -44,6 +44,7 @@ namespace netmeld::datastore::objects::aws {
       std::string routeTableId;
 
       std::string vpcId;
+      bool isDefault {false};
 
       std::set<std::string> associations;
       std::set<Route>       routes;
@@ -71,6 +72,8 @@ namespace netmeld::datastore::objects::aws {
 
       void addAssociation(const std::string&);
       void addRoute(const Route&);
+
+      void makeVpcDefault();
 
       bool isValid() const override;
 

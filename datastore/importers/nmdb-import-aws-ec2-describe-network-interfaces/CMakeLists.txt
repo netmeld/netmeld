@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -24,26 +24,28 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-set(MODULE_VERSION "2.0")
+add_executable(${TGT_TOOL}
+    Parser.cpp
+    ${TGT_TOOL}.cpp
+  )
+
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+  )
+
+nm_install_bin(${TGT_TOOL})
+#nm_install_include(file dir)
 
 foreach(ITEM
-    #graph-tool-template
-    nmdb-graph-ac
-    nmdb-graph-aws
-    nmdb-graph-network
+    Parser
   )
-  target_as_tool(${ITEM})
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+    )
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
 endforeach()
-
-# ----------------------------------------------------------------------
-# Deb Creation
-# ----------------------------------------------------------------------
-set(desc "This package provides the Datastore Graphers module for the \
-Netmeld tool suite.  Included are the library and headers necessary to \
-run or expand capabilities through tool development, as well as the \
-binaries necessary to graph data from the Netmeld Datastore.")
-nm_add_deb_description(${desc})
-set(deps "netmeld-core, netmeld-datastore")
-nm_add_deb_depends(${deps})
-set(deps "graphviz")
-nm_add_deb_recommends(${deps})

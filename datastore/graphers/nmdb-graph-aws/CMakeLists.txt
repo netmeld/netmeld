@@ -24,26 +24,13 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-set(MODULE_VERSION "2.0")
-
-foreach(ITEM
-    #graph-tool-template
-    nmdb-graph-ac
-    nmdb-graph-aws
-    nmdb-graph-network
+add_executable(${TGT_TOOL}
+    GraphHelper.cpp
+    ${TGT_TOOL}.cpp
   )
-  target_as_tool(${ITEM})
-endforeach()
 
-# ----------------------------------------------------------------------
-# Deb Creation
-# ----------------------------------------------------------------------
-set(desc "This package provides the Datastore Graphers module for the \
-Netmeld tool suite.  Included are the library and headers necessary to \
-run or expand capabilities through tool development, as well as the \
-binaries necessary to graph data from the Netmeld Datastore.")
-nm_add_deb_description(${desc})
-set(deps "netmeld-core, netmeld-datastore")
-nm_add_deb_depends(${deps})
-set(deps "graphviz")
-nm_add_deb_recommends(${deps})
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+  )
+
+nm_install_bin(${TGT_TOOL})

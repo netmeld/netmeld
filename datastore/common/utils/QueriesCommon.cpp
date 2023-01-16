@@ -203,27 +203,66 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
-      ("insert_raw_aws_security_group_rule", R"(
-          INSERT INTO raw_aws_security_group_rules
-            (tool_run_id, security_group_id, egress, protocol, from_port
-            , to_port, cidr_block
+      ("insert_raw_aws_security_group_rules_port", R"(
+          INSERT INTO raw_aws_security_group_rules_ports
+            (tool_run_id, security_group_id, egress, protocol
+            , from_port , to_port, cidr_block
             )
           VALUES
-            ($1, $2, $3, $4, $5
-            , $6, $7
+            ($1, $2, $3, $4
+            , $5, $6, $7
             )
           ON CONFLICT DO NOTHING
         )");
 
     db.prepare
-      ("insert_raw_aws_security_group_rule_non_ip", R"(
-          INSERT INTO raw_aws_security_group_rules_non_ip
-            (tool_run_id, security_group_id, egress, protocol, from_port
-            , to_port, target
+      ("insert_raw_aws_security_group_rules_type_code", R"(
+          INSERT INTO raw_aws_security_group_rules_type_codes
+            (tool_run_id, security_group_id, egress, protocol
+            , type, code, cidr_block
             )
           VALUES
-            ($1, $2, $3, $4, $5
-            , $6, $7
+            ($1, $2, $3, $4
+            , $5, $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rules_non_ip_detail", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip_details
+            (tool_run_id, security_group_id, egress, protocol
+            , from_port, to_port, detail
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5, $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rules_non_ip_port", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip_ports
+            (tool_run_id, security_group_id, egress, protocol
+            , from_port, to_port, target
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5, $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rules_non_ip_type_code", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip_type_codes
+            (tool_run_id, security_group_id, egress, protocol
+            , type, code, target
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5, $6, $7
             )
           ON CONFLICT DO NOTHING
         )");
@@ -256,8 +295,8 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
-      ("insert_raw_aws_network_acl_rule_port", R"(
-          INSERT INTO raw_aws_network_acl_rule_ports
+      ("insert_raw_aws_network_acl_rules_port", R"(
+          INSERT INTO raw_aws_network_acl_rules_ports
             (tool_run_id, network_acl_id, egress, rule_number, from_port
             , to_port
             )
@@ -269,8 +308,8 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
-      ("insert_raw_aws_network_acl_rule_type_code", R"(
-          INSERT INTO raw_aws_network_acl_rule_type_codes
+      ("insert_raw_aws_network_acl_rules_type_code", R"(
+          INSERT INTO raw_aws_network_acl_rules_type_codes
             (tool_run_id, network_acl_id, egress, rule_number, type, code)
           VALUES
             ($1, $2, $3, $4, $5, $6)
@@ -420,9 +459,9 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_aws_vpc_route_table", R"(
           INSERT INTO raw_aws_vpc_route_tables
-            (tool_run_id, vpc_id, route_table_id)
+            (tool_run_id, vpc_id, route_table_id, is_default)
           VALUES
-            ($1, $2, $3)
+            ($1, $2, $3, $4)
           ON CONFLICT DO NOTHING
         )");
 

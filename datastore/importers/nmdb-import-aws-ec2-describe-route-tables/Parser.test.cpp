@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(testProcessRouteTable)
     auto tobj = tp.getData()[0].routeTables;
     BOOST_TEST(1 == tobj.size());
     const std::string tev1 {
-        R"(routeTableId: a1, vpcId: b2, associations: [], routes: [])"
+        R"(routeTableId: a1, vpcId: b2, associations: [], isDefault: 0, routes: [])"
       };
     nmdp::testInString(tobj[0].toDebugString(), tev1);
   }

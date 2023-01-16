@@ -40,12 +40,12 @@ namespace netmeld::datastore::objects::aws {
   void
   SecurityGroupRule::setFromPort(std::int32_t _port)
   {
-    fromPort = _port;
+    fromOrType = _port;
   }
   void
   SecurityGroupRule::setToPort(std::int32_t _port)
   {
-    toPort = _port;
+    toOrCode = _port;
   }
   void
   SecurityGroupRule::setEgress()
@@ -72,12 +72,18 @@ namespace netmeld::datastore::objects::aws {
     if (_target.empty()) { return; } // Don't add empties
     nonCidrs.insert(_target);
   }
+  void
+  SecurityGroupRule::addDetails(const std::string& _data)
+  {
+    if (_data.empty()) { return; } // Don't add empties
+    details.insert(_data);
+  }
 
   bool
   SecurityGroupRule::isValid() const
   {
     return !(protocol.empty())
-        && !(fromPort == INT32_MIN || toPort == INT32_MIN)
+        && !(fromOrType == INT32_MIN || toOrCode == INT32_MIN)
         && (cidrBlocks.size() > 0 || nonCidrs.size() > 0)
         ;
   }
@@ -96,26 +102,64 @@ namespace netmeld::datastore::objects::aws {
 
     for (auto ip : cidrBlocks) {
       ip.save(t, toolRunId, deviceId);
-      t.exec_prepared("insert_raw_aws_security_group_rule"
-          , toolRunId
-          , deviceId
-          , egress
-          , protocol
-          , fromPort
-          , toPort
-          , ip.toString()
-        );
+      if (protocol == "icmp" || protocol == "-1") {
+        t.exec_prepared("insert_raw_aws_security_group_rules_type_code"
+            , toolRunId
+            , deviceId
+            , egress
+            , protocol
+            , fromOrType
+            , toOrCode
+            , ip.toString()
+          );
+      }
+      if (protocol != "icmp" || protocol == "-1") {
+        t.exec_prepared("insert_raw_aws_security_group_rules_port"
+            , toolRunId
+            , deviceId
+            , egress
+            , protocol
+            , fromOrType
+            , toOrCode
+            , ip.toString()
+          );
+      }
     }
 
     for (const auto& target : nonCidrs) {
-      t.exec_prepared("insert_raw_aws_security_group_rule_non_ip"
+      if (protocol == "icmp" || protocol == "-1") {
+        t.exec_prepared("insert_raw_aws_security_group_rules_non_ip_type_code"
+            , toolRunId
+            , deviceId
+            , egress
+            , protocol
+            , fromOrType
+            , toOrCode
+            , target
+          );
+      }
+      if (protocol != "icmp" || protocol == "-1") {
+        t.exec_prepared("insert_raw_aws_security_group_rules_non_ip_port"
+            , toolRunId
+            , deviceId
+            , egress
+            , protocol
+            , fromOrType
+            , toOrCode
+            , target
+          );
+      }
+    }
+
+    for (const auto& detail : details) {
+      t.exec_prepared("insert_raw_aws_security_group_rules_non_ip_detail"
           , toolRunId
           , deviceId
           , egress
           , protocol
-          , fromPort
-          , toPort
-          , target
+          , fromOrType
+          , toOrCode
+          , detail
         );
     }
   }
@@ -127,11 +171,12 @@ namespace netmeld::datastore::objects::aws {
 
     oss << '['
         << "protocol: " << protocol
-        << ", fromPort: " << fromPort
-        << ", toPort: " << toPort
+        << ", fromOrType: " << fromOrType
+        << ", toOrCode: " << toOrCode
         << ", egress: " << egress
         << ", cidrBlocks: " << cidrBlocks
         << ", nonCidrs: " << nonCidrs
+        << ", details: " << details
         << ']'
         ;
 
@@ -144,16 +189,19 @@ namespace netmeld::datastore::objects::aws {
     if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = fromPort <=> rhs.fromPort; 0 != cmp) {
+    if (auto cmp = fromOrType <=> rhs.fromOrType; 0 != cmp) {
       return cmp;
     }
-    if (auto cmp = toPort <=> rhs.toPort; 0 != cmp) {
+    if (auto cmp = toOrCode <=> rhs.toOrCode; 0 != cmp) {
       return cmp;
     }
     if (auto cmp = cidrBlocks <=> rhs.cidrBlocks; 0 != cmp) {
       return cmp;
     }
     if (auto cmp = nonCidrs <=> rhs.nonCidrs; 0 != cmp) {
+      return cmp;
+    }
+    if (auto cmp = details <=> rhs.details; 0 != cmp) {
       return cmp;
     }
 
