@@ -1,44 +1,41 @@
 DESCRIPTION
 ===========
 
-Output Graphviz `.dot` format output to produce an access control related graph
-based on the information currently in the Netmeld data store.
+Output Graphviz `.dot` format output to produce an AWS related graph based
+on the information currently in the Netmeld datastore.
+The graph is similar to a Layer-3 (network) type graph however, given the
+constructs in AWS and information required to understand the environment it
+is not accurate to say it is a Layer-3 diagram.
 
-Vertices contain information related to the source or target.  A vertex title
-is of the format `(set_id) set_name (interface)` where `set_id` is an
-identifier which contains multiple sets (e.g., a zone in terms of ACLs),
-`set_name` is an identifier for the associated network(s), and `interface`
-is the device interface where data is flowing.  Whether the interface is for
-ingress or egress depends on the edge.  Vertices further contain a listing of
-all associated networks based on the data contained in the configuration file.
+Vertices contain information related to the source or target (e.g., AWS
+network interface, AWS subnet, AWS routes, AWS VPCs, AWS gateways, etc.).
+Were possible, a vertex title contains it's associated AWS identifier.
+Cases were that is not possible include when the resource is not owned by
+AWS.
+Furthermore, in certain cases a vertex may contain additional data (e.g., a
+network interfaces security group rules, a subnet's network access control
+list rules, etc.) about the particular resource.
+These typically will not provide the AWS identifier as the data may be the
+result of aggregation of multiple AWS resources and are explicitly
+associated with the containing vertex (i.e., can be identified by examining
+the parent AWS identifier).
 
-The vertices are connected by an edge which contains information related to
-a rule's associated action(s) and service(s).  They can have multiple rules
-associated per edge.  When multiple rules are identified, order matters.
-While the rules should be in order of operations, a numerical value is also
-provided which should correspond to the order provided by a configuration
-file or the order in which it was processed.
+A solid edge between two vertices represents they are connected and can
+potentially communicate with each other (concepts like ACL rules are not
+considered here).
+In general, the solid edge represents how the AWS environment is connected.
+However, given the various concepts at play is not in strict alignment with
+AWS constructs to allow a more explicit visual representation of the logic
+within the AWS environment.
+For example, an AWS VPC contains a subnet(s) which has an associated route
+table with both local and non-local routing rules.  The diagram will
+present this as a subnet connected to the local routing, then to the VPC,
+and finaly to the external routing.
+While not in strict parent-child hierarchy, it does create graphics which
+are simpler to understand applied logic in a visual sense.
 
-A best effort is attempted in terms of resolving network and service set
-identifiers into its numerical equivalent, however this cannot always be
-done (e.g., using device built-ins).
-
-By default, this tool will only generate a graph with known applied or enforced
-rules based on configuration settings.  Unfortunately, not all *apply* values
-are fully handled by the Datastore Import module tools.  To ensure rules are
-not accidentally missed, the `--all` option will ensure all rules stored in the
-data store are placed on the graph, regardless of whether they may or may not
-be actually applied or enforced.
 
 EXAMPLE
 =======
 
-Graph applied access control rules on the device called `workstation`.
-```
-nmdb-graph-ac --device-id workstation
-```
-
-Graph all access control rules on the device called `workstation`.
-```
-nmdb-graph-ac --device-id workstation --all
-```
+TBS
