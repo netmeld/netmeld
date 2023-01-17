@@ -71,6 +71,9 @@ class Tool : public nmdt::AbstractGraphTool
     std::map<std::string, std::map<std::string, Edge>>
       edgeLookup;
 
+    bool noDetails            {false};
+    bool noNetworkInterfaces  {false};
+
   protected: // Variables intended for internal/subclass API
     // Inhertied from AbstractTool at this scope
       // std::string            helpBlurb;
@@ -103,17 +106,17 @@ class Tool : public nmdt::AbstractGraphTool
     // Overriden from AbstractGraphTool
     void addToolOptions() override
     {
-      opts.addRequiredOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>()->required(),
-            "Name of device")
+      opts.addOptionalOption("no-details", std::make_tuple(
+            "no-details",
+            NULL_SEMANTIC,
+            "Remove details, just show connectivity")
           );
-
-//      opts.addOptionalOption("all", std::make_tuple(
-//            "all",
-//            NULL_SEMANTIC,
-//            "Display all rules, regardless of known application state")
-//          );
+      opts.addOptionalOption("no-network-interfaces", std::make_tuple(
+            "no-network-interfaces",
+            NULL_SEMANTIC,
+            "Remove network interface vertices as start points."
+            " Will still graph if intermediate hop (e.g., routing).")
+          );
     }
 
     // Overriden from AbstractGraphTool
@@ -150,6 +153,7 @@ class Tool : public nmdt::AbstractGraphTool
           SELECT DISTINCT
               subnet_id , cidr_block
           FROM raw_aws_subnet_cidr_blocks
+          ORDER BY 1,2
           )"
         );
       db.prepare("select_aws_subnet_vertex_egress_rules" , R"(
@@ -180,6 +184,13 @@ class Tool : public nmdt::AbstractGraphTool
               vpc_id , cidr_block
           FROM raw_aws_vpc_cidr_blocks
           WHERE state = 'available'
+          ORDER BY 1,2
+          )"
+        );
+      db.prepare("select_aws_router_destinations_unknown", R"(
+          SELECT DISTINCT
+            next_hop_id , next_hop
+          FROM aws_route_table_next_hops_unknown_in_db
           ORDER BY 1,2
           )"
         );
@@ -219,12 +230,23 @@ class Tool : public nmdt::AbstractGraphTool
         );
       db.prepare("select_aws_router_to_destination_edges" , R"(
           SELECT DISTINCT
-              destination_id, cidr_block
-          FROM raw_aws_route_table_routes_cidr
-          WHERE cidr_block = '0/0'
+              next_hop_id , next_hop
+          FROM aws_subnet_route_table_next_hops
+          WHERE next_hop_id != 'local'
+            AND next_hop NOT IN (
+              SELECT DISTINCT
+                  cidr_block::TEXT
+              FROM raw_aws_route_table_routes_cidr
+              WHERE destination_id = 'local'
+            )
           ORDER BY 1,2
           )"
         );
+
+
+      // control flags
+      noDetails = opts.exists("no-details");
+      noNetworkInterfaces = opts.exists("no-network-interfaces");
 
 
       buildAwsGraph(db);
@@ -255,9 +277,23 @@ class Tool : public nmdt::AbstractGraphTool
     void
     addAwsVertices(pqxx::transaction_base& t)
     {
-      // select * from aws_eni_egress_t4_cleaned;
+      addNetworkInterfaces(t);
+      addSubnets(t);
+      /* NOTE:
+        Merging 'local' route(s) with the VPC vertex could result in
+        incorrect visual representation in the case a VPC has multiple
+        local routes defined between the subnets it contains.
+      */
+      addRoutes(t);
+      addVpcs(t);
+      addDestinations(t);
+    }
 
-      // add eni vertex
+    void
+    addNetworkInterfaces(pqxx::transaction_base& t)
+    {
+      if (noNetworkInterfaces) { return; }
+
       {
         pqxx::result vRows =
           t.exec_prepared("select_aws_eni_vertices");
@@ -272,17 +308,26 @@ class Tool : public nmdt::AbstractGraphTool
 
           std::ostringstream oss;
           if (!vertexLookup.count(id)) {
-            oss << id << R"(\l)";
+            oss << id << R"(\n)";
+            if (!noDetails) {
+              oss << R"(Interfaces:\l)";
+            }
           }
-          oss << " - "
-              << mac << " : "
-              << ip
-              << R"(\l)"
-              ;
+
+          if (!noDetails) {
+            oss << " - "
+                << mac << " : "
+                << ip
+                << R"(\l)"
+                ;
+          }
 
           addVertex("box", id, oss.str());
         }
       }
+
+      if (noDetails) { return; }
+
       // add sg rules to eni vertex
       {
         { // egress
@@ -302,7 +347,7 @@ class Tool : public nmdt::AbstractGraphTool
 
             std::ostringstream oss;
             if (lastId != id) {
-              oss << R"(\nAllowed Egress (SG)\l)"
+              oss << R"(\nSG allowed egress\l)"
                   << R"( - any stateful\l)"
                   ;
             }
@@ -336,7 +381,7 @@ class Tool : public nmdt::AbstractGraphTool
 
             std::ostringstream oss;
             if (lastId != id) {
-              oss << R"(\nAllowed Ingress (SG)\l)"
+              oss << R"(\nSG allowed ingress\l)"
                   << R"( - any stateful\l)";
             }
             if (!src.empty()) {
@@ -353,7 +398,11 @@ class Tool : public nmdt::AbstractGraphTool
           }
         }
       }
-      // add subnet vertex
+    }
+
+    void
+    addSubnets(pqxx::transaction_base& t)
+    {
       {
         pqxx::result vRows =
           t.exec_prepared("select_aws_subnet_vertices");
@@ -365,12 +414,20 @@ class Tool : public nmdt::AbstractGraphTool
           vRow.at("cidr_block").to(subnet);
 
           std::ostringstream oss;
-          oss << id << R"(\l)"
-              << subnet << R"(\l)"
-              ;
+          oss << id << R"(\n)";
+
+          if (!noDetails) {
+            oss << subnet << R"(\n)"
+                << R"(Subnet internal\l- allow any any\l)"
+                ;
+          }
+
           addVertex("oval", id, oss.str());
         }
       }
+
+      if (noDetails) { return; }
+
       // add nacl rules to subnet vertex
       {
         { // egress
@@ -394,7 +451,7 @@ class Tool : public nmdt::AbstractGraphTool
 
             std::ostringstream oss;
             if (lastId != id) {
-              oss << R"(\nAllowed Egress (NACL)\l)"
+              oss << R"(\nNACL subnet egress\l)"
                   ;
             }
             if (!target.empty()) {
@@ -433,7 +490,7 @@ class Tool : public nmdt::AbstractGraphTool
 
             std::ostringstream oss;
             if (lastId != id) {
-              oss << R"(\nAllowed Ingress (NACL)\l)"
+              oss << R"(\nNACL subnet ingress\l)"
                   ;
             }
             if (!target.empty()) {
@@ -452,76 +509,86 @@ class Tool : public nmdt::AbstractGraphTool
           }
         }
       }
-      // add router vertex
-      {
-        pqxx::result vRows =
-          t.exec_prepared("select_aws_router_vertices");
+    }
 
-        for (const auto& vRow : vRows) {
-          std::string id;
-          vRow.at("next_hop_id").to(id);
-          std::string nextHop;
-          vRow.at("next_hop").to(nextHop);
-          std::string state;
-          vRow.at("state").to(state);
+    void
+    addRoutes(pqxx::transaction_base& t)
+    {
+      pqxx::result vRows =
+        t.exec_prepared("select_aws_router_vertices");
 
-          if ("local" == id) {
-            continue;
+      // local
+      for (const auto& vRow : vRows) {
+        std::string id;
+        vRow.at("next_hop_id").to(id);
+        std::string nextHop;
+        vRow.at("next_hop").to(nextHop);
+        std::string state;
+        vRow.at("state").to(state);
+
+        std::ostringstream oss;
+
+        std::string nId {("local" == id) ? id+nextHop : id};
+
+        if (!vertexLookup.count(nId)) {
+          oss << id << R"(\n)";
+          if (!noDetails) {
+            oss << R"(Route(s)\l)";
           }
-
-          std::ostringstream oss;
-          if (!vertexLookup.count(id)) {
-            oss << id << R"(\n)";
-          }
-          oss << " - " << nextHop << " (" << state << R"()\l)";
-
-          addVertex("box", id, oss.str());
         }
-        for (const auto& vRow : vRows) {
-          std::string id;
-          vRow.at("next_hop_id").to(id);
-          std::string nextHop;
-          vRow.at("next_hop").to(nextHop);
-          std::string state;
-          vRow.at("state").to(state);
 
-          std::ostringstream oss;
-          if ("local" != id) {
-            continue;
-          }
-          std::string nId {id+nextHop};
-
-          if (!vertexLookup.count(nId)) {
-            oss << id
-                << R"( (routing)\n)"
-                ;
-          }
+        if (!noDetails) {
           oss << " - " << nextHop << " (" << state << R"()\l)";
-
-          addVertex("box", nId, oss.str());
         }
+
+        addVertex("box", nId, oss.str());
       }
-      // add vpcs
-      {
-        pqxx::result vRows =
-          t.exec_prepared("select_aws_vpc_vertices");
+    }
 
-        for (const auto& vRow : vRows) {
-          std::string id;
-          vRow.at("vpc_id").to(id);
-          std::string cidrs;
-          vRow.at("cidr_block").to(cidrs);
+    void
+    addVpcs(pqxx::transaction_base& t)
+    {
+      pqxx::result vRows =
+        t.exec_prepared("select_aws_vpc_vertices");
 
-          std::ostringstream oss;
-          if (!vertexLookup.count(id)) {
-            oss << id << R"(\n)";
+      for (const auto& vRow : vRows) {
+        std::string id;
+        vRow.at("vpc_id").to(id);
+        std::string cidrs;
+        vRow.at("cidr_block").to(cidrs);
+
+        std::ostringstream oss;
+        if (!vertexLookup.count(id)) {
+          oss << id << R"(\n)";
+          if (!noDetails) {
+            oss << R"(Subnet\l)";
           }
+        }
+        if (!noDetails) {
           oss << " - " << cidrs << R"(\l)";
-
-          addVertex("oval", id, oss.str());
         }
+
+        addVertex("oval", id, oss.str());
       }
-      // TODO add final hops? rtr/next hop not known in DB?
+    }
+
+    void
+    addDestinations(pqxx::transaction_base& t)
+    {
+      pqxx::result vRows =
+        t.exec_prepared("select_aws_router_destinations_unknown");
+
+      for (const auto& vRow : vRows) {
+        std::string id;
+        vRow.at("next_hop").to(id);
+
+        std::ostringstream oss;
+        if (!vertexLookup.count(id)) {
+          oss << id << R"(\n)";
+        }
+
+        addVertex("oval", id, oss.str());
+      }
     }
 
     void
@@ -530,6 +597,9 @@ class Tool : public nmdt::AbstractGraphTool
              , const std::string label=""
              )
     {
+      LOG_DEBUG << "Vertex: " << id << " (" << shape << ") -- " << label
+                << std::endl;
+
       if (!vertexLookup.count(id)) {
         Vertex v {boost::add_vertex(graph)};
         vertexLookup[id] = v;
@@ -546,105 +616,123 @@ class Tool : public nmdt::AbstractGraphTool
     void
     addAwsEdges(pqxx::transaction_base& t)
     {
-      // eni -> subnet
-      {
-        pqxx::result eRows =
-          t.exec_prepared("select_aws_eni_to_subnet_edges");
+      addNetworkInterfaceToSubnet(t);
+      addSubnetToLocalRoute(t);
+      addLocalRouteToVpc(t);
+      addVpcToExternalRoute(t);
+      addExternalRouteToDestination(t);
+    }
 
-        for (const auto& eRow : eRows) {
-          std::string src;
-          eRow.at("interface_id").to(src);
-          std::string dst;
-          eRow.at("subnet_id").to(dst);
+    void
+    addNetworkInterfaceToSubnet(pqxx::transaction_base& t)
+    {
+      if (noNetworkInterfaces) { return; }
 
-          addEdge(src, dst);
-        }
+      pqxx::result eRows =
+        t.exec_prepared("select_aws_eni_to_subnet_edges");
+
+      for (const auto& eRow : eRows) {
+        std::string src;
+        eRow.at("interface_id").to(src);
+        std::string dst;
+        eRow.at("subnet_id").to(dst);
+
+        addEdge(src, dst);
       }
-      // subnet -> local router
-      {
-        pqxx::result eRows =
-          t.exec_prepared("select_aws_subnet_to_local_router_edges");
+    }
 
-        for (const auto& eRow : eRows) {
-          std::string src;
-          eRow.at("subnet_id").to(src);
-          std::string dst;
-          eRow.at("lr_id").to(dst);
+    void
+    addSubnetToLocalRoute(pqxx::transaction_base& t)
+    {
+      pqxx::result eRows =
+        t.exec_prepared("select_aws_subnet_to_local_router_edges");
 
-          LOG_DEBUG << "s--lr: " << src << " -- " << dst << std::endl;
-          addEdge(src, dst);
-        }
+      for (const auto& eRow : eRows) {
+        std::string src;
+        eRow.at("subnet_id").to(src);
+        std::string dst;
+        eRow.at("lr_id").to(dst);
+
+        addEdge(src, dst);
       }
-      // local router -> vpc
-      {
-        pqxx::result eRows =
-          t.exec_prepared("select_aws_local_router_to_vpc_edges");
+    }
 
-        for (const auto& eRow : eRows) {
-          std::string src;
-          eRow.at("lr_id").to(src);
-          std::string dst;
-          eRow.at("vpc_id").to(dst);
+    void
+    addLocalRouteToVpc(pqxx::transaction_base& t)
+    {
+      pqxx::result eRows =
+        t.exec_prepared("select_aws_local_router_to_vpc_edges");
 
-          LOG_DEBUG << "lr--vpc: " << src << " -- " << dst << std::endl;
-          addEdge(src, dst);
-        }
+      for (const auto& eRow : eRows) {
+        std::string src;
+        eRow.at("lr_id").to(src);
+        std::string dst;
+        eRow.at("vpc_id").to(dst);
+
+        addEdge(src, dst);
       }
-      // vpc -> tgw/igw/pcx/etc
-      {
-        pqxx::result eRows =
-          t.exec_prepared("select_aws_vpc_to_router_edges");
+    }
 
-        for (const auto& eRow : eRows) {
-          std::string src;
-          eRow.at("vpc_id").to(src);
-          std::string dst;
-          eRow.at("next_hop_id").to(dst);
+    void
+    addVpcToExternalRoute(pqxx::transaction_base& t)
+    {
+      pqxx::result eRows =
+        t.exec_prepared("select_aws_vpc_to_router_edges");
 
-          LOG_DEBUG << "vpc--rr: " << src << " -- " << dst << std::endl;
-          addEdge(src, dst);
-        }
+      for (const auto& eRow : eRows) {
+        std::string src;
+        eRow.at("vpc_id").to(src);
+        std::string dst;
+        eRow.at("next_hop_id").to(dst);
+
+        addEdge(src, dst);
       }
-      // tgw/igw/pcx/etc -> outside
-      {
-        pqxx::result eRows =
-          t.exec_prepared("select_aws_router_to_destination_edges");
+    }
 
-        for (const auto& eRow : eRows) {
-          std::string src;
-          eRow.at("destination_id").to(src);
-          std::string dst;
-          eRow.at("cidr_block").to(dst);
+    void
+    addExternalRouteToDestination(pqxx::transaction_base& t)
+    {
+      pqxx::result eRows =
+        t.exec_prepared("select_aws_router_to_destination_edges");
 
-          LOG_DEBUG << "rr--ext: " << src << " -- " << dst << std::endl;
-          if (!vertexLookup.count(dst)) {
-            addVertex("box", dst, dst);
-          }
-          addEdge(src, dst);
-        }
+      for (const auto& eRow : eRows) {
+        std::string src;
+        eRow.at("next_hop_id").to(src);
+        std::string dst;
+        eRow.at("next_hop").to(dst);
+
+        //if (!vertexLookup.count(dst)) {
+        //  addVertex("box", dst, dst);
+        //}
+        addEdge(src, dst);
       }
     }
 
     void
     addEdge(const std::string& src, const std::string& dst)
     {
+      LOG_DEBUG << "Edge: "
+                << src << " <-> " << dst
+                << std::endl;
+
       try {
         const auto u {vertexLookup.at(src)};
         const auto v {vertexLookup.at(dst)};
 
-      if (edgeLookup.count(src) && edgeLookup[src].count(dst)) {
-        const auto e {edgeLookup.at(src).at(dst)};
-        //graph[e].label += oss.str();
-      } else {
-        Edge e;
-        bool inserted;
-        tie(e, inserted) = boost::add_edge(u, v, graph);
-        edgeLookup[src][dst] = e;
-        //graph[e].label = "";
-      }
+        if (edgeLookup.count(src) && edgeLookup[src].count(dst)) {
+          const auto e {edgeLookup.at(src).at(dst)};
+        } else {
+          Edge e;
+          bool inserted;
+          tie(e, inserted) = boost::add_edge(u, v, graph);
+          edgeLookup[src][dst] = e;
+        }
       } catch (const std::exception& e) {
-        LOG_ERROR << "Failed: " << e.what() << std::endl;
-        LOG_ERROR << "- Probably not '" << src << "' or '" << dst << "'" << std::endl;
+        LOG_ERROR << "Failed: " << e.what()
+                  << std::endl;
+        LOG_ERROR << "- One of '" << src << "'" << " or '" << dst << "'"
+                  << " is a non-existant graph vertex"
+                  << std::endl;
       }
     }
 

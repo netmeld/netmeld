@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -787,7 +787,32 @@ FROM (
 ) AS t1
 ;
 
+
 -------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW aws_route_table_next_hops_unknown_in_db AS
+SELECT DISTINCT
+    next_hop_id
+  , next_hop
+FROM aws_route_table_routes
+WHERE next_hop IN (
+  SELECT DISTINCT
+      cidr_block::text
+  FROM raw_aws_cidr_blocks
+  WHERE cidr_block NOT IN (
+    SELECT DISTINCT cidr_block FROM raw_aws_route_table_routes_cidr WHERE destination_id = 'local'
+    UNION
+    SELECT DISTINCT ip_address FROM raw_aws_network_interface_ips
+    UNION
+    SELECT DISTINCT cidr_block FROM raw_aws_vpc_cidr_blocks
+    UNION
+    SELECT DISTINCT cidr_block FROM raw_aws_subnet_cidr_blocks
+  )
+  UNION
+  SELECT DISTINCT
+      destination
+  FROM raw_aws_route_table_routes_non_cidr
+)
+;
 
 
 -------------------------------------------------------------------------------
