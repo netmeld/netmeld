@@ -81,11 +81,11 @@ BEGIN TRANSACTION;
 --  AND t1.egress = t3.egress
 --  AND t1.rule_number = t3.rule_number
 -- ;
--- 
+--
 -- ------------
 -- -- ENI Based
 -- ------------
--- 
+--
 -- -- stitch; start eni,vpc,subnet add sg,nacl,route
 -- CREATE OR REPLACE VIEW aws_eni_sg_subnet_nacl_rt_vpc_join AS
 -- SELECT DISTINCT
@@ -105,7 +105,7 @@ BEGIN TRANSACTION;
 -- LEFT JOIN aws_vpc_route_table_defaults AS avrtd
 --   ON ranivs.vpc_id = avrtd.vpc_id
 -- ;
--- 
+--
 -- -- egress
 -- -- eni -> sg
 -- CREATE OR REPLACE VIEW aws_eni_egress_t1 AS
@@ -248,7 +248,7 @@ BEGIN TRANSACTION;
 -- FROM aws_eni_egress_t4 AS t1
 -- WHERE (t1.next_hop IS NOT NULL) -- remove non-routable (already applied vpc default routes)
 -- ;
--- 
+--
 -- CREATE OR REPLACE VIEW aws_eni_vpc_subnet_join_sg_nacl_route AS
 -- SELECT DISTINCT
 --   ranivs.interface_id AS iface_id
@@ -267,7 +267,7 @@ BEGIN TRANSACTION;
 -- LEFT JOIN aws_vpc_route_table_defaults AS avrtd
 --   ON ranivs.vpc_id = avrtd.vpc_id
 -- ;
--- 
+--
 -- -- prior cleaned
 -- CREATE OR REPLACE VIEW aws_eni_egress_t5 AS
 -- SELECT DISTINCT
@@ -298,8 +298,8 @@ BEGIN TRANSACTION;
 -- ) AS aeet4
 -- -- GROUP BY 1,2,3,4,5,6,7,8
 -- ;
--- 
--- 
+--
+--
 -- -- ingress; can build up same way as just what rules are tighter
 -- -- eni -> sg
 -- CREATE OR REPLACE VIEW aws_eni_ingress_t1 AS
@@ -379,7 +379,7 @@ BEGIN TRANSACTION;
 -- LEFT JOIN aws_network_acl_rules_joined AS anarj
 --   ON aeit2.nacl_id = anarj.network_acl_id
 --  AND anarj.egress = 'false'
---  AND (   (aeit2.sg_protocol IS NULL) -- stateful allow case 
+--  AND (   (aeit2.sg_protocol IS NULL) -- stateful allow case
 --       OR (aeit2.sg_protocol = anarj.protocol)
 --       OR (aeit2.sg_protocol = '-1' OR anarj.protocol = '-1') -- -1 means any
 --       OR (aeit2.sg_protocol = 'tcp' AND anarj.protocol = '6')
@@ -534,6 +534,50 @@ LEFT JOIN raw_aws_network_acl_rules_type_codes AS t3
   ON t1.network_acl_id = t3.network_acl_id
  AND t1.egress = t3.egress
  AND t1.rule_number = t3.rule_number
+;
+
+-------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW aws_route_table_next_hops_unknown_in_db AS
+SELECT DISTINCT
+    next_hop_id
+  , next_hop
+FROM aws_route_table_routes
+WHERE next_hop IN (
+  SELECT DISTINCT
+      cidr_block::text
+  FROM raw_aws_cidr_blocks
+  WHERE cidr_block NOT IN (
+    SELECT DISTINCT cidr_block FROM raw_aws_route_table_routes_cidr WHERE destination_id = 'local'
+    UNION
+    SELECT DISTINCT ip_address FROM raw_aws_network_interface_ips
+    UNION
+    SELECT DISTINCT cidr_block FROM raw_aws_vpc_cidr_blocks
+    UNION
+    SELECT DISTINCT cidr_block FROM raw_aws_subnet_cidr_blocks
+  )
+  UNION
+  SELECT DISTINCT
+      destination
+  FROM raw_aws_route_table_routes_non_cidr
+)
+;
+
+-------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW aws_active_instance_details AS
+SELECT DISTINCT
+    instance_id
+  , instance_type
+  , image_id
+  , architecture
+  , platform_details
+  , launch_time
+  , availability_zone
+  , state_code
+  , state_name
+FROM raw_aws_instance_details
+WHERE state_name NOT IN ('terminated','shutting down')
 ;
 
 -------------------------------------------------------------------------------
@@ -890,50 +934,22 @@ FROM (
 
 -------------------------------------------------------------------------------
 
-CREATE OR REPLACE VIEW aws_route_table_next_hops_unknown_in_db AS
+CREATE OR REPLACE VIEW aws_subnet_network_acl_rules_full_machine AS
 SELECT DISTINCT
-    next_hop_id
-  , next_hop
-FROM aws_route_table_routes
-WHERE next_hop IN (
-  SELECT DISTINCT
-      cidr_block::text
-  FROM raw_aws_cidr_blocks
-  WHERE cidr_block NOT IN (
-    SELECT DISTINCT cidr_block FROM raw_aws_route_table_routes_cidr WHERE destination_id = 'local'
-    UNION
-    SELECT DISTINCT ip_address FROM raw_aws_network_interface_ips
-    UNION
-    SELECT DISTINCT cidr_block FROM raw_aws_vpc_cidr_blocks
-    UNION
-    SELECT DISTINCT cidr_block FROM raw_aws_subnet_cidr_blocks
-  )
-  UNION
-  SELECT DISTINCT
-      destination
-  FROM raw_aws_route_table_routes_non_cidr
-)
+    t1.network_acl_id
+  , t1.subnet_id
+  , t2.egress
+  , t2.rule_number::NUMERIC
+  , t2.action
+  , t2.protocol::NUMERIC
+  , t2.cidr_block
+  , t2.ports::PortRange
+  , t2.type::NUMERIC
+  , t2.code::NUMERIC
+FROM raw_aws_network_acl_subnets AS t1
+LEFT JOIN aws_network_acl_rules_joined AS t2
+  ON t1.network_acl_id = t2.network_acl_id
 ;
-
--------------------------------------------------------------------------------
-
-CREATE OR REPLACE VIEW aws_active_instance_details AS
-SELECT DISTINCT
-    instance_id
-  , instance_type
-  , image_id
-  , architecture
-  , platform_details
-  , launch_time
-  , availability_zone
-  , state_code
-  , state_name
-FROM raw_aws_instance_details
-WHERE state_name NOT IN ('terminated','shutting down')
-;
-
--------------------------------------------------------------------------------
-
 
 -------------------------------------------------------------------------------
 
