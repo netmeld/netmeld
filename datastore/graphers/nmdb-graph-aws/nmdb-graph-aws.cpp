@@ -26,10 +26,12 @@
 
 #include <regex>
 
+#include <netmeld/datastore/objects/PortRange.hpp>
 #include <netmeld/datastore/tools/AbstractGraphTool.hpp>
 
 #include "GraphHelper.hpp"
 
+namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
 namespace nmdu = netmeld::datastore::utils;
 namespace nmcu = netmeld::core::utils;
@@ -73,6 +75,7 @@ class Tool : public nmdt::AbstractGraphTool
 
     bool noDetails            {false};
     bool noNetworkInterfaces  {false};
+    bool graphInstances       {false};
 
   protected: // Variables intended for internal/subclass API
     // Inhertied from AbstractTool at this scope
@@ -117,6 +120,12 @@ class Tool : public nmdt::AbstractGraphTool
             "Remove network interface vertices as start points."
             " Will still graph if intermediate hop (e.g., routing).")
           );
+      opts.addOptionalOption("graph-instances", std::make_tuple(
+            "graph-instances",
+            NULL_SEMANTIC,
+            "Add vertices for usable instances"
+            " and connect to network interfaces.")
+          );
     }
 
     // Overriden from AbstractGraphTool
@@ -126,60 +135,80 @@ class Tool : public nmdt::AbstractGraphTool
       pqxx::connection db {getDbConnectString()};
       nmdu::dbPrepareCommon(db);
 
-      db.prepare("select_aws_eni_vertices" , R"(
+      db.prepare("select_aws_instance_vertices", R"(
+          SELECT DISTINCT
+              instance_id , instance_type , image_id , architecture
+            , platform_details , launch_time , availability_zone
+            , state_code , state_name
+          FROM aws_active_instance_details
+          ORDER BY 1,2
+          )"
+        );
+
+      db.prepare("select_aws_eni_vertices", R"(
+          SELECT DISTINCT
+            interface_id
+          FROM raw_aws_network_interfaces
+          ORDER BY 1
+          )"
+        );
+
+      db.prepare("select_aws_eni_details", R"(
+          SELECT DISTINCT
+              interface_id , interface_type , description
+          FROM raw_aws_network_interface_details
+          WHERE interface_id IN (
+            SELECT DISTINCT interface_id FROM aws_network_interface_mac_ips
+          )
+          ORDER BY 1
+          )"
+        );
+
+      db.prepare("select_aws_eni_mac_ips", R"(
           SELECT DISTINCT
               interface_id , mac_address , ip_address
-          FROM  aws_network_interface_mac_ips
+          FROM aws_network_interface_mac_ips
           ORDER BY 1,2,3
           )"
         );
-      db.prepare("select_aws_eni_vertex_egress_rules", R"(
+
+      db.prepare("select_aws_eni_vertex_sg_rules", R"(
           SELECT DISTINCT
-              interface_id , protocol , ports , cidr_block
-          FROM aws_eni_security_group_rules_full
-          WHERE egress = 't'
-          ORDER BY 1,2,3,4
+              interface_id , egress , protocol , ports , type , code
+            , cidr_block , target
+          FROM aws_eni_security_group_rules_full_machine
+          WHERE egress IS NOT NULL
+          ORDER BY 1,2,3,4,5
           )"
         );
-      db.prepare("select_aws_eni_vertex_ingress_rules", R"(
-          SELECT DISTINCT
-              interface_id , protocol , ports , cidr_block
-          FROM aws_eni_security_group_rules_full
-          WHERE egress = 'f'
-          ORDER BY 1,2,3,4
-          )"
-        );
-      db.prepare("select_aws_subnet_vertices" , R"(
+
+      db.prepare("select_aws_subnet_vertices", R"(
           SELECT DISTINCT
               subnet_id , cidr_block
           FROM raw_aws_subnet_cidr_blocks
           ORDER BY 1,2
           )"
         );
-      db.prepare("select_aws_subnet_vertex_egress_rules" , R"(
+
+      db.prepare("select_aws_subnet_vertex_nacl_rules", R"(
           SELECT DISTINCT
-              net_id , rule_number , action
-            , nacl_dest , nacl_protocol , nacl_ports
-          FROM aws_eni_egress_t4_cleaned
-          ORDER BY net_id, rule_number, nacl_dest
+              subnet_id , egress , rule_number , action , protocol 
+            , cidr_block , ports , type , code
+          FROM aws_subnet_network_acl_rules_full_machine
+          WHERE egress IS NOT NULL
+          ORDER BY 1,2,3
           )"
         );
-      db.prepare("select_aws_subnet_vertex_ingress_rules" , R"(
-          SELECT DISTINCT
-              net_id , rule_number , action
-            , nacl_src , nacl_protocol, nacl_ports
-          FROM aws_eni_ingress_t4_cleaned
-          ORDER BY net_id, rule_number, nacl_src
-          )"
-        );
-      db.prepare("select_aws_router_vertices" , R"(
+
+      db.prepare("select_aws_router_vertices", R"(
           SELECT DISTINCT
               next_hop_id , next_hop , state
           FROM aws_route_table_routes
           ORDER BY 1,2
           )"
         );
-      db.prepare("select_aws_vpc_vertices" ,R"(
+
+      db.prepare("select_aws_vpc_vertices", R"(
           SELECT DISTINCT
               vpc_id , cidr_block
           FROM raw_aws_vpc_cidr_blocks
@@ -187,10 +216,19 @@ class Tool : public nmdt::AbstractGraphTool
           ORDER BY 1,2
           )"
         );
+
       db.prepare("select_aws_router_destinations_unknown", R"(
           SELECT DISTINCT
             next_hop_id , next_hop
           FROM aws_route_table_next_hops_unknown_in_db
+          ORDER BY 1,2
+          )"
+        );
+
+      db.prepare("select_aws_instance_to_eni_edges", R"(
+          SELECT DISTINCT
+              instance_id , interface_id
+          FROM raw_aws_instance_network_interfaces
           ORDER BY 1,2
           )"
         );
@@ -202,6 +240,7 @@ class Tool : public nmdt::AbstractGraphTool
           ORDER BY 1,2
           )"
         );
+
       db.prepare("select_aws_subnet_to_local_router_edges" , R"(
           SELECT DISTINCT
               subnet_id
@@ -211,6 +250,7 @@ class Tool : public nmdt::AbstractGraphTool
           ORDER BY 1,2
           )"
         );
+
       db.prepare("select_aws_local_router_to_vpc_edges" , R"(
           SELECT DISTINCT
               next_hop_id || next_hop AS lr_id
@@ -220,6 +260,7 @@ class Tool : public nmdt::AbstractGraphTool
           ORDER BY 1,2
           )"
         );
+
       db.prepare("select_aws_vpc_to_router_edges" , R"(
           SELECT DISTINCT
               vpc_id , next_hop_id
@@ -228,6 +269,7 @@ class Tool : public nmdt::AbstractGraphTool
           ORDER BY 1,2
           )"
         );
+
       db.prepare("select_aws_router_to_destination_edges" , R"(
           SELECT DISTINCT
               next_hop_id , next_hop
@@ -245,8 +287,9 @@ class Tool : public nmdt::AbstractGraphTool
 
 
       // control flags
-      noDetails = opts.exists("no-details");
+      noDetails           = opts.exists("no-details");
       noNetworkInterfaces = opts.exists("no-network-interfaces");
+      graphInstances      = opts.exists("graph-instances");
 
 
       buildAwsGraph(db);
@@ -277,6 +320,7 @@ class Tool : public nmdt::AbstractGraphTool
     void
     addAwsVertices(pqxx::transaction_base& t)
     {
+      addInstances(t);
       addNetworkInterfaces(t);
       addSubnets(t);
       /* NOTE:
@@ -287,6 +331,54 @@ class Tool : public nmdt::AbstractGraphTool
       addRoutes(t);
       addVpcs(t);
       addDestinations(t);
+    }
+
+    void
+    addInstances(pqxx::transaction_base& t)
+    {
+      if (!graphInstances) { return; }
+
+      pqxx::result vRows =
+        t.exec_prepared("select_aws_instance_vertices");
+
+      for (const auto& vRow : vRows) {
+        std::string id;
+        vRow.at("instance_id").to(id);
+        std::string instanceType;
+        vRow.at("instance_type").to(instanceType);
+        std::string imageId;
+        vRow.at("image_id").to(imageId);
+        std::string architecture;
+        vRow.at("architecture").to(architecture);
+        std::string platformDetails;
+        vRow.at("platform_details").to(platformDetails);
+        std::string launchTime;
+        vRow.at("launch_time").to(launchTime);
+        std::string availabilityZone;
+        vRow.at("availability_zone").to(availabilityZone);
+        std::string stateCode;
+        vRow.at("state_code").to(stateCode);
+        std::string stateName;
+        vRow.at("state_name").to(stateName);
+
+        std::ostringstream oss;
+        if (!vertexLookup.count(id)) {
+          oss << id << R"(\n)";
+        }
+
+        if (!noDetails) {
+          oss << R"(State: )" << stateCode
+                << " (" << stateName << R"()\l)"
+              << R"(Type: )" << instanceType << R"(\l)"
+              << R"(Image: )" << imageId
+                << " (" << platformDetails << " " << architecture << R"()\l)"
+              << R"(Launched: )" << launchTime
+                << " (" << availabilityZone << R"()\l)"
+              ;
+        }
+
+        addVertex("box", id, oss.str());
+      }
     }
 
     void
@@ -301,25 +393,10 @@ class Tool : public nmdt::AbstractGraphTool
         for (const auto& vRow : vRows) {
           std::string id;
           vRow.at("interface_id").to(id);
-          std::string mac;
-          vRow.at("mac_address").to(mac);
-          std::string ip;
-          vRow.at("ip_address").to(ip);
 
           std::ostringstream oss;
           if (!vertexLookup.count(id)) {
             oss << id << R"(\n)";
-            if (!noDetails) {
-              oss << R"(Interfaces:\l)";
-            }
-          }
-
-          if (!noDetails) {
-            oss << " - "
-                << mac << " : "
-                << ip
-                << R"(\l)"
-                ;
           }
 
           addVertex("box", id, oss.str());
@@ -328,76 +405,152 @@ class Tool : public nmdt::AbstractGraphTool
 
       if (noDetails) { return; }
 
-      // add sg rules to eni vertex
+      // add interface details
       {
-        { // egress
-          pqxx::result vRows =
-            t.exec_prepared("select_aws_eni_vertex_egress_rules");
+        pqxx::result vRows =
+          t.exec_prepared("select_aws_eni_details");
 
-          std::string lastId {""};
-          for (const auto& vRow : vRows) {
-            std::string id;
-            vRow.at("interface_id").to(id);
-            std::string protocol;
-            vRow.at("protocol").to(protocol);
-            std::string ports;
-            vRow.at("ports").to(ports);
-            std::string dest;
-            vRow.at("cidr_block").to(dest);
+        for (const auto& vRow : vRows) {
+          std::string id;
+          vRow.at("interface_id").to(id);
+          std::string type;
+          vRow.at("interface_type").to(type);
+          std::string description;
+          vRow.at("description").to(description);
 
-            std::ostringstream oss;
-            if (lastId != id) {
-              oss << R"(\nSG allowed egress\l)"
-                  << R"( - any stateful\l)"
-                  ;
-            }
-            if (!dest.empty()) {
-              oss << " - "
-                  << dest << " "
-                  << protocol << " "
-                  << ports << " "
-                  << R"(\l)"
-                  ;
-            }
+          std::ostringstream oss;
+          oss << R"(Type: )" << type << R"(\l)"
+              << R"(Description: )" << description << R"(\l)"
+              ;
 
-            addVertex("box", id, oss.str());
-            lastId = id;
-          }
-        }
-        { // ingress
-          pqxx::result vRows =
-            t.exec_prepared("select_aws_eni_vertex_ingress_rules");
-
-          std::string lastId {""};
-          for (const auto& vRow : vRows) {
-            std::string id;
-            vRow.at("interface_id").to(id);
-            std::string protocol;
-            vRow.at("protocol").to(protocol);
-            std::string ports;
-            vRow.at("ports").to(ports);
-            std::string src;
-            vRow.at("cidr_block").to(src);
-
-            std::ostringstream oss;
-            if (lastId != id) {
-              oss << R"(\nSG allowed ingress\l)"
-                  << R"( - any stateful\l)";
-            }
-            if (!src.empty()) {
-              oss << " - "
-                  << src << " "
-                  << protocol << " "
-                  << ports << " "
-                  << R"(\l)"
-                  ;
-            }
-
-            addVertex("box", id, oss.str());
-            lastId = id;
-          }
+          addVertex("box", id, oss.str());
         }
       }
+      {
+        pqxx::result vRows =
+          t.exec_prepared("select_aws_eni_mac_ips");
+
+        std::string lastId {""};
+        for (const auto& vRow : vRows) {
+          std::string id;
+          vRow.at("interface_id").to(id);
+          std::string mac;
+          vRow.at("mac_address").to(mac);
+          std::string ip;
+          vRow.at("ip_address").to(ip);
+
+          std::ostringstream oss;
+          if (lastId != id) {
+            oss << R"(\nMac -- IP pairs:\l)";
+          }
+
+          oss << " - " << mac << " -- " << ip << R"(\l)"
+              ;
+
+          addVertex("box", id, oss.str());
+          lastId = id;
+        }
+      }
+
+      // add sg rules to eni vertex
+      {
+        pqxx::result vRows =
+          t.exec_prepared("select_aws_eni_vertex_sg_rules");
+
+        std::map<std::string, std::map<std::string, std::string>>
+          sgMap;
+        const std::string sgEgress  {"egress"};
+        const std::string sgIngress {"ingress"};
+        for (const auto& vRow : vRows) {
+          std::string id;
+          vRow.at("interface_id").to(id);
+          bool egress;
+          vRow.at("egress").to(egress);
+          std::int32_t protocol;
+          vRow.at("protocol").to(protocol);
+          std::string ports;
+          vRow.at("ports").to(ports);
+          std::string type;
+          vRow.at("type").to(type);
+          std::string code;
+          vRow.at("code").to(code);
+          std::string cidrBlock;
+          vRow.at("cidr_block").to(cidrBlock);
+          std::string target;
+          vRow.at("target").to(target);
+
+          std::ostringstream oss;
+          if (!sgMap.count(id)) {
+            sgMap[id][sgEgress] = "";
+            sgMap[id][sgIngress] = "";
+          }
+
+          if (egress) {
+            oss << sgMap.at(id).at(sgEgress);
+          } else {
+            oss << sgMap.at(id).at(sgIngress);
+          }
+
+          oss << " - "
+              << getDest(cidrBlock, target) << " "
+              << getHumanProtocol(protocol) << " "
+              << getPorts(ports, type, code) << " "
+              << R"(\l)"
+              ;
+
+          if (egress) {
+            sgMap.at(id).at(sgEgress) = oss.str();
+          } else {
+            sgMap.at(id).at(sgIngress) = oss.str();
+          }
+        }
+
+        for (const auto& [id, sgFlows] : sgMap) {
+          std::ostringstream oss;
+          oss << R"(\nSG allowed egress\l)"
+              << R"( - any stateful\l)"
+              << sgFlows.at(sgEgress)
+              << R"(\nSG allowed ingress\l)"
+              << R"( - any stateful\l)"
+              << sgFlows.at(sgIngress)
+              ;
+
+          addVertex("box", id, oss.str());
+        }
+      }
+    }
+
+    std::string
+    getDest(const std::string& s1, const std::string& s2)
+    {
+      return s1.empty() ? s2 : s1;
+    }
+    std::string
+    getHumanProtocol(std::int32_t p)
+    {
+      std::ostringstream oss;
+      switch (p) {
+        case -1:  oss << "any";   break;
+        case 1:   oss << "icmp";  break;
+        case 6:   oss << "tcp";   break;
+        case 17:  oss << "udp";   break;
+        default:  oss << p;       break;
+      }
+      return oss.str();
+    }
+    std::string
+    getPorts(const std::string& p, const std::string& t, const std::string& c)
+    {
+      std::ostringstream oss;
+
+      if (p.empty()) {
+        oss << t << ':' << c;
+      } else if ("[0,65535]" == p) {
+        oss << "any";
+      } else {
+        oss << nmdo::PortRange(p).toHumanString();
+      }
+      return oss.str();
     }
 
     void
@@ -414,13 +567,9 @@ class Tool : public nmdt::AbstractGraphTool
           vRow.at("cidr_block").to(subnet);
 
           std::ostringstream oss;
-          oss << id << R"(\n)";
-
-          if (!noDetails) {
-            oss << subnet << R"(\n)"
-                << R"(Subnet internal\l- allow any any\l)"
-                ;
-          }
+          oss << id << R"(\n)"
+              << subnet << R"(\n)"
+              ;
 
           addVertex("oval", id, oss.str());
         }
@@ -430,83 +579,71 @@ class Tool : public nmdt::AbstractGraphTool
 
       // add nacl rules to subnet vertex
       {
-        { // egress
-          pqxx::result vRows =
-            t.exec_prepared("select_aws_subnet_vertex_egress_rules");
+        pqxx::result vRows =
+          t.exec_prepared("select_aws_subnet_vertex_nacl_rules");
 
-          std::string lastId {""};
-          for (const auto& vRow : vRows) {
-            std::string id;
-            vRow.at("net_id").to(id);
-            std::string ruleNumber;
-            vRow.at("rule_number").to(ruleNumber);
-            std::string action;
-            vRow.at("action").to(action);
-            std::string target;
-            vRow.at("nacl_dest").to(target);
-            std::string protocol;
-            vRow.at("nacl_protocol").to(protocol);
-            std::string ports;
-            vRow.at("nacl_ports").to(ports);
+        std::map<std::string, std::map<std::string, std::string>>
+          naclMap;
+        const std::string naclEgress  {"egress"};
+        const std::string naclIngress {"ingress"};
+        for (const auto& vRow : vRows) {
+          std::string id;
+          vRow.at("subnet_id").to(id);
+          bool egress;
+          vRow.at("egress").to(egress);
+          std::int32_t ruleNumber;
+          vRow.at("rule_number").to(ruleNumber);
+          std::string action;
+          vRow.at("action").to(action);
+          std::int32_t protocol;
+          vRow.at("protocol").to(protocol);
+          std::string cidrBlock;
+          vRow.at("cidr_block").to(cidrBlock);
+          std::string ports;
+          vRow.at("ports").to(ports);
+          std::string type;
+          vRow.at("type").to(type);
+          std::string code;
+          vRow.at("code").to(code);
 
-            std::ostringstream oss;
-            if (lastId != id) {
-              oss << R"(\nNACL subnet egress\l)"
-                  ;
-            }
-            if (!target.empty()) {
-              oss << " - "
-                  << ruleNumber << " "
-                  << action << " "
-                  << target << " "
-                  << protocol << " "
-                  << ports << " "
-                  << R"(\l)"
-                  ;
-            }
+          std::ostringstream oss;
+          if (!naclMap.count(id)) {
+            naclMap[id][naclEgress] = "";
+            naclMap[id][naclIngress] = "";
+          }
 
-            addVertex("oval", id, oss.str());
-            lastId = id;
+          if (egress) {
+            oss << naclMap.at(id).at(naclEgress);
+          } else {
+            oss << naclMap.at(id).at(naclIngress);
+          }
+
+          oss << " - "
+              << ruleNumber << " "
+              << action << " "
+              << cidrBlock << " "
+              << getHumanProtocol(protocol) << " "
+              << getPorts(ports, type, code) << " "
+              << R"(\l)"
+              ;
+
+          if (egress) {
+            naclMap.at(id).at(naclEgress) = oss.str();
+          } else {
+            naclMap.at(id).at(naclIngress) = oss.str();
           }
         }
-        { // ingress
-          pqxx::result vRows =
-            t.exec_prepared("select_aws_subnet_vertex_ingress_rules");
 
-          std::string lastId {""};
-          for (const auto& vRow : vRows) {
-            std::string id;
-            vRow.at("net_id").to(id);
-            std::string ruleNumber;
-            vRow.at("rule_number").to(ruleNumber);
-            std::string action;
-            vRow.at("action").to(action);
-            std::string target;
-            vRow.at("nacl_src").to(target);
-            std::string protocol;
-            vRow.at("nacl_protocol").to(protocol);
-            std::string ports;
-            vRow.at("nacl_ports").to(ports);
+        for (const auto& [id, naclFlows] : naclMap) {
+          std::ostringstream oss;
+          oss << R"(Subnet internal\l- allow any any\l)"
+              << R"(\nNACL allowed egress\l)"
+              << naclFlows.at(naclEgress)
+              << R"(\nNACL allowed ingress\l)"
+              << naclFlows.at(naclIngress)
+              ;
 
-            std::ostringstream oss;
-            if (lastId != id) {
-              oss << R"(\nNACL subnet ingress\l)"
-                  ;
-            }
-            if (!target.empty()) {
-              oss << " - "
-                  << ruleNumber << " "
-                  << action << " "
-                  << target << " "
-                  << protocol << " "
-                  << ports << " "
-                  << R"(\l)"
-                  ;
-            }
-
-            addVertex("oval", id, oss.str());
-            lastId = id;
-          }
+          addVertex("oval", id, oss.str());
         }
       }
     }
@@ -616,11 +753,30 @@ class Tool : public nmdt::AbstractGraphTool
     void
     addAwsEdges(pqxx::transaction_base& t)
     {
+      addInstanceToNetworkInterface(t);
       addNetworkInterfaceToSubnet(t);
       addSubnetToLocalRoute(t);
       addLocalRouteToVpc(t);
       addVpcToExternalRoute(t);
       addExternalRouteToDestination(t);
+    }
+
+    void
+    addInstanceToNetworkInterface(pqxx::transaction_base& t)
+    {
+      if (!(graphInstances && !noNetworkInterfaces)) { return; }
+
+      pqxx::result eRows =
+        t.exec_prepared("select_aws_instance_to_eni_edges");
+
+      for (const auto& eRow : eRows) {
+        std::string src;
+        eRow.at("instance_id").to(src);
+        std::string dst;
+        eRow.at("interface_id").to(dst);
+
+        addEdge(src, dst);
+      }
     }
 
     void
