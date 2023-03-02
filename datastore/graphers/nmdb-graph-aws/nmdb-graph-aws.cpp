@@ -94,7 +94,7 @@ class Tool : public nmdt::AbstractGraphTool
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractGraphTool
       (
-       "AWS resources",    // help blurb, prefixed with:
+       "AWS resources", // help blurb, prefixed with:
                         //   "Create dot formatted graph of "
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)
@@ -884,7 +884,7 @@ class Tool : public nmdt::AbstractGraphTool
           edgeLookup[src][dst] = e;
         }
       } catch (const std::exception& e) {
-        LOG_ERROR << "Failed: " << e.what()
+        LOG_ERROR << "Failed to create edge: " << e.what()
                   << std::endl;
         LOG_ERROR << "- One of '" << src << "'" << " or '" << dst << "'"
                   << " is a non-existant graph vertex"

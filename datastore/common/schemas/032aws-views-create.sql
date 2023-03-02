@@ -538,33 +538,6 @@ LEFT JOIN raw_aws_network_acl_rules_type_codes AS t3
 
 -------------------------------------------------------------------------------
 
-CREATE OR REPLACE VIEW aws_route_table_next_hops_unknown_in_db AS
-SELECT DISTINCT
-    next_hop_id
-  , next_hop
-FROM aws_route_table_routes
-WHERE next_hop IN (
-  SELECT DISTINCT
-      cidr_block::text
-  FROM raw_aws_cidr_blocks
-  WHERE cidr_block NOT IN (
-    SELECT DISTINCT cidr_block FROM raw_aws_route_table_routes_cidr WHERE destination_id = 'local'
-    UNION
-    SELECT DISTINCT ip_address FROM raw_aws_network_interface_ips
-    UNION
-    SELECT DISTINCT cidr_block FROM raw_aws_vpc_cidr_blocks
-    UNION
-    SELECT DISTINCT cidr_block FROM raw_aws_subnet_cidr_blocks
-  )
-  UNION
-  SELECT DISTINCT
-      destination
-  FROM raw_aws_route_table_routes_non_cidr
-)
-;
-
--------------------------------------------------------------------------------
-
 CREATE OR REPLACE VIEW aws_active_instance_details AS
 SELECT DISTINCT
     instance_id
@@ -665,6 +638,34 @@ LEFT JOIN aws_route_table_routes AS t2
 
 -------------------------------------------------------------------------------
 
+CREATE OR REPLACE VIEW aws_route_table_next_hops_unknown_in_db AS
+SELECT DISTINCT
+    next_hop_id
+  , next_hop
+FROM aws_route_table_routes
+WHERE next_hop IN (
+  SELECT DISTINCT
+      cidr_block::text
+  FROM raw_aws_cidr_blocks
+  WHERE cidr_block NOT IN (
+    SELECT DISTINCT cidr_block FROM raw_aws_route_table_routes_cidr WHERE destination_id = 'local'
+    UNION
+    SELECT DISTINCT ip_address FROM raw_aws_network_interface_ips
+    UNION
+    SELECT DISTINCT cidr_block FROM raw_aws_vpc_cidr_blocks
+    UNION
+    SELECT DISTINCT cidr_block FROM raw_aws_subnet_cidr_blocks
+  )
+  UNION
+  SELECT DISTINCT
+      destination
+  FROM raw_aws_route_table_routes_non_cidr
+)
+;
+
+-------------------------------------------------------------------------------
+
+
 -------------------------------------------------------------------------------
 -- Security Groups
 -------------------------------------------------------------------------------
@@ -727,6 +728,62 @@ LEFT JOIN raw_aws_network_interface_security_groups AS t2
   ON t1.target = t2.security_group_id
 LEFT JOIN raw_aws_network_interface_ips AS t3
   ON t2.interface_id = t3.interface_id
+;
+
+-------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW aws_security_group_rules_full_machine AS
+SELECT DISTINCT
+    t1.security_group_id
+  , t2.egress
+  , t2.protocol
+  , PortRange(GREATEST(NULLIF(t2.from_port, -1), 0), LEAST(NULLIF(t2.to_port,-1),65535), '[]') AS ports
+  , NULL::NUMERIC AS type
+  , NULL::NUMERIC AS code
+  , t2.cidr_block
+  , NULL::TEXT AS target
+FROM raw_aws_security_groups AS t1
+LEFT JOIN raw_aws_security_group_rules_ports AS t2
+  ON t1.security_group_id = t2.security_group_id
+UNION
+SELECT DISTINCT
+    t1.security_group_id
+  , t2.egress
+  , t2.protocol
+  , PortRange(GREATEST(NULLIF(t2.from_port, -1), 0), LEAST(NULLIF(t2.to_port,-1),65535), '[]') AS ports
+  , NULL::NUMERIC AS type
+  , NULL::NUMERIC AS code
+  , NULL::INET AS cidr_block
+  , t2.target
+FROM raw_aws_security_groups AS t1
+LEFT JOIN raw_aws_security_group_rules_non_ip_ports AS t2
+  ON t1.security_group_id = t2.security_group_id
+UNION
+SELECT DISTINCT
+    t1.security_group_id
+  , t2.egress
+  , t2.protocol
+  , NULL::PortRange AS ports
+  , t2.type
+  , t2.code
+  , t2.cidr_block
+  , NULL::TEXT AS target
+FROM raw_aws_security_groups AS t1
+LEFT JOIN raw_aws_security_group_rules_type_codes AS t2
+  ON t1.security_group_id = t2.security_group_id
+UNION
+SELECT DISTINCT
+    t1.security_group_id
+  , t2.egress
+  , t2.protocol
+  , NULL::PortRange AS ports
+  , t2.type
+  , t2.code
+  , NULL::INET AS cidr_block
+  , t2.target
+FROM raw_aws_security_groups AS t1
+LEFT JOIN raw_aws_security_group_rules_non_ip_type_codes AS t2
+  ON t1.security_group_id = t2.security_group_id
 ;
 
 -------------------------------------------------------------------------------
