@@ -66,6 +66,8 @@ class Tool : public nmdt::AbstractGraphTool
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
+    const nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
+
     AwsGraph graph;
 
     std::map<std::string, Vertex>
@@ -126,6 +128,12 @@ class Tool : public nmdt::AbstractGraphTool
             "Add vertices for usable instances"
             " and connect to network interfaces.")
           );
+      opts.addOptionalOption("icons-folder", std::make_tuple(
+          "icons-folder",
+          po::value<std::string>()->required()->
+            default_value(nmfm.getConfPath()/"images"),
+          "Folder to search in for icons. ")
+        );
     }
 
     // Overriden from AbstractGraphTool
@@ -307,7 +315,7 @@ class Tool : public nmdt::AbstractGraphTool
     void
     buildAwsGraph(pqxx::connection& db)
     {
-      pqxx::work t  {db};
+      pqxx::work t {db};
 
       addAwsVertices(t);
       addAwsEdges(t);
@@ -315,6 +323,16 @@ class Tool : public nmdt::AbstractGraphTool
       t.commit();
 
       //boost::remove_edge_if(IsRedundantEdge(graph), graph);
+
+      finalizeVertices();
+    }
+
+    void
+    finalizeVertices()
+    {
+      for (const auto& [_, v] : vertexLookup) {
+        graph[v].label += R"(</font></td></tr></table>> + ")";
+      }
     }
 
     void
@@ -362,18 +380,23 @@ class Tool : public nmdt::AbstractGraphTool
         vRow.at("state_name").to(stateName);
 
         std::ostringstream oss;
-        if (!vertexLookup.count(id)) {
-          oss << id << R"(\n)";
-        }
 
         if (!noDetails) {
-          oss << R"(State: )" << stateCode
-                << " (" << stateName << R"()\l)"
-              << R"(Type: )" << instanceType << R"(\l)"
+          oss << R"(Type: )" << instanceType
+                << R"(<br align="left"/>)"
               << R"(Image: )" << imageId
-                << " (" << platformDetails << " " << architecture << R"()\l)"
+                << R"(<br align="left"/>)"
+              << R"(Platform: )" << platformDetails
+                << R"(<br align="left"/>)"
+              << R"(Architecture: )" << architecture
+                << R"(<br align="left"/>)"
+              << R"(<br/>)"
+              << R"(State: )" << stateCode << " (" << stateName << R"())"
+                << R"(<br align="left"/>)"
               << R"(Launched: )" << launchTime
-                << " (" << availabilityZone << R"()\l)"
+                << R"(<br align="left"/>)"
+              << R"(Availability Zone: )" << availabilityZone
+                << R"(<br align="left"/>)"
               ;
         }
 
@@ -394,12 +417,7 @@ class Tool : public nmdt::AbstractGraphTool
           std::string id;
           vRow.at("interface_id").to(id);
 
-          std::ostringstream oss;
-          if (!vertexLookup.count(id)) {
-            oss << id << R"(\n)";
-          }
-
-          addVertex("box", id, oss.str());
+          addVertex("box", id);
         }
       }
 
@@ -419,8 +437,8 @@ class Tool : public nmdt::AbstractGraphTool
           vRow.at("description").to(description);
 
           std::ostringstream oss;
-          oss << R"(Type: )" << type << R"(\l)"
-              << R"(Description: )" << description << R"(\l)"
+          oss << R"(Type: )" << type << R"(<br align="left"/>)"
+              << R"(Description: )" << description << R"(<br align="left"/>)"
               ;
 
           addVertex("box", id, oss.str());
@@ -441,10 +459,10 @@ class Tool : public nmdt::AbstractGraphTool
 
           std::ostringstream oss;
           if (lastId != id) {
-            oss << R"(\nMac -- IP pairs:\l)";
+            oss << R"(<br/>Mac -- IP pairs:<br align="left"/>)";
           }
 
-          oss << " - " << mac << " -- " << ip << R"(\l)"
+          oss << " - " << mac << " -- " << ip << R"(<br align="left"/>)"
               ;
 
           addVertex("box", id, oss.str());
@@ -495,7 +513,7 @@ class Tool : public nmdt::AbstractGraphTool
               << getDest(cidrBlock, target) << " "
               << getHumanProtocol(protocol) << " "
               << getPorts(ports, type, code) << " "
-              << R"(\l)"
+              << R"(<br align="left"/>)"
               ;
 
           if (egress) {
@@ -507,11 +525,11 @@ class Tool : public nmdt::AbstractGraphTool
 
         for (const auto& [id, sgFlows] : sgMap) {
           std::ostringstream oss;
-          oss << R"(\nSG allowed egress\l)"
-              << R"( - any stateful\l)"
+          oss << R"(<br/>SG allowed egress<br align="left"/>)"
+              << R"( - any stateful<br align="left"/>)"
               << sgFlows.at(sgEgress)
-              << R"(\nSG allowed ingress\l)"
-              << R"( - any stateful\l)"
+              << R"(<br/>SG allowed ingress<br align="left"/>)"
+              << R"( - any stateful<br align="left"/>)"
               << sgFlows.at(sgIngress)
               ;
 
@@ -525,6 +543,7 @@ class Tool : public nmdt::AbstractGraphTool
     {
       return s1.empty() ? s2 : s1;
     }
+
     std::string
     getHumanProtocol(std::int32_t p)
     {
@@ -538,6 +557,7 @@ class Tool : public nmdt::AbstractGraphTool
       }
       return oss.str();
     }
+
     std::string
     getPorts(const std::string& p, const std::string& t, const std::string& c)
     {
@@ -567,9 +587,7 @@ class Tool : public nmdt::AbstractGraphTool
           vRow.at("cidr_block").to(subnet);
 
           std::ostringstream oss;
-          oss << id << R"(\n)"
-              << subnet << R"(\n)"
-              ;
+          oss << '(' << subnet << R"()<br/>)";
 
           addVertex("oval", id, oss.str());
         }
@@ -624,7 +642,7 @@ class Tool : public nmdt::AbstractGraphTool
               << cidrBlock << " "
               << getHumanProtocol(protocol) << " "
               << getPorts(ports, type, code) << " "
-              << R"(\l)"
+              << R"(<br align="left"/>)"
               ;
 
           if (egress) {
@@ -636,10 +654,16 @@ class Tool : public nmdt::AbstractGraphTool
 
         for (const auto& [id, naclFlows] : naclMap) {
           std::ostringstream oss;
-          oss << R"(Subnet internal\l- allow any any\l)"
-              << R"(\nNACL allowed egress\l)"
+          oss << R"(</font></td></tr>)"
+              << R"(<tr>)" << getIconString("acl-")
+              << R"(<td><font point-size="11">)"
+              << R"(Intra-subnet<br align="left"/>)"
+              << R"(- allow any any<br align="left"/>)"
+              << R"(<br/>)"
+              << R"(Inter-subnet; NACL egress<br align="left"/>)"
               << naclFlows.at(naclEgress)
-              << R"(\nNACL allowed ingress\l)"
+              << R"(<br/>)"
+              << R"(Inter-subnet; NACL ingress<br align="left"/>)"
               << naclFlows.at(naclIngress)
               ;
 
@@ -667,15 +691,12 @@ class Tool : public nmdt::AbstractGraphTool
 
         std::string nId {("local" == id) ? id+nextHop : id};
 
-        if (!vertexLookup.count(nId)) {
-          oss << id << R"(\n)";
-          if (!noDetails) {
-            oss << R"(Route(s)\l)";
-          }
+        if (!noDetails && !vertexLookup.count(nId)) {
+          oss << R"(Route(s)<br align="left"/>)";
         }
 
         if (!noDetails) {
-          oss << " - " << nextHop << " (" << state << R"()\l)";
+          oss << " - " << nextHop << " (" << state << R"()<br align="left"/>)";
         }
 
         addVertex("box", nId, oss.str());
@@ -691,19 +712,11 @@ class Tool : public nmdt::AbstractGraphTool
       for (const auto& vRow : vRows) {
         std::string id;
         vRow.at("vpc_id").to(id);
-        std::string cidrs;
-        vRow.at("cidr_block").to(cidrs);
+        std::string cidr;
+        vRow.at("cidr_block").to(cidr);
 
         std::ostringstream oss;
-        if (!vertexLookup.count(id)) {
-          oss << id << R"(\n)";
-          if (!noDetails) {
-            oss << R"(Subnet\l)";
-          }
-        }
-        if (!noDetails) {
-          oss << " - " << cidrs << R"(\l)";
-        }
+        oss << '(' << cidr << R"()<br/>)";
 
         addVertex("oval", id, oss.str());
       }
@@ -720,9 +733,6 @@ class Tool : public nmdt::AbstractGraphTool
         vRow.at("next_hop").to(id);
 
         std::ostringstream oss;
-        if (!vertexLookup.count(id)) {
-          oss << id << R"(\n)";
-        }
 
         addVertex("oval", id, oss.str());
       }
@@ -737,17 +747,77 @@ class Tool : public nmdt::AbstractGraphTool
       LOG_DEBUG << "Vertex: " << id << " (" << shape << ") -- " << label
                 << std::endl;
 
+      std::string mLabel {label};
       if (!vertexLookup.count(id)) {
         Vertex v {boost::add_vertex(graph)};
         vertexLookup[id] = v;
+        if (id.starts_with("local")) {
+          mLabel = getLabelHeader("VPC intra-routing") + label;
+        } else {
+          mLabel = getLabelHeader(id) + label;
+        }
       }
 
       const auto v {vertexLookup[id]};
       graph[v].name = id;
-      if (!label.empty()) {
-        graph[v].label += label;
+      if (!mLabel.empty()) {
+        graph[v].label += mLabel;
       }
       graph[v].shape = shape;
+    }
+
+    std::string
+    getLabelHeader(const std::string id) {
+      std::ostringstream oss;
+
+      oss << R"(" + <<table border="0" cellborder="0"><tr>)"
+          << getIconString(id)
+          << R"(<td><font point-size="11">)" << id << R"(<br/>)"
+          ;
+
+      return oss.str();
+    }
+
+    std::string
+    getIconString(const std::string& id)
+    {
+      std::string iconPath;
+
+      std::size_t pos {id.find_first_of("-")};
+      LOG_DEBUG << "Postition of '-' (" << id << "):" << pos << '\n';
+      if (pos != std::string::npos) {
+        std::string type {"aws-" + id.substr(0, pos) + ".svg"};
+        LOG_DEBUG << "Looking for icon name: " << type << '\n';
+
+        sfs::path iPath {opts.getValue("icons-folder")};
+        for (const auto& pathIter : sfs::recursive_directory_iterator(iPath)) {
+          std::string fileName {pathIter.path().filename()};
+
+          LOG_DEBUG << " - " << fileName << '\n';
+          if (std::equal(type.begin(), type.end(),
+                         fileName.begin(), fileName.end(),
+                         [](auto a, auto b) {
+                            return std::tolower(a) == std::tolower(b);
+                         }))
+          {
+            iconPath = pathIter.path();
+            break;
+          }
+        }
+      }
+
+      LOG_DEBUG << "Icon path: " << iconPath << '\n';
+      std::ostringstream oss;
+      if (iconPath.empty()) {
+        oss << R"(<td></td>)";
+      } else {
+        oss << R"(<td width="60" height="60" fixedsize="true">)"
+            << R"(<img src=")" << iconPath << R"(" scale="true"/>)"
+            << R"(</td>)"
+            ;
+      }
+
+      return oss.str();
     }
 
     void
@@ -886,9 +956,11 @@ class Tool : public nmdt::AbstractGraphTool
       } catch (const std::exception& e) {
         LOG_ERROR << "Failed to create edge: " << e.what()
                   << std::endl;
-        LOG_ERROR << "- One of '" << src << "'" << " or '" << dst << "'"
-                  << " is a non-existant graph vertex"
-                  << std::endl;
+        for (const auto& i : {src,dst}) {
+          if (!vertexLookup.count(i)) {
+            LOG_ERROR << " - Non-existant vertex: " << i << std::endl;
+          }
+        }
       }
     }
 
