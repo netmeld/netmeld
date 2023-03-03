@@ -72,9 +72,13 @@ LabelWriter::operator()(std::ostream& os, Edge const& e) const
 void
 GraphWriter::operator()(std::ostream& os) const
 {
-  os << "rankdir=LR" << std::endl;
-  os << "splines=true;" << std::endl;
-  os << "nodesep=1.00;" << std::endl;
-  os << "ranksep=2.50;" << std::endl;
-  os << "overlap=false;" << std::endl;
+  os << "rankdir=LR\n"
+//     << "splines=ortho;\n"
+     << "splines=true;\n"
+//     << "nodesep=1.00;\n"
+//     << "ranksep=2.50;\n"
+     << "overlap=false;\n"
+//     << "beautify=true;\n"
+//     << "concentrate=true;\n"
+     ;
 }
