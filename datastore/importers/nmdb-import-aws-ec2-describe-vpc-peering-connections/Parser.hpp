@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,71 +24,62 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "Parser.hpp"
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
+#include <nlohmann/json.hpp>
 
-// =============================================================================
-// Parser logic
-// =============================================================================
-Parser::Parser()
-{}
+#include <netmeld/datastore/objects/ToolObservations.hpp>
 
-void
-Parser::fromJson(const json& _data)
-{
-  try {
-    for (const auto& vpc : _data.at("Vpcs")) {
-      processVpcs(vpc);
-    }
-  } catch (json::out_of_range& ex) {
-    LOG_ERROR << "Parse error " << ex.what() << std::endl;
-  }
-}
+#include <netmeld/datastore/objects/aws/Vpc.hpp>
+#include <netmeld/datastore/objects/aws/VpcPeeringConnection.hpp>
 
-void
-Parser::processVpcs(const json& _vpc)
-{
-  nmdoa::Vpc avpc;
-  avpc.setId(_vpc.value("VpcId", ""));
-  avpc.setOwnerId(_vpc.value("OwnerId", ""));
-  avpc.setState(_vpc.value("State", ""));
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdoa = netmeld::datastore::objects::aws;
 
-  processCidrBlockAssociationSet(_vpc, avpc);
+using json = nlohmann::json;
 
-  d.vpcs.emplace_back(avpc);
-}
-
-void
-Parser::processCidrBlockAssociationSet(const json& _cbas, nmdoa::Vpc& _avpc)
-{
-  const std::vector<std::string> prefixes {
-        ""
-      , "Ipv6"
-    };
-  for (const auto& prefix : prefixes) {
-    std::string tgtCidrBlockSet {prefix + "CidrBlockAssociationSet"};
-    if (!_cbas.contains(tgtCidrBlockSet)) {
-      continue;
-    }
-
-    for (const auto& cbas : _cbas.at(tgtCidrBlockSet)) {
-      nmdoa::CidrBlock avcb;
-      avcb.setCidrBlock(cbas.value(prefix + "CidrBlock", ""));
-      avcb.setState(cbas.at(prefix + "CidrBlockState").value("State", ""));
-
-      _avpc.addCidrBlock(avcb);
-    }
-  }
-}
 
 // =============================================================================
-// Parser helper methods
+// Data containers
 // =============================================================================
-Result
-Parser::getData()
+struct Data {
+  std::vector<nmdoa::VpcPeeringConnection> pcxs;
+
+  nmdo::ToolObservations observations;
+};
+typedef std::vector<Data>    Result;
+
+
+// =============================================================================
+// Parser definition
+// =============================================================================
+class Parser
 {
-  Result r;
-  r.emplace_back(d);
-  return r;
-}
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private: // Variables are always private
+    Data d;
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  public: // Constructor is only default and must be public
+    Parser();
+
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private:
+  protected:
+    void processVpcPeeringConnections(const json&);
+    void processAccepter(const json&, nmdoa::VpcPeeringConnection&);
+    void processRequester(const json&, nmdoa::VpcPeeringConnection&);
+    void processCidrBlockSets(const json&, nmdoa::Vpc&);
+
+  public:
+    void fromJson(const json&);
+    Result getData();
+};
+#endif // PARSER_HPP

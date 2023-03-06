@@ -24,11 +24,11 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_VPC_HPP
-#define AWS_VPC_HPP
+#ifndef AWS_VPC_PEERING_CONNECTION_HPP
+#define AWS_VPC_PEERING_CONNECTION_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/aws/CidrBlock.hpp>
+#include <netmeld/datastore/objects/aws/Vpc.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
@@ -36,18 +36,19 @@ namespace nmdo = netmeld::datastore::objects;
 
 namespace netmeld::datastore::objects::aws {
 
-  class Vpc : public nmdo::AbstractDatastoreObject {
+  class VpcPeeringConnection : public nmdo::AbstractDatastoreObject {
     // ========================================================================
     // Variables
     // ========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string vpcId;
+      std::string pcxId;
 
-      std::string ownerId;
-      std::string state;
+      std::string statusCode;
+      std::string statusMessage;
 
-      std::set<CidrBlock> cidrBlocks;
+      Vpc accepter;
+      Vpc requester;
 
     public: // Variables should rarely appear at this scope
 
@@ -57,7 +58,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      Vpc();
+      VpcPeeringConnection();
 
     // ========================================================================
     // Methods
@@ -66,13 +67,10 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setId(const std::string&);
-      void setOwnerId(const std::string&);
-      void setState(const std::string&);
+      void setStatus(const std::string&, const std::string&);
 
-      void addCidrBlock(const CidrBlock&);
-
-      std::string getId() const;
-      std::string getOwnerId() const;
+      void setAccepter(const Vpc&);
+      void setRequester(const Vpc&);
 
       bool isValid() const override;
 
@@ -81,8 +79,8 @@ namespace netmeld::datastore::objects::aws {
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const Vpc&) const;
-      bool operator==(const Vpc&) const;
+      std::partial_ordering operator<=>(const VpcPeeringConnection&) const;
+      bool operator==(const VpcPeeringConnection&) const;
   };
 }
-#endif // AWS_VPC_HPP
+#endif // AWS_VPC_PEERING_CONNECTION_HPP

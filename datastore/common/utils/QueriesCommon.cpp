@@ -162,11 +162,20 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
+      ("insert_raw_aws_vpc_owner", R"(
+          INSERT INTO raw_aws_vpc_owners
+            (tool_run_id, vpc_id, owner_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
       ("insert_raw_aws_vpc_detail", R"(
           INSERT INTO raw_aws_vpc_details
             (tool_run_id, vpc_id, state)
           VALUES
-            ($1, $2, $3)
+            ($1, $2, nullif($3, ''))
           ON CONFLICT DO NOTHING
         )");
 
@@ -174,6 +183,44 @@ namespace netmeld::datastore::utils {
       ("insert_raw_aws_vpc_cidr_block", R"(
           INSERT INTO raw_aws_vpc_cidr_blocks
             (tool_run_id, vpc_id, cidr_block, state)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS VPC Peering Connection related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_vpc_peering_connection", R"(
+          INSERT INTO raw_aws_vpc_peering_connections
+            (tool_run_id, pcx_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_peering_connection_peer", R"(
+          INSERT INTO raw_aws_vpc_peering_connection_peers
+            ( tool_run_id, pcx_id
+            , accepter_vpc_id, accepter_owner_id
+            , requester_vpc_id, requester_owner_id
+            )
+          VALUES
+            ( $1, $2
+            , $3, $4
+            , $5, $6
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_peering_connection_status", R"(
+          INSERT INTO raw_aws_vpc_peering_connection_statuses
+            (tool_run_id, pcx_id, code, message)
           VALUES
             ($1, $2, $3, $4)
           ON CONFLICT DO NOTHING

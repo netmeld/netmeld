@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,46 +38,99 @@ void
 Parser::fromJson(const json& _data)
 {
   try {
-    for (const auto& vpc : _data.at("Vpcs")) {
-      processVpcs(vpc);
-    }
-  } catch (json::out_of_range& ex) {
-    LOG_ERROR << "Parse error " << ex.what() << std::endl;
+    processVpcPeeringConnections(_data);
+  } catch (json::parse_error& ex) {
+    LOG_ERROR << "Parse error at byte " << ex.byte
+              << std::endl;
+    std::exit(nmcu::Exit::FAILURE);
   }
 }
 
 void
-Parser::processVpcs(const json& _vpc)
+Parser::processVpcPeeringConnections(const json& _json)
 {
-  nmdoa::Vpc avpc;
-  avpc.setId(_vpc.value("VpcId", ""));
-  avpc.setOwnerId(_vpc.value("OwnerId", ""));
-  avpc.setState(_vpc.value("State", ""));
+  if (!_json.contains("VpcPeeringConnections")) {
+    return;
+  }
 
-  processCidrBlockAssociationSet(_vpc, avpc);
+  for (const auto& jPcx : _json.at("VpcPeeringConnections")) {
+    nmdoa::VpcPeeringConnection pcx;
+    pcx.setId(jPcx.value("VpcPeeringConnectionId", ""));
 
-  d.vpcs.emplace_back(avpc);
+    if (jPcx.contains("Status")) {
+      const auto& status {jPcx.at("Status")};
+      pcx.setStatus(status.value("Code", ""), status.value("Message", ""));
+    }
+
+    processAccepter(jPcx, pcx);
+    processRequester(jPcx, pcx);
+
+    d.pcxs.emplace_back(pcx);
+  }
 }
 
 void
-Parser::processCidrBlockAssociationSet(const json& _cbas, nmdoa::Vpc& _avpc)
+Parser::processAccepter(const json& _json,
+                        nmdoa::VpcPeeringConnection& _pcx)
+{
+  if (!_json.contains("AccepterVpcInfo")) {
+    return;
+  }
+
+  const auto& jVpc {_json.at("AccepterVpcInfo")};
+  nmdoa::Vpc vpc;
+  vpc.setId(jVpc.value("VpcId", ""));
+  vpc.setOwnerId(jVpc.value("OwnerId", ""));
+
+  nmdoa::CidrBlock cb;
+  cb.setCidrBlock(jVpc.value("CidrBlock", ""));
+  vpc.addCidrBlock(cb);
+  processCidrBlockSets(jVpc, vpc);
+
+  // TODO peering options
+
+  _pcx.setAccepter(vpc);
+}
+void
+Parser::processRequester(const json& _json,
+                         nmdoa::VpcPeeringConnection& _pcx)
+{
+  if (!_json.contains("RequesterVpcInfo")) {
+    return;
+  }
+
+  const auto& jVpc {_json.at("RequesterVpcInfo")};
+  nmdoa::Vpc vpc;
+  vpc.setId(jVpc.value("VpcId", ""));
+  vpc.setOwnerId(jVpc.value("OwnerId", ""));
+
+  nmdoa::CidrBlock cb;
+  cb.setCidrBlock(jVpc.value("CidrBlock", ""));
+  vpc.addCidrBlock(cb);
+  processCidrBlockSets(jVpc, vpc);
+
+  // TODO peering options
+
+  _pcx.setRequester(vpc);
+}
+
+void
+Parser::processCidrBlockSets(const json& _cbs, nmdoa::Vpc& _vpc)
 {
   const std::vector<std::string> prefixes {
         ""
       , "Ipv6"
     };
   for (const auto& prefix : prefixes) {
-    std::string tgtCidrBlockSet {prefix + "CidrBlockAssociationSet"};
-    if (!_cbas.contains(tgtCidrBlockSet)) {
+    std::string tgtCidrBlockSet {prefix + "CidrBlockSet"};
+    if (!_cbs.contains(tgtCidrBlockSet)) {
       continue;
     }
 
-    for (const auto& cbas : _cbas.at(tgtCidrBlockSet)) {
-      nmdoa::CidrBlock avcb;
-      avcb.setCidrBlock(cbas.value(prefix + "CidrBlock", ""));
-      avcb.setState(cbas.at(prefix + "CidrBlockState").value("State", ""));
-
-      _avpc.addCidrBlock(avcb);
+    for (const auto& cbs : _cbs.at(tgtCidrBlockSet)) {
+      nmdoa::CidrBlock cb;
+      cb.setCidrBlock(cbs.value(prefix + "CidrBlock", ""));
+      _vpc.addCidrBlock(cb);
     }
   }
 }

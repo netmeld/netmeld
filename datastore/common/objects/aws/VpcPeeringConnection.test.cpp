@@ -28,89 +28,95 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/datastore/objects/aws/Vpc.hpp>
+#include <netmeld/datastore/objects/aws/VpcPeeringConnection.hpp>
 
 namespace nmdoa = netmeld::datastore::objects::aws;
 
 
-class TestVpc : public nmdoa::Vpc {
+class TestVpcPeeringConnection : public nmdoa::VpcPeeringConnection {
   public:
-    TestVpc() : Vpc() {};
+    TestVpcPeeringConnection() : VpcPeeringConnection() {};
 
   public:
-    std::string getState() const
-    { return state; }
-
-    std::set<nmdoa::CidrBlock> getCidrBlocks() const
-    { return cidrBlocks; }
+    std::string getId() const
+    { return pcxId; }
+    std::string getStatusCode() const
+    { return statusCode; }
+    std::string getStatusMessage() const
+    { return statusMessage; }
+    nmdoa::Vpc getAccepter() const
+    { return accepter; }
+    nmdoa::Vpc getRequester() const
+    { return requester; }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
-    TestVpc tobj;
+    TestVpcPeeringConnection tobj;
 
     BOOST_TEST(tobj.getId().empty());
-    BOOST_TEST(tobj.getOwnerId().empty());
-    BOOST_TEST(tobj.getState().empty());
-    BOOST_TEST(tobj.getCidrBlocks().empty());
+    BOOST_TEST(tobj.getStatusCode().empty());
+    BOOST_TEST(tobj.getStatusMessage().empty());
+    BOOST_TEST(!tobj.getAccepter().isValid());
+    BOOST_TEST(!tobj.getRequester().isValid());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
-    TestVpc tobj;
+    TestVpcPeeringConnection tobj;
 
     const std::string tv1 {"aBc1@3"};
     tobj.setId(tv1);
     BOOST_TEST(tv1 == tobj.getId());
   }
   {
-    TestVpc tobj;
+    TestVpcPeeringConnection tobj;
 
     const std::string tv1 {"aBc1@3"};
-    tobj.setOwnerId(tv1);
-    BOOST_TEST(tv1 == tobj.getOwnerId());
+    tobj.setStatus(tv1, tv1+tv1);
+    BOOST_TEST(tv1 == tobj.getStatusCode());
+    BOOST_TEST((tv1+tv1) == tobj.getStatusMessage());
   }
   {
-    TestVpc tobj;
+    TestVpcPeeringConnection tobj;
 
-    const std::string tv1 {"aBc1@3"};
-    tobj.setState(tv1);
-    BOOST_TEST(tv1 == tobj.getState());
+    const nmdoa::Vpc tv1;
+    tobj.setAccepter(tv1);
+    BOOST_TEST(tv1 == tobj.getAccepter());
   }
   {
-    TestVpc tobj;
+    TestVpcPeeringConnection tobj;
 
-    nmdoa::CidrBlock tv1;
-    tobj.addCidrBlock(tv1);
-    auto cbs = tobj.getCidrBlocks();
-    BOOST_TEST(0 == cbs.size());
-
-    tv1.setCidrBlock("1.2.3.4/24");
-    tobj.addCidrBlock(tv1);
-    cbs = tobj.getCidrBlocks();
-    BOOST_TEST(1 == cbs.size());
-    BOOST_TEST(cbs.contains(tv1));
+    const nmdoa::Vpc tv1;
+    tobj.setRequester(tv1);
+    BOOST_TEST(tv1 == tobj.getRequester());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
-    TestVpc tobj;
+    TestVpcPeeringConnection tobj;
 
     const std::string tv1 {"aBc1@3"};
+    const nmdoa::Vpc  tv2;
+    nmdoa::Vpc  tv3;
+    tv3.setId(tv1);
+    tv3.setOwnerId(tv1+tv1);
 
+    BOOST_TEST(!tv2.isValid());
     BOOST_TEST(!tobj.isValid());
+
     tobj.setId(tv1);
     BOOST_TEST(!tobj.isValid());
-    tobj.setId("");
-    tobj.setOwnerId(tv1);
+    tobj.setAccepter(tv2);
+    tobj.setRequester(tv2);
     BOOST_TEST(!tobj.isValid());
-    tobj.setId(tv1);
-    tobj.setOwnerId(tv1);
+    tobj.setAccepter(tv3);
+    tobj.setRequester(tv3);
     BOOST_TEST(tobj.isValid());
   }
 }

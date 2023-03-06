@@ -24,22 +24,27 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
+add_executable(${TGT_TOOL}
+    Parser.cpp
+    ${TGT_TOOL}.cpp
+  )
+
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+  )
+
+nm_install_bin(${TGT_TOOL})
+#nm_install_include(file dir)
+
 foreach(ITEM
-    Attachment
-    CidrBlock
-    Instance
-    NetworkAcl
-    NetworkAclRule
-    NetworkInterface
-    Route
-    RouteTable
-    SecurityGroup
-    SecurityGroupRule
-    Subnet
-    Vpc
-    VpcPeeringConnection
+    Parser
   )
   nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+    )
   target_link_libraries(${TGT_TEST}
       netmeld-datastore
     )

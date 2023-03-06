@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(testProcessVpcs)
         , "InstanceTenancy": ""
         , "Ipv6CidrBlockAssociationSet": []
         , "IsDefault": false
-        , "OwnerId": ""
+        , "OwnerId": "a3"
         , "State": "a1"
         , "Tags": []
         , "VpcId": "a2"
@@ -164,6 +164,7 @@ BOOST_AUTO_TEST_CASE(testProcessVpcs)
     const std::vector<std::string> tevs {
           R"(vpcId: a2)"
         , R"(state: a1)"
+        , R"(ownerId: a3)"
       };
     for (const auto& tev : tevs) {
       nmdp::testInString(trv1[0].toDebugString(), tev);

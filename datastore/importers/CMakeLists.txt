@@ -35,6 +35,7 @@ foreach(ITEM
     nmdb-import-aws-ec2-describe-security-groups
     nmdb-import-aws-ec2-describe-subnets
     nmdb-import-aws-ec2-describe-vpcs
+    nmdb-import-aws-ec2-describe-vpc-peering-connections
     nmdb-import-brocade
     nmdb-import-brocade-show-ip-route
     nmdb-import-cisco

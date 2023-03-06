@@ -28,89 +28,50 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/datastore/objects/aws/Vpc.hpp>
+#include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 
-namespace nmdoa = netmeld::datastore::objects::aws;
+#include "Parser.hpp"
 
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
-class TestVpc : public nmdoa::Vpc {
+using qi::ascii::blank;
+
+class TestParser : public Parser
+{
   public:
-    TestVpc() : Vpc() {};
-
-  public:
-    std::string getState() const
-    { return state; }
-
-    std::set<nmdoa::CidrBlock> getCidrBlocks() const
-    { return cidrBlocks; }
+    using Parser::processVpcPeeringConnections;
+    using Parser::processAccepter;
+    using Parser::processRequester;
+    using Parser::processCidrBlockSets;
 };
 
-BOOST_AUTO_TEST_CASE(testConstructors)
+//BOOST_AUTO_TEST_CASE(testProcessVpcPeeringConnections)
+//{
+//}
+//
+//BOOST_AUTO_TEST_CASE(testProcessAccepter)
+//{
+//}
+//
+//BOOST_AUTO_TEST_CASE(testProcessRequester)
+//{
+//}
+//
+//BOOST_AUTO_TEST_CASE(testProcessCidrBlockSets)
+//{
+//}
+
+BOOST_AUTO_TEST_CASE(testFromJson)
 {
   {
-    TestVpc tobj;
+    TestParser tp;
 
-    BOOST_TEST(tobj.getId().empty());
-    BOOST_TEST(tobj.getOwnerId().empty());
-    BOOST_TEST(tobj.getState().empty());
-    BOOST_TEST(tobj.getCidrBlocks().empty());
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testSetters)
-{
-  {
-    TestVpc tobj;
-
-    const std::string tv1 {"aBc1@3"};
-    tobj.setId(tv1);
-    BOOST_TEST(tv1 == tobj.getId());
-  }
-  {
-    TestVpc tobj;
-
-    const std::string tv1 {"aBc1@3"};
-    tobj.setOwnerId(tv1);
-    BOOST_TEST(tv1 == tobj.getOwnerId());
-  }
-  {
-    TestVpc tobj;
-
-    const std::string tv1 {"aBc1@3"};
-    tobj.setState(tv1);
-    BOOST_TEST(tv1 == tobj.getState());
-  }
-  {
-    TestVpc tobj;
-
-    nmdoa::CidrBlock tv1;
-    tobj.addCidrBlock(tv1);
-    auto cbs = tobj.getCidrBlocks();
-    BOOST_TEST(0 == cbs.size());
-
-    tv1.setCidrBlock("1.2.3.4/24");
-    tobj.addCidrBlock(tv1);
-    cbs = tobj.getCidrBlocks();
-    BOOST_TEST(1 == cbs.size());
-    BOOST_TEST(cbs.contains(tv1));
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testValidity)
-{
-  {
-    TestVpc tobj;
-
-    const std::string tv1 {"aBc1@3"};
-
-    BOOST_TEST(!tobj.isValid());
-    tobj.setId(tv1);
-    BOOST_TEST(!tobj.isValid());
-    tobj.setId("");
-    tobj.setOwnerId(tv1);
-    BOOST_TEST(!tobj.isValid());
-    tobj.setId(tv1);
-    tobj.setOwnerId(tv1);
-    BOOST_TEST(tobj.isValid());
+    json tv1 = json::parse(
+        R"({ "VpcPeeringConnections": [] })"
+      );
+    tp.fromJson(tv1);
+    auto tobj = tp.getData()[0].pcxs;
+    BOOST_TEST(0 == tobj.size());
   }
 }

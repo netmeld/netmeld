@@ -24,107 +24,96 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/aws/Vpc.hpp>
+#include <netmeld/datastore/objects/aws/VpcPeeringConnection.hpp>
 
 
 namespace netmeld::datastore::objects::aws {
 
-  Vpc::Vpc()
+  VpcPeeringConnection::VpcPeeringConnection()
   {}
 
   void
-  Vpc::setId(const std::string& _id)
+  VpcPeeringConnection::setId(const std::string& _id)
   {
-    vpcId = _id;
+    pcxId = _id;
   }
   void
-  Vpc::setOwnerId(const std::string& _id)
+  VpcPeeringConnection::setStatus( const std::string& _code
+                                 , const std::string& _message
+                                 )
   {
-    ownerId = _id;
+    statusCode = _code;
+    statusMessage = _message;
   }
   void
-  Vpc::setState(const std::string& _state)
+  VpcPeeringConnection::setAccepter(const Vpc& _vpc)
   {
-    state = _state;
+    accepter = _vpc;
   }
   void
-  Vpc::addCidrBlock(const CidrBlock& _cidr)
+  VpcPeeringConnection::setRequester(const Vpc& _vpc)
   {
-    CidrBlock t;
-    if (t == _cidr) { return; } // Don't add empties
-    cidrBlocks.insert(_cidr);
-  }
-
-  std::string
-  Vpc::getId() const
-  {
-    return vpcId;
-  }
-  std::string
-  Vpc::getOwnerId() const
-  {
-    return ownerId;
+    requester = _vpc;
   }
 
 
   bool
-  Vpc::isValid() const
+  VpcPeeringConnection::isValid() const
   {
-    return !(vpcId.empty() || ownerId.empty());
+    return !(pcxId.empty())
+           && (accepter.isValid() && requester.isValid())
+           ;
   }
 
   void
-  Vpc::save(pqxx::transaction_base& t,
+  VpcPeeringConnection::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AWS Vpc object is not saving: "
+      LOG_DEBUG << "AWS VpcPeeringConnection object is not saving: "
                 << toDebugString()
                 << std::endl;
       return;
     }
 
-    t.exec_prepared("insert_raw_aws_vpc"
+    t.exec_prepared("insert_raw_aws_vpc_peering_connection"
         , toolRunId
-        , vpcId
+        , pcxId
       );
 
-    t.exec_prepared("insert_raw_aws_vpc_owner"
+    t.exec_prepared("insert_raw_aws_vpc_peering_connection_peer"
         , toolRunId
-        , vpcId
-        , ownerId
+        , pcxId
+        , accepter.getId()
+        , accepter.getOwnerId()
+        , requester.getId()
+        , requester.getOwnerId()
       );
 
-    if (!state.empty()) {
-      t.exec_prepared("insert_raw_aws_vpc_detail"
+    if (!statusCode.empty()) {
+      t.exec_prepared("insert_raw_aws_vpc_peering_connection_status"
           , toolRunId
-          , vpcId
-          , state
+          , pcxId
+          , statusCode
+          , statusMessage
         );
     }
 
-    for (auto cidr : cidrBlocks) {
-      cidr.save(t, toolRunId, vpcId);
-
-      t.exec_prepared("insert_raw_aws_vpc_cidr_block"
-          , toolRunId
-          , vpcId
-          , cidr.toString()
-          , state
-        );
-    }
+    accepter.save(t, toolRunId);
+    requester.save(t, toolRunId);
   }
 
   std::string
-  Vpc::toDebugString() const
+  VpcPeeringConnection::toDebugString() const
   {
     std::ostringstream oss;
 
     oss << '['
-        << "vpcId: " << vpcId
-        << ", ownerId: " << ownerId
-        << ", state: " << state
-        << ", cidrBlocks: " << cidrBlocks
+        << "pcxId: " << pcxId
+        << ", statusCode: " << statusCode
+        << ", statusMessage: " << statusMessage
+        << ", accepter: " << accepter
+        << ", requester: " << requester
         << ']'
         ;
 
@@ -132,23 +121,25 @@ namespace netmeld::datastore::objects::aws {
   }
 
   std::partial_ordering
-  Vpc::operator<=>(const Vpc& rhs) const
+  VpcPeeringConnection::operator<=>(const VpcPeeringConnection& rhs) const
   {
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = ownerId <=> rhs.ownerId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
-      return cmp;
-    }
-
-    return cidrBlocks <=> rhs.cidrBlocks;
+    return std::tie( pcxId
+                   , statusCode
+                   , statusMessage
+                   , accepter
+                   , requester
+                   )
+       <=> std::tie( rhs.pcxId
+                   , rhs.statusCode
+                   , rhs.statusMessage
+                   , rhs.accepter
+                   , rhs.requester
+                   )
+      ;
   }
 
   bool
-  Vpc::operator==(const Vpc& rhs) const
+  VpcPeeringConnection::operator==(const VpcPeeringConnection& rhs) const
   {
     return 0 == operator<=>(rhs);
   }

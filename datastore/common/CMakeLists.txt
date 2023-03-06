@@ -68,6 +68,7 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/aws/SecurityGroupRule.cpp
     ./objects/aws/Subnet.cpp
     ./objects/aws/Vpc.cpp
+    ./objects/aws/VpcPeeringConnection.cpp
 
     ./tools/AbstractDatastoreTool.cpp
     ./tools/AbstractExportTool.cpp

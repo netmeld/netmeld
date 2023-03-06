@@ -183,12 +183,21 @@ CREATE TABLE raw_aws_vpcs (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+CREATE TABLE raw_aws_vpc_owners (
+      tool_run_id                   UUID  NOT NULL
+    , vpc_id                        TEXT  NOT NULL
+    , owner_id                      TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, vpc_id, owner_id)
+    , FOREIGN KEY (tool_run_id, vpc_id)
+        REFERENCES raw_aws_vpcs(tool_run_id, vpc_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 CREATE TABLE raw_aws_vpc_details (
       tool_run_id                   UUID  NOT NULL
     , vpc_id                        TEXT  NOT NULL
-    , state                         TEXT  NOT NULL
---    , owner_id                      TEXT  NOT NULL
-    , PRIMARY KEY (tool_run_id, vpc_id, state)
+    , state                         TEXT  NULL
+    , PRIMARY KEY (tool_run_id, vpc_id)
     , FOREIGN KEY (tool_run_id, vpc_id)
         REFERENCES raw_aws_vpcs(tool_run_id, vpc_id)
         ON DELETE CASCADE
@@ -206,6 +215,45 @@ CREATE TABLE raw_aws_vpc_cidr_blocks (
         ON UPDATE CASCADE
     , FOREIGN KEY (tool_run_id, cidr_block)
         REFERENCES raw_aws_cidr_blocks(tool_run_id, cidr_block)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+-- AWS VPC Peering Connections
+CREATE TABLE raw_aws_vpc_peering_connections (
+      tool_run_id                   UUID  NOT NULL
+    , pcx_id                        TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, pcx_id)
+    , FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_vpc_peering_connection_peers (
+      tool_run_id                   UUID  NOT NULL
+    , pcx_id                        TEXT  NOT NULL
+    , accepter_vpc_id               TEXT  NOT NULL
+    , accepter_owner_id             TEXT  NOT NULL
+    , requester_vpc_id              TEXT  NOT NULL
+    , requester_owner_id           TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, pcx_id
+                  , accepter_vpc_id, accepter_owner_id
+                  , requester_vpc_id, requester_owner_id
+                  )
+    , FOREIGN KEY (tool_run_id, pcx_id)
+        REFERENCES raw_aws_vpc_peering_connections(tool_run_id, pcx_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_vpc_peering_connection_statuses (
+      tool_run_id                   UUID  NOT NULL
+    , pcx_id                        TEXT  NOT NULL
+    , code                          TEXT  NOT NULL
+    , message                       TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, pcx_id, code, message)
+    , FOREIGN KEY (tool_run_id, pcx_id)
+        REFERENCES raw_aws_vpc_peering_connections(tool_run_id, pcx_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
