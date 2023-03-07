@@ -446,6 +446,53 @@ namespace netmeld::datastore::utils {
 
 
     // ----------------------------------------------------------------------
+    // TABLES: AWS Route Table related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway", R"(
+          INSERT INTO raw_aws_transit_gateways
+            (tool_run_id, tgw_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway_owner", R"(
+          INSERT INTO raw_aws_transit_gateway_owners
+            (tool_run_id, tgw_id, owner_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway_attachment", R"(
+          INSERT INTO raw_aws_transit_gateway_attachments
+            (tool_run_id, tgw_id, tgw_attach_id, state)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway_attachment_detail", R"(
+          INSERT INTO raw_aws_transit_gateway_attachment_details
+            ( tool_run_id, tgw_id, tgw_attach_id
+            , resource_type, resource_id, resource_owner_id
+            , association_state
+            )
+          VALUES
+            ( $1, $2, $3
+            , $4, $5, $6
+            , $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
     // TABLES: AWS multi-service/component related
     // ----------------------------------------------------------------------
 

@@ -242,14 +242,6 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_aws_router_destinations_unknown", R"(
-          SELECT DISTINCT
-            next_hop_id , next_hop
-          FROM aws_route_table_next_hops_unknown_in_db
-          ORDER BY 1,2
-          )"
-        );
-
       db.prepare("select_aws_instance_to_eni_edges", R"(
           SELECT DISTINCT
               instance_id , interface_id
@@ -373,6 +365,15 @@ class Tool : public nmdt::AbstractGraphTool
           ORDER BY 1
           )"
         );
+      db.prepare("select_aws_tgw_to_resource", R"(
+          SELECT DISTINCT
+              tgw_id , resource_type , resource_id , resource_owner_id
+          FROM raw_aws_transit_gateway_attachment_details
+          WHERE association_state = 'associated'
+            AND resource_id NOT IN (SELECT vpc_id FROM raw_aws_vpcs)
+          ORDER BY 1,2,3,4
+          )"
+        );
 
 
       // control flags
@@ -422,14 +423,7 @@ class Tool : public nmdt::AbstractGraphTool
       addInstances(t);
       addNetworkInterfaces(t);
       addSubnets(t);
-      /* NOTE:
-        Merging 'local' route(s) with the VPC vertex could result in
-        incorrect visual representation in the case a VPC has multiple
-        local routes defined between the subnets it contains.
-      */
       addRoutes(t);
-      //addVpcs(t);
-      //addDestinations(t);
     }
 
     void
@@ -767,7 +761,6 @@ class Tool : public nmdt::AbstractGraphTool
     addRoutes(pqxx::transaction_base& t)
     {
       pqxx::result routerTables =
-      //pqxx::result vRows =
         t.exec_prepared("select_aws_router_vertices");
 
       for (const auto& vRow : routerTables) {
@@ -870,22 +863,6 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addDestinations(pqxx::transaction_base& t)
-    {
-      pqxx::result vRows =
-        t.exec_prepared("select_aws_router_destinations_unknown");
-
-      for (const auto& vRow : vRows) {
-        std::string id;
-        vRow.at("next_hop").to(id);
-
-        std::ostringstream oss;
-
-        addVertex("oval", id, oss.str());
-      }
-    }
-
-    void
     addVertex( const std::string shape
              , const std::string id
              , const std::string label=""
@@ -969,6 +946,25 @@ class Tool : public nmdt::AbstractGraphTool
       }
 
       return oss.str();
+    }
+
+    void
+    addIcon(const std::string& id, const std::string& icon)
+    {
+      if (!vertexLookup.count(id)) {
+        return;
+      }
+      LOG_DEBUG << "Vertex: " << id << " found; updating to: " << icon;
+
+      const auto v {vertexLookup[id]};
+      std::string curLabel {graph[v].label};
+
+      std::regex re {R"(<td></td>)"};
+      std::string newText {getIconString(icon)};
+      std::ostringstream oss;
+      oss << std::regex_replace(curLabel, re, newText);
+
+      graph[v].label = oss.str();
     }
 
     void
@@ -1166,6 +1162,30 @@ class Tool : public nmdt::AbstractGraphTool
           eRow.at("destination_id").to(src);
           std::string dst;
           eRow.at("subnet_id").to(dst);
+
+          addEdge(src, dst);
+        }
+      }
+      {
+        pqxx::result eRows =
+          t.exec_prepared("select_aws_tgw_to_resource");
+
+        for (const auto& eRow : eRows) {
+          std::string src;
+          eRow.at("tgw_id").to(src);
+          std::string dst;
+          eRow.at("resource_id").to(dst);
+          std::string type;
+          eRow.at("resource_type").to(type);
+          std::string owner;
+          eRow.at("resource_owner_id").to(owner);
+
+          if (!vertexLookup.count(dst)) {
+            std::ostringstream oss;
+            oss << R"((Owner: )" << owner << R"()<br/>)";
+            addVertex("oval", dst, oss.str());
+            addIcon(dst, "dcg-");
+          }
 
           addEdge(src, dst);
         }

@@ -380,16 +380,6 @@ CREATE TABLE raw_aws_network_acls (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
--- CREATE TABLE raw_aws_network_acl_details (
---       tool_run_id                   UUID  NOT NULL
---     , network_acl_id                TEXT  NOT NULL
---     , owner_id                      TEXT  NOT NULL
---     , PRIMARY KEY (tool_run_id, network_acl_id, owner_id)
---     , FOREIGN KEY (tool_run_id, network_acl_id)
---         REFERENCES raw_aws_network_acls(tool_run_id, network_acl_id)
---         ON DELETE CASCADE
---         ON UPDATE CASCADE
--- );
 CREATE TABLE raw_aws_network_acl_rules (
       tool_run_id                   UUID  NOT NULL
     , network_acl_id                TEXT  NOT NULL
@@ -531,6 +521,57 @@ CREATE TABLE raw_aws_route_table_routes_non_cidr (
         ON UPDATE CASCADE
 );
 
+
+-- AWS Transit Gateways
+CREATE TABLE raw_aws_transit_gateways (
+      tool_run_id                   UUID  NOT NULL
+    , tgw_id                        TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, tgw_id)
+    , FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_transit_gateway_owners (
+      tool_run_id                   UUID  NOT NULL
+    , tgw_id                        TEXT  NOT NULL
+    , owner_id                      TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, tgw_id, owner_id)
+    , FOREIGN KEY (tool_run_id, tgw_id)
+        REFERENCES raw_aws_transit_gateways(tool_run_id, tgw_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_transit_gateway_attachments (
+      tool_run_id                   UUID  NOT NULL
+    , tgw_id                        TEXT  NOT NULL
+    , tgw_attach_id                 TEXT  NOT NULL
+    , state                         TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, tgw_id, tgw_attach_id)
+    , FOREIGN KEY (tool_run_id, tgw_id)
+        REFERENCES raw_aws_transit_gateways(tool_run_id, tgw_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+CREATE TABLE raw_aws_transit_gateway_attachment_details (
+      tool_run_id                   UUID  NOT NULL
+    , tgw_id                        TEXT  NOT NULL
+    , tgw_attach_id                 TEXT  NOT NULL
+    , resource_type                 TEXT  NOT NULL
+    , resource_id                   TEXT  NOT NULL
+    , resource_owner_id             TEXT  NOT NULL
+    , association_state             TEXT  NOT NULL
+    , PRIMARY KEY ( tool_run_id, tgw_id, tgw_attach_id
+                  , resource_type, resource_id, resource_owner_id
+                  , association_state
+                  )
+    , FOREIGN KEY (tool_run_id, tgw_id, tgw_attach_id)
+        REFERENCES raw_aws_transit_gateway_attachments( tool_run_id
+                                                      , tgw_id, tgw_attach_id
+                                                      )
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 -- ----------------------------------------------------------------------
 -- AWS cross component/service ties
