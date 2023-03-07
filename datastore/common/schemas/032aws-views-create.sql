@@ -47,14 +47,21 @@ LEFT JOIN raw_aws_network_interface_macs AS t2
 -------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW aws_vpc_route_table_defaults AS
+--SELECT DISTINCT
+--  vpc_id, route_table_id
+--FROM raw_aws_vpc_route_tables AS ravrt
+--WHERE NOT EXISTS (
+--  SELECT
+--  FROM raw_aws_route_table_associations
+--  WHERE route_table_id = ravrt.route_table_id
+--)
+--;
 SELECT DISTINCT
-  vpc_id, route_table_id
-FROM raw_aws_vpc_route_tables AS ravrt
-WHERE NOT EXISTS (
-  SELECT
-  FROM raw_aws_route_table_associations
-  WHERE route_table_id = ravrt.route_table_id
-)
+    vpc_id
+  , route_table_id
+FROM raw_aws_vpc_route_tables
+WHERE is_default = 't'
+ORDER BY 1,2
 ;
 
 -------------------------------------------------------------------------------
@@ -110,6 +117,24 @@ WHERE state_name NOT IN ('terminated','shutting down')
 
 -------------------------------------------------------------------------------
 
+CREATE OR REPLACE VIEW aws_vpc_cidr_blocks AS
+SELECT DISTINCT
+    t1.vpc_id
+  , t1.owner_id
+  , t2.cidr_block
+  , t3.state
+FROM raw_aws_vpc_owners AS t1
+LEFT JOIN raw_aws_vpc_cidr_blocks AS t2
+  ON t1.vpc_id = t2.vpc_id
+LEFT JOIN raw_aws_vpc_cidr_blocks AS t3
+  ON t1.vpc_id = t3.vpc_id
+ AND t3.state IS NOT NULL
+ AND t2.cidr_block = t3.cidr_block
+ORDER BY 1,2,3
+;
+
+-------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
 -- Additional views; inter-dependencies
 -------------------------------------------------------------------------------
@@ -128,7 +153,7 @@ SELECT DISTINCT
   , ranisg.security_group_id
   , ranivs.subnet_id
   , ranas.network_acl_id
-  , COALESCE(rarta.route_table_id, avrtd.route_table_id)
+  , COALESCE(rarta.route_table_id, avrtd.route_table_id) AS route_table_id
   , ranivs.vpc_id
 FROM raw_aws_network_interface_vpc_subnet AS ranivs
 LEFT JOIN raw_aws_network_interface_security_groups AS ranisg
@@ -151,11 +176,15 @@ LEFT JOIN aws_vpc_route_table_defaults AS avrtd
 
 CREATE OR REPLACE VIEW aws_route_table_routes AS
 SELECT DISTINCT
-    route_table_id
-  , destination_id AS next_hop_id
-  , cidr_block::text AS next_hop
-  , state
-FROM raw_aws_route_table_routes_cidr
+    t1.route_table_id
+  , t1.destination_id AS next_hop_id
+  , COALESCE(t2.vpc_id, t1.cidr_block::text) AS next_hop
+  , t1.state
+FROM raw_aws_route_table_routes_cidr AS t1
+LEFT JOIN aws_vpc_cidr_blocks AS t2
+  ON t1.destination_id != 'local'
+ AND t1.cidr_block <<= t2.cidr_block
+ AND t2.state = 'available'
 UNION
 SELECT DISTINCT
     route_table_id

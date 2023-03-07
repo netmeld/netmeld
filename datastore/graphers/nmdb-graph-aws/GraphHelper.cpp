@@ -73,12 +73,12 @@ void
 GraphWriter::operator()(std::ostream& os) const
 {
   os << "rankdir=LR\n"
-//     << "splines=ortho;\n"
+     << "//splines=ortho;\n"
      << "splines=true;\n"
-//     << "nodesep=1.00;\n"
-//     << "ranksep=2.50;\n"
+     << "nodesep=1.00;\n"
+     << "ranksep=2.50;\n"
      << "overlap=false;\n"
-//     << "beautify=true;\n"
-//     << "concentrate=true;\n"
+     << "beautify=true;\n"
+     << "concentrate=true;\n"
      ;
 }

@@ -175,7 +175,7 @@ namespace netmeld::datastore::utils {
           INSERT INTO raw_aws_vpc_details
             (tool_run_id, vpc_id, state)
           VALUES
-            ($1, $2, nullif($3, ''))
+            ($1, $2, $3)
           ON CONFLICT DO NOTHING
         )");
 
@@ -184,7 +184,7 @@ namespace netmeld::datastore::utils {
           INSERT INTO raw_aws_vpc_cidr_blocks
             (tool_run_id, vpc_id, cidr_block, state)
           VALUES
-            ($1, $2, $3, $4)
+            ($1, $2, $3, nullif($4, ''))
           ON CONFLICT DO NOTHING
         )");
 

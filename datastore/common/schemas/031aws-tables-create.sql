@@ -196,8 +196,8 @@ CREATE TABLE raw_aws_vpc_owners (
 CREATE TABLE raw_aws_vpc_details (
       tool_run_id                   UUID  NOT NULL
     , vpc_id                        TEXT  NOT NULL
-    , state                         TEXT  NULL
-    , PRIMARY KEY (tool_run_id, vpc_id)
+    , state                         TEXT  NOT NULL
+    , PRIMARY KEY (tool_run_id, vpc_id, state)
     , FOREIGN KEY (tool_run_id, vpc_id)
         REFERENCES raw_aws_vpcs(tool_run_id, vpc_id)
         ON DELETE CASCADE
@@ -207,8 +207,8 @@ CREATE TABLE raw_aws_vpc_cidr_blocks (
       tool_run_id                   UUID  NOT NULL
     , vpc_id                        TEXT  NOT NULL
     , cidr_block                    CIDR  NOT NULL
-    , state                         TEXT  NOT NULL
-    , PRIMARY KEY (tool_run_id, vpc_id, cidr_block, state)
+    , state                         TEXT  NULL
+    , PRIMARY KEY (tool_run_id, vpc_id, cidr_block)
     , FOREIGN KEY (tool_run_id, vpc_id)
         REFERENCES raw_aws_vpcs(tool_run_id, vpc_id)
         ON DELETE CASCADE
