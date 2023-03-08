@@ -47,15 +47,6 @@ LEFT JOIN raw_aws_network_interface_macs AS t2
 -------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW aws_vpc_route_table_defaults AS
---SELECT DISTINCT
---  vpc_id, route_table_id
---FROM raw_aws_vpc_route_tables AS ravrt
---WHERE NOT EXISTS (
---  SELECT
---  FROM raw_aws_route_table_associations
---  WHERE route_table_id = ravrt.route_table_id
---)
---;
 SELECT DISTINCT
     vpc_id
   , route_table_id
@@ -135,6 +126,21 @@ ORDER BY 1,2,3
 
 -------------------------------------------------------------------------------
 
+CREATE OR REPLACE VIEW aws_vpc_default_security_groups AS
+SELECT DISTINCT
+    t1.vpc_id
+  , t1.security_group_id
+FROM raw_aws_vpc_security_groups AS t1
+LEFT JOIN raw_aws_security_group_details AS t2
+  ON t1.security_group_id = t2.security_group_id
+ AND t2.group_name = 'default' -- AWS magic value
+WHERE t2.security_group_id IS NOT NULL
+ORDER BY 1,2
+;
+
+-------------------------------------------------------------------------------
+
+
 -------------------------------------------------------------------------------
 -- Additional views; inter-dependencies
 -------------------------------------------------------------------------------
@@ -150,7 +156,7 @@ ORDER BY 1,2,3
 CREATE OR REPLACE VIEW aws_eni_sg_subnet_nacl_rt_vpc_join AS
 SELECT DISTINCT
   ranivs.interface_id
-  , ranisg.security_group_id
+  , COALESCE(ranisg.security_group_id, avdsg.security_group_id) AS security_group_id
   , ranivs.subnet_id
   , ranas.network_acl_id
   , COALESCE(rarta.route_table_id, avrtd.route_table_id) AS route_table_id
@@ -158,6 +164,8 @@ SELECT DISTINCT
 FROM raw_aws_network_interface_vpc_subnet AS ranivs
 LEFT JOIN raw_aws_network_interface_security_groups AS ranisg
   ON ranivs.interface_id = ranisg.interface_id
+LEFT JOIN aws_vpc_default_security_groups AS avdsg
+  ON ranivs.vpc_id = avdsg.vpc_id
 LEFT JOIN raw_aws_network_acl_subnets AS ranas
   ON ranivs.subnet_id = ranas.subnet_id
 LEFT JOIN raw_aws_route_table_associations AS rarta
@@ -277,7 +285,8 @@ SELECT DISTINCT
   , t1.target
   , t3.ip_address AS cidr_block
 FROM raw_aws_security_group_rules_non_ip_ports AS t1
-LEFT JOIN raw_aws_network_interface_security_groups AS t2
+--LEFT JOIN raw_aws_network_interface_security_groups AS t2
+LEFT JOIN aws_eni_sg_subnet_nacl_rt_vpc_join AS t2
   ON t1.target = t2.security_group_id
 LEFT JOIN raw_aws_network_interface_ips AS t3
   ON t2.interface_id = t3.interface_id
@@ -308,7 +317,8 @@ SELECT DISTINCT
   , t1.target
   , t3.ip_address AS cidr_block
 FROM raw_aws_security_group_rules_non_ip_type_codes AS t1
-LEFT JOIN raw_aws_network_interface_security_groups AS t2
+--LEFT JOIN raw_aws_network_interface_security_groups AS t2
+LEFT JOIN aws_eni_sg_subnet_nacl_rt_vpc_join AS t2
   ON t1.target = t2.security_group_id
 LEFT JOIN raw_aws_network_interface_ips AS t3
   ON t2.interface_id = t3.interface_id
@@ -382,7 +392,8 @@ SELECT DISTINCT
   , t2.ports
   , t2.cidr_block
   , NULL AS target
-FROM raw_aws_network_interface_security_groups AS t1
+--FROM raw_aws_network_interface_security_groups AS t1
+FROM aws_eni_sg_subnet_nacl_rt_vpc_join AS t1
 LEFT JOIN aws_security_group_rules_ports AS t2
   ON (t1.security_group_id = t2.security_group_id)
 UNION
@@ -394,7 +405,8 @@ SELECT DISTINCT
   , t2.ports
   , t2.cidr_block
   , t2.target
-FROM raw_aws_network_interface_security_groups AS t1
+--FROM raw_aws_network_interface_security_groups AS t1
+FROM aws_eni_sg_subnet_nacl_rt_vpc_join AS t1
 LEFT JOIN aws_security_group_rules_non_ip_ports AS t2
   ON (t1.security_group_id = t2.security_group_id)
 )
@@ -429,7 +441,8 @@ SELECT DISTINCT
   , t2.code
   , t2.cidr_block
   , NULL AS target
-FROM raw_aws_network_interface_security_groups AS t1
+--FROM raw_aws_network_interface_security_groups AS t1
+FROM aws_eni_sg_subnet_nacl_rt_vpc_join AS t1
 LEFT JOIN aws_security_group_rules_type_codes AS t2
   ON (t1.security_group_id = t2.security_group_id)
 UNION
@@ -442,7 +455,8 @@ SELECT DISTINCT
   , t2.code
   , t2.cidr_block
   , t2.target
-FROM raw_aws_network_interface_security_groups AS t1
+--FROM raw_aws_network_interface_security_groups AS t1
+FROM aws_eni_sg_subnet_nacl_rt_vpc_join AS t1
 LEFT JOIN aws_security_group_rules_non_ip_type_codes AS t2
   ON (t1.security_group_id = t2.security_group_id)
 )

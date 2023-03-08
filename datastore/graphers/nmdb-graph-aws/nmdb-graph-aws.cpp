@@ -189,6 +189,20 @@ class Tool : public nmdt::AbstractGraphTool
           ORDER BY 1,2,3,4,5
           )"
         );
+      db.prepare("select_aws_eni_vertex_sg_rules_empty", R"(
+          SELECT DISTINCT
+              interface_id
+          FROM aws_eni_security_group_rules_full_machine
+          WHERE egress IS NULL
+            AND interface_id NOT IN (
+              SELECT DISTINCT
+                  interface_id
+              FROM aws_eni_security_group_rules_full_machine
+              WHERE egress IS NOT NULL
+            )
+          ORDER BY 1
+          )"
+        );
 
       db.prepare("select_aws_subnet_vertices", R"(
           select distinct
@@ -606,6 +620,24 @@ class Tool : public nmdt::AbstractGraphTool
               << R"(<br/>SG allowed ingress<br align="left"/>)"
               << R"( - any stateful<br align="left"/>)"
               << sgFlows.at(sgIngress)
+              ;
+
+          addVertex("box", id, oss.str());
+        }
+      }
+      {
+        pqxx::result vRows =
+          t.exec_prepared("select_aws_eni_vertex_sg_rules_empty");
+
+        for (const auto& vRow : vRows) {
+          std::string id;
+          vRow.at("interface_id").to(id);
+
+          std::ostringstream oss;
+          oss << R"(<br/>SG allowed egress<br align="left"/>)"
+              << R"( - none<br align="left"/>)"
+              << R"(<br/>SG allowed ingress<br align="left"/>)"
+              << R"( - none<br align="left"/>)"
               ;
 
           addVertex("box", id, oss.str());
