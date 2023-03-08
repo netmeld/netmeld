@@ -43,34 +43,12 @@ class TestParser : public Parser
     using Parser::packageLine;
 };
 
-BOOST_AUTO_TEST_CASE(testPackageLine)
-{
-  TestParser tp;
-
-  {
-    const auto& parserRule {tp.packageLine};
-
-    // OK
-    std::vector<std::string> testsOk {
-      "pkg        1.0         all     some description\n",
-      "pkg-other  1.1.99.0-5  amd64   more des-cript -- ion\n",
-      "pkg-o12    1.0+v1      x86_64  description\n",
-    };
-
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'packageLine': " << test);
-    }
-  }
-}
-
 BOOST_AUTO_TEST_CASE(testWhole)
 {
   TestParser tp;
   const auto &parserRule {tp};
 
   std::vector<std::string> testsOk {
-    // dpkg -l | head
     R"STR(polkit-libs                                            0.115-11.el8              x86_64              Libraries for polkit
           geolite2-country                                    20180605-1.el8               noarch              Free IP geolocation country database
           libevent                                               2.1.8-5.el8               x86_64              Abstract asynchronous event notification library

@@ -24,68 +24,70 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
-#include "Parser.hpp"
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-namespace nmdt = netmeld::datastore::tools;
+#include <netmeld/datastore/objects/Package.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdo = netmeld::datastore::objects;
 
 // =============================================================================
-// Import tool definition
+// Data containers
 // =============================================================================
-template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+struct Data
+{
+  std::vector<nmdo::Package>    packages;
+  nmdo::ToolObservations        observations;
+};
+typedef std::vector<Data> Result;
+
+// =============================================================================
+// Parser definition
+// =============================================================================
+class Parser :
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
   private:
+    // Supporting data structures
+    Data data;
+
   protected:
-  public:
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      start;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      headers, ignoredLine;
+
+    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
+      packageLine;
+
+    qi::rule<nmdp::IstreamIter, std::string()>
+      packageName,
+      version,
+      architecture,
+      description,
+      token
+    ;
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  private:
-  protected:
   public:
-    Tool() : nmdt::AbstractImportTool<P,R>
-      (
-       "dpkg -l",  // command line tool imports data from
-       PROGRAM_NAME,           // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION         // program version (set in CMakeLists.txt)
-      )
-    {}
+    Parser();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private: // Methods part of internal API
-    void
-    specificInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
-      const auto& deviceId  {this->getDeviceId()};
-      for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over Packages";
-        for(auto& result : results.packages){
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
-        }
-        LOG_DEBUG << "Iterating over Observations\n";
-        results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << "\n";
-      }
-    }
+  private:
+    void addPackage(const nmdo::Package&);
 
-  protected:
-  public:
+    Result getData();
 };
-
-// =============================================================================
-// Program entry point
-// =============================================================================
-int
-main(int argc, char** argv) {
-  Tool<Parser, Result> tool;
-  return tool.start(argc, argv);
-}
+#endif // PARSER_HPP

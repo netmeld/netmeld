@@ -28,15 +28,17 @@
 // =============================================================================
 // Parser logic
 // =============================================================================
-Parser::Parser() : Parser::base_type(prestart)
+Parser::Parser() : Parser::base_type(start)
 {
-  prestart = start [(qi::_val = pnx::bind(&Parser::getData, this))];
-
   start =
-    *(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
+    (*(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
       | ignoredLine
       | qi::eol
-    )
+    )) [(qi::_val = pnx::bind(&Parser::getData, this))]
+  ;
+
+  token =
+    +qi::ascii::graph
   ;
 
   packageLine =
@@ -48,26 +50,22 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageName =
-    +token
+    token
   ;
   version =
-    +token
+    token
   ;
 
   architecture =
-    +token
+    token
   ;
 
   description =
     +qi::ascii::print
   ;
 
-  token =
-    +qi::ascii::graph
-  ;
-
   ignoredLine =
-    (+token > -qi::eol) | +qi::eol
+    (token > -qi::eol) | +qi::eol
   ;
 
   // Allows for error handling and debugging of qi.

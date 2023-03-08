@@ -1,7 +1,9 @@
 DESCRIPTION
 ===========
 
-Parse and import the output of the `rpm -qa --queryformat="%-50{NAME}%10{VERSION}%-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n"` command on modern Linux
+Parse and import the output of the 
+`rpm -qa --queryformat="%-50{NAME}%10{VERSION}%-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n"` 
+command on modern Linux
 systems into the Netmeld framework for later analysis. Import's package's
 based on device-id.
 
