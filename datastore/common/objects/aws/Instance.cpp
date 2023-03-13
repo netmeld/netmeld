@@ -105,24 +105,18 @@ namespace netmeld::datastore::objects::aws {
         , instanceId
       );
 
-    bool hasDetails {
-        true // NOTE Let datastore logic handle existance or not
-      };
-
-    if (hasDetails) {
-      t.exec_prepared("insert_raw_aws_instance_detail"
-          , toolRunId
-          , instanceId
-          , type
-          , imageId
-          , architecture
-          , platformDetails
-          , launchTime
-          , availabilityZone
-          , stateCode
-          , stateName
-        );
-    }
+    t.exec_prepared("insert_raw_aws_instance_detail"
+        , toolRunId
+        , instanceId
+        , type
+        , imageId
+        , architecture
+        , platformDetails
+        , launchTime
+        , availabilityZone
+        , stateCode
+        , stateName
+      );
 
     for (auto interface : interfaces) {
       interface.save(t, toolRunId, instanceId);

@@ -78,7 +78,7 @@ class LabelWriter
     AwsGraph const& graph;
 
   public:
-    explicit LabelWriter(AwsGraph&);
+    explicit LabelWriter(const AwsGraph&);
 
     void operator()(std::ostream&, Vertex const&) const;
     void operator()(std::ostream&, Edge const&) const;

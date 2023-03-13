@@ -29,7 +29,7 @@
 //==============================================================================
 // LabelWriter
 //==============================================================================
-LabelWriter::LabelWriter(AwsGraph& _graph) :
+LabelWriter::LabelWriter(const AwsGraph& _graph) :
   graph(_graph)
 {}
 

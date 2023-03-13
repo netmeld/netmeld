@@ -895,9 +895,9 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addVertex( const std::string shape
-             , const std::string id
-             , const std::string label=""
+    addVertex( const std::string& shape
+             , const std::string& id
+             , const std::string& label=""
              )
     {
       LOG_DEBUG << "Vertex: " << id << " (" << shape << ") -- " << label
@@ -924,7 +924,7 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     std::string
-    getLabelHeader(const std::string id) {
+    getLabelHeader(const std::string& id) {
       std::ostringstream oss;
 
       oss << R"(" + <<table border="0" cellborder="0"><tr>)"
@@ -1034,21 +1034,6 @@ class Tool : public nmdt::AbstractGraphTool
 
       pqxx::result eRows =
         t.exec_prepared("select_aws_eni_to_subnet_edges");
-
-      for (const auto& eRow : eRows) {
-        std::string src;
-        eRow.at("interface_id").to(src);
-        std::string dst;
-        eRow.at("subnet_id").to(dst);
-
-        addEdge(src, dst);
-      }
-    }
-    void
-    addEdgeEniToSubnet(pqxx::transaction_base& t, const std::string& eniId)
-    {
-      pqxx::result eRows =
-        t.exec_prepared("select_aws_eni_to_subnet_edges", eniId);
 
       for (const auto& eRow : eRows) {
         std::string src;

@@ -100,9 +100,12 @@ namespace netmeld::datastore::objects::aws {
       return;
     }
 
+    const std::string icmp {"icmp"};
+    const std::string any  {"-1"};
+
     for (auto ip : cidrBlocks) {
       ip.save(t, toolRunId, deviceId);
-      if (protocol == "icmp" || protocol == "-1") {
+      if (protocol == icmp || protocol == any) {
         t.exec_prepared("insert_raw_aws_security_group_rules_type_code"
             , toolRunId
             , deviceId
@@ -113,7 +116,7 @@ namespace netmeld::datastore::objects::aws {
             , ip.toString()
           );
       }
-      if (protocol != "icmp" || protocol == "-1") {
+      if (protocol != icmp || protocol == any) {
         t.exec_prepared("insert_raw_aws_security_group_rules_port"
             , toolRunId
             , deviceId
@@ -127,7 +130,7 @@ namespace netmeld::datastore::objects::aws {
     }
 
     for (const auto& target : nonCidrs) {
-      if (protocol == "icmp" || protocol == "-1") {
+      if (protocol == icmp || protocol == any) {
         t.exec_prepared("insert_raw_aws_security_group_rules_non_ip_type_code"
             , toolRunId
             , deviceId
@@ -138,7 +141,7 @@ namespace netmeld::datastore::objects::aws {
             , target
           );
       }
-      if (protocol != "icmp" || protocol == "-1") {
+      if (protocol != icmp || protocol == any) {
         t.exec_prepared("insert_raw_aws_security_group_rules_non_ip_port"
             , toolRunId
             , deviceId
