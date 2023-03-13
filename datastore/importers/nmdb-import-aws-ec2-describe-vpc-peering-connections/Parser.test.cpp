@@ -46,21 +46,139 @@ class TestParser : public Parser
     using Parser::processCidrBlockSets;
 };
 
-//BOOST_AUTO_TEST_CASE(testProcessVpcPeeringConnections)
-//{
-//}
-//
-//BOOST_AUTO_TEST_CASE(testProcessAccepter)
-//{
-//}
-//
-//BOOST_AUTO_TEST_CASE(testProcessRequester)
-//{
-//}
-//
-//BOOST_AUTO_TEST_CASE(testProcessCidrBlockSets)
-//{
-//}
+BOOST_AUTO_TEST_CASE(testProcessVpcPeeringConnections)
+{
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"(
+        { "VpcPeeringConnections":
+          [ { "VpcPeeringConnectionId": ""
+            , "Status":
+              { "Code": ""
+              , "Message": ""
+              }
+            }
+          ]
+        }
+        )"
+      );
+    tp.processVpcPeeringConnections(tv1);
+    auto tobj = tp.getData()[0].pcxs;
+    BOOST_TEST(1 == tobj.size());
+    nmdoa::VpcPeeringConnection tev1;
+    BOOST_TEST(tev1 == tobj[0]);
+  }
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"(
+        { "VpcPeeringConnections":
+          [ { "VpcPeeringConnectionId": "aB1-2c3"
+            , "Status":
+              { "Code": "aB1-2c3"
+              , "Message": "aB1-2c3"
+              }
+            }
+          ]
+        }
+        )"
+      );
+    tp.processVpcPeeringConnections(tv1);
+    auto tobj = tp.getData()[0].pcxs;
+    const std::vector<std::string> tevs {
+          R"([pcxId: aB1-2c3,)"
+        , R"(statusCode: aB1-2c3,)"
+        , R"(statusMessage: aB1-2c3,)"
+      };
+    for (const auto& tev : tevs) {
+      nmdp::testInString(tobj[0].toDebugString(), tev);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testProcessAccepter)
+{
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"(
+        { "AccepterVpcInfo":
+          { "OwnerId": "aB1-2c3"
+          , "VpcId": "aB1-2c3"
+          , "CidrBlock": "aB1-2c3"
+          }
+        }
+        )"
+      );
+    nmdoa::VpcPeeringConnection tobj;
+    tp.processAccepter(tv1, tobj);
+    const std::vector<std::string> tevs {
+          R"(accepter: [vpcId: aB1-2c3,)"
+        , R"(ownerId: aB1-2c3,)"
+        , R"(cidrBlocks: [[cidrBlock: aB1-2c3,)"
+      };
+    for (const auto& tev : tevs) {
+      nmdp::testInString(tobj.toDebugString(), tev);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testProcessRequester)
+{
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"(
+        { "RequesterVpcInfo":
+          { "OwnerId": "aB1-2c3"
+          , "VpcId": "aB1-2c3"
+          , "CidrBlock": "aB1-2c3"
+          }
+        }
+        )"
+      );
+    nmdoa::VpcPeeringConnection tobj;
+    tp.processRequester(tv1, tobj);
+    const std::vector<std::string> tevs {
+          R"(requester: [vpcId: aB1-2c3,)"
+        , R"(ownerId: aB1-2c3,)"
+        , R"(cidrBlocks: [[cidrBlock: aB1-2c3,)"
+      };
+    for (const auto& tev : tevs) {
+      nmdp::testInString(tobj.toDebugString(), tev);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testProcessCidrBlockSets)
+{
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"(
+        { "CidrBlockSet":
+          [ { "CidrBlock": "ipv4-aB1-2c3"
+            }
+          ]
+        , "Ipv6CidrBlockSet":
+          [ { "Ipv6CidrBlock": "ipv6-aB1-2c3"
+            }
+          ]
+        }
+        )"
+      );
+    nmdoa::Vpc tobj;
+    tp.processCidrBlockSets(tv1, tobj);
+    const std::vector<std::string> tevs {
+          R"([cidrBlock: ipv4-aB1-2c3,)"
+        , R"([cidrBlock: ipv6-aB1-2c3,)"
+      };
+    for (const auto& tev : tevs) {
+      nmdp::testInString(tobj.toDebugString(), tev);
+    }
+  }
+}
 
 BOOST_AUTO_TEST_CASE(testFromJson)
 {

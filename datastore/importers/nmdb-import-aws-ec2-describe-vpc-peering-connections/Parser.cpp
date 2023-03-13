@@ -91,6 +91,7 @@ Parser::processAccepter(const json& _json,
 
   _pcx.setAccepter(vpc);
 }
+
 void
 Parser::processRequester(const json& _json,
                          nmdoa::VpcPeeringConnection& _pcx)
