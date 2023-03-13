@@ -97,14 +97,15 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   Attachment::operator<=>(const Attachment& rhs) const
   {
-    if (auto cmp = attachmentId <=> rhs.attachmentId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = status <=> rhs.status; 0 != cmp) {
-      return cmp;
-    }
-
-    return deleteOnTermination <=> rhs.deleteOnTermination;
+    return std::tie( attachmentId
+                   , status
+                   , deleteOnTermination
+                   )
+       <=> std::tie( rhs.attachmentId
+                   , rhs.status
+                   , rhs.deleteOnTermination
+                   )
+      ;
   }
 
   bool

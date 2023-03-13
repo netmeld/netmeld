@@ -134,17 +134,17 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   Vpc::operator<=>(const Vpc& rhs) const
   {
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = ownerId <=> rhs.ownerId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
-      return cmp;
-    }
-
-    return cidrBlocks <=> rhs.cidrBlocks;
+    return std::tie( vpcId
+                   , ownerId
+                   , state
+                   , cidrBlocks
+                   )
+       <=> std::tie( rhs.vpcId
+                   , rhs.ownerId
+                   , rhs.state
+                   , rhs.cidrBlocks
+                   )
+      ;
   }
 
   bool

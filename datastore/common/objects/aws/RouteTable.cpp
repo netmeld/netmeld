@@ -130,20 +130,19 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   RouteTable::operator<=>(const RouteTable& rhs) const
   {
-    if (auto cmp = routeTableId <=> rhs.routeTableId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = associations <=> rhs.associations; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = isDefault <=> rhs.isDefault; 0 != cmp) {
-      return cmp;
-    }
-
-    return routes <=> rhs.routes;
+    return std::tie( routeTableId
+                   , vpcId
+                   , associations
+                   , isDefault
+                   , routes
+                   )
+       <=> std::tie( rhs.routeTableId
+                   , rhs.vpcId
+                   , rhs.associations
+                   , rhs.isDefault
+                   , rhs.routes
+                   )
+      ;
   }
 
   bool

@@ -186,26 +186,23 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   SecurityGroupRule::operator<=>(const SecurityGroupRule& rhs) const
   {
-    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = fromOrType <=> rhs.fromOrType; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = toOrCode <=> rhs.toOrCode; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = cidrBlocks <=> rhs.cidrBlocks; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = nonCidrs <=> rhs.nonCidrs; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = details <=> rhs.details; 0 != cmp) {
-      return cmp;
-    }
-
-    return egress <=> rhs.egress;
+    return std::tie( protocol
+                   , fromOrType
+                   , toOrCode
+                   , cidrBlocks
+                   , nonCidrs
+                   , details
+                   , egress
+                   )
+       <=> std::tie( rhs.protocol
+                   , rhs.fromOrType
+                   , rhs.toOrCode
+                   , rhs.cidrBlocks
+                   , rhs.nonCidrs
+                   , rhs.details
+                   , rhs.egress
+                   )
+      ;
   }
 
   bool

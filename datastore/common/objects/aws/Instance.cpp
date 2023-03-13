@@ -154,35 +154,29 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   Instance::operator<=>(const Instance& rhs) const
   {
-    if (auto cmp = instanceId <=> rhs.instanceId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = type <=> rhs.type; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = imageId <=> rhs.imageId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = architecture <=> rhs.architecture; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = platformDetails <=> rhs.platformDetails; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = launchTime <=> rhs.launchTime; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = availabilityZone <=> rhs.availabilityZone; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = stateCode <=> rhs.stateCode; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = stateName <=> rhs.stateName; 0 != cmp) {
-      return cmp;
-    }
-
-    return interfaces <=> rhs.interfaces;
+    return std::tie( instanceId
+                   , type
+                   , imageId
+                   , architecture
+                   , platformDetails
+                   , launchTime
+                   , availabilityZone
+                   , stateCode
+                   , stateName
+                   , interfaces
+                   )
+       <=> std::tie( rhs.instanceId
+                   , rhs.type
+                   , rhs.imageId
+                   , rhs.architecture
+                   , rhs.platformDetails
+                   , rhs.launchTime
+                   , rhs.availabilityZone
+                   , rhs.stateCode
+                   , rhs.stateName
+                   , rhs.interfaces
+                   )
+      ;
   }
 
   bool

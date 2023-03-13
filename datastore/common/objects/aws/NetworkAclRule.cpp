@@ -169,32 +169,27 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   NetworkAclRule::operator<=>(const NetworkAclRule& rhs) const
   {
-    if (auto cmp = number <=> rhs.number; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = action <=> rhs.action; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = fromOrType <=> rhs.fromOrType; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = toOrCode <=> rhs.toOrCode; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = egress <=> rhs.egress; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = portRange <=> rhs.portRange; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = typeCode <=> rhs.typeCode; 0 != cmp) {
-      return cmp;
-    }
-
-    return cidrBlocks <=> rhs.cidrBlocks;
+    return std::tie( number
+                   , action
+                   , protocol
+                   , fromOrType
+                   , toOrCode
+                   , egress
+                   , portRange
+                   , typeCode
+                   , cidrBlocks
+                   )
+       <=> std::tie( rhs.number
+                   , rhs.action
+                   , rhs.protocol
+                   , rhs.fromOrType
+                   , rhs.toOrCode
+                   , rhs.egress
+                   , rhs.portRange
+                   , rhs.typeCode
+                   , rhs.cidrBlocks
+                   )
+      ;
   }
 
   bool
