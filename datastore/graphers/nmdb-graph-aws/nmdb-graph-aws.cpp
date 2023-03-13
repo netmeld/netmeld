@@ -186,7 +186,7 @@ class Tool : public nmdt::AbstractGraphTool
             , cidr_block , target
           FROM aws_eni_security_group_rules_full_machine
           WHERE egress IS NOT NULL
-          ORDER BY 1,2,3,4,5
+          ORDER BY 1,2,7,8,3,4,5,6
           )"
         );
       db.prepare("select_aws_eni_vertex_sg_rules_empty", R"(
@@ -885,9 +885,9 @@ class Tool : public nmdt::AbstractGraphTool
         }
         if (!noDetails) {
           if (!vertexLookup.count(id)) {
-            oss << R"(Subnet(s))<br align="left"/>)";
+            oss << R"(Subnet(s)<br align="left"/>)";
           }
-          oss << " - " << cidr << R"()<br align="left"/>)";
+          oss << " - " << cidr << R"(<br align="left"/>)";
         }
 
         addVertex("oval", id, oss.str());
