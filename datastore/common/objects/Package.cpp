@@ -123,13 +123,13 @@ namespace netmeld::datastore::objects
     Package::toDebugString() const
     {
         std::ostringstream oss;
-            oss << "["; // opening bracket
-            oss << "state: " << state << ", "
-                << "name: " << name << ", "
-                << "version: " << version << ", "
-                << "architecture: " << architecture << ", "
-                << "description: " << description;
-            oss << "]"; // closing bracket
+        oss << "["; // opening bracket
+        oss << "state: " << state << ", "
+            << "name: " << name << ", "
+            << "version: " << version << ", "
+            << "architecture: " << architecture << ", "
+            << "description: " << description;
+        oss << "]"; // closing bracket
         return oss.str();
     }
 }

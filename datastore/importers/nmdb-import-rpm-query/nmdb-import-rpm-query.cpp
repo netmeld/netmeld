@@ -50,7 +50,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   public:
     Tool() : nmdt::AbstractImportTool<P,R>
       (
-       "rpm -qa",  // command line tool imports data from
+       R"(rpm -qa --queryformat="%-50{NAME}%10{VERSION}-%-20{RELEASE}%-20{ARCH}%{SUMMARY}\n")",  // command line tool imports data from
        PROGRAM_NAME,           // program name (set in CMakeLists.txt)
        PROGRAM_VERSION         // program version (set in CMakeLists.txt)
       )
