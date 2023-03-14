@@ -92,7 +92,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       std::ifstream f {this->getDataPath().string()};
 
       this->executionStart = nmco::Time();
-      
+
       Parser parser;
       parser.fromJson(json::parse(f));
       this->tResults = parser.getData();

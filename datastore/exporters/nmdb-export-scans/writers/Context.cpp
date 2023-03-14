@@ -243,7 +243,7 @@ namespace netmeld::export_scans {
       for (const auto& p : patterns) {
         docLink = std::regex_replace(docLink, p.first, p.second);
       }
-    
+
       codeSubsectionProwler(oss,
           severity, controlId, level, control, risk, remediation, docLink, count
         );

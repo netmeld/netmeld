@@ -646,7 +646,7 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
         parseConfigApplicationOrTerm(applicationNode);
     std::copy(
         aclServicesToAdd.begin(),
-        aclServicesToAdd.end(), 
+        aclServicesToAdd.end(),
         std::back_inserter(aclServices)
         );
   }
@@ -771,7 +771,7 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
     auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
         aclRulesToAdd.begin(),
-        aclRulesToAdd.end(), 
+        aclRulesToAdd.end(),
         std::back_inserter(aclRules)
         );
     ++ruleId;
@@ -784,7 +784,7 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
     auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
         aclRulesToAdd.begin(),
-        aclRulesToAdd.end(), 
+        aclRulesToAdd.end(),
         std::back_inserter(aclRules)
         );
     ++ruleId;

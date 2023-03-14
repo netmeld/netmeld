@@ -100,7 +100,7 @@ class Tool : public nmdlt::AbstractDatalakeTool
     {
       const auto& dataLake  {getDatalakeHandler()};
       const auto& deviceId  {opts.getValue("device-id")};
-      
+
       std::string dataPath;
       if (opts.exists("data-file")) {
         dataPath = opts.getValue("data-file");

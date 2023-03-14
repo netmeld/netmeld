@@ -52,7 +52,7 @@ digraph G {
     node [shape="cylinder"];
     git [label="Git Repository"];
   }
-  
+
 
   users->bins;
   users->git [lhead=cluster_datalake];

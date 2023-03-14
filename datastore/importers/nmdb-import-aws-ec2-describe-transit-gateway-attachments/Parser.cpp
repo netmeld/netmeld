@@ -66,7 +66,7 @@ Parser::processTransitGatewayAttachments(const json& _json)
       const auto& jsonSub {json.at("Association")};
       tgwa.setAssociationState(jsonSub.value("State", ""));
     }
-    
+
     d.tgwas.emplace_back(tgwa);
   }
 }

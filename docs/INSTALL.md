@@ -73,23 +73,23 @@ directory.
 * Create makefiles: `cmake -S . -B ./build`
   <details>
     <summary>Graphical Example</summary>
-  
+
     ![](term/createMakes2x.svg)
   </details>
-  
+
 * Building source:	`cmake --build ./build`
   * Build and run tests (example): `cmake --build ./build --target Test.netmeld`
   * Run test (example):	`(cd build/; ctest Test.netmeld)`
   <details>
     <summary>Graphical Example</summary>
-  
+
     ![](term/buildingSrc4x.svg)
   </details>
 
 * Installing (as a privileged user): `sudo cmake --install build`
   <details>
     <summary>Graphical Example</summary>
-  
+
     ![](term/installSrc.svg)
   </details>
 
@@ -105,7 +105,7 @@ a Netmeld library this will more than likely resolve the issue.
 
 <details>
   <summary>Graphical Example</summary>
-  
+
   ![](term/ldconfig.svg)
 </details>
 
@@ -122,7 +122,7 @@ nmdl-initialize
 ```
 <details>
   <summary>Graphical Example</summary>
-  
+
   ![](term/nmdl-init.svg)
 </details>
 
@@ -162,7 +162,7 @@ nmdb-initialize
 ```
 <details>
   <summary>Graphical Example</summary>
-  
+
   ![](term/nmdb-init.svg)
 </details>
 

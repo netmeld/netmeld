@@ -46,7 +46,7 @@ class Parser :
         decByte >> +hexByte >> -qi::eol
         ;
     }
-    
+
     qi::rule<nmdp::IstreamIter, Result()>
       start;
 

@@ -382,7 +382,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
     std::string mode6Response =
         _pd.count(ntpCtrlFlags2R) ? s1(ntpCtrlFlags2R) : "";
 
-    if (!("3" == mode || ("6" == mode && "1" != mode6Response))) { 
+    if (!("3" == mode || ("6" == mode && "1" != mode6Response))) {
       if ("6" == mode && "1" == mode6Response) {
         std::ostringstream oss;
         oss << "NTP control data present in frame: " << s1(frameNumber);

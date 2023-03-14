@@ -116,7 +116,7 @@ struct PhaseConfig
         << "\", \"family\": \"" << family
         << "\", \"sessionId\": \"" << sessionId
         << "\", \"dbConnectString\": \"" << dbConnectString
-        //<< "\", \"\": \"" << 
+        //<< "\", \"\": \"" <<
         << "\"}";
     return oss.str();
   }
@@ -1021,7 +1021,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       const YAML::Node& yCmdSet)
     {
       bool stageEnabled       {true};
-      const auto& cmdSetName  {yCmdSet["name"].as<std::string>()}; 
+      const auto& cmdSetName  {yCmdSet["name"].as<std::string>()};
       const auto& yFailMap    {yCmdSet["on-fail"]};
 
       if (noPrompt && yIs(yCmdSet, "no-prompt", std::string("skip"))) {

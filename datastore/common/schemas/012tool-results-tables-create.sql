@@ -882,7 +882,7 @@ CREATE TABLE raw_prowler_checks (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-    
+
 
 -- ----------------------------------------------------------------------
 
