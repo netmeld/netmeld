@@ -34,3 +34,23 @@ target_link_libraries(${TGT_TOOL}
   )
 
 nm_install_bin(${TGT_TOOL})
+
+foreach(ITEM
+    aws-acl.svg
+    aws-dcg.svg
+    aws-eni.svg
+    aws-igw.svg
+    aws-internet.svg
+    aws-i.svg
+    aws-nat.svg
+    aws-pcx.svg
+    aws-rtb.svg
+    aws-tgwa.svg
+    aws-tgw.svg
+    aws-vgw.svg
+    aws-vpce.svg
+    aws-vpc.svg
+    aws-vpn.svg
+  )
+  nm_install_conf("images/${ITEM}" "${NETMELD_IMAGE_DIR}")
+endforeach()
