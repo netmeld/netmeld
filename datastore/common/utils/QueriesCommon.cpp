@@ -446,7 +446,7 @@ namespace netmeld::datastore::utils {
 
 
     // ----------------------------------------------------------------------
-    // TABLES: AWS Route Table related
+    // TABLES: AWS Transit Gateway related
     // ----------------------------------------------------------------------
 
     db.prepare

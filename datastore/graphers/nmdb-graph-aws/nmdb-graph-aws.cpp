@@ -96,7 +96,7 @@ class Tool : public nmdt::AbstractGraphTool
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractGraphTool
       (
-       "AWS resources", // help blurb, prefixed with:
+       "AWS VPC related resources", // help blurb, prefixed with:
                         //   "Create dot formatted graph of "
        PROGRAM_NAME,    // program name (set in CMakeLists.txt)
        PROGRAM_VERSION  // program version (set in CMakeLists.txt)

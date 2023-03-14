@@ -87,8 +87,6 @@ Parser::processAccepter(const json& _json,
   vpc.addCidrBlock(cb);
   processCidrBlockSets(jVpc, vpc);
 
-  // TODO peering options
-
   _pcx.setAccepter(vpc);
 }
 
@@ -109,8 +107,6 @@ Parser::processRequester(const json& _json,
   cb.setCidrBlock(jVpc.value("CidrBlock", ""));
   vpc.addCidrBlock(cb);
   processCidrBlockSets(jVpc, vpc);
-
-  // TODO peering options
 
   _pcx.setRequester(vpc);
 }
