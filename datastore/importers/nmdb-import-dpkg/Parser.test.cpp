@@ -57,12 +57,11 @@ BOOST_AUTO_TEST_CASE(testPackageLine)
     std::vector<char> errorFlags      = {' ','R'};
 
     std::ostringstream oss;
-    std::string test;
     for (const auto i : desiredActions) {
       for (const auto j : packageStatuses) {
         for (const auto k : errorFlags) {
           oss << i << j << k << ' ';
-          test = oss.str();
+          std::string test {oss.str()};
           BOOST_TEST(nmdp::test(test.c_str(), parserRule),
                      "Parse rule 'packageState': " << test);
           oss.str(std::string());

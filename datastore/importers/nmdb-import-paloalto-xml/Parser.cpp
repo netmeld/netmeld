@@ -59,9 +59,9 @@ Parser::parseConfig(const pugi::xml_node& configNode)
   for (const auto& devicesEntryMatch :
        configNode.select_nodes("devices/entry")) {
     const pugi::xml_node devicesEntryNode{devicesEntryMatch.node()};
-    const std::string deviceName{
-      devicesEntryNode.attribute("name").value()
-    };
+    //const std::string deviceName {
+    //  devicesEntryNode.attribute("name").value()
+    //};
 
     for (const auto& deviceconfigMatch :
          devicesEntryNode.select_nodes("deviceconfig")) {

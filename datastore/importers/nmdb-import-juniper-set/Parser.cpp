@@ -225,13 +225,13 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
 void
-Parser::setIfaceRoute(const std::string& _iface, nmdo::IpAddress& _ip)
+Parser::setIfaceRoute(const std::string& _iface, const nmdo::IpAddress& _ip)
 {
   d.routes[_iface].setDstIpNet(_ip);
 }
 
 void
-Parser::setIfaceGateway(const std::string& _iface, nmdo::IpAddress& _ip)
+Parser::setIfaceGateway(const std::string& _iface, const nmdo::IpAddress& _ip)
 {
   d.routes[_iface].setNextHopIpAddr(_ip);
 }
@@ -255,7 +255,7 @@ Parser::disableIface()
 }
 
 void
-Parser::updateIfaceIp(nmdo::IpAddress& _ip)
+Parser::updateIfaceIp(const nmdo::IpAddress& _ip)
 {
   d.ifaces[tgtIface].addIpAddress(_ip);
 }

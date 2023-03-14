@@ -127,13 +127,13 @@ class Parser:
   // ===========================================================================
   private:
     // Route related
-    void setIfaceRoute(const std::string&, nmdo::IpAddress&);
-    void setIfaceGateway(const std::string&, nmdo::IpAddress&);
+    void setIfaceRoute(const std::string&, const nmdo::IpAddress&);
+    void setIfaceGateway(const std::string&, const nmdo::IpAddress&);
 
     // Interface related
     void initIface(const std::string&, const std::string&);
     void disableIface();
-    void updateIfaceIp(nmdo::IpAddress&);
+    void updateIfaceIp(const nmdo::IpAddress&);
     void updateZoneIfaceBook(const std::string&);
 
     // Access control related

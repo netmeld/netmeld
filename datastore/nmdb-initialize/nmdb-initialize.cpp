@@ -164,7 +164,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
       }
       // If DB doesn't exists, nothing special
-      catch (std::exception& e) { }
+      catch (const std::exception& e) { }
 
       pqxx::nontransaction ntWork{postgresDb};
       LOG_INFO << "Creating database '" << dbName << "'..." << std::endl;

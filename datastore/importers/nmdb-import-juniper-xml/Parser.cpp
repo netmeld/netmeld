@@ -1148,7 +1148,7 @@ Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName = ifaceName.substr(0, ifaceName.find(" ["));
+      ifaceName.resize(ifaceName.find(" ["));
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{
@@ -1198,7 +1198,7 @@ Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName = ifaceName.substr(0, ifaceName.find(" ["));
+      ifaceName.resize(ifaceName.find(" ["));
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{

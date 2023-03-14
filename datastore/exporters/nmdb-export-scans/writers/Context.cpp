@@ -302,7 +302,6 @@ namespace netmeld::export_scans {
       }
 
       std::string rowFrame {""};
-      std::string ipName   {"{} {}"};
       bool newRow {false};
       std::string nextServer {row[0] + row[1]};
       if (lastServer != nextServer) {
@@ -316,7 +315,7 @@ namespace netmeld::export_scans {
       std::string cellFrameType {"[leftframe=on]"};
       std::string cellFrameName {"[leftframe=on, rightframe=on]"};
       if (newRow || lastAlgo != nextAlgoType) {
-        newRow        = true;
+        // newRow        = true;
         algoType      = nextAlgoType;
         cellFrameType = "[topframe=on, leftframe=on]";
         cellFrameName = "[topframe=on, leftframe=on, rightframe=on]";

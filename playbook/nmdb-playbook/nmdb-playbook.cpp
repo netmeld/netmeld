@@ -71,7 +71,9 @@ namespace netmeld::playbook {
 struct SourceConfig
 {
   nmco::Uuid             playbookSourceId;
+  // cppcheck-suppress unusedStructMember
   std::string            description;
+  // cppcheck-suppress unusedStructMember
   std::set<std::string>  ipRouters;
   // cppcheck-suppress unusedStructMember
   int                    addrFamily;

@@ -302,16 +302,16 @@ Parser::ruleInit(size_t _ruleId)
 void
 Parser::ruleAddDstIface(const std::string& _tgtZone)
 {
-  for (auto& [_, rule] : d.ruleBooks[_tgtZone]) {
-    rule.addDstIface(tgtIface->getName());
+  for (auto& [_, rbRule] : d.ruleBooks[_tgtZone]) {
+    rbRule.addDstIface(tgtIface->getName());
   }
 }
 
 void
 Parser::ruleAddSrcIface(const std::string& _tgtZone)
 {
-  for (auto& [_, rule] : d.ruleBooks[_tgtZone]) {
-    rule.addSrcIface(tgtIface->getName());
+  for (auto& [_, rbRule] : d.ruleBooks[_tgtZone]) {
+    rbRule.addSrcIface(tgtIface->getName());
   }
 }
 
@@ -351,24 +351,24 @@ Result
 Parser::getData()
 {
   for (auto& [zone, ruleBook] : d.ruleBooks) {
-    for (auto& [ruleId, rule] : ruleBook) {
-      if (0 == rule.getSrcs().size()) {
-        rule.addSrc("any");
+    for (auto& [ruleId, rbRule] : ruleBook) {
+      if (0 == rbRule.getSrcs().size()) {
+        rbRule.addSrc("any");
       }
-      if (0 == rule.getSrcIfaces().size()) {
-        rule.addSrcIface("any");
+      if (0 == rbRule.getSrcIfaces().size()) {
+        rbRule.addSrcIface("any");
       }
-      if (0 == rule.getDsts().size()) {
-        rule.addDst("any");
+      if (0 == rbRule.getDsts().size()) {
+        rbRule.addDst("any");
       }
-      if (0 == rule.getDstIfaces().size()) {
-        rule.addDstIface("any");
+      if (0 == rbRule.getDstIfaces().size()) {
+        rbRule.addDstIface("any");
       }
-      if (0 == rule.getServices().size()) {
-        rule.addService(nmcu::getSrvcString("all","",""));
+      if (0 == rbRule.getServices().size()) {
+        rbRule.addService(nmcu::getSrvcString("all","",""));
       }
-      if (0 == rule.getActions().size() && !defaultAction.empty()) {
-        rule.addAction(defaultAction);
+      if (0 == rbRule.getActions().size() && !defaultAction.empty()) {
+        rbRule.addAction(defaultAction);
         defaultAction = "";
       }
     }

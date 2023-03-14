@@ -37,9 +37,13 @@ namespace nmcu = netmeld::core::utils;
 struct VertexProperties
 {
   std::string name;
+  // cppcheck-suppress unusedStructMember
   std::string label;
+  // cppcheck-suppress unusedStructMember
   std::string shape;
+  // cppcheck-suppress unusedStructMember
   std::string style;
+  // cppcheck-suppress unusedStructMember
   std::string fillcolor;
 
   double distance     {std::numeric_limits<double>::infinity()};
@@ -50,11 +54,16 @@ struct VertexProperties
 
 struct EdgeProperties
 {
+  // cppcheck-suppress unusedStructMember
   std::string label;
+  // cppcheck-suppress unusedStructMember
   std::string style;
 
+  // cppcheck-suppress unusedStructMember
   std::string direction;
+  // cppcheck-suppress unusedStructMember
   std::string arrowhead;
+  // cppcheck-suppress unusedStructMember
   std::string arrowtail;
 
   double weight {1.0};
@@ -184,7 +193,7 @@ class Tool : public nmdt::AbstractGraphTool
     bool showTracerouteHops {false};
 
     std::string respondingState;
-    bool        passRespondingState;
+    bool        passRespondingState {false};
 
     // naively colorblind safe:
     // - (use paul tol) https://davidmathlogic.com/colorblind/
