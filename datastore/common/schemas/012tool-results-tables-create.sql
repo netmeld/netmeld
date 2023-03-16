@@ -364,7 +364,7 @@ ON raw_ip_traceroutes(hop_count, next_hop_ip_addr, dst_ip_addr);
 
 CREATE TABLE raw_packages (
     tool_run_id                  UUID            NOT NULL,
-    package_state               TEXT            NOT NULL,
+    package_state                TEXT            NULL,
     package_name                 TEXT            NOT NULL,
     package_version              TEXT            NOT NULL,
     package_architecture         TEXT            NOT NULL,

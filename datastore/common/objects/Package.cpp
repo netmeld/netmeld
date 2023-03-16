@@ -98,7 +98,7 @@ namespace netmeld::datastore::objects
     bool
     Package::isValid() const
     {
-        return !name.empty() && !version.empty() && !state.empty() && !version.empty() && !architecture.empty() && !description.empty();
+        return !name.empty() && !version.empty() && !architecture.empty() && !description.empty();
     }
 
     void
@@ -123,15 +123,13 @@ namespace netmeld::datastore::objects
     Package::toDebugString() const
     {
         std::ostringstream oss;
-
         oss << "["; // opening bracket
-        oss << state << ", "
-            << name << ", "
-            << version << ", "
-            << architecture << ", "
-            << description;
+        oss << "state: " << state << ", "
+            << "name: " << name << ", "
+            << "version: " << version << ", "
+            << "architecture: " << architecture << ", "
+            << "description: " << description;
         oss << "]"; // closing bracket
-
         return oss.str();
     }
 }
