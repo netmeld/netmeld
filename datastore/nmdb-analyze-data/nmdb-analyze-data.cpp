@@ -133,7 +133,7 @@ class Tool : public nmdt::AbstractDatastoreTool
             << YAML::Key << NAME << YAML::Value << _name
             << YAML::Key << CMDS << YAML::Value << YAML::BeginSeq
             ;
-        for (auto& _cmd : _cmds) {
+        for (const auto& _cmd : _cmds) {
           out << _cmd;
         }
         out << YAML::EndSeq << YAML::EndMap;

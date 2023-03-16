@@ -77,7 +77,7 @@ class LabelWriter
     AcGraph const& graph;
 
   public:
-    explicit LabelWriter(AcGraph&);
+    explicit LabelWriter(const AcGraph&);
 
     void operator()(std::ostream&, Vertex const&) const;
     void operator()(std::ostream&, Edge const&) const;

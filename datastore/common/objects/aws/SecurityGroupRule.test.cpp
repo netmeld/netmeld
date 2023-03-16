@@ -42,10 +42,10 @@ class TestSecurityGroupRule : public nmdoa::SecurityGroupRule {
     { return protocol; }
 
     std::int32_t getFromPort() const
-    { return fromPort; }
+    { return fromOrType; }
 
     std::int32_t getToPort() const
-    { return toPort; }
+    { return toOrCode; }
 
     std::set<nmdoa::CidrBlock> getCidrBlocks() const
     { return cidrBlocks; }

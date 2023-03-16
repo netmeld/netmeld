@@ -8,13 +8,13 @@ by an underscore (`_`) and forward slashes replaced by Unicode code point
 U+2215 (`∕`).
 
 
-EXAMPLES 
+EXAMPLES
 ========
 
 Connect to the `linhost` target with the account `user` and execute the `ls`
 command.
-``` 
-nmdb-fetch-ssh user@linhost ls 
+```
+nmdb-fetch-ssh user@linhost ls
 ```
 
 Similar to above, except use a file with a list of commands to execute

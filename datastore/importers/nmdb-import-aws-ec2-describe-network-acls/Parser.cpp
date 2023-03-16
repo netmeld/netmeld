@@ -91,8 +91,10 @@ Parser::processEntries(const json& _nacl, nmdoa::NetworkAcl& _anacl)
 
     if (entry.contains("IcmpTypeCode")) {
       const auto& tc = entry.at("IcmpTypeCode");
-      anaclr.setFromPort(tc.value("Type", ANY));
-      anaclr.setToPort(tc.value("Code", ANY));
+      anaclr.setIcmpType(tc.value("Type", ANY));
+      anaclr.setIcmpCode(tc.value("Code", ANY));
+//      anaclr.setFromPort(tc.value("Type", ANY));
+//      anaclr.setToPort(tc.value("Code", ANY));
     }
 
     _anacl.addRule(anaclr);

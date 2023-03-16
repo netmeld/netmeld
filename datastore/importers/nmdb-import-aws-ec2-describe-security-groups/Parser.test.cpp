@@ -71,8 +71,8 @@ BOOST_AUTO_TEST_CASE(testGetRule)
     auto trv1 = tp.getRule(tv1);
     const std::vector<std::string> tevs {
           R"(protocol: a1)"
-        , R"(fromPort: 15)"
-        , R"(toPort: 999)"
+        , R"(fromOrType: 15)"
+        , R"(toOrCode: 999)"
         , R"(cidrBlock: a2,)"
         , R"(cidrBlock: a4,)"
       };
@@ -80,6 +80,7 @@ BOOST_AUTO_TEST_CASE(testGetRule)
       nmdp::testInString(trv1.toDebugString(), tev);
     }
   }
+  // TODO add tests for addNonCidr logic
   {
     TestParser tp;
 
@@ -99,7 +100,7 @@ BOOST_AUTO_TEST_CASE(testGetRule)
       );
     auto trv1 = tp.getRule(tv1);
     const std::string tev1 {
-        R"(nonCidrs: [{"Description":"","PrefixListId":""}])"
+        R"(details: [{"Description":"","PrefixListId":""}])"
       };
     nmdp::testInString(trv1.toDebugString(), tev1);
   }
@@ -127,7 +128,7 @@ BOOST_AUTO_TEST_CASE(testGetRule)
       );
     auto trv1 = tp.getRule(tv1);
     const std::string tev1 {
-        R"(nonCidrs: [{"Description":"","GroupId":"")"
+        R"(details: [{"Description":"","GroupId":"")"
         R"(,"GroupName":"","PeeringStatus":"","UserId":"")"
         R"(,"VpcId":"","VpcPeeringConnectionId":""}])"
       };

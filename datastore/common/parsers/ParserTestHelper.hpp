@@ -42,7 +42,7 @@ namespace netmeld::datastore::parsers {
       IstreamIter i(dataStream), e;
       return qi::parse(i, e, p)
         && (!fullMatch || (i == e));
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       return false;
     }
   }
@@ -58,7 +58,7 @@ namespace netmeld::datastore::parsers {
       IstreamIter i(dataStream), e;
       return qi::phrase_parse(i, e, p, s)
         && (!fullMatch || (i == e));
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       return false;
     }
   }
@@ -74,7 +74,7 @@ namespace netmeld::datastore::parsers {
       IstreamIter i(dataStream), e;
       return qi::parse(i, e, p, a)
         && (!fullMatch || (i == e));
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       return false;
     }
   }
@@ -90,7 +90,7 @@ namespace netmeld::datastore::parsers {
       IstreamIter i(dataStream), e;
       return qi::phrase_parse(i, e, p, s, a)
         && (!fullMatch || (i == e));
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       return false;
     }
   }

@@ -61,6 +61,7 @@ namespace netmeld::datastore::objects {
     public:
       std::string toString() const;
       std::string toDebugString() const;
+      std::string toHumanString() const;
 
       friend std::ostream& operator<<(std::ostream&, const PortRange&);
   };

@@ -67,7 +67,7 @@ namespace netmeld::datastore::objects {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       ProwlerData() = default;
-      ProwlerData(const json&);
+      explicit ProwlerData(const json&);
 
     // =========================================================================
     // Methods

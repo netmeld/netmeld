@@ -138,7 +138,7 @@ Parser::updateInterfaces()
   nmdo::InterfaceNetwork iface {nd.curIfaceName};
   iface.setPartial(true);
 
-  for (auto& ip : nd.ipAddrs) {
+  for (const auto& ip : nd.ipAddrs) {
     iface.addIpAddress(ip);
   }
 

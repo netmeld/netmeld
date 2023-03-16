@@ -44,11 +44,12 @@ namespace netmeld::datastore::objects::aws {
     protected: // Variables intended for internal/subclass API
       std::string protocol;
 
-      std::int32_t fromPort {INT32_MIN};
-      std::int32_t toPort   {INT32_MIN};
+      std::int32_t fromOrType {INT32_MIN};
+      std::int32_t toOrCode   {INT32_MIN};
 
       std::set<CidrBlock> cidrBlocks;
       std::set<std::string> nonCidrs;
+      std::set<std::string> details;
 
       bool egress {false};
 
@@ -78,6 +79,9 @@ namespace netmeld::datastore::objects::aws {
       void addCidrBlock(const CidrBlock&);
       void addCidrBlock(const std::string&);
       void addNonCidr(const std::string&);
+
+      // NOTE: temporary method to support (deprecated) EC2 classic configs
+      void addDetails(const std::string&);
 
       bool isValid() const override;
 

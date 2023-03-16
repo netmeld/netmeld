@@ -134,20 +134,19 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   SecurityGroup::operator<=>(const SecurityGroup& rhs) const
   {
-    if (auto cmp = sgId <=> rhs.sgId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = name <=> rhs.name; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = description <=> rhs.description; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-
-    return rules <=> rhs.rules;
+    return std::tie( sgId
+                   , name
+                   , description
+                   , vpcId
+                   , rules
+                   )
+       <=> std::tie( rhs.sgId
+                   , rhs.name
+                   , rhs.description
+                   , rhs.vpcId
+                   , rhs.rules
+                   )
+      ;
   }
 
   bool

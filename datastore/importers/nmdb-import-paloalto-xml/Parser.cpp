@@ -59,9 +59,9 @@ Parser::parseConfig(const pugi::xml_node& configNode)
   for (const auto& devicesEntryMatch :
        configNode.select_nodes("devices/entry")) {
     const pugi::xml_node devicesEntryNode{devicesEntryMatch.node()};
-    const std::string deviceName{
-      devicesEntryNode.attribute("name").value()
-    };
+    //const std::string deviceName {
+    //  devicesEntryNode.attribute("name").value()
+    //};
 
     for (const auto& deviceconfigMatch :
          devicesEntryNode.select_nodes("deviceconfig")) {
@@ -570,7 +570,7 @@ Parser::parseConfigRulebase(const pugi::xml_node& rulebaseNode,
     auto aclRulesToAdd = parseConfigRules(rulesNode, 1000000, logicalSystem);
     std::copy(
         aclRulesToAdd.begin(),
-        aclRulesToAdd.end(), 
+        aclRulesToAdd.end(),
         std::back_inserter(aclRules)
         );
   }
@@ -580,7 +580,7 @@ Parser::parseConfigRulebase(const pugi::xml_node& rulebaseNode,
     auto aclRulesToAdd = parseConfigRules(rulesNode, 2000000, logicalSystem);
     std::copy(
         aclRulesToAdd.begin(),
-        aclRulesToAdd.end(), 
+        aclRulesToAdd.end(),
         std::back_inserter(aclRules)
         );
   }
@@ -688,7 +688,7 @@ Parser::parseConfigRules(const pugi::xml_node& rulesNode, const size_t ruleIdBas
     std::transform(sourceMatches.begin(), sourceMatches.end(),
         std::back_inserter(srcIpNetSetIds),
         [](const auto& sourceMatch){return sourceMatch.node().text().as_string();}
-    
+
     );
     if (srcIpNetSetIds.empty()) {
       srcIpNetSetIds.emplace_back("any");
@@ -709,7 +709,7 @@ Parser::parseConfigRules(const pugi::xml_node& rulesNode, const size_t ruleIdBas
     std::transform(serviceMatches.begin(), serviceMatches.end(),
         std::back_inserter(serviceIds),
         [](const auto& serviceMatch){return serviceMatch.node().text().as_string();}
-    );    
+    );
     if (serviceIds.empty()) {
       serviceIds.emplace_back("any");
     }

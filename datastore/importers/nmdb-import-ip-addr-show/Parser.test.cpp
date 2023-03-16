@@ -123,12 +123,12 @@ BOOST_AUTO_TEST_CASE(testRules)
               altname enp2s1
               inet 1.1.1.1/24 scope global ens33
                  valid_lft forever preferred_lft forever
-              inet6 fe80::1:1111:1:1/64 scope link 
+              inet6 fe80::1:1111:1:1/64 scope link
                  valid_lft forever preferred_lft forever
 )"},
       // ex `ip -6 addr show` (i.e., no link line when specify v4/6)
       {R"(1: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
-              inet6 1::2/64 scope link 
+              inet6 1::2/64 scope link
                  valid_lft forever preferred_lft forever
 )"},
       {R"(255: t0: flags mtu 1 tokens

@@ -13,7 +13,7 @@ def run_command(command):
   args = {}
   args["capture_output"] = True
   args["args"] = shlex.split(command)
-  
+
   logging.info("Testing with: %s", command)
   r = subprocess.run(**args)
   output = str(r.stdout, "utf8")

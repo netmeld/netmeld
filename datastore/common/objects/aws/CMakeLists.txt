@@ -36,7 +36,9 @@ foreach(ITEM
     SecurityGroup
     SecurityGroupRule
     Subnet
+    TransitGatewayAttachment
     Vpc
+    VpcPeeringConnection
   )
   nm_add_test(${ITEM})
   target_link_libraries(${TGT_TEST}

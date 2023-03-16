@@ -128,10 +128,10 @@ Parser::addIfaceIp(nmdo::IpAddress& _ip, const nmdo::IpAddress& _mask)
 }
 
 void
-Parser::setIfaceGateway(nmdo::IpAddress& _ip)
+Parser::setIfaceGateway(const nmdo::IpAddress& _ip)
 {
   auto& iface {d.ifaces[tgtIfaceName]};
-  for (auto& ip : iface.getIpAddresses()) { // should only be one ip/route
+  for (const auto& ip : iface.getIpAddresses()) { // should only be one ip/route
     d.routes[tgtIfaceName].setDstIpNet(ip);
     d.routes[tgtIfaceName].setNextHopIpAddr(_ip);
   }

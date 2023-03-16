@@ -341,7 +341,7 @@ clw nmap -T4 -n -e eth0 -PR -Pn -O
 <br/>
 clw nmap -T4 -n -e eth0 -PR -Pn -O
 <br/>
-  --script '(banner or dns-nsid or ntp-info or rpcinfo 
+  --script '(banner or dns-nsid or ntp-info or rpcinfo
 <br/>
       or ssh-hostkey or ssh2-enum-algos or ssl-cert
 <br/>

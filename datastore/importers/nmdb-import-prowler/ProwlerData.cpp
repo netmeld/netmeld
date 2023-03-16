@@ -31,22 +31,22 @@ namespace netmeld::datastore::objects {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  ProwlerData::ProwlerData(const json& jline)
+  /*{"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""}*/
+  ProwlerData::ProwlerData(const json& jline) :
+      accountNumber(jline["Account Number"])
+    , region(jline["Region"])
+    , control(jline["Control"])
+    , severity(jline["Severity"])
+    , status(jline["Status"])
+    , level(jline["Level"])
+    , controlId(jline["Control ID"])
+    , service(jline["Service"])
+    , risk(jline["Risk"])
+    , remediation(jline["Remediation"])
+    , documentationLink(jline["Doc link"])
+    , resourceId(jline["Resource ID"])
   {
-    /*{"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""}*/
-    accountNumber     = jline["Account Number"];
     timestamp.readFormatted(jline["Timestamp"], "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
-    region            = jline["Region"];
-    control           = jline["Control"];
-    severity          = jline["Severity"];
-    status            = jline["Status"];
-    level             = jline["Level"];
-    controlId         = jline["Control ID"];
-    service           = jline["Service"];
-    risk              = jline["Risk"];
-    remediation       = jline["Remediation"];
-    documentationLink = jline["Doc link"];
-    resourceId        = jline["Resource ID"];
   }
 
   // ===========================================================================

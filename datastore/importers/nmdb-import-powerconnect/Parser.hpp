@@ -94,7 +94,7 @@ class Parser :
     // interface related
     void updateIfaceTypeSlot(const std::string&, const std::string&);
     void addIfaceIp(nmdo::IpAddress&, const nmdo::IpAddress&);
-    void setIfaceGateway(nmdo::IpAddress&);
+    void setIfaceGateway(const nmdo::IpAddress&);
     void updateIfaceSwitchportMode(const std::string&);
     void disableIface();
 

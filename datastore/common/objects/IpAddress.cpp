@@ -58,6 +58,7 @@ namespace netmeld::datastore::objects {
     return instance;
   }
   IpAddress
+  // cppcheck-suppress unusedFunction
   IpAddress::getIpv6Default()
   {
     static const IpAddress instance {"::/0", "Netmeld IPv6 default used"};

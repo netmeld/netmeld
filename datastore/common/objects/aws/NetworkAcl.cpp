@@ -127,17 +127,17 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   NetworkAcl::operator<=>(const NetworkAcl& rhs) const
   {
-    if (auto cmp = naclId <=> rhs.naclId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = subnetIds <=> rhs.subnetIds; 0 != cmp) {
-      return cmp;
-    }
-
-    return rules <=> rhs.rules;
+    return std::tie( naclId
+                   , vpcId
+                   , subnetIds
+                   , rules
+                   )
+       <=> std::tie( rhs.naclId
+                   , rhs.vpcId
+                   , rhs.subnetIds
+                   , rhs.rules
+                   )
+      ;
   }
 
   bool

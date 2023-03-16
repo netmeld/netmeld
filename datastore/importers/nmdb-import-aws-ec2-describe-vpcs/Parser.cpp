@@ -51,6 +51,7 @@ Parser::processVpcs(const json& _vpc)
 {
   nmdoa::Vpc avpc;
   avpc.setId(_vpc.value("VpcId", ""));
+  avpc.setOwnerId(_vpc.value("OwnerId", ""));
   avpc.setState(_vpc.value("State", ""));
 
   processCidrBlockAssociationSet(_vpc, avpc);

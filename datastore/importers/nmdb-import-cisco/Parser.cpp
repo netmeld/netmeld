@@ -543,26 +543,26 @@ Parser::serviceAddSyslog(const nmdo::IpAddress& ip)
 void
 Parser::routeAddIp(const nmdo::IpAddress& dstIpNet, const nmdo::IpAddress& rtrIp)
 {
-  nmdo::Route route;
-  route.setDstIpNet(dstIpNet);
-  route.setNextHopIpAddr(rtrIp);
-  route.setProtocol("static");
-  route.setMetric(0);
+  nmdo::Route nextHop;
+  nextHop.setDstIpNet(dstIpNet);
+  nextHop.setNextHopIpAddr(rtrIp);
+  nextHop.setProtocol("static");
+  nextHop.setMetric(0);
 
-  d.routes.push_back(route);
+  d.routes.push_back(nextHop);
 }
 
 void
 Parser::routeAddIface(const nmdo::IpAddress& dstIpNet,
                       const std::string& rtrIface)
 {
-  nmdo::Route route;
-  route.setDstIpNet(dstIpNet);
-  route.setIfaceName(rtrIface);
-  route.setProtocol("static");
-  route.setMetric(0);
+  nmdo::Route nextHop;
+  nextHop.setDstIpNet(dstIpNet);
+  nextHop.setIfaceName(rtrIface);
+  nextHop.setProtocol("static");
+  nextHop.setMetric(0);
 
-  d.routes.push_back(route);
+  d.routes.push_back(nextHop);
 }
 
 void
@@ -625,9 +625,9 @@ Parser::expandVlanNumberRangeList(
   for (const auto& range : vlanNumbers) {
     // Widen the uint16_t vlan number to a size_t to prevent looping forever on 0-65535.
     for (size_t i{std::get<0>(range)}; i <= static_cast<size_t>(std::get<1>(range)); ++i) {
-      nmdo::Vlan vlan{vlanPrototype};
-      vlan.setId(static_cast<uint16_t>(i));
-      vlans.emplace_back(vlan);
+      nmdo::Vlan vl {vlanPrototype};
+      vl.setId(static_cast<uint16_t>(i));
+      vlans.emplace_back(vl);
     }
   }
   return vlans;
@@ -636,8 +636,8 @@ Parser::expandVlanNumberRangeList(
 void
 Parser::vlansAdd(const std::vector<nmdo::Vlan>& vlans)
 {
-  for (auto vlan : vlans) {
-    vlanAdd(vlan);
+  for (auto vl : vlans) {
+    vlanAdd(vl);
   }
 }
 
@@ -657,10 +657,10 @@ Parser::vlanAddIfaceData()
     std::istringstream iss {ifaceName.erase(0, vlanPrefix.size())};
     unsigned short id;
     iss >> id;
-    for (auto ipAddr : tgtIface->getIpAddresses()) {
-      nmdo::Vlan vlan {id};
-      vlan.setIpNet(ipAddr);
-      d.vlans.push_back(vlan);
+    for (auto ipa : tgtIface->getIpAddresses()) {
+      nmdo::Vlan vl {id};
+      vl.setIpNet(ipa);
+      d.vlans.push_back(vl);
     }
   }
 }
@@ -743,8 +743,10 @@ Parser::addObservation(const std::string& obs)
 
 // Object return
 void
-Parser::setRuleTargetIface(nmdo::AcRule& _rule, const std::string& _name,
-                           void (nmdo::AcRule::*x)(const std::string&))
+Parser::setRuleTargetIface( nmdo::AcRule& _rule
+                          , const std::string& _name
+                          , void (nmdo::AcRule::*x)(const std::string&)
+                          )
 {
   if (0 == ifaceAliases.count(_name)) {
     (_rule.*x)(_name);
