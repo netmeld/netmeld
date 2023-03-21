@@ -123,7 +123,7 @@ def buildClw():
 
   cleanUp()
   closeOut()
-    
+
   return 0
 
 def buildDatalake():
@@ -211,7 +211,7 @@ def buildDevelopment():
 
   print('RUN update-ca-certificates')
 
-  config['root'] = True 
+  config['root'] = True
 
   cleanUp()
   closeOut()

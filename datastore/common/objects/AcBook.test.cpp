@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     []
     (void (TestAcBook::*x)(const std::string&),
      const std::string& (TestAcBook::*y)() const,
-     const std::vector<T> vs)
+     const std::vector<T>& vs)
   {
     TestAcBook tab;
     for (const auto& v1 : vs) {

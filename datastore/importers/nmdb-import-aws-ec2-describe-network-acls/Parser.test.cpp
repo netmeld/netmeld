@@ -79,7 +79,65 @@ BOOST_AUTO_TEST_CASE(testProcessEntries)
     const std::vector<std::string> tevs {
           R"(number: -1)"
         , R"(portRange: 1)"
+        , R"(typeCode: 1)"
+        , R"(fromOrType: -1)"
+        , R"(toOrCode: -1)"
+      };
+    for (const auto& tev : tevs) {
+      nmdp::testInString(tobj.toDebugString(), tev);
+    }
+  }
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"(
+        {"Entries":
+          [{ "CidrBlock": ""
+          , "Egress": false
+          , "Ipv6CidrBlock": ""
+          , "PortRange": {"From": -1, "To": -1}
+          , "Protocol": ""
+          , "RuleAction": ""
+          , "RuleNumber": -1
+          }]
+        }
+        )"
+      );
+    nmdoa::NetworkAcl tobj;
+    tp.processEntries(tv1, tobj);
+    const std::vector<std::string> tevs {
+          R"(number: -1)"
+        , R"(portRange: 1)"
         , R"(typeCode: 0)"
+        , R"(fromOrType: -1)"
+        , R"(toOrCode: -1)"
+      };
+    for (const auto& tev : tevs) {
+      nmdp::testInString(tobj.toDebugString(), tev);
+    }
+  }
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"(
+        {"Entries":
+          [{ "CidrBlock": ""
+          , "Egress": false
+          , "IcmpTypeCode": {"Code": -1, "Type": -1}
+          , "Ipv6CidrBlock": ""
+          , "Protocol": ""
+          , "RuleAction": ""
+          , "RuleNumber": -1
+          }]
+        }
+        )"
+      );
+    nmdoa::NetworkAcl tobj;
+    tp.processEntries(tv1, tobj);
+    const std::vector<std::string> tevs {
+          R"(number: -1)"
+        , R"(portRange: 0)"
+        , R"(typeCode: 1)"
         , R"(fromOrType: -1)"
         , R"(toOrCode: -1)"
       };
@@ -111,7 +169,7 @@ BOOST_AUTO_TEST_CASE(testProcessEntries)
         , R"(action: aB c-1 @3,)"
         , R"(protocol: aB c-1 @3,)"
         , R"(portRange: 1,)"
-        , R"(typeCode: 0,)"
+        , R"(typeCode: 1,)"
         , R"(fromOrType: 123,)"
         , R"(toOrCode: 123,)"
         , R"(egress: 1,)"

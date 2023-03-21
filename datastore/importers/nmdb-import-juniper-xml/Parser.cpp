@@ -646,7 +646,7 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
         parseConfigApplicationOrTerm(applicationNode);
     std::copy(
         aclServicesToAdd.begin(),
-        aclServicesToAdd.end(), 
+        aclServicesToAdd.end(),
         std::back_inserter(aclServices)
         );
   }
@@ -771,7 +771,7 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
     auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
         aclRulesToAdd.begin(),
-        aclRulesToAdd.end(), 
+        aclRulesToAdd.end(),
         std::back_inserter(aclRules)
         );
     ++ruleId;
@@ -784,7 +784,7 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
     auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
         aclRulesToAdd.begin(),
-        aclRulesToAdd.end(), 
+        aclRulesToAdd.end(),
         std::back_inserter(aclRules)
         );
     ++ruleId;
@@ -1148,7 +1148,7 @@ Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName = ifaceName.substr(0, ifaceName.find(" ["));
+      ifaceName.resize(ifaceName.find(" ["));
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{
@@ -1198,7 +1198,7 @@ Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName = ifaceName.substr(0, ifaceName.find(" ["));
+      ifaceName.resize(ifaceName.find(" ["));
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{

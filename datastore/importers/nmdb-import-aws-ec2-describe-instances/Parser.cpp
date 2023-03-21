@@ -147,9 +147,9 @@ Parser::processIps(const json& _interface, nmdoa::NetworkInterface& _iface)
 
   // Handle IPv4 addresses
   for (const auto& ip : _interface.at("PrivateIpAddresses")) {
-    nmdoa::CidrBlock cb {ip.at("PrivateIpAddress").get<std::string>()};
-    cb.addAlias(ip.value("PrivateDnsName", ""));
-    _iface.addCidrBlock(cb);
+    nmdoa::CidrBlock privCb {ip.at("PrivateIpAddress").get<std::string>()};
+    privCb.addAlias(ip.value("PrivateDnsName", ""));
+    _iface.addCidrBlock(privCb);
 
     // Handle public IPs
     if (ip.contains("Association")) {
@@ -158,9 +158,9 @@ Parser::processIps(const json& _interface, nmdoa::NetworkInterface& _iface)
       std::set keys {"CarrierIp", "CustomerOwnedIp", "PublicIp"};
       for (const auto& key : keys) {
         if (association.contains(key)) {
-          nmdoa::CidrBlock cb {association.value(key, "")};
-          cb.addAlias(dnsName);
-          _iface.addCidrBlock(cb);
+          nmdoa::CidrBlock pubCb {association.value(key, "")};
+          pubCb.addAlias(dnsName);
+          _iface.addCidrBlock(pubCb);
         }
       }
     }

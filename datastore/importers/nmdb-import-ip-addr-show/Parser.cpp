@@ -111,7 +111,7 @@ Parser::addObservation(const std::vector<std::string>& observations,
 {
   std::ostringstream oss;
   oss << "Extra link data for " << iface.getName() << ":";
-  for (auto& observation : observations) {
+  for (const auto& observation : observations) {
     oss << " " << observation;
   }
   d.observations.addNotable(oss.str());

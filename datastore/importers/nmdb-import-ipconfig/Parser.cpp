@@ -202,19 +202,19 @@ Parser::setIfaceDnsSuffix(const std::string& _suffix)
 void
 Parser::addRoute(const nmdo::IpAddress& _ipAddr)
 {
-  for (auto& ipAddr : d.ifaces[curIfaceName].getIpAddresses()) {
-    if (ipAddr.isV4() && _ipAddr.isV4()) {
+  for (const auto& ipa : d.ifaces[curIfaceName].getIpAddresses()) {
+    if (ipa.isV4() && _ipAddr.isV4()) {
       nmdo::Route route;
       route.setIfaceName(curIfaceName);
       route.setNextHopIpAddr(_ipAddr);
-      route.setDstIpNet(ipAddr);
+      route.setDstIpNet(ipa);
       d.routes.push_back(route);
     }
-    if (ipAddr.isV6() && _ipAddr.isV6()) {
+    if (ipa.isV6() && _ipAddr.isV6()) {
       nmdo::Route route;
       route.setIfaceName(curIfaceName);
       route.setNextHopIpAddr(_ipAddr);
-      route.setDstIpNet(ipAddr);
+      route.setDstIpNet(ipa);
       d.routes.push_back(route);
     }
   }

@@ -31,7 +31,7 @@ components are:
   system level commands.  While there are a couple currently, functionality
   will eventually be consolidated to `CmdExec`.
 * `FileManager`: This handles many common scenarios regarding file interaction
-  while abstracting the actual backing from the user.  It also handles 
+  while abstracting the actual backing from the user.  It also handles
   creation of a common storage root for many tools.
 * `LoggerSingleton`: This is the primary *logging* capability used throughout
   the Netmeld tool suite.  It is closer to being an interface than an actual

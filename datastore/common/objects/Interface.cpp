@@ -144,7 +144,7 @@ namespace netmeld::datastore::objects {
     }
 
     // Tie interface to IP
-    for (auto& ipAddr : macAddr.getIpAddresses()) {
+    for (const auto& ipAddr : macAddr.getIpAddresses()) {
       if (!ipAddr.isValid()) { continue; }
 
       t.exec_prepared("insert_raw_device_ip_addr",

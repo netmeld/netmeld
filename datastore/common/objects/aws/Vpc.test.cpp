@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,9 +38,6 @@ class TestVpc : public nmdoa::Vpc {
     TestVpc() : Vpc() {};
 
   public:
-    std::string getVpcId() const
-    { return vpcId; }
-
     std::string getState() const
     { return state; }
 
@@ -53,7 +50,8 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestVpc tobj;
 
-    BOOST_TEST(tobj.getVpcId().empty());
+    BOOST_TEST(tobj.getId().empty());
+    BOOST_TEST(tobj.getOwnerId().empty());
     BOOST_TEST(tobj.getState().empty());
     BOOST_TEST(tobj.getCidrBlocks().empty());
   }
@@ -66,7 +64,14 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     const std::string tv1 {"aBc1@3"};
     tobj.setId(tv1);
-    BOOST_TEST(tv1 == tobj.getVpcId());
+    BOOST_TEST(tv1 == tobj.getId());
+  }
+  {
+    TestVpc tobj;
+
+    const std::string tv1 {"aBc1@3"};
+    tobj.setOwnerId(tv1);
+    BOOST_TEST(tv1 == tobj.getOwnerId());
   }
   {
     TestVpc tobj;
@@ -100,6 +105,12 @@ BOOST_AUTO_TEST_CASE(testValidity)
 
     BOOST_TEST(!tobj.isValid());
     tobj.setId(tv1);
+    BOOST_TEST(!tobj.isValid());
+    tobj.setId("");
+    tobj.setOwnerId(tv1);
+    BOOST_TEST(!tobj.isValid());
+    tobj.setId(tv1);
+    tobj.setOwnerId(tv1);
     BOOST_TEST(tobj.isValid());
   }
 }

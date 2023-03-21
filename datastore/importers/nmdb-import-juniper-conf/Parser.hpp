@@ -172,7 +172,7 @@ class Parser:
     void updateIfaceTypeSlot(const std::string&, const std::string&);
     void addInvalidIface(const std::string&);
     void updateIfaceUnit(const size_t);
-    void addIfaceIpAddr(nmdo::IpAddress&);
+    void addIfaceIpAddr(const nmdo::IpAddress&);
     void addIfaceVlan(const uint16_t);
     void addIfaceVlanRange(const uint16_t, const uint16_t);
     void addIfaceVlanMembers(const std::string&);

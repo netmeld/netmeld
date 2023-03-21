@@ -162,6 +162,15 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
+      ("insert_raw_aws_vpc_owner", R"(
+          INSERT INTO raw_aws_vpc_owners
+            (tool_run_id, vpc_id, owner_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
       ("insert_raw_aws_vpc_detail", R"(
           INSERT INTO raw_aws_vpc_details
             (tool_run_id, vpc_id, state)
@@ -174,6 +183,44 @@ namespace netmeld::datastore::utils {
       ("insert_raw_aws_vpc_cidr_block", R"(
           INSERT INTO raw_aws_vpc_cidr_blocks
             (tool_run_id, vpc_id, cidr_block, state)
+          VALUES
+            ($1, $2, $3, nullif($4, ''))
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS VPC Peering Connection related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_vpc_peering_connection", R"(
+          INSERT INTO raw_aws_vpc_peering_connections
+            (tool_run_id, pcx_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_peering_connection_peer", R"(
+          INSERT INTO raw_aws_vpc_peering_connection_peers
+            ( tool_run_id, pcx_id
+            , accepter_vpc_id, accepter_owner_id
+            , requester_vpc_id, requester_owner_id
+            )
+          VALUES
+            ( $1, $2
+            , $3, $4
+            , $5, $6
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_vpc_peering_connection_status", R"(
+          INSERT INTO raw_aws_vpc_peering_connection_statuses
+            (tool_run_id, pcx_id, code, message)
           VALUES
             ($1, $2, $3, $4)
           ON CONFLICT DO NOTHING
@@ -203,27 +250,66 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
-      ("insert_raw_aws_security_group_rule", R"(
-          INSERT INTO raw_aws_security_group_rules
-            (tool_run_id, security_group_id, egress, protocol, from_port
-            , to_port, cidr_block
+      ("insert_raw_aws_security_group_rules_port", R"(
+          INSERT INTO raw_aws_security_group_rules_ports
+            (tool_run_id, security_group_id, egress, protocol
+            , from_port , to_port, cidr_block
             )
           VALUES
-            ($1, $2, $3, $4, $5
-            , $6, $7
+            ($1, $2, $3, $4
+            , $5, $6, $7
             )
           ON CONFLICT DO NOTHING
         )");
 
     db.prepare
-      ("insert_raw_aws_security_group_rule_non_ip", R"(
-          INSERT INTO raw_aws_security_group_rules_non_ip
-            (tool_run_id, security_group_id, egress, protocol, from_port
-            , to_port, target
+      ("insert_raw_aws_security_group_rules_type_code", R"(
+          INSERT INTO raw_aws_security_group_rules_type_codes
+            (tool_run_id, security_group_id, egress, protocol
+            , type, code, cidr_block
             )
           VALUES
-            ($1, $2, $3, $4, $5
-            , $6, $7
+            ($1, $2, $3, $4
+            , $5, $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rules_non_ip_detail", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip_details
+            (tool_run_id, security_group_id, egress, protocol
+            , from_port, to_port, detail
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5, $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rules_non_ip_port", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip_ports
+            (tool_run_id, security_group_id, egress, protocol
+            , from_port, to_port, target
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5, $6, $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_security_group_rules_non_ip_type_code", R"(
+          INSERT INTO raw_aws_security_group_rules_non_ip_type_codes
+            (tool_run_id, security_group_id, egress, protocol
+            , type, code, target
+            )
+          VALUES
+            ($1, $2, $3, $4
+            , $5, $6, $7
             )
           ON CONFLICT DO NOTHING
         )");
@@ -256,8 +342,8 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
-      ("insert_raw_aws_network_acl_rule_port", R"(
-          INSERT INTO raw_aws_network_acl_rule_ports
+      ("insert_raw_aws_network_acl_rules_port", R"(
+          INSERT INTO raw_aws_network_acl_rules_ports
             (tool_run_id, network_acl_id, egress, rule_number, from_port
             , to_port
             )
@@ -269,8 +355,8 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
-      ("insert_raw_aws_network_acl_rule_type_code", R"(
-          INSERT INTO raw_aws_network_acl_rule_type_codes
+      ("insert_raw_aws_network_acl_rules_type_code", R"(
+          INSERT INTO raw_aws_network_acl_rules_type_codes
             (tool_run_id, network_acl_id, egress, rule_number, type, code)
           VALUES
             ($1, $2, $3, $4, $5, $6)
@@ -360,6 +446,53 @@ namespace netmeld::datastore::utils {
 
 
     // ----------------------------------------------------------------------
+    // TABLES: AWS Transit Gateway related
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway", R"(
+          INSERT INTO raw_aws_transit_gateways
+            (tool_run_id, tgw_id)
+          VALUES
+            ($1, $2)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway_owner", R"(
+          INSERT INTO raw_aws_transit_gateway_owners
+            (tool_run_id, tgw_id, owner_id)
+          VALUES
+            ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway_attachment", R"(
+          INSERT INTO raw_aws_transit_gateway_attachments
+            (tool_run_id, tgw_id, tgw_attach_id, state)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+      ("insert_raw_aws_transit_gateway_attachment_detail", R"(
+          INSERT INTO raw_aws_transit_gateway_attachment_details
+            ( tool_run_id, tgw_id, tgw_attach_id
+            , resource_type, resource_id, resource_owner_id
+            , association_state
+            )
+          VALUES
+            ( $1, $2, $3
+            , $4, $5, $6
+            , $7
+            )
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    // ----------------------------------------------------------------------
     // TABLES: AWS multi-service/component related
     // ----------------------------------------------------------------------
 
@@ -420,9 +553,9 @@ namespace netmeld::datastore::utils {
     db.prepare
       ("insert_raw_aws_vpc_route_table", R"(
           INSERT INTO raw_aws_vpc_route_tables
-            (tool_run_id, vpc_id, route_table_id)
+            (tool_run_id, vpc_id, route_table_id, is_default)
           VALUES
-            ($1, $2, $3)
+            ($1, $2, $3, $4)
           ON CONFLICT DO NOTHING
         )");
 

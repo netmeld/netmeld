@@ -272,7 +272,7 @@ procedures:
 - name: Possible not (service) scanned ports;
         based on port scanning and descriptive configs
   cmds:
-  - psql "{{dbConnectString}}" -c 
+  - psql "{{dbConnectString}}" -c
   - '"'
   - &missed_ports
       WITH sd1 AS (
@@ -315,7 +315,7 @@ procedures:
 #   TCP (long) : clw nmap -d -T4 -n -e {{linkName}} -PR --host-timeout 30m --script-timeout 10m -A --script '((default or discovery) and not (external or brute or dos))' -sS -p `nmdb-export-port-list --from-db --tcp` -iL *path-responding-host-ips --excludefile *path-roe-exclude-ips
 #   UDP        : clw nmap -d -T4 -n -e {{linkName}} -PR --host-timeout 30m --script-timeout 2m -Pn -O --script '(banner or dns-nsid or ntp-info or rpcinfo or ssh-hostkey or ssh2-enum-algos or ssl-cert or smtp-commands or smb-os-discovery or smbv2-enabled or vnc-info)' -sU -p `nmdb-export-port-list --udp` -iL *path-responding-host-ips --excludefile *path-roe-exclude-ips
   cmds:
-  - psql "{{dbConnectString}}" -c 
+  - psql "{{dbConnectString}}" -c
   - '"'
   - WITH missed_ports AS (
   - *missed_ports

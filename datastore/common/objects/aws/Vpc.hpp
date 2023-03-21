@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -43,6 +43,8 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       std::string vpcId;
+
+      std::string ownerId;
       std::string state;
 
       std::set<CidrBlock> cidrBlocks;
@@ -64,9 +66,13 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setId(const std::string&);
+      void setOwnerId(const std::string&);
       void setState(const std::string&);
 
       void addCidrBlock(const CidrBlock&);
+
+      std::string getId() const;
+      std::string getOwnerId() const;
 
       bool isValid() const override;
 

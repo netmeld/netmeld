@@ -85,7 +85,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     parseData() override
     {
       std::ifstream f {this->getDataPath().string()};
-      std::stringstream input;
 
       Parser parser;
       std::string line;

@@ -145,20 +145,19 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   Subnet::operator<=>(const Subnet& rhs) const
   {
-    if (auto cmp = subnetId <=> rhs.subnetId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = availabilityZone <=> rhs.availabilityZone; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = subnetArn <=> rhs.subnetArn; 0 != cmp) {
-      return cmp;
-    }
-
-    return cidrBlocks <=> rhs.cidrBlocks;
+    return std::tie( subnetId
+                   , vpcId
+                   , availabilityZone
+                   , subnetArn
+                   , cidrBlocks
+                   )
+       <=> std::tie( rhs.subnetId
+                   , rhs.vpcId
+                   , rhs.availabilityZone
+                   , rhs.subnetArn
+                   , rhs.cidrBlocks
+                   )
+      ;
   }
 
   bool

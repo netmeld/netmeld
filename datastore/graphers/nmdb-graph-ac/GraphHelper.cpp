@@ -29,7 +29,7 @@
 //==============================================================================
 // LabelWriter
 //==============================================================================
-LabelWriter::LabelWriter(AcGraph& _graph) :
+LabelWriter::LabelWriter(const AcGraph& _graph) :
   graph(_graph)
 {}
 

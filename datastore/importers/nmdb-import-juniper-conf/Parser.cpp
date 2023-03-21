@@ -592,15 +592,15 @@ Parser::addRoute(nmdo::Route& _route)
 void
 Parser::addVlan(const std::string& _name, unsigned short _id)
 {
-  auto& vlan {d->vlans[_name]};
-  vlan.setId(_id);
+  auto& vl {d->vlans[_name]};
+  vl.setId(_id);
 }
 
 void
 Parser::updateVlanDescription(const std::string& _name, const std::string& _desc)
 {
-  auto& vlan {d->vlans[_name]};
-  vlan.setDescription(_desc);
+  auto& vl {d->vlans[_name]};
+  vl.setDescription(_desc);
 }
 
 // Interface related
@@ -639,7 +639,7 @@ Parser::updateIfaceUnit(const size_t _unit)
 }
 
 void
-Parser::addIfaceIpAddr(nmdo::IpAddress& ipAddr)
+Parser::addIfaceIpAddr(const nmdo::IpAddress& ipAddr)
 {
   d->ifaces[tgtIfaceName].addIpAddress(ipAddr);
 }
@@ -868,11 +868,11 @@ Parser::getData()
     // VLAN_NAME - iface gets VLAN_NAME ids
     for (const auto& [iface, members] : ifaceVlanMembers) {
       if ("all" == members) {
-        for (const auto& [_, vlan] : device.vlans) {
-          device.ifaces[iface].addVlan(vlan.getVlanId());
+        for (const auto& [_, vl] : device.vlans) {
+          device.ifaces[iface].addVlan(vl.getVlanId());
         }
-        for (const auto& [_, vlan] : devices.at(0).vlans) {
-          device.ifaces[iface].addVlan(vlan.getVlanId());
+        for (const auto& [_, vl] : devices.at(0).vlans) {
+          device.ifaces[iface].addVlan(vl.getVlanId());
         }
       } else {
         const auto& searchLocal    {device.vlans.find(members)};

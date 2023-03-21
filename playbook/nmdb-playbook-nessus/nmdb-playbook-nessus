@@ -75,7 +75,7 @@ Options:
   -h [ --help ]     Show this help message, then exit.
   -v [ --version ]  Show version information, then exit.
 EOF
-  
+
   echo "${USAGE}";
   exit 0;
 }

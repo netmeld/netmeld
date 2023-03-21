@@ -76,13 +76,13 @@ namespace netmeld::datastore::objects {
   {
     std::copy(
         other.ifaces.begin(),
-        other.ifaces.end(), 
+        other.ifaces.end(),
         std::back_inserter(ifaces)
         );
 
     std::copy(
         other.routes.begin(),
-        other.routes.end(), 
+        other.routes.end(),
         std::back_inserter(routes)
         );
   }

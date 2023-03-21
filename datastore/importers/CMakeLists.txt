@@ -31,9 +31,12 @@ foreach(ITEM
     nmdb-import-apk
     nmdb-import-aws-ec2-describe-instances
     nmdb-import-aws-ec2-describe-network-acls
+    nmdb-import-aws-ec2-describe-network-interfaces
     nmdb-import-aws-ec2-describe-route-tables
     nmdb-import-aws-ec2-describe-security-groups
     nmdb-import-aws-ec2-describe-subnets
+    nmdb-import-aws-ec2-describe-transit-gateway-attachments
+    nmdb-import-aws-ec2-describe-vpc-peering-connections
     nmdb-import-aws-ec2-describe-vpcs
     nmdb-import-brocade
     nmdb-import-brocade-show-ip-route
@@ -60,6 +63,7 @@ foreach(ITEM
     nmdb-import-ping
     nmdb-import-powerconnect
     nmdb-import-prowler
+    nmdb-import-rpm-query
     nmdb-import-show-cdp-neighbor
     nmdb-import-show-inventory
     nmdb-import-show-mac-address-table

@@ -234,43 +234,33 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   NetworkInterface::operator<=>(const NetworkInterface& rhs) const
   {
-    if (auto cmp = interfaceId <=> rhs.interfaceId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = type <=> rhs.type; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = description <=> rhs.description; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = sourceDestinationCheck <=> rhs.sourceDestinationCheck;
-        0 != cmp)
-    {
-      return cmp;
-    }
-    if (auto cmp = status <=> rhs.status; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = isUp <=> rhs.isUp; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = subnetId <=> rhs.subnetId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = attachment <=> rhs.attachment; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = securityGroups <=> rhs.securityGroups; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = cidrBlocks <=> rhs.cidrBlocks; 0 != cmp) {
-      return cmp;
-    }
-
-    return macAddr <=> rhs.macAddr;
+    return std::tie( interfaceId
+                   , type
+                   , description
+                   , sourceDestinationCheck
+                   , status
+                   , isUp
+                   , subnetId
+                   , vpcId
+                   , attachment
+                   , securityGroups
+                   , macAddr
+                   , cidrBlocks
+                   )
+       <=> std::tie( rhs.interfaceId
+                   , rhs.type
+                   , rhs.description
+                   , rhs.sourceDestinationCheck
+                   , rhs.status
+                   , rhs.isUp
+                   , rhs.subnetId
+                   , rhs.vpcId
+                   , rhs.attachment
+                   , rhs.securityGroups
+                   , rhs.macAddr
+                   , rhs.cidrBlocks
+                   )
+      ;
   }
 
   bool

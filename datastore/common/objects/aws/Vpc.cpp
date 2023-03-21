@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,6 +38,11 @@ namespace netmeld::datastore::objects::aws {
     vpcId = _id;
   }
   void
+  Vpc::setOwnerId(const std::string& _id)
+  {
+    ownerId = _id;
+  }
+  void
   Vpc::setState(const std::string& _state)
   {
     state = _state;
@@ -50,11 +55,22 @@ namespace netmeld::datastore::objects::aws {
     cidrBlocks.insert(_cidr);
   }
 
+  std::string
+  Vpc::getId() const
+  {
+    return vpcId;
+  }
+  std::string
+  Vpc::getOwnerId() const
+  {
+    return ownerId;
+  }
+
 
   bool
   Vpc::isValid() const
   {
-    return !(vpcId.empty());
+    return !(vpcId.empty() || ownerId.empty());
   }
 
   void
@@ -71,6 +87,12 @@ namespace netmeld::datastore::objects::aws {
     t.exec_prepared("insert_raw_aws_vpc"
         , toolRunId
         , vpcId
+      );
+
+    t.exec_prepared("insert_raw_aws_vpc_owner"
+        , toolRunId
+        , vpcId
+        , ownerId
       );
 
     if (!state.empty()) {
@@ -100,6 +122,7 @@ namespace netmeld::datastore::objects::aws {
 
     oss << '['
         << "vpcId: " << vpcId
+        << ", ownerId: " << ownerId
         << ", state: " << state
         << ", cidrBlocks: " << cidrBlocks
         << ']'
@@ -111,14 +134,17 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   Vpc::operator<=>(const Vpc& rhs) const
   {
-    if (auto cmp = vpcId <=> rhs.vpcId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
-      return cmp;
-    }
-
-    return cidrBlocks <=> rhs.cidrBlocks;
+    return std::tie( vpcId
+                   , ownerId
+                   , state
+                   , cidrBlocks
+                   )
+       <=> std::tie( rhs.vpcId
+                   , rhs.ownerId
+                   , rhs.state
+                   , rhs.cidrBlocks
+                   )
+      ;
   }
 
   bool

@@ -147,17 +147,17 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   CidrBlock::operator<=>(const CidrBlock& rhs) const
   {
-    if (auto cmp = cidrBlock <=> rhs.cidrBlock; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = description <=> rhs.description; 0 != cmp) {
-      return cmp;
-    }
-
-    return aliases <=> aliases;
+    return std::tie( cidrBlock
+                   , state
+                   , description
+                   , aliases
+                   )
+       <=> std::tie( rhs.cidrBlock
+                   , rhs.state
+                   , rhs.description
+                   , rhs.aliases
+                   )
+      ;
   }
 
   bool

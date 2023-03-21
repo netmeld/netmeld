@@ -108,13 +108,13 @@ BOOST_AUTO_TEST_CASE(testParts)
                 "Parse rule 'compartmentHeader': " << test);
     }
   }
-  
+
   { // hostData
     const auto &parserRule {tp.hostData};
     std::vector<std::string> testsOk {
       //Host Name, also tests empty Primary Dns Suffix
       R"STR(Host Name . . . . . . . . . . . . : TEST-DATA
-      Primary Dns Suffix. . . . . . . . . . . : 
+      Primary Dns Suffix. . . . . . . . . . . :
 
       )STR",
 
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       Link-local IPv6 Address . . . . . : fe80::aaaa:abcd:abcd:8080%18
       IPv4 Address. . . . . . . . . . . : 10.11.12.13
       Subnet Mask . . . . . . . . . . . : 255.255.255.240
-      Default Gateway . . . . . . . . . : 
+      Default Gateway . . . . . . . . . :
       )STR",
 
       //adapter, ipv4, has default gateway with 1 address
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // servers
     const auto &parserRule {tp.servers};
     std::vector<std::string> testsOk {
-      
+
       R"STR(DHCP Server. . . . . . . . . . . . : 192.168.1.2
       )STR",
 
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(testParts)
   { // ifaceType
     const auto &parserRule {tp.ifaceType};
     std::vector<std::string> testsOk {
-      
+
       "Ethernet",
       "Wireless LAN",
       "Local Area Network"
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
     Unknown adapter Local Area Connection:
 
       Media State . . . . . . . . . . . : Media disconnected
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
 
     Ethernet adapter Ethernet:
 
@@ -324,15 +324,15 @@ BOOST_AUTO_TEST_CASE(testWhole)
 
     Ethernet adapter vEthernet (WSL):
 
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Link-local IPv6 Address . . . . . : fe80::fe80:fe80:fe:fe80%5
       IPv4 Address. . . . . . . . . . . : 172.172.172.1
       Subnet Mask . . . . . . . . . . . : 255.255.240.0
-      Default Gateway . . . . . . . . . : 
+      Default Gateway . . . . . . . . . :
 
     Ethernet adapter VirtualBox Host-Only Network:
 
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Link-local IPv6 Address . . . . . : fe80::f5a4:152a:9cf3:2b32%4
       IPv4 Address. . . . . . . . . . . : 192.168.56.2
       Subnet Mask . . . . . . . . . . . : 255.255.255.0
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
     Unknown adapter Local Area Connection:
 
       Media State . . . . . . . . . . . : Media disconnected
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Description . . . . . . . . . . . : Virtual Network Manager
       Physical Address. . . . . . . . . : 00-11-22-33-44-55
       DHCP Enabled. . . . . . . . . . . : No
@@ -372,15 +372,15 @@ BOOST_AUTO_TEST_CASE(testWhole)
 
     Ethernet adapter vEthernet (WSL):
 
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Description . . . . . . . . . . . : Virtual Ethernet Adapter
       Physical Address. . . . . . . . . : 00-AA-11-BB-22-CC
       DHCP Enabled. . . . . . . . . . . : No
       Autoconfiguration Enabled . . . . : Yes
-      Link-local IPv6 Address . . . . . : fe80::1:2:3:4(Preferred) 
-      IPv4 Address. . . . . . . . . . . : 172.173.174.1(Preferred) 
+      Link-local IPv6 Address . . . . . : fe80::1:2:3:4(Preferred)
+      IPv4 Address. . . . . . . . . . . : 172.173.174.1(Preferred)
       Subnet Mask . . . . . . . . . . . : 255.255.240.0
-      Default Gateway . . . . . . . . . : 
+      Default Gateway . . . . . . . . . :
       DHCPv6 IAID . . . . . . . . . . . : 123456789
       DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-01-00-01-01-AB-BA-AB-BA-AB-BA
       DNS Servers . . . . . . . . . . . : fad7:1:4:ffff::1%1
@@ -391,7 +391,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
     Wireless LAN adapter Local Area Connection* 1:
 
       Media State . . . . . . . . . . . : Media disconnected
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Description . . . . . . . . . . . : Microsoft Wi-Fi Direct Virtual Adapter
       Physical Address. . . . . . . . . : 33-44-55-66-77-77
       DHCP Enabled. . . . . . . . . . . : Yes
@@ -404,11 +404,11 @@ BOOST_AUTO_TEST_CASE(testWhole)
       Physical Address. . . . . . . . . : FC-CF-AA-AA-CF-FC
       DHCP Enabled. . . . . . . . . . . : Yes
       Autoconfiguration Enabled . . . . : Yes
-      IPv6 Address. . . . . . . . . . . : 2001:0dd:533:2002::2003(Preferred) 
+      IPv6 Address. . . . . . . . . . . : 2001:0dd:533:2002::2003(Preferred)
       Lease Obtained. . . . . . . . . . : Saturday, January 02, 2021 12:03:40 AM
       Lease Expires . . . . . . . . . . : Sunday, January 10, 2021 18:17:46 AM
-      Link-local IPv6 Address . . . . . : fe80::dddd:a:0:0%13(Preferred) 
-      IPv4 Address. . . . . . . . . . . : 10.0.0.2(Preferred) 
+      Link-local IPv6 Address . . . . . : fe80::dddd:a:0:0%13(Preferred)
+      IPv4 Address. . . . . . . . . . . : 10.0.0.2(Preferred)
       Subnet Mask . . . . . . . . . . . : 255.255.255.0
       Lease Obtained. . . . . . . . . . : Saturday, April 17, 2021 2:03:38 AM
       Lease Expires . . . . . . . . . . : Saturday, April 24, 2021 12:53:56 PM
@@ -441,7 +441,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
     Unknown adapter Local Area Connection:
 
       Media State . . . . . . . . . . . : Media disconnected
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Description . . . . . . . . . . . : Virtual Network Manager
       Physical Address. . . . . . . . . : 00-11-22-33-44-55
       DHCP Enabled. . . . . . . . . . . : No
@@ -449,15 +449,15 @@ BOOST_AUTO_TEST_CASE(testWhole)
 
     Ethernet adapter vEthernet (WSL):
 
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Description . . . . . . . . . . . : Virtual Ethernet Adapter
       Physical Address. . . . . . . . . : 00-AA-11-BB-22-CC
       DHCP Enabled. . . . . . . . . . . : No
       Autoconfiguration Enabled . . . . : Yes
-      Link-local IPv6 Address . . . . . : fe80::1:2:3:4(Preferred) 
-      IPv4 Address. . . . . . . . . . . : 172.173.174.1(Preferred) 
+      Link-local IPv6 Address . . . . . : fe80::1:2:3:4(Preferred)
+      IPv4 Address. . . . . . . . . . . : 172.173.174.1(Preferred)
       Subnet Mask . . . . . . . . . . . : 255.255.240.0
-      Default Gateway . . . . . . . . . : 
+      Default Gateway . . . . . . . . . :
       DHCPv6 IAID . . . . . . . . . . . : 123456789
       DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-01-00-01-01-AB-BA-AB-BA-AB-BA
       DNS Servers . . . . . . . . . . . : fad7:1:4:ffff::1%1
@@ -468,7 +468,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
     Wireless LAN adapter Local Area Connection* 1:
 
       Media State . . . . . . . . . . . : Media disconnected
-      Connection-specific DNS Suffix  . : 
+      Connection-specific DNS Suffix  . :
       Description . . . . . . . . . . . : Microsoft Wi-Fi Direct Virtual Adapter
       Physical Address. . . . . . . . . : 33-44-55-66-77-77
       DHCP Enabled. . . . . . . . . . . : Yes
@@ -481,11 +481,11 @@ BOOST_AUTO_TEST_CASE(testWhole)
       Physical Address. . . . . . . . . : FC-CF-AA-AA-CF-FC
       DHCP Enabled. . . . . . . . . . . : Yes
       Autoconfiguration Enabled . . . . : Yes
-      IPv6 Address. . . . . . . . . . . : 2001:0dd:533:2002::2003(Preferred) 
+      IPv6 Address. . . . . . . . . . . : 2001:0dd:533:2002::2003(Preferred)
       Lease Obtained. . . . . . . . . . : Saturday, January 02, 2021 12:03:40 AM
       Lease Expires . . . . . . . . . . : Sunday, January 10, 2021 18:17:46 AM
-      Link-local IPv6 Address . . . . . : fe80::dddd:a:0:0%13(Preferred) 
-      IPv4 Address. . . . . . . . . . . : 10.0.0.2(Preferred) 
+      Link-local IPv6 Address . . . . . : fe80::dddd:a:0:0%13(Preferred)
+      IPv4 Address. . . . . . . . . . . : 10.0.0.2(Preferred)
       Subnet Mask . . . . . . . . . . . : 255.255.255.0
       Lease Obtained. . . . . . . . . . : Saturday, April 17, 2021 2:03:38 AM
       Lease Expires . . . . . . . . . . : Saturday, April 24, 2021 12:53:56 PM

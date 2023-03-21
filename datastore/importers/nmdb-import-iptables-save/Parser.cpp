@@ -208,28 +208,28 @@ Parser::updateRule(const bool _neg,
 void
 Parser::finalizeRule()
 {
-  auto& rule {d.ruleBooks[bookName][curRuleId]};
+  auto& rbRule {d.ruleBooks[bookName][curRuleId]};
 
-  rule.setSrcId(bookName);
-  rule.setDstId(bookName);
+  rbRule.setSrcId(bookName);
+  rbRule.setDstId(bookName);
 
-  if (0 == rule.getSrcs().size()) {
-    rule.addSrc("any");
+  if (0 == rbRule.getSrcs().size()) {
+    rbRule.addSrc("any");
   }
-  if (0 == rule.getSrcIfaces().size()) {
-    rule.addSrcIface("any");
+  if (0 == rbRule.getSrcIfaces().size()) {
+    rbRule.addSrcIface("any");
   }
-  if (0 == rule.getDsts().size()) {
-    rule.addDst("any");
+  if (0 == rbRule.getDsts().size()) {
+    rbRule.addDst("any");
   }
-  if (0 == rule.getDstIfaces().size()) {
-    rule.addDstIface("any");
+  if (0 == rbRule.getDstIfaces().size()) {
+    rbRule.addDstIface("any");
   }
-  if (0 == rule.getServices().size()) {
-    rule.addService("any");
+  if (0 == rbRule.getServices().size()) {
+    rbRule.addService("any");
   }
-  if (0 == rule.getActions().size()) {
-    rule.addAction("none");
+  if (0 == rbRule.getActions().size()) {
+    rbRule.addAction("none");
   }
 }
 
@@ -240,17 +240,17 @@ Parser::updateChainPolicy(const std::string& _bookName,
   if ("-" != _policy) {
     setBookName(_bookName);
 
-    auto& rule {d.ruleBooks[bookName][SIZE_MAX]};
+    auto& rbRule {d.ruleBooks[bookName][SIZE_MAX]};
 
-    rule.setSrcId(bookName);
-    rule.setDstId(bookName);
-    rule.setRuleId(SIZE_MAX);
-    rule.addSrc("any");
-    rule.addSrcIface("any");
-    rule.addDst("any");
-    rule.addDstIface("any");
-    rule.addService("any");
-    rule.addAction(_policy);
+    rbRule.setSrcId(bookName);
+    rbRule.setDstId(bookName);
+    rbRule.setRuleId(SIZE_MAX);
+    rbRule.addSrc("any");
+    rbRule.addSrcIface("any");
+    rbRule.addDst("any");
+    rbRule.addDstIface("any");
+    rbRule.addService("any");
+    rbRule.addAction(_policy);
   }
 }
 

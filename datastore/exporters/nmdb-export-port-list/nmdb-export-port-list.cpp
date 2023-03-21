@@ -40,7 +40,6 @@ class Tool : public nmdt::AbstractExportTool
       std::ostringstream portsString;
 
       uint16_t portRangeFirst {0};
-      uint16_t portRangeLast  {0};
       bool     inPortRange    {false};
 
       for (size_t i {0}; i <= ports.size(); ++i) {
@@ -54,7 +53,7 @@ class Tool : public nmdt::AbstractExportTool
         else {
           // Port's bit is not set or max port: end port range if in a range.
           if (inPortRange) {
-            portRangeLast = boost::numeric_cast<uint16_t>(i-1);
+            uint16_t portRangeLast {boost::numeric_cast<uint16_t>(i-1)};
             inPortRange = false;
 
             // Append the completed range onto the ports string.

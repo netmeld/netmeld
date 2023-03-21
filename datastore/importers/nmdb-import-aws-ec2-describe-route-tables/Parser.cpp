@@ -66,19 +66,23 @@ Parser::processAssociations(const json& _rt,
       , "SubnetId"
     };
 
-  for (const auto& key : keys) {
-    for (const auto& association : _rt.at("Associations")) {
-      if ("associated" != association.at("AssociationState").at("State")) {
-        LOG_DEBUG << "RouteTable not associated: "
-                  << _routeTable.toDebugString()
-                  ;
-        continue;
-      }
+  for (const auto& association : _rt.at("Associations")) {
+    if (association.value("Main", false)) {
+      _routeTable.makeVpcDefault();
+    }
+    if ("associated" != association.at("AssociationState").at("State")) {
+      LOG_DEBUG << "RouteTable not associated: "
+                << _routeTable.toDebugString()
+                ;
+      continue;
+    }
+    for (const auto& key : keys) {
       if (association.contains(key)) {
         _routeTable.addAssociation(association.at(key));
       }
     }
   }
+
 }
 
 void

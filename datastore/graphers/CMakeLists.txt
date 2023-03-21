@@ -29,6 +29,7 @@ set(MODULE_VERSION "2.0")
 foreach(ITEM
     #graph-tool-template
     nmdb-graph-ac
+    nmdb-graph-aws
     nmdb-graph-network
   )
   target_as_tool(${ITEM})

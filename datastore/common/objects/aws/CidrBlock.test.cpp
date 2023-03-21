@@ -36,7 +36,7 @@ namespace nmdoa = netmeld::datastore::objects::aws;
 class TestCidrBlock : public nmdoa::CidrBlock {
   public:
     TestCidrBlock() : CidrBlock() {};
-    TestCidrBlock(const std::string& _cidr) : CidrBlock(_cidr) {};
+    explicit TestCidrBlock(const std::string& _cidr) : CidrBlock(_cidr) {};
 
   public:
     std::string getState() const

@@ -114,17 +114,17 @@ namespace netmeld::datastore::objects::aws {
   std::partial_ordering
   Route::operator<=>(const Route& rhs) const
   {
-    if (auto cmp = typeId <=> rhs.typeId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = nonCidrBlocks <=> rhs.nonCidrBlocks; 0 != cmp) {
-      return cmp;
-    }
-
-    return cidrBlocks <=> rhs.cidrBlocks;
+    return std::tie( typeId
+                   , state
+                   , nonCidrBlocks
+                   , cidrBlocks
+                   )
+       <=> std::tie( rhs.typeId
+                   , rhs.state
+                   , rhs.nonCidrBlocks
+                   , rhs.cidrBlocks
+                   )
+      ;
   }
 
   bool

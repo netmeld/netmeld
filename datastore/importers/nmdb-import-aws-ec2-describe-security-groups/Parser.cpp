@@ -104,15 +104,17 @@ Parser::getRule(const json& _permission)
     }
   }
   {
-    std::set<std::string> keys {
-          "PrefixListIds"
-        , "UserIdGroupPairs"
+    std::map<std::string, std::string> keys {
+          {"PrefixListIds", "PrefixListId"}
+        , {"UserIdGroupPairs", "GroupId"}
       };
-    for (const auto& key : keys) {
-      for (const auto& entry : _permission.at(key)) {
+    for (const auto& [listKey, idKey] : keys) {
+      for (const auto& dataBlock : _permission.at(listKey)) {
+        asgr.addNonCidr(dataBlock.value(idKey, ""));
+
         std::ostringstream oss;
-        oss << entry;
-        asgr.addNonCidr(oss.str());
+        oss << dataBlock;
+        asgr.addDetails(oss.str());
       }
     }
   }

@@ -389,15 +389,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       }
 
       // Extract Mac Address
-      std::string macAddrs;
       tags = reportHostNode.select_nodes
         ("HostProperties/tag[@name='mac-address']");
 
       for (const auto& tag : tags) {
         pugi::xml_node tagNode = tag.node();
 
-        macAddrs = tagNode.text().as_string();
-
+        std::string macAddrs {tagNode.text().as_string()};
         if (!macAddrs.empty()) {
           // Nessus puts multiple MACs under one tag, so split and iterate
           boost::char_separator<char> sep("\n");
@@ -417,13 +415,12 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       }
 
       // Extract Operating System
-      std::string cpe;
       tags = reportHostNode.select_nodes
         ("HostProperties/tag[starts-with(@name, 'cpe')]");
 
       for (const auto& tag : tags) {
         pugi::xml_node tagNode = tag.node();
-        cpe = tagNode.text().as_string();
+        std::string cpe {tagNode.text().as_string()};
 
         std::string prefix {"cpe:/o:"};
         if (0 == cpe.compare(0, prefix.size(), prefix)) {

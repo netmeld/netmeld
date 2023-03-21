@@ -88,6 +88,19 @@ namespace netmeld::datastore::objects {
   }
 
   std::string
+  PortRange::toHumanString() const
+  {
+    std::ostringstream oss;
+    if (std::get<0>(*this) == std::get<1>(*this)) {
+      oss << boost::format("%1%") % std::get<0>(*this);
+    } else {
+      oss << boost::format("%1%-%2%") % std::get<0>(*this) % std::get<1>(*this);
+    }
+
+    return oss.str();
+  }
+
+  std::string
   PortRange::toDebugString() const
   {
     return toString();

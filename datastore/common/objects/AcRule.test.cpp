@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     []
     (void (TestAcRule::*x)(const std::string&),
      const std::string& (TestAcRule::*y)() const,
-     const std::vector<std::string> vs)
+     const std::vector<std::string>& vs)
   {
     TestAcRule tar;
     for (const auto& v1 : vs) {
