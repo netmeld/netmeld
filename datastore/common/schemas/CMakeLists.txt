@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -36,6 +36,7 @@ foreach(ITEM
     023device-views-create.sql
     024tool-results-views-create.sql
     031aws-tables-create.sql
+    032aws-views-create.sql
   )
   nm_install_conf(${ITEM} "${NETMELD_SCHEMA_DIR}")
 endforeach()
