@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -43,9 +43,9 @@ namespace netmeld::datastore::objects {
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
-      inline static const std::string defaultIpv4Addr {"0.0.0.0"};
-      inline static const std::string defaultIpv6Addr {"::"};
-      inline static const uint8_t     defaultIpPrefix {0};
+      inline static const std::string defaultRouteReason {
+          "Netmeld Route default used"
+        };
 
     protected: // Variables intended for internal/subclass API
       std::string vrfId;

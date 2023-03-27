@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -159,19 +159,39 @@ BOOST_AUTO_TEST_CASE(testSetters)
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
+    nmdo::IpAddress ipAddr  {"1.2.3.4/24"};
+    std::string     iface   {"eth101"};
+    {
+      TestRoute route;
+
+      BOOST_CHECK(!route.isValid());
+      route.setDstIpNet(ipAddr);
+      BOOST_CHECK(!route.isValid());
+      route.setNullRoute(true);
+      BOOST_CHECK(route.isValid());
+      route.setIfaceName(iface);
+      BOOST_CHECK(!route.isValid());
+      LOG_DEBUG << route.toDebugString() << std::endl;
+    }
+    {
+      TestRoute route;
+
+      BOOST_CHECK(!route.isValid());
+      route.setIfaceName(iface);
+      BOOST_CHECK(!route.isValid());
+      route.setDstIpNet(ipAddr);
+      BOOST_CHECK(!route.isValid());
+      route.setIfaceName(iface);
+      BOOST_CHECK(route.isValid());
+    }
     {
       TestRoute route;
 
       BOOST_CHECK(!route.isValid());
       route.setNextHopIpAddr(ipAddr);
-      BOOST_CHECK(route.isValid());
-    }
-
-    {
-      TestRoute route;
-
       BOOST_CHECK(!route.isValid());
+      route.setIfaceName(iface);
+      BOOST_CHECK(route.isValid());
       route.setDstIpNet(ipAddr);
       BOOST_CHECK(route.isValid());
     }
@@ -181,7 +201,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestRoute route;
     nmdo::IpAddress ipAddr;
 
-    BOOST_CHECK(ipAddr.isDefault());
+    BOOST_CHECK(ipAddr.hasUnsetPrefix());
     route.setNextHopIpAddr(ipAddr);
     BOOST_CHECK(!route.isValid());
     route.setDstIpNet(ipAddr);

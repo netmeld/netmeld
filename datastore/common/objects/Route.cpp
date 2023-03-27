@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -51,15 +51,6 @@ namespace netmeld::datastore::objects {
   Route::setDstIpNet(const IpAddress& _dstIpNet)
   {
     dstIpNet = _dstIpNet;
-
-    if (nextHopIpAddr.isDefault() && !dstIpNet.isDefault()) {
-      if (dstIpNet.isV4()) {
-        nextHopIpAddr.setAddress(defaultIpv4Addr);
-      } else {
-        nextHopIpAddr.setAddress(defaultIpv6Addr);
-      }
-      nextHopIpAddr.setReason("Netmeld route default used");
-    }
   }
 
   void
@@ -79,14 +70,14 @@ namespace netmeld::datastore::objects {
   {
     nextHopIpAddr = _nextHopIpAddr;
 
-    if (dstIpNet.isDefault() && !nextHopIpAddr.isDefault()) {
+    // if needed, init dstIpNet as default route
+    if (!nextHopIpAddr.hasUnsetPrefix() && dstIpNet.hasUnsetPrefix()) {
       if (nextHopIpAddr.isV4()) {
-        dstIpNet.setAddress(defaultIpv4Addr);
+        dstIpNet = IpNetwork::getIpv4Default();
       } else {
-        dstIpNet.setAddress(defaultIpv6Addr);
+        dstIpNet = IpNetwork::getIpv6Default();
       }
-      dstIpNet.setPrefix(defaultIpPrefix);
-      dstIpNet.setReason("Netmeld route default used");
+      dstIpNet.setReason(defaultRouteReason);
     }
   }
 
@@ -94,6 +85,19 @@ namespace netmeld::datastore::objects {
   Route::setIfaceName(const std::string& _ifaceName)
   {
     ifaceName = nmcu::toLower(_ifaceName);
+
+    // if needed, init nextHopIpAddr to the correct IP version
+    if (  !dstIpNet.hasUnsetPrefix()
+       && nextHopIpAddr.hasUnsetPrefix()
+       && !ifaceName.empty()
+       ) {
+      if (dstIpNet.isV4()) {
+        nextHopIpAddr = IpAddress::getIpv4Default();
+      } else {
+        nextHopIpAddr = IpAddress::getIpv6Default();
+      }
+      nextHopIpAddr.setReason(defaultRouteReason);
+    }
   }
 
   void
@@ -135,7 +139,8 @@ namespace netmeld::datastore::objects {
   std::string
   Route::getNextHopIpAddrString() const
   {
-    std::string nextHopIpAddrString;
+    std::string nextHopIpAddrString {""};
+
     if (!isNullRoute) {
       nextHopIpAddrString = nextHopIpAddr.toString();
     }
@@ -146,7 +151,24 @@ namespace netmeld::datastore::objects {
   bool
   Route::isValid() const
   {
-    return !(nextHopIpAddr.isDefault() && dstIpNet.isDefault());
+    // table lookups require both vrf-id and table-id to be set
+    bool isTableLookupRoute {
+        !(nextVrfId.empty() || nextTableId.empty())
+      };
+    // next-hops require both ifaceName and nextHopIpAddr to be set
+    bool isNextHopRoute {
+        !(ifaceName.empty() || nextHopIpAddr.hasUnsetPrefix())
+      };
+
+    return (  // dstIpNet cannot be IpAddress default value; Route default OK
+              (!dstIpNet.hasUnsetPrefix())
+              // XOR; next-hop or table-lookup must be defined, not both
+           && (  (isNextHopRoute != isTableLookupRoute)
+                 // XOR; prior or null-route must be defined, not both
+              != isNullRoute
+              )
+           )
+      ;
   }
 
   bool
@@ -214,18 +236,21 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << boost::format("[%1%,%2%,%3%,%4%,%5%,%6%,%7%,%8%,%9%,%10%,%11%]")
-        % vrfId
-        % tableId
-        % isActive
-        % dstIpNet.toDebugString()
-        % nextVrfId
-        % nextTableId
-        % nextHopIpAddr.toDebugString()
-        % ifaceName
-        % protocol
-        % adminDistance
-        % metric
+    oss << "["
+        << "vrfId: " << vrfId
+        << ", tableId: " << tableId
+        << ", isActive: " << isActive
+        << ", dstIpNet: " << dstIpNet
+        << ", nextVrfId: " << nextVrfId
+        << ", nextTableId: " << nextTableId
+        << ", nextHopIpAddr: " << nextHopIpAddr
+        << ", ifaceName: " << ifaceName
+        << ", protocol: " << protocol
+        << ", adminDistance: " << adminDistance
+        << ", metric: " << metric
+        << ", isNullRoute: " << isNullRoute
+        << ", description: " << description
+        << "]"
         ;
 
     return oss.str();
@@ -234,40 +259,35 @@ namespace netmeld::datastore::objects {
   std::partial_ordering
   Route::operator<=>(const Route& rhs) const
   {
-    if (auto cmp = isActive <=> rhs.isActive; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = vrfId <=> rhs.vrfId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = tableId <=> rhs.tableId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = dstIpNet <=> rhs.dstIpNet; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = nextVrfId <=> rhs.nextVrfId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = nextTableId <=> rhs.nextTableId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = nextHopIpAddr <=> rhs.nextHopIpAddr; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = ifaceName <=> rhs.ifaceName; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = adminDistance <=> rhs.adminDistance; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = metric <=> rhs.metric; 0 != cmp) {
-      return cmp;
-    }
-    return description <=> rhs.description;
+    return std::tie( vrfId
+                   , tableId
+                   , dstIpNet
+                   , nextVrfId
+                   , nextTableId
+                   , nextHopIpAddr
+                   , ifaceName
+                   , protocol
+                   , description
+                   , adminDistance
+                   , metric
+                   , isActive
+                   , isNullRoute
+                   )
+       <=> std::tie( rhs.vrfId
+                   , rhs.tableId
+                   , rhs.dstIpNet
+                   , rhs.nextVrfId
+                   , rhs.nextTableId
+                   , rhs.nextHopIpAddr
+                   , rhs.ifaceName
+                   , rhs.protocol
+                   , rhs.description
+                   , rhs.adminDistance
+                   , rhs.metric
+                   , rhs.isActive
+                   , rhs.isNullRoute
+                   )
+      ;
   }
 
   bool
