@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -131,17 +131,17 @@ BOOST_AUTO_TEST_CASE(testSettersSimple)
   {
     TestIpNetwork ipNet;
 
-    BOOST_TEST(ipNet.isDefault());
+    BOOST_TEST(ipNet.hasUnsetPrefix());
     ipNet.setPrefix(0);
-    BOOST_TEST(!ipNet.isDefault());
+    BOOST_TEST(!ipNet.hasUnsetPrefix());
     ipNet.setPrefix(24);
-    BOOST_TEST(!ipNet.isDefault());
+    BOOST_TEST(!ipNet.hasUnsetPrefix());
     ipNet.setPrefix(32);
-    BOOST_TEST(!ipNet.isDefault());
+    BOOST_TEST(!ipNet.hasUnsetPrefix());
     ipNet.setPrefix(128);
-    BOOST_TEST(!ipNet.isDefault());
+    BOOST_TEST(!ipNet.hasUnsetPrefix());
     ipNet.setPrefix(UINT8_MAX);
-    BOOST_TEST(!ipNet.isDefault()); // once set, can never be unset
+    BOOST_TEST(!ipNet.hasUnsetPrefix()); // once set, can never be unset
   }
 
   {

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -129,7 +129,7 @@ namespace netmeld::datastore::objects {
   std::string
   IpNetwork::getNetwork() const
   {
-    if (isDefault()) {
+    if (hasUnsetPrefix()) {
       return address.to_string();
     } else if (isV4()) {
       if (32 < prefix) {
@@ -288,7 +288,7 @@ namespace netmeld::datastore::objects {
   }
 
   bool
-  IpNetwork::isDefault() const
+  IpNetwork::hasUnsetPrefix() const
   {
     return UINT8_MAX == prefix;
   }
