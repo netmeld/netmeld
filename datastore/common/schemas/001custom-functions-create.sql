@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -36,26 +36,28 @@ BEGIN TRANSACTION;
 -- an expressional index when partial index combinations have
 -- high complexity (>2 NULL fields).
 -- ----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION hash_chain(VARIADIC args TEXT[])
-  RETURNS TEXT
-  AS
-  '
-  DECLARE
-    sub TEXT := ''~'';
-    temp TEXT := '''';
-    results TEXT;
-  BEGIN
-    FOR i IN 1 .. ARRAY_UPPER(args, 1) LOOP
-      temp := MD5(temp || COALESCE(args[i], sub));
-    END LOOP;
-    SELECT temp INTO results;
-    RETURN results;
-  END;
-  '
-  LANGUAGE plpgsql
-  CALLED ON NULL INPUT
-  PARALLEL SAFE
-  IMMUTABLE;
+CREATE OR REPLACE FUNCTION hash_chain(
+    VARIADIC args TEXT[]
+)
+RETURNS TEXT
+AS $$
+DECLARE
+  sub TEXT := ''~'';
+  temp TEXT := '''';
+  results TEXT;
+BEGIN
+  FOR i IN 1 .. ARRAY_UPPER(args, 1) LOOP
+    temp := MD5(temp || COALESCE(args[i], sub));
+  END LOOP;
+  SELECT temp INTO results;
+  RETURN results;
+END;
+$$
+LANGUAGE plpgsql
+CALLED ON NULL INPUT
+PARALLEL SAFE
+IMMUTABLE
+;
 
 
 -- ----------------------------------------------------------------------

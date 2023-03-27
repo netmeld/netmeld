@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -31,10 +31,10 @@ BEGIN TRANSACTION;
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_devices (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -51,15 +51,15 @@ ON raw_devices(device_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_virtualizations (
-    tool_run_id                 UUID            NOT NULL,
-    host_device_id              TEXT            NOT NULL,
-    guest_device_id             TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, host_device_id, guest_device_id),
-    FOREIGN KEY (tool_run_id, host_device_id)
+    tool_run_id                 UUID            NOT NULL
+  , host_device_id              TEXT            NOT NULL
+  , guest_device_id             TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, host_device_id, guest_device_id)
+  , FOREIGN KEY (tool_run_id, host_device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, guest_device_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, guest_device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -84,15 +84,15 @@ ON raw_device_virtualizations(host_device_id, guest_device_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_hardware_information (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    device_type                 TEXT            NULL,
-    vendor                      TEXT            NULL,
-    model                       TEXT            NULL,
-    hardware_revision           TEXT            NULL,
-    serial_number               TEXT            NULL,
-    description                 TEXT            NULL,
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , device_type                 TEXT            NULL
+  , vendor                      TEXT            NULL
+  , model                       TEXT            NULL
+  , hardware_revision           TEXT            NULL
+  , serial_number               TEXT            NULL
+  , description                 TEXT            NULL
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -102,12 +102,12 @@ CREATE TABLE raw_device_hardware_information (
 -- Create UNIQUE expressional index with substitutions of NULL values
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_device_hardware_information_idx_unique
-ON raw_device_hardware_information
-  ((HASH_CHAIN(
-      tool_run_id::TEXT, device_id,
-      device_type, vendor, model, hardware_revision, serial_number, description
+ON raw_device_hardware_information(
+  HASH_CHAIN(
+      tool_run_id::TEXT, device_id, device_type, vendor, model
+    , hardware_revision, serial_number, description
     )
-  ));
+);
 
 -- Partial indexes
 CREATE INDEX raw_device_hardware_information_idx_tool_run_id
@@ -136,25 +136,27 @@ ON raw_device_hardware_information(description);
 
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_hardware_information_idx_views
-ON raw_device_hardware_information(device_id, device_type, vendor, model,
-    hardware_revision, serial_number, description);
+ON raw_device_hardware_information(
+    device_id, device_type, vendor, model, hardware_revision, serial_number
+  , description
+);
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE device_colors (
-    device_id                   TEXT            NOT NULL,
-    color                       TEXT            NOT NULL,
-    PRIMARY KEY (device_id)
+    device_id                   TEXT            NOT NULL
+  , color                       TEXT            NOT NULL
+  , PRIMARY KEY (device_id)
 );
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE device_extra_weights (
-    device_id                   TEXT            NOT NULL,
-    extra_weight                FLOAT           NOT NULL,
-    PRIMARY KEY (device_id)
+    device_id                   TEXT            NOT NULL
+  , extra_weight                FLOAT           NOT NULL
+  , PRIMARY KEY (device_id)
 );
 
 
@@ -163,14 +165,14 @@ CREATE TABLE device_extra_weights (
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    media_type                  TEXT            NOT NULL,
-    is_up                       BOOLEAN         NOT NULL,
-    description                 TEXT            NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , media_type                  TEXT            NOT NULL
+  , is_up                       BOOLEAN         NOT NULL
+  , description                 TEXT            NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -203,16 +205,18 @@ ON raw_device_interfaces(device_id, interface_name);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interface_hierarchies (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    underlying_interface_name   TEXT            NOT NULL,
-    virtual_interface_name      TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, underlying_interface_name, virtual_interface_name),
-    FOREIGN KEY (tool_run_id, device_id, underlying_interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , underlying_interface_name   TEXT            NOT NULL
+  , virtual_interface_name      TEXT            NOT NULL
+  , PRIMARY KEY ( tool_run_id, device_id, underlying_interface_name
+                , virtual_interface_name
+                )
+  , FOREIGN KEY (tool_run_id, device_id, underlying_interface_name)
         REFERENCES raw_device_interfaces(tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, virtual_interface_name)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, device_id, virtual_interface_name)
         REFERENCES raw_device_interfaces(tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -234,7 +238,9 @@ ON raw_device_interface_hierarchies(virtual_interface_name);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_interface_hierarchies_idx_views
-ON raw_device_interface_hierarchies(device_id, underlying_interface_name, virtual_interface_name);
+ON raw_device_interface_hierarchies(
+  device_id, underlying_interface_name, virtual_interface_name
+);
 
 
 -- ----------------------------------------------------------------------
@@ -242,17 +248,17 @@ ON raw_device_interface_hierarchies(device_id, underlying_interface_name, virtua
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_mac_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    mac_addr                    MACADDR         NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name, mac_addr),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , mac_addr                    MACADDR         NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name, mac_addr)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, mac_addr)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, mac_addr)
         REFERENCES raw_mac_addrs(tool_run_id, mac_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -285,23 +291,23 @@ ON raw_device_mac_addrs(device_id, interface_name, mac_addr);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_ip_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    ip_net                      CIDR            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name, ip_addr, ip_net),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , ip_net                      CIDR            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name, ip_addr, ip_net)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, ip_addr)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (ip_addr = host(ip_addr)::INET),
-    CHECK (ip_addr <<= ip_net)
+        ON UPDATE CASCADE
+  , CHECK (ip_addr = host(ip_addr)::INET)
+  , CHECK (ip_addr <<= ip_net)
 );
 
 -- Partial indexes
@@ -334,11 +340,11 @@ ON raw_device_ip_addrs(device_id, interface_name, ip_addr, ip_net);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_vrfs (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    vrf_id                      TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, vrf_id),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , vrf_id                      TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, vrf_id)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -365,16 +371,16 @@ ON raw_device_vrfs(device_id, vrf_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_vrfs_interfaces (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    vrf_id                      TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, vrf_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id, vrf_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , vrf_id                      TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, vrf_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id, vrf_id)
         REFERENCES raw_device_vrfs(tool_run_id, device_id, vrf_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces(tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -417,30 +423,32 @@ ON raw_device_vrfs_interfaces(device_id, vrf_id, interface_name);
 --   accurately correspond to actual ip_nets.
 
 CREATE TABLE raw_device_ip_routes (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    vrf_id                      TEXT            NOT NULL,
-    table_id                    TEXT            NOT NULL,
-    is_active                   BOOLEAN         NOT NULL,
-    dst_ip_net                  CIDR            NOT NULL,
-    next_vrf_id                 TEXT            NULL,
-    next_table_id               TEXT            NULL,
-    next_hop_ip_addr            INET            NULL,
-    outgoing_interface_name     TEXT            NULL,
-    protocol                    TEXT            NULL,
-    administrative_distance     INT             NOT NULL,
-    metric                      INT             NOT NULL,
-    description                 TEXT            NULL,
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , vrf_id                      TEXT            NOT NULL
+  , table_id                    TEXT            NOT NULL
+  , is_active                   BOOLEAN         NOT NULL
+  , dst_ip_net                  CIDR            NOT NULL
+  , next_vrf_id                 TEXT            NULL
+  , next_table_id               TEXT            NULL
+  , next_hop_ip_addr            INET            NULL
+  , outgoing_interface_name     TEXT            NULL
+  , protocol                    TEXT            NULL
+  , administrative_distance     INT             NOT NULL
+  , metric                      INT             NOT NULL
+  , description                 TEXT            NULL
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (next_hop_ip_addr = host(next_hop_ip_addr)::INET),
-    CHECK (inet_same_family(dst_ip_net, next_hop_ip_addr)),
-    CHECK (((next_vrf_id IS NULL) AND (next_table_id IS NULL)) OR
-           ((next_vrf_id IS NOT NULL) AND (next_table_id IS NOT NULL))),
-    CHECK (((next_vrf_id IS NULL) AND (next_table_id IS NULL)) OR
-           ((next_hop_ip_addr IS NULL) AND (outgoing_interface_name IS NULL)))
+        ON UPDATE CASCADE
+  , CHECK (next_hop_ip_addr = host(next_hop_ip_addr)::INET)
+  , CHECK (inet_same_family(dst_ip_net, next_hop_ip_addr))
+  , CHECK (  ((next_vrf_id IS NULL)     AND (next_table_id IS NULL))
+          OR ((next_vrf_id IS NOT NULL) AND (next_table_id IS NOT NULL))
+          )
+  , CHECK (  ((next_vrf_id IS NULL)      AND (next_table_id IS NULL))
+          OR ((next_hop_ip_addr IS NULL) AND (outgoing_interface_name IS NULL))
+          )
 );
 
 -- Partial indexes
@@ -489,20 +497,22 @@ CREATE INDEX raw_device_ip_routes_idx_views4
 ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net);
 
 CREATE INDEX raw_device_ip_routes_idx_views5_next_vrf_id
-ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net,
-    next_vrf_id);
+ON raw_device_ip_routes(
+  device_id, vrf_id, is_active, dst_ip_net, next_vrf_id
+);
 
 CREATE INDEX raw_device_ip_routes_idx_views5_next_hop_ip_addr
-ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net,
-    next_hop_ip_addr);
+ON raw_device_ip_routes(
+  device_id, vrf_id, is_active, dst_ip_net, next_hop_ip_addr
+);
 
 CREATE INDEX raw_device_ip_routes_idx_views5_outgoing_interface
-ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net,
-    outgoing_interface_name);
+ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net
+  , outgoing_interface_name);
 
 CREATE INDEX raw_device_ip_routes_idx_views6
-ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net,
-    next_hop_ip_addr, outgoing_interface_name);
+ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net
+  , next_hop_ip_addr, outgoing_interface_name);
 
 
 -- ----------------------------------------------------------------------
@@ -511,17 +521,18 @@ ON raw_device_ip_routes(device_id, vrf_id, is_active, dst_ip_net,
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_ip_servers (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    service_name                TEXT            NOT NULL,
-    server_ip_addr              INET            NOT NULL,
-    port                        PortNumber      NULL,
-    local_service               BOOLEAN         NOT NULL,
-    description                 TEXT            NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name, service_name,
-                server_ip_addr),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , service_name                TEXT            NOT NULL
+  , server_ip_addr              INET            NOT NULL
+  , port                        PortNumber      NULL
+  , local_service               BOOLEAN         NOT NULL
+  , description                 TEXT            NULL
+  , PRIMARY KEY ( tool_run_id, device_id, interface_name, service_name
+                , server_ip_addr
+                )
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -561,33 +572,32 @@ ON raw_device_ip_servers(device_id, service_name, server_ip_addr);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_dns_resolvers (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NULL,
-    scope_domain                TEXT            NULL,
-    src_ip_addr                 INET            NULL,
-    dst_ip_addr                 INET            NOT NULL,
-    dst_port                    PortNumber      NOT NULL,
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NULL
+  , scope_domain                TEXT            NULL
+  , src_ip_addr                 INET            NULL
+  , dst_ip_addr                 INET            NOT NULL
+  , dst_port                    PortNumber      NOT NULL
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (scope_domain = lower(scope_domain)),
-    CHECK (src_ip_addr = host(src_ip_addr)::INET),
-    CHECK (dst_ip_addr = host(dst_ip_addr)::INET)
+        ON UPDATE CASCADE
+  , CHECK (scope_domain = lower(scope_domain))
+  , CHECK (src_ip_addr = host(src_ip_addr)::INET)
+  , CHECK (dst_ip_addr = host(dst_ip_addr)::INET)
 );
 
 -- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
 -- Create UNIQUE expressional index with substitutions of NULL values
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_device_dns_resolvers_idx_unique
-ON raw_device_dns_resolvers
-  ((HASH_CHAIN(
-      tool_run_id::TEXT, device_id,
-      interface_name, scope_domain,
-      src_ip_addr::TEXT, dst_ip_addr::TEXT, dst_port::TEXT
+ON raw_device_dns_resolvers(
+  HASH_CHAIN(
+      tool_run_id::TEXT, device_id, interface_name, scope_domaini
+    , src_ip_addr::TEXT, dst_ip_addr::TEXT, dst_port::TEXT
     )
-  ));
+);
 
 -- Partial indexes
 CREATE INDEX raw_device_dns_resolvers_idx_tool_run_id
@@ -615,15 +625,15 @@ ON raw_device_dns_resolvers(dst_port);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_dns_search_domains (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    search_domain               TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, search_domain),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , search_domain               TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, search_domain)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (search_domain = lower(search_domain))
+        ON UPDATE CASCADE
+  , CHECK (search_domain = lower(search_domain))
 );
 
 -- Partial indexes
@@ -645,15 +655,15 @@ ON raw_device_dns_search_domains(device_id, search_domain);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_dns_references (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    hostname                    TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, hostname),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , hostname                    TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, hostname)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (hostname = lower(hostname))
+        ON UPDATE CASCADE
+  , CHECK (hostname = lower(hostname))
 );
 
 -- Partial indexes
@@ -675,20 +685,21 @@ ON raw_device_dns_references(device_id, hostname);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_phys_connections (
-    tool_run_id                 UUID            NOT NULL,
-    self_device_id              TEXT            NOT NULL,
-    self_interface_name         TEXT            NOT NULL,
-    peer_device_id              TEXT            NOT NULL,
-    peer_interface_name         TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id,
-                 self_device_id, self_interface_name,
-                 peer_device_id, peer_interface_name),
-    FOREIGN KEY (tool_run_id, self_device_id, self_interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , self_device_id              TEXT            NOT NULL
+  , self_interface_name         TEXT            NOT NULL
+  , peer_device_id              TEXT            NOT NULL
+  , peer_interface_name         TEXT            NOT NULL
+  , PRIMARY KEY ( tool_run_id
+                , self_device_id, self_interface_name
+                , peer_device_id, peer_interface_name
+                )
+  , FOREIGN KEY (tool_run_id, self_device_id, self_interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, peer_device_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, peer_device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -719,26 +730,27 @@ ON raw_device_phys_connections(peer_device_id, peer_interface_name);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_phys_connections_idx_views
-ON raw_device_phys_connections(self_device_id, self_interface_name,
-                           peer_device_id, peer_interface_name);
+ON raw_device_phys_connections(self_device_id, self_interface_name
+                         , peer_device_id, peer_interface_name);
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_link_connections (
-    tool_run_id                 UUID            NOT NULL,
-    self_device_id              TEXT            NOT NULL,
-    self_interface_name         TEXT            NOT NULL,
-    peer_mac_addr               MACADDR         NOT NULL,
-    PRIMARY KEY (tool_run_id,
-                 self_device_id, self_interface_name,
-                 peer_mac_addr),
-    FOREIGN KEY (tool_run_id, self_device_id, self_interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , self_device_id              TEXT            NOT NULL
+  , self_interface_name         TEXT            NOT NULL
+  , peer_mac_addr               MACADDR         NOT NULL
+  , PRIMARY KEY ( tool_run_id
+                , self_device_id, self_interface_name
+                , peer_mac_addr
+                )
+  , FOREIGN KEY (tool_run_id, self_device_id, self_interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, peer_mac_addr)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, peer_mac_addr)
         REFERENCES raw_mac_addrs(tool_run_id, mac_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -772,11 +784,11 @@ ON raw_device_link_connections
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_devices_aaa (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    aaa_command                 TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, aaa_command),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , aaa_command                 TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, aaa_command)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -793,12 +805,12 @@ ON raw_devices_aaa(device_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_mode (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    interface_mode              TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , interface_mode              TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
@@ -827,13 +839,13 @@ ON raw_device_interfaces_mode(device_id, interface_name);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_bpdu (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    is_bpduguard_enabled        BOOLEAN         NOT NULL,
-    is_bpdufilter_enabled       BOOLEAN         NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , is_bpduguard_enabled        BOOLEAN         NOT NULL
+  , is_bpdufilter_enabled       BOOLEAN         NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
@@ -865,12 +877,12 @@ ON raw_device_interfaces_bpdu(device_id, interface_name);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_cdp (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    is_cdp_enabled              BOOLEAN         NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , is_cdp_enabled              BOOLEAN         NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
@@ -899,12 +911,12 @@ ON raw_device_interfaces_cdp(device_id, interface_name);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_portfast (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    is_portfast_enabled         BOOLEAN         NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , is_portfast_enabled         BOOLEAN         NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
@@ -933,20 +945,20 @@ ON raw_device_interfaces_portfast(device_id, interface_name);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_port_security (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    is_port_security_enabled    BOOLEAN         NOT NULL,
-    is_mac_addr_sticky          BOOLEAN         NOT NULL,
-    max_mac_addrs               INT             NOT NULL,
-    violation_action            TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , is_port_security_enabled    BOOLEAN         NOT NULL
+  , is_mac_addr_sticky          BOOLEAN         NOT NULL
+  , max_mac_addrs               INT             NOT NULL
+  , violation_action            TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (0 <= max_mac_addrs)
+        ON UPDATE CASCADE
+  , CHECK (0 <= max_mac_addrs)
 );
 
 -- Partial indexes
@@ -980,17 +992,17 @@ ON raw_device_interfaces_port_security(device_id, interface_name);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_port_security_mac_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    mac_addr                    MACADDR         NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name, mac_addr),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , mac_addr                    MACADDR         NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name, mac_addr)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, mac_addr)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, mac_addr)
         REFERENCES raw_mac_addrs(tool_run_id, mac_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1021,12 +1033,12 @@ ON raw_device_interfaces_port_security_mac_addrs
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_ac_nets (
-    tool_run_id   UUID    NOT NULL,
-    device_id     TEXT    NOT NULL,
-    net_set_id    TEXT    NOT NULL,
-    net_set       TEXT    NOT NULL,
-    net_set_data  TEXT    NULL,
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id   UUID    NOT NULL
+  , device_id     TEXT    NOT NULL
+  , net_set_id    TEXT    NOT NULL
+  , net_set       TEXT    NOT NULL
+  , net_set_data  TEXT    NULL
+  , FOREIGN KEY (tool_run_id, device_id)
       REFERENCES raw_devices(tool_run_id, device_id)
       ON DELETE CASCADE
       ON UPDATE CASCADE
@@ -1040,8 +1052,7 @@ ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set)
 WHERE (net_set_data IS NULL);
 
 CREATE UNIQUE INDEX raw_device_ac_nets_idx_unique2
-ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set,
-       net_set_data)
+ON raw_device_ac_nets(tool_run_id, device_id, net_set_id, net_set, net_set_data)
 WHERE (net_set_data IS NOT NULL);
 
 -- Partial indexes
@@ -1068,11 +1079,11 @@ ON raw_device_ac_nets(device_id, net_set_id, net_set_data);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_ac_services (
-    tool_run_id       UUID    NOT NULL,
-    device_id         TEXT    NOT NULL,
-    service_set       TEXT    NOT NULL,
-    service_set_data  TEXT    NULL,
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id       UUID    NOT NULL
+  , device_id         TEXT    NOT NULL
+  , service_set       TEXT    NOT NULL
+  , service_set_data  TEXT    NULL
+  , FOREIGN KEY (tool_run_id, device_id)
       REFERENCES raw_devices(tool_run_id, device_id)
       ON DELETE CASCADE
       ON UPDATE CASCADE
@@ -1086,8 +1097,7 @@ ON raw_device_ac_services(tool_run_id, device_id, service_set)
 WHERE (service_set_data IS NULL);
 
 CREATE UNIQUE INDEX raw_device_ac_services_idx_unique2
-ON raw_device_ac_services(tool_run_id, device_id, service_set,
-       service_set_data)
+ON raw_device_ac_services(tool_run_id, device_id, service_set, service_set_data)
 WHERE (service_set_data IS NOT NULL);
 
 -- Partial indexes
@@ -1110,20 +1120,20 @@ ON raw_device_ac_services(device_id, service_set, service_set_data);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_ac_rules (
-    tool_run_id     UUID    NOT NULL,
-    device_id       TEXT    NOT NULL,
-    enabled         BOOLEAN NOT NULL,
-    ac_id           INT     NOT NULL,
-    src_net_set_id  TEXT    NOT NULL,
-    src_net_set     TEXT    NOT NULL,
-    src_iface       TEXT    NULL,
-    dst_net_set_id  TEXT    NOT NULL,
-    dst_net_set     TEXT    NOT NULL,
-    dst_iface       TEXT    NULL,
-    service_set     TEXT    NULL,
-    action          TEXT    NOT NULL,
-    description     TEXT    NULL,
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id     UUID    NOT NULL
+  , device_id       TEXT    NOT NULL
+  , enabled         BOOLEAN NOT NULL
+  , ac_id           INT     NOT NULL
+  , src_net_set_id  TEXT    NOT NULL
+  , src_net_set     TEXT    NOT NULL
+  , src_iface       TEXT    NULL
+  , dst_net_set_id  TEXT    NOT NULL
+  , dst_net_set     TEXT    NOT NULL
+  , dst_iface       TEXT    NULL
+  , service_set     TEXT    NULL
+  , action          TEXT    NOT NULL
+  , description     TEXT    NULL
+  , FOREIGN KEY (tool_run_id, device_id)
       REFERENCES raw_devices(tool_run_id, device_id)
       ON DELETE CASCADE
       ON UPDATE CASCADE
@@ -1133,14 +1143,14 @@ CREATE TABLE raw_device_ac_rules (
 -- Create UNIQUE expressional index with substitutions of NULL values
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_device_ac_rules_idx_unique
-ON raw_device_ac_rules
-  ((HASH_CHAIN(
-    tool_run_id::TEXT, device_id, enabled::TEXT, ac_id::TEXT,
-    src_net_set_id, src_net_set, src_iface,
-    dst_net_set_id, dst_net_set, dst_iface,
-    service_set, action, description
+ON raw_device_ac_rules(
+  HASH_CHAIN(
+      tool_run_id::TEXT, device_id, enabled::TEXT, ac_id::TEXT
+    , src_net_set_id, src_net_set, src_iface
+    , dst_net_set_id, dst_net_set, dst_iface
+    , service_set, action, description
     )
-  ));
+);
 
 -- Partial indexes
 CREATE INDEX raw_device_ac_rules_idx_tool_run_id
@@ -1184,20 +1194,22 @@ ON raw_device_ac_rules(description);
 
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_ac_rules_idx_views
-ON raw_device_ac_rules(device_id, enabled, ac_id,
-    src_net_set_id, src_net_set, src_iface,
-    dst_net_set_id, dst_net_set, dst_iface,
-    service_set, action, description);
+ON raw_device_ac_rules(
+    device_id, enabled, ac_id
+  , src_net_set_id, src_net_set, src_iface
+  , dst_net_set_id, dst_net_set, dst_iface
+  , service_set, action, description
+);
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_zones_bases (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    zone_id                 TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, zone_id),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , zone_id                 TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, zone_id)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1222,12 +1234,12 @@ ON raw_device_acl_zones_bases(device_id, zone_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_zones_interfaces (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    zone_id                 TEXT        NOT NULL,
-    interface_name          TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, zone_id, interface_name),
-    FOREIGN KEY (tool_run_id, device_id, zone_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , zone_id                 TEXT        NOT NULL
+  , interface_name          TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, zone_id, interface_name)
+  , FOREIGN KEY (tool_run_id, device_id, zone_id)
         REFERENCES raw_device_acl_zones_bases(tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1258,12 +1270,12 @@ ON raw_device_acl_zones_interfaces(device_id, zone_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_zones_includes (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    zone_id                 TEXT        NOT NULL,
-    included_id             TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, zone_id, included_id),
-    FOREIGN KEY (tool_run_id, device_id, zone_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , zone_id                 TEXT        NOT NULL
+  , included_id             TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, zone_id, included_id)
+  , FOREIGN KEY (tool_run_id, device_id, zone_id)
         REFERENCES raw_device_acl_zones_bases(tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1294,12 +1306,12 @@ ON raw_device_acl_zones_includes(device_id, zone_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_ip_nets_bases (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    ip_net_set_namespace    TEXT        NOT NULL,
-    ip_net_set_id           TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , ip_net_set_namespace    TEXT        NOT NULL
+  , ip_net_set_id           TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1328,13 +1340,15 @@ ON raw_device_acl_ip_nets_bases
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_ip_nets_ip_nets (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    ip_net_set_namespace    TEXT        NOT NULL,
-    ip_net_set_id           TEXT        NOT NULL,
-    ip_net                  CIDR        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id, ip_net),
-    FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , ip_net_set_namespace    TEXT        NOT NULL
+  , ip_net_set_id           TEXT        NOT NULL
+  , ip_net                  CIDR        NOT NULL
+  , PRIMARY KEY ( tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id
+                , ip_net
+                )
+  , FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         REFERENCES raw_device_acl_ip_nets_bases
             (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
@@ -1371,18 +1385,20 @@ ON raw_device_acl_ip_nets_ip_nets
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_ip_nets_hostnames (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    ip_net_set_namespace    TEXT        NOT NULL,
-    ip_net_set_id           TEXT        NOT NULL,
-    hostname                TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id, hostname),
-    FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , ip_net_set_namespace    TEXT        NOT NULL
+  , ip_net_set_id           TEXT        NOT NULL
+  , hostname                TEXT        NOT NULL
+  , PRIMARY KEY ( tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id
+                , hostname
+                )
+  , FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         REFERENCES raw_device_acl_ip_nets_bases
             (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, hostname)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, device_id, hostname)
         REFERENCES raw_device_dns_references
             (tool_run_id, device_id, hostname)
         ON DELETE CASCADE
@@ -1419,15 +1435,16 @@ ON raw_device_acl_ip_nets_hostnames
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_ip_nets_includes (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    ip_net_set_namespace    TEXT        NOT NULL,
-    ip_net_set_id           TEXT        NOT NULL,
-    included_namespace      TEXT        NOT NULL,
-    included_id             TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id,
-                 included_namespace, included_id),
-    FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , ip_net_set_namespace    TEXT        NOT NULL
+  , ip_net_set_id           TEXT        NOT NULL
+  , included_namespace      TEXT        NOT NULL
+  , included_id             TEXT        NOT NULL
+  , PRIMARY KEY ( tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id
+                , included_namespace, included_id
+                )
+  , FOREIGN KEY (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         REFERENCES raw_device_acl_ip_nets_bases
             (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
@@ -1456,22 +1473,25 @@ ON raw_device_acl_ip_nets_includes(included_id);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_ip_nets_includes_idx_views
-ON raw_device_acl_ip_nets_includes
-    (device_id, ip_net_set_namespace, ip_net_set_id, included_namespace, included_id);
+ON raw_device_acl_ip_nets_includes(
+    device_id, ip_net_set_namespace, ip_net_set_id, included_namespace
+  , included_id
+);
 
 CREATE INDEX raw_device_acl_ip_nets_includes_idx_views_fkey
-ON raw_device_acl_ip_nets_includes
-    (device_id, ip_net_set_namespace, ip_net_set_id);
+ON raw_device_acl_ip_nets_includes(
+    device_id, ip_net_set_namespace, ip_net_set_id
+);
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_ports_bases (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    port_set_id             TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, port_set_id),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , port_set_id             TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, port_set_id)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1496,13 +1516,15 @@ ON raw_device_acl_ports_bases(device_id, port_set_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_ports_ports (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    port_set_id             TEXT        NOT NULL,
-    port_range              PortRange   NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, port_set_id, port_range),
-    FOREIGN KEY (tool_run_id, device_id, port_set_id)
-        REFERENCES raw_device_acl_ports_bases(tool_run_id, device_id, port_set_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , port_set_id             TEXT        NOT NULL
+  , port_range              PortRange   NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, port_set_id, port_range)
+  , FOREIGN KEY (tool_run_id, device_id, port_set_id)
+        REFERENCES raw_device_acl_ports_bases(
+              tool_run_id, device_id, port_set_id
+          )
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1532,13 +1554,15 @@ ON raw_device_acl_ports_ports(device_id, port_set_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_ports_includes (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    port_set_id             TEXT        NOT NULL,
-    included_id             TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, port_set_id, included_id),
-    FOREIGN KEY (tool_run_id, device_id, port_set_id)
-        REFERENCES raw_device_acl_ports_bases(tool_run_id, device_id, port_set_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , port_set_id             TEXT        NOT NULL
+  , included_id             TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, port_set_id, included_id)
+  , FOREIGN KEY (tool_run_id, device_id, port_set_id)
+        REFERENCES raw_device_acl_ports_bases(
+              tool_run_id, device_id, port_set_id
+          )
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1568,11 +1592,11 @@ ON raw_device_acl_ports_includes(device_id, port_set_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_services_bases (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    service_id              TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, service_id),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , service_id              TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, service_id)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1597,13 +1621,15 @@ ON raw_device_acl_services_bases(device_id, service_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_services_protocols (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    service_id              TEXT        NOT NULL,
-    protocol                TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, service_id, protocol),
-    FOREIGN KEY (tool_run_id, device_id, service_id)
-        REFERENCES raw_device_acl_services_bases(tool_run_id, device_id, service_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , service_id              TEXT        NOT NULL
+  , protocol                TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, service_id, protocol)
+  , FOREIGN KEY (tool_run_id, device_id, service_id)
+        REFERENCES raw_device_acl_services_bases(
+              tool_run_id, device_id, service_id
+          )
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1633,15 +1659,19 @@ ON raw_device_acl_services_protocols(device_id, service_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_services_ports (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    service_id              TEXT        NOT NULL,
-    protocol                TEXT        NOT NULL,
-    src_port_range          PortRange   NOT NULL,
-    dst_port_range          PortRange   NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, service_id, protocol, src_port_range, dst_port_range),
-    FOREIGN KEY (tool_run_id, device_id, service_id, protocol)
-        REFERENCES raw_device_acl_services_protocols(tool_run_id, device_id, service_id, protocol)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , service_id              TEXT        NOT NULL
+  , protocol                TEXT        NOT NULL
+  , src_port_range          PortRange   NOT NULL
+  , dst_port_range          PortRange   NOT NULL
+  , PRIMARY KEY ( tool_run_id, device_id, service_id, protocol
+                , src_port_range, dst_port_range
+                )
+  , FOREIGN KEY (tool_run_id, device_id, service_id, protocol)
+        REFERENCES raw_device_acl_services_protocols(
+              tool_run_id, device_id, service_id, protocol
+          )
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1668,7 +1698,9 @@ ON raw_device_acl_services_ports(dst_port_range);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_services_ports_idx_views
-ON raw_device_acl_services_ports(device_id, service_id, protocol, src_port_range, dst_port_range);
+ON raw_device_acl_services_ports(
+    device_id, service_id, protocol, src_port_range, dst_port_range
+);
 
 CREATE INDEX raw_device_acl_services_ports_idx_views_fkey
 ON raw_device_acl_services_ports(device_id, service_id, protocol);
@@ -1677,13 +1709,15 @@ ON raw_device_acl_services_ports(device_id, service_id, protocol);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_services_includes (
-    tool_run_id             UUID        NOT NULL,
-    device_id               TEXT        NOT NULL,
-    service_id              TEXT        NOT NULL,
-    included_id             TEXT        NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, service_id, included_id),
-    FOREIGN KEY (tool_run_id, device_id, service_id)
-        REFERENCES raw_device_acl_services_bases(tool_run_id, device_id, service_id)
+    tool_run_id             UUID        NOT NULL
+  , device_id               TEXT        NOT NULL
+  , service_id              TEXT        NOT NULL
+  , included_id             TEXT        NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, service_id, included_id)
+  , FOREIGN KEY (tool_run_id, device_id, service_id)
+        REFERENCES raw_device_acl_services_bases(
+              tool_run_id, device_id, service_id
+          )
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -1715,51 +1749,56 @@ ON raw_device_acl_services_includes(device_id, service_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_rules_ports (
-    tool_run_id                 UUID        NOT NULL,
-    device_id                   TEXT        NOT NULL,
-    priority                    INT         NOT NULL,
-    action                      TEXT        NOT NULL,
-    incoming_zone_id            TEXT        NOT NULL,
-    outgoing_zone_id            TEXT        NOT NULL,
-    src_ip_net_set_namespace    TEXT        NOT NULL,
-    src_ip_net_set_id           TEXT        NOT NULL,
-    dst_ip_net_set_namespace    TEXT        NOT NULL,
-    dst_ip_net_set_id           TEXT        NOT NULL,
-    protocol                    TEXT        NOT NULL,
-    src_port_set_id             TEXT        NOT NULL,
-    dst_port_set_id             TEXT        NOT NULL,
-    description                 TEXT        NULL,
-    PRIMARY KEY (tool_run_id, device_id, priority, action,
-                 incoming_zone_id, outgoing_zone_id,
-                 src_ip_net_set_namespace, src_ip_net_set_id,
-                 dst_ip_net_set_namespace, dst_ip_net_set_id,
-                 protocol, src_port_set_id, dst_port_set_id),
-    FOREIGN KEY (tool_run_id, device_id, incoming_zone_id)
+    tool_run_id                 UUID        NOT NULL
+  , device_id                   TEXT        NOT NULL
+  , priority                    INT         NOT NULL
+  , action                      TEXT        NOT NULL
+  , incoming_zone_id            TEXT        NOT NULL
+  , outgoing_zone_id            TEXT        NOT NULL
+  , src_ip_net_set_namespace    TEXT        NOT NULL
+  , src_ip_net_set_id           TEXT        NOT NULL
+  , dst_ip_net_set_namespace    TEXT        NOT NULL
+  , dst_ip_net_set_id           TEXT        NOT NULL
+  , protocol                    TEXT        NOT NULL
+  , src_port_set_id             TEXT        NOT NULL
+  , dst_port_set_id             TEXT        NOT NULL
+  , description                 TEXT        NULL
+  , PRIMARY KEY ( tool_run_id, device_id, priority, action
+                , incoming_zone_id, outgoing_zone_id
+                , src_ip_net_set_namespace, src_ip_net_set_id
+                , dst_ip_net_set_namespace, dst_ip_net_set_id
+                , protocol, src_port_set_id, dst_port_set_id
+                )
+  , FOREIGN KEY
+        (tool_run_id, device_id, incoming_zone_id)
         REFERENCES raw_device_acl_zones_bases
             (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, outgoing_zone_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY
+        (tool_run_id, device_id, outgoing_zone_id)
         REFERENCES raw_device_acl_zones_bases
             (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, src_ip_net_set_namespace, src_ip_net_set_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY
+        (tool_run_id, device_id, src_ip_net_set_namespace, src_ip_net_set_id)
         REFERENCES raw_device_acl_ip_nets_bases
             (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, dst_ip_net_set_namespace, dst_ip_net_set_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY
+        (tool_run_id, device_id, dst_ip_net_set_namespace, dst_ip_net_set_id)
         REFERENCES raw_device_acl_ip_nets_bases
             (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, src_port_set_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, device_id, src_port_set_id)
         REFERENCES raw_device_acl_ports_bases
             (tool_run_id, device_id, port_set_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, dst_port_set_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, device_id, dst_port_set_id)
         REFERENCES raw_device_acl_ports_bases
             (tool_run_id, device_id, port_set_id)
         ON DELETE CASCADE
@@ -1809,11 +1848,13 @@ ON raw_device_acl_rules_ports(dst_port_set_id);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_rules_ports_idx_views
-ON raw_device_acl_rules_ports(device_id, priority, action,
-    incoming_zone_id, outgoing_zone_id,
-    src_ip_net_set_namespace, src_ip_net_set_id,
-    dst_ip_net_set_namespace, dst_ip_net_set_id,
-    protocol, src_port_set_id, dst_port_set_id);
+ON raw_device_acl_rules_ports(
+    device_id, priority, action
+  , incoming_zone_id, outgoing_zone_id
+  , src_ip_net_set_namespace, src_ip_net_set_id
+  , dst_ip_net_set_namespace, dst_ip_net_set_id
+  , protocol, src_port_set_id, dst_port_set_id
+);
 
 CREATE INDEX raw_device_acl_rules_ports_idx_views_fkey_incoming_zone
 ON raw_device_acl_rules_ports(device_id, incoming_zone_id);
@@ -1845,39 +1886,44 @@ ON raw_device_acl_rules_ports(device_id, dst_port_set_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_acl_rules_services (
-    tool_run_id                 UUID        NOT NULL,
-    device_id                   TEXT        NOT NULL,
-    priority                    INT         NOT NULL,
-    action                      TEXT        NOT NULL,
-    incoming_zone_id            TEXT        NOT NULL,
-    outgoing_zone_id            TEXT        NOT NULL,
-    src_ip_net_set_namespace    TEXT        NOT NULL,
-    src_ip_net_set_id           TEXT        NOT NULL,
-    dst_ip_net_set_namespace    TEXT        NOT NULL,
-    dst_ip_net_set_id           TEXT        NOT NULL,
-    service_id                  TEXT        NOT NULL,
-    description                 TEXT        NULL,
-    PRIMARY KEY (tool_run_id, device_id, priority, action,
-                 incoming_zone_id, outgoing_zone_id,
-                 src_ip_net_set_namespace, src_ip_net_set_id,
-                 dst_ip_net_set_namespace, dst_ip_net_set_id,
-                 service_id),
-    FOREIGN KEY (tool_run_id, device_id, incoming_zone_id)
+    tool_run_id                 UUID        NOT NULL
+  , device_id                   TEXT        NOT NULL
+  , priority                    INT         NOT NULL
+  , action                      TEXT        NOT NULL
+  , incoming_zone_id            TEXT        NOT NULL
+  , outgoing_zone_id            TEXT        NOT NULL
+  , src_ip_net_set_namespace    TEXT        NOT NULL
+  , src_ip_net_set_id           TEXT        NOT NULL
+  , dst_ip_net_set_namespace    TEXT        NOT NULL
+  , dst_ip_net_set_id           TEXT        NOT NULL
+  , service_id                  TEXT        NOT NULL
+  , description                 TEXT        NULL
+  , PRIMARY KEY ( tool_run_id, device_id, priority, action
+                , incoming_zone_id, outgoing_zone_id
+                , src_ip_net_set_namespace, src_ip_net_set_id
+                , dst_ip_net_set_namespace, dst_ip_net_set_id
+                , service_id
+                )
+  , FOREIGN KEY
+        (tool_run_id, device_id, incoming_zone_id)
         REFERENCES raw_device_acl_zones_bases
             (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, outgoing_zone_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY
+        (tool_run_id, device_id, outgoing_zone_id)
         REFERENCES raw_device_acl_zones_bases
             (tool_run_id, device_id, zone_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, src_ip_net_set_namespace, src_ip_net_set_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY
+        (tool_run_id, device_id, src_ip_net_set_namespace, src_ip_net_set_id)
         REFERENCES raw_device_acl_ip_nets_bases
             (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, device_id, dst_ip_net_set_namespace, dst_ip_net_set_id)
+        ON UPDATE CASCADE
+  , FOREIGN KEY
+        (tool_run_id, device_id, dst_ip_net_set_namespace, dst_ip_net_set_id)
         REFERENCES raw_device_acl_ip_nets_bases
             (tool_run_id, device_id, ip_net_set_namespace, ip_net_set_id)
         ON DELETE CASCADE
@@ -1928,11 +1974,13 @@ ON raw_device_acl_rules_services(service_id);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_device_acl_rules_services_idx_views
-ON raw_device_acl_rules_services(device_id, priority, action,
-    incoming_zone_id, outgoing_zone_id,
-    src_ip_net_set_namespace, src_ip_net_set_id,
-    dst_ip_net_set_namespace, dst_ip_net_set_id,
-    service_id);
+ON raw_device_acl_rules_services(
+    device_id, priority, action
+  , incoming_zone_id, outgoing_zone_id
+  , src_ip_net_set_namespace, src_ip_net_set_id
+  , dst_ip_net_set_namespace, dst_ip_net_set_id
+  , service_id
+);
 
 CREATE INDEX raw_device_acl_rules_services_idx_views_fkey_incoming_zone
 ON raw_device_acl_rules_services(device_id, incoming_zone_id);
@@ -1961,12 +2009,12 @@ ON raw_device_acl_rules_services(device_id, service_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_vlans (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    vlan                        VlanNumber      NOT NULL,
-    description                 TEXT            NULL,
-    PRIMARY KEY (tool_run_id, device_id, vlan),
-    FOREIGN KEY (tool_run_id, device_id)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , vlan                        VlanNumber      NOT NULL
+  , description                 TEXT            NULL
+  , PRIMARY KEY (tool_run_id, device_id, vlan)
+  , FOREIGN KEY (tool_run_id, device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -1990,16 +2038,16 @@ ON raw_device_vlans(device_id, vlan);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_vlans_ip_nets (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    vlan                        VlanNumber      NOT NULL,
-    ip_net                      CIDR            NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, vlan, ip_net),
-    FOREIGN KEY (tool_run_id, device_id, vlan)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , vlan                        VlanNumber      NOT NULL
+  , ip_net                      CIDR            NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, vlan, ip_net)
+  , FOREIGN KEY (tool_run_id, device_id, vlan)
         REFERENCES raw_device_vlans(tool_run_id, device_id, vlan)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, ip_net)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, ip_net)
         REFERENCES raw_ip_nets(tool_run_id, ip_net)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -2026,12 +2074,12 @@ ON raw_device_vlans_ip_nets(device_id, vlan, ip_net);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_device_interfaces_vlans (
-    tool_run_id                 UUID            NOT NULL,
-    device_id                   TEXT            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    vlan                        VlanNumber      NOT NULL,
-    PRIMARY KEY (tool_run_id, device_id, interface_name, vlan),
-    FOREIGN KEY (tool_run_id, device_id, interface_name)
+    tool_run_id                 UUID            NOT NULL
+  , device_id                   TEXT            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , vlan                        VlanNumber      NOT NULL
+  , PRIMARY KEY (tool_run_id, device_id, interface_name, vlan)
+  , FOREIGN KEY (tool_run_id, device_id, interface_name)
         REFERENCES raw_device_interfaces
                    (tool_run_id, device_id, interface_name)
         ON DELETE CASCADE

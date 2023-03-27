@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -41,8 +41,8 @@ BEGIN TRANSACTION;
 -- create a custom "CVE" aggregate type in the database.
 -- ----------------------------------------------------------------------
 CREATE TYPE CVE AS (
-    year        SMALLINT,
-    number      INT
+    year        SMALLINT
+  , number      INT
 );
 
 
@@ -83,14 +83,14 @@ CREATE TYPE PortRange AS RANGE (
 -- Network information about each hop on an IP route.
 -- ----------------------------------------------------------------------
 CREATE TYPE RouteHop AS (
-    device_id                   TEXT,
-    vrf_id                      TEXT,
-    incoming_interface_name     TEXT,
-    incoming_ip_addr            INET,
-    incoming_ip_net             CIDR,
-    outgoing_interface_name     TEXT,
-    outgoing_ip_addr            INET,
-    outgoing_ip_net             CIDR
+    device_id                   TEXT
+  , vrf_id                      TEXT
+  , incoming_interface_name     TEXT
+  , incoming_ip_addr            INET
+  , incoming_ip_net             CIDR
+  , outgoing_interface_name     TEXT
+  , outgoing_ip_addr            INET
+  , outgoing_ip_net             CIDR
 );
 
 
@@ -98,11 +98,11 @@ CREATE TYPE RouteHop AS (
 -- Prowler severity enum to aid in sorting.
 -- ----------------------------------------------------------------------
 CREATE TYPE ProwlerSeverity AS ENUM (
-  'Critical',
-  'High',
-  'Medium',
-  'Low',
-  'Informational'
+    'Critical'
+  , 'High'
+  , 'Medium'
+  , 'Low'
+  , 'Informational'
 );
 
 -- ----------------------------------------------------------------------
