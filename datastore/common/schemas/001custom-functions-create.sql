@@ -62,4 +62,49 @@ IMMUTABLE
 
 -- ----------------------------------------------------------------------
 
+CREATE OR REPLACE FUNCTION as_text(
+    severity    ProwlerSeverity
+)
+RETURNS TEXT
+AS $$
+DECLARE
+  val TEXT;
+BEGIN
+  CASE severity
+  WHEN 'Critical'       THEN val='Critical';
+  WHEN 'High'           THEN val='High';
+  WHEN 'Medium'         THEN val='Medium';
+  WHEN 'Low'            THEN val='Low';
+  WHEN 'Informational'  THEN val='Informational';
+  ELSE                       val='Undefined';
+  END CASE;
+  RETURN val;
+END;
+$$
+LANGUAGE plpgsql
+IMMUTABLE
+;
+
+
+-- ----------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION as_text(
+    ts        TIMESTAMP
+)
+RETURNS TEXT
+AS $$
+DECLARE
+  val TEXT;
+BEGIN
+  SELECT to_char('UTC', ts) INTO val;
+  RETURN val;
+END;
+$$
+LANGUAGE plpgsql
+IMMUTABLE
+;
+
+
+-- ----------------------------------------------------------------------
+
 COMMIT TRANSACTION;

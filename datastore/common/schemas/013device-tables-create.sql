@@ -594,7 +594,7 @@ CREATE TABLE raw_device_dns_resolvers (
 CREATE UNIQUE INDEX raw_device_dns_resolvers_idx_unique
 ON raw_device_dns_resolvers(
   HASH_CHAIN(
-      tool_run_id::TEXT, device_id, interface_name, scope_domaini
+      tool_run_id::TEXT, device_id, interface_name, scope_domain
     , src_ip_addr::TEXT, dst_ip_addr::TEXT, dst_port::TEXT
     )
 );

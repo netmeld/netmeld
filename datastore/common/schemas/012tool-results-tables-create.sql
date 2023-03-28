@@ -402,7 +402,7 @@ ON raw_packages(package_description);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_packages_idx_views
-ON raw_packages(package_name, package_version, ackage_architecture);
+ON raw_packages(package_name, package_version, package_architecture);
 
 
 -- ----------------------------------------------------------------------
@@ -893,8 +893,8 @@ CREATE TABLE raw_prowler_checks (
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_prowler_checks_idx_unique
 ON raw_prowler_checks(
-  HASH_CHAIN( tool_run_id::TEXT, account_number, timestamp::TEXT
-            , region, level, control_id, service, status, severity::TEXT
+  HASH_CHAIN( tool_run_id::TEXT, account_number, AS_TEXT(timestamp)
+            , region, level, control_id, service, status, AS_TEXT(severity)
             , control, risk, remediation, documentation_link, resource_id
             )
 );
