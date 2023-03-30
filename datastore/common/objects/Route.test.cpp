@@ -154,6 +154,22 @@ BOOST_AUTO_TEST_CASE(testSetters)
     route.setMetric(1000);
     BOOST_CHECK_EQUAL(1000, route.getMetric());
   }
+
+  {
+    TestRoute route;
+    nmdo::IpAddress tv1;
+    nmdo::IpAddress tv2 {"1.2.3.4/24"};
+
+    BOOST_CHECK("" == route.getNextHopIpAddrString());
+    route.setNextHopIpAddr(tv2);
+    BOOST_CHECK(tv2.toString() == route.getNextHopIpAddrString());
+    route.setNullRoute(true);
+    BOOST_CHECK("" == route.getNextHopIpAddrString());
+    route.setNullRoute(false);
+    BOOST_CHECK(tv2.toString() == route.getNextHopIpAddrString());
+    route.setNextHopIpAddr(tv1);
+    BOOST_CHECK("" == route.getNextHopIpAddrString());
+  }
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
@@ -169,30 +185,25 @@ BOOST_AUTO_TEST_CASE(testValidity)
       BOOST_CHECK(!route.isValid());
       route.setNullRoute(true);
       BOOST_CHECK(route.isValid());
-      route.setIfaceName(iface);
-      BOOST_CHECK(!route.isValid());
-      LOG_DEBUG << route.toDebugString() << std::endl;
     }
     {
       TestRoute route;
 
-      BOOST_CHECK(!route.isValid());
-      route.setIfaceName(iface);
       BOOST_CHECK(!route.isValid());
       route.setDstIpNet(ipAddr);
-      BOOST_CHECK(!route.isValid());
-      route.setIfaceName(iface);
-      BOOST_CHECK(route.isValid());
-    }
-    {
-      TestRoute route;
-
       BOOST_CHECK(!route.isValid());
       route.setNextHopIpAddr(ipAddr);
-      BOOST_CHECK(!route.isValid());
-      route.setIfaceName(iface);
       BOOST_CHECK(route.isValid());
+    }
+    {
+      TestRoute route;
+
+      BOOST_CHECK(!route.isValid());
       route.setDstIpNet(ipAddr);
+      BOOST_CHECK(!route.isValid());
+      route.setNextVrfId("test");
+      BOOST_CHECK(!route.isValid());
+      route.setNextTableId("test");
       BOOST_CHECK(route.isValid());
     }
   }

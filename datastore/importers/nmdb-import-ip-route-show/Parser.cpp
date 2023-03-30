@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,7 +42,7 @@ Parser::Parser() : Parser::base_type(start)
     >> nextHopIp [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
     >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
     >> qi::omit[*token]
-    >> qi::eol
+    >> qi::eol [pnx::bind(&Parser::ensureSameFamily, this, qi::_val)]
     ;
 
   route =
@@ -64,14 +64,19 @@ Parser::Parser() : Parser::base_type(start)
 
   dstIpNet =
     ( qi::lit("default")
+      [(pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, 0))]
     | ipAddr [(qi::_val = qi::_1)]
-    ) [(pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON))]
+    ) [( pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON)
+       , pnx::bind(&Parser::curDestNet, this) = qi::_val
+      )]
     ;
 
   nextHopIp =
     ipAddr
-        [(qi::_val = qi::_1,
-          pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON))]
+        [( qi::_val = qi::_1
+         , pnx::bind(&nmdo::IpAddress::setReason, &qi::_val, IP_REASON)
+         , pnx::bind(&Parser::curNextHop, this) = qi::_val
+        )]
     ;
 
   ifaceName =
@@ -89,4 +94,15 @@ Parser::Parser() : Parser::base_type(start)
       (ifaceName)
       //(token)
     );
+}
+
+void
+Parser::ensureSameFamily(nmdo::Route& _route)
+{
+  if (curNextHop.isV6() && curDestNet.isV4()) {
+    LOG_DEBUG << "Fixing route destination and next-hop family\n";
+    curDestNet.setAddress("::");
+    curDestNet.setPrefix(0);
+    _route.setDstIpNet(curDestNet);
+  }
 }

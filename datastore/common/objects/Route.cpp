@@ -48,7 +48,7 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Route::setDstIpNet(const IpAddress& _dstIpNet)
+  Route::setDstIpNet(const IpNetwork& _dstIpNet)
   {
     dstIpNet = _dstIpNet;
   }
@@ -69,35 +69,12 @@ namespace netmeld::datastore::objects {
   Route::setNextHopIpAddr(const IpAddress& _nextHopIpAddr)
   {
     nextHopIpAddr = _nextHopIpAddr;
-
-    // if needed, init dstIpNet as default route
-    if (!nextHopIpAddr.hasUnsetPrefix() && dstIpNet.hasUnsetPrefix()) {
-      if (nextHopIpAddr.isV4()) {
-        dstIpNet = IpNetwork::getIpv4Default();
-      } else {
-        dstIpNet = IpNetwork::getIpv6Default();
-      }
-      dstIpNet.setReason(defaultRouteReason);
-    }
   }
 
   void
   Route::setIfaceName(const std::string& _ifaceName)
   {
     ifaceName = nmcu::toLower(_ifaceName);
-
-    // if needed, init nextHopIpAddr to the correct IP version
-    if (  !dstIpNet.hasUnsetPrefix()
-       && nextHopIpAddr.hasUnsetPrefix()
-       && !ifaceName.empty()
-       ) {
-      if (dstIpNet.isV4()) {
-        nextHopIpAddr = IpAddress::getIpv4Default();
-      } else {
-        nextHopIpAddr = IpAddress::getIpv6Default();
-      }
-      nextHopIpAddr.setReason(defaultRouteReason);
-    }
   }
 
   void
@@ -141,7 +118,7 @@ namespace netmeld::datastore::objects {
   {
     std::string nextHopIpAddrString {""};
 
-    if (!isNullRoute) {
+    if (!isNullRoute && !nextHopIpAddr.hasUnsetPrefix()) {
       nextHopIpAddrString = nextHopIpAddr.toString();
     }
 
@@ -151,21 +128,15 @@ namespace netmeld::datastore::objects {
   bool
   Route::isValid() const
   {
-    // table lookups require both vrf-id and table-id to be set
-    bool isTableLookupRoute {
-        !(nextVrfId.empty() || nextTableId.empty())
-      };
-    // next-hops require both ifaceName and nextHopIpAddr to be set
-    bool isNextHopRoute {
-        !(ifaceName.empty() || nextHopIpAddr.hasUnsetPrefix())
-      };
-
-    return (  // dstIpNet cannot be IpAddress default value; Route default OK
-              (!dstIpNet.hasUnsetPrefix())
-              // XOR; next-hop or table-lookup must be defined, not both
-           && (  (isNextHopRoute != isTableLookupRoute)
-                 // XOR; prior or null-route must be defined, not both
-              != isNullRoute
+    // NOTE: Given the broad range of scenarios this has to accomodate,
+    //       dstIpNet has to be set and one of the following has to be true:
+    //       - nextHopIpAddr is set
+    //       - isNullRoute is true
+    //       - nextVrfId and nextTableId is set
+    return (  !dstIpNet.hasUnsetPrefix()
+           && (  !nextHopIpAddr.hasUnsetPrefix()
+              || isNullRoute
+              || !(nextVrfId.empty() || nextTableId.empty())
               )
            )
       ;
@@ -183,15 +154,48 @@ namespace netmeld::datastore::objects {
     return dstIpNet.isV6();
   }
 
+  //void
+  //Route::ensureSameFamily()
+  //{
+  //  bool defaultRoute { // case: default route
+  //         !nextHopIpAddr.hasUnsetPrefix()
+  //      && dstIpNet.hasUnsetPrefix()
+  //    };
+  //  bool ifaceRoute { // case: route via interface
+  //         !ifaceName.empty()
+  //      && nextHopIpAddr.hasUnsetPrefix()
+  //      && !dstIpNet.hasUnsetPrefix()
+  //    };
+
+  //  if (defaultRoute) {
+  //    if (nextHopIpAddr.isV4()) {
+  //      dstIpNet = IpNetwork::getIpv4Default();
+  //    } else {
+  //      dstIpNet = IpNetwork::getIpv6Default();
+  //    }
+  //    dstIpNet.setReason(defaultRouteReason);
+  //  } else if (ifaceRoute) {
+  //    if (dstIpNet.isV4()) {
+  //      nextHopIpAddr = IpAddress::getIpv4Default();
+  //    } else {
+  //      nextHopIpAddr = IpAddress::getIpv6Default();
+  //    }
+  //    nextHopIpAddr.setReason(defaultRouteReason);
+  //  }
+  //}
+
   void
   Route::save(pqxx::transaction_base& t,
               const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
-    if (!isValid() && !deviceId.empty()) {
+    if (!isValid()) {
       LOG_DEBUG << "Route object is not saving: " << toDebugString()
                 << std::endl;
       return;
     }
+
+    //// Ensure dstIpNet and nextHopIpAddr are same IP family when needed
+    //ensureSameFamily();
 
     dstIpNet.save(t, toolRunId, deviceId);
     nextHopIpAddr.save(t, toolRunId, deviceId);

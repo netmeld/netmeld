@@ -79,12 +79,14 @@ namespace netmeld::datastore::objects {
     // =========================================================================
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
+//      void ensureSameFamily();
+
     public: // Methods part of public API
       std::string getNextHopIpAddrString() const;
 
       void setVrfId(const std::string&);
       void setTableId(const std::string&);
-      void setDstIpNet(const IpAddress&);
+      void setDstIpNet(const IpNetwork&);
       void setNextVrfId(const std::string&);
       void setNextTableId(const std::string&);
       void setNextHopIpAddr(const IpAddress&);
