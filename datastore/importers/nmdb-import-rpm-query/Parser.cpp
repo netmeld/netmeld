@@ -52,6 +52,7 @@ Parser::Parser() : Parser::base_type(start)
   packageName =
     token
   ;
+
   version =
     token
   ;

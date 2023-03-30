@@ -1,7 +1,7 @@
 DESCRIPTION
 ===========
 
-Parse and import the output of the `apk info -vv` command on modern Linux
+Parse and import the output of the `apk list -I -v` command on modern Linux
 systems into the Netmeld framework for later analysis. Import's package's
 based on device-id.
 
@@ -17,11 +17,11 @@ EXAMPLES
 
 Gather package output from target with
 ```
-apk info -vv > packages.txt
+apk list -I -v > packages.txt
 ```
 or to strip unicode
 ```
-apk info -vv | uni2ascii > packages.txt
+apk list -I -v | uni2ascii > packages.txt
 ```
 
 Process the target data for the device workstation from a local file

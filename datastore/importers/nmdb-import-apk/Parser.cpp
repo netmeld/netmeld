@@ -39,13 +39,10 @@ Parser::Parser() : Parser::base_type(prestart)
     )
   ;
 
+  token =
+    +qi::ascii::graph
+  ;
 
-  // We need to parse this output
-//  busybox-openrc-1.35.0-r29 x86_64 {busybox} (GPL-2.0-only) [installed]
-//    Size optimized toolbox of many common UNIX utilities
-  // name-version arch {skip} {skip} {skip} [installed]
-  // description
-  // going to have to make architecture optional
   packageLine =
     packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
     >> qi::char_("-")
@@ -57,15 +54,15 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageName =
-    // we need to try and parse up until we hit a 0-9
-    // this will be the difference between the name and version
     *(qi::char_ - qi::omit[qi::char_("-") >> qi::digit])
   ;
+
   version =
-    +token
+    token
   ;
+
   architecture =
-    +token
+    token
   ;
 
   description =
@@ -74,10 +71,6 @@ Parser::Parser() : Parser::base_type(prestart)
 
   skipper =
     qi::blank | '-'
-  ;
-
-  token =
-    +qi::ascii::graph
   ;
 
   ignoredLine =

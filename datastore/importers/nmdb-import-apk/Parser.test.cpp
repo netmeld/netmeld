@@ -70,7 +70,6 @@ BOOST_AUTO_TEST_CASE(testWhole)
   const auto &parserRule {tp};
 
   std::vector<std::string> testsOk {
-    // dpkg -l | head
     R"STR(mesa-gl-22.2.5-r1 x86_64 {mesa} (MIT SGI-B-2.0 BSL-1.0) [installed]
   Mesa libGL runtime libraries
 

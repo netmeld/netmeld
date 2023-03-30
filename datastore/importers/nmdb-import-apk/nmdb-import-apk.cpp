@@ -50,7 +50,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   public:
     Tool() : nmdt::AbstractImportTool<P,R>
       (
-       "apk list -I -v",  // command line tool imports data from
+       "apk list -I -v",       // command line tool imports data from
        PROGRAM_NAME,           // program name (set in CMakeLists.txt)
        PROGRAM_VERSION         // program version (set in CMakeLists.txt)
       )
