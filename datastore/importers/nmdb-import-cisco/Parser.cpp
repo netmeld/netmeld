@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -541,28 +541,36 @@ Parser::serviceAddSyslog(const nmdo::IpAddress& ip)
 
 // Route related
 void
-Parser::routeAddIp(const nmdo::IpAddress& dstIpNet, const nmdo::IpAddress& rtrIp)
+Parser::routeAddIp( const nmdo::IpAddress& dstIpNet
+                  , const nmdo::IpAddress& nextHopIp
+                  )
 {
-  nmdo::Route nextHop;
-  nextHop.setDstIpNet(dstIpNet);
-  nextHop.setNextHopIpAddr(rtrIp);
-  nextHop.setProtocol("static");
-  nextHop.setMetric(0);
+  nmdo::Route routeRule;
+  routeRule.setDstIpNet(dstIpNet);
+  routeRule.setNextHopIpAddr(nextHopIp);
+  routeRule.setProtocol("static");
+  routeRule.setMetric(0);
 
-  d.routes.push_back(nextHop);
+  d.routes.push_back(routeRule);
 }
 
 void
-Parser::routeAddIface(const nmdo::IpAddress& dstIpNet,
-                      const std::string& rtrIface)
+Parser::routeAddIface( const nmdo::IpAddress& dstIpNet
+                     , const std::string& rtrIface
+                     )
 {
-  nmdo::Route nextHop;
-  nextHop.setDstIpNet(dstIpNet);
-  nextHop.setIfaceName(rtrIface);
-  nextHop.setProtocol("static");
-  nextHop.setMetric(0);
+  nmdo::Route routeRule;
+  routeRule.setDstIpNet(dstIpNet);
+  routeRule.setIfaceName(rtrIface);
+  if (dstIpNet.isV4()) {
+    routeRule.setNextHopIpAddr(nmdo::IpAddress::getIpv4Default());
+  } else {
+    routeRule.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
+  }
+  routeRule.setProtocol("static");
+  routeRule.setMetric(0);
 
-  d.routes.push_back(nextHop);
+  d.routes.push_back(routeRule);
 }
 
 void
