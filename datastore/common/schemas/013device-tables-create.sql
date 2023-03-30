@@ -443,11 +443,8 @@ CREATE TABLE raw_device_ip_routes (
         ON UPDATE CASCADE
   , CHECK (next_hop_ip_addr = host(next_hop_ip_addr)::INET)
   , CHECK (inet_same_family(dst_ip_net, next_hop_ip_addr))
-  , CHECK (  ((next_vrf_id IS NULL)     AND (next_table_id IS NULL))
-          OR ((next_vrf_id IS NOT NULL) AND (next_table_id IS NOT NULL))
-          )
-  , CHECK (  ((next_vrf_id IS NULL)      AND (next_table_id IS NULL))
-          OR ((next_hop_ip_addr IS NULL) AND (outgoing_interface_name IS NULL))
+  , CHECK (  ((next_vrf_id IS NULL) = (next_table_id IS NULL))
+          OR (next_hop_ip_addr IS NOT NULL)
           )
 );
 
