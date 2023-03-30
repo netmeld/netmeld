@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -85,8 +85,10 @@ Parser::Parser() : Parser::base_type(start)
         ) >>
         -qi::eol >>
         ( (qi::lit("is directly connected")
-             [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, 0),
-               pnx::bind(&nmdo::Route::setMetric, &qi::_val, 0))]
+             [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, 0)
+             , pnx::bind(&nmdo::Route::setMetric, &qi::_val, 0)
+             , pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, nmdo::IpAddress::getIpv4Default())
+             )]
           )
         | ((qi::lit('[') >>
             distance
@@ -132,7 +134,9 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::string("Null0") > -qi::lit(", receive")
         )[(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
       | (csvToken > -qi::lit(", directly connected")
-        )[(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+        )[(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1)
+         , pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, nmdo::IpAddress::getIpv6Default())
+         )]
       )
     | (qi::string("Null0")
       )[(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
