@@ -96,7 +96,7 @@ AS $$
 DECLARE
   val TEXT;
 BEGIN
-  SELECT to_char('UTC', ts) INTO val;
+  SELECT timezone('UTC', ts)::TEXT INTO val;
   RETURN val;
 END;
 $$
