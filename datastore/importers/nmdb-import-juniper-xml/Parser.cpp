@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -40,9 +40,9 @@
 #include <algorithm>
 #include <iterator>
 
-extern "C" {
-#include <netdb.h>
-}
+//extern "C" {
+//#include <netdb.h>
+//}
 
 
 namespace nmcu = netmeld::core::utils;
@@ -507,6 +507,7 @@ Parser::parseConfigRoutingOptions(const pugi::xml_node& routingOptionsNode)
     if (discardMatch) {
       const std::string outgoingIfaceName{discardMatch.node().name()};
       route.setIfaceName(outgoingIfaceName);
+      route.setNullRoute(true);
     }
 
     const auto nextHopMatch{routeNode.select_node("next-hop[not(@inactive='inactive')]")};
@@ -1083,6 +1084,7 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       };
       if ("Discard" == nhType) {
         route.setIfaceName("discard");
+        route.setNullRoute(true);
       }
     }
 

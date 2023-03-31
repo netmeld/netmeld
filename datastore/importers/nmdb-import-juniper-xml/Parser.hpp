@@ -81,35 +81,17 @@ struct Data
 class Parser
 {
   public:
-    Data
-    getData();
+    Data getData();
 
-    void
-    parseConfig(const pugi::xml_node& configNode);
-
-    void
-    parseRouteInfo(const pugi::xml_node& routeInfoNode);
-
-    void
-    parseArpTableInfo(const pugi::xml_node& arpTableInfoNode);
-
-    void
-    parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode);
-
-    void
-    parseLldpNeighborInfo(const pugi::xml_node& lldpNeighborInfoNode);
-
-    void
-    parseEthernetSwitching(const pugi::xml_node& l2ngNode);
-
-    void
-    parseUnsupported(const pugi::xml_node& unsupportedNode);
-
-    void
-    parseError(const pugi::xml_node& errorNode);
-
-    void
-    parseWarning(const pugi::xml_node& warningNode);
+    void parseConfig(const pugi::xml_node&);
+    void parseRouteInfo(const pugi::xml_node&);
+    void parseArpTableInfo(const pugi::xml_node&);
+    void parseIpv6NeighborInfo(const pugi::xml_node&);
+    void parseLldpNeighborInfo(const pugi::xml_node&);
+    void parseEthernetSwitching(const pugi::xml_node&);
+    void parseUnsupported(const pugi::xml_node&);
+    void parseError(const pugi::xml_node&);
+    void parseWarning(const pugi::xml_node&);
 
   protected:
     std::tuple<std::map<std::string, netmeld::datastore::objects::InterfaceNetwork>,
