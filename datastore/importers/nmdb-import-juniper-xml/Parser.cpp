@@ -1015,7 +1015,7 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
   };
 
   // Ignore ephemeral multicast routes where the destination
-  // is of the form "multicaseIp, unicastIp".
+  // is of the form "multicastIp, unicastIp".
   // There isn't a clean way to collapse these into standard routes
   // and they are so short lived that they aren't useful for
   // analysis of periodic data snapshots.
@@ -1037,6 +1037,14 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
 
     nmdo::Route route;
     route.setDstIpNet(dstIpNet);
+
+    // Init next-hop so route will save in cases a specific IP not known;
+    // this may be overridden later
+    if (dstIpNet.isV4()) {
+      route.setNextHopIpAddr(nmdo::IpAddress::getIpv4Default());
+    } else {
+      route.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
+    }
 
     const std::string activeTag{
       routeEntryNode.select_node("active-tag").node().text().as_string()
