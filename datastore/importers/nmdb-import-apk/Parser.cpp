@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -28,15 +28,13 @@
 // =============================================================================
 // Parser logic
 // =============================================================================
-Parser::Parser() : Parser::base_type(prestart)
+Parser::Parser() : Parser::base_type(start)
 {
-  prestart = start [(qi::_val = pnx::bind(&Parser::getData, this))];
-
   start =
-    *(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
+    (*(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
       | ignoredLine
       | qi::eol
-    )
+    )) [(qi::_val = pnx::bind(&Parser::getData, this))]
   ;
 
   token =
@@ -54,7 +52,7 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageName =
-    *(qi::char_ - qi::omit[qi::char_("-") >> qi::digit])
+    +(qi::print - qi::omit[qi::char_("-") >> qi::digit])
   ;
 
   version =
@@ -69,10 +67,6 @@ Parser::Parser() : Parser::base_type(prestart)
    +qi::ascii::print
   ;
 
-  skipper =
-    qi::blank | '-'
-  ;
-
   ignoredLine =
     (+token > -qi::eol) | +qi::eol
   ;
@@ -80,11 +74,11 @@ Parser::Parser() : Parser::base_type(prestart)
   // Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      (headers)
-      (packageName)
       (packageLine)
+      (ignoredLine)
+      (packageName)
       (version)
-      (skipper)
+      (architecture)
       (description)
       (token)
       );

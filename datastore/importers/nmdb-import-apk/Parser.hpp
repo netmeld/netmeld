@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -60,9 +60,6 @@ class Parser :
   protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      prestart;
-
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
@@ -74,7 +71,6 @@ class Parser :
     qi::rule<nmdp::IstreamIter, std::string()>
       packageName,
       version,
-      skipper,
       architecture,
       description,
       token
