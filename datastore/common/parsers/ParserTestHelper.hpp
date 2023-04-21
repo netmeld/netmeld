@@ -104,7 +104,7 @@ namespace netmeld::datastore::parsers {
               , "Value '" + _tv1 + "' not found in '" + _str + "'"
               );
     BOOST_TEST(trv1 == trv2
-              , "Value '" + _tv1 + "' found in multiple locations in '"
+              , "Value '" + _tv1 + "' found in only one location in '"
                 + _str + "'");
   }
 }
