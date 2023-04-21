@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -67,18 +67,23 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& toolRunId{this->getToolRunId()};
       const auto& deviceId{this->getDeviceId()};
 
+      LOG_DEBUG << "Saving DeviceInformation\n";
       auto& deviceInfo{this->devInfo};
-      deviceInfo.setDeviceId(deviceId);
+      deviceInfo.setVendor("cisco");
       deviceInfo.save(t, toolRunId, deviceId);
+      LOG_DEBUG << deviceInfo.toDebugString() << std::endl;
 
       LOG_DEBUG << "Iterating over results\n";
-      for (auto& [vrfId, routes] : this->tResults) {
-        LOG_DEBUG << deviceInfo.toDebugString() << std::endl;
-        for (auto& route : routes) {
-          route.setVrfId(vrfId);
+      for (auto& vrf : this->tResults) {
+        LOG_DEBUG << "Iterating over Routes\n";
+        for (auto& route : vrf.routes) {
           route.save(t, toolRunId, deviceId);
           LOG_DEBUG << route.toDebugString() << std::endl;
         }
+
+        LOG_DEBUG << "Iterating over ToolObservations\n";
+        vrf.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << vrf.observations.toDebugString() << std::endl;
       }
     }
 
