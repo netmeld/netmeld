@@ -567,6 +567,9 @@ Parser::routeAddIface( const nmdo::IpAddress& dstIpNet
   } else {
     routeRule.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
   }
+  if ("Null0" == rtrIface) {
+    routeRule.setNullRoute(true);
+  }
   routeRule.setProtocol("static");
   routeRule.setMetric(0);
 
