@@ -214,7 +214,7 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << boost::format("[%1%,%2%,%3%,%4%,%5%,%6%,%7%,%8%,%9%,%10%,%11%]")
+    oss << boost::format("[vrfId: %1%, tableId: %2%, isActive: %3%, dstIpNet: %4%, nextVrfId: %5%, nextTableId: %6%, nextHopIpAddr: %7%, ifaceName: %8%, protocol: %9%, adminDistance: %10%, metric: %11%]")
         % vrfId
         % tableId
         % isActive
