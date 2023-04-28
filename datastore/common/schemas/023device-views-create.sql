@@ -1119,7 +1119,14 @@ WITH RECURSIVE device_acl_ip_nets_recursion(
     FROM device_acl_ip_nets_recursion AS acl_recur
     JOIN raw_device_acl_ip_nets_includes AS acl_includes
       ON (acl_recur.device_id             = acl_includes.device_id)
-     AND (acl_recur.ip_net_set_namespace  = acl_includes.included_namespace)
+     AND (  (acl_recur.ip_net_set_namespace  = acl_includes.included_namespace)
+         -- NOTE: More complicated than this, but current revised ACL logic
+         --       doesn't appropriately support the recursive logic.
+         --       See AcNetworkBook and the Parser for juniper-conf;
+         --       effectively it is a matter of walk up the tree and first
+         --       match wins (same applies to services).
+         OR (acl_includes.included_namespace = '')
+         )
      AND (acl_recur.ip_net_set_id         = acl_includes.included_id)
 )
 SELECT DISTINCT
