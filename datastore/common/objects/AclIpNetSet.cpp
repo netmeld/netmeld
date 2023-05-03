@@ -132,10 +132,57 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
+        << "ns: "
         << ns
         << ", "
+        << "id: "
         << id
-        << "]";
+        << ", ";
+
+    oss << "ipNets: "
+        << "[";
+        
+    if (!ipNets.empty()) {
+        oss << ipNets.front().toDebugString();
+    
+      for (auto it = ipNets.begin() + 1; it != ipNets.end(); it++) {
+        oss << ", "
+            << it->toDebugString();
+      }
+    }
+    oss << "]"
+        << ", ";
+
+    oss << "hostnames: "
+        << "[";
+        
+    if (!hostnames.empty()) {
+        oss << hostnames.front();
+    
+      for (auto it = hostnames.begin() + 1; it != hostnames.end(); it++) {
+        oss << ", "
+            << *it;
+      }
+    }
+    oss << "]"
+        << ", ";
+
+    oss << "includedIds: "
+        << "[";
+
+    if (!includedIds.empty()) {
+        oss << "[" << std::get<0>(includedIds.front()) << ", " << std::get<1>(includedIds.front()) << "]"; 
+    
+      for (auto it = includedIds.begin() + 1; it != includedIds.end(); it++) {
+        oss << ", "
+            << "["
+            << std::get<0>(*it) << ", " << std::get<1>(*it)
+            << "]"; 
+      }
+    }
+    oss << "]";
+
+    oss << "]";
 
     return oss.str();
   }
