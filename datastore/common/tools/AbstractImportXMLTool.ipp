@@ -29,21 +29,25 @@
 
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/utils/QueriesCommon.hpp>
+#include <nlohmann/json.hpp>
 
 namespace nmcu = netmeld::core::utils;
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdu = netmeld::datastore::utils;
+
+#include <pugixml.hpp>
+
 
 namespace netmeld::datastore::tools {
   // ===========================================================================
   // Constructors
   // ===========================================================================
   template<typename P, typename R>
-  AbstractImportTool<P,R>::AbstractImportTool()
+  AbstractImportXMLTool<P,R>::AbstractImportXMLTool()
   {}
 
   template<typename P, typename R>
-  AbstractImportTool<P,R>::AbstractImportTool(
+  AbstractImportXMLTool<P,R>::AbstractImportXMLTool(
       const char* _helpBlurb,
       const char* _programName,
       const char* _version) :
@@ -54,85 +58,41 @@ namespace netmeld::datastore::tools {
   // ===========================================================================
   // Tool Entry Points (execution order)
   // ===========================================================================
-  template<typename P, typename R>
-  int
-  AbstractImportTool<P,R>::runTool()
+
+  template<typename P,typename R>
+  void
+  AbstractImportXMLTool<P,R>::parseData()
   {
-    if (opts.exists("data-path")) {
-      dataPath = sfs::canonical(opts.getValue("data-path"));
-    }
-
-    setToolRunId();
-
-    parseData(); // only returns on success
-
-    pqxx::connection db {getDbConnectString()};
-    nmdu::dbPrepareCommon(db);
-    pqxx::work t{db};
-
-    if (opts.exists("tool-run-metadata")) {
-      LOG_DEBUG << "Running as tool-run-metadata\n";
-      toolRunMetadataInserts(t);
-    }
-    else {
-      LOG_DEBUG << "Running as general/specific tool\n";
-      generalInserts(t, dataPath.string());
-      specificInserts(t);
-    }
-
-    t.commit();
-
-    if (!opts.exists("tool-run-id")) {
-      LOG_INFO << "tool-run-id: " << toolRunId << '\n';
-    }
-
-    return nmcu::Exit::SUCCESS;
+      executionStart = nmco::Time();
+      // How it's done in nmdb-import-juniper-xml
+      pugi::xml_document doc;
+       if (!doc.load_file(this->getDataPath().string().c_str(),
+                         pugi::parse_default | pugi::parse_trim_pcdata)) {
+        LOG_ERROR << "Could not open XML: "
+                  << this->getDataPath().string()
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
+      P parser;
+      parser.handleXML(doc);
+      this->tResults = parser.getData(); // emplace_back was used in nmdb-import-juniper-xml
+      // end nmdb-import-juniper-xml
+      executionStop = nmco::Time();
   }
 
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::printHelp() const
-  {
-    LOG_NOTICE << "Import output from " << helpBlurb
-               << "\nUsage: " << programName << " [options] DATA_PATH"
-               << "\nOptions:\n"
-               << opts
-               << this->bugTeam
-               << '\n';
-  }
-
-  template<typename P, typename R>
-  void
-  AbstractImportTool<P,R>::setToolRunId()
-  {
-    toolRunId
-      = opts.exists("tool-run-id")
-      ? (nmco::Uuid(opts.getValue("tool-run-id")))
-      : (nmco::Uuid());
-  }
-
-  template<typename P, typename R>
-  void
-  AbstractImportTool<P,R>::parseData() // Could pass the parser as an argument
-  {
-    executionStart = nmco::Time();
-    tResults = nmdp::fromFilePath<P,R>(dataPath.string());
-    executionStop = nmco::Time();
-  }
-
-  template<typename P, typename R>
-  void
-  AbstractImportTool<P,R>::toolRunMetadataInserts(pqxx::transaction_base&)
+  AbstractImportXMLTool<P,R>::toolRunMetadataInserts(pqxx::transaction_base&)
   {}
 
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::specificInserts(pqxx::transaction_base&)
+  AbstractImportXMLTool<P,R>::specificInserts(pqxx::transaction_base&)
   {}
 
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::addModuleOptions()
+  AbstractImportXMLTool<P,R>::addModuleOptions()
   {
     AbstractDatastoreTool::addModuleOptions();
 
@@ -166,7 +126,7 @@ namespace netmeld::datastore::tools {
 
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::addToolOptions()
+  AbstractImportXMLTool<P,R>::addToolOptions()
   {}
 
 
@@ -175,7 +135,7 @@ namespace netmeld::datastore::tools {
   // ===========================================================================
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::generalInserts(
+  AbstractImportXMLTool<P,R>::generalInserts(
       pqxx::transaction_base& t,
       const std::string& dataFile)
   {
@@ -202,21 +162,21 @@ namespace netmeld::datastore::tools {
 
   template<typename P, typename R>
   sfs::path const
-  AbstractImportTool<P,R>::getDataPath() const
+  AbstractImportXMLTool<P,R>::getDataPath() const
   {
     return dataPath;
   }
 
   template<typename P, typename R>
   const std::string
-  AbstractImportTool<P,R>::getDeviceId() const
+  AbstractImportXMLTool<P,R>::getDeviceId() const
   {
     return devInfo.getDeviceId();
   }
 
   template<typename P, typename R>
   nmco::Uuid const
-  AbstractImportTool<P,R>::getToolRunId() const
+  AbstractImportXMLTool<P,R>::getToolRunId() const
   {
     return toolRunId;
   }

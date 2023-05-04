@@ -128,9 +128,10 @@ namespace netmeld::datastore::tools {
           this->tResults = parser.getData();
       } catch (json::out_of_range& ex) {
           LOG_ERROR << "Parse error " << ex.what() << std::endl;
+          std::exit(nmcu::Exit::FAILURE);
       } catch (json::parse_error& ex) {
           LOG_ERROR << "Parse error at byte " << ex.byte << std::endl;
-          exit(1); // Error handling
+          std::exit(nmcu::Exit::FAILURE);
       }
       // end nmdb-import-aws copy
       executionStop = nmco::Time();

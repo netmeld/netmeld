@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportXMLTool.hpp>
 #include <pugixml.hpp>
 
 #include "Parser.hpp"
@@ -38,78 +38,13 @@ typedef std::vector<Data> Results;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportXMLTool<P,R>
 {
   public:
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportXMLTool<P,R>
       ("Juniper XML output (.xml files)", PROGRAM_NAME, PROGRAM_VERSION)
     {
       this->devInfo.setVendor("Juniper");
-    }
-
-    void
-    parseData() override
-    {
-      pugi::xml_document doc;
-      if (!doc.load_file(this->getDataPath().string().c_str(),
-                         pugi::parse_default | pugi::parse_trim_pcdata)) {
-        LOG_ERROR << "Could not open XML: "
-                  << this->getDataPath().string()
-                  << std::endl;
-        std::exit(nmcu::Exit::FAILURE);
-      }
-
-      const pugi::xml_node rpcReplyNode{doc.select_node("/rpc-reply").node()};
-      if (!rpcReplyNode) {
-        LOG_ERROR << "Could not find XML element: /rpc-reply"
-                  << std::endl;
-        std::exit(nmcu::Exit::FAILURE);
-      }
-
-      Parser parser;
-
-      for (const pugi::xml_node dataNode : rpcReplyNode.children()) {
-        const std::string dataNodeName{dataNode.name()};
-        if ("arp-table-information" == dataNodeName) {
-          parser.parseArpTableInfo(dataNode);
-        }
-        else if ("cli" == dataNodeName) {
-          // Ignored: Metadata for the command-line interface.
-        }
-        else if ("configuration" == dataNodeName) {
-          parser.parseConfig(dataNode);
-        }
-        else if ("ipv6-nd-information" == dataNodeName) {
-          parser.parseIpv6NeighborInfo(dataNode);
-        }
-        else if (("l2ng-l2ald-rtb-mac-ip-db" == dataNodeName) ||
-                 ("l2ng-l2ald-rtb-macdb"     == dataNodeName) ||
-                 ("l2ng-l2rtb-evpn-arp-db"   == dataNodeName) ||
-                 ("l2ng-l2rtb-evpn-nd-db"    == dataNodeName)) {
-          parser.parseEthernetSwitching(dataNode);
-        }
-        else if ("lldp-neighbors-information" == dataNodeName) {
-          parser.parseLldpNeighborInfo(dataNode);
-        }
-        else if ("output" == dataNodeName) {
-          // Ignored: Context-specific text for the device to output.
-          // Either ignored or handled in the parser for another element.
-        }
-        else if ("route-information" == dataNodeName) {
-          parser.parseRouteInfo(dataNode);
-        }
-        else if ("xnm:error" == dataNodeName) {
-          parser.parseError(dataNode);
-        }
-        else if ("xnm:warning" == dataNodeName) {
-          parser.parseWarning(dataNode);
-        }
-        else {
-          parser.parseUnsupported(dataNode);
-        }
-      }
-
-      this->tResults.emplace_back(parser.getData());
     }
 
     void
@@ -220,7 +155,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<nmdp::DummyParser, Results> tool;
+  Tool<Parser, Results> tool;
   return tool.start(argc, argv);
 }
 

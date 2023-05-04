@@ -51,12 +51,66 @@ namespace nmdp = netmeld::datastore::parsers;
 namespace nmdu = netmeld::datastore::utils;
 
 
-Data
+Results
 Parser::getData()
 {
-  return data;
+  Results res;
+  res.emplace_back(data);
+  return res;
 }
 
+
+void
+Parser::handleXML(const pugi::xml_document& doc)
+{
+  const pugi::xml_node rpcReplyNode{doc.select_node("/rpc-reply").node()};
+  if (!rpcReplyNode) {
+    LOG_ERROR << "Could not find XML element: /rpc-reply"
+              << std::endl;
+    std::exit(nmcu::Exit::FAILURE);
+  }
+
+  for (const pugi::xml_node dataNode : rpcReplyNode.children()) {
+    const std::string dataNodeName{dataNode.name()};
+    if ("arp-table-information" == dataNodeName) {
+      this->parseArpTableInfo(dataNode);
+    }
+    else if ("cli" == dataNodeName) {
+      // Ignored: Metadata for the command-line interface.
+    }
+    else if ("configuration" == dataNodeName) {
+      this->parseConfig(dataNode);
+    }
+    else if ("ipv6-nd-information" == dataNodeName) {
+      this->parseIpv6NeighborInfo(dataNode);
+    }
+    else if (("l2ng-l2ald-rtb-mac-ip-db" == dataNodeName) ||
+             ("l2ng-l2ald-rtb-macdb"     == dataNodeName) ||
+             ("l2ng-l2rtb-evpn-arp-db"   == dataNodeName) ||
+             ("l2ng-l2rtb-evpn-nd-db"    == dataNodeName)) {
+      this->parseEthernetSwitching(dataNode);
+    }
+    else if ("lldp-neighbors-information" == dataNodeName) {
+      this->parseLldpNeighborInfo(dataNode);
+    }
+    else if ("output" == dataNodeName) {
+      // Ignored: Context-specific text for the device to output.
+      // Either ignored or handled in the parser for another element.
+    }
+    else if ("route-information" == dataNodeName) {
+      this->parseRouteInfo(dataNode);
+    }
+    else if ("xnm:error" == dataNodeName) {
+      this->parseError(dataNode);
+    }
+    else if ("xnm:warning" == dataNodeName) {
+      this->parseWarning(dataNode);
+    }
+    else {
+      this->parseUnsupported(dataNode);
+    }
+  }
+}
 
 void
 Parser::parseConfig(const pugi::xml_node& configNode)
