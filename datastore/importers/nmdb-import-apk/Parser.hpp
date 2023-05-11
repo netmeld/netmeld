@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -23,78 +23,72 @@
 // =============================================================================
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
-#include "Parser.hpp"
+
+#ifndef PARSER_HPP
+#define PARSER_HPP
+
+#include <netmeld/datastore/objects/Package.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdo = netmeld::datastore::objects;
 
 // =============================================================================
-// Parser logic
+// Data containers
 // =============================================================================
-Parser::Parser() : Parser::base_type(start)
+struct Data
 {
-  start =
-    (*(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
-      | ignoredLine
-      | qi::eol
-    )) [(qi::_val = pnx::bind(&Parser::getData, this))]
-  ;
-
-  token =
-    +qi::ascii::graph
-  ;
-
-  packageLine =
-    packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
-    > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
-    > architecture [(pnx::bind(&nmdo::Package::setArchitecture, &qi::_val, qi::_1))]
-    > description [(pnx::bind(&nmdo::Package::setDescription, &qi::_val, qi::_1))]
-    > qi::eol
-  ;
-
-  packageName =
-    token
-  ;
-
-  version =
-    token
-  ;
-
-  architecture =
-    token
-  ;
-
-  description =
-    +qi::ascii::print
-  ;
-
-  ignoredLine =
-    (token > -qi::eol) | +qi::eol
-  ;
-
-  // Allows for error handling and debugging of qi.
-  BOOST_SPIRIT_DEBUG_NODES(
-      (start)
-      (headers)
-      (packageName)
-      (packageLine)
-      (version)
-      (architecture)
-      (description)
-      (token)
-      );
-}
+  std::vector<nmdo::Package>    packages;
+  nmdo::ToolObservations        observations;
+};
+typedef std::vector<Data> Result;
 
 // =============================================================================
-// Parser helper methods
+// Parser definition
 // =============================================================================
-void
-Parser::addPackage(const nmdo::Package& packg)
+class Parser :
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
-  data.packages.push_back(packg);
-}
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private:
+    // Supporting data structures
+    Data data;
 
-Result
-Parser::getData()
-{
-  Result r;
-  r.push_back(data);
-  return r;
-}
+  protected:
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      start;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      headers, ignoredLine;
+
+    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
+      packageLine;
+
+    qi::rule<nmdp::IstreamIter, std::string()>
+      packageName,
+      version,
+      architecture,
+      description,
+      token
+    ;
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  public:
+    Parser();
+
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private:
+    void addStateNote(const std::string&);
+    void addPackage(const nmdo::Package&);
+
+    Result getData();
+};
+#endif // PARSER_HPP
