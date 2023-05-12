@@ -32,9 +32,25 @@
 #include <ostream>
 #include <set>
 #include <vector>
+#include <tuple>
 
 
 namespace netmeld::core::utils {
+
+  template<size_t Idx = 0, typename... Types>
+  std::ostream& operator<<(std::ostream& os, const std::tuple<Types...>& tup)
+  {
+    if constexpr(Idx == 0) {
+      os << "[";
+    }
+    os << std::get<Idx>(tup);
+    if constexpr(Idx + 1 < sizeof...(Types)) {
+      os << " -- ";
+      return operator<<<Idx + 1, Types...>(os, tup);
+    } else {
+      return os << "]";
+    }
+  }
 
   template<typename T>
   std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
@@ -47,7 +63,7 @@ namespace netmeld::core::utils {
       }
     }
 
-    return os << "], ";
+    return os << "]";
   }
 
   template<typename T>
