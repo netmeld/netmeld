@@ -27,7 +27,11 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/datastore/objects/Package.hpp>
+// #include <netmeld/datastore/objects/DeviceInformation.hpp>
+// #include <netmeld/datastore/objects/OperatingSystem.hpp>
+// #include <netmeld/datastore/objects/Interface.hpp>
+// #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+// #include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 
@@ -39,10 +43,38 @@ namespace nmdo = netmeld::datastore::objects;
 // =============================================================================
 struct Data
 {
-  std::vector<nmdo::Package>    packages;
-  nmdo::ToolObservations        observations;
+  nmdo::ToolObservations                  observations;
 };
 typedef std::vector<Data> Result;
+
+struct Systeminfo
+{
+  std::string host_name;
+  std::string os_name;
+  std::string os_version;
+  std::string os_manufacturer;
+  std::string os_configuration;
+  std::string build_type;
+  std::string registered_owner;
+  std::string registered_organization;
+  std::string product_id;
+  std::string original_install_date;
+  std::string system_boot_time;
+  std::string system_manufacturer;
+  std::string system_model;
+  std::string system_type;
+  std::string processor;
+  std::string system_directory;
+  std::string locale;
+  std::string domain;
+  std::string time_zone;
+  std::string total_physical_memory;
+  std::string available_physical_memory;
+  std::string virtual_memory_max_size;
+  std::string virtual_memory_in_use;
+  std::string page_file_location;
+};
+typedef std::vector<std::string> Info;
 
 // =============================================================================
 // Parser definition
@@ -63,18 +95,10 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      headers, ignoredLine;
+     ignoredLine;
 
-    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
-      packageLine;
-
-    qi::rule<nmdp::IstreamIter, std::string()>
-      packageName,
-      version,
-      architecture,
-      description,
-      token
-    ;
+    qi::rule<nmdp::IstreamIter, Info(), qi::ascii::blank_type>
+      systeminfo;
 
   // ===========================================================================
   // Constructors
@@ -86,8 +110,6 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void addPackage(const nmdo::Package&);
-
     Result getData();
 };
 #endif // PARSER_HPP

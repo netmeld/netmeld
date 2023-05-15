@@ -66,11 +66,11 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
       for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over Packages";
-        for(auto& result : results.packages){
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
-        }
+        LOG_DEBUG << "Iterating over Systeminfo";
+        // for(auto& result : results){
+        //   result.save(t, toolRunId, deviceId);
+        //   LOG_DEBUG << result.toDebugString() << std::endl;
+        // }
         LOG_DEBUG << "Iterating over Observations\n";
         results.observations.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.observations.toDebugString() << "\n";

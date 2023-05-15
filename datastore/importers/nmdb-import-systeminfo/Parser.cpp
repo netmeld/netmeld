@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -30,60 +30,59 @@
 // =============================================================================
 Parser::Parser() : Parser::base_type(start)
 {
-  start =
-    (*(packageLine [(pnx::bind(&Parser::addPackage, this, qi::_1))]
-      | ignoredLine
-      | qi::eol
-    )) [(qi::_val = pnx::bind(&Parser::getData, this))]
+  start = (
+    systeminfo
+    ) [(qi::_val = pnx::bind(&Parser::getData, this))]
   ;
-
-  token =
-    +qi::ascii::graph
-  ;
-
-  packageLine =
-    packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
-    > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
-    > architecture [(pnx::bind(&nmdo::Package::setArchitecture, &qi::_val, qi::_1))]
-    > description [(pnx::bind(&nmdo::Package::setDescription, &qi::_val, qi::_1))]
-    > qi::eol
-  ;
-
-  packageName =
-    token
-  ;
-  version =
-    token
-  ;
-
-  architecture =
-    token
-  ;
-
-  description =
-    +qi::ascii::print
+  systeminfo =
+      qi::lit("\r\nHost Name:") >> +(qi::char_ - qi::eol) [(qi::_val.host_name = qi::_1)]
+      // qi::lit("OS Name:") >> +qi::blank >> +(qi::char_ - qi::eol) >>
+      // qi::lit("OS Version:") >> +qi::blank >> +(qi::char_ - qi::eol) >>
+      // qi::lit("OS Manufacturer:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("OS Configuration:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("OS Build Type:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Registered Owner:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Registered Organization:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Product ID:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Original Install Date:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("System Boot Time:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("System Manufacturer:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("System Model:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("System Type:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Processor(s):" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Windows Directory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("System Directory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Boot Device:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("System Locale:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Input Locale:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Time Zone:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Total Physical Memory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Available Physical Memory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Virtual Memory: Max Size:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Virtual Memory: Available:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Virtual Memory: In Use:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
+      // qi::lit("Page File Location(s):" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol);
   ;
 
   ignoredLine =
-    (token > -qi::eol) | +qi::eol
+    (qi::ascii::print > -qi::eol) | +qi::eol
   ;
 
   // Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      (headers)
-      (token)
+      (systeminfo)
       );
 }
 
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-void
-Parser::addPackage(const nmdo::Package& packg)
-{
-  data.packages.push_back(packg);
-}
+// void
+// Parser::addPackage(const nmdo::Package& packg)
+// {
+//   data.packages.push_back(packg);
+// }
 
 Result
 Parser::getData()
