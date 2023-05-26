@@ -40,6 +40,10 @@ Parser::Parser() : Parser::base_type(prestart)
     )
   ;
 
+  token =
+    +qi::ascii::graph
+  ;
+
   headers =
     qi::lit("Desired") > ignoredLine
     > qi::lit("|") > ignoredLine
@@ -64,22 +68,18 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageName =
-    +token
+    token
   ;
   version =
-    +token
+    token
   ;
 
   architecture =
-    +token
+    token
   ;
 
   description =
     +qi::ascii::print
-  ;
-
-  token =
-    +qi::ascii::graph
   ;
 
   ignoredLine =
