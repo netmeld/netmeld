@@ -132,50 +132,11 @@ namespace netmeld::datastore::objects {
 
     oss << "["
         << "id: " << id << ", "
-        << "protocol: " << protocol << ", ";
-
-    oss << "srcPortRanges: "
-        << "[";
-        
-    if (!srcPortRanges.empty()) {
-        oss << srcPortRanges.front();
-    
-      for (auto it = srcPortRanges.begin() + 1; it != srcPortRanges.end(); it++) {
-        oss << ", "
-            << it->toDebugString();
-      }
-    }
-    oss << "]"
-        << ", ";
-
-    oss << "dstPortRanges: "
-        << "[";
-        
-    if (!dstPortRanges.empty()) {
-        oss << dstPortRanges.front();
-    
-      for (auto it = dstPortRanges.begin() + 1; it != dstPortRanges.end(); it++) {
-        oss << ", "
-            << it->toDebugString();
-      }
-    }
-    oss << "]"
-        << ", ";
-
-    oss << "includedIds: "
-        << "[";
-        
-    if (!includedIds.empty()) {
-        oss << includedIds.front();
-    
-      for (auto it = includedIds.begin() + 1; it != includedIds.end(); it++) {
-        oss << ", "
-            << *it;
-      }
-    }
-    oss << "]";
-
-    oss << "]";
+        << "protocol: " << protocol << ", "
+        << "srcPortRanges: " << srcPortRanges << ", "
+        << "dstPortRanges: " << dstPortRanges << ", "
+        << "includedIds: " << includedIds
+        << "]";
 
     return oss.str();
   }

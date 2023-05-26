@@ -41,6 +41,14 @@ namespace netmeld::core::objects {
     questionType{}
   { }
 
+  DnsQuestion::DnsQuestion(const std::string& strQuestionFqdn,
+                           const std::string& strQuestionClass,
+                           const std::string& strQuestionType) :
+    questionFqdn{strQuestionFqdn},
+    questionClass{strQuestionClass},
+    questionType{strQuestionType}
+  { }
+
   void
   DnsQuestion::setFqdn(const std::string& _fqdn)
   {
@@ -84,11 +92,9 @@ namespace netmeld::core::objects {
     std::ostringstream oss;
 
     oss << "["
-        << questionFqdn
-        << ", "
-        << questionClass
-        << ", "
-        << questionType
+        << "questionFqdn: " << questionFqdn << ", "
+        << "questionClass: " << questionClass << ", "
+        << "questionType: " << questionType 
         << "]";
 
     return oss.str();

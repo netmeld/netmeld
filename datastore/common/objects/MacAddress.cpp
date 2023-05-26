@@ -148,10 +148,13 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "[";
-    oss << toString() << ", ";
+    oss << "macAddress: " << toString() << ", "
+        << "ipAddrs: " << "[";
     for (const auto& ip : ipAddrs) { oss << ip.toDebugString() << ", "; }
-    oss << "isResponding: " << std::boolalpha << isResponding;
-    oss << "]";
+    oss << "]"
+        << ", "
+        << "isResponding: " << std::boolalpha << isResponding
+        << "]";
 
     return oss.str();
   }

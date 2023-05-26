@@ -195,14 +195,12 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << name
-        << ", " << description
-        << ", " << std::boolalpha << isUp
-        << ", " << mediaType
-        << ", " << macAddr.toDebugString()
-        ;
-
-    oss << "]"; // closing bracket
+    oss << "name: " << name  << ", "
+        << "description: " << description  << ", "
+        << "isUp: " << std::boolalpha << isUp << ", "
+        << "mediaType: " << mediaType  << ", "
+        << "macAddr: " << macAddr .toDebugString()
+        << "]"; // closing bracket
 
     return oss.str();
   }

@@ -117,35 +117,10 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
     
     oss << "[" // opening bracket
-        << "vrfId: "
-        << vrfId
-        << ", ";
-
-    oss << "ifaces: "
-        << "[";
-
-    for(auto beg = begin(ifaces); beg != end(ifaces); beg++) {
-      oss << *beg;
-      if (next(beg) != end(ifaces)) {
-        oss << ", ";
-      }
-    }
-
-    oss << "], ";
-
-    oss << "routes: "
-        << "[";
-
-    for(auto beg = begin(routes); beg != end(routes); beg++) {
-      oss << beg->toDebugString();
-      if (next(beg) != end(routes)) {
-        oss << ", ";
-      }
-    }
-
-    oss << "]";
-
-    oss << "]"; // closing bracket
+        << "vrfId: " << vrfId << ", "
+        << "ifaces: " << ifaces << ", "
+        << "routes: " << routes
+        << "]"; // closing bracket
 
     return oss.str();
   }

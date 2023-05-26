@@ -325,43 +325,62 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << name
-        << ", " << description
-        << ", " << mediaType
-        << ", " << mode
-        << ", State:" << std::boolalpha << isUp
-        << ", DiscProtoEnabled:" << isDiscoveryProtocolEnabled
-        << ", " << macAddr.toDebugString()
+    oss << "name: " << name << ", "
+        << "description: " << description << ", "
+        << "mediaType: " << mediaType << ", "
+        << "mode: " << mode << ", " 
+        << "State:" << std::boolalpha << isUp << ", " 
+        << "DiscProtoEnabled: " << isDiscoveryProtocolEnabled << ", "
+        << "macAddr: " << macAddr .toDebugString()
         ;
 
-    oss << ", Port-Security: ["
-        << " State:" << isPortSecurityEnabled
-        << ", " << portSecurityMaxMacAddrs
-        << ", " << portSecurityViolationAction
-        << ", Sticky:" << isPortSecurityStickyMac
+    oss << ", Port-Security: [ "
+        << "State:" << isPortSecurityEnabled << ", "
+        << "portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs  << ", "
+        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", " 
+        << "Sticky:" << isPortSecurityStickyMac << ", "
         ;
-    oss  << ", Macs: [";
-    for (const auto& mac : learnedMacAddrs) {
-      oss << mac.toDebugString() << ", ";
+
+    oss << "Macs: " 
+        << "[";
+    if (!learnedMacAddrs.empty()) {
+      auto iter = learnedMacAddrs.begin();
+      oss << iter->toDebugString();
+      for (; iter != learnedMacAddrs.end(); iter++) {
+        oss << ", " << iter->toDebugString();
+      }
     }
-    oss << "]]";
+    oss << "]"
+        << "]"
+        << ", ";
 
-    oss  << ", ReachableMacs: [";
-    for (const auto& mac : reachableMacAddrs) {
-      oss << mac.toDebugString() << ", ";
+    oss << "ReachableMacs: " 
+        << "[";
+    if (!reachableMacAddrs.empty()) {
+      auto iter = reachableMacAddrs.begin();
+      oss << iter->toDebugString();
+      for (; iter != reachableMacAddrs.end(); iter++) {
+        oss << ", " << iter->toDebugString();
+      }
     }
-    oss << "]";
+    oss << "]"
+        << ", ";
 
-    oss << ", Spanning-Tree: ["
-        << " Portfast:" << isPortfastEnabled
-        << ", BPDU Guard:" << isBpduGuardEnabled
-        << ", BPDU Filter:" << isBpduFilterEnabled
-        << " ]"
+    oss << "Spanning-Tree: ["
+        << "Portfast: " << isPortfastEnabled << ", "
+        << "BPDU Guard: " << isBpduGuardEnabled << ", "
+        << "BPDU Filter: " << isBpduFilterEnabled
+        << "]"
+        << ", "
         ;
 
-    oss << ", VLANs: [";
-    for (const auto& vlan : vlans) {
-      oss << vlan.toDebugString() << ", ";
+    oss << "VLANs: [";
+    if (!vlans.empty()) {
+      auto iter = vlans.begin();
+      oss << iter->toDebugString();
+      for (; iter != vlans.end(); iter++) {
+        oss << ", " << iter->toDebugString();
+      }
     }
     oss << "]";
 
