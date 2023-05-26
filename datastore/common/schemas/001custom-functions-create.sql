@@ -61,6 +61,12 @@ IMMUTABLE
 
 
 -- ----------------------------------------------------------------------
+-- ----------------------------------------------------------------------
+-- AS_TEXT(ProwlerSeverity)
+--
+-- This function provides consistent, comparable textual values for
+-- the enumeration values defined in the custom type ProwlerSeverity.
+-- ----------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION as_text(
     severity    ProwlerSeverity
@@ -88,6 +94,13 @@ IMMUTABLE
 ;
 
 
+-- ----------------------------------------------------------------------
+-- ----------------------------------------------------------------------
+-- AS_TEXT(TIMESTAMP)
+--
+-- This function provides consistent, comparable textual values for
+-- a timestamp value defined in TIMESTAMP.  Generally speaking, the
+-- value is standardized on UTC, converted to text, and returned.
 -- ----------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION as_text(
