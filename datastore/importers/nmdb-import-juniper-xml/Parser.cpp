@@ -662,8 +662,11 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
     };
     aclService.setId(applicationSetName);
 
-    for (const auto& applicationMatch :
-         applicationSetNode.select_nodes("application[not(@inactive='inactive')]")) {
+    const pugi::xpath_query query {
+        "application[not(@inactive='inactive')]|"
+        "application-set[not(@inactive='inactive')]"
+      };
+    for (const auto& applicationMatch : applicationSetNode.select_nodes(query)) {
       const pugi::xml_node applicationNode{applicationMatch.node()};
       const std::string applicationName{
         applicationNode.select_node("name").node().text().as_string()
@@ -1158,7 +1161,10 @@ Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName.resize(ifaceName.find(" ["));
+      auto length {ifaceName.find(" [")};
+      if (length != std::string::npos) {
+        ifaceName.resize(length);
+      }
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{
@@ -1208,7 +1214,10 @@ Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName.resize(ifaceName.find(" ["));
+      auto length {ifaceName.find(" [")};
+      if (length != std::string::npos) {
+        ifaceName.resize(length);
+      }
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{
