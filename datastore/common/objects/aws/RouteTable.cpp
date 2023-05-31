@@ -116,11 +116,11 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "routeTableId: " << routeTableId
-        << ", vpcId: " << vpcId
-        << ", associations: " << associations
-        << ", isDefault: " << isDefault
-        << ", routes: " << routes
+        << "routeTableId: " << routeTableId << ", "
+        << "vpcId: " << vpcId << ", "
+        << "associations: " << associations << ", "
+        << "isDefault: " << isDefault << ", "
+        << "routes: " << routes
         << ']'
         ;
 

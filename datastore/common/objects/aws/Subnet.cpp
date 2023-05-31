@@ -131,11 +131,11 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "subnetId: " << subnetId
-        << ", vpcId: " << vpcId
-        << ", availabilityZone: " << availabilityZone
-        << ", subnetArn: " << subnetArn
-        << ", cidrBlocks: " << cidrBlocks
+        << "subnetId: " << subnetId << ", "
+        << "vpcId: " << vpcId << ", "
+        << "availabilityZone: " << availabilityZone << ", "
+        << "subnetArn: " << subnetArn << ", "
+        << "cidrBlocks: " << cidrBlocks
         << ']'
         ;
 
