@@ -66,8 +66,11 @@ namespace netmeld::datalake::handlers {
     LOG_DEBUG << "Target time: " << _dts << '\n';
 
     std::ostringstream oss;
+    oss << "git branch --show-current";
+    auto branch {nmcu::trim(nmcu::cmdExecOut(oss.str()))};
+    oss.str("");
     oss << "echo -n `git rev-list -n 1 --first-parent"
-        << " --before=\"" << _dts << "\" master`" ;
+        << " --before=\"" << _dts << "\" " << branch << "`";
     auto result {nmcu::trim(nmcu::cmdExecOut(oss.str()))};
     LOG_DEBUG << "Target SHA: " << result << '\n';
 
@@ -84,7 +87,7 @@ namespace netmeld::datalake::handlers {
       return false;
     } else {
       oss << "git checkout -q "
-          << ("infinity" == _dts.toString() ? "master" : result);
+          << ("infinity" == _dts.toString() ? branch : result);
       nmcu::cmdExec(oss.str());
     }
 
