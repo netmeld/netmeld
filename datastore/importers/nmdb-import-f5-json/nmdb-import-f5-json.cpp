@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 #include <nlohmann/json.hpp>
 #include <fstream>
 
@@ -39,10 +39,10 @@ typedef std::vector<Data> Results;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   public:
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       ("F5 REST API JSON output (.json files)", PROGRAM_NAME, PROGRAM_VERSION)
     {
       this->devInfo.setVendor("F5");

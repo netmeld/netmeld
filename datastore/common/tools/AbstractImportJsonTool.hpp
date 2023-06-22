@@ -27,10 +27,7 @@
 #ifndef ABSTRACT_IMPORT_JSON_TOOL_HPP
 #define ABSTRACT_IMPORT_JSON_TOOL_HPP
 
-#include <netmeld/core/objects/Time.hpp>
-#include <netmeld/core/objects/Uuid.hpp>
-#include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
-#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 #include <nlohmann/json.hpp>
 
 namespace nmco = netmeld::core::objects;
@@ -42,22 +39,11 @@ using json = nlohmann::json;
 namespace netmeld::datastore::tools {
 
   template<typename TParser, typename TResults>
-  class AbstractImportJsonTool : public AbstractDatastoreTool
+  class AbstractImportJsonTool : public AbstractImportTool<TParser,TResults>
   {
     // =========================================================================
     // Variables
     // =========================================================================
-    private:
-      sfs::path   dataPath;
-
-    protected:
-      TResults    tResults;
-
-      nmco::Uuid  toolRunId;
-      nmco::Time  executionStart;
-      nmco::Time  executionStop;
-
-      nmdo::DeviceInformation devInfo;
 
 
     // =========================================================================
@@ -75,24 +61,7 @@ namespace netmeld::datastore::tools {
     // =========================================================================
     // Methods
     // =========================================================================
-    private:
-      // Performs default inserts into the DB
-      void generalInserts(pqxx::transaction_base&, const std::string&);
-      void addModuleOptions() override;
-
-    protected:
-      const sfs::path   getDataPath() const;
-      const std::string getDeviceId() const;
-      const nmco::Uuid  getToolRunId() const;
-      virtual void addToolOptions() override;
       virtual void parseData();
-      virtual void printHelp() const override;
-      virtual int  runTool() override;
-      virtual void setToolRunId();
-      // Tool specific behavior entry point
-      virtual void specificInserts(pqxx::transaction_base&);
-      // Tool run metadata behavior entry point
-      virtual void toolRunMetadataInserts(pqxx::transaction_base&);
   };
 }
 #include "AbstractImportJsonTool.ipp"

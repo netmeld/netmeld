@@ -24,44 +24,43 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef ABSTRACT_IMPORT_XML_TOOL_HPP
-#define ABSTRACT_IMPORT_XML_TOOL_HPP
+// NOTE This implementation is included in the header (at the end) since it
+//      leverages templating.
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
-#include <pugixml.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/utils/QueriesCommon.hpp>
 
-namespace nmco = netmeld::core::objects;
-namespace nmdo = netmeld::datastore::objects;
-
+namespace nmcu = netmeld::core::utils;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdu = netmeld::datastore::utils;
 
 namespace netmeld::datastore::tools {
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  template<typename P, typename R>
+  AbstractImportSpiritTool<P,R>::AbstractImportSpiritTool()
+  {}
 
-  template<typename TParser, typename TResults>
-  class AbstractImportXMLTool : public AbstractImportTool<TParser,TResults>
+  template<typename P, typename R>
+  AbstractImportSpiritTool<P,R>::AbstractImportSpiritTool(
+      const char* _helpBlurb,
+      const char* _programName,
+      const char* _version) :
+    AbstractImportTool<P,R>(_helpBlurb, _programName, _version)
+  {}
+
+
+  // ===========================================================================
+  // Tool Entry Points (execution order)
+  // ===========================================================================
+
+  template<typename P, typename R>
+  void
+  AbstractImportSpiritTool<P,R>::parseData() // Could pass the parser as an argument
   {
-    // =========================================================================
-    // Variables
-    // =========================================================================
-
-
-    // =========================================================================
-    // Constructors and Destructors
-    // =========================================================================
-    protected:
-      // Default constructor, provided only for convienence
-      AbstractImportXMLTool();
-      // Standard constructor, should be primary
-      AbstractImportXMLTool(const char*, const char*, const char*);
-
-    public:
-      virtual ~AbstractImportXMLTool() = default;
-
-    // =========================================================================
-    // Methods
-    // =========================================================================
-    protected:
-      virtual void parseData();
-  };
+    this->executionStart = nmco::Time();
+    this->tResults = nmdp::fromFilePath<P,R>(this->dataPath.string());
+    this->executionStop = nmco::Time();
+  }
 }
-#include "AbstractImportXMLTool.ipp"
-#endif // ABSTRACT_IMPORT_XML_TOOL_HPP

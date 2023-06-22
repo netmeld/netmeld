@@ -26,7 +26,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
 #include "Parser.hpp"
@@ -40,7 +40,7 @@ using json = nlohmann::json;
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -56,7 +56,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       (
                               // command line tool imports data from
        "aws ec2 describe-vpc-peering-connections",
@@ -70,7 +70,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportSpiritTool
     void
     addToolOptions() override
     {
@@ -85,7 +85,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       this->opts.removeOptionalOption("device-color");
     }
 
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportSpiritTool
     void
     parseData() override
     {
@@ -100,7 +100,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       this->executionStop = nmco::Time();
     }
 
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportSpiritTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {

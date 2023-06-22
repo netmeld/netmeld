@@ -24,11 +24,10 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef ABSTRACT_IMPORT_XML_TOOL_HPP
-#define ABSTRACT_IMPORT_XML_TOOL_HPP
+#ifndef ABSTRACT_IMPORT_SPIRIT_TOOL_HPP
+#define ABSTRACT_IMPORT_SPIRIT_TOOL_HPP
 
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
-#include <pugixml.hpp>
 
 namespace nmco = netmeld::core::objects;
 namespace nmdo = netmeld::datastore::objects;
@@ -37,31 +36,31 @@ namespace nmdo = netmeld::datastore::objects;
 namespace netmeld::datastore::tools {
 
   template<typename TParser, typename TResults>
-  class AbstractImportXMLTool : public AbstractImportTool<TParser,TResults>
+  class AbstractImportSpiritTool : public AbstractImportTool<TParser,TResults>
   {
     // =========================================================================
     // Variables
     // =========================================================================
-
 
     // =========================================================================
     // Constructors and Destructors
     // =========================================================================
     protected:
       // Default constructor, provided only for convienence
-      AbstractImportXMLTool();
+      AbstractImportSpiritTool();
       // Standard constructor, should be primary
-      AbstractImportXMLTool(const char*, const char*, const char*);
+      AbstractImportSpiritTool(const char*, const char*, const char*);
 
     public:
-      virtual ~AbstractImportXMLTool() = default;
+      virtual ~AbstractImportSpiritTool() = default;
 
     // =========================================================================
     // Methods
     // =========================================================================
+
     protected:
       virtual void parseData();
   };
 }
-#include "AbstractImportXMLTool.ipp"
-#endif // ABSTRACT_IMPORT_XML_TOOL_HPP
+#include "AbstractImportSpiritTool.ipp"
+#endif // ABSTRACT_IMPORT_SPIRIT_TOOL_HPP

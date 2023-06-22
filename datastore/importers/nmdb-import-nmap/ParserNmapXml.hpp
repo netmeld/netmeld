@@ -37,7 +37,7 @@
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/objects/TracerouteHop.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 
 #include "NseResult.hpp"
 #include "SshAlgorithm.hpp"
