@@ -73,8 +73,8 @@ namespace netmeld::core::objects {
   {
     std::ostringstream oss;
     oss << "[" // opening bracket
-        << data1
-        << ", " << data2
+        << "data1" << data1 << ", "
+        << "data2" << data2
         << "]"; // closing bracket
 
     return oss.str();
