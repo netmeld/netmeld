@@ -236,7 +236,16 @@ HAVING (max(outgoing_interface_name) IS NULL)
 ;
 
 
-CREATE VIEW device_ip_route_connections AS
+CREATE OR REPLACE VIEW device_ip_route_connections AS
+WITH cte1 AS (
+  SELECT DISTINCT
+      device_id
+    , vrf_id
+    , interface_name
+    , ip_addr
+    , ip_net
+  FROM device_vrfs_ip_addrs
+)
 -- Implicit routes to directly-connected routable networks:
 SELECT DISTINCT
   -- Destination network:
@@ -264,8 +273,8 @@ SELECT DISTINCT
   , NULL::TEXT                          AS next_hop_incoming_interface_name
   , NULL::INET                          AS next_hop_incoming_ip_addr
   , NULL::CIDR                          AS next_hop_incoming_ip_net
-FROM device_vrfs_ip_addrs AS self_incoming_addrs
-JOIN device_vrfs_ip_addrs AS self_outgoing_addrs
+FROM cte1 AS self_incoming_addrs
+JOIN cte1 AS self_outgoing_addrs
   ON (self_incoming_addrs.device_id = self_outgoing_addrs.device_id)
 -- AND (  (self_incoming_addrs.vrf_id = self_outgoing_addrs.vrf_id)
 --     OR (self_incoming_addrs.vrf_id IS NULL)
@@ -309,7 +318,7 @@ SELECT DISTINCT
   , self_routes.next_hop_ip_addr        AS next_hop_incoming_ip_addr
   , peer_incoming_addrs.ip_net          AS next_hop_incoming_ip_net
 FROM device_ip_routes AS self_routes
-JOIN device_vrfs_ip_addrs AS self_incoming_addrs
+JOIN cte1 AS self_incoming_addrs
   ON (self_routes.device_id = self_incoming_addrs.device_id)
  AND (  (self_routes.vrf_id = self_incoming_addrs.vrf_id)
      OR (self_incoming_addrs.vrf_id IS NULL)
@@ -319,7 +328,7 @@ JOIN device_vrfs_ip_addrs AS self_incoming_addrs
      OR (self_routes.next_hop_ip_addr IS NULL)
      )
  AND (NOT self_routes.dst_ip_net <<= self_incoming_addrs.ip_net)
-JOIN device_vrfs_ip_addrs AS self_outgoing_addrs
+JOIN cte1 AS self_outgoing_addrs
   ON (self_routes.device_id = self_outgoing_addrs.device_id)
 -- AND (  (self_routes.vrf_id = self_outgoing_addrs.vrf_id)
 --     OR (self_outgoing_addrs.vrf_id IS NULL)
@@ -331,15 +340,14 @@ JOIN device_vrfs_ip_addrs AS self_outgoing_addrs
  AND (  (self_outgoing_addrs.interface_name != self_incoming_addrs.interface_name)
      OR (self_outgoing_addrs.interface_name IS NULL)
      )
-LEFT JOIN device_vrfs_ip_addrs AS peer_incoming_addrs
+LEFT JOIN cte1 AS peer_incoming_addrs
   ON (self_routes.next_hop_ip_addr = peer_incoming_addrs.ip_addr)
 ;
 
 
 -- ----------------------------------------------------------------------
 
-
-CREATE OR REPLACE FUNCTION ip_route_paths(
+CREATE OR REPLACE FUNCTION ip_route_paths (
     arg_src_ip_net INET
   , arg_dst_ip_net INET
   , arg_device_ids TEXT[] DEFAULT '{}'
@@ -352,7 +360,7 @@ RETURNS TABLE (
   , route_path              TEXT[]
   , route_path_detail       RouteHop[]
 ) AS $$
-WITH RECURSIVE device_ip_route_recursion(
+WITH RECURSIVE device_ip_route_recursion (
   -- Source network:
     src_ip_net
   -- Destination network:
@@ -367,6 +375,22 @@ WITH RECURSIVE device_ip_route_recursion(
   , route_path
   , route_path_detail
 ) AS (
+    WITH cte1 AS (
+      SELECT DISTINCT
+          *
+      FROM device_ip_route_connections
+      WHERE (is_active = true)
+        AND ( (   (incoming_interface_name NOT LIKE 'management%')
+              AND (incoming_interface_name NOT LIKE 'mgmt%')
+              )
+            OR (incoming_interface_name IS NULL)
+            )
+        AND ( (   (outgoing_interface_name NOT LIKE 'management%')
+              AND (outgoing_interface_name NOT LIKE 'mgmt%')
+              )
+            OR (outgoing_interface_name IS NULL)
+            )
+    )
     -- Base case: First router in path to destination.
     SELECT DISTINCT
      -- Source network:
@@ -391,20 +415,9 @@ WITH RECURSIVE device_ip_route_recursion(
           , route_conns.outgoing_ip_addr
           , route_conns.outgoing_ip_net
         )::RouteHop]                                  AS route_path_detail
-    FROM device_ip_route_connections AS route_conns
+    FROM cte1 AS route_conns
     WHERE ($1 && route_conns.incoming_ip_net)
       AND ($2 && route_conns.dst_ip_net)
-      AND (route_conns.is_active = true)
-      AND ( (   (route_conns.incoming_interface_name NOT LIKE 'management%')
-            AND (route_conns.incoming_interface_name NOT LIKE 'mgmt%')
-            )
-          OR (route_conns.incoming_interface_name IS NULL)
-          )
-      AND ( (   (route_conns.outgoing_interface_name NOT LIKE 'management%')
-            AND (route_conns.outgoing_interface_name NOT LIKE 'mgmt%')
-            )
-          OR (route_conns.outgoing_interface_name IS NULL)
-          )
     UNION ALL
     -- Recursive case: Move current router one hop downstream.
     SELECT DISTINCT
@@ -434,7 +447,7 @@ WITH RECURSIVE device_ip_route_recursion(
           , route_conns.outgoing_ip_net
         )::RouteHop                                   AS route_path_detail
     FROM device_ip_route_recursion AS route_recur
-    JOIN device_ip_route_connections AS route_conns
+    JOIN cte1 AS route_conns
       ON (route_recur.next_hop_device_id = route_conns.device_id)
      AND (  (route_recur.next_hop_vrf_id = route_conns.vrf_id)
          OR (route_recur.next_hop_vrf_id IS NULL)
@@ -445,17 +458,6 @@ WITH RECURSIVE device_ip_route_recursion(
      AND (route_recur.dst_ip_net && route_conns.dst_ip_net)
     WHERE (route_conns.device_id != ALL(route_path))
       AND ($2 && route_conns.dst_ip_net)
-      AND (route_conns.is_active = true)
-      AND ( (   (route_conns.incoming_interface_name NOT LIKE 'management%')
-            AND (route_conns.incoming_interface_name NOT LIKE 'mgmt%')
-            )
-          OR (route_conns.incoming_interface_name IS NULL)
-          )
-      AND ( (   (route_conns.outgoing_interface_name NOT LIKE 'management%')
-            AND (route_conns.outgoing_interface_name NOT LIKE 'mgmt%')
-            )
-          OR (route_conns.outgoing_interface_name IS NULL)
-          )
 )
 -- Filter results
 SELECT
@@ -1074,6 +1076,8 @@ LEFT JOIN device_acl_zones_recursion AS acl_recur
 ;
 
 
+-- ----------------------------------------------------------------------
+
 CREATE VIEW device_acl_ip_nets AS
 WITH RECURSIVE device_acl_ip_nets_recursion(
     device_id
@@ -1144,6 +1148,8 @@ LEFT JOIN device_acl_ip_nets_recursion AS acl_recur
 ;
 
 
+-- ----------------------------------------------------------------------
+
 CREATE VIEW device_acl_ports AS
 WITH RECURSIVE device_acl_ports_recursion(
     device_id
@@ -1177,6 +1183,8 @@ LEFT JOIN device_acl_ports_recursion AS acl_recur
  AND (acl_bases.port_set_id = acl_recur.port_set_id)
 ;
 
+
+-- ----------------------------------------------------------------------
 
 CREATE VIEW device_acl_services AS
 WITH RECURSIVE device_acl_services_recursion(
@@ -1224,6 +1232,8 @@ LEFT JOIN device_acl_services_recursion AS acl_recur
 ;
 
 
+-- ----------------------------------------------------------------------
+
 CREATE VIEW device_acl_rules_ports AS
 SELECT DISTINCT
     device_id                   AS device_id
@@ -1243,6 +1253,8 @@ FROM raw_device_acl_rules_ports
 ;
 
 
+-- ----------------------------------------------------------------------
+
 CREATE VIEW device_acl_rules_services AS
 SELECT DISTINCT
     device_id                   AS device_id
@@ -1260,7 +1272,59 @@ FROM raw_device_acl_rules_services
 ;
 
 
-CREATE VIEW device_acl_rules AS
+-- ----------------------------------------------------------------------
+
+CREATE VIEW device_acl_rules_all AS
+SELECT DISTINCT
+    device_id                   AS device_id
+  , priority                    AS priority
+  , action                      AS action
+  , incoming_zone_id            AS incoming_zone_id
+  , outgoing_zone_id            AS outgoing_zone_id
+  , src_ip_net_set_namespace    AS src_ip_net_set_namespace
+  , src_ip_net_set_id           AS src_ip_net_set_id
+  , dst_ip_net_set_namespace    AS dst_ip_net_set_namespace
+  , dst_ip_net_set_id           AS dst_ip_net_set_id
+  , NULL                        AS service_id
+  , protocol                    AS protocol
+  , src_port_set_id             AS src_port_set_id
+  , dst_port_set_id             AS dst_port_set_id
+  , description                 AS description
+FROM raw_device_acl_rules_ports
+UNION
+SELECT DISTINCT
+    device_id                   AS device_id
+  , priority                    AS priority
+  , action                      AS action
+  , incoming_zone_id            AS incoming_zone_id
+  , outgoing_zone_id            AS outgoing_zone_id
+  , src_ip_net_set_namespace    AS src_ip_net_set_namespace
+  , src_ip_net_set_id           AS src_ip_net_set_id
+  , dst_ip_net_set_namespace    AS dst_ip_net_set_namespace
+  , dst_ip_net_set_id           AS dst_ip_net_set_id
+  , service_id                  AS service_id
+  , NULL                        AS protocol
+  , NULL                        AS src_port_set_id
+  , NULL                        AS dst_port_set_id
+  , description                 AS description
+FROM raw_device_acl_rules_services
+;
+
+
+-- ----------------------------------------------------------------------
+CREATE OR REPLACE VIEW device_acl_rules AS
+WITH cte1 AS (
+  SELECT DISTINCT * FROM device_acl_zones
+),
+cte2 AS (
+  SELECT DISTINCT * FROM device_acl_ip_nets
+),
+cte3 AS (
+  SELECT DISTINCT * FROM device_acl_ports
+),
+cte4 AS (
+  SELECT DISTINCT * FROM device_acl_services
+)
 SELECT DISTINCT
     acl_rules.device_id                 AS device_id
   , acl_rules.priority                  AS priority
@@ -1285,25 +1349,25 @@ SELECT DISTINCT
   , acl_dst_ports.port_range            AS dst_port_range
   , acl_rules.description               AS description
 FROM device_acl_rules_ports AS acl_rules
-LEFT JOIN device_acl_zones AS acl_incoming_zones
+LEFT JOIN cte1 AS acl_incoming_zones
   ON (acl_rules.device_id         = acl_incoming_zones.device_id)
  AND (acl_rules.incoming_zone_id  = acl_incoming_zones.zone_id)
-LEFT JOIN device_acl_zones AS acl_outgoing_zones
+LEFT JOIN cte1 AS acl_outgoing_zones
   ON (acl_rules.device_id         = acl_outgoing_zones.device_id)
  AND (acl_rules.outgoing_zone_id  = acl_outgoing_zones.zone_id)
-LEFT JOIN device_acl_ip_nets AS acl_src_ip_nets
+LEFT JOIN cte2 AS acl_src_ip_nets
   ON (acl_rules.device_id                 = acl_src_ip_nets.device_id)
  AND (acl_rules.src_ip_net_set_namespace  = acl_src_ip_nets.ip_net_set_namespace)
  AND (acl_rules.src_ip_net_set_id         = acl_src_ip_nets.ip_net_set_id)
-LEFT JOIN device_acl_ip_nets AS acl_dst_ip_nets
+LEFT JOIN cte2 AS acl_dst_ip_nets
   ON (acl_rules.device_id                 = acl_dst_ip_nets.device_id)
  AND (acl_rules.dst_ip_net_set_namespace  = acl_dst_ip_nets.ip_net_set_namespace)
  AND (acl_rules.dst_ip_net_set_id         = acl_dst_ip_nets.ip_net_set_id)
  AND (inet_same_family(acl_src_ip_nets.ip_net, acl_dst_ip_nets.ip_net))
-LEFT JOIN device_acl_ports AS acl_src_ports
+LEFT JOIN cte3 AS acl_src_ports
   ON (acl_rules.device_id         = acl_src_ports.device_id)
  AND (acl_rules.src_port_set_id   = acl_src_ports.port_set_id)
-LEFT JOIN device_acl_ports AS acl_dst_ports
+LEFT JOIN cte3 AS acl_dst_ports
   ON (acl_rules.device_id         = acl_dst_ports.device_id)
  AND (acl_rules.dst_port_set_id   = acl_dst_ports.port_set_id)
 UNION
@@ -1331,22 +1395,22 @@ SELECT DISTINCT
   , acl_services.dst_port_range         AS dst_port_range
   , acl_rules.description               AS description
 FROM device_acl_rules_services AS acl_rules
-LEFT JOIN device_acl_zones AS acl_incoming_zones
+LEFT JOIN cte1 AS acl_incoming_zones
   ON (acl_rules.device_id         = acl_incoming_zones.device_id)
  AND (acl_rules.incoming_zone_id  = acl_incoming_zones.zone_id)
-LEFT JOIN device_acl_zones AS acl_outgoing_zones
+LEFT JOIN cte1 AS acl_outgoing_zones
   ON (acl_rules.device_id         = acl_outgoing_zones.device_id)
  AND (acl_rules.outgoing_zone_id  = acl_outgoing_zones.zone_id)
-LEFT JOIN device_acl_ip_nets AS acl_src_ip_nets
+LEFT JOIN cte2 AS acl_src_ip_nets
   ON (acl_rules.device_id                 = acl_src_ip_nets.device_id)
  AND (acl_rules.src_ip_net_set_namespace  = acl_src_ip_nets.ip_net_set_namespace)
  AND (acl_rules.src_ip_net_set_id         = acl_src_ip_nets.ip_net_set_id)
-LEFT JOIN device_acl_ip_nets AS acl_dst_ip_nets
+LEFT JOIN cte2 AS acl_dst_ip_nets
   ON (acl_rules.device_id                 = acl_dst_ip_nets.device_id)
  AND (acl_rules.dst_ip_net_set_namespace  = acl_dst_ip_nets.ip_net_set_namespace)
  AND (acl_rules.dst_ip_net_set_id         = acl_dst_ip_nets.ip_net_set_id)
  AND (inet_same_family(acl_src_ip_nets.ip_net, acl_dst_ip_nets.ip_net))
-LEFT JOIN device_acl_services AS acl_services
+LEFT JOIN cte4 AS acl_services
   ON (acl_rules.device_id         = acl_services.device_id)
  AND (acl_rules.service_id        = acl_services.service_id)
 ;
