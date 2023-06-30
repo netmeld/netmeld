@@ -65,10 +65,10 @@ BOOST_AUTO_TEST_CASE(testParts)
     std::string dbgStr;
     const auto tr {tp.getData()};
     BOOST_TEST(2 == tr.size());
-    dbgStr = R"([[1.2.3.4/32, 1, , 0, []], [0.0.0.0/255, 0, , 0, []], 0])";
+    dbgStr = R"([hopIpAddr: [ipAddress: 1.2.3.4/32, isResponding: 1, reason: , extraWeight: 0, aliases: []], dstIpAddr: [ipAddress: 0.0.0.0/255, isResponding: 0, reason: , extraWeight: 0, aliases: []], hopCount: 0])";
     BOOST_TEST(dbgStr == tr[0].toDebugString());
-    dbgStr = R"([[1.2.3.4/32, 1, from traceroute import, 0, )"
-             R"([router1.site.domain]], [0.0.0.0/255, 0, , 0, []], 0])";
+    dbgStr = R"([hopIpAddr: [ipAddress: 1.2.3.4/32, isResponding: 1, reason: from traceroute import, extraWeight: 0, )"
+             R"(aliases: [router1.site.domain]], dstIpAddr: [ipAddress: 0.0.0.0/255, isResponding: 0, reason: , extraWeight: 0, aliases: []], hopCount: 0])";
     BOOST_TEST(dbgStr == tr[1].toDebugString());
     for (const auto& d : tr) {
       BOOST_TEST(!d.isValid());
@@ -161,13 +161,13 @@ BOOST_AUTO_TEST_CASE(testParts)
     std::string dbgStr;
     const auto tr {tp.getData()};
     BOOST_TEST(testsOk.size() == tr.size());
-    dbgStr = R"([[1.2.3.4/32, 1, , 0, []], [0.0.0.0/255, 0, , 0, []], 0])";
+    dbgStr = R"([hopIpAddr: [ipAddress: 1.2.3.4/32, isResponding: 1, reason: , extraWeight: 0, aliases: []], dstIpAddr: [ipAddress: 0.0.0.0/255, isResponding: 0, reason: , extraWeight: 0, aliases: []], hopCount: 0])";
     BOOST_TEST(dbgStr == tr[0].toDebugString());
     BOOST_TEST(dbgStr == tr[1].toDebugString());
-    dbgStr = R"([[1.2.3.4/32, 1, from traceroute import, 0, )"
-             R"([router1.site.domain]], [0.0.0.0/255, 0, , 0, []], 0])";
+    dbgStr = R"([hopIpAddr: [ipAddress: 1.2.3.4/32, isResponding: 1, reason: from traceroute import, extraWeight: 0, )"
+             R"(aliases: [router1.site.domain]], dstIpAddr: [ipAddress: 0.0.0.0/255, isResponding: 0, reason: , extraWeight: 0, aliases: []], hopCount: 0])";
     BOOST_TEST(dbgStr == tr[2].toDebugString());
-    dbgStr = R"([[1::2/128, 1, , 0, []], [0.0.0.0/255, 0, , 0, []], 0])";
+    dbgStr = R"([hopIpAddr: [ipAddress: 1::2/128, isResponding: 1, reason: , extraWeight: 0, aliases: []], dstIpAddr: [ipAddress: 0.0.0.0/255, isResponding: 0, reason: , extraWeight: 0, aliases: []], hopCount: 0])";
     BOOST_TEST(dbgStr == tr[3].toDebugString());
     for (const auto& d : tr) {
       BOOST_TEST(!d.isValid());
