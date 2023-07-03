@@ -331,58 +331,28 @@ namespace netmeld::datastore::objects {
         << "mode: " << mode << ", " 
         << "State:" << std::boolalpha << isUp << ", " 
         << "DiscProtoEnabled: " << isDiscoveryProtocolEnabled << ", "
-        << "macAddr: " << macAddr .toDebugString()
+        << "macAddr: " << macAddr .toDebugString() << ", "
         ;
 
-    oss << ", Port-Security: [ "
-        << "State:" << isPortSecurityEnabled << ", "
+    oss << "Port-Security: ["
+        << "State: " << isPortSecurityEnabled << ", "
         << "portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs  << ", "
         << "portSecurityViolationAction: " << portSecurityViolationAction  << ", " 
-        << "Sticky:" << isPortSecurityStickyMac << ", "
+        << "Sticky :" << isPortSecurityStickyMac << "], "
         ;
 
-    oss << "Macs: " 
-        << "[";
-    if (!learnedMacAddrs.empty()) {
-      auto iter = learnedMacAddrs.begin();
-      oss << iter->toDebugString();
-      for (; iter != learnedMacAddrs.end(); iter++) {
-        oss << ", " << iter->toDebugString();
-      }
-    }
-    oss << "]"
-        << "]"
-        << ", ";
+    oss << "Macs: "  << learnedMacAddrs << ", ";
 
-    oss << "ReachableMacs: " 
-        << "[";
-    if (!reachableMacAddrs.empty()) {
-      auto iter = reachableMacAddrs.begin();
-      oss << iter->toDebugString();
-      for (; iter != reachableMacAddrs.end(); iter++) {
-        oss << ", " << iter->toDebugString();
-      }
-    }
-    oss << "]"
-        << ", ";
+    oss << "ReachableMacs: " << reachableMacAddrs << ", ";
 
     oss << "Spanning-Tree: ["
         << "Portfast: " << isPortfastEnabled << ", "
         << "BPDU Guard: " << isBpduGuardEnabled << ", "
         << "BPDU Filter: " << isBpduFilterEnabled
-        << "]"
-        << ", "
+        << "], "
         ;
 
-    oss << "VLANs: [";
-    if (!vlans.empty()) {
-      auto iter = vlans.begin();
-      oss << iter->toDebugString();
-      for (; iter != vlans.end(); iter++) {
-        oss << ", " << iter->toDebugString();
-      }
-    }
-    oss << "]";
+    oss << "VLANs: " << vlans;
 
     oss << "]"; // closing bracket
 
