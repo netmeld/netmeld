@@ -45,7 +45,7 @@ namespace netmeld::core::utils {
     }
     os << std::get<Idx>(tup);
     if constexpr(Idx + 1 < sizeof...(Types)) {
-      os << " -- ";
+      os << ", ";
       return operator<<<Idx + 1, Types...>(os, tup);
     } else {
       return os << "]";
