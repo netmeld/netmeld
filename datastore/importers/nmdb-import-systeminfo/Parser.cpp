@@ -34,35 +34,146 @@ Parser::Parser() : Parser::base_type(start)
     systeminfo
     ) [(qi::_val = pnx::bind(&Parser::getData, this))]
   ;
-  systeminfo =
-      qi::lit("\r\nHost Name:") >> +(qi::char_ - qi::eol) [(qi::_val.host_name = qi::_1)]
-      // qi::lit("OS Name:") >> +qi::blank >> +(qi::char_ - qi::eol) >>
-      // qi::lit("OS Version:") >> +qi::blank >> +(qi::char_ - qi::eol) >>
-      // qi::lit("OS Manufacturer:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("OS Configuration:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("OS Build Type:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Registered Owner:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Registered Organization:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Product ID:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Original Install Date:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("System Boot Time:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("System Manufacturer:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("System Model:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("System Type:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Processor(s):" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Windows Directory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("System Directory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Boot Device:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("System Locale:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Input Locale:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Time Zone:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Total Physical Memory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Available Physical Memory:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Virtual Memory: Max Size:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Virtual Memory: Available:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Virtual Memory: In Use:" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol) >>
-      // qi::lit("Page File Location(s):" >> +qi::blank >> +(qi::char_ - qi::eol) >> qi::eol);
+  token =
+    +(qi::ascii::print)
   ;
+
+  host_name = 
+    qi::lit("Host Name:") >> (token - '\n') >> qi::eol
+  ;
+  os_name = 
+    qi::lit("OS Name:") >> (token - '\n') >> qi::eol
+  ;
+  os_version = 
+    qi::lit("OS Version:") >> (token - '\n') >> qi::eol
+  ;
+  os_manufacturer = 
+    qi::lit("OS Manufacturer:") >> (token - '\n') >> qi::eol
+  ;
+  os_configuration  =
+    qi::lit("OS Configuration:") >> (token - '\n') >> qi::eol
+  ;
+  os_build_type  =
+    qi::lit("OS Build Type:") >> (token - '\n') >> qi::eol
+  ;
+  registered_owner  =
+    qi::lit("Registered Owner:") >> (token - '\n') >> qi::eol
+  ;
+  registered_organization  =
+    qi::lit("Registered Organization:") >> (token - '\n') >> qi::eol
+  ;
+  product_id  =
+    qi::lit("Product ID:") >> (token - '\n') >> qi::eol
+  ;
+  original_install_date  =
+    qi::lit("Original Install Date:") >> (token - '\n') >> qi::eol
+  ;
+  system_boot_time  =
+    qi::lit("System Boot Time:") >> (token - '\n') >> qi::eol
+  ;
+  system_manufacturer  =
+    qi::lit("System Manufacturer:") >> (token - '\n') >> qi::eol
+  ;
+  system_model  =
+    qi::lit("System Model:") >> (token - '\n') >> qi::eol
+  ;
+  system_type  =
+    qi::lit("System Type:") >> (token - '\n') >> qi::eol
+  ;
+  processors  =
+    qi::lit("Processor(s):") >> (token - '\n') >> qi::eol
+  ;
+  bios_version  =
+    qi::lit("BIOS Version:") >> (token - '\n') >> qi::eol
+  ;
+  windows_directory  =
+    qi::lit("Windows Directory:") >> (token - '\n') >> qi::eol
+  ;
+  system_directory  =
+    qi::lit("System Directory:") >> (token - '\n') >> qi::eol
+  ;
+  boot_device  =
+    qi::lit("Boot Device:") >> (token - '\n') >> qi::eol
+  ;
+  system_locale  =
+    qi::lit("System Locale:") >> (token - '\n') >> qi::eol
+  ;
+  input_locale  =
+    qi::lit("Input Locale:") >> (token - '\n') >> qi::eol
+  ;
+  time_zone  =
+    qi::lit("Time Zone:") >> (token - '\n') >> qi::eol
+  ;
+  total_physical_memory  =
+    qi::lit("Total Physical Memory:") >> (token - '\n') >> qi::eol
+  ;
+  available_physical_memory  =
+    qi::lit("Available Physical Memory:") >> (token - '\n') >> qi::eol
+  ;
+  virtual_memory_max  =
+    qi::lit("Virtual Memory: Max Size:") >> (token - '\n') >> qi::eol
+  ;
+  virtual_memery_available  =
+    qi::lit("Virtual Memory: Available:") >> (token - '\n') >> qi::eol
+  ;
+  virtual_memory_in_use  =
+    qi::lit("Virtual Memory: In Use:") >> (token - '\n') >> qi::eol
+  ;
+  page_file_locations  =
+    qi::lit("Page File Location(s):") >> (token - '\n') >> qi::eol
+  ;
+  domain  =
+    qi::lit("Domain:") >> (token - '\n') >> qi::eol
+  ;
+  logon_server  =
+    qi::lit("Logon Server:") >> (token - '\n') >> qi::eol
+  ;
+  hotfixs  =
+    qi::lit("Hotfix(s):") >> (token - '\n') >> qi::eol
+  ;
+  network_cards  =
+    qi::lit("Network Card(s):") >> (token - '\n') >> qi::eol
+  ;
+  hyper_v = 
+    qi::lit("Hyper-V Requirements:") >> (token - '\n') >> qi::eol
+  ;
+  systeminfo =
+      host_name >>
+      os_name >>
+      os_version >>
+      os_manufacturer >>
+      os_configuration >>
+      os_build_type >>
+      registered_owner >>
+      registered_organization >>
+      product_id >>
+      original_install_date >>
+      system_boot_time >>
+      system_manufacturer >>
+      system_model >>
+      system_type;
+      // processors >>
+      // bios_version >>
+      // windows_directory >>
+      // system_directory >>
+      // boot_device >>
+      // system_locale >>
+      // input_locale >>
+      // time_zone >>
+      // total_physical_memory >>
+      // available_physical_memory >>
+      // virtual_memory_max >>
+      // virtual_memery_available >>
+      // virtual_memory_in_use >>
+      // page_file_locations >>
+      // domain >>
+      // logon_server >>
+      // hotfixs >>
+      // network_cards >>
+      // hyper_v;
+  ;
+
+
 
   ignoredLine =
     (qi::ascii::print > -qi::eol) | +qi::eol
@@ -72,17 +183,52 @@ Parser::Parser() : Parser::base_type(start)
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
       (systeminfo)
+      (host_name)
+      (os_name)
+      (os_version)
+      (os_manufacturer)
+      (os_configuration)
+      (os_build_type)
+      (registered_owner)
+      (registered_organization)
+      (product_id)
+      (original_install_date)
+      (system_boot_time)
+      (system_manufacturer)
+      (system_model)
+      (system_type)
+      // (processors)
+      // (bios_version)
+      // (windows_directory)
+      // (system_directory)
+      // (boot_device)
+      // (system_locale)
+      // (input_locale)
+      // (time_zone)
+      // (total_physical_memory)
+      // (available_physical_memory)
+      // (virtual_memory_max)
+      // (virtual_memery_available)
+      // (virtual_memory_in_use)
+      // (page_file_locations)
+      // (domain)
+      // (logon_server)
+      // (hotfixs)
+      // (network_cards)
+      // (hyper_v)
+      (token)
+      // (systeminfo)
       );
 }
 
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-// void
-// Parser::addPackage(const nmdo::Package& packg)
-// {
-//   data.packages.push_back(packg);
-// }
+void
+Parser::setHostname(const std::string& _string)
+{
+  sysinfo_.host_name = _string;
+}
 
 Result
 Parser::getData()

@@ -74,7 +74,6 @@ struct Systeminfo
   std::string virtual_memory_in_use;
   std::string page_file_location;
 };
-typedef std::vector<std::string> Info;
 
 // =============================================================================
 // Parser definition
@@ -95,11 +94,46 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-     ignoredLine;
+     ignoredLine,
+     token;
 
-    qi::rule<nmdp::IstreamIter, Info(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       systeminfo;
 
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+      host_name,
+      os_name,
+      os_version,
+      os_manufacturer,
+      os_configuration,
+      os_build_type,
+      registered_owner,
+      registered_organization,
+      product_id,
+      original_install_date,
+      system_boot_time,
+      system_manufacturer,
+      system_model,
+      system_type,
+      processors,
+      bios_version,
+      windows_directory,
+      system_directory,
+      boot_device,
+      system_locale,
+      input_locale,
+      time_zone,
+      total_physical_memory,
+      available_physical_memory,
+      virtual_memory_max,
+      virtual_memery_available,
+      virtual_memory_in_use,
+      page_file_locations,
+      domain,
+      logon_server,
+      hotfixs,
+      network_cards,
+      hyper_v;
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -111,5 +145,7 @@ class Parser :
   // ===========================================================================
   private:
     Result getData();
+    void setHostname(const std::string&);
+    Systeminfo sysinfo_;
 };
 #endif // PARSER_HPP
