@@ -80,11 +80,11 @@ namespace netmeld::datastore::objects {
   TracerouteHop::toDebugString() const
   {
     std::ostringstream oss;
-    oss << "[";
-    oss << hopIpAddr << ", "
-        << dstIpAddr << ", "
-        << hopCount;
-    oss << "]";
+    oss << "["
+        << "hopIpAddr: " << hopIpAddr  << ", "
+        << "dstIpAddr: " << dstIpAddr  << ", "
+        << "hopCount: " << hopCount 
+        << "]";
 
     return oss.str();
   }

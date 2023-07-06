@@ -368,9 +368,9 @@ namespace netmeld::datastore::objects {
 
     oss << "[";
 
-    oss << toString() << ", "
-        << reason << ", "
-        << extraWeight
+    oss << "ipNetwork: " << toString() << ", "
+        << "reason: " << reason << ", "
+        << "extraWeight: " << extraWeight
         ;
 
     oss << "]";

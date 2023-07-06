@@ -67,7 +67,7 @@ namespace netmeld::core::objects {
     std::ostringstream oss;
 
     oss << "[";
-    oss << uuid;
+    oss << "uuid: " << uuid;
     oss << "]";
 
     return oss.str();

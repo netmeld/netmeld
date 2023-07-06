@@ -98,11 +98,11 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
     oss << "[" // opening bracket
-        << ifaceName << ", "
-        << scopeDomain << ", "
-        << srcIpAddr << ", "
-        << dstIpAddr << ", "
-        << dstPort
+        << "ifaceName: " << ifaceName  << ", "
+        << "scopeDomain: " << scopeDomain  << ", "
+        << "srcIpAddr: " << srcIpAddr  << ", "
+        << "dstIpAddr: " << dstIpAddr  << ", "
+        << "dstPort: " << dstPort 
         << "]"; // closing bracket
 
     return oss.str();

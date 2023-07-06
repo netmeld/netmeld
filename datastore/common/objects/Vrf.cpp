@@ -115,12 +115,12 @@ namespace netmeld::datastore::objects {
   Vrf::toDebugString() const
   {
     std::ostringstream oss;
-    oss << "["
-        << "vrfId: " << vrfId
-        << ", ifaces: " << ifaces
-        << ", routes: " << routes
-        << "]"
-        ;
+    
+    oss << "[" // opening bracket
+        << "vrfId: " << vrfId << ", "
+        << "ifaces: " << ifaces << ", "
+        << "routes: " << routes
+        << "]"; // closing bracket
 
     return oss.str();
   }

@@ -325,45 +325,34 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << name
-        << ", " << description
-        << ", " << mediaType
-        << ", " << mode
-        << ", State:" << std::boolalpha << isUp
-        << ", DiscProtoEnabled:" << isDiscoveryProtocolEnabled
-        << ", " << macAddr.toDebugString()
+    oss << "name: " << name << ", "
+        << "description: " << description << ", "
+        << "mediaType: " << mediaType << ", "
+        << "mode: " << mode << ", " 
+        << "State:" << std::boolalpha << isUp << ", " 
+        << "DiscProtoEnabled: " << isDiscoveryProtocolEnabled << ", "
+        << "macAddr: " << macAddr .toDebugString() << ", "
         ;
 
-    oss << ", Port-Security: ["
-        << " State:" << isPortSecurityEnabled
-        << ", " << portSecurityMaxMacAddrs
-        << ", " << portSecurityViolationAction
-        << ", Sticky:" << isPortSecurityStickyMac
-        ;
-    oss  << ", Macs: [";
-    for (const auto& mac : learnedMacAddrs) {
-      oss << mac.toDebugString() << ", ";
-    }
-    oss << "]]";
-
-    oss  << ", ReachableMacs: [";
-    for (const auto& mac : reachableMacAddrs) {
-      oss << mac.toDebugString() << ", ";
-    }
-    oss << "]";
-
-    oss << ", Spanning-Tree: ["
-        << " Portfast:" << isPortfastEnabled
-        << ", BPDU Guard:" << isBpduGuardEnabled
-        << ", BPDU Filter:" << isBpduFilterEnabled
-        << " ]"
+    oss << "Port-Security: ["
+        << "State: " << isPortSecurityEnabled << ", "
+        << "portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs  << ", "
+        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", " 
+        << "Sticky :" << isPortSecurityStickyMac << "], "
         ;
 
-    oss << ", VLANs: [";
-    for (const auto& vlan : vlans) {
-      oss << vlan.toDebugString() << ", ";
-    }
-    oss << "]";
+    oss << "Macs: "  << learnedMacAddrs << ", ";
+
+    oss << "ReachableMacs: " << reachableMacAddrs << ", ";
+
+    oss << "Spanning-Tree: ["
+        << "Portfast: " << isPortfastEnabled << ", "
+        << "BPDU Guard: " << isBpduGuardEnabled << ", "
+        << "BPDU Filter: " << isBpduFilterEnabled
+        << "], "
+        ;
+
+    oss << "VLANs: " << vlans;
 
     oss << "]"; // closing bracket
 

@@ -152,19 +152,16 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "[";
-
-    oss << "id: \"" << deviceId << "\", "
-        << "color: \"" << deviceColor << "\", "
-        << "type: \"" << deviceType << "\", "
-        << "vendor: \"" << vendor << "\", "
-        << "model: \"" << model << "\", "
-        << "rev: \"" << hardwareRevision << "\", "
-        << "sn: \"" << serialNumber << "\", "
-        << "desc: \"" << description << "\""
-        ;
-
-    oss << "]";
+    oss << "["
+        << "id: " << deviceId << ", "
+        << "color: " << deviceColor << ", "
+        << "type: " << deviceType << ", "
+        << "vendor: " << vendor << ", "
+        << "model: " << model << ", "
+        << "rev: " << hardwareRevision << ", "
+        << "sn: " << serialNumber << ", "
+        << "desc: " << description
+        << "]";
 
     return oss.str();
   }

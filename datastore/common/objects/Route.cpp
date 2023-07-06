@@ -240,22 +240,17 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "["
-        << "vrfId: " << vrfId
-        << ", tableId: " << tableId
-        << ", isActive: " << isActive
-        << ", dstIpNet: " << dstIpNet
-        << ", nextVrfId: " << nextVrfId
-        << ", nextTableId: " << nextTableId
-        << ", nextHopIpAddr: " << nextHopIpAddr
-        << ", ifaceName: " << ifaceName
-        << ", protocol: " << protocol
-        << ", adminDistance: " << adminDistance
-        << ", metric: " << metric
-        << ", isNullRoute: " << isNullRoute
-        << ", description: " << description
-        << "]"
-        ;
+    oss << "vrfId: " << vrfId << ", "
+    << "tableId: " << tableId << ", "
+    << "isActive: " << isActive << ", " 
+    << "dstIpNet: " << dstIpNet.toDebugString() << ", "
+    << "nextVrfId: " << nextVrfId << ", "
+    << "netxtTableId: " << nextTableId << ", " 
+    << "nextHopIpAddr: " << nextHopIpAddr.toDebugString() << ", "
+    << "ifaceName: " << ifaceName << ", " 
+    <<  "protocol: " << protocol << ", "
+    <<  "adminDistance: " << adminDistance << ", "
+    <<  "metric: " << metric;
 
     return oss.str();
   }

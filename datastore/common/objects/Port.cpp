@@ -123,11 +123,11 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << port
-        << ", " << protocol
-        << ", " << ipAddr.toDebugString()
-        << ", " << state
-        << ", " << reason
+        << "port: " << port << ", "
+        << "protocol: " << protocol << ", "
+        << "ipAddr: " << ipAddr.toDebugString() << ", "
+        << "state: " << state << ", "
+        << "reason: " << reason
         << "]"
         ;
 
