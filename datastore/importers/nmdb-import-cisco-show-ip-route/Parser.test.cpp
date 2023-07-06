@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(testRules)
                 , "Validity failure: " + test + "\n\tYielded: " + debugStr
                 );
       if (std::string::npos != debugStr.find("ifaceName: null0")) {
-        nmdp::testInString(debugStr, "isNullRoute: 1");
+        nmdp::testInString(debugStr, "isNullRoute: true");
       }
       //nmdp::testInString(debugStr, "adminDistance: 1");
       //nmdp::testInString(debugStr, "metric: 2");
@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE(testRules)
                 , "Validity failure: " + test + "\n\tYielded: " + debugStr
                 );
       if (std::string::npos != debugStr.find("ifaceName: null0")) {
-        nmdp::testInString(debugStr, "isNullRoute: 1");
+        nmdp::testInString(debugStr, "isNullRoute: true");
       }
       //nmdp::testInString(debugStr, "adminDistance: 1");
       //nmdp::testInString(debugStr, "metric: 2");

@@ -242,15 +242,18 @@ namespace netmeld::datastore::objects {
 
     oss << "vrfId: " << vrfId << ", "
     << "tableId: " << tableId << ", "
-    << "isActive: " << isActive << ", " 
+    << "isActive: " << std::boolalpha << isActive << ", " 
     << "dstIpNet: " << dstIpNet.toDebugString() << ", "
     << "nextVrfId: " << nextVrfId << ", "
     << "netxtTableId: " << nextTableId << ", " 
     << "nextHopIpAddr: " << nextHopIpAddr.toDebugString() << ", "
     << "ifaceName: " << ifaceName << ", " 
-    <<  "protocol: " << protocol << ", "
-    <<  "adminDistance: " << adminDistance << ", "
-    <<  "metric: " << metric;
+    << "protocol: " << protocol << ", "
+    << "adminDistance: " << adminDistance << ", "
+    << "metric: " << metric << ", "
+    << "isNullRoute: " << isNullRoute << ", "
+    << "description: " << description
+    ;
 
     return oss.str();
   }
