@@ -214,19 +214,17 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << boost::format("[%1%,%2%,%3%,%4%,%5%,%6%,%7%,%8%,%9%,%10%,%11%]")
-        % vrfId
-        % tableId
-        % isActive
-        % dstIpNet.toDebugString()
-        % nextVrfId
-        % nextTableId
-        % nextHopIpAddr.toDebugString()
-        % ifaceName
-        % protocol
-        % adminDistance
-        % metric
-        ;
+    oss << "vrfId: " << vrfId << ", "
+    << "tableId: " << tableId << ", "
+    << "isActive: " << isActive << ", " 
+    << "dstIpNet: " << dstIpNet.toDebugString() << ", "
+    << "nextVrfId: " << nextVrfId << ", "
+    << "netxtTableId: " << nextTableId << ", " 
+    << "nextHopIpAddr: " << nextHopIpAddr.toDebugString() << ", "
+    << "ifaceName: " << ifaceName << ", " 
+    <<  "protocol: " << protocol << ", "
+    <<  "adminDistance: " << adminDistance << ", "
+    <<  "metric: " << metric;
 
     return oss.str();
   }

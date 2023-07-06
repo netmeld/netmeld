@@ -116,9 +116,9 @@ namespace netmeld::core::objects {
   {
     std::ostringstream oss;
 
-    oss << "[";
-    oss << time;
-    oss << "]";
+    oss << "["
+        << "time: " << time
+        << "]";
 
     return oss.str();
   }

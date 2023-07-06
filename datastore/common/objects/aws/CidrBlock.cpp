@@ -128,10 +128,10 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "cidrBlock: " << cidrBlock
-        << ", state: " << state
-        << ", description: " << description
-        << ", aliases: " << aliases
+        << "cidrBlock: " << cidrBlock << ", "
+        << "state: " << state << ", "
+        << "description: " << description << ", "
+        << "aliases: " << aliases
         << ']'
         ;
 

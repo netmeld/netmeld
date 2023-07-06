@@ -95,14 +95,11 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << resolver
-        << ", "
-        << question
-        << ", "
-        << status
-        << ", "
-        << responseSections
-        << "]";
+        << "resolver: " << resolver << ", "
+        << "question: " << question << ", "
+        << "status: " << status << ", "
+        << "responseSections: " << responseSections <<
+        "]";
 
     return oss.str();
   }

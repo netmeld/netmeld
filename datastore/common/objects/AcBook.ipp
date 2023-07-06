@@ -115,11 +115,11 @@ AcBook<TData>::toDebugString() const
   std::ostringstream oss;
 
   oss << "[ " // opening bracket
-      << id << ", "
-      << name << ", "
+      << "id: " << id << ", "
+      << "name: " << name << ", "
       ;
 
-  oss << data
+  oss << "data: " << data
       ;
 
   oss << " ]"; // closing bracket

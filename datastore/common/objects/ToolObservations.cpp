@@ -107,8 +107,8 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << "[ NOTABLES: " << notables << "]";
-    oss << "[ UNSUPPORTED FEATURES: " << unsupportedFeatures << "]";
+    oss << "notables: " << notables  << ", ";
+    oss << "unsupportedFeatures: " << unsupportedFeatures ;
 
     oss << "]"; // closing bracket
 

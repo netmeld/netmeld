@@ -109,11 +109,11 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "pcxId: " << pcxId
-        << ", statusCode: " << statusCode
-        << ", statusMessage: " << statusMessage
-        << ", accepter: " << accepter
-        << ", requester: " << requester
+        << "pcxId: " << pcxId << ", "
+        << "statusCode: " << statusCode << ", "
+        << "statusMessage: " << statusMessage << ", "
+        << "accepter: " << accepter << ", "
+        << "requester: " << requester
         << ']'
         ;
 
