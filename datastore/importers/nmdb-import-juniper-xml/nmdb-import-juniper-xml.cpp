@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportXMLTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportXmlTool.hpp>
 
 #include "Parser.hpp"
 
@@ -37,10 +37,10 @@ typedef std::vector<Data> Results;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportXMLTool<P,R>
+class Tool : public nmdt::AbstractImportXmlTool<P,R>
 {
   public:
-    Tool() : nmdt::AbstractImportXMLTool<P,R>
+    Tool() : nmdt::AbstractImportXmlTool<P,R>
       ("Juniper XML output (.xml files)", PROGRAM_NAME, PROGRAM_VERSION)
     {
       this->devInfo.setVendor("Juniper");
