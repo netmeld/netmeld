@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
 #include "Parser.hpp"
@@ -37,7 +37,7 @@ namespace nmdt = netmeld::datastore::tools;
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportSpiritTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -53,7 +53,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportSpiritTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       (
        "prowler -M json",  // command line tool imports data from
        PROGRAM_NAME,       // program name (set in CMakeLists.txt)
@@ -66,7 +66,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractImportSpiritTool
+    // Overriden from AbstractImportTool
     void
     addToolOptions() override
     {
@@ -97,7 +97,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       this->executionStop = nmco::Time();
     }
 
-    // Overriden from AbstractImportSpiritTool
+    // Overriden from AbstractImportTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {

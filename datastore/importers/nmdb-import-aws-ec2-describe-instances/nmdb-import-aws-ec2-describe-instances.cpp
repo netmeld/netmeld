@@ -27,7 +27,6 @@
 #include <nlohmann/json.hpp>
 
 #include <netmeld/datastore/tools/AbstractImportJsonTool.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
 #include "Parser.hpp"
 
@@ -113,6 +112,6 @@ class Tool : public nmdt::AbstractImportJsonTool<P,R>
 // Program entry point
 // =============================================================================
 int main(int argc, char** argv) {
-  Tool<Parser, Result> tool; // if parser not needed
+  Tool<Parser, Result> tool;
   return tool.start(argc, argv);
 }

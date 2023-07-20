@@ -25,7 +25,6 @@
 // =============================================================================
 
 #include <netmeld/datastore/tools/AbstractImportXMLTool.hpp>
-#include <pugixml.hpp>
 
 #include "Parser.hpp"
 

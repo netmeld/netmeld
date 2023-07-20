@@ -24,9 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
-#include <nlohmann/json.hpp>
-#include <fstream>
+#include <netmeld/datastore/tools/AbstractImportJsonTool.hpp>
 
 #include "Parser.hpp"
 
@@ -39,43 +37,13 @@ typedef std::vector<Data> Results;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportSpiritTool<P,R>
+class Tool : public nmdt::AbstractImportJsonTool<P,R>
 {
   public:
-    Tool() : nmdt::AbstractImportSpiritTool<P,R>
+    Tool() : nmdt::AbstractImportJsonTool<P,R>
       ("F5 REST API JSON output (.json files)", PROGRAM_NAME, PROGRAM_VERSION)
     {
       this->devInfo.setVendor("F5");
-    }
-
-    void
-    parseData() override
-    {
-      std::ifstream f(this->getDataPath().string());
-      nlohmann::ordered_json doc = nlohmann::ordered_json::parse(f);
-
-      Parser parser;
-
-      const std::string docKind{doc.at("kind").get<std::string>()};
-
-      if ("tm:ltm:virtual-address:virtual-addresscollectionstate" == docKind) {
-        parser.parseLtmVirtualAddress(doc);
-      }
-      else if (("tm:net:arp:arpcollectionstate" == docKind) ||
-               ("tm:net:ndp:ndpcollectionstate" == docKind)) {
-        parser.parseNetArpNdp(doc);
-      }
-      else if ("tm:net:self:selfcollectionstate" == docKind) {
-        parser.parseNetSelf(doc);
-      }
-      else if ("tm:net:route:routecollectionstate" == docKind) {
-        parser.parseNetRoute(doc);
-      }
-      else {
-        parser.parseUnsupported(doc);
-      }
-
-      this->tResults.emplace_back(parser.getData());
     }
 
     void
@@ -167,7 +135,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<nmdp::DummyParser, Results> tool;
+  Tool<Parser, Results> tool;
   return tool.start(argc, argv);
 }
 

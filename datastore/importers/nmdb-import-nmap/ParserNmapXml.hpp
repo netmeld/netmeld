@@ -37,7 +37,6 @@
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/objects/TracerouteHop.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 
 #include "NseResult.hpp"
 #include "SshAlgorithm.hpp"
@@ -45,7 +44,6 @@
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
-namespace nmdt = netmeld::datastore::tools;
 namespace nmdu = netmeld::datastore::utils;
 
 // =============================================================================
