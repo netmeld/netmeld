@@ -28,7 +28,6 @@
 #define ABSTRACT_IMPORT_XML_TOOL_HPP
 
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
-#include <pugixml.hpp>
 
 namespace nmco = netmeld::core::objects;
 namespace nmdo = netmeld::datastore::objects;
@@ -37,7 +36,7 @@ namespace nmdo = netmeld::datastore::objects;
 namespace netmeld::datastore::tools {
 
   template<typename TParser, typename TResults>
-  class AbstractImportXMLTool : public AbstractImportTool<TParser,TResults>
+  class AbstractImportXmlTool : public AbstractImportTool<TParser,TResults>
   {
     // =========================================================================
     // Variables
@@ -49,12 +48,12 @@ namespace netmeld::datastore::tools {
     // =========================================================================
     protected:
       // Default constructor, provided only for convienence
-      AbstractImportXMLTool();
+      AbstractImportXmlTool();
       // Standard constructor, should be primary
-      AbstractImportXMLTool(const char*, const char*, const char*);
+      AbstractImportXmlTool(const char*, const char*, const char*);
 
     public:
-      virtual ~AbstractImportXMLTool() = default;
+      virtual ~AbstractImportXmlTool() = default;
 
     // =========================================================================
     // Methods
@@ -63,5 +62,5 @@ namespace netmeld::datastore::tools {
       virtual void parseData();
   };
 }
-#include "AbstractImportXMLTool.ipp"
+#include "AbstractImportXmlTool.ipp"
 #endif // ABSTRACT_IMPORT_XML_TOOL_HPP

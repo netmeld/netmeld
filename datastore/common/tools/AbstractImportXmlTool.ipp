@@ -42,11 +42,11 @@ namespace netmeld::datastore::tools {
   // Constructors
   // ===========================================================================
   template<typename P, typename R>
-  AbstractImportXMLTool<P,R>::AbstractImportXMLTool()
+  AbstractImportXmlTool<P,R>::AbstractImportXmlTool()
   {}
 
   template<typename P, typename R>
-  AbstractImportXMLTool<P,R>::AbstractImportXMLTool(
+  AbstractImportXmlTool<P,R>::AbstractImportXmlTool(
       const char* _helpBlurb,
       const char* _programName,
       const char* _version) :
@@ -60,7 +60,7 @@ namespace netmeld::datastore::tools {
 
   template<typename P,typename R>
   void
-  AbstractImportXMLTool<P,R>::parseData()
+  AbstractImportXmlTool<P,R>::parseData()
   {
       this->executionStart = nmco::Time();
       pugi::xml_document doc;

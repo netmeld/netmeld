@@ -28,12 +28,9 @@
 #define ABSTRACT_IMPORT_JSON_TOOL_HPP
 
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
-#include <nlohmann/json.hpp>
 
 namespace nmco = netmeld::core::objects;
 namespace nmdo = netmeld::datastore::objects;
-
-using json = nlohmann::json;
 
 
 namespace netmeld::datastore::tools {

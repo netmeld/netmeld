@@ -24,8 +24,6 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <nlohmann/json.hpp>
-
 #include <netmeld/datastore/tools/AbstractImportJsonTool.hpp>
 
 #include "Parser.hpp"
