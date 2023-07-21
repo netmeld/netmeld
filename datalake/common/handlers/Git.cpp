@@ -66,9 +66,18 @@ namespace netmeld::datalake::handlers {
     LOG_DEBUG << "Target time: " << _dts << '\n';
 
     std::ostringstream oss;
-    oss << "git branch --show-current";
-    auto branch {nmcu::trim(nmcu::cmdExecOut(oss.str()))};
-    oss.str("");
+    std::string branch{this->branchName};
+    if (this->branchName.empty()) {
+    
+      oss << "git branch --show-current";
+      branch = {nmcu::trim(nmcu::cmdExecOut(oss.str()))};
+      oss.str("");
+      if (branch.empty()) {
+        LOG_ERROR << "Invalid repo state: detached HEAD" << '\n';
+        return false;
+      }
+      this->branchName = branch;
+    }
     oss << "echo -n `git rev-list -n 1 --first-parent"
         << " --before=\"" << _dts << "\" " << branch << "`";
     auto result {nmcu::trim(nmcu::cmdExecOut(oss.str()))};
