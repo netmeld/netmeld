@@ -28,6 +28,7 @@ set(MODULE_VERSION "2.0")
 
 foreach(ITEM
     #import-tool-template
+    nmdb-import-apk
     nmdb-import-aws-ec2-describe-instances
     nmdb-import-aws-ec2-describe-network-acls
     nmdb-import-aws-ec2-describe-network-interfaces

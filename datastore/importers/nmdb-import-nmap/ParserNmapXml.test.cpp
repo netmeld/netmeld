@@ -246,10 +246,10 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       BOOST_TEST(1 == aliases.count("some_host"));
     }
     BOOST_TEST(d.ipAddrs.at(0).toDebugString() ==
-        "[1.2.3.4/32, 0, nmap user, 0, [some_host]]"
+        "[ipAddress: 1.2.3.4/32, isResponding: 0, reason: nmap user, extraWeight: 0, aliases: [some_host]]"
         );
     BOOST_TEST(d.ipAddrs.at(1).toDebugString() ==
-        "[1.2.3.4/32, 0, nmap ptr, 0, [some_host]]"
+        "[ipAddress: 1.2.3.4/32, isResponding: 0, reason: nmap ptr, extraWeight: 0, aliases: [some_host]]"
         );
   }
 
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     BOOST_TEST(1 == aliases.size());
     BOOST_TEST(1 == aliases.count("some_host"));
     BOOST_TEST(ipa.toDebugString() ==
-        "[1.2.3.4/32, 0, nmap nbstat, 0, [some_host]]"
+        "[ipAddress: 1.2.3.4/32, isResponding: 0, reason: nmap nbstat, extraWeight: 0, aliases: [some_host]]"
         );
   }
 
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     const auto ipa {d.ipAddrs.at(0)};
     BOOST_TEST("1.2.3.4/32" == ipa.toString());
     BOOST_TEST(ipa.toDebugString() ==
-        "[1.2.3.4/32, 0, nmap smb-os-discovery, 0, [some_fqdn, some_host]]"
+        "[ipAddress: 1.2.3.4/32, isResponding: 0, reason: nmap smb-os-discovery, extraWeight: 0, aliases: [some_fqdn, some_host]]"
         );
   }
 
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
         BOOST_TEST(1 == aliases.count("some_host"));
       }
       BOOST_TEST(d.ipAddrs[0].toDebugString() ==
-          "[1.2.3.4/32, 0, nmap microsoft-ds, 0, [some_host]]"
+          "[ipAddress: 1.2.3.4/32, isResponding: 0, reason: nmap microsoft-ds, extraWeight: 0, aliases: [some_host]]"
           );
     }
     {
@@ -352,11 +352,11 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
       BOOST_TEST(0 == d.ipAddrs.size());
       //BOOST_TEST(1 == d.observations.size());
       BOOST_TEST(d.observations.toDebugString() ==
-          "[[ NOTABLES: ["
-          "Nmap service scan: other"
+          "[notables: "
+          "[Nmap service scan: other"
           "\n  From IP: 1.2.3.4/32"
-          "\n  Potential alias: 1.2.3.4]"
-          "][ UNSUPPORTED FEATURES: []]]"
+          "\n  Potential alias: 1.2.3.4], "
+          "unsupportedFeatures: []]"
           );
     }
   }
@@ -397,12 +397,12 @@ BOOST_AUTO_TEST_CASE(testExtractHostnames)
     }
     // NOTE: not the best way...but no "easy" solution
     BOOST_TEST(d.ipAddrs.at(0).toDebugString() ==
-        "[1.2.3.4/32, 0, nmap rdp-ntlm-info, 0,"
-        " [some_dns_computer_name, some_netbios_computer_name]]"
+        "[ipAddress: 1.2.3.4/32, isResponding: 0, reason: nmap rdp-ntlm-info, extraWeight: 0, "
+        "aliases: [some_dns_computer_name, some_netbios_computer_name]]"
         );
     BOOST_TEST(d.ipAddrs.at(1).toDebugString() ==
-        "[1.2.3.4/32, 0, nmap ms-sql-ntlm-info, 0,"
-        " [some_dns_computer_name, some_netbios_computer_name, some_target]]"
+        "[ipAddress: 1.2.3.4/32, isResponding: 0, reason: nmap ms-sql-ntlm-info, extraWeight: 0, "
+        "aliases: [some_dns_computer_name, some_netbios_computer_name, some_target]]"
         );
   }
 }
@@ -430,8 +430,8 @@ BOOST_AUTO_TEST_CASE(testExtractOperatingSystems)
 
     const auto os {d.oses.at(0)};
     BOOST_TEST(os.toDebugString() ==
-        "[[1.2.3.4/32, 0, , 0, []],"
-        " some_vendor, some_osfamily, some_osgen, some_cpe, 1.23]"
+        "[ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], "
+        "vendorName: some_vendor, productName: some_osfamily, productVersion: some_osgen, cpe: some_cpe, accuracy: 1.23]"
         );
   }
 }
@@ -458,11 +458,12 @@ BOOST_AUTO_TEST_CASE(testExtractTraceRoutes)
 
     BOOST_TEST(2 == d.tracerouteHops.size());
     BOOST_TEST(d.tracerouteHops[0].toDebugString() ==
-        "[[4.3.2.1/32, 1, , 0, []], [1.2.3.4/32, 0, , 0, []], 1]"
+        "[hopIpAddr: [ipAddress: 4.3.2.1/32, isResponding: 1, reason: , extraWeight: 0, aliases: []], "
+        "dstIpAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], hopCount: 1]"
       );
     BOOST_TEST(d.tracerouteHops[1].toDebugString() ==
-        "[[4.3.2.2/32, 1, nmap trace, 0, [rtr1.tld]],"
-        " [1.2.3.4/32, 0, , 0, []], 2]"
+        "[hopIpAddr: [ipAddress: 4.3.2.2/32, isResponding: 1, reason: nmap trace, extraWeight: 0, aliases: [rtr1.tld]], "
+        "dstIpAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], hopCount: 2]"
       );
   }
 }
@@ -491,7 +492,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[-1, tcp, [1.2.3.4/32, 0, , 0, []], filtered, no-responses]"
+        "[port: -1, protocol: tcp, ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], state: filtered, reason: no-responses]"
         );
   }
 
@@ -514,7 +515,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[-1, udp, [1.2.3.4/32, 0, , 0, []], filtered, udp-responses]"
+        "[port: -1, protocol: udp, ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], state: filtered, reason: udp-responses]"
         );
   }
 
@@ -537,7 +538,7 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, []], open, syn-ack]"
+        "[port: 22, protocol: tcp, ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], state: open, reason: syn-ack]"
         );
   }
 
@@ -562,13 +563,14 @@ BOOST_AUTO_TEST_CASE(testExtractPortsAndServices)
 
     const auto port = d.ports.at(0);
     BOOST_TEST(port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, []], open, syn-ack]"
+        "[port: 22, protocol: tcp, ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], state: open, reason: syn-ack]"
         );
 
     const auto service = d.services.at(0);
     BOOST_TEST(service.toDebugString() ==
-        "[[1.2.3.4/32, 0, , 0, []], [0.0.0.0/255, 0, , 0, []]"
-        ", 0, -, , ssh, OpenSSH, probed, tcp, [22], []]"
+        "[dstAddress: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], "
+        "srcAddress: [ipAddress: 0.0.0.0/255, isResponding: 0, reason: , extraWeight: 0, aliases: []], "
+        "isLocal: 0, interfaceName: -, zone: , serviceName: ssh, serviceDescription: OpenSSH, serviceReason: probed, protocol: tcp, dstPorts: [22], srcPorts: []]"
         );
   }
 }
@@ -597,7 +599,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 
     const auto nseResult = d.nseResults.at(0);
     BOOST_TEST(nseResult.port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, []], , ]"
+        "[port: 22, protocol: tcp, ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], state: , reason: ]"
         );
     BOOST_TEST("ssh-hostkey" == nseResult.scriptId);
     BOOST_TEST("2048 aa:bb::cc::dd (RSA)" == nseResult.scriptOutput);
@@ -629,7 +631,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 
     const auto sshKey = d.sshKeys.at(0);
     BOOST_TEST(sshKey.port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, []], , ]"
+        "[port: 22, protocol: tcp, ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], state: , reason: ]"
         );
     BOOST_TEST("ssh-rsa" == sshKey.type);
     BOOST_TEST(2048 == sshKey.bits);
@@ -660,7 +662,7 @@ BOOST_AUTO_TEST_CASE(testExtractNseAndSsh)
 
     const auto sshAlgo = d.sshAlgorithms.at(0);
     BOOST_TEST(sshAlgo.port.toDebugString() ==
-        "[22, tcp, [1.2.3.4/32, 0, , 0, []], , ]"
+        "[port: 22, protocol: tcp, ipAddr: [ipAddress: 1.2.3.4/32, isResponding: 0, reason: , extraWeight: 0, aliases: []], state: , reason: ]"
         );
     BOOST_TEST("ssh-rsa" == sshAlgo.type);
     BOOST_TEST("AAABBBCCC" == sshAlgo.name);

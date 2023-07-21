@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -43,14 +43,16 @@ Parser::Parser() : Parser::base_type(start)
 
   packageLine =
     packageName [(pnx::bind(&nmdo::Package::setName, &qi::_val, qi::_1))]
+    >> qi::char_("-")
     > version [(pnx::bind(&nmdo::Package::setVersion, &qi::_val, qi::_1))]
     > architecture [(pnx::bind(&nmdo::Package::setArchitecture, &qi::_val, qi::_1))]
+    > (+token > -qi::eol)
     > description [(pnx::bind(&nmdo::Package::setDescription, &qi::_val, qi::_1))]
     > qi::eol
   ;
 
   packageName =
-    token
+    +(qi::print - qi::omit[qi::char_("-") >> qi::digit])
   ;
 
   version =
@@ -62,19 +64,19 @@ Parser::Parser() : Parser::base_type(start)
   ;
 
   description =
-    +qi::ascii::print
+   +qi::ascii::print
   ;
 
   ignoredLine =
-    (token > -qi::eol) | +qi::eol
+    (+token > -qi::eol) | +qi::eol
   ;
 
   // Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      (headers)
-      (packageName)
       (packageLine)
+      (ignoredLine)
+      (packageName)
       (version)
       (architecture)
       (description)

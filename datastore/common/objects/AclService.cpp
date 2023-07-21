@@ -131,7 +131,11 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << id
+        << "id: " << id << ", "
+        << "protocol: " << protocol << ", "
+        << "srcPortRanges: " << srcPortRanges << ", "
+        << "dstPortRanges: " << dstPortRanges << ", "
+        << "includedIds: " << includedIds
         << "]";
 
     return oss.str();

@@ -115,10 +115,10 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "[";
-    oss << year << ", "
-        << number << ", "
-        << port.toDebugString() << ", "
-        << pluginId;
+    oss << "year: " << year << ", "
+        << "number: " << number << ", "
+        << "port: " << port.toDebugString() << ", "
+        << "pluginId: " << pluginId;
     oss << "]";
 
     return oss.str();

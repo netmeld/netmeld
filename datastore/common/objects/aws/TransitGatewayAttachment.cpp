@@ -139,14 +139,14 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "tgwAttachmentId: " << tgwAttachmentId
-        << ", tgwId: " << tgwId
-        << ", tgwOwnerId: " << tgwOwnerId
-        << ", resourceId: " << resourceId
-        << ", resourceOwnerId: " << resourceOwnerId
-        << ", resourceType: " << resourceType
-        << ", state: " << state
-        << ", associationState: " << associationState
+        << "tgwAttachmentId: " << tgwAttachmentId << ", "
+        << "tgwId: " << tgwId << ", "
+        << "tgwOwnerId: " << tgwOwnerId << ", "
+        << "resourceId: " << resourceId << ", "
+        << "resourceOwnerId: " << resourceOwnerId << ", "
+        << "resourceType: " << resourceType << ", "
+        << "state: " << state << ", "
+        << "associationState: " << associationState
         << ']'
         ;
 

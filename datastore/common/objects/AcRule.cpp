@@ -247,27 +247,18 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "[ " // opening bracket
-        << enabled << ", "
-        << id << ", ";
-
-    oss << srcId << ", "
-        << srcs
-        << srcIfaces
-        ;
-
-    oss << dstId << ", "
-        << dsts
-        << dstIfaces
-        ;
-
-    oss << services
-        << actions
-        ;
-
-    oss << description
-        ;
-
-    oss << "]"; // closing bracket
+        << "enabled:" << enabled << ", "
+        << "id: " << id << ", "
+        << "srcId: " << srcId << ", "
+        << "srcs: " << srcs << ", "
+        << "srcIfaces: " << srcIfaces << ", "
+        << "dstId: " << dstId << ", "
+        << "dsts: " << dsts << ", "
+        << "dstIfaces: " << dstIfaces << ", "
+        << "services: " << services << ", "
+        << "actions: " << actions << ", "
+        << "description: " << description
+        << "]"; // closing bracket
 
     return oss.str();
   }

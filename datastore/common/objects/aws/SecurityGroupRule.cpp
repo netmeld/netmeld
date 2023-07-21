@@ -173,13 +173,13 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "protocol: " << protocol
-        << ", fromOrType: " << fromOrType
-        << ", toOrCode: " << toOrCode
-        << ", egress: " << egress
-        << ", cidrBlocks: " << cidrBlocks
-        << ", nonCidrs: " << nonCidrs
-        << ", details: " << details
+        << "protocol: " << protocol << ", "
+        << "fromOrType: " << fromOrType << ", "
+        << "toOrCode: " << toOrCode << ", "
+        << "egress: " << egress << ", "
+        << "cidrBlocks: " << cidrBlocks << ", "
+        << "nonCidrs: " << nonCidrs << ", "
+        << "details: " << details
         << ']'
         ;
 

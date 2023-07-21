@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,104 +24,71 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/Vrf.hpp>
-#include <netmeld/core/utils/StringUtilities.hpp>
-#include <algorithm>
-#include <iterator>
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-namespace nmcu = netmeld::core::utils;
+#include <netmeld/datastore/objects/Package.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdo = netmeld::datastore::objects;
 
-namespace netmeld::datastore::objects {
+// =============================================================================
+// Data containers
+// =============================================================================
+struct Data
+{
+  std::vector<nmdo::Package>    packages;
+  nmdo::ToolObservations        observations;
+};
+typedef std::vector<Data> Result;
+
+// =============================================================================
+// Parser definition
+// =============================================================================
+class Parser :
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+{
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private:
+    // Supporting data structures
+    Data data;
+
+  protected:
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      start;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      headers, ignoredLine;
+
+    qi::rule<nmdp::IstreamIter, nmdo::Package(), qi::ascii::blank_type>
+      packageLine;
+
+    qi::rule<nmdp::IstreamIter, std::string()>
+      packageName,
+      version,
+      architecture,
+      description,
+      token
+    ;
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  Vrf::Vrf()
-  {}
-
-  Vrf::Vrf(const std::string& _vrfId) :
-    vrfId(_vrfId)
-  {}
+  public:
+    Parser();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
-  void
-  Vrf::setId(const std::string& _vrfId)
-  {
-    vrfId = _vrfId;
-  }
+  private:
+    void addStateNote(const std::string&);
+    void addPackage(const nmdo::Package&);
 
-  std::string
-  Vrf::getId() const
-  {
-    return vrfId;
-  }
-
-  void
-  Vrf::addIface(const std::string& iface)
-  {
-    ifaces.emplace_back(nmcu::toLower(iface));
-  }
-
-  void
-  Vrf::addRoute(const Route& route)
-  {
-    routes.emplace_back(route);
-  }
-
-  void
-  Vrf::merge(const Vrf& other)
-  {
-    std::copy(
-        other.ifaces.begin(),
-        other.ifaces.end(),
-        std::back_inserter(ifaces)
-        );
-
-    std::copy(
-        other.routes.begin(),
-        other.routes.end(),
-        std::back_inserter(routes)
-        );
-  }
-
-  void
-  Vrf::save(pqxx::transaction_base& t,
-            const nmco::Uuid& toolRunId, const std::string& deviceId)
-  {
-    t.exec_prepared("insert_raw_device_vrf",
-        toolRunId,
-        deviceId,
-        vrfId
-        );
-
-    for (const auto& iface : ifaces) {
-      t.exec_prepared("insert_raw_device_vrf_interface",
-          toolRunId,
-          deviceId,
-          vrfId,
-          iface
-          );
-    }
-
-    for (auto& route : routes) {
-      route.save(t, toolRunId, deviceId);
-    }
-  }
-
-  std::string
-  Vrf::toDebugString() const
-  {
-    std::ostringstream oss;
-    
-    oss << "[" // opening bracket
-        << "vrfId: " << vrfId << ", "
-        << "ifaces: " << ifaces << ", "
-        << "routes: " << routes
-        << "]"; // closing bracket
-
-    return oss.str();
-  }
-}
+    Result getData();
+};
+#endif // PARSER_HPP

@@ -111,12 +111,12 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["; // opening bracket
-    oss << ipAddr.toDebugString() << ", "
-        << vendorName << ", "
-        << productName << ", "
-        << productVersion << ", "
-        << cpe << ", "
-        << accuracy;
+    oss << "ipAddr: " << ipAddr .toDebugString() << ", "
+        << "vendorName: " << vendorName  << ", "
+        << "productName: " << productName  << ", "
+        << "productVersion: " << productVersion  << ", "
+        << "cpe: " << cpe  << ", "
+        << "accuracy: " << accuracy ;
     oss << "]"; // closing bracket
 
     return oss.str();

@@ -109,14 +109,14 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << action << ", "
-        << incomingZoneId << ", "
-        << outgoingZoneId << ", "
-        << srcIpNetSetNamespace << ", "
-        << srcIpNetSetId << ", "
-        << dstIpNetSetNamespace << ", "
-        << dstIpNetSetId << ", "
-        << description
+        << "action: " << action << ", "
+        << "incomingZoneId: " << incomingZoneId << ", "
+        << "outgoingZoneId: " << outgoingZoneId << ", "
+        << "srcIpNetSetNamespace: " << srcIpNetSetNamespace << ", "
+        << "srcIpNetSetId: " << srcIpNetSetId << ", "
+        << "dstIpNetSetNamespace: " << dstIpNetSetNamespace << ", "
+        << "dstIpNetSetId: " << dstIpNetSetId << ", "
+        << "description: " << description
         << "]";
 
     return oss.str();
