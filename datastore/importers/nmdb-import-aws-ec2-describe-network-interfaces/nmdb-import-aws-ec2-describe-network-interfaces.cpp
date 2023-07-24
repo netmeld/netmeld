@@ -24,10 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <nlohmann/json.hpp>
-
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
+#include <netmeld/datastore/tools/AbstractImportJsonTool.hpp>
 
 #include "Parser.hpp"
 
@@ -40,7 +37,7 @@ using json = nlohmann::json;
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportJsonTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -56,7 +53,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportJsonTool<P,R>
       (
                               // command line tool imports data from
        "aws ec2 describe-network-interfaces",
@@ -70,7 +67,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportJsonTool
     void
     addToolOptions() override
     {
@@ -85,22 +82,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       this->opts.removeOptionalOption("device-color");
     }
 
-    // Overriden from AbstractImportTool
-    void
-    parseData() override
-    {
-      std::ifstream f {this->getDataPath().string()};
-
-      this->executionStart = nmco::Time();
-
-      Parser parser;
-      parser.fromJson(json::parse(f));
-      this->tResults = parser.getData();
-
-      this->executionStop = nmco::Time();
-    }
-
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportJsonTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -129,6 +111,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 // Program entry point
 // =============================================================================
 int main(int argc, char** argv) {
-  Tool<nmdp::DummyParser, Result> tool; // if parser not needed
+  Tool<Parser, Result> tool;
   return tool.start(argc, argv);
 }

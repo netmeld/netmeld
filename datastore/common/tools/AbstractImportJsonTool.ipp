@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,62 +24,58 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
+// NOTE This implementation is included in the header (at the end) since it
+//      leverages templating.
 
-#include "Parser.hpp"
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/utils/QueriesCommon.hpp>
+#include <nlohmann/json.hpp>
 
-namespace nmdt = netmeld::datastore::tools;
+namespace nmcu = netmeld::core::utils;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdu = netmeld::datastore::utils;
 
-
-template<typename P, typename R>
-class Tool : public nmdt::AbstractImportSpiritTool<P,R>
-{
-  // ===========================================================================
-  // Variables
-  // ===========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+using json = nlohmann::json;
 
 
+namespace netmeld::datastore::tools {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  private: // Constructors should rarely appear at this scope
-  protected: // Constructors intended for internal/subclass API
-  public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      ("show ip route", PROGRAM_NAME, PROGRAM_VERSION)
-    {}
+  template<typename P, typename R>
+  AbstractImportJsonTool<P,R>::AbstractImportJsonTool()
+  {}
+
+  template<typename P, typename R>
+  AbstractImportJsonTool<P,R>::AbstractImportJsonTool(
+      const char* _helpBlurb,
+      const char* _programName,
+      const char* _version) :
+    AbstractImportTool<P,R>(_helpBlurb, _programName, _version)
+  {}
 
 
   // ===========================================================================
-  // Methods
+  // Tool Entry Points (execution order)
   // ===========================================================================
-  private: // Methods part of internal API
-    // Overriden from AbstractImportSpiritTool
-    void
-    specificInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
-      const auto& deviceId  {this->getDeviceId()};
 
-      LOG_DEBUG << "Iterating over results\n";
-      for (auto& result : this->tResults) {
-        result.save(t, toolRunId, deviceId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
+  template<typename P,typename R>
+  void
+  AbstractImportJsonTool<P,R>::parseData()
+  {
+      this->executionStart = nmco::Time();
+      try {
+          P parser;
+          std::ifstream f {this->getDataPath().string()};
+          parser.fromJson(json::parse(f));
+          this->tResults = parser.getData();
+      } catch (json::out_of_range& ex) {
+          LOG_ERROR << "Parse error " << ex.what() << std::endl;
+          std::exit(nmcu::Exit::FAILURE);
+      } catch (json::parse_error& ex) {
+          LOG_ERROR << "Parse error at byte " << ex.byte << std::endl;
+          std::exit(nmcu::Exit::FAILURE);
       }
-    }
-
-  protected: // Methods part of subclass API
-  public: // Methods part of public API
-};
-
-
-// =============================================================================
-// Program entry point
-// =============================================================================
-int main(int argc, char** argv) {
-  Tool<Parser, Result> tool; // if parser needed
-  return tool.start(argc, argv);
+      this->executionStop = nmco::Time();
+  }
 }

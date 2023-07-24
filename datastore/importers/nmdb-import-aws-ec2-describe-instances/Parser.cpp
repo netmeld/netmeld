@@ -38,12 +38,8 @@ Parser::Parser()
 void
 Parser::fromJson(const json& _data)
 {
-  try {
-    for (const auto& reservation : _data.at("Reservations")) {
-      processInstances(reservation);
-    }
-  } catch (json::out_of_range& ex) {
-    LOG_ERROR << "Parse error " << ex.what() << std::endl;
+  for (const auto& reservation : _data.at("Reservations")) {
+    processInstances(reservation);
   }
 }
 

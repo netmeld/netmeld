@@ -77,12 +77,17 @@ struct Data
   netmeld::datastore::objects::ToolObservations observations;
 };
 
+typedef std::vector<Data> Results;
+
 
 class Parser
 {
   public:
-    Data
+    Results
     getData();
+
+    void
+    handleXML(const pugi::xml_document& doc);
 
     void
     parseConfig(const pugi::xml_node& configNode);

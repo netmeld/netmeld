@@ -44,10 +44,9 @@ namespace netmeld::datastore::tools {
     // =========================================================================
     // Variables
     // =========================================================================
-    private:
-      sfs::path   dataPath;
 
     protected:
+      sfs::path   dataPath;
       TResults    tResults;
 
       nmco::Uuid  toolRunId;
@@ -82,7 +81,7 @@ namespace netmeld::datastore::tools {
       const std::string getDeviceId() const;
       const nmco::Uuid  getToolRunId() const;
       virtual void addToolOptions() override;
-      virtual void parseData();
+      virtual void parseData() = 0;
       virtual void printHelp() const override;
       virtual int  runTool() override;
       virtual void setToolRunId();

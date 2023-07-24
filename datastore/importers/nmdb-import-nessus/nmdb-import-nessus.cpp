@@ -36,7 +36,7 @@
 #include <netmeld/datastore/objects/TracerouteHop.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 
 #include "InterfaceHelper.hpp"
 #include "MetasploitModule.hpp"
@@ -64,10 +64,10 @@ typedef std::vector<Data>             Results;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   public:
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       ("Nessus's XML output (.nessus file)", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
