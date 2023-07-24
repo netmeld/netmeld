@@ -94,11 +94,17 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-     ignoredLine,
-     token;
+      ignoredLine;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       systeminfo;
+
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+      hotfixs,
+      networkCardName,
+      networkCardConnectionName,
+      ipaddresssection,
+      network_cards;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       host_name,
@@ -126,14 +132,15 @@ class Parser :
       total_physical_memory,
       available_physical_memory,
       virtual_memory_max,
-      virtual_memery_available,
+      virtual_memory_available,
       virtual_memory_in_use,
       page_file_locations,
       domain,
       logon_server,
-      hotfixs,
-      network_cards,
-      hyper_v;
+      hotfix,
+      network_card,
+      hyper_v,
+      token;
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -146,6 +153,38 @@ class Parser :
   private:
     Result getData();
     void setHostname(const std::string&);
+    void setOS(const std::string&);
+    void setOSVersion(const std::string&);
+    void setOSManufacturer(const std::string&);
+    void setOSConfiguration(const std::string&);
+    void setOSBuildType(const std::string&);
+    void setRegisteredOwner(const std::string&);
+    void setRegisteredOrganization(const std::string&);
+    void setProductID(const std::string&);
+    void setOriginalInstallDate(const std::string&);
+    void setSystemBootTime(const std::string&);
+    void setSystemManufacturer(const std::string&);
+    void setSystemModel(const std::string&);
+    void setSystemType(const std::string&);
+    void setProcessors(const std::string&);
+    void setBIOSVersion(const std::string&);
+    void setWindowsDirectory(const std::string&);
+    void setSystemDirectory(const std::string&);
+    void setBootDevice(const std::string&);
+    void setSystemLocale(const std::string&);
+    void setInputLocale(const std::string&);
+    void setTimeZone(const std::string&);
+    void setTotalPhysicalMemory(const std::string&);
+    void setAvailablePhysicalMemory(const std::string&);
+    void setVirtualMemoryMax(const std::string&);
+    void setVirtualMemoryAvailable(const std::string&);
+    void setVirtualMemoryInUse(const std::string&);
+    void setPageFileLocations(const std::string&);
+    void setDomain(const std::string&);
+    void setLogonServer(const std::string&);
+    void setHotfixs(const std::string&);
+    void setNetworkCards(const std::string&);
+    void setHyperV(const std::string&);
     Systeminfo sysinfo_;
 };
 #endif // PARSER_HPP
