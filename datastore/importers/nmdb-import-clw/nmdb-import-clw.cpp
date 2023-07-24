@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,19 +24,17 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 #include <netmeld/core/utils/ForkExec.hpp>
 
 typedef std::vector<std::string>  Results;
 
-namespace nmdp = netmeld::datastore::parsers;
 namespace nmdt = netmeld::datastore::tools;
 namespace nmcu = netmeld::core::utils;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportSpiritTool<P,R>
+class Tool : public nmdt::AbstractImportTool<P,R>
 {
   private:
     std::string
@@ -51,7 +49,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
     }
 
   public:
-    Tool() : nmdt::AbstractImportSpiritTool<P,R>
+    Tool() : nmdt::AbstractImportTool<P,R>
       ("clw", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -174,6 +172,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 int
 main(int argc, char** argv)
 {
-  Tool<nmdp::DummyParser, Results> tool;
+  Tool<std::nullptr_t, std::nullptr_t> tool;
   return tool.start(argc, argv);
 }
