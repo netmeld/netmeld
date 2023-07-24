@@ -24,57 +24,43 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
+// NOTE This implementation is included in the header (at the end) since it
+//      leverages templating.
 
-#include "Parser.hpp"
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/utils/QueriesCommon.hpp>
 
-namespace nmdt = netmeld::datastore::tools;
+namespace nmcu = netmeld::core::utils;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdu = netmeld::datastore::utils;
+
+namespace netmeld::datastore::tools {
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  template<typename P, typename R>
+  AbstractImportSpiritTool<P,R>::AbstractImportSpiritTool()
+  {}
+
+  template<typename P, typename R>
+  AbstractImportSpiritTool<P,R>::AbstractImportSpiritTool(
+      const char* _helpBlurb,
+      const char* _programName,
+      const char* _version) :
+    AbstractImportTool<P,R>(_helpBlurb, _programName, _version)
+  {}
 
 
-template<typename P, typename R>
-class Tool : public nmdt::AbstractImportSpiritTool<P,R>
-{
-  public:
-    Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      ("ip addr show", PROGRAM_NAME, PROGRAM_VERSION)
-    {}
+  // ===========================================================================
+  // Tool Entry Points (execution order)
+  // ===========================================================================
 
-    void
-    toolRunMetadataInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
-
-      for (auto& results : this->tResults) {
-        for (auto& result: results.ifaces) {
-          result.saveAsMetadata(t, toolRunId);
-          LOG_DEBUG << "[TRM] " << result.toDebugString() << std::endl;
-        }
-      }
-    }
-
-    void
-    specificInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
-      const auto& deviceId  {this->getDeviceId()};
-
-      for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over Interfaces\n";
-        for (auto& result: results.ifaces) {
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << '\n';
-        }
-
-        LOG_DEBUG << "Iterating over Observations\n";
-        results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << "\n";
-      }
-    }
-};
-
-int
-main(int argc, char** argv)
-{
-  Tool<Parser, Result> tool;
-  return tool.start(argc, argv);
+  template<typename P, typename R>
+  void
+  AbstractImportSpiritTool<P,R>::parseData() // Could pass the parser as an argument
+  {
+    this->executionStart = nmco::Time();
+    this->tResults = nmdp::fromFilePath<P,R>(this->dataPath.string());
+    this->executionStop = nmco::Time();
+  }
 }

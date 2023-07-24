@@ -30,12 +30,9 @@
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
-namespace nmdt = netmeld::datastore::tools;
-
 
 // =============================================================================
 // Data containers

@@ -25,7 +25,7 @@
 // =============================================================================
 
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 #include <netmeld/core/utils/ForkExec.hpp>
 
 typedef std::vector<std::string>  Results;
@@ -36,7 +36,7 @@ namespace nmcu = netmeld::core::utils;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   private:
     std::string
@@ -51,7 +51,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     }
 
   public:
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       ("clw", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 

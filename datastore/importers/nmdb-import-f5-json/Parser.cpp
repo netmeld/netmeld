@@ -41,10 +41,35 @@ namespace nmdp = netmeld::datastore::parsers;
 namespace nmdu = netmeld::datastore::utils;
 
 
-Data
+Result
 Parser::getData()
 {
-  return data;
+  Result r;
+  r.emplace_back(data);
+  return r;
+}
+
+void
+Parser::fromJson(const nlohmann::json &doc)
+{
+  const std::string docKind{doc.at("kind").get<std::string>()};
+
+  if ("tm:ltm:virtual-address:virtual-addresscollectionstate" == docKind) {
+    parseLtmVirtualAddress(doc);
+  }
+  else if (("tm:net:arp:arpcollectionstate" == docKind) ||
+           ("tm:net:ndp:ndpcollectionstate" == docKind)) {
+    parseNetArpNdp(doc);
+  }
+  else if ("tm:net:self:selfcollectionstate" == docKind) {
+    parseNetSelf(doc);
+  }
+  else if ("tm:net:route:routecollectionstate" == docKind) {
+    parseNetRoute(doc);
+  }
+  else {
+    parseUnsupported(doc);
+  }
 }
 
 

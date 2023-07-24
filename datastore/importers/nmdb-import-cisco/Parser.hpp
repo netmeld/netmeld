@@ -37,7 +37,7 @@
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/parsers/ParserMacAddress.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 
 #include "CiscoAcls.hpp"
 #include "CiscoNetworkBook.hpp"

@@ -25,7 +25,7 @@
 // =============================================================================
 
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include "Parser.hpp"
@@ -35,7 +35,7 @@ namespace nmdt = netmeld::datastore::tools;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -51,7 +51,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       ("show ip route", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -60,7 +60,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportSpiritTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {

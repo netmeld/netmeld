@@ -51,85 +51,90 @@
 #include <vector>
 
 
+namespace nmdo = netmeld::datastore::objects;
+
 typedef std::tuple<std::string, std::string> InterfaceHierarchy;
 
 
 struct LogicalSystem
 {
   std::string name;
-  std::map<std::string, netmeld::datastore::objects::InterfaceNetwork> ifaces;
+  std::map<std::string, nmdo::InterfaceNetwork> ifaces;
   std::vector<InterfaceHierarchy> ifaceHierarchies;
-  std::map<std::string, netmeld::datastore::objects::Vrf> vrfs;
-  std::vector<netmeld::datastore::objects::Service> services;
-  std::vector<netmeld::datastore::objects::DnsResolver> dnsResolvers;
+  std::map<std::string, nmdo::Vrf> vrfs;
+  std::vector<nmdo::Service> services;
+  std::vector<nmdo::DnsResolver> dnsResolvers;
   std::vector<std::string> dnsSearchDomains;
 
-  std::map<std::string, netmeld::datastore::objects::AclZone> aclZones;
-  std::map<std::string, std::map<std::string, netmeld::datastore::objects::AclIpNetSet>> aclIpNetSets;
-  std::vector<netmeld::datastore::objects::AclService> aclServices;
-  std::vector<netmeld::datastore::objects::AclRuleService> aclRules;
+  std::map<std::string, nmdo::AclZone> aclZones;
+  std::map<std::string, std::map<std::string, nmdo::AclIpNetSet>> aclIpNetSets;
+  std::vector<nmdo::AclService> aclServices;
+  std::vector<nmdo::AclRuleService> aclRules;
 };
 
 
 struct Data
 {
   std::map<std::string, LogicalSystem> logicalSystems;
-  netmeld::datastore::objects::ToolObservations observations;
+  nmdo::ToolObservations observations;
 };
+
+typedef std::vector<Data> Results;
 
 
 class Parser
 {
   public:
-    Data getData();
+    Results getData();
 
-    void parseConfig(const pugi::xml_node&);
-    void parseRouteInfo(const pugi::xml_node&);
-    void parseArpTableInfo(const pugi::xml_node&);
-    void parseIpv6NeighborInfo(const pugi::xml_node&);
-    void parseLldpNeighborInfo(const pugi::xml_node&);
-    void parseEthernetSwitching(const pugi::xml_node&);
-    void parseUnsupported(const pugi::xml_node&);
-    void parseError(const pugi::xml_node&);
-    void parseWarning(const pugi::xml_node&);
+    void handleXML(const pugi::xml_document& doc);
+    void parseConfig(const pugi::xml_node& configNode);
+    void parseRouteInfo(const pugi::xml_node& routeInfoNode);
+    void parseArpTableInfo(const pugi::xml_node& arpTableInfoNode);
+    void parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode);
+    void parseLldpNeighborInfo(const pugi::xml_node& lldpNeighborInfoNode);
+    void parseEthernetSwitching(const pugi::xml_node& l2ngNode);
+    void parseUnsupported(const pugi::xml_node& unsupportedNode);
+    void parseError(const pugi::xml_node& errorNode);
+    void parseWarning(const pugi::xml_node& warningNode);
 
   protected:
-    std::tuple<std::map<std::string, netmeld::datastore::objects::InterfaceNetwork>,
+    std::tuple<std::map<std::string, nmdo::InterfaceNetwork>,
                std::vector<InterfaceHierarchy>>
     parseConfigInterfaces(const pugi::xml_node& interfacesNode);
 
-    std::map<std::string, netmeld::datastore::objects::Vrf>
+    std::map<std::string, nmdo::Vrf>
     parseConfigRoutingInstances(const pugi::xml_node& routingInstancesNode,
-        const std::map<std::string, netmeld::datastore::objects::InterfaceNetwork>& ifaces);
+        const std::map<std::string, nmdo::InterfaceNetwork>& ifaces);
 
-    netmeld::datastore::objects::RoutingTable
+    nmdo::RoutingTable
     parseConfigRoutingOptions(const pugi::xml_node& routingOptionsNode);
 
-    std::map<std::string, netmeld::datastore::objects::AclZone>
+    std::map<std::string, nmdo::AclZone>
     parseConfigZones(const pugi::xml_node& zonesNode);
 
-    std::map<std::string, std::map<std::string, netmeld::datastore::objects::AclIpNetSet>>
+    std::map<std::string, std::map<std::string, nmdo::AclIpNetSet>>
     parseConfigAddressBook(const pugi::xml_node& addressBookNode);
 
-    std::vector<netmeld::datastore::objects::AclService>
+    std::vector<nmdo::AclService>
     parseConfigApplications(const pugi::xml_node& applicationsNode);
 
-    std::vector<netmeld::datastore::objects::AclService>
+    std::vector<nmdo::AclService>
     parseConfigApplicationOrTerm(const pugi::xml_node& applicationNode);
 
-    std::vector<netmeld::datastore::objects::AclRuleService>
+    std::vector<nmdo::AclRuleService>
     parseConfigPolicies(const pugi::xml_node& policiesNode);
 
-    std::vector<netmeld::datastore::objects::AclRuleService>
+    std::vector<nmdo::AclRuleService>
     parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId);
 
     std::string
     parseRouteLogicalSystemName(const std::string& s);
 
-    std::map<std::string, netmeld::datastore::objects::Vrf>
+    std::map<std::string, nmdo::Vrf>
     parseRouteTable(const pugi::xml_node& routeTableNode);
 
-    netmeld::datastore::objects::RoutingTable
+    nmdo::RoutingTable
     parseRoute(const pugi::xml_node& routeNode);
 
     std::tuple<std::string, std::string>
