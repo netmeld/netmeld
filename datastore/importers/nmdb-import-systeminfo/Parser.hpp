@@ -41,12 +41,6 @@ namespace nmdo = netmeld::datastore::objects;
 // =============================================================================
 // Data containers
 // =============================================================================
-struct Data
-{
-  nmdo::ToolObservations                  observations;
-};
-typedef std::vector<Data> Result;
-
 struct Systeminfo
 {
   std::string host_name;
@@ -73,7 +67,18 @@ struct Systeminfo
   std::string virtual_memory_max_size;
   std::string virtual_memory_in_use;
   std::string page_file_location;
+  std::string logon_server;
+  std::vector<std::string> hotfixs;
+  std::vector<std::string> network_cards;
+  std::string hyper_v;
 };
+
+struct Data
+{
+  Systeminfo                              sysinfo_;
+  nmdo::ToolObservations                  observations;
+};
+typedef std::vector<Data> Result;
 
 // =============================================================================
 // Parser definition
@@ -94,17 +99,27 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      ignoredLine;
+      ignoredLine,
+      network_cards;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, Systeminfo(), qi::ascii::blank_type>
       systeminfo;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       hotfixs,
       networkCardName,
       networkCardConnectionName,
-      ipaddresssection,
-      network_cards;
+      dhcpServer,
+      networkCardStatus,
+      ipAddressLine
+      ;
+
+    qi::rule<nmdp::IstreamIter, std::vector<std::string>(), qi::ascii::blank_type>
+      ipaddresssection
+    ;
+
+    qi::rule<nmdp::IstreamIter, bool(), qi::ascii::blank_type>
+      dhcpEnabledStatus;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       host_name,
@@ -185,6 +200,6 @@ class Parser :
     void setHotfixs(const std::string&);
     void setNetworkCards(const std::string&);
     void setHyperV(const std::string&);
-    Systeminfo sysinfo_;
+    void addSysteminfo(Systeminfo&);
 };
 #endif // PARSER_HPP
