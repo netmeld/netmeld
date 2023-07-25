@@ -58,19 +58,70 @@ struct Systeminfo
   std::string system_model;
   std::string system_type;
   std::string processor;
+  std::string bios_version; // optional
+  std::string windows_directory; // optional
   std::string system_directory;
+  std::string boot_device; // optional
   std::string locale;
   std::string domain;
   std::string time_zone;
   std::string total_physical_memory;
   std::string available_physical_memory;
   std::string virtual_memory_max_size;
-  std::string virtual_memory_in_use;
+  std::string virtual_memory_available;
   std::string page_file_location;
   std::string logon_server;
   std::vector<std::string> hotfixs;
   std::vector<std::string> network_cards;
   std::string hyper_v;
+
+  void
+  save(pqxx::transaction_base& t, const nmco::Uuid& toolRunId, const std::string& deviceId)
+  {
+      if(!isValid() && !deviceId.empty()){
+          LOG_DEBUG << "Package object is not saving: " << toDebugString()
+              << std::endl;
+      return;
+      }
+
+      // t.exec_prepared("insert_raw_packages",
+      //     toolRunId,
+      //     state,
+      //     name,
+      //     version,
+      //     architecture,
+      //     description);
+  }
+
+  std::string
+  toDebugString() const
+  {
+      std::ostringstream oss;
+      oss << "["; // opening bracket
+      oss << "Host Name: " << host_name << ",\n ";
+      oss << "OS Name: " << os_name << ",\n ";
+      oss << "OS Version: " << os_version << ",\n ";
+      oss << "OS Manufacturer: " << os_manufacturer << ",\n ";
+      oss << "OS Configuration: " << os_configuration << ",\n ";
+      oss << "OS Build Type: " << build_type << ",\n ";
+      oss << "Registered Owner: " << registered_owner << ",\n ";
+      oss << "Registered Organization: " << registered_organization << ",\n ";
+      oss << "Product ID: " << product_id << ",\n ";
+      oss << "Original Install Date: " << original_install_date << ",\n ";
+      oss << "System Boot Time: " << system_boot_time << ",\n ";
+      oss << "System Manufacturer: " << system_manufacturer << ",\n ";
+      oss << "System Model: " << system_model << ",\n ";
+      oss << "System Type: " << system_type << ",\n ";
+      oss << "Processor(s): " << processor << ",\n ";
+      oss << "]"; // closing bracket
+      return oss.str();
+  }
+
+  bool
+  isValid() const
+  {
+      return true;
+  }
 };
 
 struct Data
