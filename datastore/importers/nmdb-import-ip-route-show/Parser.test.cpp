@@ -210,7 +210,6 @@ BOOST_AUTO_TEST_CASE(testWhole)
       std::vector<std::string> testsOkv4 {
             "1.2.3.0/24 dev eth0 proto kernel scope link src 1.2.3.4\n"
           , "1.2.3.0/24 dev eth0 proto kernel scope link src 1.2.3.4 linkdown\n"
-          , "1.2.3.0/24 dev eth0 proto kernel scope link src 1.2.3.4 linkdown\n"
         };
 
       nmdo::IpAddress dstIp {"1.2.3.0/24"};

@@ -40,7 +40,7 @@ def genDatastoreDotFiles():
   ds_tmpl = 'datastore.dot.tmpl'
   ds_dot  = 'netmeld-datastore.dot'
   d = {}
-  
+
   # get bins
   ds_bins_locs = ['', 'exporters', 'graphers', 'importers', 'inserters']
   for folder in ds_bins_locs:
@@ -53,7 +53,7 @@ def genDatastoreDotFiles():
 
     d[dict_list]  = data_list
     d[dict_count] = data_count
-    
+
   # get libs
   ds_libs_locs = ['objects', 'parsers', 'tools', 'utils']
   for folder in ds_libs_locs:
@@ -66,7 +66,7 @@ def genDatastoreDotFiles():
 
     d[dict_list]  = data_list
     d[dict_count] = data_count
-  
+
   with open(ds_tmpl, 'r') as src:
     with open(ds_dot, 'w') as dst:
       src_tmpl = Template(src.read())
@@ -137,7 +137,7 @@ def getSchemaDotFiles(db_name, db_namespace):
   postgresql_autodoc  = '/usr/bin/postgresql_autodoc'
   postgresql_autodoc += ' -d {0} -f {1} -t dot'
 
-  
+
   print('- Generating default graph (just tables)')
   dot_schema_t = '{0}.dot'.format(dot_schema_root)
   cmd_str      = postgresql_autodoc.format(db_name, dot_schema_root)
@@ -159,7 +159,7 @@ def getSchemaDotFiles(db_name, db_namespace):
                               , stdout=subprocess.DEVNULL
                               , stderr=subprocess.STDOUT
                               )
-    
+
     tmp_dot='{0}.dot'.format(tmp.name)
     with open(tmp_dot, 'r') as src:
       with open(dot_schema_tv, 'w') as dst:

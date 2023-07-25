@@ -50,7 +50,7 @@ Parser::Parser() : Parser::base_type(start)
     >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
     // IPv6 doesn't seem to do this, so needs to be optional
     >> -(qi::lit("proto kernel scope link src") >> nextHopIp)
-        [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
+            [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
     >> qi::omit[*token]
     >> qi::eol
     ;
