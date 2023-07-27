@@ -47,51 +47,51 @@ Parser::Parser() : Parser::base_type(start)
     "OS Name: " > token > qi::eol
   ;
 
-  os_version %=
+  os_version =
       ("OS Version: " > token > qi::eol)
     ;
 
-  os_manufacturer %=
+  os_manufacturer =
       ("OS Manufacturer: " > token > qi::eol)
     ;
 
-  os_configuration %=
-      ("OS Configuration: " > token > qi::eol) 
+  os_configuration =
+      ("OS Configuration: " > token > qi::eol)
     ;
 
-  os_build_type %=
-      ("OS Build Type: " > token > qi::eol) 
+  os_build_type =
+      ("OS Build Type: " > token > qi::eol)
     ;
 
-  registered_owner %=
-      ("Registered Owner: " > token > qi::eol) 
+  registered_owner =
+      ("Registered Owner: " > token > qi::eol)
     ;
 
-  registered_organization %=
-      ("Registered Organization: " > token > qi::eol) 
+  registered_organization =
+      ("Registered Organization: " > token > qi::eol)
     ;
-  product_id %=
-      ("Product ID: " > token > qi::eol) 
-    ;
-
-  original_install_date %=
-      ("Original Install Date: " > token > qi::eol) 
+  product_id =
+      ("Product ID: " > token > qi::eol)
     ;
 
-  system_boot_time %=
-      ("System Boot Time: " > token > qi::eol) 
+  original_install_date =
+      ("Original Install Date: " > token > qi::eol)
     ;
 
-  system_manufacturer %=
-      ("System Manufacturer: " > token > qi::eol) 
+  system_boot_time =
+      ("System Boot Time: " > token > qi::eol)
     ;
 
-  system_model %=
+  system_manufacturer =
+      ("System Manufacturer: " > token > qi::eol)
+    ;
+
+  system_model =
       ("System Model: " > token > qi::eol)
     ;
 
   system_type =
-      ("System Type: " > token > qi::eol) 
+      ("System Type: " > token > qi::eol)
     ;
 
   processors =
@@ -99,113 +99,115 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   bios_version =
-      ("BIOS Version: " > token > qi::eol) 
+      ("BIOS Version: " > token > qi::eol)
     ;
 
   windows_directory =
-      ("Windows Directory: " > token > qi::eol) 
+      ("Windows Directory: " > token > qi::eol)
     ;
 
   system_directory =
-      ("System Directory: " > token > qi::eol) 
+      ("System Directory: " > token > qi::eol)
     ;
 
   boot_device =
-      ("Boot Device: " > token > qi::eol) 
+      ("Boot Device: " > token > qi::eol)
     ;
 
   system_locale =
-      ("System Locale: " > token > qi::eol) 
+      ("System Locale: " > token > qi::eol)
     ;
 
   input_locale =
-      ("Input Locale: " > token > qi::eol) 
+      ("Input Locale: " > token > qi::eol)
     ;
 
   time_zone =
-      ("Time Zone: " > token > qi::eol) 
+      ("Time Zone: " > token > qi::eol)
     ;
 
   total_physical_memory =
-      ("Total Physical Memory: " > token > qi::eol) 
+      ("Total Physical Memory: " > token > qi::eol)
     ;
 
   available_physical_memory =
-      ("Available Physical Memory: " > token > qi::eol) 
+      ("Available Physical Memory: " > token > qi::eol)
     ;
 
   virtual_memory_max =
-      ("Virtual Memory: Max Size: " > token > qi::eol) 
+      ("Virtual Memory: Max Size: " > token > qi::eol)
     ;
 
   virtual_memory_available =
-      ("Virtual Memory: Available: " > token > qi::eol) 
+      ("Virtual Memory: Available: " > token > qi::eol)
     ;
 
   virtual_memory_in_use =
-      ("Virtual Memory: In Use: " > token > qi::eol) 
+      ("Virtual Memory: In Use: " > token > qi::eol)
     ;
 
   page_file_locations =
-      ("Page File Location(s): " > token > qi::eol) 
+      ("Page File Location(s): " > token > qi::eol)
     ;
 
   domain =
-      ("Domain: " > token > qi::eol) 
+      ("Domain: " > token > qi::eol)
     ;
 
   logon_server =
-      ("Logon Server: " > token > qi::eol) 
+      ("Logon Server: " > token > qi::eol)
     ;
 
-  // hotfix =
-  //     +(token - qi::omit[qi::lit("Network Card(s)")])// add hotfixes here
-  // ;
-  // hotfixs =
-  //     ("Hotfix(s): " > *(hotfix > qi::eol))
-  //   ;
-  // networkCardName =
-  //   qi::lexeme[+(qi::ascii::char_ - qi::eol)]
-  // ;
-  // networkCardConnectionName =
-  //   qi::lexeme[+(qi::ascii::char_ - qi::eol)]
-  // ;
+  hotfix =
+      +(token - qi::omit[qi::lit("Network Card(s)")])// add hotfixes here
+  ;
+  hotfixs =
+      ("Hotfix(s): " > *(hotfix > qi::eol))
+    ;
+  networkCardName =
+    qi::lexeme[+(qi::ascii::char_ - qi::eol)]
+  ;
+  networkCardConnectionName =
+    qi::lexeme[+(qi::ascii::char_ - qi::eol)]
+  ;
 
-  // ipAddressLine =
-  //   qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_
-  // ;
+  ipAddressLine =
+    qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_
+  ;
 
-  // ipaddresssection =
-  //   +qi::ascii::graph
-  // ;
-  // dhcpServer =
-  //   qi::lexeme[+(qi::char_ - qi::eol)];
-  // ;
-  // dhcpEnabledStatus =
-  //   qi::lit("DHCP Enabled:") >> ( qi::lit("Yes") |  qi::lit("No"))
-  // ;
+  ipaddresssection =
+    +qi::ascii::graph
+  ;
+  dhcpServer =
+    qi::lexeme[+(qi::char_ - qi::eol)];
+  ;
+  dhcpEnabledStatus =
+    qi::lit("DHCP Enabled:") >> ( qi::lit("Yes") |  qi::lit("No"))
+  ;
 
-  // networkCardStatus =
-  //   +qi::ascii::graph
-  // ;
-  // network_card =
-  // +(
-  //       '[' >> qi::lexeme[+qi::char_("0-9")] >> ']' >> qi::lit(':')
-  //       >> networkCardName >> qi::eol
-  //       >> "Connection Name: " > networkCardConnectionName >> qi::eol
-  //       >> -(dhcpEnabledStatus >> qi::eol)
-  //       >> -("DHCP Server: " >> dhcpServer >> qi::eol)
-  //       >> -("IP address(es)" >> qi::eol >> ('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: " >> ipAddressLine) >> qi::eol)
-  //       >> -("Status: " >> networkCardStatus >> qi::eol)
-  //   );
-  // ;
-  // network_cards =
-  //     qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > network_card
-  //   ;
+  networkCardStatus =
+    +qi::ascii::graph
+  ;
+  network_card =
+  (
+        '[' >> qi::lexeme[+qi::char_("0-9")]
+        >> ']' >> qi::lit(':')
+        >> networkCardName [(pnx::bind(&Parser::addInterface, this, qi::_1))] >> qi::eol
+        >> "Connection Name: " > networkCardConnectionName [(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))] >> qi::eol
+        >> -(dhcpEnabledStatus >> qi::eol)
+        >> -("DHCP Server: " >> dhcpServer >> qi::eol)
+        >> -("IP address(es)" >> qi::eol >> ('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: " >> ipAddr [(pnx::bind(&Parser::addIfaceIp, this, qi::_1))] ) >> qi::eol)
+        >> -("Status: " >> networkCardStatus [(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol)
+    );
+  ;
+  network_cards =
+      qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol
+      > +network_card
+    ;
 
-  // hyper_v =
-  //     ("Hyper-V Requirements: " > token > qi::eol > qi::eol) [pnx::bind(&Parser::setHyperV, this, qi::_1)]
-  //   ;
+  hyper_v =
+      ("Hyper-V Requirements: " > token > qi::eol)
+    ;
   systeminfo =
       host_name [(pnx::bind(&Parser::setHostname, this, qi::_1))]
       > os_name [(pnx::bind(&Parser::setOS, this, qi::_1))]
@@ -236,10 +238,10 @@ Parser::Parser() : Parser::base_type(start)
       > virtual_memory_in_use [pnx::bind(&Parser::setVirtualMemoryInUse, this, qi::_1)]
       > page_file_locations [pnx::bind(&Parser::setPageFileLocations, this, qi::_1)]
       > domain [pnx::bind(&Parser::setDomain, this, qi::_1)]
-      > logon_server [pnx::bind(&Parser::setLogonServer, this, qi::_1)];
-      // > hotfixs
-      // > network_cards
-      // > hyper_v;
+      > logon_server [pnx::bind(&Parser::setLogonServer, this, qi::_1)]
+      > hotfixs [pnx::bind(&Parser::setHotfixs, this, qi::_1)]
+      > network_cards
+      > hyper_v [pnx::bind(&Parser::setHyperV, this, qi::_1)];
   ;
   ignoredLine =
     (qi::ascii::print > -qi::eol) | +qi::eol
@@ -279,17 +281,17 @@ Parser::Parser() : Parser::base_type(start)
       (page_file_locations)
       (domain)
       (logon_server)
-      // (hotfixs)
-      // (hotfix)
-      // (network_cards)
-      // (network_card)
-      // (dhcpServer)
-      // (dhcpEnabledStatus)
-      // (ipAddressLine)
-      // (networkCardName)
-      // (networkCardConnectionName)
-      // (networkCardStatus)
-      // (hyper_v)
+      (hotfixs)
+      (hotfix)
+      (network_cards)
+      (network_card)
+      (dhcpServer)
+      (dhcpEnabledStatus)
+      (ipAddressLine)
+      (networkCardName)
+      (networkCardConnectionName)
+      (networkCardStatus)
+      (hyper_v)
       // (token)
       );
 }
@@ -478,25 +480,55 @@ Parser::setLogonServer(const std::string& _string)
   data.sysinfo_.logon_server = _string;
 }
 
+void
+Parser::setHotfixs(const std::string& _string)
+{
+  data.sysinfo_.hotfixs = _string;
+}
 
-// void
-// Parser::setHotfixs(const std::string& _string)
-// {
-//   data.sysinfo_.os_name = _string;
-// }
+void
+Parser::addInterface(const std::string& _name)
+{
+  nmdo::Interface iface;
+  iface.setName(_name);
+  curIfaceName = iface.getName();
+  data.sysinfo_.network_cards[curIfaceName] = iface;
+}
 
+void
+Parser::addIfaceConnectName(const std::string& _connectionname)
+{
+  auto& iface {data.sysinfo_.network_cards[curIfaceName]};
+  if(_connectionname.find("Wi-Fi") != std::string::npos || _connectionname.find("Bluetooth") != std::string::npos)
+  {
+    iface.setMediaType(_connectionname);
+  }
+  iface.setUp();
+  iface.setDescription(_connectionname);
+}
 
-// void
-// Parser::setNetworkCards(const std::string& _string)
-// {
-//   data.sysinfo_.os_name = _string;
-// }
+void
+Parser::addIfaceIp(nmdo::IpAddress& _ipAddr)
+{
+  auto& iface {data.sysinfo_.network_cards[curIfaceName]};
 
-// void
-// Parser::setHyperV(const std::string& _string)
-// {
-//   data.sysinfo_.os_name = _string;
-// }
+  _ipAddr.addAlias(data.sysinfo_.host_name, "systeminfo");
+  iface.addIpAddress(_ipAddr);
+}
+
+void
+Parser::setIfaceStatus(const std::string& _status)
+{
+  auto& iface {data.sysinfo_.network_cards[curIfaceName]};
+  iface.setDown();
+
+}
+
+void
+Parser::setHyperV(const std::string& _string)
+{
+  data.sysinfo_.hyper_v = _string;
+}
 
 // void
 // Parser::addSysteminfo(Systeminfo& systeminfo)

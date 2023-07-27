@@ -34,6 +34,9 @@
 // #include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/objects/Interface.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserDomainName.hpp>
 
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdo = netmeld::datastore::objects;
@@ -67,12 +70,13 @@ struct Systeminfo
   std::string time_zone;
   std::string total_physical_memory;
   std::string available_physical_memory;
+  std::string virtual_memory_in_use;
   std::string virtual_memory_max_size;
   std::string virtual_memory_available;
   std::string page_file_location;
   std::string logon_server;
-  std::vector<std::string> hotfixs;
-  std::vector<std::string> network_cards;
+  std::string hotfixs;
+  std::map<std::string, nmdo::Interface> network_cards;
   std::string hyper_v;
 
   void
@@ -112,7 +116,24 @@ struct Systeminfo
       oss << "System Manufacturer: " << system_manufacturer << ",\n ";
       oss << "System Model: " << system_model << ",\n ";
       oss << "System Type: " << system_type << ",\n ";
-      oss << "Processor(s): " << processor << ",\n ";
+      oss << "Processor(s):" << processor << ",\n ";
+      oss << "BIOS Version:" << bios_version << ",\n ";
+      oss << "Windows Directory:" << windows_directory << ",\n ";
+      oss << "System Directory:" << system_directory << ",\n ";
+      oss << "Boot Device:" << boot_device << ",\n ";
+      oss << "Input Locale:" << locale << ",\n ";
+      oss << "Time Zone: " << time_zone << ",\n ";
+      oss << "Total Physical Memory:" << total_physical_memory << ",\n ";
+      oss << "Available Physical Memory:" << available_physical_memory << ",\n ";
+      oss << "Virtual Memory: Max Size:" << virtual_memory_max_size << ",\n ";
+      oss << "Virtual Memory: Available:" << virtual_memory_available << ",\n ";
+      oss << "Virtual Memory: In Use:" << virtual_memory_in_use << ",\n ";
+      oss << "Page File Location(s):" << page_file_location << ",\n ";
+      oss << "Domain:" << domain << ",\n ";
+      oss << "Logon Server:" << logon_server << ",\n ";
+      oss << "Hotfix(s):" << hotfixs << ",\n ";
+      oss << "Network Card(s):" << network_cards << ",\n ";
+      oss << "Hyper-V Requirements:" << hyper_v << ",\n ";
       oss << "]"; // closing bracket
       return oss.str();
   }
@@ -143,6 +164,9 @@ class Parser :
   private:
     // Supporting data structures
     Data data;
+    std::string curHostname;
+    std::string curIfaceName;
+    nmdp::ParserIpAddress   ipAddr;
 
   protected:
     // Rules
@@ -150,8 +174,7 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      ignoredLine,
-      network_cards;
+      ignoredLine;
 
     qi::rule<nmdp::IstreamIter, Systeminfo(), qi::ascii::blank_type>
       systeminfo;
@@ -171,6 +194,12 @@ class Parser :
 
     qi::rule<nmdp::IstreamIter, bool(), qi::ascii::blank_type>
       dhcpEnabledStatus;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+     network_card;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+     network_cards;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       host_name,
@@ -204,7 +233,6 @@ class Parser :
       domain,
       logon_server,
       hotfix,
-      network_card,
       hyper_v,
       token;
   // ===========================================================================
@@ -249,7 +277,10 @@ class Parser :
     void setDomain(const std::string&);
     void setLogonServer(const std::string&);
     void setHotfixs(const std::string&);
-    void setNetworkCards(const std::string&);
+    void addInterface(const std::string&);
+    void addIfaceConnectName(const std::string&);
+    void addIfaceIp(nmdo::IpAddress&);
+    void setIfaceStatus(const std::string&);
     void setHyperV(const std::string&);
     void addSysteminfo(Systeminfo&);
 };
