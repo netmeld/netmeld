@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 
 #include "Parser.hpp"
 
@@ -37,7 +37,7 @@ namespace nmdt = netmeld::datastore::tools;
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -49,7 +49,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       // std::string            programName;
       // std::string            version;
       // ProgramOptions         opts;
-    // Inhertied from AbstractImportTool at this scope
+    // Inhertied from AbstractImportSpiritTool at this scope
       // TResults                 tResults;
       // nmco::Uuid               toolRunId;
       // nmco::Time               executionStart;
@@ -64,7 +64,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       (
        "traceroute [-n] | tracert [-d]",  // command line tool imports data from
        PROGRAM_NAME,           // program name (set in CMakeLists.txt)
@@ -78,7 +78,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // ===========================================================================
   private: // Methods part of internal API
 
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportSpiritTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -97,7 +97,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     // Inherited from AbstractTool at this scope
       // std::string const getDbName() const;
       // virtual void printVersion() const;
-    // Inherited from AbstractImportTool at this scope
+    // Inherited from AbstractImportSpiritTool at this scope
       // fs::path    const getDataPath() const;
       // std::string const getDeviceId() const;
       // nmco::Uuid   const getToolRunId() const;

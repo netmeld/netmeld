@@ -120,11 +120,11 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "sgId: " << sgId
-        << ", name: " << name
-        << ", description: " << description
-        << ", vpcId: " << vpcId
-        << ", rules: " << rules
+        << "sgId: " << sgId << ", "
+        << "name: " << name << ", "
+        << "description: " << description << ", "
+        << "vpcId: " << vpcId << ", "
+        << "rules: " << rules
         << ']'
         ;
 

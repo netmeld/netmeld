@@ -50,6 +50,7 @@
 #include <tuple>
 #include <vector>
 
+using json = nlohmann::json;
 
 struct LogicalSystem
 {
@@ -72,13 +73,17 @@ struct Data
   std::map<std::string, LogicalSystem> logicalSystems;
   netmeld::datastore::objects::ToolObservations observations;
 };
+typedef std::vector<Data>    Result;
 
 
 class Parser
 {
   public:
-    Data
+    Result
     getData();
+
+    void
+    fromJson(const json&);
 
     void
     parseLtmVirtualAddress(const nlohmann::ordered_json&);

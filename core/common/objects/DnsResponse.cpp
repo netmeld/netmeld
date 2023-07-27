@@ -133,15 +133,11 @@ namespace netmeld::core::objects {
     std::ostringstream oss;
 
     oss << "["
-        << responseFqdn
-        << ", "
-        << responseClass
-        << ", "
-        << responseType
-        << ", "
-        << responseTtl
-        << ", "
-        << responseData
+        << "responseFqdn: " << responseFqdn << ", "
+        << "responseClass: " << responseClass << ", "
+        << "responseType: " << responseType << ", "
+        << "responseTtl: " << responseTtl << ", "
+        << "responseData: " << responseData 
         << "]";
 
     return oss.str();

@@ -126,9 +126,9 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
     oss << "[" // opening bracket
-        << vlanId << ", "
-        << ipNet << ", "
-        << description
+        << "vlanId: " << vlanId  << ", "
+        << "ipNet: " << ipNet  << ", "
+        << "description: " << description 
         << "]"; // closing bracket
 
     return oss.str();

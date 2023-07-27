@@ -157,11 +157,11 @@ namespace netmeld::datastore::objects {
 
     oss << "[";
 
-    oss << toString() << ", "
-        << isResponding << ", "
-        << reason << ", "
-        << extraWeight << ", "
-        << aliases
+    oss << "ipAddress: " << toString() << ", "
+        << "isResponding: " << isResponding << ", "
+        << "reason: " << reason << ", "
+        << "extraWeight: " << extraWeight << ", "
+        << "aliases: " << aliases
         ;
 
     oss << "]";

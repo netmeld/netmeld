@@ -113,15 +113,6 @@ namespace netmeld::datastore::tools {
 
   template<typename P, typename R>
   void
-  AbstractImportTool<P,R>::parseData()
-  {
-    executionStart = nmco::Time();
-    tResults = nmdp::fromFilePath<P,R>(dataPath.string());
-    executionStop = nmco::Time();
-  }
-
-  template<typename P, typename R>
-  void
   AbstractImportTool<P,R>::toolRunMetadataInserts(pqxx::transaction_base&)
   {}
 

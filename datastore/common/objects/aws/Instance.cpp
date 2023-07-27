@@ -129,16 +129,16 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "instanceId: " << instanceId
-        << ", type: " << type
-        << ", imageId: " << imageId
-        << ", architecture: " << architecture
-        << ", platformDetails: " << platformDetails
-        << ", launchTime: " << launchTime
-        << ", availabilityZone: " << availabilityZone
-        << ", stateCode: " << stateCode
-        << ", stateName: " << stateName
-        << ", interfaces: " << interfaces
+        << "instanceId: " << instanceId << ", "
+        << "type: " << type << ", "
+        << "imageId: " << imageId << ", "
+        << "architecture: " << architecture << ", "
+        << "platformDetails: " << platformDetails << ", "
+        << "launchTime: " << launchTime << ", "
+        << "availabilityZone: " << availabilityZone << ", "
+        << "stateCode: " << stateCode << ", "
+        << "stateName: " << stateName << ", "
+        << "interfaces: " << interfaces
         << ']'
         ;
 

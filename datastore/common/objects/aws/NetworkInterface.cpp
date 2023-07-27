@@ -213,18 +213,18 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "interfaceId: " << interfaceId
-        << ", type: " << type
-        << ", description: " << description
-        << ", sourceDestinationCheck: " << sourceDestinationCheck
-        << ", status: " << status
-        << ", isUp: " << isUp
-        << ", subnetId: " << subnetId
-        << ", vpcId: " << vpcId
-        << ", attachment: " << attachment.toDebugString()
-        << ", securityGroups: " << securityGroups
-        << ", macAddr: " << macAddr
-        << ", cidrBlocks: " << cidrBlocks
+        << "interfaceId: " << interfaceId << ", "
+        << "type: " << type << ", "
+        << "description: " << description << ", "
+        << "sourceDestinationCheck: " << sourceDestinationCheck << ", "
+        << "status: " << status << ", "
+        << "isUp: " << isUp << ", "
+        << "subnetId: " << subnetId << ", "
+        << "vpcId: " << vpcId << ", "
+        << "attachment: " << attachment.toDebugString() << ", "
+        << "securityGroups: " << securityGroups << ", "
+        << "macAddr: " << macAddr << ", "
+        << "cidrBlocks: " << cidrBlocks
         << ']'
         ;
 

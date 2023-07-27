@@ -24,57 +24,43 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
+#ifndef ABSTRACT_IMPORT_XML_TOOL_HPP
+#define ABSTRACT_IMPORT_XML_TOOL_HPP
 
-#include "Parser.hpp"
+#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
-namespace nmdt = netmeld::datastore::tools;
+namespace nmco = netmeld::core::objects;
+namespace nmdo = netmeld::datastore::objects;
 
 
-template<typename P, typename R>
-class Tool : public nmdt::AbstractImportSpiritTool<P,R>
-{
-  public:
-    Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      ("ip addr show", PROGRAM_NAME, PROGRAM_VERSION)
-    {}
+namespace netmeld::datastore::tools {
 
-    void
-    toolRunMetadataInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
+  template<typename TParser, typename TResults>
+  class AbstractImportXmlTool : public AbstractImportTool<TParser,TResults>
+  {
+    // =========================================================================
+    // Variables
+    // =========================================================================
 
-      for (auto& results : this->tResults) {
-        for (auto& result: results.ifaces) {
-          result.saveAsMetadata(t, toolRunId);
-          LOG_DEBUG << "[TRM] " << result.toDebugString() << std::endl;
-        }
-      }
-    }
 
-    void
-    specificInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
-      const auto& deviceId  {this->getDeviceId()};
+    // =========================================================================
+    // Constructors and Destructors
+    // =========================================================================
+    protected:
+      // Default constructor, provided only for convienence
+      AbstractImportXmlTool();
+      // Standard constructor, should be primary
+      AbstractImportXmlTool(const char*, const char*, const char*);
 
-      for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over Interfaces\n";
-        for (auto& result: results.ifaces) {
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << '\n';
-        }
+    public:
+      virtual ~AbstractImportXmlTool() = default;
 
-        LOG_DEBUG << "Iterating over Observations\n";
-        results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << "\n";
-      }
-    }
-};
-
-int
-main(int argc, char** argv)
-{
-  Tool<Parser, Result> tool;
-  return tool.start(argc, argv);
+    // =========================================================================
+    // Methods
+    // =========================================================================
+    protected:
+      virtual void parseData();
+  };
 }
+#include "AbstractImportXmlTool.ipp"
+#endif // ABSTRACT_IMPORT_XML_TOOL_HPP

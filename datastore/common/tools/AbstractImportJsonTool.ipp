@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,104 +24,58 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/Vrf.hpp>
-#include <netmeld/core/utils/StringUtilities.hpp>
-#include <algorithm>
-#include <iterator>
+// NOTE This implementation is included in the header (at the end) since it
+//      leverages templating.
+
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
+#include <netmeld/datastore/utils/QueriesCommon.hpp>
+#include <nlohmann/json.hpp>
 
 namespace nmcu = netmeld::core::utils;
+namespace nmdp = netmeld::datastore::parsers;
+namespace nmdu = netmeld::datastore::utils;
+
+using json = nlohmann::json;
 
 
-namespace netmeld::datastore::objects {
-
+namespace netmeld::datastore::tools {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  Vrf::Vrf()
+  template<typename P, typename R>
+  AbstractImportJsonTool<P,R>::AbstractImportJsonTool()
   {}
 
-  Vrf::Vrf(const std::string& _vrfId) :
-    vrfId(_vrfId)
+  template<typename P, typename R>
+  AbstractImportJsonTool<P,R>::AbstractImportJsonTool(
+      const char* _helpBlurb,
+      const char* _programName,
+      const char* _version) :
+    AbstractImportTool<P,R>(_helpBlurb, _programName, _version)
   {}
 
+
   // ===========================================================================
-  // Methods
+  // Tool Entry Points (execution order)
   // ===========================================================================
+
+  template<typename P,typename R>
   void
-  Vrf::setId(const std::string& _vrfId)
+  AbstractImportJsonTool<P,R>::parseData()
   {
-    vrfId = _vrfId;
-  }
-
-  std::string
-  Vrf::getId() const
-  {
-    return vrfId;
-  }
-
-  void
-  Vrf::addIface(const std::string& iface)
-  {
-    ifaces.emplace_back(nmcu::toLower(iface));
-  }
-
-  void
-  Vrf::addRoute(const Route& route)
-  {
-    routes.emplace_back(route);
-  }
-
-  void
-  Vrf::merge(const Vrf& other)
-  {
-    std::copy(
-        other.ifaces.begin(),
-        other.ifaces.end(),
-        std::back_inserter(ifaces)
-        );
-
-    std::copy(
-        other.routes.begin(),
-        other.routes.end(),
-        std::back_inserter(routes)
-        );
-  }
-
-  void
-  Vrf::save(pqxx::transaction_base& t,
-            const nmco::Uuid& toolRunId, const std::string& deviceId)
-  {
-    t.exec_prepared("insert_raw_device_vrf",
-        toolRunId,
-        deviceId,
-        vrfId
-        );
-
-    for (const auto& iface : ifaces) {
-      t.exec_prepared("insert_raw_device_vrf_interface",
-          toolRunId,
-          deviceId,
-          vrfId,
-          iface
-          );
-    }
-
-    for (auto& route : routes) {
-      route.save(t, toolRunId, deviceId);
-    }
-  }
-
-  std::string
-  Vrf::toDebugString() const
-  {
-    std::ostringstream oss;
-    
-    oss << "[" // opening bracket
-        << "vrfId: " << vrfId << ", "
-        << "ifaces: " << ifaces << ", "
-        << "routes: " << routes
-        << "]"; // closing bracket
-
-    return oss.str();
+      this->executionStart = nmco::Time();
+      try {
+          P parser;
+          std::ifstream f {this->getDataPath().string()};
+          parser.fromJson(json::parse(f));
+          this->tResults = parser.getData();
+      } catch (json::out_of_range& ex) {
+          LOG_ERROR << "Parse error " << ex.what() << std::endl;
+          std::exit(nmcu::Exit::FAILURE);
+      } catch (json::parse_error& ex) {
+          LOG_ERROR << "Parse error at byte " << ex.byte << std::endl;
+          std::exit(nmcu::Exit::FAILURE);
+      }
+      this->executionStop = nmco::Time();
   }
 }
