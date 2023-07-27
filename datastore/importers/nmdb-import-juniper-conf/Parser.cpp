@@ -215,7 +215,20 @@ Parser::Parser() : Parser::base_type(start)
     ;
   route =
     qi::lit("route") >> ipAddr
-      [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
+      [(  pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1)
+        , pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val
+                   , pnx::bind([](nmdo::IpAddress& ip)
+                                {
+                                  if (ip.isV4()) {
+                                    return nmdo::IpAddress::getIpv4Default();
+                                  } else {
+                                    return nmdo::IpAddress::getIpv6Default();
+                                  }
+                                }
+                              , qi::_1
+                              )
+                   )
+      )] >>
     qi::lit("next-hop") >>
     (  (ipAddr >> semicolon)
          [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
