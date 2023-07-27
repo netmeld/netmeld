@@ -47,7 +47,21 @@ Parser::Parser() : Parser::base_type(start)
 
   route =
     dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
-    >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+    >> ifaceName
+        [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1)
+        , pnx::bind(&Parser::curNextHop, this) = pnx::bind([&]()
+                        {
+                          if (curDestNet.isV4()) {
+                            return nmdo::IpAddress::getIpv4Default();
+                          } else {
+                            return nmdo::IpAddress::getIpv6Default();
+                          }
+                        }
+                   )
+        , pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val
+                   , pnx::bind(&Parser::curNextHop, this)
+                   )
+        )]
     // IPv6 doesn't seem to do this, so needs to be optional
     >> -(qi::lit("proto kernel scope link src") >> nextHopIp)
             [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]

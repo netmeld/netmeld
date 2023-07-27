@@ -150,6 +150,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
                 );
       BOOST_TEST(out.getNextHopIpAddrString().empty());
       BOOST_TEST(expected == out);
+      BOOST_TEST(out.isValid());
     }
   }
 
@@ -176,6 +177,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
                   , "Parser rule 'defaultRoute': " << test
                   );
         BOOST_TEST(expected == out);
+        BOOST_TEST(out.isValid());
       }
     }
     { // v6
@@ -199,6 +201,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
                   , "Parser rule 'defaultRoute': " << test
                   );
         BOOST_TEST(expected == out);
+        BOOST_TEST(out.isValid());
       }
     }
   }
@@ -223,9 +226,10 @@ BOOST_AUTO_TEST_CASE(testWhole)
       for (const auto& test : testsOkv4) {
         nmdo::Route out;
         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank)
-                  , "Parser rule 'defaultRoute': " << test
+                  , "Parser rule 'route': " << test
                   );
         BOOST_TEST(expected == out);
+        BOOST_TEST(out.isValid());
       }
     }
     { // v6
@@ -234,20 +238,19 @@ BOOST_AUTO_TEST_CASE(testWhole)
           , "1::2/64 dev eth0 proto kernel metric 256 mtu 1500 advmss 1440\n"
         };
 
-      //nmdo::IpAddress nextHop {"1::2/64"};
-      //nextHop.setReason(tp.IP_REASON);
       nmdo::IpAddress dstIpNet {"1::2/64"};
       dstIpNet.setReason(tp.IP_REASON);
       nmdo::Route expected;
       expected.setDstIpNet(dstIpNet);
-      //expected.setNextHopIpAddr(nextHop);
+      expected.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
       expected.setIfaceName("eth0");
       for (const auto& test : testsOkv6) {
         nmdo::Route out;
         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank)
-                  , "Parser rule 'defaultRoute': " << test
+                  , "Parser rule 'route': " << test
                   );
         BOOST_TEST(expected == out);
+        BOOST_TEST(out.isValid());
       }
     }
   }
