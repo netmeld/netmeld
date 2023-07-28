@@ -70,6 +70,14 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         // results.sysinfo_.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.sysinfo_.toDebugString() << "\n";
 
+        LOG_DEBUG << "Iterating over Device Information\n";
+        // results.sysinfo_.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.devInfo.toDebugString() << "\n";
+        
+        LOG_DEBUG << "Iterating over Operating System\n";
+        // results.sysinfo_.save(t, toolRunId, deviceId);
+        LOG_DEBUG << results.os.toDebugString() << "\n";
+
         LOG_DEBUG << "Iterating over Observations\n";
         results.observations.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.observations.toDebugString() << "\n";

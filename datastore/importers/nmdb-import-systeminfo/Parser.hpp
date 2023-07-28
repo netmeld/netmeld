@@ -27,16 +27,14 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-// #include <netmeld/datastore/objects/DeviceInformation.hpp>
-// #include <netmeld/datastore/objects/OperatingSystem.hpp>
-// #include <netmeld/datastore/objects/Interface.hpp>
-// #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-// #include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/objects/Interface.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/OperatingSystem.hpp>
+#include <netmeld/datastore/objects/Hotfix.hpp>
 
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdo = netmeld::datastore::objects;
@@ -46,38 +44,29 @@ namespace nmdo = netmeld::datastore::objects;
 // =============================================================================
 struct Systeminfo
 {
-  std::string host_name;
-  std::string os_name;
-  std::string os_version;
-  std::string os_manufacturer;
-  std::string os_configuration;
+  std::string host_name; //deviceinfo deviceId
+  // std::string os_name; //os
+  // std::string os_version; //os
+  // std::string os_manufacturer; //os
+  // std::string os_configuration; //deviceinfo device type
   std::string build_type;
-  std::string registered_owner;
-  std::string registered_organization;
-  std::string product_id;
-  std::string original_install_date;
-  std::string system_boot_time;
-  std::string system_manufacturer;
-  std::string system_model;
-  std::string system_type;
-  std::string processor;
+  std::string registered_owner; //nohome
+  std::string registered_organization; //can be blank //nohome
+  std::string product_id; //nohome
+  std::string original_install_date; //nohome
+  std::string system_boot_time; //nohome
+  std::string system_manufacturer;  //deviceinfo
+  std::string system_model; //deviceinfo
+  std::string system_type; //deviceinfo
+  std::string processor; //nohome
   std::string bios_version; // optional
   std::string windows_directory; // optional
   std::string system_directory;
   std::string boot_device; // optional
-  std::string locale;
-  std::string domain;
-  std::string time_zone;
-  std::string total_physical_memory;
-  std::string available_physical_memory;
-  std::string virtual_memory_in_use;
-  std::string virtual_memory_max_size;
-  std::string virtual_memory_available;
-  std::string page_file_location;
-  std::string logon_server;
-  std::string hotfixs;
-  std::map<std::string, nmdo::Interface> network_cards;
-  std::string hyper_v;
+  std::string domain; //nohome
+  std::string hotfixs; //nohome //do we have a place to store hotfixs which would be an array of hotfix
+  std::map<std::string, nmdo::Interface> network_cards; //interface
+  std::string hyper_v; //nohome
 
   void
   save(pqxx::transaction_base& t, const nmco::Uuid& toolRunId, const std::string& deviceId)
@@ -102,35 +91,18 @@ struct Systeminfo
   {
       std::ostringstream oss;
       oss << "["; // opening bracket
-      oss << "Host Name: " << host_name << ",\n ";
-      oss << "OS Name: " << os_name << ",\n ";
-      oss << "OS Version: " << os_version << ",\n ";
-      oss << "OS Manufacturer: " << os_manufacturer << ",\n ";
-      oss << "OS Configuration: " << os_configuration << ",\n ";
+      oss << "HostName: " << host_name << ",\n ";
       oss << "OS Build Type: " << build_type << ",\n ";
       oss << "Registered Owner: " << registered_owner << ",\n ";
       oss << "Registered Organization: " << registered_organization << ",\n ";
       oss << "Product ID: " << product_id << ",\n ";
       oss << "Original Install Date: " << original_install_date << ",\n ";
       oss << "System Boot Time: " << system_boot_time << ",\n ";
-      oss << "System Manufacturer: " << system_manufacturer << ",\n ";
-      oss << "System Model: " << system_model << ",\n ";
-      oss << "System Type: " << system_type << ",\n ";
       oss << "Processor(s):" << processor << ",\n ";
       oss << "BIOS Version:" << bios_version << ",\n ";
       oss << "Windows Directory:" << windows_directory << ",\n ";
       oss << "System Directory:" << system_directory << ",\n ";
       oss << "Boot Device:" << boot_device << ",\n ";
-      oss << "Input Locale:" << locale << ",\n ";
-      oss << "Time Zone: " << time_zone << ",\n ";
-      oss << "Total Physical Memory:" << total_physical_memory << ",\n ";
-      oss << "Available Physical Memory:" << available_physical_memory << ",\n ";
-      oss << "Virtual Memory: Max Size:" << virtual_memory_max_size << ",\n ";
-      oss << "Virtual Memory: Available:" << virtual_memory_available << ",\n ";
-      oss << "Virtual Memory: In Use:" << virtual_memory_in_use << ",\n ";
-      oss << "Page File Location(s):" << page_file_location << ",\n ";
-      oss << "Domain:" << domain << ",\n ";
-      oss << "Logon Server:" << logon_server << ",\n ";
       oss << "Hotfix(s):" << hotfixs << ",\n ";
       oss << "Network Card(s):" << network_cards << ",\n ";
       oss << "Hyper-V Requirements:" << hyper_v << ",\n ";
@@ -148,9 +120,14 @@ struct Systeminfo
 struct Data
 {
   Systeminfo                              sysinfo_;
+  nmdo::DeviceInformation                 devInfo;
+  nmdo::OperatingSystem                   os;
+  std::vector<nmdo::Hotfix>               hotfixs;
+
   nmdo::ToolObservations                  observations;
 };
 typedef std::vector<Data> Result;
+
 
 // =============================================================================
 // Parser definition
@@ -221,17 +198,7 @@ class Parser :
       windows_directory,
       system_directory,
       boot_device,
-      system_locale,
-      input_locale,
-      time_zone,
-      total_physical_memory,
-      available_physical_memory,
-      virtual_memory_max,
-      virtual_memory_available,
-      virtual_memory_in_use,
-      page_file_locations,
       domain,
-      logon_server,
       hotfix,
       hyper_v,
       token;
@@ -265,18 +232,9 @@ class Parser :
     void setWindowsDirectory(const std::string&);
     void setSystemDirectory(const std::string&);
     void setBootDevice(const std::string&);
-    void setSystemLocale(const std::string&);
-    void setInputLocale(const std::string&);
-    void setTimeZone(const std::string&);
-    void setTotalPhysicalMemory(const std::string&);
-    void setAvailablePhysicalMemory(const std::string&);
-    void setVirtualMemoryMax(const std::string&);
-    void setVirtualMemoryAvailable(const std::string&);
-    void setVirtualMemoryInUse(const std::string&);
-    void setPageFileLocations(const std::string&);
     void setDomain(const std::string&);
     void setLogonServer(const std::string&);
-    void setHotfixs(const std::string&);
+    void addHotfixs(const std::string&);
     void addInterface(const std::string&);
     void addIfaceConnectName(const std::string&);
     void addIfaceIp(nmdo::IpAddress&);

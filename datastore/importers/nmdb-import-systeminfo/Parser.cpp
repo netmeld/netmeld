@@ -114,55 +114,15 @@ Parser::Parser() : Parser::base_type(start)
       ("Boot Device: " > token > qi::eol)
     ;
 
-  system_locale =
-      ("System Locale: " > token > qi::eol)
-    ;
-
-  input_locale =
-      ("Input Locale: " > token > qi::eol)
-    ;
-
-  time_zone =
-      ("Time Zone: " > token > qi::eol)
-    ;
-
-  total_physical_memory =
-      ("Total Physical Memory: " > token > qi::eol)
-    ;
-
-  available_physical_memory =
-      ("Available Physical Memory: " > token > qi::eol)
-    ;
-
-  virtual_memory_max =
-      ("Virtual Memory: Max Size: " > token > qi::eol)
-    ;
-
-  virtual_memory_available =
-      ("Virtual Memory: Available: " > token > qi::eol)
-    ;
-
-  virtual_memory_in_use =
-      ("Virtual Memory: In Use: " > token > qi::eol)
-    ;
-
-  page_file_locations =
-      ("Page File Location(s): " > token > qi::eol)
-    ;
-
   domain =
       ("Domain: " > token > qi::eol)
     ;
 
-  logon_server =
-      ("Logon Server: " > token > qi::eol)
-    ;
-
   hotfix =
-      +(token - qi::omit[qi::lit("Network Card(s)")])// add hotfixes here
+      +(token - qi::omit[qi::eol])// add hotfixes here
   ;
   hotfixs =
-      ("Hotfix(s): " > *(hotfix > qi::eol))
+      ("Hotfix(s): " > *(hotfix [pnx::bind(&Parser::addHotfixs, this, qi::_1)] > qi::eol) )
     ;
   networkCardName =
     qi::lexeme[+(qi::ascii::char_ - qi::eol)]
@@ -209,6 +169,7 @@ Parser::Parser() : Parser::base_type(start)
       ("Hyper-V Requirements: " > token > qi::eol)
     ;
   systeminfo =
+      // host_name [pnx::bind(&nmdo::DeviceInformation::setDeviceId, pnx::ref(data.devInfo), pnx::bind(&std::to_string, qi::_1))]
       host_name [(pnx::bind(&Parser::setHostname, this, qi::_1))]
       > os_name [(pnx::bind(&Parser::setOS, this, qi::_1))]
       > os_version [pnx::bind(&Parser::setOSVersion, this, qi::_1)]
@@ -228,18 +189,10 @@ Parser::Parser() : Parser::base_type(start)
       > -windows_directory [pnx::bind(&Parser::setWindowsDirectory, this, qi::_1)]
       > system_directory [pnx::bind(&Parser::setSystemDirectory, this, qi::_1)]
       > -boot_device [pnx::bind(&Parser::setBootDevice, this, qi::_1)]
-      > system_locale [pnx::bind(&Parser::setSystemLocale, this, qi::_1)]
-      > input_locale [pnx::bind(&Parser::setInputLocale, this, qi::_1)]
-      > time_zone [pnx::bind(&Parser::setTimeZone, this, qi::_1)]
-      > total_physical_memory [pnx::bind(&Parser::setTotalPhysicalMemory, this, qi::_1)]
-      > available_physical_memory [pnx::bind(&Parser::setAvailablePhysicalMemory, this, qi::_1)]
-      > virtual_memory_max [pnx::bind(&Parser::setVirtualMemoryMax, this, qi::_1)]
-      > virtual_memory_available [pnx::bind(&Parser::setVirtualMemoryAvailable, this, qi::_1)]
-      > virtual_memory_in_use [pnx::bind(&Parser::setVirtualMemoryInUse, this, qi::_1)]
-      > page_file_locations [pnx::bind(&Parser::setPageFileLocations, this, qi::_1)]
+      > *(qi::char_ - qi::lit("Domain:"))
       > domain [pnx::bind(&Parser::setDomain, this, qi::_1)]
-      > logon_server [pnx::bind(&Parser::setLogonServer, this, qi::_1)]
-      > hotfixs [pnx::bind(&Parser::setHotfixs, this, qi::_1)]
+      > *(qi::char_ - qi::lit("Hotfix"))
+      > hotfixs
       > network_cards
       > hyper_v [pnx::bind(&Parser::setHyperV, this, qi::_1)];
   ;
@@ -270,17 +223,7 @@ Parser::Parser() : Parser::base_type(start)
       (windows_directory)
       (system_directory)
       (boot_device)
-      (system_locale)
-      (input_locale)
-      (time_zone)
-      (total_physical_memory)
-      (available_physical_memory)
-      (virtual_memory_max)
-      (virtual_memory_available)
-      (virtual_memory_in_use)
-      (page_file_locations)
       (domain)
-      (logon_server)
       (hotfixs)
       (hotfix)
       (network_cards)
@@ -302,31 +245,31 @@ Parser::Parser() : Parser::base_type(start)
 void
 Parser::setHostname(const std::string& _string)
 {
-  data.sysinfo_.host_name = _string;
+  data.devInfo.setDeviceId(_string);
 }
 
 void
 Parser::setOS(const std::string& _string)
 {
-  data.sysinfo_.os_name = _string;
+  data.os.setProductName(_string);
 }
 
 void
 Parser::setOSVersion(const std::string& _string)
 {
-  data.sysinfo_.os_version = _string;
+  data.os.setProductVersion(_string);
 }
 
 void
 Parser::setOSManufacturer(const std::string& _string)
 {
-  data.sysinfo_.os_manufacturer = _string;
+  data.os.setVendorName(_string);
 }
 
 void
 Parser::setOSConfiguration(const std::string& _string)
 {
-  data.sysinfo_.os_configuration = _string;
+  data.devInfo.setDescription(_string);
 }
 
 void
@@ -368,19 +311,19 @@ Parser::setSystemBootTime(const std::string& _string)
 void
 Parser::setSystemManufacturer(const std::string& _string)
 {
-  data.sysinfo_.system_manufacturer = _string;
+  data.devInfo.setVendor(_string);
 }
 
 void
 Parser::setSystemModel(const std::string& _string)
 {
-  data.sysinfo_.system_model = _string;
+  data.devInfo.setModel(_string);
 }
 
 void
 Parser::setSystemType(const std::string& _string)
 {
-  data.sysinfo_.system_type = _string;
+  data.devInfo.setDeviceType(_string);
 }
 
 void
@@ -414,76 +357,17 @@ Parser::setBootDevice(const std::string& _string)
 }
 
 void
-Parser::setSystemLocale(const std::string& _string)
-{
-  data.sysinfo_.locale = _string;
-}
-
-void
-Parser::setInputLocale(const std::string& _string)
-{
-  data.sysinfo_.locale = _string;
-}
-
-void
-Parser::setTimeZone(const std::string& _string)
-{
-  data.sysinfo_.time_zone = _string;
-}
-
-void
-Parser::setTotalPhysicalMemory(const std::string& _string)
-{
-  data.sysinfo_.total_physical_memory = _string;
-}
-
-void
-Parser::setAvailablePhysicalMemory(const std::string& _string)
-{
-  data.sysinfo_.available_physical_memory = _string;
-}
-
-void
-Parser::setVirtualMemoryMax(const std::string& _string)
-{
-  data.sysinfo_.virtual_memory_max_size = _string;
-}
-
-void
-Parser::setVirtualMemoryAvailable(const std::string& _string)
-{
-  data.sysinfo_.virtual_memory_available = _string;
-}
-
-void
-Parser::setVirtualMemoryInUse(const std::string& _string)
-{
-  data.sysinfo_.virtual_memory_in_use = _string;
-}
-
-void
-Parser::setPageFileLocations(const std::string& _string)
-{
-  data.sysinfo_.page_file_location = _string;
-}
-
-void
 Parser::setDomain(const std::string& _string)
 {
   data.sysinfo_.domain = _string;
 }
 
-
 void
-Parser::setLogonServer(const std::string& _string)
+Parser::addHotfixs(const std::string& _string)
 {
-  data.sysinfo_.logon_server = _string;
-}
-
-void
-Parser::setHotfixs(const std::string& _string)
-{
-  data.sysinfo_.hotfixs = _string;
+  nmdo::Hotfix hotfix;
+  hotfix.setHotfix(_string);
+  data.hotfixs.push_back(hotfix);
 }
 
 void
