@@ -52,6 +52,9 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+    nmdo::IpNetwork curDestNet;
+    nmdo::IpAddress curNextHop;
+
   protected:
     const std::string IP_REASON {"ip route show"};
 
@@ -87,6 +90,8 @@ class Parser :
   // ===========================================================================
   private:
   protected:
+    void ensureSameFamily(nmdo::Route&);
+
   public:
 };
 #endif // PARSER_HPP

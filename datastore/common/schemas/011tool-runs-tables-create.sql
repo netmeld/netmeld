@@ -32,12 +32,12 @@ BEGIN TRANSACTION;
 -- ----------------------------------------------------------------------
 
 CREATE TABLE tool_runs (
-    id                          UUID            NOT NULL,
-    tool_name                   TEXT            NOT NULL,
-    command_line                TEXT            NOT NULL,
-    data_path                   TEXT            NOT NULL,
-    execute_time                TSRANGE         NOT NULL,
-    PRIMARY KEY (id)
+    id                          UUID            NOT NULL
+  , tool_name                   TEXT            NOT NULL
+  , command_line                TEXT            NOT NULL
+  , data_path                   TEXT            NOT NULL
+  , execute_time                TSRANGE         NOT NULL
+  , PRIMARY KEY (id)
 );
 
 -- Partial indexes
@@ -53,12 +53,12 @@ ON tool_runs(execute_time);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE tool_run_interfaces (
-    tool_run_id                 UUID            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    media_type                  TEXT            NOT NULL,
-    is_up                       BOOLEAN         NOT NULL,
-    PRIMARY KEY (tool_run_id, interface_name),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , media_type                  TEXT            NOT NULL
+  , is_up                       BOOLEAN         NOT NULL
+  , PRIMARY KEY (tool_run_id, interface_name)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -83,11 +83,11 @@ ON tool_run_interfaces(is_up);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE tool_run_mac_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    mac_addr                    MACADDR         NOT NULL,
-    PRIMARY KEY (tool_run_id, interface_name, mac_addr),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , mac_addr                    MACADDR         NOT NULL
+  , PRIMARY KEY (tool_run_id, interface_name, mac_addr)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -117,11 +117,11 @@ ON tool_run_mac_addrs(interface_name, mac_addr);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE tool_run_ip_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    PRIMARY KEY (tool_run_id, interface_name, ip_addr),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , PRIMARY KEY (tool_run_id, interface_name, ip_addr)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -154,17 +154,17 @@ ON tool_run_ip_addrs(interface_name, ip_addr);
 -- next_hop_ip_addr = '0.0.0.0'   or '::'   for directly connected LANs.
 
 CREATE TABLE tool_run_ip_routes (
-    tool_run_id                 UUID            NOT NULL,
-    interface_name              TEXT            NOT NULL,
-    dst_ip_net                  CIDR            NOT NULL,
-    next_hop_ip_addr            INET            NOT NULL,
-    PRIMARY KEY (tool_run_id, interface_name, dst_ip_net, next_hop_ip_addr),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , interface_name              TEXT            NOT NULL
+  , dst_ip_net                  CIDR            NOT NULL
+  , next_hop_ip_addr            INET            NOT NULL
+  , PRIMARY KEY (tool_run_id, interface_name, dst_ip_net, next_hop_ip_addr)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (next_hop_ip_addr = host(next_hop_ip_addr)::INET),
-    CHECK (inet_same_family(dst_ip_net, next_hop_ip_addr))
+        ON UPDATE CASCADE
+  , CHECK (next_hop_ip_addr = host(next_hop_ip_addr)::INET)
+  , CHECK (inet_same_family(dst_ip_net, next_hop_ip_addr))
 );
 
 -- Partial indexes

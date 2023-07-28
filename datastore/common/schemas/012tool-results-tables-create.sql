@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -31,11 +31,11 @@ BEGIN TRANSACTION;
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_mac_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    mac_addr                    MACADDR         NOT NULL,
-    is_responding               BOOLEAN         NULL,
-    PRIMARY KEY (tool_run_id, mac_addr),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , mac_addr                    MACADDR         NOT NULL
+  , is_responding               BOOLEAN         NULL
+  , PRIMARY KEY (tool_run_id, mac_addr)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -57,15 +57,15 @@ ON raw_mac_addrs(is_responding);
 
 
 CREATE TABLE raw_ip_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    is_responding               BOOLEAN         NULL,
-    PRIMARY KEY (tool_run_id, ip_addr),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , is_responding               BOOLEAN         NULL
+  , PRIMARY KEY (tool_run_id, ip_addr)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (ip_addr = host(ip_addr)::INET)
+        ON UPDATE CASCADE
+  , CHECK (ip_addr = host(ip_addr)::INET)
 );
 
 -- Partial indexes
@@ -84,15 +84,15 @@ ON raw_ip_addrs(is_responding);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_mac_addrs_ip_addrs (
-    tool_run_id                 UUID            NOT NULL,
-    mac_addr                    MACADDR         NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    PRIMARY KEY (tool_run_id, mac_addr, ip_addr),
-    FOREIGN KEY (tool_run_id, mac_addr)
+    tool_run_id                 UUID            NOT NULL
+  , mac_addr                    MACADDR         NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , PRIMARY KEY (tool_run_id, mac_addr, ip_addr)
+  , FOREIGN KEY (tool_run_id, mac_addr)
         REFERENCES raw_mac_addrs(tool_run_id, mac_addr)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, ip_addr)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -119,12 +119,12 @@ ON raw_mac_addrs_ip_addrs(mac_addr, ip_addr);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_hostnames (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    hostname                    TEXT            NOT NULL,
-    reason                      TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, hostname, reason),
-    FOREIGN KEY (tool_run_id, ip_addr)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , hostname                    TEXT            NOT NULL
+  , reason                      TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, ip_addr, hostname, reason)
+  , FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -155,37 +155,38 @@ ON raw_hostnames(ip_addr, hostname, reason);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_dns_lookups (
-    tool_run_id                 UUID            NOT NULL,
-    resolver_ip_addr            INET            NOT NULL,
-    resolver_port               PortNumber      NOT NULL,
-    query_fqdn                  TEXT            NOT NULL,
-    query_class                 TEXT            NOT NULL,
-    query_type                  TEXT            NOT NULL,
-    response_status             TEXT            NOT NULL,
-    response_section            TEXT            NOT NULL,
-    response_fqdn               TEXT            NOT NULL,
-    response_class              TEXT            NOT NULL,
-    response_type               TEXT            NOT NULL,
-    response_ttl                INT             NOT NULL,
-    response_data               TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, resolver_ip_addr, resolver_port,
-                 query_fqdn, query_class, query_type,
-                 response_status, response_section,
-                 response_fqdn, response_class, response_type,
-                 response_ttl, response_data),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , resolver_ip_addr            INET            NOT NULL
+  , resolver_port               PortNumber      NOT NULL
+  , query_fqdn                  TEXT            NOT NULL
+  , query_class                 TEXT            NOT NULL
+  , query_type                  TEXT            NOT NULL
+  , response_status             TEXT            NOT NULL
+  , response_section            TEXT            NOT NULL
+  , response_fqdn               TEXT            NOT NULL
+  , response_class              TEXT            NOT NULL
+  , response_type               TEXT            NOT NULL
+  , response_ttl                INT             NOT NULL
+  , response_data               TEXT            NOT NULL
+  , PRIMARY KEY ( tool_run_id, resolver_ip_addr, resolver_port
+                , query_fqdn, query_class, query_type
+                , response_status, response_section
+                , response_fqdn, response_class, response_type
+                , response_ttl, response_data
+                )
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (resolver_ip_addr = host(resolver_ip_addr)::INET),
-    CHECK (query_fqdn  = lower(query_fqdn)),
-    CHECK (query_class = upper(query_class)),
-    CHECK (query_type  = upper(query_type)),
-    CHECK (response_status  = upper(response_status)),
-    CHECK (response_section = upper(response_section)),
-    CHECK (response_fqdn  = lower(response_fqdn)),
-    CHECK (response_class = upper(response_class)),
-    CHECK (response_type  = upper(response_type))
+        ON UPDATE CASCADE
+  , CHECK (resolver_ip_addr = host(resolver_ip_addr)::INET)
+  , CHECK (query_fqdn       = lower(query_fqdn))
+  , CHECK (query_class      = upper(query_class))
+  , CHECK (query_type       = upper(query_type))
+  , CHECK (response_status  = upper(response_status))
+  , CHECK (response_section = upper(response_section))
+  , CHECK (response_fqdn    = lower(response_fqdn))
+  , CHECK (response_class   = upper(response_class))
+  , CHECK (response_type    = upper(response_type))
 );
 
 -- Partial indexes
@@ -232,21 +233,22 @@ ON raw_dns_lookups(response_data);
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_dns_lookups_idx_views
 ON raw_dns_lookups
-   (resolver_ip_addr, resolver_port,
-    query_fqdn, query_class, query_type,
-    response_status, response_section,
-    response_fqdn, response_class, response_type,
-    response_ttl, response_data);
+   ( resolver_ip_addr, resolver_port
+   , query_fqdn, query_class, query_type
+   , response_status, response_section
+   , response_fqdn, response_class, response_type
+   , response_ttl, response_data
+   );
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_vlans (
-    tool_run_id                 UUID            NOT NULL,
-    vlan                        VlanNumber      NOT NULL,
-    description                 TEXT            NULL,
-    PRIMARY KEY (tool_run_id, vlan),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , vlan                        VlanNumber      NOT NULL
+  , description                 TEXT            NULL
+  , PRIMARY KEY (tool_run_id, vlan)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -263,11 +265,11 @@ ON raw_vlans(vlan);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_ip_nets (
-    tool_run_id                 UUID            NOT NULL,
-    ip_net                      CIDR            NOT NULL,
-    description                 TEXT            NULL,
-    PRIMARY KEY (tool_run_id, ip_net),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , ip_net                      CIDR            NOT NULL
+  , description                 TEXT            NULL
+  , PRIMARY KEY (tool_run_id, ip_net)
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -284,24 +286,24 @@ ON raw_ip_nets(ip_net);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE ip_nets_extra_weights (
-    ip_net                      CIDR            NOT NULL,
-    extra_weight                FLOAT           NOT NULL,
-    PRIMARY KEY (ip_net)
+    ip_net                      CIDR            NOT NULL
+  , extra_weight                FLOAT           NOT NULL
+  , PRIMARY KEY (ip_net)
 );
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_vlans_ip_nets (
-    tool_run_id                 UUID            NOT NULL,
-    vlan                        VlanNumber      NOT NULL,
-    ip_net                      CIDR            NOT NULL,
-    PRIMARY KEY (tool_run_id, vlan, ip_net),
-    FOREIGN KEY (tool_run_id, vlan)
+    tool_run_id                 UUID            NOT NULL
+  , vlan                        VlanNumber      NOT NULL
+  , ip_net                      CIDR            NOT NULL
+  , PRIMARY KEY (tool_run_id, vlan, ip_net)
+  , FOREIGN KEY (tool_run_id, vlan)
         REFERENCES raw_vlans(tool_run_id, vlan)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, ip_net)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, ip_net)
         REFERENCES raw_ip_nets(tool_run_id, ip_net)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -326,20 +328,20 @@ ON raw_vlans_ip_nets(vlan, ip_net);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_ip_traceroutes (
-    tool_run_id                 UUID            NOT NULL,
-    hop_count                   INT             NOT NULL,
-    next_hop_ip_addr            INET            NOT NULL,
-    dst_ip_addr                 INET            NOT NULL,
-    PRIMARY KEY (tool_run_id, hop_count, next_hop_ip_addr, dst_ip_addr),
-    FOREIGN KEY (tool_run_id, next_hop_ip_addr)
+    tool_run_id                 UUID            NOT NULL
+  , hop_count                   INT             NOT NULL
+  , next_hop_ip_addr            INET            NOT NULL
+  , dst_ip_addr                 INET            NOT NULL
+  , PRIMARY KEY (tool_run_id, hop_count, next_hop_ip_addr, dst_ip_addr)
+  , FOREIGN KEY (tool_run_id, next_hop_ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (tool_run_id, dst_ip_addr)
+        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, dst_ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (hop_count BETWEEN 0 AND 255)
+        ON UPDATE CASCADE
+  , CHECK (hop_count BETWEEN 0 AND 255)
 );
 
 -- Partial indexes
@@ -363,14 +365,16 @@ ON raw_ip_traceroutes(hop_count, next_hop_ip_addr, dst_ip_addr);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_packages (
-    tool_run_id                  UUID            NOT NULL,
-    package_state                TEXT            NULL,
-    package_name                 TEXT            NOT NULL,
-    package_version              TEXT            NOT NULL,
-    package_architecture         TEXT            NOT NULL,
-    package_description          TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, package_state, package_name, package_version, package_architecture, package_description),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                  UUID            NOT NULL
+  , package_state                TEXT            NULL
+  , package_name                 TEXT            NOT NULL
+  , package_version              TEXT            NOT NULL
+  , package_architecture         TEXT            NOT NULL
+  , package_description          TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, package_state, package_name
+                , package_version, package_architecture, package_description
+                )
+  , FOREIGN KEY (tool_run_id)
         REFERENCES tool_runs(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -398,20 +402,20 @@ ON raw_packages(package_description);
 -- Index the primary key without tool_run_id (if not already indexed).
 -- Helps the views that ignore the tool_run_id.
 CREATE INDEX raw_packages_idx_views
-ON raw_packages(package_state, package_name, package_architecture);
+ON raw_packages(package_name, package_version, package_architecture);
 
 
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_ports (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL, -- '-1' = 'other'
-    port_state                  TEXT            NULL,
-    port_reason                 TEXT            NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port),
-    FOREIGN KEY (tool_run_id, ip_addr)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL -- '-1' = 'other'
+  , port_state                  TEXT            NULL
+  , port_reason                 TEXT            NULL
+  , PRIMARY KEY (tool_run_id, ip_addr, protocol, port)
+  , FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -445,16 +449,16 @@ ON raw_ports(ip_addr, protocol, port);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_network_services (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL,
-    service_name                TEXT            NULL,
-    service_description         TEXT            NULL,
-    service_reason              TEXT            NULL,
-    observer_ip_addr            INET            NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port),
-    FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL
+  , service_name                TEXT            NULL
+  , service_description         TEXT            NULL
+  , service_reason              TEXT            NULL
+  , observer_ip_addr            INET            NULL
+  , PRIMARY KEY (tool_run_id, ip_addr, protocol, port)
+  , FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -497,24 +501,24 @@ ON raw_network_services(ip_addr, protocol, port);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_nessus_results (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL,
-    plugin_id                   INT             NOT NULL,
-    plugin_name                 TEXT            NULL,
-    plugin_family               TEXT            NULL,
-    plugin_type                 TEXT            NULL,
-    plugin_output               TEXT            NULL,
-    severity                    INT             NOT NULL,
-    description                 TEXT            NULL,
-    solution                    TEXT            NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port, plugin_id),
-    FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL
+  , plugin_id                   INT             NOT NULL
+  , plugin_name                 TEXT            NULL
+  , plugin_family               TEXT            NULL
+  , plugin_type                 TEXT            NULL
+  , plugin_output               TEXT            NULL
+  , severity                    INT             NOT NULL
+  , description                 TEXT            NULL
+  , solution                    TEXT            NULL
+  , PRIMARY KEY (tool_run_id, ip_addr, protocol, port, plugin_id)
+  , FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (severity BETWEEN 0 AND 4)
+        ON UPDATE CASCADE
+  , CHECK (severity BETWEEN 0 AND 4)
 );
 
 -- Partial indexes
@@ -566,14 +570,14 @@ ON raw_nessus_results(ip_addr, protocol, port, plugin_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_nessus_results_cves (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL,
-    plugin_id                   INT             NOT NULL,
-    cve_id                      CVE             NOT NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id),
-    FOREIGN KEY (tool_run_id, ip_addr, protocol, port, plugin_id)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL
+  , plugin_id                   INT             NOT NULL
+  , cve_id                      CVE             NOT NULL
+  , PRIMARY KEY (tool_run_id, ip_addr, protocol, port, plugin_id, cve_id)
+  , FOREIGN KEY (tool_run_id, ip_addr, protocol, port, plugin_id)
         REFERENCES raw_nessus_results
                    (tool_run_id, ip_addr, protocol, port, plugin_id)
         ON DELETE CASCADE
@@ -608,15 +612,16 @@ ON raw_nessus_results_cves(ip_addr, protocol, port, plugin_id, cve_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_nessus_results_metasploit_modules (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL,
-    plugin_id                   INT             NOT NULL,
-    metasploit_name             TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port, plugin_id,
-                 metasploit_name),
-    FOREIGN KEY (tool_run_id, ip_addr, protocol, port, plugin_id)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL
+  , plugin_id                   INT             NOT NULL
+  , metasploit_name             TEXT            NOT NULL
+  , PRIMARY KEY ( tool_run_id, ip_addr, protocol, port, plugin_id
+                , metasploit_name
+                )
+  , FOREIGN KEY (tool_run_id, ip_addr, protocol, port, plugin_id)
         REFERENCES raw_nessus_results
                    (tool_run_id, ip_addr, protocol, port, plugin_id)
         ON DELETE CASCADE
@@ -654,14 +659,14 @@ ON raw_nessus_results_metasploit_modules
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_nse_results (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL,
-    script_id                   TEXT            NOT NULL,
-    script_output               TEXT            NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port, script_id),
-    FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL
+  , script_id                   TEXT            NOT NULL
+  , script_output               TEXT            NULL
+  , PRIMARY KEY (tool_run_id, ip_addr, protocol, port, script_id)
+  , FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -698,17 +703,18 @@ ON raw_nse_results(ip_addr, protocol, port, script_id);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_ssh_host_public_keys (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL,
-    ssh_key_type                TEXT            NOT NULL,
-    ssh_key_bits                INT             NOT NULL,
-    ssh_key_fingerprint         TEXT            NOT NULL,
-    ssh_key_public              TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port,
-                 ssh_key_type, ssh_key_bits, ssh_key_fingerprint),
-    FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL
+  , ssh_key_type                TEXT            NOT NULL
+  , ssh_key_bits                INT             NOT NULL
+  , ssh_key_fingerprint         TEXT            NOT NULL
+  , ssh_key_public              TEXT            NOT NULL
+  , PRIMARY KEY ( tool_run_id, ip_addr, protocol, port
+                , ssh_key_type, ssh_key_bits, ssh_key_fingerprint
+                )
+  , FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -745,15 +751,16 @@ ON raw_ssh_host_public_keys(ip_addr, protocol, port);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_ssh_host_algorithms (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    protocol                    TEXT            NOT NULL,
-    port                        PortNumber      NOT NULL,
-    ssh_algo_type               TEXT            NOT NULL,
-    ssh_algo_name               TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, ip_addr, protocol, port,
-                 ssh_algo_type, ssh_algo_name),
-    FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , protocol                    TEXT            NOT NULL
+  , port                        PortNumber      NOT NULL
+  , ssh_algo_type               TEXT            NOT NULL
+  , ssh_algo_name               TEXT            NOT NULL
+  , PRIMARY KEY ( tool_run_id, ip_addr, protocol, port
+                , ssh_algo_type, ssh_algo_name
+                )
+  , FOREIGN KEY (tool_run_id, ip_addr, protocol, port)
         REFERENCES raw_ports(tool_run_id, ip_addr, protocol, port)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -787,14 +794,14 @@ ON raw_ssh_host_algorithms(ip_addr, protocol, port);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_operating_systems (
-    tool_run_id                 UUID            NOT NULL,
-    ip_addr                     INET            NOT NULL,
-    vendor_name                 TEXT            NULL,
-    product_name                TEXT            NULL,
-    product_version             TEXT            NULL,
-    cpe                         TEXT            NULL,
-    accuracy                    FLOAT           NULL,
-    FOREIGN KEY (tool_run_id, ip_addr)
+    tool_run_id                 UUID            NOT NULL
+  , ip_addr                     INET            NOT NULL
+  , vendor_name                 TEXT            NULL
+  , product_name                TEXT            NULL
+  , product_version             TEXT            NULL
+  , cpe                         TEXT            NULL
+  , accuracy                    FLOAT           NULL
+  , FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -804,13 +811,12 @@ CREATE TABLE raw_operating_systems (
 -- Create UNIQUE expressional index with substitutions of NULL values
 -- for use with `ON CONFLICT` guards against duplicate data.
 CREATE UNIQUE INDEX raw_operating_systems_idx_unique
-ON raw_operating_systems
-  ((HASH_CHAIN(
-      tool_run_id::TEXT, ip_addr::TEXT,
-      vendor_name, product_name, product_version,
-      cpe, accuracy::TEXT
-    )
-  ));
+ON raw_operating_systems(
+  HASH_CHAIN( tool_run_id::TEXT, ip_addr::TEXT
+            , vendor_name, product_name, product_version
+            , cpe, accuracy::TEXT
+            )
+);
 
 -- Partial indexes
 CREATE INDEX raw_operating_systems_idx_tool_run_id
@@ -838,11 +844,11 @@ ON raw_operating_systems(accuracy);
 -- ----------------------------------------------------------------------
 
 CREATE TABLE raw_tool_observations (
-    tool_run_id                 UUID            NOT NULL,
-    category                    TEXT            NOT NULL,
-    observation                 TEXT            NOT NULL,
-    PRIMARY KEY (tool_run_id, category, observation),
-    FOREIGN KEY (tool_run_id)
+    tool_run_id                 UUID            NOT NULL
+  , category                    TEXT            NOT NULL
+  , observation                 TEXT            NOT NULL
+  , PRIMARY KEY (tool_run_id, category, observation)
+  , FOREIGN KEY (tool_run_id)
       REFERENCES tool_runs(id)
       ON DELETE CASCADE
       ON UPDATE CASCADE
@@ -860,7 +866,6 @@ ON raw_tool_observations(observation);
 
 
 -- ----------------------------------------------------------------------
-
 
 CREATE TABLE raw_prowler_checks (
       tool_run_id                 UUID            NOT NULL
@@ -882,6 +887,60 @@ CREATE TABLE raw_prowler_checks (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
+-- Create UNIQUE expressional index with substitutions of NULL values
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_prowler_checks_idx_unique
+ON raw_prowler_checks(
+  HASH_CHAIN( tool_run_id::TEXT, account_number, AS_TEXT(timestamp)
+            , region, level, control_id, service, status, AS_TEXT(severity)
+            , control, risk, remediation, documentation_link, resource_id
+            )
+);
+
+-- Partial indexes
+CREATE INDEX raw_prowler_checks_idx_tool_run_id
+ON raw_prowler_checks(tool_run_id);
+
+CREATE INDEX raw_prowler_checks_idx_account_number
+ON raw_prowler_checks(account_number);
+
+CREATE INDEX raw_prowler_checks_idx_timestamp
+ON raw_prowler_checks(timestamp);
+
+CREATE INDEX raw_prowler_checks_idx_region
+ON raw_prowler_checks(region);
+
+CREATE INDEX raw_prowler_checks_idx_level
+ON raw_prowler_checks(level);
+
+CREATE INDEX raw_prowler_checks_idx_control_id
+ON raw_prowler_checks(control_id);
+
+CREATE INDEX raw_prowler_checks_idx_service
+ON raw_prowler_checks(service);
+
+CREATE INDEX raw_prowler_checks_idx_status
+ON raw_prowler_checks(status);
+
+CREATE INDEX raw_prowler_checks_idx_severity
+ON raw_prowler_checks(severity);
+
+CREATE INDEX raw_prowler_checks_idx_control
+ON raw_prowler_checks(control);
+
+CREATE INDEX raw_prowler_checks_idx_risk
+ON raw_prowler_checks(risk);
+
+CREATE INDEX raw_prowler_checks_idx_remediation
+ON raw_prowler_checks(remediation);
+
+CREATE INDEX raw_prowler_checks_idx_documentation_link
+ON raw_prowler_checks(documentation_link);
+
+CREATE INDEX raw_prowler_checks_idx_resource_id
+ON raw_prowler_checks(resource_id);
 
 
 -- ----------------------------------------------------------------------

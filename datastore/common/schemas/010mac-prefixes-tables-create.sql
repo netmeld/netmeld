@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -29,10 +29,10 @@ BEGIN TRANSACTION;
 -- ----------------------------------------------------------------------
 
 CREATE TABLE vendor_mac_prefixes (
-    mac_prefix                  MACADDR         NOT NULL,
-    vendor_name                 TEXT            NOT NULL,
-    PRIMARY KEY (mac_prefix),
-    CHECK (trunc(mac_prefix) = mac_prefix)
+    mac_prefix                  MACADDR         NOT NULL
+  , vendor_name                 TEXT            NOT NULL
+  , PRIMARY KEY (mac_prefix)
+  , CHECK (trunc(mac_prefix) = mac_prefix)
 );
 
 

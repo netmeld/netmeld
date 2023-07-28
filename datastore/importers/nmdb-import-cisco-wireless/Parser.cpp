@@ -136,7 +136,10 @@ Parser::addIface2(const std::string& name,
   if (rtr.isValid()){
     nmdo::Route route;
     route.setIfaceName(name);
-    route.setDstIpNet(ip); // saves as both addr and net
+    if ("Null0" == name) {
+      route.setNullRoute(true);
+    }
+    route.setDstIpNet(ip);
     route.setNextHopIpAddr(rtr);
     d.routes.push_back(route);
   }

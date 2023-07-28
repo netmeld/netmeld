@@ -1,0 +1,45 @@
+// =============================================================================
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// =============================================================================
+// Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
+// =============================================================================
+
+digraph g {
+graph [
+rankdir = "LR",
+concentrate = true,
+ratio = auto
+];
+node [
+fontsize = "10",
+shape = record
+];
+edge [
+];
+<TMPL_LOOP name="schemas"><TMPL_LOOP name="tables">
+"<TMPL_IF name="number_of_schemas"><TMPL_VAR name="schema_dot">.</TMPL_IF name="number_of_schemas"><TMPL_VAR name="table_dot">" [shape = plaintext, label = < <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0"> <TR ><TD PORT="ltcol0"> </TD> <TD bgcolor="grey90" border="1" COLSPAN="4"> \N </TD> <TD PORT="rtcol0"></TD></TR> <TMPL_LOOP name="columns"> <TR><TD PORT="ltcol<TMPL_VAR name="column_number">" ></TD><TD align="left" > <TMPL_VAR name="column_dot"> </TD><TD align="left" > <TMPL_VAR name="column_type"> </TD><TD align="left" > <TMPL_LOOP name="column_constraints"><TMPL_IF NAME="column_primary_key">PK</TMPL_IF NAME="column_primary_key"></TMPL_LOOP name="column_constraints"> </TD><TD align="left" > <TMPL_LOOP name="column_constraints"><TMPL_IF NAME="column_fk"><TMPL_IF NAME="__first__">FK</TMPL_IF NAME="__first__"></TMPL_IF NAME="column_fk"></TMPL_LOOP name="column_constraints"> </TD><TD align="left" PORT="rtcol<TMPL_VAR name="column_number">"> </TD></TR></TMPL_LOOP name="columns"> </TABLE>> ];
+</TMPL_LOOP name="tables"></TMPL_LOOP name="schemas">
+
+<TMPL_LOOP name="fk_links">
+"<TMPL_IF name="number_of_schemas"><TMPL_VAR name="handle0_schema">.</TMPL_IF name="number_of_schemas"><TMPL_VAR name="handle0_name">":rtcol<TMPL_VAR name="handle0_connection"> -> "<TMPL_IF name="number_of_schemas"><TMPL_VAR name="handle1_schema">.</TMPL_IF name="number_of_schemas"><TMPL_VAR name="handle1_name">":ltcol<TMPL_VAR name="handle1_connection"> [label="<TMPL_VAR name="fk_link_name_dot">"];</TMPL_LOOP name="fk_links">
+}

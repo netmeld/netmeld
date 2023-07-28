@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -135,7 +135,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           pqxx::nontransaction ntWork {db};
 
           LOG_INFO << "Cleaning tool_runs\n";
-          ntWork.exec("DELETE FROM tool_runs");
+          ntWork.exec("TRUNCATE FROM tool_runs RESTART IDENTITY CASCADE");
 
           pqxx::result tables = ntWork.exec(
               "SELECT relname AS populated_table"
@@ -146,7 +146,10 @@ class Tool : public nmdt::AbstractDatastoreTool
             std::string populatedTable;
             tableRow.at("populated_table").to(populatedTable);
             LOG_DEBUG << "Cleaning " << populatedTable << std::endl;
-            ntWork.exec("DELETE FROM " + populatedTable);
+            ntWork.exec("TRUNCATE FROM "
+                       + populatedTable
+                       + " RESTART IDENTITY CASCADE"
+                       );
           }
           return; // short circuit, easier logic
 

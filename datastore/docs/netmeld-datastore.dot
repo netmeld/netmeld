@@ -1,3 +1,29 @@
+// =============================================================================
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// =============================================================================
+// Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
+// =============================================================================
+
 digraph netmeld {
   rankdir=LR;
   nodesep=0.5;
@@ -12,22 +38,95 @@ digraph netmeld {
   node[shape="circle"];
   users [label="End\nUsers"];
 
-  // find . -iname "nmdb-*" -printf '%f\n' | sed -e 's/.cpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
 
-  node[shape="rectangle",margin=0.1];
-  bins [label=<
-    <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-      <tr><td rowspan="7">Bin(s)</td></tr>
-      <tr><td align="left">nmdb-export-*</td></tr>
-      <tr><td align="left">nmdb-graph-*</td></tr>
-      <tr><td align="left">nmdb-import-*</td></tr>
-      <tr><td align="left">nmdb-insert-*</td></tr>
-      <tr><td align="left" port="init">nmdb-initialize</td></tr>
-      <tr><td align="left" port="remove">nmdb-remove-tool-run</td></tr>
-    </table>>];
+  subgraph cluster_bin {
+    label="Binary Resources\n(Includes Sub-Module Binaries)";
+    style="dashed";
+
+    node[shape="rectangle", margin=0.1];
+    bins_ [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="5">Datastore<br/>Bin(s)</td></tr>
+  <tr><td align="left">nmdb-analyze-data</td></tr>
+<tr><td align="left">nmdb-convert-acls</td></tr>
+<tr><td align="left" port="init">nmdb-initialize</td></tr>
+<tr><td align="left" port="remove">nmdb-remove-tool-run</td></tr>
+      </table>>];
+    bins_exporters [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="4">Exporter<br/>Bin(s)</td></tr>
+  <tr><td align="left">nmdb-export-port-list</td></tr>
+<tr><td align="left">nmdb-export-query</td></tr>
+<tr><td align="left">nmdb-export-scans</td></tr>
+      </table>>];
+    bins_graphers [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="4">Grapher<br/>Bin(s)</td></tr>
+  <tr><td align="left">nmdb-graph-ac</td></tr>
+<tr><td align="left">nmdb-graph-aws</td></tr>
+<tr><td align="left">nmdb-graph-network</td></tr>
+      </table>>];
+    bins_importers [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="43">Importer<br/>Bin(s)</td></tr>
+  <tr><td align="left">nmdb-import-aws-ec2-describe-instances</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-network-acls</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-network-interfaces</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-route-tables</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-security-groups</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-subnets</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-transit-gateway-attachments</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-vpc-peering-connections</td></tr>
+<tr><td align="left">nmdb-import-aws-ec2-describe-vpcs</td></tr>
+<tr><td align="left">nmdb-import-brocade</td></tr>
+<tr><td align="left">nmdb-import-brocade-show-ip-route</td></tr>
+<tr><td align="left">nmdb-import-cisco</td></tr>
+<tr><td align="left">nmdb-import-cisco-show-ip-route</td></tr>
+<tr><td align="left">nmdb-import-cisco-wireless</td></tr>
+<tr><td align="left">nmdb-import-clw</td></tr>
+<tr><td align="left">nmdb-import-dig</td></tr>
+<tr><td align="left">nmdb-import-dpkg</td></tr>
+<tr><td align="left">nmdb-import-f5-json</td></tr>
+<tr><td align="left">nmdb-import-hosts</td></tr>
+<tr><td align="left">nmdb-import-ip-addr-show</td></tr>
+<tr><td align="left">nmdb-import-ipconfig</td></tr>
+<tr><td align="left">nmdb-import-ip-route-show</td></tr>
+<tr><td align="left">nmdb-import-iptables-save</td></tr>
+<tr><td align="left">nmdb-import-juniper-conf</td></tr>
+<tr><td align="left">nmdb-import-juniper-set</td></tr>
+<tr><td align="left">nmdb-import-juniper-show-route</td></tr>
+<tr><td align="left">nmdb-import-juniper-xml</td></tr>
+<tr><td align="left">nmdb-import-nessus</td></tr>
+<tr><td align="left">nmdb-import-nmap</td></tr>
+<tr><td align="left">nmdb-import-paloalto-xml</td></tr>
+<tr><td align="left">nmdb-import-pcap</td></tr>
+<tr><td align="left">nmdb-import-ping</td></tr>
+<tr><td align="left">nmdb-import-powerconnect</td></tr>
+<tr><td align="left">nmdb-import-prowler</td></tr>
+<tr><td align="left">nmdb-import-rpm-query</td></tr>
+<tr><td align="left">nmdb-import-show-cdp-neighbor</td></tr>
+<tr><td align="left">nmdb-import-show-inventory</td></tr>
+<tr><td align="left">nmdb-import-show-mac-address-table</td></tr>
+<tr><td align="left">nmdb-import-show-neighbor</td></tr>
+<tr><td align="left">nmdb-import-traceroute</td></tr>
+<tr><td align="left">nmdb-import-tshark</td></tr>
+<tr><td align="left">nmdb-import-vyos</td></tr>
+      </table>>];
+    bins_inserters [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td rowspan="6">Inserter<br/>Bin(s)</td></tr>
+  <tr><td align="left">nmdb-insert-ac</td></tr>
+<tr><td align="left">nmdb-insert-address</td></tr>
+<tr><td align="left">nmdb-insert-device</td></tr>
+<tr><td align="left">nmdb-insert-device-hardware</td></tr>
+<tr><td align="left">nmdb-insert-network</td></tr>
+      </table>>];
+
+    bins_importers -> {rank=same; bins_ bins_exporters bins_graphers bins_inserters} [style="invis"];
+    {}
+  };
 
 
-  // find common/schemas -iname "*.hpp" -printf '%f\n' | sed -e 's/.hpp//g' | sort -u | sed -e 's/\(.*\)/<tr><td align="left">\1<\/td><\/tr>/g'
 
   subgraph cluster_lib {
     label="Library Resources";
@@ -36,51 +135,78 @@ digraph netmeld {
     node[shape="rectangle",margin=0.1];
     objects [label=<
       <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-        <tr><td rowspan="19">Object(s)</td></tr>
-        <tr><td align="left">AbstractDatastoreObject</td></tr>
-        <tr><td align="left">AcBook</td></tr>
-        <tr><td align="left">AcNetworkBook</td></tr>
-        <tr><td align="left">AcRule</td></tr>
-        <tr><td align="left">AcServiceBook</td></tr>
-        <tr><td align="left">Cve</td></tr>
-        <tr><td align="left">DeviceInformation</td></tr>
-        <tr><td align="left">Interface</td></tr>
-        <tr><td align="left">InterfaceNetwork</td></tr>
-        <tr><td align="left">IpAddress</td></tr>
-        <tr><td align="left">IpNetwork</td></tr>
-        <tr><td align="left">MacAddress</td></tr>
-        <tr><td align="left">OperatingSystem</td></tr>
-        <tr><td align="left">Port</td></tr>
-        <tr><td align="left">Route</td></tr>
-        <tr><td align="left">Service</td></tr>
-        <tr><td align="left">ToolObservations</td></tr>
-        <tr><td align="left">Vlan</td></tr>
+        <tr><td rowspan="46">Object(s)</td></tr>
+<tr><td align="left">AbstractDatastoreObject</td></tr>
+<tr><td align="left">AcBook</td></tr>
+<tr><td align="left">AclIpNetSet</td></tr>
+<tr><td align="left">AclPortSet</td></tr>
+<tr><td align="left">AclRule</td></tr>
+<tr><td align="left">AclRulePort</td></tr>
+<tr><td align="left">AclRuleService</td></tr>
+<tr><td align="left">AclService</td></tr>
+<tr><td align="left">AclZone</td></tr>
+<tr><td align="left">AcNetworkBook</td></tr>
+<tr><td align="left">AcRule</td></tr>
+<tr><td align="left">AcServiceBook</td></tr>
+<tr><td align="left">aws/Attachment</td></tr>
+<tr><td align="left">aws/CidrBlock</td></tr>
+<tr><td align="left">aws/Instance</td></tr>
+<tr><td align="left">aws/NetworkAcl</td></tr>
+<tr><td align="left">aws/NetworkAclRule</td></tr>
+<tr><td align="left">aws/NetworkInterface</td></tr>
+<tr><td align="left">aws/Route</td></tr>
+<tr><td align="left">aws/RouteTable</td></tr>
+<tr><td align="left">aws/SecurityGroup</td></tr>
+<tr><td align="left">aws/SecurityGroupRule</td></tr>
+<tr><td align="left">aws/Subnet</td></tr>
+<tr><td align="left">aws/TransitGatewayAttachment</td></tr>
+<tr><td align="left">aws/Vpc</td></tr>
+<tr><td align="left">aws/VpcPeeringConnection</td></tr>
+<tr><td align="left">Cve</td></tr>
+<tr><td align="left">DeviceInformation</td></tr>
+<tr><td align="left">DnsLookup</td></tr>
+<tr><td align="left">DnsResolver</td></tr>
+<tr><td align="left">Interface</td></tr>
+<tr><td align="left">InterfaceNetwork</td></tr>
+<tr><td align="left">IpAddress</td></tr>
+<tr><td align="left">IpNetwork</td></tr>
+<tr><td align="left">MacAddress</td></tr>
+<tr><td align="left">OperatingSystem</td></tr>
+<tr><td align="left">Package</td></tr>
+<tr><td align="left">Port</td></tr>
+<tr><td align="left">PortRange</td></tr>
+<tr><td align="left">Route</td></tr>
+<tr><td align="left">Service</td></tr>
+<tr><td align="left">ToolObservations</td></tr>
+<tr><td align="left">TracerouteHop</td></tr>
+<tr><td align="left">Vlan</td></tr>
+<tr><td align="left">Vrf</td></tr>
       </table>>];
     parsers [label=<
       <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
         <tr><td rowspan="7">Parser(s)</td></tr>
-        <tr><td align="left">ParserCve</td></tr>
-        <tr><td align="left">ParserDomainName</td></tr>
-        <tr><td align="left">ParserHelper</td></tr>
-        <tr><td align="left">ParserIpAddress</td></tr>
-        <tr><td align="left">ParserMacAddress</td></tr>
-        <tr><td align="left">ParserTestHelper</td></tr>
+<tr><td align="left">ParserCve</td></tr>
+<tr><td align="left">ParserDomainName</td></tr>
+<tr><td align="left">ParserHelper</td></tr>
+<tr><td align="left">ParserIpAddress</td></tr>
+<tr><td align="left">ParserMacAddress</td></tr>
+<tr><td align="left">ParserTestHelper</td></tr>
       </table>>];
     tools [label=<
       <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
         <tr><td rowspan="6">Tool(s)</td></tr>
-        <tr><td align="left" port="dstool">AbstractDatastoreTool</td></tr>
-        <tr><td align="left">AbstractExportTool</td></tr>
-        <tr><td align="left">AbstractGraphTool</td></tr>
-        <tr><td align="left">AbstractImportTool</td></tr>
-        <tr><td align="left">AbstractInsertTool</td></tr>
+<tr><td align="left" port="dstool">AbstractDatastoreTool</td></tr>
+<tr><td align="left">AbstractExportTool</td></tr>
+<tr><td align="left">AbstractGraphTool</td></tr>
+<tr><td align="left">AbstractImportTool</td></tr>
+<tr><td align="left">AbstractInsertTool</td></tr>
       </table>>];
     utils [label=<
       <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
         <tr><td rowspan="4">Util(s)</td></tr>
-        <tr><td align="left">AcBookUtilities</td></tr>
-        <tr><td align="left">QueriesCommon</td></tr>
-        <tr><td align="left">ServiceFactory</td></tr>
+<tr><td align="left">AcBookUtilities</td></tr>
+<tr><td align="left">QueriesCommon</td></tr>
+<tr><td align="left">ServiceFactory</td></tr>
       </table>>];
 
     schemas [label="Schema(s)"];
@@ -97,13 +223,13 @@ digraph netmeld {
 
   {rank=same; schemas psqldb};
 
-  users->bins;
+  users->bins_ [lhead="cluster_bin"];
   users->psqldb [dir="both"];
   schemas->psqldb;
   objects->psqldb [dir="both", lhead="cluster_datastore"];
-  bins->tools [lhead="cluster_lib"];
-  bins:init->psqldb;
-  bins:remove->psqldb;
+  bins_->tools [ltail="cluster_bin", lhead="cluster_lib"];
+  bins_:init->psqldb;
+  bins_:remove->psqldb;
   tools->{parsers objects utils};
   tools:dstool->psqldb [lhead="cluster_datastore"];
   parsers->{objects utils};

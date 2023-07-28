@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -154,25 +154,56 @@ BOOST_AUTO_TEST_CASE(testSetters)
     route.setMetric(1000);
     BOOST_CHECK_EQUAL(1000, route.getMetric());
   }
+
+  {
+    TestRoute route;
+    nmdo::IpAddress tv1;
+    nmdo::IpAddress tv2 {"1.2.3.4/24"};
+
+    BOOST_CHECK("" == route.getNextHopIpAddrString());
+    route.setNextHopIpAddr(tv2);
+    BOOST_CHECK(tv2.toString() == route.getNextHopIpAddrString());
+    route.setNullRoute(true);
+    BOOST_CHECK("" == route.getNextHopIpAddrString());
+    route.setNullRoute(false);
+    BOOST_CHECK(tv2.toString() == route.getNextHopIpAddrString());
+    route.setNextHopIpAddr(tv1);
+    BOOST_CHECK("" == route.getNextHopIpAddrString());
+  }
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
-    {
-      TestRoute route;
-
-      BOOST_CHECK(!route.isValid());
-      route.setNextHopIpAddr(ipAddr);
-      BOOST_CHECK(route.isValid());
-    }
-
+    nmdo::IpAddress ipAddr  {"1.2.3.4/24"};
+    std::string     iface   {"eth101"};
     {
       TestRoute route;
 
       BOOST_CHECK(!route.isValid());
       route.setDstIpNet(ipAddr);
+      BOOST_CHECK(!route.isValid());
+      route.setNullRoute(true);
+      BOOST_CHECK(route.isValid());
+    }
+    {
+      TestRoute route;
+
+      BOOST_CHECK(!route.isValid());
+      route.setDstIpNet(ipAddr);
+      BOOST_CHECK(!route.isValid());
+      route.setNextHopIpAddr(ipAddr);
+      BOOST_CHECK(route.isValid());
+    }
+    {
+      TestRoute route;
+
+      BOOST_CHECK(!route.isValid());
+      route.setDstIpNet(ipAddr);
+      BOOST_CHECK(!route.isValid());
+      route.setNextVrfId("test");
+      BOOST_CHECK(!route.isValid());
+      route.setNextTableId("test");
       BOOST_CHECK(route.isValid());
     }
   }
@@ -181,7 +212,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestRoute route;
     nmdo::IpAddress ipAddr;
 
-    BOOST_CHECK(ipAddr.isDefault());
+    BOOST_CHECK(ipAddr.hasUnsetPrefix());
     route.setNextHopIpAddr(ipAddr);
     BOOST_CHECK(!route.isValid());
     route.setDstIpNet(ipAddr);
