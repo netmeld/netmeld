@@ -49,7 +49,7 @@ struct Systeminfo
   // std::string os_version; //os
   // std::string os_manufacturer; //os
   // std::string os_configuration; //deviceinfo device type
-  std::string build_type;
+  std::string build_type; //nohome
   std::string registered_owner; //nohome
   std::string registered_organization; //can be blank //nohome
   std::string product_id; //nohome
@@ -58,11 +58,11 @@ struct Systeminfo
   // std::string system_manufacturer;  //deviceinfo
   // std::string system_model; //deviceinfo
   // std::string system_type; //deviceinfo
-  std::string processor; //nohome
-  std::string bios_version; // optional
-  std::string windows_directory; // optional
-  std::string system_directory;
-  std::string boot_device; // optional
+  std::string processor; //nohome //nohome
+  std::string bios_version; // optional //nohome 
+  std::string windows_directory; // optional //nohome
+  std::string system_directory; //nohome
+  std::string boot_device; // optional //nohome
   std::string domain; //nohome
   // std::map<std::string, nmdo::Interface> network_cards; //interface
   std::string hyper_v; //nohome
@@ -102,7 +102,6 @@ struct Systeminfo
       oss << "Windows Directory:" << windows_directory << ",\n ";
       oss << "System Directory:" << system_directory << ",\n ";
       oss << "Boot Device:" << boot_device << ",\n ";
-      // oss << "Network Card(s):" << network_cards << ",\n ";
       oss << "Hyper-V Requirements:" << hyper_v << ",\n ";
       oss << "]"; // closing bracket
       return oss.str();
@@ -211,20 +210,12 @@ class Parser :
   // ===========================================================================
   private:
     Result getData();
-    void setHostname(const std::string&);
-    void setOS(const std::string&);
-    void setOSVersion(const std::string&);
-    void setOSManufacturer(const std::string&);
-    void setOSConfiguration(const std::string&);
     void setOSBuildType(const std::string&);
     void setRegisteredOwner(const std::string&);
     void setRegisteredOrganization(const std::string&);
     void setProductID(const std::string&);
     void setOriginalInstallDate(const std::string&);
     void setSystemBootTime(const std::string&);
-    void setSystemManufacturer(const std::string&);
-    void setSystemModel(const std::string&);
-    void setSystemType(const std::string&);
     void setProcessors(const std::string&);
     void setBIOSVersion(const std::string&);
     void setWindowsDirectory(const std::string&);

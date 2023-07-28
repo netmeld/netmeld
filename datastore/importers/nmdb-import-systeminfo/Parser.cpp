@@ -127,11 +127,31 @@ Parser::Parser() : Parser::base_type(start)
   hyper_v =
       ("Hyper-V Requirements: " > token > qi::eol);
   systeminfo =
-      // host_name [pnx::bind(&nmdo::DeviceInformation::setDeviceId, pnx::ref(data.devInfo), pnx::bind(&std::to_string, qi::_1))]
-      // host_name [(pnx::bind(&Parser::setHostname, this, qi::_1))]
       host_name
-      // > os_name [(pnx::bind(&Parser::setOS, this, qi::_1))]
-      > os_name > os_version > os_manufacturer > os_configuration > os_build_type[pnx::bind(&Parser::setOSBuildType, this, qi::_1)] > registered_owner[pnx::bind(&Parser::setRegisteredOwner, this, qi::_1)] > registered_organization[pnx::bind(&Parser::setRegisteredOrganization, this, qi::_1)] > product_id[pnx::bind(&Parser::setProductID, this, qi::_1)] > original_install_date[pnx::bind(&Parser::setOriginalInstallDate, this, qi::_1)] > system_boot_time[pnx::bind(&Parser::setSystemBootTime, this, qi::_1)] > system_manufacturer > system_model > system_type > processors[pnx::bind(&Parser::setProcessors, this, qi::_1)] > -bios_version[pnx::bind(&Parser::setBIOSVersion, this, qi::_1)] > -windows_directory[pnx::bind(&Parser::setWindowsDirectory, this, qi::_1)] > system_directory[pnx::bind(&Parser::setSystemDirectory, this, qi::_1)] > -boot_device[pnx::bind(&Parser::setBootDevice, this, qi::_1)] > *(qi::char_ - qi::lit("Domain:")) > domain[pnx::bind(&Parser::setDomain, this, qi::_1)] > *(qi::char_ - qi::lit("Hotfix")) > hotfixs > network_cards > hyper_v[pnx::bind(&Parser::setHyperV, this, qi::_1)];
+      > os_name
+      > os_version
+      > os_manufacturer
+      > os_configuration
+      > os_build_type[pnx::bind(&Parser::setOSBuildType, this, qi::_1)]
+      > registered_owner[pnx::bind(&Parser::setRegisteredOwner, this, qi::_1)]
+      > registered_organization[pnx::bind(&Parser::setRegisteredOrganization, this, qi::_1)]
+      > product_id[pnx::bind(&Parser::setProductID, this, qi::_1)]
+      > original_install_date[pnx::bind(&Parser::setOriginalInstallDate, this, qi::_1)]
+      > system_boot_time[pnx::bind(&Parser::setSystemBootTime, this, qi::_1)]
+      > system_manufacturer
+      > system_model
+      > system_type
+      > processors[pnx::bind(&Parser::setProcessors, this, qi::_1)]
+      > -bios_version[pnx::bind(&Parser::setBIOSVersion, this, qi::_1)]
+      > -windows_directory[pnx::bind(&Parser::setWindowsDirectory, this, qi::_1)]
+      > system_directory[pnx::bind(&Parser::setSystemDirectory, this, qi::_1)]
+      > -boot_device[pnx::bind(&Parser::setBootDevice, this, qi::_1)]
+      > *(qi::char_ - qi::lit("Domain:"))
+      > domain[pnx::bind(&Parser::setDomain, this, qi::_1)]
+      > *(qi::char_ - qi::lit("Hotfix"))
+      > hotfixs
+      > network_cards
+      > hyper_v[pnx::bind(&Parser::setHyperV, this, qi::_1)];
   ;
   ignoredLine =
       (qi::ascii::print > -qi::eol) | +qi::eol;
@@ -139,7 +159,6 @@ Parser::Parser() : Parser::base_type(start)
   // Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
       (start)(systeminfo)(host_name)(os_name)(os_version)(os_manufacturer)(os_configuration)(os_build_type)(registered_owner)(registered_organization)(product_id)(original_install_date)(system_boot_time)(system_manufacturer)(system_model)(system_type)(processors)(bios_version)(windows_directory)(system_directory)(boot_device)(domain)(hotfixs)(hotfix)(network_cards)(network_card)(dhcpServer)(dhcpEnabledStatus)(ipAddressLine)(networkCardName)(networkCardConnectionName)(networkCardStatus)(hyper_v)
-      // (token)
   );
 }
 
