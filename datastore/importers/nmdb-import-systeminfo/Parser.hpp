@@ -55,17 +55,16 @@ struct Systeminfo
   std::string product_id; //nohome
   std::string original_install_date; //nohome
   std::string system_boot_time; //nohome
-  std::string system_manufacturer;  //deviceinfo
-  std::string system_model; //deviceinfo
-  std::string system_type; //deviceinfo
+  // std::string system_manufacturer;  //deviceinfo
+  // std::string system_model; //deviceinfo
+  // std::string system_type; //deviceinfo
   std::string processor; //nohome
   std::string bios_version; // optional
   std::string windows_directory; // optional
   std::string system_directory;
   std::string boot_device; // optional
   std::string domain; //nohome
-  std::string hotfixs; //nohome //do we have a place to store hotfixs which would be an array of hotfix
-  std::map<std::string, nmdo::Interface> network_cards; //interface
+  // std::map<std::string, nmdo::Interface> network_cards; //interface
   std::string hyper_v; //nohome
 
   void
@@ -103,8 +102,7 @@ struct Systeminfo
       oss << "Windows Directory:" << windows_directory << ",\n ";
       oss << "System Directory:" << system_directory << ",\n ";
       oss << "Boot Device:" << boot_device << ",\n ";
-      oss << "Hotfix(s):" << hotfixs << ",\n ";
-      oss << "Network Card(s):" << network_cards << ",\n ";
+      // oss << "Network Card(s):" << network_cards << ",\n ";
       oss << "Hyper-V Requirements:" << hyper_v << ",\n ";
       oss << "]"; // closing bracket
       return oss.str();
@@ -123,7 +121,7 @@ struct Data
   nmdo::DeviceInformation                 devInfo;
   nmdo::OperatingSystem                   os;
   std::vector<nmdo::Hotfix>               hotfixs;
-
+  std::map<std::string, nmdo::Interface>  network_cards;
   nmdo::ToolObservations                  observations;
 };
 typedef std::vector<Data> Result;
