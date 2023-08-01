@@ -71,11 +71,11 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         LOG_DEBUG << results.sysinfo_.toDebugString() << "\n";
 
         LOG_DEBUG << "Iterating over Device Information\n";
-        // results.sysinfo_.save(t, toolRunId, deviceId);
+        results.devInfo.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.devInfo.toDebugString() << "\n";
 
         LOG_DEBUG << "Iterating over Operating System\n";
-        // results.sysinfo_.save(t, toolRunId, deviceId);
+        results.os.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.os.toDebugString() << "\n";
 
         LOG_DEBUG << "Iterating over Hotfixs\n";
@@ -85,9 +85,13 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           LOG_DEBUG << hotfix.toDebugString() << "\n";
         }
 
-        LOG_DEBUG << "Iterating over systeminfo\n";
-        // results.sysinfo_.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.network_cards << "\n";
+        LOG_DEBUG << "Iterating over network_cards\n";
+        for (auto& [_, result] : results.network_cards)
+        {
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << "\n";
+        }
+        // LOG_DEBUG << results.network_cards << "\n";
 
         LOG_DEBUG << "Iterating over Observations\n";
         results.observations.save(t, toolRunId, deviceId);
