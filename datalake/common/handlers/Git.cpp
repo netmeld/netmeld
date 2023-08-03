@@ -201,7 +201,7 @@ namespace netmeld::datalake::handlers {
   }
 
   std::vector<nmdlo::DataEntry>
-  Git::getDataEntries(const nmco::Time& _dts)
+  Git::getDataEntries(const nmco::Time& _dts, bool useIngestToolData)
   {
     std::vector<nmdlo::DataEntry> vde;
     if (!(changeDirToRepo() && alignRepo(_dts))) { return vde; }
@@ -229,7 +229,9 @@ namespace netmeld::datalake::handlers {
 
         data.setDeviceId(deviceId);
         data.setDataPath(filePath);
-        setIngestToolData(data, filePath);
+        if (useIngestToolData) {
+          setIngestToolData(data, filePath);
+        }
 
         vde.push_back(data);
       }

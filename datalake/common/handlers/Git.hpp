@@ -77,7 +77,7 @@ namespace netmeld::datalake::handlers {
       void removeLast(const std::string&, const std::string&) override;
 
       std::vector<nmdlo::DataEntry>
-        getDataEntries(const nmco::Time& = {}) override;
+        getDataEntries(const nmco::Time& = {}, bool useIngestToolData = false) override;
   };
 }
 #endif // HANDLER_GIT_HPP
