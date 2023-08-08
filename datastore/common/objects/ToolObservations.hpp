@@ -53,6 +53,7 @@ namespace netmeld::datastore::objects {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
+      virtual ~ToolObservations() = default;
       ToolObservations();
 
     // =========================================================================
@@ -74,6 +75,9 @@ namespace netmeld::datastore::objects {
 
       // Utilized for full object data dump, for debug purposes
       std::string toDebugString() const override;
+
+      std::partial_ordering operator<=>(const ToolObservations&) const;
+      bool operator==(const ToolObservations&) const;
   };
 }
 #endif // TOOL_OBSERVATIONS_HPP

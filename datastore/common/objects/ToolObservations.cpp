@@ -115,7 +115,23 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+  std::partial_ordering
+  ToolObservations::operator<=>(const ToolObservations& rhs) const
+  {
+    return std::tie( quiet
+                   , notables
+                   , unsupportedFeatures
+                   )
+       <=> std::tie( rhs.quiet
+                   , rhs.notables
+                   , rhs.unsupportedFeatures
+                   )
+      ;
+  }
+
+  bool
+  ToolObservations::operator==(const ToolObservations& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }
