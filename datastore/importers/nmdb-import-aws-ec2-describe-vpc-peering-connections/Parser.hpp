@@ -30,7 +30,6 @@
 #include <nlohmann/json.hpp>
 
 #include <netmeld/datastore/objects/ToolObservations.hpp>
-
 #include <netmeld/datastore/objects/aws/Vpc.hpp>
 #include <netmeld/datastore/objects/aws/VpcPeeringConnection.hpp>
 
@@ -73,7 +72,7 @@ class Parser
   // ===========================================================================
   private:
   protected:
-    void processVpcPeeringConnections(const json&);
+    void processVpcPeeringConnection(const json&);
     void processAccepter(const json&, nmdoa::VpcPeeringConnection&);
     void processRequester(const json&, nmdoa::VpcPeeringConnection&);
     void processCidrBlockSets(const json&, nmdoa::Vpc&);

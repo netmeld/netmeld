@@ -28,6 +28,7 @@
 #define PARSER_HPP
 
 #include <nlohmann/json.hpp>
+
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/objects/aws/RouteTable.hpp>
 

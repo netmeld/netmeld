@@ -30,7 +30,6 @@
 #include <nlohmann/json.hpp>
 
 #include <netmeld/datastore/objects/ToolObservations.hpp>
-
 #include <netmeld/datastore/objects/aws/NetworkInterface.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
@@ -72,7 +71,7 @@ class Parser
   // ===========================================================================
   private:
   protected:
-    void processInterfaces(const json&);
+    void processInterface(const json&);
     void processInterfaceAttachment(const json&, nmdoa::NetworkInterface&);
     void processSecurityGroups(const json&, nmdoa::NetworkInterface&);
     void processIps(const json&, nmdoa::NetworkInterface&);

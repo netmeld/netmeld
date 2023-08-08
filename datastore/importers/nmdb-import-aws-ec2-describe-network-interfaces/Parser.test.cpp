@@ -43,7 +43,7 @@ class TestParser : public Parser
     using Parser::processIps;
     using Parser::processSecurityGroups;
     using Parser::processInterfaceAttachment;
-    using Parser::processInterfaces;
+    using Parser::processInterface;
     using Parser::fromJson;
 };
 
@@ -236,46 +236,33 @@ BOOST_AUTO_TEST_CASE(testProcessInterfaces)
     TestParser tp;
 
     json tv1 = json::parse(
-        R"({ "NetworkInterfaces": [] })"
-      );
-    tp.processInterfaces(tv1);
-    auto tobj = tp.getData()[0].interfaces;
-    BOOST_TEST(0 == tobj.size());
-  }
-  {
-    TestParser tp;
-
-    json tv1 = json::parse(
         // Elements we handle
-        R"(
-          { "NetworkInterfaces":
-            [{
-              "Description": ""
-            , "InterfaceType": ""
-            , "MacAddress": ""
-            , "NetworkInterfaceId": ""
-            , "SourceDestCheck": false
-            , "Status": ""
-            , "SubnetId": ""
-            , "VpcId": ""
+        R"({
+             "Description": ""
+           , "InterfaceType": ""
+           , "MacAddress": ""
+           , "NetworkInterfaceId": ""
+           , "SourceDestCheck": false
+           , "Status": ""
+           , "SubnetId": ""
+           , "VpcId": ""
         )"
         // Elements we ignore
         R"(
-            , "Association": {}
-            , "Attachment": {}
-            , "Groups": []
-            , "Ipv4Prefixes": []
-            , "Ipv6Addresses": []
-            , "Ipv6Prefixes": []
-            , "OwnerId": ""
-            , "PrivateDnsName": ""
-            , "PrivateIpAddress": ""
-            , "PrivateIpAddresses": []
-            }]
-          }
+           , "Association": {}
+           , "Attachment": {}
+           , "Groups": []
+           , "Ipv4Prefixes": []
+           , "Ipv6Addresses": []
+           , "Ipv6Prefixes": []
+           , "OwnerId": ""
+           , "PrivateDnsName": ""
+           , "PrivateIpAddress": ""
+           , "PrivateIpAddresses": []
+           }
         )"
       );
-    tp.processInterfaces(tv1);
+    tp.processInterface(tv1);
     auto tobj = tp.getData()[0].interfaces;
     BOOST_TEST(1 == tobj.size());
     nmdoa::NetworkInterface tev1;
@@ -286,35 +273,32 @@ BOOST_AUTO_TEST_CASE(testProcessInterfaces)
 
     json tv1 = json::parse(
         // Elements we handle
-        R"(
-          { "NetworkInterfaces":
-            [{
-              "Description": "a B-c 1 2.3"
-            , "InterfaceType": "a B-c 1 2.3"
-            , "MacAddress": "a B-c 1 2.3"
-            , "NetworkInterfaceId": "a B-c 1 2.3"
-            , "SourceDestCheck": true
-            , "Status": "aBc-1@3"
-            , "SubnetId": "a B-c 1 2.3"
-            , "VpcId": "a B-c 1 2.3"
+        R"({
+             "Description": "a B-c 1 2.3"
+           , "InterfaceType": "a B-c 1 2.3"
+           , "MacAddress": "a B-c 1 2.3"
+           , "NetworkInterfaceId": "a B-c 1 2.3"
+           , "SourceDestCheck": true
+           , "Status": "aBc-1@3"
+           , "SubnetId": "a B-c 1 2.3"
+           , "VpcId": "a B-c 1 2.3"
         )"
         // Elements we ignore
         R"(
-            , "Association": {}
-            , "Attachment": {}
-            , "Groups": []
-            , "Ipv4Prefixes": []
-            , "Ipv6Addresses": []
-            , "Ipv6Prefixes": []
-            , "OwnerId": ""
-            , "PrivateDnsName": ""
-            , "PrivateIpAddress": ""
-            , "PrivateIpAddresses": []
-            }]
-          }
+           , "Association": {}
+           , "Attachment": {}
+           , "Groups": []
+           , "Ipv4Prefixes": []
+           , "Ipv6Addresses": []
+           , "Ipv6Prefixes": []
+           , "OwnerId": ""
+           , "PrivateDnsName": ""
+           , "PrivateIpAddress": ""
+           , "PrivateIpAddresses": []
+           }
         )"
       );
-    tp.processInterfaces(tv1);
+    tp.processInterface(tv1);
     auto tobj = tp.getData()[0].interfaces;
     BOOST_TEST(1 == tobj.size());
 

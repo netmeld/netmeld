@@ -30,7 +30,6 @@
 #include <nlohmann/json.hpp>
 
 #include <netmeld/datastore/objects/ToolObservations.hpp>
-
 #include <netmeld/datastore/objects/aws/TransitGatewayAttachment.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
@@ -72,7 +71,7 @@ class Parser
   // ===========================================================================
   private:
   protected:
-    void processTransitGatewayAttachments(const json&);
+    void processTransitGatewayAttachment(const json&);
 
   public:
     void fromJson(const json&);

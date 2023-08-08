@@ -40,7 +40,7 @@ using qi::ascii::blank;
 class TestParser : public Parser
 {
   public:
-    using Parser::processVpcPeeringConnections;
+    using Parser::processVpcPeeringConnection;
     using Parser::processAccepter;
     using Parser::processRequester;
     using Parser::processCidrBlockSets;
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(testProcessVpcPeeringConnections)
         }
         )"
       );
-    tp.processVpcPeeringConnections(tv1);
+    tp.processVpcPeeringConnection(tv1);
     auto tobj = tp.getData()[0].pcxs;
     BOOST_TEST(1 == tobj.size());
     nmdoa::VpcPeeringConnection tev1;
@@ -73,18 +73,15 @@ BOOST_AUTO_TEST_CASE(testProcessVpcPeeringConnections)
     TestParser tp;
 
     json tv1 = json::parse(R"(
-        { "VpcPeeringConnections":
-          [ { "VpcPeeringConnectionId": "aB1-2c3"
-            , "Status":
-              { "Code": "aB1-2c3"
-              , "Message": "aB1-2c3"
-              }
+          { "VpcPeeringConnectionId": "aB1-2c3"
+          , "Status":
+            { "Code": "aB1-2c3"
+            , "Message": "aB1-2c3"
             }
-          ]
-        }
+          }
         )"
       );
-    tp.processVpcPeeringConnections(tv1);
+    tp.processVpcPeeringConnection(tv1);
     auto tobj = tp.getData()[0].pcxs;
     const std::vector<std::string> tevs {
           R"([pcxId: aB1-2c3,)"

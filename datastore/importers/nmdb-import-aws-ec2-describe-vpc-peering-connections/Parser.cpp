@@ -37,36 +37,26 @@ Parser::Parser()
 void
 Parser::fromJson(const json& _data)
 {
-  try {
-    processVpcPeeringConnections(_data);
-  } catch (json::parse_error& ex) {
-    LOG_ERROR << "Parse error at byte " << ex.byte
-              << std::endl;
-    std::exit(nmcu::Exit::FAILURE);
+  for (const auto& json : _data.at("VpcPeeringConnections")) {
+    processVpcPeeringConnection(json);
   }
 }
 
 void
-Parser::processVpcPeeringConnections(const json& _json)
+Parser::processVpcPeeringConnection(const json& _json)
 {
-  if (!_json.contains("VpcPeeringConnections")) {
-    return;
+  nmdoa::VpcPeeringConnection pcx;
+  pcx.setId(_json.value("VpcPeeringConnectionId", ""));
+
+  if (_json.contains("Status")) {
+    const auto& status {_json.at("Status")};
+    pcx.setStatus(status.value("Code", ""), status.value("Message", ""));
   }
 
-  for (const auto& jPcx : _json.at("VpcPeeringConnections")) {
-    nmdoa::VpcPeeringConnection pcx;
-    pcx.setId(jPcx.value("VpcPeeringConnectionId", ""));
+  processAccepter(_json, pcx);
+  processRequester(_json, pcx);
 
-    if (jPcx.contains("Status")) {
-      const auto& status {jPcx.at("Status")};
-      pcx.setStatus(status.value("Code", ""), status.value("Message", ""));
-    }
-
-    processAccepter(jPcx, pcx);
-    processRequester(jPcx, pcx);
-
-    d.pcxs.emplace_back(pcx);
-  }
+  d.pcxs.emplace_back(pcx);
 }
 
 void

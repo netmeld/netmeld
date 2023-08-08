@@ -40,45 +40,35 @@ Parser::Parser()
 void
 Parser::fromJson(const json& _data)
 {
-  try {
-    processInterfaces(_data);
-  } catch (json::parse_error& ex) {
-    LOG_ERROR << "Parse error at byte " << ex.byte
-              << std::endl;
-    std::exit(nmcu::Exit::FAILURE);
+  for (const auto& interface : _data.at("NetworkInterfaces")) {
+    processInterface(interface);
   }
 }
 
 void
-Parser::processInterfaces(const json& _json)
+Parser::processInterface(const json& _json)
 {
-  if (!_json.contains("NetworkInterfaces")) {
-    return;
+  nmdoa::NetworkInterface ani;
+  const std::string iid {_json.value("NetworkInterfaceId", "")};
+  ani.setId(iid);
+  ani.setDescription(_json.value("Description", ""));
+  ani.setStatus(_json.value("Status", ""));
+  ani.setType(_json.value("InterfaceType", ""));
+  ani.setMacAddress(_json.value("MacAddress", ""));
+  ani.setSubnetId(_json.value("SubnetId", ""));
+  ani.setVpcId(_json.value("VpcId", ""));
+
+  if (_json.value("SourceDestCheck", true)) {
+    ani.enableSourceDestinationCheck();
+  } else {
+    ani.disableSourceDestinationCheck();
   }
 
-  for (const auto& interface : _json.at("NetworkInterfaces")) {
-    nmdoa::NetworkInterface ani;
-    const std::string iid {interface.value("NetworkInterfaceId", "")};
-    ani.setId(iid);
-    ani.setDescription(interface.value("Description", ""));
-    ani.setStatus(interface.value("Status", ""));
-    ani.setType(interface.value("InterfaceType", ""));
-    ani.setMacAddress(interface.value("MacAddress", ""));
-    ani.setSubnetId(interface.value("SubnetId", ""));
-    ani.setVpcId(interface.value("VpcId", ""));
+  processInterfaceAttachment(_json, ani);
+  processSecurityGroups(_json, ani);
+  processIps(_json, ani);
 
-    if (interface.value("SourceDestCheck", true)) {
-      ani.enableSourceDestinationCheck();
-    } else {
-      ani.disableSourceDestinationCheck();
-    }
-
-    processInterfaceAttachment(interface, ani);
-    processSecurityGroups(interface, ani);
-    processIps(interface, ani);
-
-    d.interfaces.emplace_back(ani);
-  }
+  d.interfaces.emplace_back(ani);
 }
 
 void

@@ -35,12 +35,8 @@ Parser::Parser()
 void
 Parser::fromJson(const json& _data)
 {
-  try {
-    for (const auto& securityGroup : _data.at("SecurityGroups")) {
-      processSecurityGroup(securityGroup);
-    }
-  } catch (json::out_of_range& ex) {
-    LOG_ERROR << "Parse error " << ex.what() << std::endl;
+  for (const auto& securityGroup : _data.at("SecurityGroups")) {
+    processSecurityGroup(securityGroup);
   }
 }
 

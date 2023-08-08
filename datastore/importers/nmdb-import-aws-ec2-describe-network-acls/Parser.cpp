@@ -35,12 +35,8 @@ Parser::Parser()
 void
 Parser::fromJson(const json& _data)
 {
-  try {
-    for (const auto& networkAcl : _data.at("NetworkAcls")) {
-      processNetworkAcl(networkAcl);
-    }
-  } catch (json::out_of_range& ex) {
-    LOG_ERROR << "Parse error " << ex.what() << std::endl;
+  for (const auto& networkAcl : _data.at("NetworkAcls")) {
+    processNetworkAcl(networkAcl);
   }
 }
 
