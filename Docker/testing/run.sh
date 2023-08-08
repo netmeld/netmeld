@@ -9,6 +9,7 @@ function create_test_data()
   cat << EOF > d2
 <config></config>
 <rpc-reply></rpc-reply>
+<nmaprun></nmaprun>
 EOF
 
   # json array
@@ -26,6 +27,23 @@ AAAAAAC0AAAAAQAAAEAAAAABAAAAAAAEAAIAAgBsbwAACQABAAkAAAAMABMATGludXggNi4wLjAt
 Mi1hbWQ2NAAAAAAAQAAAAAUAAABsAAAAAAAAACLtBQA0Wfh+AQAcAENvdW50ZXJzIHByb3ZpZGVk
 IGJ5IGR1bXBjYXACAAgAIu0FAEUF6X4DAAgAIu0FAFpY+H4EAAgAAAAAAAAAAAAFAAgAAAAAAAAA
 AAAAAAAAbAAAAA==
+EOF
+
+  # targeted json top levels
+  cat << EOF > d5
+{
+  "NetworkAcls": []
+, "NetworkInterfaces": []
+, "Reservations": []
+, "RouteTables": []
+, "SecurityGroups": []
+, "Subnets": []
+, "TransitGatewayAttachments": []
+, "VpcPeeringConnections": []
+, "Vpcs": []
+
+, "kind": ""
+}
 EOF
 
 }
