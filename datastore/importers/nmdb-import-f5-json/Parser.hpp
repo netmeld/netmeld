@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -65,6 +65,9 @@ struct LogicalSystem
   std::map<std::string, netmeld::datastore::objects::AclIpNetSet> aclIpNetSets;
   std::vector<netmeld::datastore::objects::AclService> aclServices;
   std::vector<netmeld::datastore::objects::AclRuleService> aclRules;
+
+  auto operator<=>(const LogicalSystem&) const = default;
+  bool operator==(const LogicalSystem&) const = default;
 };
 
 
@@ -72,6 +75,9 @@ struct Data
 {
   std::map<std::string, LogicalSystem> logicalSystems;
   netmeld::datastore::objects::ToolObservations observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data>    Result;
 

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -124,7 +124,43 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+  std::partial_ordering
+  ProwlerData::operator<=>(const ProwlerData& rhs) const
+  {
+    return std::tie( accountNumber
+                   , timestamp
+                   , region
+                   , control
+                   , severity
+                   , status
+                   , level
+                   , controlId
+                   , service
+                   , risk
+                   , remediation
+                   , documentationLink
+                   , resourceId
+                   )
+       <=> std::tie( rhs.accountNumber
+                   , rhs.timestamp
+                   , rhs.region
+                   , rhs.control
+                   , rhs.severity
+                   , rhs.status
+                   , rhs.level
+                   , rhs.controlId
+                   , rhs.service
+                   , rhs.risk
+                   , rhs.remediation
+                   , rhs.documentationLink
+                   , rhs.resourceId
+                   )
+      ;
+  }
+
+  bool
+  ProwlerData::operator==(const ProwlerData& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }

@@ -46,6 +46,9 @@ struct Data {
   std::vector<nmdoa::VpcPeeringConnection> pcxs;
 
   nmdo::ToolObservations observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data>    Result;
 

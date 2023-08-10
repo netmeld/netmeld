@@ -68,7 +68,9 @@ Parser::processInterface(const json& _json)
   processSecurityGroups(_json, ani);
   processIps(_json, ani);
 
-  d.interfaces.emplace_back(ani);
+  if (ani != nmdoa::NetworkInterface()) {
+    d.interfaces.emplace_back(ani);
+  }
 }
 
 void
@@ -147,6 +149,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.emplace_back(d);
+
+  if (d != Data()) {
+    r.push_back(d);
+  }
+
   return r;
 }

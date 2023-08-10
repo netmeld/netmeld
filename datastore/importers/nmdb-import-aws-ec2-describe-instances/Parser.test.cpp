@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -332,8 +332,7 @@ BOOST_AUTO_TEST_CASE(testProcessInstance)
         R"({ "Instances": [] })"
       );
     tp.processInstances(tv1);
-    auto tobj = tp.getData()[0].instances;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -416,6 +415,7 @@ BOOST_AUTO_TEST_CASE(testProcessInstance)
         )"
       );
     tp.processInstances(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto tobj = tp.getData()[0].instances;
     BOOST_TEST(1 == tobj.size());
     nmdoa::Instance tev1;
@@ -504,6 +504,7 @@ BOOST_AUTO_TEST_CASE(testProcessInstance)
         )"
       );
     tp.processInstances(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto tobj = tp.getData()[0].instances;
     BOOST_TEST(1 == tobj.size());
 
@@ -533,8 +534,7 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "Reservations": [] })"
       );
     tp.fromJson(tv1);
-    auto tobj = tp.getData()[0].instances;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -551,7 +551,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         )"
       );
     tp.fromJson(tv1);
-    auto tobj = tp.getData()[0].instances;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

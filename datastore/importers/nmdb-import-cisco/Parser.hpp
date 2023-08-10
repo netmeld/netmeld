@@ -73,6 +73,9 @@ struct Data
   std::map<std::string, NetworkBook>  networkBooks;
   std::map<std::string, ServiceBook>  serviceBooks;
   std::map<std::string, RuleBook>     ruleBooks;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data> Result;
 

@@ -263,10 +263,7 @@ BOOST_AUTO_TEST_CASE(testProcessInterfaces)
         )"
       );
     tp.processInterface(tv1);
-    auto tobj = tp.getData()[0].interfaces;
-    BOOST_TEST(1 == tobj.size());
-    nmdoa::NetworkInterface tev1;
-    BOOST_TEST(tev1 == tobj[0]);
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -299,6 +296,7 @@ BOOST_AUTO_TEST_CASE(testProcessInterfaces)
         )"
       );
     tp.processInterface(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto tobj = tp.getData()[0].interfaces;
     BOOST_TEST(1 == tobj.size());
 
@@ -327,7 +325,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "NetworkInterfaces": [] })"
       );
     tp.fromJson(tv1);
-    auto tobj = tp.getData()[0].interfaces;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

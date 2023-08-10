@@ -56,7 +56,9 @@ Parser::processVpcPeeringConnection(const json& _json)
   processAccepter(_json, pcx);
   processRequester(_json, pcx);
 
-  d.pcxs.emplace_back(pcx);
+  if (pcx != nmdoa::VpcPeeringConnection()) {
+    d.pcxs.emplace_back(pcx);
+  }
 }
 
 void
@@ -129,6 +131,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.emplace_back(d);
+
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
+
   return r;
 }

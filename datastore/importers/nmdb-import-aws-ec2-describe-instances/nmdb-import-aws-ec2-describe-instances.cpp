@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,7 +31,6 @@
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
 
-using json = nlohmann::json;
 
 // =============================================================================
 // Import tool definition
@@ -88,16 +87,17 @@ class Tool : public nmdt::AbstractImportJsonTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& results : this->tResults) {
+      for (auto& result : this->tResults) {
         LOG_DEBUG << "Iterating over AWS Instances\n";
-        for (auto& result : results.instances) {
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
+        for (auto& instance : result.instances) {
+          instance.save(t, toolRunId, deviceId);
+          LOG_DEBUG << instance.toDebugString() << std::endl;
         }
 
         LOG_DEBUG << "Iterating over Observations\n";
-        results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << '\n';
+        auto& observations {result.observations};
+        observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << observations.toDebugString() << '\n';
       }
     }
 

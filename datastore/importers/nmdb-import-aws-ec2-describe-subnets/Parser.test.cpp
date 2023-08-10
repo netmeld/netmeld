@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(testProcessSubnets)
         , "OutpostArn": ""
         , "OwnerId": ""
         , "PrivateDnsNameOptionsOnLaunch": {}
-        , "State": ""
+        , "State": "available"
         , "SubnetArn": ""
         , "SubnetId": ""
         , "Tags": []
@@ -75,11 +75,7 @@ BOOST_AUTO_TEST_CASE(testProcessSubnets)
         )"
       );
     tp.processSubnets(tv1);
-    auto trv1 = tp.getData()[0].subnets;
-    auto trv2 = tp.getData()[0].observations;
-    BOOST_TEST(1 == trv1.size());
-    BOOST_TEST(!trv1[0].isValid());
-    BOOST_TEST(trv2.isValid());
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -101,7 +97,7 @@ BOOST_AUTO_TEST_CASE(testProcessSubnets)
         , "OutpostArn": ""
         , "OwnerId": ""
         , "PrivateDnsNameOptionsOnLaunch": {}
-        , "State": "available"
+        , "State": ""
         , "SubnetArn": ""
         , "SubnetId": ""
         , "Tags": []
@@ -110,11 +106,11 @@ BOOST_AUTO_TEST_CASE(testProcessSubnets)
         )"
       );
     tp.processSubnets(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto trv1 = tp.getData()[0].subnets;
     auto trv2 = tp.getData()[0].observations;
-    BOOST_TEST(1 == trv1.size());
-    BOOST_TEST(!trv1[0].isValid());
-    BOOST_TEST(!trv2.isValid());
+    BOOST_TEST(0 == trv1.size());
+    BOOST_TEST(trv2.isValid());
   }
   {
     TestParser tp;
@@ -152,6 +148,7 @@ BOOST_AUTO_TEST_CASE(testProcessSubnets)
         )"
       );
     tp.processSubnets(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto trv1 = tp.getData()[0].subnets;
     auto trv2 = tp.getData()[0].observations;
     BOOST_TEST(1 == trv1.size());
@@ -181,7 +178,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "Subnets": [] })"
       );
     tp.fromJson(tv1);
-    auto trv1 = tp.getData()[0].subnets;
-    BOOST_TEST(0 == trv1.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

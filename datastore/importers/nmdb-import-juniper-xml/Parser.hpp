@@ -70,6 +70,9 @@ struct LogicalSystem
   std::map<std::string, std::map<std::string, nmdo::AclIpNetSet>> aclIpNetSets;
   std::vector<nmdo::AclService> aclServices;
   std::vector<nmdo::AclRuleService> aclRules;
+
+  auto operator<=>(const LogicalSystem&) const = default;
+  bool operator==(const LogicalSystem&) const = default;
 };
 
 
@@ -77,6 +80,9 @@ struct Data
 {
   std::map<std::string, LogicalSystem> logicalSystems;
   nmdo::ToolObservations observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 
 typedef std::vector<Data> Results;

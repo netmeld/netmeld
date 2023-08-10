@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -135,9 +135,7 @@ BOOST_AUTO_TEST_CASE(testProcessVpcs)
         )"
       );
     tp.processVpcs(tv1);
-    auto trv1 = tp.getData()[0].vpcs;
-    BOOST_TEST(1 == trv1.size());
-    BOOST_TEST(!trv1[0].isValid());
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -157,6 +155,7 @@ BOOST_AUTO_TEST_CASE(testProcessVpcs)
         )"
       );
     tp.processVpcs(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto trv1 = tp.getData()[0].vpcs;
     BOOST_TEST(1 == trv1.size());
     BOOST_TEST(trv1[0].isValid());
@@ -181,7 +180,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "Vpcs": [] })"
       );
     tp.fromJson(tv1);
-    auto trv1 = tp.getData()[0].vpcs;
-    BOOST_TEST(0 == trv1.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

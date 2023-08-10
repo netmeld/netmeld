@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -79,4 +79,36 @@ NessusResult::toString() const
   oss << "]";
 
   return oss.str();
+}
+
+std::partial_ordering
+NessusResult::operator<=>(const NessusResult& rhs) const
+{
+  return std::tie( port
+                 , pluginId
+                 , pluginName
+                 , pluginFamily
+                 , pluginType
+                 , pluginOutput
+                 , severity
+                 , description
+                 , solution
+                 )
+     <=> std::tie( rhs.port
+                 , rhs.pluginId
+                 , rhs.pluginName
+                 , rhs.pluginFamily
+                 , rhs.pluginType
+                 , rhs.pluginOutput
+                 , rhs.severity
+                 , rhs.description
+                 , rhs.solution
+                 )
+    ;
+}
+
+bool
+NessusResult::operator==(const NessusResult& rhs) const
+{
+  return 0 == operator<=>(rhs);
 }

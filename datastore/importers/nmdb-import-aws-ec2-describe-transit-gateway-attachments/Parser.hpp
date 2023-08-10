@@ -45,6 +45,9 @@ struct Data {
   std::vector<nmdoa::TransitGatewayAttachment> tgwas;
 
   nmdo::ToolObservations observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data>    Result;
 

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -29,29 +29,30 @@
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 
-namespace netmeld::datastore::objects{
+namespace netmeld::datastore::objects {
 
-    class Package : public AbstractDatastoreObject
-    {
+  class Package : public AbstractDatastoreObject
+  {
     // =========================================================================
     // Variables
     // =========================================================================
     private:
     protected:
-        std::string state;
-        std::string name;
-        std::string version;
-        std::string architecture;
-        std::string description;
+      std::string state;
+      std::string name;
+      std::string version;
+      std::string architecture;
+      std::string description;
     public:
+
     // =========================================================================
     // Constructors
     // =========================================================================
     private:
     protected:
     public:
-        Package();
-        explicit Package(const std::string&);
+      Package();
+      explicit Package(const std::string&);
 
     // =========================================================================
     // Methods
@@ -59,30 +60,35 @@ namespace netmeld::datastore::objects{
     private:
     protected:
     public:
-        // ===========================================================================
-        // Setters
-        // ===========================================================================
-        void setState(const std::string&);
-        void setName(const std::string&);
-        void setVersion(const std::string&);
-        void setArchitecture(const std::string&);
-        void setDescription(const std::string&);
-        // ===========================================================================
-        // Getters
-        // ===========================================================================
-        std::string getState() const;
-        std::string getName() const;
-        std::string getVersion() const;
-        std::string getArchitecture() const;
-        std::string getDescription() const;
-        std::string toDebugString() const override;
-        // ===========================================================================
-        // toolOverride
-        // ===========================================================================
-        bool isValid() const override;
+      // =====================================================================
+      // Setters
+      // =====================================================================
+      void setState(const std::string&);
+      void setName(const std::string&);
+      void setVersion(const std::string&);
+      void setArchitecture(const std::string&);
+      void setDescription(const std::string&);
+      // =====================================================================
+      // Getters
+      // =====================================================================
+      std::string getState() const;
+      std::string getName() const;
+      std::string getVersion() const;
+      std::string getArchitecture() const;
+      std::string getDescription() const;
+      std::string toDebugString() const override;
+      // =====================================================================
+      // toolOverride
+      // =====================================================================
+      bool isValid() const override;
 
-        void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
-    };
+      void save(pqxx::transaction_base&,
+              const nmco::Uuid&, const std::string&) override;
+      // =====================================================================
+      // Comparators
+      // =====================================================================
+      std::partial_ordering operator<=>(const Package&) const;
+      bool operator==(const Package&) const;
+  };
 }
 #endif

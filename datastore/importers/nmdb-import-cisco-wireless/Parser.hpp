@@ -45,11 +45,14 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 struct Data
 {
-  std::string                         domainName;
+  std::string                          domainName;
   nmdo::DeviceInformation              devInfo;
   std::vector<nmdo::InterfaceNetwork>  ifaces;
   std::vector<nmdo::Route>             routes;
   std::vector<nmdo::Service>           services;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data> Result;
 

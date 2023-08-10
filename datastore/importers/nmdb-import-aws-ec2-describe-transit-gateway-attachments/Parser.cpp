@@ -58,7 +58,9 @@ Parser::processTransitGatewayAttachment(const json& _json)
     tgwa.setAssociationState(jAssoc.value("State", ""));
   }
 
-  d.tgwas.emplace_back(tgwa);
+  if (tgwa != nmdoa::TransitGatewayAttachment()) {
+    d.tgwas.emplace_back(tgwa);
+  }
 }
 
 
@@ -69,6 +71,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.emplace_back(d);
+
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
+
   return r;
 }

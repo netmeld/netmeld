@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -81,8 +81,8 @@ namespace netmeld::datastore::objects {
       std::string toString() const;
       std::string toDebugString() const override;
 
-      auto operator<=>(const IpAddress&) const = default;
-      bool operator==(const IpAddress&) const = default;
+      std::partial_ordering operator<=>(const IpAddress&) const;
+      bool operator==(const IpAddress&) const;
   };
 }
 #endif // IP_ADDRESS_HPP

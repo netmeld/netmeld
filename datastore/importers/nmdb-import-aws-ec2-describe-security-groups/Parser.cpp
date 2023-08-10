@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -52,7 +52,9 @@ Parser::processSecurityGroup(const json& _securityGroup)
 
   processPermissions(_securityGroup, asg);
 
-  d.securityGroups.emplace_back(asg);
+  if (asg != nmdoa::SecurityGroup()) {
+    d.securityGroups.emplace_back(asg);
+  }
 }
 
 void
@@ -126,6 +128,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.emplace_back(d);
+
+  if (d != Data()) {
+    r.push_back(d);
+  }
+
   return r;
 }

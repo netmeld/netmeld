@@ -64,10 +64,7 @@ BOOST_AUTO_TEST_CASE(testProcessVpcPeeringConnections)
         )"
       );
     tp.processVpcPeeringConnection(tv1);
-    auto tobj = tp.getData()[0].pcxs;
-    BOOST_TEST(1 == tobj.size());
-    nmdoa::VpcPeeringConnection tev1;
-    BOOST_TEST(tev1 == tobj[0]);
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -82,6 +79,7 @@ BOOST_AUTO_TEST_CASE(testProcessVpcPeeringConnections)
         )"
       );
     tp.processVpcPeeringConnection(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto tobj = tp.getData()[0].pcxs;
     const std::vector<std::string> tevs {
           R"([pcxId: aB1-2c3,)"
@@ -186,7 +184,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "VpcPeeringConnections": [] })"
       );
     tp.fromJson(tv1);
-    auto tobj = tp.getData()[0].pcxs;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -66,4 +66,24 @@ MetasploitModule::toString() const
   oss << "]";
 
   return oss.str();
+}
+
+std::partial_ordering
+MetasploitModule::operator<=>(const MetasploitModule& rhs) const
+{
+  return std::tie( port
+                 , pluginId
+                 , name
+                 )
+     <=> std::tie( rhs.port
+                 , rhs.pluginId
+                 , rhs.name
+                 )
+    ;
+}
+
+bool
+MetasploitModule::operator==(const MetasploitModule& rhs) const
+{
+  return 0 == operator<=>(rhs);
 }

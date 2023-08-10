@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -50,7 +50,9 @@ Parser::processRouteTable(const json& _routeTable)
   processAssociations(_routeTable, art);
   processRoutes(_routeTable, art);
 
-  d.routeTables.emplace_back(art);
+  if (art != nmdoa::RouteTable()) {
+    d.routeTables.emplace_back(art);
+  }
 }
 
 void
@@ -177,6 +179,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.emplace_back(d);
+
+  if (d != Data()) {
+    r.push_back(d);
+  }
+
   return r;
 }

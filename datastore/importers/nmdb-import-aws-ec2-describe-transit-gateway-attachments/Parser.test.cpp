@@ -61,11 +61,8 @@ BOOST_AUTO_TEST_CASE(testProcessTransitGatewayAttachments)
           }
         )"
       );
-    nmdoa::TransitGatewayAttachment tev1;
     tp.processTransitGatewayAttachment(tv1);
-    auto tobj = tp.getData()[0].tgwas;
-    BOOST_TEST(1 == tobj.size());
-    BOOST_TEST(tev1 == tobj[0]);
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -84,6 +81,7 @@ BOOST_AUTO_TEST_CASE(testProcessTransitGatewayAttachments)
         )"
       );
     tp.processTransitGatewayAttachment(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto tobj = tp.getData()[0].tgwas;
     const std::vector<std::string> tevs {
         R"([tgwAttachmentId: aB1-2c3,)"
@@ -111,7 +109,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "TransitGatewayAttachments": [] })"
       );
     tp.fromJson(tv1);
-    auto tobj = tp.getData()[0].tgwas;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

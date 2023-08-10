@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -73,8 +73,8 @@ namespace netmeld::core::objects {
 
       std::string toDebugString() const override;
 
-      std::strong_ordering operator<=>(const DnsQuestion&) const = default;
-      bool operator==(const DnsQuestion&) const = default;
+      std::strong_ordering operator<=>(const DnsQuestion&) const;
+      bool operator==(const DnsQuestion&) const;
   };
 }
 
