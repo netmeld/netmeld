@@ -1,7 +1,7 @@
 #!/usr/bin/python3 --
 
 # =============================================================================
-# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -263,8 +263,9 @@ def buildTester():
   print('COPY ./testing /home/netmeld/')
   print('RUN chown -R netmeld:netmeld /home/netmeld')
   print('USER netmeld')
-  print('ENTRYPOINT ["/bin/bash", "/home/netmeld/run.sh"]')
-  print('CMD ["run"]')
+  #print('ENTRYPOINT ["/bin/bash", "/home/netmeld/run.sh"]')
+  print('ENTRYPOINT ["/bin/bash"]')
+  #print('CMD ["run"]')
 
   return 0
 
