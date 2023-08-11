@@ -81,12 +81,14 @@ namespace netmeld::datastore::tools {
       specificInserts(t);
     }
 
-    if (tResults == R()) {
-        LOG_WARN << "Parsed data contained no storable information."
-                 << " Aborting transactions."
-                 << "\n"
-                 ;
-        t.abort();
+    if (tResults == R() && !preCommitTool) {
+        LOG_WARN << "Parsed data contained no storable information.\n";
+        try {
+          t.abort();
+          LOG_WARN << "Aborted Datastore transaction(s).\n";
+        } catch (pqxx::usage_error& e) {
+          LOG_DEBUG << "Failed to manually abort: " <<  e.what() << std::endl;
+        }
     } else {
       t.commit();
       if (!opts.exists("tool-run-id")) {
