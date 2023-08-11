@@ -59,7 +59,7 @@ def createHeader():
   fromDistro = "debian:testing-slim"
 
   print('FROM {0}'.format(fromDistro))
-  print('ENV DEBIAN_FRONTEND noninteractive')
+  print('ENV DEBIAN_FRONTEND=noninteractive')
   print('RUN useradd -m -s /bin/bash netmeld')
   print('WORKDIR /home/netmeld')
 
@@ -252,8 +252,7 @@ def buildTester():
   createHeader()
   prepInstallNetmeld()
 
-  #packages = 'sudo ./netmeld-*.deb'
-  packages = 'sudo ./netmeld-*core.deb'
+  packages = 'sudo ./netmeld-*.deb'
   addAptInstall(packages)
 
   enableDbUser()
@@ -262,9 +261,10 @@ def buildTester():
 
   print('COPY ./testing /home/netmeld/')
   print('RUN chown -R netmeld:netmeld /home/netmeld')
-  #print('USER netmeld')
-  #print('ENTRYPOINT ["/bin/bash", "/home/netmeld/run.sh"]')
-  print('ENTRYPOINT ["/bin/bash"]')
+  print('USER netmeld')
+  print('RUN chmod +x /home/netmeld/run.sh')
+  #print('ENTRYPOINT ["/bin/bash", "-l", "-c"]')
+  print('ENTRYPOINT ["/bin/bash", "-l", "-c", "/home/netmeld/run.sh run"]')
   #print('CMD ["run"]')
 
   return 0
