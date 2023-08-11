@@ -262,7 +262,7 @@ def buildTester():
 
   print('COPY ./testing /home/netmeld/')
   print('RUN chown -R netmeld:netmeld /home/netmeld')
-  print('USER netmeld')
+  #print('USER netmeld')
   #print('ENTRYPOINT ["/bin/bash", "/home/netmeld/run.sh"]')
   print('ENTRYPOINT ["/bin/bash"]')
   #print('CMD ["run"]')

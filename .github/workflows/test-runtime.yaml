@@ -19,6 +19,7 @@ jobs:
         run: |
           cd Docker
           python3 docker-netmeld.py tester | docker build --no-cache --tag "netmeld-tester" -f- .
+          docker --version
           docker run --rm -t netmeld-tester pwd
           docker run --rm -t netmeld-tester ls -lah
           docker run --rm -t netmeld-tester ls -lah /home/netmeld/
