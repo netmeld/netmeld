@@ -259,10 +259,10 @@ def buildTester():
 
   cleanUp()
 
-  print('COPY ./testing ./')
+  print('COPY ./testing /home/netmeld/')
   print('RUN chown -R netmeld:netmeld /home/netmeld')
   print('USER netmeld')
-  print('ENTRYPOINT ["/bin/bash", "run.sh"]')
+  print('ENTRYPOINT ["/bin/bash", "/home/netmeld/run.sh"]')
   print('CMD ["run"]')
 
   return 0
