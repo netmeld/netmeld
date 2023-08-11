@@ -252,7 +252,8 @@ def buildTester():
   createHeader()
   prepInstallNetmeld()
 
-  packages = 'sudo ./netmeld-*.deb'
+  #packages = 'sudo ./netmeld-*.deb'
+  packages = 'sudo ./netmeld-*core.deb'
   addAptInstall(packages)
 
   enableDbUser()
