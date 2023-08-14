@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -28,8 +28,7 @@
 # CMake Settings
 # ----------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.0)
-#cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.13)
 set(TOOL_SUITE "netmeld")
 set(MODULE_NAME "netmeld")
 project(${TOOL_SUITE})
