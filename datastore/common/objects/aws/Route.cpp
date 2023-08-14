@@ -111,7 +111,7 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   Route::operator<=>(const Route& rhs) const
   {
     return std::tie( typeId

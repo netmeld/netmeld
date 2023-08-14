@@ -124,7 +124,7 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   ProwlerData::operator<=>(const ProwlerData& rhs) const
   {
     return std::tie( accountNumber

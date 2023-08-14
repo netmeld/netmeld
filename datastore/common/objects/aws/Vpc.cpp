@@ -131,7 +131,7 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   Vpc::operator<=>(const Vpc& rhs) const
   {
     return std::tie( vpcId

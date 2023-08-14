@@ -87,7 +87,7 @@ namespace netmeld::datastore::objects {
       // =====================================================================
       // Comparators
       // =====================================================================
-      std::partial_ordering operator<=>(const Package&) const;
+      std::strong_ordering operator<=>(const Package&) const;
       bool operator==(const Package&) const;
   };
 }

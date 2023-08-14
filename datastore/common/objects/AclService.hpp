@@ -71,7 +71,7 @@ namespace netmeld::datastore::objects {
                 const nmco::Uuid&, const std::string&) override;
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const AclService&) const;
+      std::strong_ordering operator<=>(const AclService&) const;
       bool operator==(const AclService&) const;
   };
 }

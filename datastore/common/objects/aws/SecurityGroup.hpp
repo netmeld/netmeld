@@ -82,7 +82,7 @@ namespace netmeld::datastore::objects::aws {
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const SecurityGroup&) const;
+      std::strong_ordering operator<=>(const SecurityGroup&) const;
       bool operator==(const SecurityGroup&) const;
   };
 }

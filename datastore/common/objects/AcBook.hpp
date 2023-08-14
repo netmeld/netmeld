@@ -76,7 +76,7 @@ namespace netmeld::datastore::objects {
                         const nmco::Uuid&, const std::string&) override;
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const AcBook<TData>&) const;
+      std::strong_ordering operator<=>(const AcBook<TData>&) const;
       bool operator==(const AcBook<TData>&) const;
   };
 #include "AcBook.ipp"

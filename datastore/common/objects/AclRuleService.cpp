@@ -68,7 +68,7 @@ namespace netmeld::datastore::objects {
         );
   }
 
-  std::partial_ordering
+  std::strong_ordering
   AclRuleService::operator<=>(const AclRuleService& rhs) const
   {
     if (auto cmp = AclRule::operator<=>(rhs); 0 != cmp) {

@@ -63,7 +63,7 @@ namespace netmeld::datastore::objects {
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
 
-      std::partial_ordering operator<=>(const AclRulePort&) const;
+      std::strong_ordering operator<=>(const AclRulePort&) const;
       bool operator==(const AclRulePort&) const;
   };
 }

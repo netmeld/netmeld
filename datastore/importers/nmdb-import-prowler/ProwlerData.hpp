@@ -82,7 +82,7 @@ namespace netmeld::datastore::objects {
       // Utilized for full object data dump, for debug purposes
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const ProwlerData&) const;
+      std::strong_ordering operator<=>(const ProwlerData&) const;
       bool operator==(const ProwlerData&) const;
   };
 }

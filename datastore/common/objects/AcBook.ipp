@@ -128,7 +128,7 @@ AcBook<TData>::toDebugString() const
 }
 
 template<typename TData>
-std::partial_ordering
+std::strong_ordering
 AcBook<TData>::operator<=>(const AcBook<TData>& rhs) const
 {
   return std::tie( id

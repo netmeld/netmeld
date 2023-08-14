@@ -115,7 +115,7 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   ToolObservations::operator<=>(const ToolObservations& rhs) const
   {
     return std::tie( quiet

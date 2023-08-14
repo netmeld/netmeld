@@ -83,7 +83,7 @@ namespace netmeld::datastore::objects {
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const DeviceInformation&) const;
+      std::strong_ordering operator<=>(const DeviceInformation&) const;
       bool operator==(const DeviceInformation&) const;
   };
 }

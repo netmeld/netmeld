@@ -145,7 +145,7 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   Instance::operator<=>(const Instance& rhs) const
   {
     return std::tie( instanceId

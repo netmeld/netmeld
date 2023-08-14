@@ -122,7 +122,7 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   AclRule::operator<=>(const AclRule& rhs) const
   {
     return std::tie( priority

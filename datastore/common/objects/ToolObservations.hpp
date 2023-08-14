@@ -76,7 +76,7 @@ namespace netmeld::datastore::objects {
       // Utilized for full object data dump, for debug purposes
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const ToolObservations&) const;
+      std::strong_ordering operator<=>(const ToolObservations&) const;
       bool operator==(const ToolObservations&) const;
   };
 }

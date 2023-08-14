@@ -114,7 +114,7 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   AclZone::operator<=>(const AclZone& rhs) const
   {
     return std::tie( id
