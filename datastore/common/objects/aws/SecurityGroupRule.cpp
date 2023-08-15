@@ -186,7 +186,7 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   SecurityGroupRule::operator<=>(const SecurityGroupRule& rhs) const
   {
     return std::tie( protocol

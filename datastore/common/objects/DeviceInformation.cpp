@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -164,5 +164,35 @@ namespace netmeld::datastore::objects {
         << "]";
 
     return oss.str();
+  }
+
+  std::strong_ordering
+  DeviceInformation::operator<=>(const DeviceInformation& rhs) const
+  {
+    return std::tie( deviceId
+                   , deviceType
+                   , deviceColor
+                   , vendor
+                   , model
+                   , hardwareRevision
+                   , serialNumber
+                   , description
+                   )
+       <=> std::tie( rhs.deviceId
+                   , rhs.deviceType
+                   , rhs.deviceColor
+                   , rhs.vendor
+                   , rhs.model
+                   , rhs.hardwareRevision
+                   , rhs.serialNumber
+                   , rhs.description
+                   )
+      ;
+  }
+
+  bool
+  DeviceInformation::operator==(const DeviceInformation& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

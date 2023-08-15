@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -199,10 +199,7 @@ BOOST_AUTO_TEST_CASE(testProcessNetworkAcl)
         )"
       );
     tp.processNetworkAcl(tv1);
-    auto tobj = tp.getData()[0].networkAcls;
-    nmdoa::NetworkAcl tev1;
-    BOOST_TEST(1 == tobj.size());
-    BOOST_TEST(tev1 == tobj[0]);
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -223,6 +220,7 @@ BOOST_AUTO_TEST_CASE(testProcessNetworkAcl)
         )"
       );
     tp.processNetworkAcl(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto tobj = tp.getData()[0].networkAcls;
     BOOST_TEST(1 == tobj.size());
     const std::string tev1 {
@@ -241,8 +239,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "NetworkAcls": [] })"
       );
     tp.fromJson(tv1);
-    auto tobj = tp.getData()[0].networkAcls;
-    nmdoa::NetworkAcl tev1;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

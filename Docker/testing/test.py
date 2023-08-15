@@ -16,8 +16,8 @@ def run_command(command):
 
   logging.info("Testing with: %s", command)
   r = subprocess.run(**args)
-  output = str(r.stdout, "utf8")
-  err = str(r.stderr, "utf8")
+  output = str(r.stdout, "utf8", errors="replace")
+  err = str(r.stderr, "utf8", errors="replace")
   rtc = r.returncode
   logging.debug("out: %s", output)
   logging.debug("err: %s", err)
@@ -37,10 +37,10 @@ def run_commands(commands):
     allSuccess = run_command(command) and allSuccess
 
   if allSuccess:
-    logging.info("All commands ran successfully")
+    logging.info("All command(s) ran successfully")
     return 0
   else:
-    logging.info("Some command failed")
+    logging.info("Some command(s) failed")
     return 1
 
 
@@ -77,35 +77,42 @@ def test_nmDatastore():
     "nmdb-export-query -q 'select * from tool_runs'",
     "nmdb-export-scans --intra-network",
     # Importers
-    "nmdb-import-aws-ec2-describe-instances --device-id test d1",
-    "nmdb-import-aws-ec2-describe-network-acls --device-id test d1",
-    "nmdb-import-aws-ec2-describe-route-tables --device-id test d1",
-    "nmdb-import-aws-ec2-describe-security-groups --device-id test d1",
-    "nmdb-import-aws-ec2-describe-subnets --device-id test d1",
-    "nmdb-import-aws-ec2-describe-vpcs --device-id test d1",
+    "nmdb-import-apk --device-id test d1",
+    "nmdb-import-aws-ec2-describe-instances --device-id test d5",
+    "nmdb-import-aws-ec2-describe-network-acls --device-id test d5",
+    "nmdb-import-aws-ec2-describe-network-interfaces --device-id test d5",
+    "nmdb-import-aws-ec2-describe-route-tables --device-id test d5",
+    "nmdb-import-aws-ec2-describe-security-groups --device-id test d5",
+    "nmdb-import-aws-ec2-describe-subnets --device-id test d5",
+    "nmdb-import-aws-ec2-describe-transit-gateway-attachments --device-id test d5",
+    "nmdb-import-aws-ec2-describe-vpc-peering-connections --device-id test d5",
+    "nmdb-import-aws-ec2-describe-vpcs --device-id test d5",
     "nmdb-import-brocade --device-id test d1",
+    "nmdb-import-brocade-show-ip-route --device-id test d1",
     "nmdb-import-cisco --device-id test d1",
-    "nmdb-import-cisco-show-ip-route --device-id test /dev/null",
+    #"nmdb-import-cisco-show-ip-route --device-id test d1", #
     "nmdb-import-cisco-wireless --device-id test d1",
-    #"nmdb-import-clw --device-id test d0",
-    #"nmdb-import-dig --device-id test d0",
-    #"nmdb-import-f5-json --device-id test d0",
+    "bash -c \"nmdb-import-clw --device-id test `find .netmeld/clw -maxdepth 1 -type d | grep ls`\"",
+    #"nmdb-import-dig --device-id test d0", #
+    #"nmdb-import-dpkg --device-id test d1", #
+    "nmdb-import-f5-json --device-id test d5",
     "nmdb-import-hosts --device-id test d1",
     "nmdb-import-ip-addr-show --device-id test /dev/null",
-    #"nmdb-import-ipconfig --device-id test d0",
-    #"nmdb-import-ip-route-show --device-id test d0",
-    #"nmdb-import-iptables-save --device-id test d0",
+    #"nmdb-import-ip-route-show --device-id test d0", #
+    #"nmdb-import-ipconfig --device-id test d0", #
+    #"nmdb-import-iptables-save --device-id test d0", #
     "nmdb-import-juniper-conf --device-id test /dev/null",
     "nmdb-import-juniper-set --device-id test d1",
     "nmdb-import-juniper-show-route --device-id test /dev/null",
     "nmdb-import-juniper-xml --device-id test d2",
-    #"nmdb-import-nessus --device-id test d0",
-    #"nmdb-import-nmap --device-id test d0",
+    #"nmdb-import-nessus --device-id test d0", #
+    #"nmdb-import-nmap --device-id test d0", #
     "nmdb-import-paloalto-xml --device-id test d2",
     "nmdb-import-pcap --device-id test d4",
     "nmdb-import-ping --device-id test d1",
     "nmdb-import-powerconnect --device-id test d1",
     "nmdb-import-prowler --device-id test d1",
+    "nmdb-import-rpm-query --device-id test d1",
     "nmdb-import-show-cdp-neighbor --device-id test d1",
     "nmdb-import-show-inventory --device-id test d1",
     "nmdb-import-show-mac-address-table --device-id test /dev/null",
@@ -121,6 +128,7 @@ def test_nmDatastore():
     "nmdb-insert-network",
     # Graphers; Tested later so data to pull exists
     "nmdb-graph-ac --device-id test",
+    "nmdb-graph-aws",
     "nmdb-graph-network --device-id test --layer 3",
     # Other
     "nmdb-remove-tool-run 12345678-1234-1234-1234-123456789012",

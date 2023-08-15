@@ -97,6 +97,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.push_back(data);
+
+  if (data != Data()) {
+    r.push_back(data);
+  }
+
   return r;
 }

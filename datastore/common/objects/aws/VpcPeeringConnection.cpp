@@ -120,7 +120,7 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   VpcPeeringConnection::operator<=>(const VpcPeeringConnection& rhs) const
   {
     return std::tie( pcxId

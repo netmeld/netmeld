@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,9 +27,10 @@
 // NOTE This implementation is included in the header (at the end) since it
 //      leverages templating.
 
+#include <nlohmann/json.hpp>
+
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/utils/QueriesCommon.hpp>
-#include <nlohmann/json.hpp>
 
 namespace nmcu = netmeld::core::utils;
 namespace nmdp = netmeld::datastore::parsers;
@@ -70,10 +71,15 @@ namespace netmeld::datastore::tools {
           parser.fromJson(json::parse(f));
           this->tResults = parser.getData();
       } catch (json::out_of_range& ex) {
-          LOG_ERROR << "Parse error " << ex.what() << std::endl;
+          LOG_ERROR << "Parse error " << ex.what()
+                    << std::endl
+                    ;
           std::exit(nmcu::Exit::FAILURE);
       } catch (json::parse_error& ex) {
-          LOG_ERROR << "Parse error at byte " << ex.byte << std::endl;
+          LOG_ERROR << "Parse error at byte " << ex.byte
+                    << " -- " << ex.what()
+                    << std::endl
+                    ;
           std::exit(nmcu::Exit::FAILURE);
       }
       this->executionStop = nmco::Time();

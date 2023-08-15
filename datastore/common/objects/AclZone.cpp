@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -114,7 +114,23 @@ namespace netmeld::datastore::objects {
     return oss.str();
   }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+  std::strong_ordering
+  AclZone::operator<=>(const AclZone& rhs) const
+  {
+    return std::tie( id
+                   , ifaces
+                   , includedIds
+                   )
+       <=> std::tie( rhs.id
+                   , rhs.ifaces
+                   , rhs.includedIds
+                   )
+      ;
+  }
+
+  bool
+  AclZone::operator==(const AclZone& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }

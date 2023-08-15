@@ -29,6 +29,7 @@
 
 #include <ostream>
 #include <string>
+#include <cstdint>
 
 
 namespace netmeld::core::objects {

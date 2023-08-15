@@ -30,7 +30,6 @@
 #include <nlohmann/json.hpp>
 
 #include <netmeld/datastore/objects/ToolObservations.hpp>
-
 #include <netmeld/datastore/objects/aws/NetworkInterface.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
@@ -46,6 +45,9 @@ struct Data {
   std::vector<nmdoa::NetworkInterface> interfaces;
 
   nmdo::ToolObservations observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data>    Result;
 
@@ -72,7 +74,7 @@ class Parser
   // ===========================================================================
   private:
   protected:
-    void processInterfaces(const json&);
+    void processInterface(const json&);
     void processInterfaceAttachment(const json&, nmdoa::NetworkInterface&);
     void processSecurityGroups(const json&, nmdoa::NetworkInterface&);
     void processIps(const json&, nmdoa::NetworkInterface&);

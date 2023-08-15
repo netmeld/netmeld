@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -357,6 +357,56 @@ namespace netmeld::datastore::objects {
     oss << "]"; // closing bracket
 
     return oss.str();
+  }
+
+  std::partial_ordering
+  InterfaceNetwork::operator<=>(const InterfaceNetwork& rhs) const
+  {
+    return std::tie( name
+                   , description
+                   , isPartial
+                   , mediaType
+                   , isUp
+                   , isDiscoveryProtocolEnabled
+                   , macAddr
+                   , mode
+                   , isPortSecurityEnabled
+                   , portSecurityMaxMacAddrs
+                   , portSecurityViolationAction
+                   , isPortSecurityStickyMac
+                   , learnedMacAddrs
+                   , reachableMacAddrs
+                   , vlans
+                   , isBpduGuardEnabled
+                   , isBpduFilterEnabled
+                   , isPortfastEnabled
+                   )
+       <=> std::tie( rhs.name
+                   , rhs.description
+                   , rhs.isPartial
+                   , rhs.mediaType
+                   , rhs.isUp
+                   , rhs.isDiscoveryProtocolEnabled
+                   , rhs.macAddr
+                   , rhs.mode
+                   , rhs.isPortSecurityEnabled
+                   , rhs.portSecurityMaxMacAddrs
+                   , rhs.portSecurityViolationAction
+                   , rhs.isPortSecurityStickyMac
+                   , rhs.learnedMacAddrs
+                   , rhs.reachableMacAddrs
+                   , rhs.vlans
+                   , rhs.isBpduGuardEnabled
+                   , rhs.isBpduFilterEnabled
+                   , rhs.isPortfastEnabled
+                   )
+      ;
+  }
+
+  bool
+  InterfaceNetwork::operator==(const InterfaceNetwork& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 
   // ===========================================================================

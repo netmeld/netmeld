@@ -144,7 +144,7 @@ namespace netmeld::datastore::objects::aws {
     return cidrBlock;
   }
 
-  std::partial_ordering
+  std::strong_ordering
   CidrBlock::operator<=>(const CidrBlock& rhs) const
   {
     return std::tie( cidrBlock

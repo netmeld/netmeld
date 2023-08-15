@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -33,6 +33,7 @@
 namespace nmcu = netmeld::core::utils;
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdu = netmeld::datastore::utils;
+
 
 namespace netmeld::datastore::tools {
   // ===========================================================================
@@ -80,10 +81,19 @@ namespace netmeld::datastore::tools {
       specificInserts(t);
     }
 
-    t.commit();
-
-    if (!opts.exists("tool-run-id")) {
-      LOG_INFO << "tool-run-id: " << toolRunId << '\n';
+    if (tResults == R() && !preCommitTool) {
+        LOG_WARN << "Parsed data contained no storable information.\n";
+        try {
+          t.abort();
+          LOG_WARN << "Aborted Datastore transaction(s).\n";
+        } catch (pqxx::usage_error& e) {
+          LOG_DEBUG << "Failed to manually abort: " <<  e.what() << std::endl;
+        }
+    } else {
+      t.commit();
+      if (!opts.exists("tool-run-id")) {
+        LOG_INFO << "tool-run-id: " << toolRunId << '\n';
+      }
     }
 
     return nmcu::Exit::SUCCESS;
