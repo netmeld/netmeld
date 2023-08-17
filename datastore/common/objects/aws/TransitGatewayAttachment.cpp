@@ -153,7 +153,7 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   TransitGatewayAttachment::operator<=>(const TransitGatewayAttachment& rhs) const
   {
     return std::tie( tgwAttachmentId

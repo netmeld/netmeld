@@ -102,7 +102,7 @@ namespace netmeld::datastore::objects::aws {
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const NetworkInterface&) const;
+      std::strong_ordering operator<=>(const NetworkInterface&) const;
       bool operator==(const NetworkInterface&) const;
   };
 }

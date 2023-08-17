@@ -166,7 +166,7 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   NetworkAclRule::operator<=>(const NetworkAclRule& rhs) const
   {
     return std::tie( number

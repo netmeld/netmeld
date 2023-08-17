@@ -40,7 +40,7 @@ using qi::ascii::blank;
 class TestParser : public Parser
 {
   public:
-    using Parser::processTransitGatewayAttachments;
+    using Parser::processTransitGatewayAttachment;
 };
 
 BOOST_AUTO_TEST_CASE(testProcessTransitGatewayAttachments)
@@ -48,48 +48,40 @@ BOOST_AUTO_TEST_CASE(testProcessTransitGatewayAttachments)
   {
     TestParser tp;
     json tv1 = json::parse(R"(
-        { "TransitGatewayAttachments": [
-            { "TransitGatewayAttachmentId": ""
-            , "TransitGatewayId": ""
-            , "TransitGatewayOwnerId": ""
-            , "ResourceOwnerId": ""
-            , "ResourceType": ""
-            , "ResourceId": ""
-            , "State": ""
-            , "Association": {
-                "State": ""
-              }
+          { "TransitGatewayAttachmentId": ""
+          , "TransitGatewayId": ""
+          , "TransitGatewayOwnerId": ""
+          , "ResourceOwnerId": ""
+          , "ResourceType": ""
+          , "ResourceId": ""
+          , "State": ""
+          , "Association": {
+              "State": ""
             }
-          ]
-        }
+          }
         )"
       );
-    nmdoa::TransitGatewayAttachment tev1;
-    tp.processTransitGatewayAttachments(tv1);
-    auto tobj = tp.getData()[0].tgwas;
-    BOOST_TEST(1 == tobj.size());
-    BOOST_TEST(tev1 == tobj[0]);
+    tp.processTransitGatewayAttachment(tv1);
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
     json tv1 = json::parse(R"(
-        { "TransitGatewayAttachments": [
-            { "TransitGatewayAttachmentId": "aB1-2c3"
-            , "TransitGatewayId": "aB1-2c3"
-            , "TransitGatewayOwnerId": "aB1-2c3"
-            , "ResourceOwnerId": "aB1-2c3"
-            , "ResourceType": "aB1-2c3"
-            , "ResourceId": "aB1-2c3"
-            , "State": "aB1-2c3"
-            , "Association": {
-                "State": "aB1-2c3"
-              }
+          { "TransitGatewayAttachmentId": "aB1-2c3"
+          , "TransitGatewayId": "aB1-2c3"
+          , "TransitGatewayOwnerId": "aB1-2c3"
+          , "ResourceOwnerId": "aB1-2c3"
+          , "ResourceType": "aB1-2c3"
+          , "ResourceId": "aB1-2c3"
+          , "State": "aB1-2c3"
+          , "Association": {
+              "State": "aB1-2c3"
             }
-          ]
-        }
+          }
         )"
       );
-    tp.processTransitGatewayAttachments(tv1);
+    tp.processTransitGatewayAttachment(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto tobj = tp.getData()[0].tgwas;
     const std::vector<std::string> tevs {
         R"([tgwAttachmentId: aB1-2c3,)"
@@ -117,7 +109,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "TransitGatewayAttachments": [] })"
       );
     tp.fromJson(tv1);
-    auto tobj = tp.getData()[0].tgwas;
-    BOOST_TEST(0 == tobj.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

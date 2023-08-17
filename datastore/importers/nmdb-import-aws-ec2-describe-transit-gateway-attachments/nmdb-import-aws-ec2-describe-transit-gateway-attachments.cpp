@@ -31,7 +31,6 @@
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
 
-using json = nlohmann::json;
 
 // =============================================================================
 // Import tool definition

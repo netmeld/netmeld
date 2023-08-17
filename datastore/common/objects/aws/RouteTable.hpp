@@ -82,7 +82,7 @@ namespace netmeld::datastore::objects::aws {
 
       std::string toDebugString() const override;
 
-      std::partial_ordering operator<=>(const RouteTable&) const;
+      std::strong_ordering operator<=>(const RouteTable&) const;
       bool operator==(const RouteTable&) const;
   };
 }

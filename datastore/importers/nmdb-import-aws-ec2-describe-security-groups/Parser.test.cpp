@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -205,10 +205,7 @@ BOOST_AUTO_TEST_CASE(testProcessSecurityGroup)
         )"
       );
     tp.processSecurityGroup(tv1);
-    auto trv1 = tp.getData()[0].securityGroups;
-    BOOST_TEST(1 == trv1.size());
-    nmdoa::SecurityGroup tev1;
-    BOOST_TEST(tev1 == trv1[0]);
+    BOOST_TEST(0 == tp.getData().size());
   }
   {
     TestParser tp;
@@ -226,6 +223,7 @@ BOOST_AUTO_TEST_CASE(testProcessSecurityGroup)
         )"
       );
     tp.processSecurityGroup(tv1);
+    BOOST_TEST(1 == tp.getData().size());
     auto trv1 = tp.getData()[0].securityGroups;
     BOOST_TEST(1 == trv1.size());
     const std::string tev1 {
@@ -244,7 +242,6 @@ BOOST_AUTO_TEST_CASE(testFromJson)
         R"({ "SecurityGroups": [] })"
       );
     tp.fromJson(tv1);
-    auto trv1 = tp.getData()[0].securityGroups;
-    BOOST_TEST(0 == trv1.size());
+    BOOST_TEST(0 == tp.getData().size());
   }
 }

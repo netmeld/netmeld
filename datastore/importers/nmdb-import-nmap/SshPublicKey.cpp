@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -73,4 +73,28 @@ SshPublicKey::toString() const
   oss << "]";
 
   return oss.str();
+}
+
+std::partial_ordering
+SshPublicKey::operator<=>(const SshPublicKey& rhs) const
+{
+  return std::tie( port
+                 , type
+                 , bits
+                 , fingerprint
+                 , key
+                 )
+     <=> std::tie( rhs.port
+                 , rhs.type
+                 , rhs.bits
+                 , rhs.fingerprint
+                 , rhs.key
+                 )
+    ;
+}
+
+bool
+SshPublicKey::operator==(const SshPublicKey& rhs) const
+{
+  return 0 == operator<=>(rhs);
 }

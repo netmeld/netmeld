@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -158,6 +158,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 
       // Commit transaction, use tool run entry per data set transaction
       t.commit();
+      this->preCommitTool = true;
 
       pqxx::connection db {this->getDbConnectString()};
       nmdu::dbPrepareCommon(db);

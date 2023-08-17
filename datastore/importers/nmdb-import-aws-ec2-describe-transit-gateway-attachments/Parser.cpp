@@ -36,37 +36,29 @@ Parser::Parser()
 void
 Parser::fromJson(const json& _data)
 {
-  try {
-    processTransitGatewayAttachments(_data);
-  } catch (json::parse_error& ex) {
-    LOG_ERROR << "Parse error at byte " << ex.byte
-              << std::endl;
-    std::exit(nmcu::Exit::FAILURE);
+  for (const auto& json : _data.at("TransitGatewayAttachments")) {
+    processTransitGatewayAttachment(json);
   }
 }
 
 void
-Parser::processTransitGatewayAttachments(const json& _json)
+Parser::processTransitGatewayAttachment(const json& _json)
 {
-  if (!_json.contains("TransitGatewayAttachments")) {
-    return;
+  nmdoa::TransitGatewayAttachment tgwa;
+  tgwa.setTgwId(_json.value("TransitGatewayId", ""));
+  tgwa.setTgwOwnerId(_json.value("TransitGatewayOwnerId", ""));
+  tgwa.setTgwAttachmentId(_json.value("TransitGatewayAttachmentId", ""));
+  tgwa.setResourceType(_json.value("ResourceType", ""));
+  tgwa.setResourceId(_json.value("ResourceId", ""));
+  tgwa.setResourceOwnerId(_json.value("ResourceOwnerId", ""));
+  tgwa.setState(_json.value("State", ""));
+
+  if (_json.contains("Association")) {
+    const auto& jAssoc {_json.at("Association")};
+    tgwa.setAssociationState(jAssoc.value("State", ""));
   }
 
-  for (const auto& json : _json.at("TransitGatewayAttachments")) {
-    nmdoa::TransitGatewayAttachment tgwa;
-    tgwa.setTgwId(json.value("TransitGatewayId", ""));
-    tgwa.setTgwOwnerId(json.value("TransitGatewayOwnerId", ""));
-    tgwa.setTgwAttachmentId(json.value("TransitGatewayAttachmentId", ""));
-    tgwa.setResourceType(json.value("ResourceType", ""));
-    tgwa.setResourceId(json.value("ResourceId", ""));
-    tgwa.setResourceOwnerId(json.value("ResourceOwnerId", ""));
-    tgwa.setState(json.value("State", ""));
-
-    if (json.contains("Association")) {
-      const auto& jsonSub {json.at("Association")};
-      tgwa.setAssociationState(jsonSub.value("State", ""));
-    }
-
+  if (tgwa != nmdoa::TransitGatewayAttachment()) {
     d.tgwas.emplace_back(tgwa);
   }
 }
@@ -79,6 +71,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.emplace_back(d);
+
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
+
   return r;
 }

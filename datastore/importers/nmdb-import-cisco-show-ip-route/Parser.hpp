@@ -42,6 +42,9 @@ namespace nmdp = netmeld::datastore::parsers;
 struct Data {
   std::vector<nmdo::Route>  routes;
   nmdo::ToolObservations    observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 
 typedef std::vector<Data> Result;

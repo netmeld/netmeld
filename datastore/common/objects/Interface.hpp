@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -95,6 +95,9 @@ namespace netmeld::datastore::objects {
       // Linux specific
       void setFlags(const std::string&);
       void setMtu(uint32_t);
+
+      std::partial_ordering operator<=>(const Interface&) const;
+      bool operator==(const Interface&) const;
   };
 }
 #endif // INTERFACE_HPP

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -70,6 +70,9 @@ namespace netmeld::datastore::objects {
                 const nmco::Uuid&, const std::string&) override;
 
       std::string toDebugString() const override;
+
+      std::partial_ordering operator<=>(const TracerouteHop&) const;
+      bool operator==(const TracerouteHop&) const;
   };
 }
 #endif //TRACEROUTE_HOP

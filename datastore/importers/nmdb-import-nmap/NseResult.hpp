@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,7 +35,7 @@ namespace nmdo = netmeld::datastore::objects;
 class NseResult : public nmdo::AbstractDatastoreObject
 {
   public:
-    nmdo::Port       port;
+    nmdo::Port      port;
     std::string     scriptId;
     std::string     scriptOutput;
 
@@ -43,6 +43,9 @@ class NseResult : public nmdo::AbstractDatastoreObject
     void save(pqxx::transaction_base&,
               const nmco::Uuid&, const std::string&) override;
     std::string toString() const;
+
+    std::partial_ordering operator<=>(const NseResult&) const;
+    bool operator==(const NseResult&) const;
 };
 
 #endif //NSE_RESULT

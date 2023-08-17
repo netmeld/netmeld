@@ -882,6 +882,10 @@ Parser::getData()
   }
 
   Result r;
-  r.push_back(d);
+
+  if (d != Data()) {
+    r.push_back(d);
+  }
+
   return r;
 }

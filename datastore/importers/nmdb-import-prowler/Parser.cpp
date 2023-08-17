@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,7 +42,11 @@ Parser::parseJsonLine(const std::string_view line)
   try {
     json jline;
     jline = json::parse(line);
-    r.emplace_back(Data(jline));
+
+    Data d {jline};
+    if (d != Data()) {
+      r.emplace_back(d);
+    }
   } catch (json::parse_error& ex) {
     LOG_WARN << "Parse error at byte " << ex.byte
              << " for line -- " << line << std::endl;

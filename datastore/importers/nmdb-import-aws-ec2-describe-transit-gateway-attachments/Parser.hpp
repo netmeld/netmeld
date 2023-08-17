@@ -30,7 +30,6 @@
 #include <nlohmann/json.hpp>
 
 #include <netmeld/datastore/objects/ToolObservations.hpp>
-
 #include <netmeld/datastore/objects/aws/TransitGatewayAttachment.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
@@ -46,6 +45,9 @@ struct Data {
   std::vector<nmdoa::TransitGatewayAttachment> tgwas;
 
   nmdo::ToolObservations observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data>    Result;
 
@@ -72,7 +74,7 @@ class Parser
   // ===========================================================================
   private:
   protected:
-    void processTransitGatewayAttachments(const json&);
+    void processTransitGatewayAttachment(const json&);
 
   public:
     void fromJson(const json&);
