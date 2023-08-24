@@ -49,6 +49,7 @@ struct VertexProperties
 struct EdgeProperties
 {
   std::string label;
+  std::string style;
 
   double weight = 1.0;
 };

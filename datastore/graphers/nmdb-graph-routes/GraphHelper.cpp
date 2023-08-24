@@ -37,13 +37,10 @@ void
 LabelWriter::operator()(std::ostream& os, Vertex const& v) const
 {
   os << "["
-     << "shape=\"" << graph[v].shape << "\""
-     << ", "
-     << "style=\"" << graph[v].style << "\""
-     << ", "
-     << "fillcolor=\"" << graph[v].fillcolor << "\""
-     << ", "
-     << "label=\"" << graph[v].label << "\""
+     << R"(shape=")" << graph[v].shape << '"'
+     << R"(, style=")" << graph[v].style << '"'
+     << R"(, fillcolor=")" << graph[v].fillcolor << '"'
+     << R"(, label=")" << graph[v].label << '"'
      << "]";
 }
 
@@ -56,12 +53,13 @@ LabelWriter::operator()(std::ostream& os, Edge const& e) const
   double const distance_ratio = (graph[s].distance / graph[t].distance);
   std::string constraint;
   if ((0.999 < distance_ratio) && (distance_ratio < 1.001)) {
-    constraint = "constraint=false, ";
+    constraint = ", constraint=false";
   }
 
   os << "["
+     << R"(label=")" << graph[e].label << '"'
+     << R"(, style=")" << graph[e].style << '"'
      << constraint
-     << "label=\"" << graph[e].label << "\""
      << "]";
 }
 

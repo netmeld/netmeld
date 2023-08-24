@@ -124,7 +124,7 @@ Parser::Parser() : Parser::base_type(start)
   //   nextHop == [ip/prefix | ip | iface]
   route =
     (qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
-    -(qi::lit("vrf") >> token) >>
+    -(qi::lit("vrf") >> token) [(pnx::bind(&Parser::vrfId, this) = qi::_1)] >>
        // ip_mask ip
     (  (ipMask >> ipAddr)
          [(pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2))]
@@ -551,6 +551,11 @@ Parser::routeAddIp( const nmdo::IpAddress& dstIpNet
   routeRule.setProtocol("static");
   routeRule.setMetric(0);
 
+  if (!vrfId.empty()) {
+    routeRule.setVrfId(vrfId);
+    vrfId = "";
+  }
+
   d.routes.push_back(routeRule);
 }
 
@@ -572,6 +577,11 @@ Parser::routeAddIface( const nmdo::IpAddress& dstIpNet
   }
   routeRule.setProtocol("static");
   routeRule.setMetric(0);
+
+  if (!vrfId.empty()) {
+    routeRule.setVrfId(vrfId);
+    vrfId = "";
+  }
 
   d.routes.push_back(routeRule);
 }

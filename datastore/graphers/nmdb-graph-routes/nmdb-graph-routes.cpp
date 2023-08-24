@@ -52,6 +52,8 @@ class Tool : public nmdt::AbstractGraphTool
     std::string testStartIp;
     std::string testDestIp;
 
+    std::map<std::string, std::set<std::string>> vertexDetails;
+
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
 
@@ -82,14 +84,12 @@ class Tool : public nmdt::AbstractGraphTool
     {
       opts.addRequiredOption("source", std::make_tuple(
             "source,s",
-            po::value<std::string>()->required()
-              ->default_value("10.0/16"),
+            po::value<std::string>()->required(),
             "Source host or network for routes")
           );
       opts.addRequiredOption("destination", std::make_tuple(
             "destination,d",
-            po::value<std::string>()->required()
-              ->default_value("8.8.8.8"),
+            po::value<std::string>()->required(),
             "Destination host or network for routes")
           );
     }
@@ -129,10 +129,6 @@ class Tool : public nmdt::AbstractGraphTool
     void
     dbPrepareToolSpecific(pqxx::connection& db)
     {
-      //db.prepare("", R"(
-      //    )"
-      //  );
-
       db.prepare("select_initial_hops", R"(
           SELECT DISTINCT
               device_id
@@ -141,8 +137,7 @@ class Tool : public nmdt::AbstractGraphTool
             , ip_addr
             , ip_net
           FROM device_vrfs_ip_addrs
-          WHERE ip_net  && $1
-            AND ip_addr != $1
+          WHERE ip_net && $1
           )"
         );
       db.prepare("select_hop_routes", R"(
@@ -155,16 +150,28 @@ class Tool : public nmdt::AbstractGraphTool
             , next_vrf_id
             , next_table_id
             , next_hop_ip_addr
-            , outgoing_interface_name
-            , protocol
-            , administrative_distance
-            , metric
-            , description
+            , max(outgoing_interface_name) AS outgoing_interface_name
+--            , protocol
+--            , administrative_distance
+--            , metric
+--            , description
           FROM device_ip_routes
           WHERE is_active
-            AND $1 <<= dst_ip_net
+            --AND $1 <<= dst_ip_net
+            AND $1 && dst_ip_net
             AND $2 = device_id
             AND $3 = vrf_id
+            AND NOT (  outgoing_interface_name = 'discard'
+                    OR outgoing_interface_name = 'null0'
+                    )
+          GROUP BY  device_id
+                  , vrf_id
+                  , table_id
+                  , is_active
+                  , dst_ip_net
+                  , next_vrf_id
+                  , next_table_id
+                  , next_hop_ip_addr
           )"
         );
       db.prepare("select_next_hops", R"(
@@ -178,124 +185,6 @@ class Tool : public nmdt::AbstractGraphTool
           WHERE ip_addr = $1
           )"
         );
-
-
-//      db.prepare("select_next_hop", R"(
-//          SELECT DISTINCT
-//            --, dst_ip_net
-//              device_id
-//            , vrf_id
-//            --, table_id
-//            --, is_active
-//            --, protocol
-//            --, administrative_distance
-//            --, metric
-//            --, incoming_interface_name
-//            --, incoming_ip_addr
-//            , incoming_ip_net
-//            --, outgoing_interface_name
-//            --, outgoing_ip_addr
-//            --, outgoing_ip_net
-//            --, next_hop_device_id
-//            --, next_hop_vrf_id
-//            --, next_hop_incoming_interface_name
-//            --, next_hop_incoming_ip_addr
-//            --, next_hop_incoming_ip_net
-//          FROM device_ip_route_connections
-//          WHERE (is_active = true)
-//            AND ( (   (incoming_interface_name NOT LIKE 'management%')
-//                  AND (incoming_interface_name NOT LIKE 'mgmt%')
-//                  )
-//                OR (incoming_interface_name IS NULL)
-//                )
-//            AND ( (   (outgoing_interface_name NOT LIKE 'management%')
-//                  AND (outgoing_interface_name NOT LIKE 'mgmt%')
-//                  )
-//                OR (outgoing_interface_name IS NULL)
-//                )
-//            AND ($1 && incoming_ip_net)
-//          )"
-//        );
-
-//      db.prepare("select_next_hops", R"(
-//          SELECT DISTINCT
-//              dst_ip_net
-//            , device_id
-//            , vrf_id
-//            --, table_id
-//            --, is_active
-//            --, protocol
-//            --, administrative_distance
-//            --, metric
-//            , incoming_interface_name
-//            , incoming_ip_addr
-//            , incoming_ip_net
-//            , outgoing_interface_name
-//            , outgoing_ip_addr
-//            , outgoing_ip_net
-//            --, next_hop_device_id
-//            --, next_hop_vrf_id
-//            --, next_hop_incoming_interface_name
-//            --, next_hop_incoming_ip_addr
-//            --, next_hop_incoming_ip_net
-//          FROM device_ip_route_connections
-//          WHERE (is_active = true)
-//            AND ( (   (incoming_interface_name NOT LIKE 'management%')
-//                  AND (incoming_interface_name NOT LIKE 'mgmt%')
-//                  )
-//                OR (incoming_interface_name IS NULL)
-//                )
-//            AND ( (   (outgoing_interface_name NOT LIKE 'management%')
-//                  AND (outgoing_interface_name NOT LIKE 'mgmt%')
-//                  )
-//                OR (outgoing_interface_name IS NULL)
-//                )
-//          )"
-//        );
-
-//      db.prepare("select_hop_routes", R"(
-//          SELECT DISTINCT
-//              dst_ip_net
-//            , device_id
-//            , vrf_id
-//            --, table_id
-//            --, is_active
-//            --, protocol
-//            --, administrative_distance
-//            --, metric
-//            --, incoming_interface_name
-//            --, incoming_ip_addr
-//            , incoming_ip_net
-//            , outgoing_interface_name
-//            , outgoing_ip_addr
-//            , outgoing_ip_net
-//            --, next_hop_device_id
-//            --, next_hop_vrf_id
-//            --, next_hop_incoming_interface_name
-//            --, next_hop_incoming_ip_addr
-//            --, next_hop_incoming_ip_net
-//          FROM device_ip_route_connections
-//          WHERE (is_active = true)
-//            AND ( (   (incoming_interface_name NOT LIKE 'management%')
-//                  AND (incoming_interface_name NOT LIKE 'mgmt%')
-//                  )
-//                OR (incoming_interface_name IS NULL)
-//                )
-//            AND ( (   (outgoing_interface_name NOT LIKE 'management%')
-//                  AND (outgoing_interface_name NOT LIKE 'mgmt%')
-//                  )
-//                OR (outgoing_interface_name IS NULL)
-//                )
-//            AND (   $1 = device_id
-//                AND $2 = vrf_id
-//                AND $3 <<= dst_ip_net
-//                )
-//          ORDER BY dst_ip_net desc
-//          LIMIT 1
-//          )"
-//        );
-
-      // TODO
     }
 
     void
@@ -305,38 +194,12 @@ class Tool : public nmdt::AbstractGraphTool
 
       // TODO
       findRoutesBetweenPoints(t);
+      addVertexDetails();
 
       t.abort();
       finalizeVertices();
     }
 
-    /*
-      findRoutes()
-        for each nextHop(source)
-          getPossibleRoutes()
-
-      getPossibleRoutes()
-        rExists = false
-
-        get node route where target is reachable
-        if route == default
-          rExists = true
-        if route == target
-          rExists = true
-        otherwise
-          get node nextHops via outIp
-          for each nextHop(outIp)
-            if nextHop exists
-              rExists = getPossibleRoutes()
-            else
-              rExists = true
-
-        if rExists
-          add data
-          
-        return rExists
-          
-    */
     void
     findRoutesBetweenPoints(pqxx::transaction_base& t)
     {
@@ -348,19 +211,17 @@ class Tool : public nmdt::AbstractGraphTool
         t.exec_prepared("select_initial_hops", testStartIp);
 
       for (const auto& nextHop : nextHops) {
-        std::string deviceId;
-        nextHop.at("device_id").to(deviceId);
-        std::string vrfId;
-        nextHop.at("vrf_id").to(vrfId);
-        std::string ipNet;
-        nextHop.at("ip_net").to(ipNet);
+        const std::string deviceId    {nextHop.at("device_id").c_str()};
+        const std::string vrfId       {nextHop.at("vrf_id").c_str()};
+        const std::string ipNet       {nextHop.at("ip_net").c_str()};
+        const std::string inIfaceName {nextHop.at("interface_name").c_str()};
 
         const std::string id {vrfId + "::" + deviceId};
-        addVertex("oval", ipNet);
-        addEdge(testStartIp, ipNet);
-
-        getPossibleRoutes(t, deviceId, vrfId);
+        getPossibleRoutes(t, deviceId, vrfId, inIfaceName);
         if (vertexLookup.count(id)) {
+          addVertex("oval", ipNet);
+          addEdge(testStartIp, ipNet);
+
           LOG_ERROR << "Route was found starting at: "
                     << ipNet << "->" << id
                     << std::endl;
@@ -368,53 +229,31 @@ class Tool : public nmdt::AbstractGraphTool
         }
       }
     }
-//    void
-//    findRoutesBetweenPoints(pqxx::transaction_base& t)
-//    {
-//      // add source and destination nodes
-//      addVertex("oval", testStartIp);
-//      addVertex("oval", testDestIp);
-//
-//      pqxx::result nextHops =
-//        t.exec_prepared("select_next_hop", testStartIp);
-//
-//      for (const auto& nextHop : nextHops) {
-//        std::string deviceId;
-//        nextHop.at("device_id").to(deviceId);
-//        std::string vrfId;
-//        nextHop.at("vrf_id").to(vrfId);
-//        std::string inIpNet;
-//        nextHop.at("incoming_ip_net").to(inIpNet);
-//
-//        if (getPossibleRoutes(t, deviceId, vrfId)) {
-//          std::string id {vrfId + "::" + deviceId};
-//          addEdge(inIpNet, id);
-//        }
-//      }
-//    }
 
+    // This behaves as a DFS type lookup for routes
     void
     getPossibleRoutes( pqxx::transaction_base& t
                      , const std::string& deviceId
                      , const std::string& vrfId
+                     , const std::string& inIfaceName
                      )
     {
-      std::string id {vrfId + "::" + deviceId};
+      const std::string id {vrfId + "::" + deviceId};
 
       // process hop route(s) where destination is reachable
       // - empty if no routes, otherwise a route is known
       pqxx::result routes =
         t.exec_prepared("select_hop_routes", testDestIp, deviceId, vrfId);
       for (const auto& route : routes) {
-        std::string nextHopIpAddr;
-        route.at("next_hop_ip_addr").to(nextHopIpAddr);
+        const std::string nextHopIpAddr {route.at("next_hop_ip_addr").c_str()};
         
         // found if node out IP is destination; else inspect further
         if ((testDestIp == nextHopIpAddr)) {
           LOG_ERROR << "Route found ending at: "
                     << id << "->" << testDestIp
                     << std::endl;
-          addVertex("box", id);
+          //addVertex("box", id);
+          addVertexRoute(route, inIfaceName);
           addEdge(id, testDestIp);
         } else {
           // can be multiple next hops (e.g. failover)
@@ -425,16 +264,13 @@ class Tool : public nmdt::AbstractGraphTool
             LOG_ERROR << "Possible route: "
                       << id << "->" << testDestIp
                       << std::endl;
-            addVertex("box", id);
-            addEdge(id, testDestIp);
+            //addVertex("box", id);
+            addVertexRoute(route, inIfaceName);
+            addEdge(id, testDestIp, "dashed");
           } else {
             for (const auto& nextHop : nextHops) {
-              std::string nextDeviceId;
-              nextHop.at("device_id").to(nextDeviceId);
-              std::string nextVrfId;
-              nextHop.at("vrf_id").to(nextVrfId);
-              std::string ipNet;
-              nextHop.at("ip_net").to(ipNet);
+              const std::string nextDeviceId  {nextHop.at("device_id").c_str()};
+              const std::string nextVrfId     {nextHop.at("vrf_id").c_str()};
 
               const std::string nextId {nextVrfId + "::" + nextDeviceId};
 
@@ -445,16 +281,20 @@ class Tool : public nmdt::AbstractGraphTool
                           << std::endl;
 
                 // continue along path until can't
-                getPossibleRoutes(t, nextDeviceId, nextVrfId);
+                const std::string nextInIfaceName
+                  {nextHop.at("interface_name").c_str()};
+                getPossibleRoutes(t, nextDeviceId, nextVrfId, nextInIfaceName);
               }
 
               if (vertexLookup.contains(nextId)) {
+                const std::string ipNet {nextHop.at("ip_net").c_str()};
                 LOG_ERROR << "NextHop was viable: "
                           << ipNet << "->" << nextId
                           << std::endl;
                 addVertex("oval", ipNet);
                 addEdge(ipNet, nextId);
-                addVertex("box", id);
+                addVertexRoute(route, inIfaceName);
+                //addVertex("box", id);
                 addEdge(id, ipNet);
               }
             }
@@ -463,174 +303,33 @@ class Tool : public nmdt::AbstractGraphTool
       }
     }
 
-//    bool
-//    getPossibleRoutes( pqxx::transaction_base& t
-//                     , const std::string& deviceId
-//                     , const std::string& vrfId
-//                     )
-//    {
-//      bool        routeExists {false};
-//      std::string id          {vrfId + "::" + deviceId};
-//
-//      std::string dstIpNet;
-//      std::string outIpAddr;
-//      std::string outIpNet;
-//      std::string inIpNet;
-//     
-//      LOG_ERROR << "visiting: "
-//                << deviceId << "::" << vrfId << "--" << testDestIp
-//                << std::endl;
-//
-//      // process hop route(s) where destination is reachable
-//      // - empty if no routes, otherwise a route is known
-//      pqxx::result routes =
-//        t.exec_prepared("select_hop_routes", deviceId, vrfId, testDestIp);
-//      for (const auto& route : routes) {
-//        route.at("dst_ip_net").to(dstIpNet);
-//        route.at("outgoing_ip_addr").to(outIpAddr);
-//        route.at("outgoing_ip_net").to(outIpNet);
-//        route.at("incoming_ip_net").to(inIpNet);
-//        
-//        LOG_ERROR << "Route: " << dstIpNet << " via " << outIpAddr << std::endl;
-//
-//        // found if node out IP is destination or next hop is default
-//        if ((testDestIp == outIpAddr)) {
-//          LOG_ERROR << "Route found" << std::endl;
-//          routeExists = true;
-//        }
-//        // further inspect route
-//        else {
-//          // can be multiple next hops (e.g. failover)
-//          pqxx::result nextHops =
-//            t.exec_prepared("select_next_hop", outIpAddr);
-//          // route entry for destination, but next hop not known
-//          if (0 == nextHops.size()) {
-//            LOG_ERROR << "Viable route" << std::endl;
-//            routeExists = true;
-//          }
-//          else {
-//            for (const auto& nextHop : nextHops) {
-//              std::string nextDeviceId;
-//              nextHop.at("device_id").to(nextDeviceId);
-//              std::string nextVrfId;
-//              nextHop.at("vrf_id").to(nextVrfId);
-//
-//              const std::string visitId {nextDeviceId + nextVrfId};
-//              if (!visited.contains(visitId)) {
-//                visited.insert(visitId);
-//                LOG_ERROR << "Visiting: "
-//                          << nextDeviceId << "::" << nextVrfId
-//                          << std::endl;
-//
-//                // continue along path until can't
-//                if (getPossibleRoutes(t, nextDeviceId, nextVrfId)) {
-//                  LOG_ERROR << "Viable nextHop" << std::endl;
-//                  routeExists = true;
-//                }
-//              } else {
-//                if ("0.0.0.0/0" == dstIpNet) {
-//                  LOG_ERROR << "Default routed" << std::endl;
-//                  routeExists = true;
-//                }
-//              }
-//            }
-//          }
-//        }
-//
-//        if (routeExists) {
-//          // add subnet nodes
-//          addVertex("oval", inIpNet);
-//          addVertex("oval", outIpNet);
-//
-//          // add host node
-//          // TODO? list viable host routes
-//          addVertex("box", id);
-//
-//          // add edges between host and subnets
-//          addEdge(inIpNet, id);
-//          addEdge(id, outIpNet);
-//        }
-//      }
-//
-//      return routeExists;
-//    }
-
-    bool
-    doesNetContainIp( pqxx::transaction_base& t
-                    , const std::string& ipNet, const std::string& ip)
-    {
-      pqxx::result rows =
-        t.exec_prepared("select_net_contains_ip", ipNet, ip);
-
-      // TODO clean up
-      for (const auto& row : rows) {
-        bool contains;
-        row.at("contains").to(contains);
-
-        if (contains) {
-          return true;
-        }
-      }
-      return false;
-    }
-
     void
-    getNextHops(pqxx::transaction_base& t, const std::string& startHop)
+    addVertexRoute(const auto& route
+                  , const std::string& inIfaceName
+                  )
     {
-      pqxx::result rows =
-        t.exec_prepared("select_next_hop", startHop);
+      const std::string vrfId     {route.at("vrf_id").c_str()};
+      const std::string deviceId  {route.at("device_id").c_str()};
 
-      for (const auto& row : rows) {
-        std::string inIpNet;
-        row.at("incoming_ip_net").to(inIpNet);
-        std::string inIpAddr;
-        row.at("incoming_ip_addr").to(inIpAddr);
-        std::string inIfaceName;
-        row.at("incoming_interface_name").to(inIfaceName);
-        std::string deviceId;
-        row.at("device_id").to(deviceId);
-        std::string vrfId;
-        row.at("vrf_id").to(vrfId);
-        std::string outIfaceName;
-        row.at("outgoing_interface_name").to(outIfaceName);
-        std::string outIpNet;
-        row.at("outgoing_ip_net").to(outIpNet);
-        std::string outIpAddr;
-        row.at("outgoing_ip_addr").to(outIpAddr);
+      const std::string id {vrfId + "::" + deviceId};
 
-        std::string id {vrfId + "::" + deviceId};
-        bool doRecurse {
-               !vertexLookup.contains(inIpNet)
-            || !vertexLookup.contains(outIpNet)
-            || !vertexLookup.contains(id)
-          };
+      std::ostringstream oss;
+      oss << "From " << inIfaceName
+          << " to "
+          << route.at("dst_ip_net")
+          << " via "
+          << route.at("outgoing_interface_name")
+          << " / "
+          << route.at("next_hop_ip_addr")
+          << R"(<br align="left"/>)"
+          ;
 
-        // add subnet nodes
-        addVertex("oval", inIpNet);
-        addVertex("oval", outIpNet);
-
-        // add host node
-        std::ostringstream oss;
-
-        oss << inIpAddr
-            << "--" << inIfaceName
-            << " --- "
-            << outIfaceName
-            << "--" << outIpAddr
-            << R"(<br align="left"/>)"
-            ;
-
-        addVertex("box", id, oss.str());
-
-        // add edges between host and subnets
-        addEdge(inIpNet, id);
-        addEdge(id, outIpNet);
-
-        // recurse
-        if (doRecurse) {
-          getNextHops(t, outIpAddr);
-        }
+      if (!vertexDetails.contains(id)) {
+        vertexDetails.emplace(id, std::set<std::string>());
       }
+      vertexDetails.at(id).insert(oss.str());
+
+      addVertex("box", id);
     }
 
     void
@@ -673,6 +372,16 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
+    addVertexDetails()
+    {
+      for (const auto& [vertex, dataSet] : vertexDetails) {
+        for (const auto& data : dataSet) {
+          addVertex("box", vertex, data);
+        }
+      }
+    }
+
+    void
     finalizeVertices()
     {
       for (const auto& [_, v] : vertexLookup) {
@@ -681,7 +390,10 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addEdge(const std::string& src, const std::string& dst)
+    addEdge( const std::string& src
+           , const std::string& dst
+           , const std::string& style=""
+           )
     {
       LOG_DEBUG << "Edge: " << src << " <-> " << dst << std::endl;
 
@@ -689,21 +401,24 @@ class Tool : public nmdt::AbstractGraphTool
         const auto u {vertexLookup.at(src)};
         const auto v {vertexLookup.at(dst)};
 
-        if (edgeLookup.count(src) && edgeLookup[src].count(dst)) {
-          const auto e {edgeLookup.at(src).at(dst)};
-        } else if (edgeLookup.count(dst) && edgeLookup[dst].count(src)) {
-          const auto e {edgeLookup.at(dst).at(src)};
+        Edge e;
+        if (edgeLookup.contains(src) && edgeLookup[src].contains(dst)) {
+          e = edgeLookup.at(src).at(dst);
+        } else if (edgeLookup.contains(dst) && edgeLookup[dst].contains(src)) {
+          e = edgeLookup.at(dst).at(src);
         } else {
-          Edge e;
           bool inserted;
           tie(e, inserted) = boost::add_edge(u, v, graph);
           edgeLookup[src][dst] = e;
         }
+        if (!style.empty()) {
+          graph[e].style = style;
+        }
       } catch (const std::exception& e) {
-        LOG_ERROR << "Failed to create edge: " << e.what()
+        LOG_ERROR << "Failed to create/update edge: " << e.what()
                   << std::endl;
         for (const auto& i : {src,dst}) {
-          if (!vertexLookup.count(i)) {
+          if (!vertexLookup.contains(i)) {
             LOG_ERROR << " - Non-existant vertex: " << i << std::endl;
           }
         }
