@@ -28,6 +28,10 @@
 #include <netmeld/datastore/objects/AcRule.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 
+#include <netmeld/datastore/objects/AclRuleService.hpp>
+#include <netmeld/datastore/objects/AclZone.hpp>
+#include <regex>
+
 namespace nmcu = netmeld::core::utils;
 
 
@@ -238,6 +242,81 @@ namespace netmeld::datastore::objects {
         }
       }
     }
+
+    // START -- Temporary logic for AC to ACL duplication
+    if (true) {
+      LOG_DEBUG << "AcRule object creating ACL object(s) to save"
+                << std::endl;
+      LOG_DEBUG << "AcRule to save: " << toDebugString() << std::endl;
+      // -- save AclZone
+      {
+        AclZone az;
+        az.setId(srcId);
+        az.save(t, toolRunId, deviceId);
+      }
+      {
+        AclZone az;
+        az.setId(dstId);
+        az.save(t, toolRunId, deviceId);
+      }
+      for (const auto& src : srcs) {
+        for (const auto& srcIface : srcIfaces) {
+          AclZone az;
+          az.setId(src);
+          az.addIface(srcIface);
+          //az.addIncludedId();
+          az.save(t, toolRunId, deviceId);
+        }
+      }
+      for (const auto& dst : dsts) {
+        for (const auto& dstIface : dstIfaces) {
+          AclZone az;
+          az.setId(dst);
+          az.addIface(dstIface);
+          //az.addIncludedId();
+          az.save(t, toolRunId, deviceId);
+        }
+      }
+
+      // -- save AclRuleService
+      if (!enabled) { // only process enabled rules
+        return;
+      }
+
+      // ACL objects only accept "allow" and "block" actions
+      std::string action;
+
+      std::regex rex_allow  {"accept|allow|pass|permit"};
+      std::regex rex_block  {"block|deny|drop|reject"};
+      std::smatch m;
+      if (std::regex_search(actionStr, m, rex_allow)) {
+        action = "allow";
+      } else if (std::regex_search(actionStr, m, rex_block)) {
+        action = "block";
+      }
+      if (action.empty()) { // only process specific actions
+        return;
+      }
+
+      // ACL objects force certain data stitching, not availalbe in AcRule
+      for (const auto& src : srcs) {
+        for (const auto& dst : dsts) {
+          for (const auto& service : services) {
+            AclRuleService ars;
+            ars.setPriority(id);
+            ars.setAction(action);
+            ars.setIncomingZoneId((srcId.empty() ? "global" : srcId));
+            ars.setOutgoingZoneId((dstId.empty() ? "global" : dstId));
+            ars.setSrcIpNetSetId((src.empty() ? "any" : src), "global");
+            ars.setDstIpNetSetId((dst.empty() ? "any" : dst), "global");
+            ars.setDescription(description);
+            ars.setServiceId(service);
+            ars.save(t, toolRunId, deviceId);
+          }
+        }
+      }
+    }
+    // END
   }
 
   // Utilized for full object data dump, for debug purposes
@@ -246,18 +325,18 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "[ " // opening bracket
-        << "enabled:" << enabled << ", "
-        << "id: " << id << ", "
-        << "srcId: " << srcId << ", "
-        << "srcs: " << srcs << ", "
-        << "srcIfaces: " << srcIfaces << ", "
-        << "dstId: " << dstId << ", "
-        << "dsts: " << dsts << ", "
-        << "dstIfaces: " << dstIfaces << ", "
-        << "services: " << services << ", "
-        << "actions: " << actions << ", "
-        << "description: " << description
+    oss << "[" // opening bracket
+        << "enabled: " << std::boolalpha << enabled << std::noboolalpha
+        << ", id: " << id
+        << ", srcId: " << srcId
+        << ", srcs: " << srcs
+        << ", srcIfaces: " << srcIfaces
+        << ", dstId: " << dstId
+        << ", dsts: " << dsts
+        << ", dstIfaces: " << dstIfaces
+        << ", services: " << services
+        << ", actions: " << actions
+        << ", description: " << description
         << "]"; // closing bracket
 
     return oss.str();

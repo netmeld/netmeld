@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,6 +26,10 @@
 
 #include <netmeld/datastore/objects/AcNetworkBook.hpp>
 
+#include <netmeld/datastore/objects/AclIpNetSet.hpp>
+#include <netmeld/datastore/objects/IpNetwork.hpp>
+#include <regex>
+
 
 namespace netmeld::datastore::objects {
 
@@ -47,10 +51,10 @@ namespace netmeld::datastore::objects {
 
   void
   AcNetworkBook::save(pqxx::transaction_base& t,
-                      const nmco::Uuid& toolRunId, const std::string& _deviceId)
+                      const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AcBook object is not saving: " << toDebugString()
+      LOG_DEBUG << "AcNetworkBook object is not saving: " << toDebugString()
                 << std::endl;
       return; // Always short circuit if invalid object
     }
@@ -58,7 +62,7 @@ namespace netmeld::datastore::objects {
     if (0 == data.size()) {
       t.exec_prepared("insert_raw_device_ac_net",
         toolRunId,
-        _deviceId,
+        deviceId,
         id,
         name,
         nullptr);
@@ -66,15 +70,32 @@ namespace netmeld::datastore::objects {
       for (const auto& entry : data) {
         t.exec_prepared("insert_raw_device_ac_net",
           toolRunId,
-          _deviceId,
+          deviceId,
           id,
           name,
           entry);
       }
     }
-  }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+    // START -- Temporary logic for AC to ACL duplication
+    if (true) {
+      LOG_DEBUG << "AcNetworkBook creating ACL object(s) to save"
+                << std::endl;
+      // -- save AclIpNetSet
+      AclIpNetSet ains;
+      ains.setId(name, id);
+      for (const auto& entry : data) {
+        std::regex  rIpNet {"^(([0-9.]+)|([0-9a-fA-F:]+))(/\\d{1,3})?$"};
+        std::smatch m;
+        if (std::regex_match(entry, m, rIpNet)) {
+          IpNetwork net {entry};
+          ains.addIpNet(net);
+        } else {
+          ains.addHostname(entry);
+        }
+      }
+      ains.save(t, toolRunId, deviceId);
+    }
+    // END
+  }
 }

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,6 +26,8 @@
 
 #include <netmeld/datastore/objects/AcServiceBook.hpp>
 
+#include <netmeld/datastore/objects/AclService.hpp>
+#include <netmeld/datastore/objects/PortRange.hpp>
 
 namespace netmeld::datastore::objects {
 
@@ -46,10 +48,10 @@ namespace netmeld::datastore::objects {
 
   void
   AcServiceBook::save(pqxx::transaction_base& t,
-               const nmco::Uuid& toolRunId, const std::string& _deviceId)
+               const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AcBook object is not saving: " << toDebugString()
+      LOG_DEBUG << "AcServiceBook object is not saving: " << toDebugString()
                 << std::endl;
       return; // Always short circuit if invalid object
     }
@@ -57,21 +59,52 @@ namespace netmeld::datastore::objects {
     if (0 == data.size()) {
       t.exec_prepared("insert_raw_device_ac_service",
         toolRunId,
-        _deviceId,
+        deviceId,
         name,
         nullptr);
     } else {
       for (const auto& entry : data) {
         t.exec_prepared("insert_raw_device_ac_service",
           toolRunId,
-          _deviceId,
+          deviceId,
           name,
           entry);
       }
     }
-  }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+    // START -- Temporary logic for AC to ACL duplication
+    if (true) {
+      LOG_DEBUG << "AcServiceBook creating ACL object(s) to save"
+                << std::endl;
+      // -- save AclService
+      for (const auto& entry : data) {
+        std::istringstream iss(entry);
+        std::vector<std::string> tokens;
+        for (std::string token; std::getline(iss, token, ':');) {
+          tokens.push_back(token);
+        }
+        if (entry.ends_with(':')) {
+          tokens.push_back("");
+        }
+
+        if (3 != tokens.size()) {
+          LOG_DEBUG << "Less than 3 tokens from '"
+                    << entry << "'"
+                    << std::endl;
+          continue;
+        }
+        std::string protocol {tokens[0]};
+        PortRange   srcPorts {tokens[1]};
+        PortRange   dstPorts {tokens[2]};
+
+        AclService as;
+        as.setId(name);
+        as.setProtocol(protocol);
+        as.addSrcPortRange(srcPorts);
+        as.addDstPortRange(dstPorts);
+        as.save(t, toolRunId, deviceId);
+      }
+    }
+    // END
+  }
 }

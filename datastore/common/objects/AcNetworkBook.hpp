@@ -28,7 +28,6 @@
 #define AC_NETWORK_BOOK_HPP
 
 #include <netmeld/datastore/objects/AcBook.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
 
 
 namespace netmeld::datastore::objects {
