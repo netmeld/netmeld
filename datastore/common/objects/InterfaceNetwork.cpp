@@ -49,18 +49,21 @@ namespace netmeld::datastore::objects {
   void
   InterfaceNetwork::addIpAddress(const IpAddress& _ipAddr)
   {
+    if (_ipAddr == IpAddress()) { return; } // don't add defaults
     macAddr.addIpAddress(_ipAddr);
   }
 
   void
   InterfaceNetwork::addPortSecurityStickyMac(const MacAddress& _macAddr)
   {
+    if (_macAddr == MacAddress()) { return; } // don't add defaults
     learnedMacAddrs.insert(_macAddr);
   }
 
   void
   InterfaceNetwork::addReachableMac(const MacAddress& _macAddr)
   {
+    if (_macAddr == MacAddress()) { return; } // don't add defaults
     reachableMacAddrs.insert(_macAddr);
   }
 
@@ -328,8 +331,8 @@ namespace netmeld::datastore::objects {
     oss << "name: " << name << ", "
         << "description: " << description << ", "
         << "mediaType: " << mediaType << ", "
-        << "mode: " << mode << ", " 
-        << "State:" << std::boolalpha << isUp << ", " 
+        << "mode: " << mode << ", "
+        << "State:" << std::boolalpha << isUp << ", "
         << "DiscProtoEnabled: " << isDiscoveryProtocolEnabled << ", "
         << "macAddr: " << macAddr .toDebugString() << ", "
         ;
@@ -337,7 +340,7 @@ namespace netmeld::datastore::objects {
     oss << "Port-Security: ["
         << "State: " << isPortSecurityEnabled << ", "
         << "portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs  << ", "
-        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", " 
+        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", "
         << "Sticky :" << isPortSecurityStickyMac << "], "
         ;
 

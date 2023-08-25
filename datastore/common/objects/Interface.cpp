@@ -78,6 +78,7 @@ namespace netmeld::datastore::objects {
   void
   Interface::addIpAddress(const IpAddress& ipAddr)
   {
+    if (ipAddr == IpAddress()) { return; } // don't add defaults
     macAddr.addIpAddress(ipAddr);
   }
 
