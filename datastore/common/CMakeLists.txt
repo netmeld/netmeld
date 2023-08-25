@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -30,11 +30,11 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/AcServiceBook.cpp
     ./objects/AcRule.cpp
     ./objects/AclIpNetSet.cpp
-    ./objects/AclPortSet.cpp
+#    ./objects/AclPortSet.cpp
     ./objects/AclService.cpp
     ./objects/AclZone.cpp
     ./objects/AclRule.cpp
-    ./objects/AclRulePort.cpp
+#    ./objects/AclRulePort.cpp
     ./objects/AclRuleService.cpp
     ./objects/Cve.cpp
     ./objects/DeviceInformation.cpp
