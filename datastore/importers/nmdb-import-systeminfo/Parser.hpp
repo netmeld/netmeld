@@ -34,7 +34,6 @@
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/objects/OperatingSystem.hpp>
-#include <netmeld/datastore/objects/Hotfix.hpp>
 
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdo = netmeld::datastore::objects;
@@ -59,7 +58,7 @@ struct Systeminfo
   // std::string system_model; //deviceinfo
   // std::string system_type; //deviceinfo
   std::string processor; //nohome //nohome
-  std::string bios_version; // optional //nohome 
+  std::string bios_version; // optional //nohome
   std::string windows_directory; // optional //nohome
   std::string system_directory; //nohome
   std::string boot_device; // optional //nohome
@@ -119,7 +118,7 @@ struct Data
   Systeminfo                              sysinfo_;
   nmdo::DeviceInformation                 devInfo;
   nmdo::OperatingSystem                   os;
-  std::vector<nmdo::Hotfix>               hotfixs;
+  std::vector<std::string>                hotfixs;
   std::map<std::string, nmdo::Interface>  network_cards;
   nmdo::ToolObservations                  observations;
 };
@@ -141,6 +140,7 @@ class Parser :
     std::string curHostname;
     std::string curIfaceName;
     nmdp::ParserIpAddress   ipAddr;
+    std::string curDomain;
 
   protected:
     // Rules
@@ -160,7 +160,7 @@ class Parser :
       dhcpServer,
       networkCardStatus,
       ipAddressLine
-      ;
+    ;
 
     qi::rule<nmdp::IstreamIter, std::vector<std::string>(), qi::ascii::blank_type>
       ipaddresssection
@@ -223,7 +223,7 @@ class Parser :
     void setBootDevice(const std::string&);
     void setDomain(const std::string&);
     void setLogonServer(const std::string&);
-    void addHotfixs(const std::string&);
+    void addHotfix(const std::string&);
     void addInterface(const std::string&);
     void addIfaceConnectName(const std::string&);
     void addIfaceIp(nmdo::IpAddress&);

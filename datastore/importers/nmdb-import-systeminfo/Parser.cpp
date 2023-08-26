@@ -32,14 +32,15 @@ Parser::Parser() : Parser::base_type(start)
 {
   start =
       ((systeminfo >> -qi::eol | qi::eol))[(qi::_val = pnx::bind(&Parser::getData, this))];
+
   token =
       +qi::ascii::graph;
 
   host_name =
-      "Host Name: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] > qi::eol;
+      ("Host Name: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] > qi::eol);
 
   os_name =
-      "OS Name: " > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)] > qi::eol;
+      ("OS Name: " > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)][pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)] > qi::eol);
 
   os_version =
       ("OS Version: " > token[pnx::bind(&nmdo::OperatingSystem::setProductVersion, &data.os, qi::_1)] > qi::eol);
@@ -50,23 +51,6 @@ Parser::Parser() : Parser::base_type(start)
   os_configuration =
       ("OS Configuration: " > token[pnx::bind(&nmdo::DeviceInformation::setDescription, &data.devInfo, qi::_1)] > qi::eol);
 
-  os_build_type =
-      ("OS Build Type: " > token > qi::eol);
-
-  registered_owner =
-      ("Registered Owner: " > token > qi::eol);
-
-  registered_organization =
-      ("Registered Organization: " > token > qi::eol);
-  product_id =
-      ("Product ID: " > token > qi::eol);
-
-  original_install_date =
-      ("Original Install Date: " > token > qi::eol);
-
-  system_boot_time =
-      ("System Boot Time: " > token > qi::eol);
-
   system_manufacturer =
       ("System Manufacturer: " > token[pnx::bind(&nmdo::DeviceInformation::setVendor, &data.devInfo, qi::_1)] > qi::eol);
 
@@ -76,89 +60,103 @@ Parser::Parser() : Parser::base_type(start)
   system_type =
       ("System Type: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceType, &data.devInfo, qi::_1)] > qi::eol);
 
-  processors =
-      ("Processor(s): " > token > qi::omit[(qi::eol)] > token > qi::eol) // parse until we hit bios
-      ;
-
-  bios_version =
-      ("BIOS Version: " > token > qi::eol);
-
-  windows_directory =
-      ("Windows Directory: " > token > qi::eol);
-
-  system_directory =
-      ("System Directory: " > token > qi::eol);
-
-  boot_device =
-      ("Boot Device: " > token > qi::eol);
-
   domain =
-      ("Domain: " > token > qi::eol);
+      ("Domain: " > token > qi::eol); // see notes
 
   hotfix =
-      +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]" > token - qi::omit[qi::eol]) // add hotfixes here
+    //   +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)] - qi::omit[qi::eol]) // add hotfixes here
+      +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&nmdo::OperatingSystem::addHotfix, &data.os, qi::_1)] - qi::omit[qi::eol]) // add hotfixes here
       ;
   hotfixs =
-      ("Hotfix(s): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix[pnx::bind(&Parser::addHotfixs, this, qi::_1)] > qi::eol));
+      ("Hotfix(s): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
+
   networkCardName =
       qi::lexeme[+(qi::ascii::char_ - qi::eol)];
+
   networkCardConnectionName =
       qi::lexeme[+(qi::ascii::char_ - qi::eol)];
 
   ipAddressLine =
-      qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_;
+      qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_
+  ;
 
   ipaddresssection =
-      +qi::ascii::graph;
+      +qi::ascii::graph
+  ;
+
   dhcpServer =
       qi::lexeme[+(qi::char_ - qi::eol)];
   ;
   dhcpEnabledStatus =
-      qi::lit("DHCP Enabled:") >> (qi::lit("Yes") | qi::lit("No"));
+      qi::lit("DHCP Enabled:") >> (qi::lit("Yes") | qi::lit("No"))
+  ;
 
   networkCardStatus =
-      +qi::ascii::graph;
+      +qi::ascii::graph
+  ;
+
   network_card =
-      ('[' >> qi::lexeme[+qi::char_("0-9")] >> ']' >> qi::lit(':') >> networkCardName[(pnx::bind(&Parser::addInterface, this, qi::_1))] >> qi::eol >> "Connection Name: " > networkCardConnectionName[(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))] >> qi::eol >> -(dhcpEnabledStatus >> qi::eol) >> -("DHCP Server: " >> dhcpServer >> qi::eol) >> -("IP address(es)" >> qi::eol >> ('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: " >> ipAddr[(pnx::bind(&Parser::addIfaceIp, this, qi::_1))]) >> qi::eol) >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
+      ('[' >> qi::lexeme[+qi::char_("0-9")] >> ']' >> qi::lit(':')
+      >> networkCardName[(pnx::bind(&Parser::addInterface, this, qi::_1))] >> qi::eol 
+      >> "Connection Name: "
+      > networkCardConnectionName[(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))] 
+      >> qi::eol
+      >> -(dhcpEnabledStatus >> qi::eol)
+      >> -("DHCP Server: " >> dhcpServer >> qi::eol) 
+      >> -("IP address(es)" >> qi::eol 
+      > +('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: " >> ipAddr[(pnx::bind(&Parser::addIfaceIp, this, qi::_1))] >> qi::eol)) >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
   ;
   network_cards =
-      qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > +network_card;
+      qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > +network_card
+  ;
 
   hyper_v =
-      ("Hyper-V Requirements: " > token > qi::eol);
+      ("Hyper-V Requirements: " > token > qi::eol)
+  ;
+
   systeminfo =
       host_name
       > os_name
       > os_version
       > os_manufacturer
       > os_configuration
-      > os_build_type[pnx::bind(&Parser::setOSBuildType, this, qi::_1)]
-      > registered_owner[pnx::bind(&Parser::setRegisteredOwner, this, qi::_1)]
-      > registered_organization[pnx::bind(&Parser::setRegisteredOrganization, this, qi::_1)]
-      > product_id[pnx::bind(&Parser::setProductID, this, qi::_1)]
-      > original_install_date[pnx::bind(&Parser::setOriginalInstallDate, this, qi::_1)]
-      > system_boot_time[pnx::bind(&Parser::setSystemBootTime, this, qi::_1)]
+      > *(qi::char_ - qi::lit("System Manufacturer:"))
       > system_manufacturer
       > system_model
       > system_type
-      > processors[pnx::bind(&Parser::setProcessors, this, qi::_1)]
-      > -bios_version[pnx::bind(&Parser::setBIOSVersion, this, qi::_1)]
-      > -windows_directory[pnx::bind(&Parser::setWindowsDirectory, this, qi::_1)]
-      > system_directory[pnx::bind(&Parser::setSystemDirectory, this, qi::_1)]
-      > -boot_device[pnx::bind(&Parser::setBootDevice, this, qi::_1)]
       > *(qi::char_ - qi::lit("Domain:"))
       > domain[pnx::bind(&Parser::setDomain, this, qi::_1)]
       > *(qi::char_ - qi::lit("Hotfix"))
       > hotfixs
       > network_cards
-      > hyper_v[pnx::bind(&Parser::setHyperV, this, qi::_1)];
+      > hyper_v;
   ;
   ignoredLine =
       (qi::ascii::print > -qi::eol) | +qi::eol;
 
   // Allows for error handling and debugging of qi.
   BOOST_SPIRIT_DEBUG_NODES(
-      (start)(systeminfo)(host_name)(os_name)(os_version)(os_manufacturer)(os_configuration)(os_build_type)(registered_owner)(registered_organization)(product_id)(original_install_date)(system_boot_time)(system_manufacturer)(system_model)(system_type)(processors)(bios_version)(windows_directory)(system_directory)(boot_device)(domain)(hotfixs)(hotfix)(network_cards)(network_card)(dhcpServer)(dhcpEnabledStatus)(ipAddressLine)(networkCardName)(networkCardConnectionName)(networkCardStatus)(hyper_v)
+      (start)
+      (systeminfo)
+      (host_name)
+      (os_name)
+      (os_version)
+      (os_manufacturer)
+      (os_configuration)
+      (system_manufacturer)
+      (system_model)
+      (system_type)
+      (domain)
+      (hotfixs)
+      (hotfix)
+      (network_cards)
+      (network_card)
+      (dhcpServer)
+      (dhcpEnabledStatus)
+      (ipAddressLine)
+      (networkCardName)
+      (networkCardConnectionName)
+      (networkCardStatus)
   );
 }
 
@@ -166,71 +164,16 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
 
-void Parser::setOSBuildType(const std::string &_string)
-{
-  data.sysinfo_.build_type = _string;
-}
-
-void Parser::setRegisteredOwner(const std::string &_string)
-{
-  data.sysinfo_.registered_owner = _string;
-}
-
-void Parser::setRegisteredOrganization(const std::string &_string)
-{
-  data.sysinfo_.registered_organization = _string;
-}
-
-void Parser::setProductID(const std::string &_string)
-{
-  data.sysinfo_.product_id = _string;
-}
-
-void Parser::setOriginalInstallDate(const std::string &_string)
-{
-  data.sysinfo_.original_install_date = _string;
-}
-
-void Parser::setSystemBootTime(const std::string &_string)
-{
-  data.sysinfo_.system_boot_time = _string;
-}
-
-void Parser::setProcessors(const std::string &_string)
-{
-  data.sysinfo_.processor = _string;
-}
-
-void Parser::setBIOSVersion(const std::string &_string)
-{
-  data.sysinfo_.bios_version = _string;
-}
-
-void Parser::setWindowsDirectory(const std::string &_string)
-{
-  data.sysinfo_.windows_directory = _string;
-}
-
-void Parser::setSystemDirectory(const std::string &_string)
-{
-  data.sysinfo_.system_directory = _string;
-}
-
-void Parser::setBootDevice(const std::string &_string)
-{
-  data.sysinfo_.boot_device = _string;
-}
-
 void Parser::setDomain(const std::string &_string)
 {
-  data.sysinfo_.domain = _string;
+  curDomain = _string;
+  //
 }
 
-void Parser::addHotfixs(const std::string &_string)
+void Parser::addHotfix(const std::string &_string)
 {
-  nmdo::Hotfix hotfix;
-  hotfix.setHotfix(_string);
-  data.hotfixs.push_back(hotfix);
+    //get each argument hotfix and add it to gotfixes
+  data.os.addHotfix(_string);
 }
 
 void Parser::addInterface(const std::string &_name)
@@ -255,8 +198,9 @@ void Parser::addIfaceConnectName(const std::string &_connectionname)
 void Parser::addIfaceIp(nmdo::IpAddress &_ipAddr)
 {
   auto &iface{data.network_cards[curIfaceName]};
-
-  _ipAddr.addAlias(curHostname, "systeminfo");
+  std::string fqdn = data.devInfo.getDeviceId() + '.' + curDomain;
+  _ipAddr.addAlias(fqdn, "from systeminfo");
+  data.os.setIpAddr(_ipAddr);
   iface.addIpAddress(_ipAddr);
 }
 
@@ -264,11 +208,6 @@ void Parser::setIfaceStatus(const std::string &_status)
 {
   auto &iface{data.network_cards[curIfaceName]};
   iface.setDown();
-}
-
-void Parser::setHyperV(const std::string &_string)
-{
-  data.sysinfo_.hyper_v = _string;
 }
 
 Result

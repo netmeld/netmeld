@@ -45,6 +45,7 @@ namespace netmeld::datastore::objects {
       std::string   productVersion;
       std::string   cpe;
       double        accuracy {0.0}; // FLOAT in DB, is 15 digits of percision
+      std::vector<std::string> hotfixs;
 
     public:
 
@@ -63,14 +64,17 @@ namespace netmeld::datastore::objects {
     private:
     protected:
     public:
+      void setIpAddr(const IpAddress&);
       void setVendorName(const std::string&);
       void setProductName(const std::string&);
       void setProductVersion(const std::string&);
       void setCpe(const std::string&);
       void setAccuracy(const double);
+      void setHotfixs(const std::vector<std::string>&);
+      void addHotfix(const std::string&);
 
       bool isValid() const override;
-
+      std::string ConvertVectorToPostgresArray(const std::vector<std::string>& vec);
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
 

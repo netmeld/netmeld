@@ -392,7 +392,6 @@ SELECT DISTINCT
   , t2.ports
   , t2.cidr_block
   , NULL AS target
---FROM raw_aws_network_interface_security_groups AS t1
 FROM aws_eni_sg_subnet_nacl_rt_vpc_join AS t1
 LEFT JOIN aws_security_group_rules_ports AS t2
   ON (t1.security_group_id = t2.security_group_id)
@@ -404,8 +403,10 @@ SELECT DISTINCT
   , t2.protocol
   , t2.ports
   , t2.cidr_block
-  , t2.target
---FROM raw_aws_network_interface_security_groups AS t1
+  , CASE -- if identifiable CIDRs, don't list SG/PL; eliminates dups
+    WHEN t2.cidr_block IS NULL THEN t2.target
+    ELSE NULL
+    END AS target
 FROM aws_eni_sg_subnet_nacl_rt_vpc_join AS t1
 LEFT JOIN aws_security_group_rules_non_ip_ports AS t2
   ON (t1.security_group_id = t2.security_group_id)
@@ -454,7 +455,10 @@ SELECT DISTINCT
   , t2.type
   , t2.code
   , t2.cidr_block
-  , t2.target
+  , CASE -- if identifiable CIDRs, don't list SG/PL; eliminates dups
+    WHEN t2.cidr_block IS NULL THEN t2.target
+    ELSE NULL
+    END AS target
 --FROM raw_aws_network_interface_security_groups AS t1
 FROM aws_eni_sg_subnet_nacl_rt_vpc_join AS t1
 LEFT JOIN aws_security_group_rules_non_ip_type_codes AS t2

@@ -40,7 +40,6 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/DeviceInformation.cpp
     ./objects/DnsLookup.cpp
     ./objects/DnsResolver.cpp
-    ./objects/Hotfix.cpp
     ./objects/Interface.cpp
     ./objects/InterfaceNetwork.cpp
     ./objects/IpAddress.cpp

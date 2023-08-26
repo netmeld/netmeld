@@ -935,10 +935,10 @@ namespace netmeld::datastore::utils {
       ("insert_raw_operating_system",
        "INSERT INTO raw_operating_systems AS orig"
        "  (tool_run_id, ip_addr,"
-       "   vendor_name, product_name, product_version, cpe, accuracy)"
+       "   vendor_name, product_name, product_version, cpe, accuracy, hotfixs)"
        " VALUES ($1, host(($2)::INET)::INET,"
        "         nullif($3, ''), nullif($4, ''), nullif($5, ''),"
-       "         nullif($6, ''), $7)"
+       "         nullif($6, ''), $7, $8)"
        " ON CONFLICT"
        " DO NOTHING");
 

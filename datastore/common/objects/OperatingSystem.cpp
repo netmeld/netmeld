@@ -40,6 +40,12 @@ namespace netmeld::datastore::objects {
   {}
 
   void
+  OperatingSystem::setIpAddr(const IpAddress& _ipAddr)
+  {
+    ipAddr = _ipAddr;
+  }
+
+  void
   OperatingSystem::setVendorName(const std::string& _name)
   {
     vendorName = nmcu::toLower(_name);
@@ -69,6 +75,12 @@ namespace netmeld::datastore::objects {
     accuracy = _accuracy;
   }
 
+  void
+  OperatingSystem::addHotfix(const std::string& _string)
+  {
+    hotfixs.push_back(_string);
+  }
+
   bool
   OperatingSystem::isValid() const
   {
@@ -82,6 +94,26 @@ namespace netmeld::datastore::objects {
         ;
   }
 
+  std::string 
+  OperatingSystem::ConvertVectorToPostgresArray(const std::vector<std::string>& vec) {
+    std::string result = "{";
+
+    for (const auto& element : vec) {
+        // Escape special characters and handle NULL elements if needed
+        // You might need additional logic here depending on your data
+        result += "'" + element + "',";
+    }
+
+    if (!vec.empty()) {
+        // Remove the trailing comma
+        result.pop_back();
+    }
+
+    result += "}";
+    return result;
+}
+
+
   void
   OperatingSystem::save(pqxx::transaction_base& t,
                         const nmco::Uuid& toolRunId,
@@ -92,7 +124,7 @@ namespace netmeld::datastore::objects {
                 << std::endl;
       return;
     }
-
+    //Add conditional
     ipAddr.save(t, toolRunId, deviceId);
 
     t.exec_prepared("insert_raw_operating_system",
@@ -102,7 +134,9 @@ namespace netmeld::datastore::objects {
         productName,
         productVersion,
         cpe,
-        accuracy);
+        accuracy,
+        ConvertVectorToPostgresArray(hotfixs)
+        );
   }
 
   std::string
@@ -116,7 +150,9 @@ namespace netmeld::datastore::objects {
         << productName << ", "
         << productVersion << ", "
         << cpe << ", "
-        << accuracy;
+        << accuracy << ", "
+        << hotfixs;
+
     oss << "]"; // closing bracket
 
     return oss.str();

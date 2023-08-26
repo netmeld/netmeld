@@ -1,0 +1,103 @@
+Host Name:                 DESKTOP-ECIDB79
+OS Name:                   Microsoft Windows 10 Home
+OS Version:                10.0.19045 N/A Build 19045
+OS Manufacturer:           Microsoft Corporation
+OS Configuration:          Standalone Workstation
+OS Build Type:             Multiprocessor Free
+Registered Owner:          lejojaluel@gmail.com
+Registered Organization:   
+Product ID:                00325-96119-00075-AAOEM
+Original Install Date:     7/20/2020, 9:32:23 PM
+System Boot Time:          8/26/2023, 7:09:41 AM
+System Manufacturer:       LENOVO
+System Model:              80WK
+System Type:               x64-based PC
+Processor(s):              1 Processor(s) Installed.
+                           [01]: Intel64 Family 6 Model 158 Stepping 9 GenuineIntel ~2800 Mhz
+BIOS Version:              LENOVO 4KCN45WW, 1/11/2019
+Windows Directory:         C:\WINDOWS
+System Directory:          C:\WINDOWS\system32
+Boot Device:               \Device\HarddiskVolume3
+System Locale:             en-us;English (United States)
+Input Locale:              en-us;English (United States)
+Time Zone:                 (UTC-07:00) Mountain Time (US & Canada)
+Total Physical Memory:     16,276 MB
+Available Physical Memory: 6,467 MB
+Virtual Memory: Max Size:  29,076 MB
+Virtual Memory: Available: 14,457 MB
+Virtual Memory: In Use:    14,619 MB
+Page File Location(s):     C:\pagefile.sys
+Domain:                    WORKGROUP
+Logon Server:              \\DESKTOP-ECIDB79
+Hotfix(s):                 34 Hotfix(s) Installed.
+                           [01]: KB5028951
+                           [02]: KB4559309
+                           [03]: KB4561600
+                           [04]: KB4562830
+                           [05]: KB4566785
+                           [06]: KB4570334
+                           [07]: KB4577266
+                           [08]: KB4577586
+                           [09]: KB4580325
+                           [10]: KB4586864
+                           [11]: KB4593175
+                           [12]: KB4598481
+                           [13]: KB5000736
+                           [14]: KB5012170
+                           [15]: KB5015684
+                           [16]: KB5029244
+                           [17]: KB5006753
+                           [18]: KB5007273
+                           [19]: KB5011352
+                           [20]: KB5011651
+                           [21]: KB5014032
+                           [22]: KB5014035
+                           [23]: KB5014671
+                           [24]: KB5015895
+                           [25]: KB5016705
+                           [26]: KB5018506
+                           [27]: KB5020372
+                           [28]: KB5022924
+                           [29]: KB5023794
+                           [30]: KB5025315
+                           [31]: KB5026879
+                           [32]: KB5028318
+                           [33]: KB5028380
+                           [34]: KB5005699
+Network Card(s):           7 NIC(s) Installed.
+                           [01]: VMware Virtual Ethernet Adapter for VMnet1
+                                 Connection Name: VMware Network Adapter VMnet1
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     192.168.136.254
+                                 IP address(es)
+                                 [01]: 192.168.136.1
+                                 [02]: fe80::6bfd:f974:8a25:e837
+                           [02]: Intel(R) Dual Band Wireless-AC 8265
+                                 Connection Name: Wi-Fi
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     192.168.10.1
+                                 IP address(es)
+                                 [01]: 192.168.10.105
+                           [03]: Realtek PCIe GBE Family Controller
+                                 Connection Name: Ethernet 2
+                                 Status:          Media disconnected
+                           [04]: Bluetooth Device (Personal Area Network)
+                                 Connection Name: Bluetooth Network Connection
+                                 Status:          Media disconnected
+                           [05]: Hyper-V Virtual Ethernet Adapter
+                                 Connection Name: vEthernet (WSL)
+                                 DHCP Enabled:    No
+                                 IP address(es)
+                                 [01]: 172.25.176.1
+                                 [02]: fe80::512a:fa6b:3cb5:2492
+                           [06]: VMware Virtual Ethernet Adapter for VMnet8
+                                 Connection Name: VMware Network Adapter VMnet8
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     192.168.68.254
+                                 IP address(es)
+                                 [01]: 192.168.68.1
+                                 [02]: fe80::b84f:7f6a:715a:c292
+                           [07]: TAP-Windows Adapter V9 for OpenVPN Connect
+                                 Connection Name: Local Area Connection 2
+                                 Status:          Media disconnected
+Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.

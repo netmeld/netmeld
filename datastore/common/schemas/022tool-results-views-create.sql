@@ -649,7 +649,8 @@ SELECT DISTINCT
     product_name                AS product_name,
     product_version             AS product_version,
     cpe                         AS cpe,
-    accuracy                    AS accuracy
+    accuracy                    AS accuracy,
+    hotfixs                     AS hotfixs
 FROM raw_operating_systems
 ;
 

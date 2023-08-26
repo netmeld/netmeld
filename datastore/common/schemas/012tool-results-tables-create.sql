@@ -794,6 +794,7 @@ CREATE TABLE raw_operating_systems (
     product_version             TEXT            NULL,
     cpe                         TEXT            NULL,
     accuracy                    FLOAT           NULL,
+    hotfixs                     TEXT[]          NULL,
     FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
