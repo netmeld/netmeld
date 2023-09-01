@@ -79,8 +79,7 @@ namespace netmeld::datastore::objects {
 
     // START -- Temporary logic for AC to ACL duplication
     if (true) {
-      LOG_DEBUG << "AcNetworkBook creating ACL object(s) to save"
-                << std::endl;
+      LOG_DEBUG << "AcNetworkBook creating ACL object(s) to save\n";
       // -- save AclIpNetSet
       AclIpNetSet ains;
       ains.setId(name, id);
@@ -94,6 +93,7 @@ namespace netmeld::datastore::objects {
           ains.addHostname(entry);
         }
       }
+      LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
       ains.save(t, toolRunId, deviceId);
     }
     // END

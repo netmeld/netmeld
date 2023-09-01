@@ -252,11 +252,13 @@ namespace netmeld::datastore::objects {
       {
         AclZone az;
         az.setId(srcId);
+        LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
         az.save(t, toolRunId, deviceId);
       }
       {
         AclZone az;
         az.setId(dstId);
+        LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
         az.save(t, toolRunId, deviceId);
       }
       for (const auto& src : srcs) {
@@ -265,6 +267,7 @@ namespace netmeld::datastore::objects {
           az.setId(src);
           az.addIface(srcIface);
           //az.addIncludedId();
+          LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
           az.save(t, toolRunId, deviceId);
         }
       }
@@ -274,6 +277,7 @@ namespace netmeld::datastore::objects {
           az.setId(dst);
           az.addIface(dstIface);
           //az.addIncludedId();
+          LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
           az.save(t, toolRunId, deviceId);
         }
       }
@@ -311,6 +315,10 @@ namespace netmeld::datastore::objects {
             ars.setDstIpNetSetId((dst.empty() ? "any" : dst), "global");
             ars.setDescription(description);
             ars.setServiceId(service);
+
+            LOG_DEBUG << "AclRuleService to save: "
+                      << ars.toDebugString() << '\n'
+                      ;
             ars.save(t, toolRunId, deviceId);
           }
         }

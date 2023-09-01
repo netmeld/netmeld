@@ -26,6 +26,8 @@
 
 #include <netmeld/datastore/objects/AcServiceBook.hpp>
 
+#include <ranges>
+#include <string_view>
 #include <netmeld/datastore/objects/AclService.hpp>
 #include <netmeld/datastore/objects/PortRange.hpp>
 
@@ -74,34 +76,41 @@ namespace netmeld::datastore::objects {
 
     // START -- Temporary logic for AC to ACL duplication
     if (true) {
-      LOG_DEBUG << "AcServiceBook creating ACL object(s) to save"
-                << std::endl;
+      LOG_DEBUG << "AcServiceBook creating ACL object(s) to save\n";
       // -- save AclService
       for (const auto& entry : data) {
-        std::istringstream iss(entry);
-        std::vector<std::string> tokens;
-        for (std::string token; std::getline(iss, token, ':');) {
-          tokens.push_back(token);
+        std::vector<std::string> serviceParts;
+        for (const auto word : std::views::split(entry, ':')) {
+          std::string token {std::string_view(word)};
+          auto n {token.find("--")};
+          if (n != std::string::npos) {
+            token.erase(n);
+          }
+          serviceParts.push_back(token);
         }
-        if (entry.ends_with(':')) {
-          tokens.push_back("");
-        }
-
-        if (3 != tokens.size()) {
-          LOG_DEBUG << "Less than 3 tokens from '"
-                    << entry << "'"
-                    << std::endl;
-          continue;
-        }
-        std::string protocol {tokens[0]};
-        PortRange   srcPorts {tokens[1]};
-        PortRange   dstPorts {tokens[2]};
 
         AclService as;
         as.setId(name);
-        as.setProtocol(protocol);
-        as.addSrcPortRange(srcPorts);
-        as.addDstPortRange(dstPorts);
+        as.setProtocol(serviceParts[0]);
+
+        PortRange any {0, 65535};
+        if (1 < serviceParts.size() && !serviceParts[1].empty()) {
+          for (const auto word : std::views::split(serviceParts[1], ',')) {
+            as.addSrcPortRange(PortRange(std::string(std::string_view(word))));
+          }
+        } else {
+          as.addSrcPortRange(any);
+        }
+        if (2 < serviceParts.size() && !serviceParts[2].empty()) {
+          for (const auto word : std::views::split(serviceParts[2], ',')) {
+            std::string token {std::string_view(word)};
+            as.addDstPortRange(PortRange(std::string(std::string_view(word))));
+          }
+        } else {
+          as.addDstPortRange(any);
+        }
+
+        LOG_DEBUG << "AclService to save: " << as.toDebugString() << std::endl;
         as.save(t, toolRunId, deviceId);
       }
     }
