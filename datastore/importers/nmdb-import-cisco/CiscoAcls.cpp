@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -227,7 +227,7 @@ namespace netmeld::datastore::importers::cisco {
     action =
       (qi::string("permit") | qi::string("deny"))
         [(pnx::bind(&CiscoAcls::initCurRule, this),
-          pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1))]
+          pnx::bind(&CiscoAcls::addCurRuleAction, this, qi::_1))]
       ;
 
     dynamicArgument =
@@ -284,12 +284,29 @@ namespace netmeld::datastore::importers::cisco {
       portArgument [(pnx::bind(&CiscoAcls::curRuleDstPort, this) = qi::_1)]
       ;
     portArgument =
-      (  (qi::lit("eq ") > token) [(qi::_val = qi::_1)]
-       | (qi::lit("neq ") > token) [(qi::_val = "!" + qi::_1)]
+      (  (qi::lit("eq ") > multiPort) [(qi::_val = qi::_1)]
+       | (qi::lit("neq ") > multiPort) [(qi::_val = "!" + qi::_1)]
        | (qi::lit("lt ") > token) [(qi::_val = "<" + qi::_1)]
        | (qi::lit("gt ") > token) [(qi::_val = ">" + qi::_1)]
        | (qi::lit("range ") > token > token) [(qi::_val = (qi::_1+"-"+qi::_2))]
       )
+      ;
+    multiPort =
+      (+(token - ( destinationAddrIos
+                 | logArgument
+                 | establishedArgument
+                 | untrackedArguments
+                 | inactiveArgument
+                 | icmpMessage
+                 )
+       > -(qi::omit[( qi::lit("hop-limit ")
+                    | qi::lit("ttl ")
+                    )
+                   > qi::lit("eq ") > qi::uint_
+                   ]
+         )
+       )
+      ) [qi::_val = pnx::bind(&CiscoAcls::getMultiPortString, this, qi::_1)]
       ;
     icmpArgument =
       (  (qi::lit("object-group ") > token)
@@ -366,6 +383,7 @@ namespace netmeld::datastore::importers::cisco {
        | (qi::lit("time-range") > +qi::ascii::blank > token)
        | (qi::lit("tos") > +qi::ascii::blank > token)
        | (qi::lit("undetermined-transport") >> &(qi::ascii::blank | qi::eol))
+       | (qi::lit("disable") >> &(qi::ascii::blank | qi::eol))
       )
       ;
 
@@ -376,7 +394,7 @@ namespace netmeld::datastore::importers::cisco {
       ;
 
     logArgument =
-      logArgumentString [(pnx::bind(&CiscoAcls::setCurRuleAction, this, qi::_1))]
+      logArgumentString [(pnx::bind(&CiscoAcls::addCurRuleAction, this, qi::_1))]
       ;
     logArgumentString =
       qi::string("log") >> -qi::string("-input")
@@ -478,7 +496,7 @@ namespace netmeld::datastore::importers::cisco {
   }
 
   void
-  CiscoAcls::setCurRuleAction(const std::string& action)
+  CiscoAcls::addCurRuleAction(const std::string& action)
   {
     curRule.addAction(action);
   }
@@ -486,13 +504,15 @@ namespace netmeld::datastore::importers::cisco {
   void
   CiscoAcls::addCurRuleOption(const std::string& option)
   {
-    std::ostringstream oss(curRuleOptions, std::ios_base::ate);
-
-    if (!curRuleOptions.empty()) {
-      oss << ',';
+    if (!option.empty()) {
+      curRuleOptions.insert(option);
     }
-    oss << option;
-    curRuleOptions = oss.str();
+  }
+
+  std::string
+  CiscoAcls::getMultiPortString(const std::vector<std::string>& ports)
+  {
+    return nmcu::toString(ports, ',');
   }
 
   void
@@ -553,7 +573,7 @@ namespace netmeld::datastore::importers::cisco {
     }
 
     if (!curRuleOptions.empty()) {
-      oss << "--" << curRuleOptions;
+      oss << "--" << nmcu::toString(curRuleOptions, ',');
     }
 
     curRule.addService(oss.str());

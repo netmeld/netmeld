@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -96,7 +96,9 @@ namespace netmeld::datastore::importers::cisco {
         addressArgument,
           addressArgumentIos,
           mask,
-        portArgument;
+        portArgument,
+          multiPort
+        ;
 
       nmdp::ParserIpAddress   ipAddr;
 
@@ -124,8 +126,10 @@ namespace netmeld::datastore::importers::cisco {
       std::string  curRuleSrcPort  {""};
       std::string  curRuleDstPort  {""};
 
-      std::string  curRuleOptions     {""};
+//      std::string  curRuleOptions     {""};
       std::string  curRuleDescription {""};
+
+      std::set<std::string> curRuleOptions;
 
       std::set<std::string> ignoredRuleData;
 
@@ -150,7 +154,7 @@ namespace netmeld::datastore::importers::cisco {
       // Policy Related
       void initRuleBook(const std::string&);
 
-      void setCurRuleAction(const std::string&);
+      void addCurRuleAction(const std::string&);
       void addCurRuleOption(const std::string&);
 
       void setCurRuleSrc(const std::string&);
@@ -160,6 +164,8 @@ namespace netmeld::datastore::importers::cisco {
 
       void curRuleFinalize();
       void updateRuleService();
+
+      std::string getMultiPortString(const std::vector<std::string>&);
 
       // Object return
       Result getData();
