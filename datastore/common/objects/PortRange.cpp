@@ -107,28 +107,49 @@ namespace netmeld::datastore::objects {
   PortRange::translateFromTypicalServiceAlias(const std::string& _data) const
   {
     std::vector<std::tuple<std::string, std::string>> mappings {
-          {"bgp", "179"}
-        , {"bootpc", "68"}
-        , {"bootps", "67"}
-        , {"cmd", "514"}
-        , {"domain", "53"}
-        , {"echo", "7"}
+          {"any", "0-65535"}
+        // reverse sort (sort!) to ensure shorter spellings don't match first
+        // hyphenated first (prevents accidental early replacement)
+        , {"ptp-general", "320"}
+        , {"ptp-event", "319"}
+        , {"netbios-ns", "137"}
+        , {"multihop-bfd", "4784"}
+        , {"micro-bfd", "6784"}
         , {"ftp-data", "20"}
-        , {"ftp", "21"}
-        , {"https", "443"}
-        , {"http", "80"}
-        , {"isakmp", "500"}
-        , {"kerberos", "88"}
-        , {"lpd", "515"}
-        , {"ntp", "123"}
-        , {"pop3", "110"}
-        , {"smtp", "25"}
+        , {"dhcpv6-server", "547"}
+        , {"dhcpv6-client", "546"}
+        , {"bfd-echo", "3785"}
+        // non-hyphenated second
+        , {"telnet", "23"}
+        , {"tacacs", "49"}
+        , {"syslog", "514"}
+        , {"ssh", "22"}
         , {"snmptrap", "162"}
         , {"snmp", "161"}
-        , {"ssh", "22"}
-        , {"syslog", "514"}
-        , {"tacacs", "49"}
-        , {"telnet", "23"}
+        , {"smtp", "25"}
+        , {"sbfd", "7784"}
+        , {"rtsp", "554"}
+        , {"rip", "520"}
+        , {"pop3", "110"}
+        , {"ntp", "123"}
+        , {"mlag", "4432"}
+        , {"lpd", "515"}
+        , {"ldp", "646"}
+        , {"ldaps", "636"}
+        , {"ldap", "389"}
+        , {"kerberos", "88"}
+        , {"isakmp", "500"}
+        , {"https", "443"}
+        , {"http", "80"}
+        , {"ftp", "21"}
+        , {"echo", "7"}
+        , {"domain", "53"}
+        , {"cmd", "514"}
+        , {"capwap", "5246-5247"}
+        , {"bootps", "67"}
+        , {"bootpc", "68"}
+        , {"bgp", "179"}
+        , {"bfd", "3784"}
       };
 
     std::string serviceData {_data};
