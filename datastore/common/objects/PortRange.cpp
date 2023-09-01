@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -28,7 +28,6 @@
 #include <boost/format.hpp>
 #include <regex>
 
-
 namespace netmeld::datastore::objects {
 
   PortRange::PortRange(uint16_t port) :
@@ -39,12 +38,16 @@ namespace netmeld::datastore::objects {
     std::tuple<uint16_t, uint16_t>(portFirst, portLast)
   { }
 
-  PortRange::PortRange(const std::string& portRangeString) :
+  PortRange::PortRange(const std::string& _portRangeString) :
     std::tuple<uint16_t, uint16_t>(0, 0)
   {
+    const auto& portRangeString {
+        translateFromTypicalServiceAlias(_portRangeString)
+      };
+
     // "[x,y]", "[x,y)", "(x,y]", or "(x,y)" port range strings
     {
-      std::regex r{"^([\\[\\(])\\s*(\\d{1,5})\\s*,\\s*(\\d{1,5})\\s*([\\]\\)])$"};
+      std::regex r {R"(^([\[\(])\s*(\d{1,5})\s*,\s*(\d{1,5})\s*([\]\)])$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
         std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[2]));
@@ -57,7 +60,7 @@ namespace netmeld::datastore::objects {
 
     // "x-y" or "x--y" port range strings
     {
-      std::regex r{"^(\\d{1,5})\\s*-{1,2}\\s*(\\d{1,5})$"};
+      std::regex r {R"(^(\d{1,5})\s*-{1,2}\s*(\d{1,5})$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
         std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
@@ -68,7 +71,7 @@ namespace netmeld::datastore::objects {
 
     // "x" single port strings
     {
-      std::regex r{"^(\\d{1,5})$"};
+      std::regex r {R"(^(\d{1,5})$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
         std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
@@ -76,6 +79,65 @@ namespace netmeld::datastore::objects {
         return;
       }
     }
+
+    // ">x" port range strings
+    {
+      std::regex r {R"(^>(\d{1,5})$)"};
+      std::smatch m;
+      if (std::regex_match(portRangeString, m, r)) {
+        std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
+        std::get<1>(*this) = UINT16_MAX;
+        ++std::get<0>(*this);
+      }
+    }
+
+    // "<x" port range strings
+    {
+      std::regex r {R"(^<(\d{1,5})$)"};
+      std::smatch m;
+      if (std::regex_match(portRangeString, m, r)) {
+        std::get<0>(*this) = 0;
+        std::get<1>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
+        --std::get<1>(*this);
+      }
+    }
+  }
+
+  std::string
+  PortRange::translateFromTypicalServiceAlias(const std::string& _data) const
+  {
+    std::vector<std::tuple<std::string, std::string>> mappings {
+          {"bgp", "179"}
+        , {"bootpc", "68"}
+        , {"bootps", "67"}
+        , {"cmd", "514"}
+        , {"domain", "53"}
+        , {"echo", "7"}
+        , {"ftp-data", "20"}
+        , {"ftp", "21"}
+        , {"https", "443"}
+        , {"http", "80"}
+        , {"isakmp", "500"}
+        , {"kerberos", "88"}
+        , {"lpd", "515"}
+        , {"ntp", "123"}
+        , {"pop3", "110"}
+        , {"smtp", "25"}
+        , {"snmptrap", "162"}
+        , {"snmp", "161"}
+        , {"ssh", "22"}
+        , {"syslog", "514"}
+        , {"tacacs", "49"}
+        , {"telnet", "23"}
+      };
+
+    std::string serviceData {_data};
+
+    for (const auto& [service, port] : mappings) {
+      serviceData = std::regex_replace(serviceData, std::regex(service), port);
+    }
+
+    return serviceData;
   }
 
   std::string
