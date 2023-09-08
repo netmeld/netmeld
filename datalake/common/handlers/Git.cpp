@@ -104,25 +104,64 @@ namespace netmeld::datalake::handlers {
   }
 
   void
-  Git::setIngestToolData(nmdlo::DataEntry& _de, const std::string& _path)
+  Git::setIngestToolData(std::vector<nmdlo::DataEntry>& vde)
   {
-    std::ostringstream oss;
-    oss << "git log -n 1 --pretty=format:\"%B\" -- " << _path;
 
+    std::ostringstream oss;
+
+    oss << "git rev-parse --show-toplevel";
+    std::string topLevel = nmcu::cmdExecOut(oss.str());
+    topLevel[topLevel.size() - 1] = '/';
+    oss.str("");
+
+    oss << "git log --pretty=format:\"%B\"";
     std::istringstream iss(nmcu::cmdExecOut(oss.str()));
 
+
+    std::vector<std::string> logs;
+    logs.reserve(vde.size() * 3);
+
+    std::unordered_map<std::string, std::pair<std::string, std::string>> parsedData;
+    parsedData.reserve(vde.size() * 2);
+
+    LOG_DEBUG << iss.str() << '\n';
+
+    std::regex checkinRegex('^' + CHECK_IN_PREFIX + "(.*)$");
     std::regex toolRegex('^' + INGEST_TOOL_PREFIX + "(.*)$");
     std::regex argsRegex('^' + TOOL_ARGS_PREFIX + "(.*)$");
     std::smatch m;
 
     for (std::string line; std::getline(iss, line);) {
+      if (!std::regex_search(line, m, checkinRegex)) continue;
+      std::string path = topLevel + m.str(1);
+      std::string ingest;
+      std::string toolArgs;
+
+      std::getline(iss, line);
       if (std::regex_search(line, m, toolRegex)) {
-        _de.setIngestTool(m.str(1));
+        ingest = m.str(1);
       }
+
+      std::getline(iss, line);
       if (std::regex_search(line, m, argsRegex)) {
-        _de.setToolArgs(m.str(1));
+        toolArgs = m.str(1);
+
       }
+
+      parsedData.emplace(path, std::make_pair(ingest, toolArgs));
     }
+
+    for (nmdlo::DataEntry& _de : vde) {
+      auto it = parsedData.find(_de.getDataPath());
+      if (it == parsedData.end()) {
+        LOG_DEBUG << "Could not locate " << _de.getDataPath() << '\n';
+        continue;
+      }
+      auto pair = it->second;
+      _de.setIngestTool(pair.first);
+      _de.setToolArgs(pair.second);
+    }
+
   }
 
   void
@@ -229,12 +268,12 @@ namespace netmeld::datalake::handlers {
 
         data.setDeviceId(deviceId);
         data.setDataPath(filePath);
-        if (useIngestToolData) {
-          setIngestToolData(data, filePath);
-        }
 
         vde.push_back(data);
       }
+    }
+    if (useIngestToolData) {
+      setIngestToolData(vde);
     }
 
     alignRepo();

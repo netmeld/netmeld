@@ -64,7 +64,7 @@ namespace netmeld::datalake::handlers {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void setIngestToolData(nmdlo::DataEntry&, const std::string&);
+      void setIngestToolData(std::vector<nmdlo::DataEntry>&);
 
       bool alignRepo(const nmco::Time& = nmco::Time("infinity"));
       bool changeDirToRepo();
