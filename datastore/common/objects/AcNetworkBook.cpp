@@ -80,21 +80,49 @@ namespace netmeld::datastore::objects {
     // START -- Temporary logic for AC to ACL duplication
     if (true) {
       LOG_DEBUG << "AcNetworkBook creating ACL object(s) to save\n";
-      // -- save AclIpNetSet
-      AclIpNetSet ains;
-      ains.setId(name, id);
-      for (const auto& entry : data) {
-        std::regex  rIpNet {"^(([0-9.]+)|([0-9a-fA-F:]+))(/\\d{1,3})?$"};
-        std::smatch m;
-        if (std::regex_match(entry, m, rIpNet)) {
-          IpNetwork net {entry};
-          ains.addIpNet(net);
-        } else {
-          ains.addHostname(entry);
-        }
+      // create "any" nets in case not explicitly defined
+      // - vendors typically have built-in defaults
+      {
+        AclIpNetSet ains;
+        ains.setId("any", "global");
+        ains.addIpNet(IpNetwork("0.0.0.0/0"));
+        ains.addIpNet(IpNetwork("::/0"));
+        ains.save(t, toolRunId, deviceId);
       }
-      LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
-      ains.save(t, toolRunId, deviceId);
+      {
+        AclIpNetSet ains;
+        ains.setId("any4", "global"); // cisco
+        ains.addIpNet(IpNetwork("0.0.0.0/0"));
+        ains.save(t, toolRunId, deviceId);
+        ains.setId("any-ipv4", "global"); // juniper
+        ains.save(t, toolRunId, deviceId);
+      }
+      {
+        AclIpNetSet ains;
+        ains.setId("any6", "global"); //cisco
+        ains.addIpNet(IpNetwork("::/0"));
+        ains.save(t, toolRunId, deviceId);
+        ains.setId("any-ipv6", "global"); // juniper
+        ains.save(t, toolRunId, deviceId);
+      }
+      // -- save AclIpNetSet
+      {
+        AclIpNetSet ains;
+        ains.setId(name, id);
+
+        std::regex rIpNet {R"(^(([0-9.]+)|([0-9a-fA-F:]+))(/\d{1,3})?$)"};
+        std::regex rAny   {R"(^any[46]?$)"};
+        for (const auto& entry : data) {
+          if (std::regex_match(entry, rIpNet)) {
+            IpNetwork net {entry};
+            ains.addIpNet(net);
+          } else if (!std::regex_match(entry, rAny)) {
+            ains.addHostname(entry);
+          }
+        }
+        LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
+        ains.save(t, toolRunId, deviceId);
+      }
     }
     // END
   }

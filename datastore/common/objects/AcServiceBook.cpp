@@ -26,8 +26,7 @@
 
 #include <netmeld/datastore/objects/AcServiceBook.hpp>
 
-#include <ranges>
-#include <string_view>
+#include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/objects/AclService.hpp>
 #include <netmeld/datastore/objects/PortRange.hpp>
 
@@ -78,40 +77,41 @@ namespace netmeld::datastore::objects {
     if (true) {
       LOG_DEBUG << "AcServiceBook creating ACL object(s) to save\n";
       // -- save AclService
-      for (const auto& entry : data) {
-        std::vector<std::string> serviceParts;
-        for (const auto word : std::views::split(entry, ':')) {
-          std::string token {std::string_view(word)};
-          auto n {token.find("--")};
-          if (n != std::string::npos) {
-            token.erase(n);
+      {
+        for (const auto& entry : data) {
+          std::vector<std::string> serviceParts;
+          for (auto& token : nmcu::split(entry, ':')) {
+            auto n {token.find("--")};
+            if (n != std::string::npos) {
+              token.erase(n);
+            }
+            serviceParts.push_back(token);
           }
-          serviceParts.push_back(token);
-        }
 
-        AclService as;
-        as.setId(name);
-        as.setProtocol(serviceParts[0]);
+          AclService as;
+          as.setId(name);
+          as.setProtocol(serviceParts[0]);
 
-        PortRange any {0, 65535};
-        if (1 < serviceParts.size() && !serviceParts[1].empty()) {
-          for (const auto word : std::views::split(serviceParts[1], ',')) {
-            as.addSrcPortRange(PortRange(std::string(std::string_view(word))));
+          PortRange any {0, 65535};
+          if (1 < serviceParts.size() && !serviceParts[1].empty()) {
+            for (const auto& range : nmcu::split(serviceParts[1], ',')) {
+              as.addSrcPortRange(PortRange(range));
+            }
+          } else {
+            as.addSrcPortRange(any);
           }
-        } else {
-          as.addSrcPortRange(any);
-        }
-        if (2 < serviceParts.size() && !serviceParts[2].empty()) {
-          for (const auto word : std::views::split(serviceParts[2], ',')) {
-            std::string token {std::string_view(word)};
-            as.addDstPortRange(PortRange(std::string(std::string_view(word))));
+          if (2 < serviceParts.size() && !serviceParts[2].empty()) {
+            for (const auto& range : nmcu::split(serviceParts[2], ',')) {
+              as.addDstPortRange(PortRange(range));
+            }
+          } else {
+            as.addDstPortRange(any);
           }
-        } else {
-          as.addDstPortRange(any);
-        }
 
-        LOG_DEBUG << "AclService to save: " << as.toDebugString() << std::endl;
-        as.save(t, toolRunId, deviceId);
+          LOG_DEBUG << "AclService to save: " << as.toDebugString()
+                    << std::endl;
+          as.save(t, toolRunId, deviceId);
+        }
       }
     }
     // END

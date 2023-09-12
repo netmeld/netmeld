@@ -206,7 +206,8 @@ Object alias identifiers are in parentheses next to the object name.
   - ACLPS.addIncludedId()
     - See ACLINS.addIncludedId().
 - AclZone (ACLZ)
-  - ACLZ.setId(ACR.srcs|ACR.dsts)
+  - ~ACLZ.setId(ACR.srcs|ACR.dsts)~
+  - ACLZ.setId(ACR.srcId|ACR.dstId)
   - ACLZ.addIface(ACR.srcIfaces|ACR.dstIfaces)
   - ACLZ.addIncludedId()
     - The AC objects do not have these.  Unclear if zone nesting is even
@@ -220,24 +221,19 @@ Object alias identifiers are in parentheses next to the object name.
       objects record more than just allow/block actions.
   - ACLRS.setIncomingZoneId(ACR.srcId)
   - ACLRS.setOutgoingZoneId(ACR.dstId)
-  - ACLRS.setSrcIpNetSetId(ACR.srcs, "global")
-    - There is not a namespace value for AcRule.  There is one in
-      AcNetworkBook.  From limited testing where this was applicable,
-      device set names appeared to be required to be unique for the entire
-      config.
-  - ACLRS.setDstIpNetSetId(ACR.dsts, "global")
+  - ACLRS.setSrcIpNetSetId(ACR.srcs, NET\_SET\_NS)
+    - There is not a specific "net\_set" namespace value for AcRule, per
+      say.  There is one in AcNetworkBook, and it could equate to the
+      "zone\_id" or not depending on the type of config being parsed,
+      heirarchy precedence, etc.  NET\_SET\_NS equates to a DB lookup call
+      to resolve the target namespace.
+  - ACLRS.setDstIpNetSetId(ACR.dsts, NET\_SET\_NS)
     - See ACLRS.setSrcIpNetSetId().
   - ACLRS.setDescription(ACR.description)
   - ACLRS.setServiceId(ACR.services)
 - AclRulePort (ACLRP): not used, unclear why
-  - ACLRP.setPriority(ACR.id)
-  - ACLRP.setAction(ACR.actions)
-    - See ACLRS.setAction().
-  - ACLRP.setIncomingZoneId(ACR.srcId)
-  - ACLRP.setOutgoingZoneId(ACR.dstId)
-  - ACLRP.setSrcIpNetSetId(ACR.srcs)
-  - ACLRP.setDstIpNetSetId(ACR.dsts)
-  - ACLRP.setDescription(ACR.description)
+  - Generally, see AclRuleService for the majority of mappings.  Only
+    calling out the oddities below.
   - ACLRP.setSrcPortSetId(?)
     - Unclear; yet to see a rule that specifies only ports not referencable
       by a singular service set id.

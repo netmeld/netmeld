@@ -252,35 +252,41 @@ namespace netmeld::datastore::objects {
       {
         AclZone az;
         az.setId(srcId);
+        for (const auto& srcIface : srcIfaces) {
+          az.addIface(srcIface);
+        }
         LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
         az.save(t, toolRunId, deviceId);
       }
       {
         AclZone az;
         az.setId(dstId);
+        for (const auto& dstIface : dstIfaces) {
+          az.addIface(dstIface);
+        }
         LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
         az.save(t, toolRunId, deviceId);
       }
-      for (const auto& src : srcs) {
-        for (const auto& srcIface : srcIfaces) {
-          AclZone az;
-          az.setId(src);
-          az.addIface(srcIface);
-          //az.addIncludedId();
-          LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
-          az.save(t, toolRunId, deviceId);
-        }
-      }
-      for (const auto& dst : dsts) {
-        for (const auto& dstIface : dstIfaces) {
-          AclZone az;
-          az.setId(dst);
-          az.addIface(dstIface);
-          //az.addIncludedId();
-          LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
-          az.save(t, toolRunId, deviceId);
-        }
-      }
+      //for (const auto& src : srcs) {
+      //  for (const auto& srcIface : srcIfaces) {
+      //    AclZone az;
+      //    az.setId(src);
+      //    az.addIface(srcIface);
+      //    //az.addIncludedId();
+      //    LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
+      //    az.save(t, toolRunId, deviceId);
+      //  }
+      //}
+      //for (const auto& dst : dsts) {
+      //  for (const auto& dstIface : dstIfaces) {
+      //    AclZone az;
+      //    az.setId(dst);
+      //    az.addIface(dstIface);
+      //    //az.addIncludedId();
+      //    LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
+      //    az.save(t, toolRunId, deviceId);
+      //  }
+      //}
 
       // -- save AclRuleService
       if (!enabled) { // only process enabled rules
@@ -303,16 +309,39 @@ namespace netmeld::datastore::objects {
       }
 
       // ACL objects force certain data stitching, not availalbe in AcRule
+      auto nsLambda = [&]( const std::string& netSet
+                         , const std::string& zoneId
+                         )
+        {
+          LOG_DEBUG << "Getting namespace (net_set--zone_id): "
+                    << netSet << "--" << zoneId
+                    << std::endl;
+          pqxx::row nsRow {
+              t.exec_prepared1("select_ip_net_set_namespace"
+                              , toolRunId
+                              , deviceId
+                              , netSet
+                              , zoneId
+                              )
+            };
+          LOG_DEBUG << "- Got: " << nsRow[0].c_str() << std::endl;
+
+          return nsRow[0].c_str();
+        };
+      const std::string tSrcId {srcId.empty() ? "global" : srcId};
+      const std::string tDstId {dstId.empty() ? "global" : dstId};
       for (const auto& src : srcs) {
         for (const auto& dst : dsts) {
           for (const auto& service : services) {
             AclRuleService ars;
             ars.setPriority(id);
             ars.setAction(action);
-            ars.setIncomingZoneId((srcId.empty() ? "global" : srcId));
-            ars.setOutgoingZoneId((dstId.empty() ? "global" : dstId));
-            ars.setSrcIpNetSetId((src.empty() ? "any" : src), "global");
-            ars.setDstIpNetSetId((dst.empty() ? "any" : dst), "global");
+            ars.setIncomingZoneId(tSrcId);
+            ars.setOutgoingZoneId(tDstId);
+            const std::string tSrcNetSet {src.empty() ? "any" : src};
+            ars.setSrcIpNetSetId(tSrcNetSet, nsLambda(tSrcNetSet, tSrcId));
+            const std::string tDstNetSet {dst.empty() ? "any" : dst};
+            ars.setDstIpNetSetId(tDstNetSet, nsLambda(tDstNetSet, tDstId));
             ars.setDescription(description);
             ars.setServiceId(service);
 
