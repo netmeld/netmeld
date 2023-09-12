@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -43,6 +43,9 @@ namespace netmeld::core::utils {
 
   std::string getSrvcString(const std::string&,
                             const std::string&, const std::string&);
+
+  std::vector<std::string> split(const std::string&, const std::string&);
+  std::vector<std::string> split(const std::string&, const char);
 
   std::string expandCiscoIfaceName(const std::string&);
 }
