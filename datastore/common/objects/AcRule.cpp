@@ -267,26 +267,6 @@ namespace netmeld::datastore::objects {
         LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
         az.save(t, toolRunId, deviceId);
       }
-      //for (const auto& src : srcs) {
-      //  for (const auto& srcIface : srcIfaces) {
-      //    AclZone az;
-      //    az.setId(src);
-      //    az.addIface(srcIface);
-      //    //az.addIncludedId();
-      //    LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
-      //    az.save(t, toolRunId, deviceId);
-      //  }
-      //}
-      //for (const auto& dst : dsts) {
-      //  for (const auto& dstIface : dstIfaces) {
-      //    AclZone az;
-      //    az.setId(dst);
-      //    az.addIface(dstIface);
-      //    //az.addIncludedId();
-      //    LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
-      //    az.save(t, toolRunId, deviceId);
-      //  }
-      //}
 
       // -- save AclRuleService
       if (!enabled) { // only process enabled rules
