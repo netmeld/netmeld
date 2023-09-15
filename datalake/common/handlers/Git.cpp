@@ -118,7 +118,6 @@ namespace netmeld::datalake::handlers {
     std::istringstream iss(nmcu::cmdExecOut(oss.str()));
 
     std::unordered_map<std::string, std::pair<std::string, std::string>> parsedData;
-    parsedData.reserve(vde.size() * 2);
 
     LOG_DEBUG << iss.str() << '\n';
 
