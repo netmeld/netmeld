@@ -28,8 +28,10 @@
 
 #include <netmeld/datastore/objects/AclIpNetSet.hpp>
 #include <netmeld/datastore/objects/IpNetwork.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <regex>
 
+namespace nmdp = netmeld::datastore::parsers;
 
 namespace netmeld::datastore::objects {
 
@@ -110,10 +112,13 @@ namespace netmeld::datastore::objects {
         AclIpNetSet ains;
         ains.setId(name, id);
 
-        std::regex rIpNet {R"(^(([0-9.]+)|([0-9a-fA-F:]+))(/\d{1,3})?$)"};
         std::regex rAny   {R"(^any[46]?$)"};
         for (const auto& entry : data) {
-          if (std::regex_match(entry, rIpNet)) {
+          bool isIpNet {
+              nmdp::matchString<nmdp::ParserIpAddress, IpAddress>(entry)
+            };
+
+          if (isIpNet) {
             IpNetwork net {entry};
             ains.addIpNet(net);
           } else if (!std::regex_match(entry, rAny)) {
