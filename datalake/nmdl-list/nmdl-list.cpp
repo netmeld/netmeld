@@ -165,7 +165,7 @@ class Tool : public nmdlt::AbstractDatalakeTool
       const auto& dataLake     {getDatalakeHandler()};
       const auto& time         {opts.getValueAs<nmco::Time>("before")};
       const auto& dataEntries  {dataLake->getDataEntries(time,
-        opts.exists("ingest-script") || opts.exists("by-tool"))};
+        opts.exists("ingest-script") || opts.exists("by-tool") || opts.exists("unbinned"))};
 
       if (opts.exists("by-tool")) {
         displayByTool(dataEntries);
