@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -60,7 +60,7 @@ nm_add_deb_description(${desc})
 set(deps "netmeld-core, \
 libc6 (>= 2.4), libgcc-s1 (>= 3.0), libpqxx-6.4 (>= 6.4), libstdc++6 (>= 9), \
 nlohmann-json3-dev (>= 3.9), \
-libyaml-cpp0.6 | libyaml-cpp0.7")
+libyaml-cpp0.7 | libyaml-cpp0.8")
 nm_add_deb_depends(${deps})
 set(deps "postgresql (>= 11), postgresql-client (>= 11)")
 nm_add_deb_recommends(${deps})
