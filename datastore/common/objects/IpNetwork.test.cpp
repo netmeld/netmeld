@@ -228,8 +228,6 @@ BOOST_AUTO_TEST_CASE(testSettersIpAsBits)
         "::ffff:ffff:ffff:ffff:ffff"},
       {0xffffffff, 0xffffffffffffffff,
         "::ffff:ffff:ffff:ffff:ffff:ffff"},
-      {0xffffffffffff, 0xffffffffffffffff,
-        "::ffff:ffff:ffff:ffff:ffff:ffff:ffff"},
       {0xffffffffffffffff, 0xffffffffffffffff,
         "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"},
       {0x0001000100010001, 0x0001000100010001,

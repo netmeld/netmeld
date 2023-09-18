@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,6 +26,12 @@
 
 #include <netmeld/datastore/objects/AcNetworkBook.hpp>
 
+#include <netmeld/datastore/objects/AclIpNetSet.hpp>
+#include <netmeld/datastore/objects/IpNetwork.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <regex>
+
+namespace nmdp = netmeld::datastore::parsers;
 
 namespace netmeld::datastore::objects {
 
@@ -47,10 +53,10 @@ namespace netmeld::datastore::objects {
 
   void
   AcNetworkBook::save(pqxx::transaction_base& t,
-                      const nmco::Uuid& toolRunId, const std::string& _deviceId)
+                      const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AcBook object is not saving: " << toDebugString()
+      LOG_DEBUG << "AcNetworkBook object is not saving: " << toDebugString()
                 << std::endl;
       return; // Always short circuit if invalid object
     }
@@ -58,7 +64,7 @@ namespace netmeld::datastore::objects {
     if (0 == data.size()) {
       t.exec_prepared("insert_raw_device_ac_net",
         toolRunId,
-        _deviceId,
+        deviceId,
         id,
         name,
         nullptr);
@@ -66,15 +72,63 @@ namespace netmeld::datastore::objects {
       for (const auto& entry : data) {
         t.exec_prepared("insert_raw_device_ac_net",
           toolRunId,
-          _deviceId,
+          deviceId,
           id,
           name,
           entry);
       }
     }
-  }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+    // START -- Temporary logic for AC to ACL duplication
+    if (true) {
+      LOG_DEBUG << "AcNetworkBook creating ACL object(s) to save\n";
+      // create "any" nets in case not explicitly defined
+      // - vendors typically have built-in defaults
+      {
+        AclIpNetSet ains;
+        ains.setId("any", "global");
+        ains.addIpNet(IpNetwork("0.0.0.0/0"));
+        ains.addIpNet(IpNetwork("::/0"));
+        ains.save(t, toolRunId, deviceId);
+      }
+      {
+        AclIpNetSet ains;
+        ains.setId("any4", "global"); // cisco
+        ains.addIpNet(IpNetwork("0.0.0.0/0"));
+        ains.save(t, toolRunId, deviceId);
+        ains.setId("any-ipv4", "global"); // juniper
+        ains.save(t, toolRunId, deviceId);
+      }
+      {
+        AclIpNetSet ains;
+        ains.setId("any6", "global"); //cisco
+        ains.addIpNet(IpNetwork("::/0"));
+        ains.save(t, toolRunId, deviceId);
+        ains.setId("any-ipv6", "global"); // juniper
+        ains.save(t, toolRunId, deviceId);
+      }
+      // -- save AclIpNetSet
+      {
+        AclIpNetSet ains;
+        ains.setId(name, id);
+
+        std::regex rAny   {R"(^any[46]?$)"};
+        for (const auto& entry : data) {
+          bool isIpNet {
+              nmdp::matchString<nmdp::ParserIpAddress, IpAddress>(entry)
+            };
+
+          if (isIpNet) {
+            IpNetwork net {entry};
+            ains.addIpNet(net);
+          } else if (!std::regex_match(entry, rAny)) {
+            ains.addHostname(entry);
+          }
+        }
+        LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
+        ains.save(t, toolRunId, deviceId);
+      }
+    }
+    // END
+  }
 }

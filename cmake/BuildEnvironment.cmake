@@ -64,7 +64,7 @@ set(PROJECT_GNU_COMMON_FLAGS
   )
 
 set(PROJECT_GNU_C_FLAGS
-  "-std=c17"
+  "-std=c18"
   "-Wbad-function-cast"
   "-Wc++-compat"
   "-Wmissing-prototypes"
@@ -78,7 +78,7 @@ set(PROJECT_GNU_C_FLAGS
 set(PROJECT_GNU_CXX_FLAGS
   # Following line needed to use boost libraries > 1.62 with cmake
   #"-DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION"
-  "-std=c++20"
+  "-std=c++23"
   #"-Weffc++"
   "-Wnon-virtual-dtor"
   "-Wctor-dtor-privacy"

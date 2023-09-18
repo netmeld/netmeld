@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,6 +27,8 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
+
+#include <regex>
 
 #include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 
@@ -169,8 +171,11 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
       {"eq 123", "123"},
+      {"eq 123 456", "123,456"},
       {"eq http", "http"},
+      {"eq http 8080 https 8443", "http,8080,https,8443"},
       {"neq 123", "!123"},
+      {"neq 123 456", "!123,456"},
       {"neq http", "!http"},
       {"lt 123", "<123"},
       {"lt http", "<http"},
@@ -186,6 +191,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     }
     // BAD
     BOOST_TEST(!nmdp::test("qe 123", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("eq 123 log", parserRule, blank, true));
     // -- The parser is 'keyword > token', so limited checkable bad cases
   }
 
@@ -244,10 +250,10 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::string> testsOk {
       // {test}
-      {"user SOMEDOM\\myUser"},
+      {R"(user SOMEDOM\myUser)"},
       {"user any"},
       {"user none"},
-      {"user-group SOMEDOM\\\\myGroup"},
+      {R"(user-group SOMEDOM\\myGroup)"},
       {"object-group-user UGI"},
     };
     for (const auto& test : testsOk) {
@@ -669,7 +675,8 @@ KEY: (unless otherwise stated)
                   | IP WILDMASK
                   | IP/PREFIX
                  )
-  PORT_ARG    -- (  ( lt | gt | eq | neq ) PORT
+  PORT_ARG    -- (  ( eq | neq ) PORT ...
+                  | ( lt | gt ) PORT
                   | range PORT PORT
                   | object-group SERVICE_GROUP_ID
                  )
@@ -905,6 +912,46 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
     const auto& ignoredRules = tpca.ignoredRuleData;
     BOOST_TEST(0 == ignoredRules.size());
+  }
+  {
+    TestCiscoAcls tpca;
+    const std::string fullText {
+      "ip access-list TEST\n"
+      "  01 permit udp any any established\n"
+      "  02 permit udp any any established log\n"
+      "  03 permit udp any any eq 1 2\n"
+      "  04 permit udp any any eq 1 2 log\n"
+      "  05 permit udp any any eq 1 2 established log\n"
+      "  06 permit udp any any eq 1 ttl eq 5 2\n"
+      "  07 permit udp any eq 1 2 any eq 1 2\n"
+      "  08 permit udp host 1.1.1.1 eq 1 2 host 2.2.2.2 eq 1 2\n"
+      "  09 permit udp 1.1.1.1/32 eq 1 2 2.2.2.2/32 eq 1 2 established log\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
+
+    const auto& aclBookName  {result.first};
+    BOOST_TEST("TEST" == aclBookName);
+    const auto& aclBook  {result.second};
+    BOOST_TEST(9 == aclBook.size());
+
+    auto regexLambda = [](const auto& a, const auto& b) {
+        std::regex r(b);
+        bool match {std::regex_search(a, r)};
+        BOOST_TEST(match, "regex '" << b << "' not in " << a);
+      };
+    const auto srcs     {R"(, srcs: \[(any|1.1.1.1|1.1.1.1/32)\], )"};
+    const auto dsts     {R"(, dsts: \[(any|2.2.2.2|2.2.2.2/32)\], )"};
+    const auto services {R"(, services: \[udp(::?1,2)*(--established)?\], )"};
+    const auto actions  {R"(, actions: \[permit(, log)?\], )"};
+    for (const auto& [id, aclLine] : aclBook) {
+      const auto& dbg {aclLine.toDebugString()};
+      regexLambda(dbg, srcs);
+      regexLambda(dbg, dsts);
+      regexLambda(dbg, services);
+      regexLambda(dbg, actions);
+    }
   }
 }
 /* NOTE: Below is a one-liner, wrapped for clarity

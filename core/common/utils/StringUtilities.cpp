@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <sstream>
+
 #include <boost/algorithm/string.hpp>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
@@ -111,15 +112,27 @@ namespace netmeld::core::utils {
     return _proto + ":" + _srcPorts + ":" + _dstPorts;
   }
 
+  std::vector<std::string>
+  split(const std::string& _data, const std::string& _split)
+  {
+    std::vector<std::string> parts;
+    boost::split(parts, _data, boost::is_any_of(_split));
+    return parts;
+  }
+  std::vector<std::string>
+  split(const std::string& _data, const char _split)
+  {
+    std::string temp {_split};
+    return split(_data, temp);
+  }
+
   std::string
   expandCiscoIfaceName(const std::string& _ifaceName)
   {
     // Various Cisco output uses two-letter interface prefixes.
     // These short interface names need to be expanded in order to match
     // the interface names obtained from the running configuration.
-    std::string ifaceName{toLower(_ifaceName)};
-
-    boost::trim(ifaceName);
+    std::string ifaceName {trim(toLower(_ifaceName))};
 
     // Ethernet variations (ordered by speed)
     if (ifaceName.starts_with("et") &&

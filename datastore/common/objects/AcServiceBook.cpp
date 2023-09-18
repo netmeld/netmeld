@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,6 +26,9 @@
 
 #include <netmeld/datastore/objects/AcServiceBook.hpp>
 
+#include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/datastore/objects/AclService.hpp>
+#include <netmeld/datastore/objects/PortRange.hpp>
 
 namespace netmeld::datastore::objects {
 
@@ -46,10 +49,10 @@ namespace netmeld::datastore::objects {
 
   void
   AcServiceBook::save(pqxx::transaction_base& t,
-               const nmco::Uuid& toolRunId, const std::string& _deviceId)
+               const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "AcBook object is not saving: " << toDebugString()
+      LOG_DEBUG << "AcServiceBook object is not saving: " << toDebugString()
                 << std::endl;
       return; // Always short circuit if invalid object
     }
@@ -57,21 +60,60 @@ namespace netmeld::datastore::objects {
     if (0 == data.size()) {
       t.exec_prepared("insert_raw_device_ac_service",
         toolRunId,
-        _deviceId,
+        deviceId,
         name,
         nullptr);
     } else {
       for (const auto& entry : data) {
         t.exec_prepared("insert_raw_device_ac_service",
           toolRunId,
-          _deviceId,
+          deviceId,
           name,
           entry);
       }
     }
-  }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+    // START -- Temporary logic for AC to ACL duplication
+    if (true) {
+      LOG_DEBUG << "AcServiceBook creating ACL object(s) to save\n";
+      // -- save AclService
+      {
+        for (const auto& entry : data) {
+          std::vector<std::string> serviceParts;
+          for (auto& token : nmcu::split(entry, ':')) {
+            auto n {token.find("--")};
+            if (n != std::string::npos) {
+              token.erase(n);
+            }
+            serviceParts.push_back(token);
+          }
+
+          AclService as;
+          as.setId(name);
+          as.setProtocol(serviceParts[0]);
+
+          PortRange any {0, 65535};
+          if (1 < serviceParts.size() && !serviceParts[1].empty()) {
+            for (const auto& range : nmcu::split(serviceParts[1], ',')) {
+              as.addSrcPortRange(PortRange(range));
+            }
+          } else {
+            as.addSrcPortRange(any);
+          }
+          if (2 < serviceParts.size() && !serviceParts[2].empty()) {
+            for (const auto& range : nmcu::split(serviceParts[2], ',')) {
+              as.addDstPortRange(PortRange(range));
+            }
+          } else {
+            as.addDstPortRange(any);
+          }
+
+          LOG_DEBUG << "AclService to save: " << as.toDebugString()
+                    << std::endl;
+          as.save(t, toolRunId, deviceId);
+        }
+      }
+    }
+    // END
+  }
 }

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,7 +31,6 @@
 #include <string>
 #include <tuple>
 
-
 namespace netmeld::datastore::objects {
 
   class PortRange : public std::tuple<uint16_t, uint16_t>
@@ -57,6 +56,8 @@ namespace netmeld::datastore::objects {
     // Methods
     // =========================================================================
     private:
+      std::string translateFromTypicalServiceAlias(const std::string&) const;
+
     protected:
     public:
       std::string toString() const;

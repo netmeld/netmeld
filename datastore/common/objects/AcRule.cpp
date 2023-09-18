@@ -28,6 +28,10 @@
 #include <netmeld/datastore/objects/AcRule.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 
+#include <netmeld/datastore/objects/AclRuleService.hpp>
+#include <netmeld/datastore/objects/AclZone.hpp>
+#include <regex>
+
 namespace nmcu = netmeld::core::utils;
 
 
@@ -238,6 +242,98 @@ namespace netmeld::datastore::objects {
         }
       }
     }
+
+    // START -- Temporary logic for AC to ACL duplication
+    if (true) {
+      LOG_DEBUG << "AcRule object creating ACL object(s) to save"
+                << std::endl;
+      LOG_DEBUG << "AcRule to save: " << toDebugString() << std::endl;
+      // -- save AclZone
+      {
+        AclZone az;
+        az.setId(srcId);
+        for (const auto& srcIface : srcIfaces) {
+          az.addIface(srcIface);
+        }
+        LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
+        az.save(t, toolRunId, deviceId);
+      }
+      {
+        AclZone az;
+        az.setId(dstId);
+        for (const auto& dstIface : dstIfaces) {
+          az.addIface(dstIface);
+        }
+        LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
+        az.save(t, toolRunId, deviceId);
+      }
+
+      // -- save AclRuleService
+      if (!enabled) { // only process enabled rules
+        return;
+      }
+
+      // ACL objects only accept "allow" and "block" actions
+      std::string action;
+
+      std::regex rex_allow  {"accept|allow|pass|permit"};
+      std::regex rex_block  {"block|deny|drop|reject"};
+      std::smatch m;
+      if (std::regex_search(actionStr, m, rex_allow)) {
+        action = "allow";
+      } else if (std::regex_search(actionStr, m, rex_block)) {
+        action = "block";
+      }
+      if (action.empty()) { // only process specific actions
+        return;
+      }
+
+      // ACL objects force certain data stitching, not availalbe in AcRule
+      auto nsLambda = [&]( const std::string& netSet
+                         , const std::string& zoneId
+                         )
+        {
+          LOG_DEBUG << "Getting namespace (net_set--zone_id): "
+                    << netSet << "--" << zoneId
+                    << std::endl;
+          pqxx::row nsRow {
+              t.exec_prepared1("select_ip_net_set_namespace"
+                              , toolRunId
+                              , deviceId
+                              , netSet
+                              , zoneId
+                              )
+            };
+          LOG_DEBUG << "- Got: " << nsRow[0].c_str() << std::endl;
+
+          return nsRow[0].c_str();
+        };
+      const std::string tSrcId {srcId.empty() ? "global" : srcId};
+      const std::string tDstId {dstId.empty() ? "global" : dstId};
+      for (const auto& src : srcs) {
+        for (const auto& dst : dsts) {
+          for (const auto& service : services) {
+            AclRuleService ars;
+            ars.setPriority(id);
+            ars.setAction(action);
+            ars.setIncomingZoneId(tSrcId);
+            ars.setOutgoingZoneId(tDstId);
+            const std::string tSrcNetSet {src.empty() ? "any" : src};
+            ars.setSrcIpNetSetId(tSrcNetSet, nsLambda(tSrcNetSet, tSrcId));
+            const std::string tDstNetSet {dst.empty() ? "any" : dst};
+            ars.setDstIpNetSetId(tDstNetSet, nsLambda(tDstNetSet, tDstId));
+            ars.setDescription(description);
+            ars.setServiceId(service);
+
+            LOG_DEBUG << "AclRuleService to save: "
+                      << ars.toDebugString() << '\n'
+                      ;
+            ars.save(t, toolRunId, deviceId);
+          }
+        }
+      }
+    }
+    // END
   }
 
   // Utilized for full object data dump, for debug purposes
@@ -246,18 +342,18 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "[ " // opening bracket
-        << "enabled:" << enabled << ", "
-        << "id: " << id << ", "
-        << "srcId: " << srcId << ", "
-        << "srcs: " << srcs << ", "
-        << "srcIfaces: " << srcIfaces << ", "
-        << "dstId: " << dstId << ", "
-        << "dsts: " << dsts << ", "
-        << "dstIfaces: " << dstIfaces << ", "
-        << "services: " << services << ", "
-        << "actions: " << actions << ", "
-        << "description: " << description
+    oss << "[" // opening bracket
+        << "enabled: " << std::boolalpha << enabled << std::noboolalpha
+        << ", id: " << id
+        << ", srcId: " << srcId
+        << ", srcs: " << srcs
+        << ", srcIfaces: " << srcIfaces
+        << ", dstId: " << dstId
+        << ", dsts: " << dsts
+        << ", dstIfaces: " << dstIfaces
+        << ", services: " << services
+        << ", actions: " << actions
+        << ", description: " << description
         << "]"; // closing bracket
 
     return oss.str();

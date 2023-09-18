@@ -1536,6 +1536,35 @@ namespace netmeld::datastore::utils {
        "    AND ($3 = interface_name)"
       );
 
+    /*
+      The CTE is in case it is defined in a specific zone (e.g., Juniper
+      type configs).  If that fails, the second query is ran (via the "NOT
+      EXISTS" query part).
+    */
+    db.prepare
+      ("select_ip_net_set_namespace", R"(
+        WITH cte1 AS (
+          SELECT DISTINCT
+            ip_net_set_namespace
+          FROM raw_device_acl_ip_nets_bases
+        WHERE ($1 = tool_run_id)
+          AND ($2 = device_id)
+          AND ($3 = ip_net_set_id)
+          AND ($4 = ip_net_set_namespace)
+        )
+        SELECT * FROM cte1
+        UNION ALL
+        SELECT DISTINCT
+          ip_net_set_namespace
+        FROM raw_device_acl_ip_nets_bases
+        WHERE ($1 = tool_run_id)
+          AND ($2 = device_id)
+          AND ($3 = ip_net_set_id)
+          AND NOT EXISTS (SELECT * FROM cte1)
+        )"
+      );
+
+
 
     dbPrepareAws(db);
 
