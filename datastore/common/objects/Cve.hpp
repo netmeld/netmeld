@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -82,21 +82,26 @@ namespace netmeld::datastore::objects {
   };
 }
 
-// pqxx mappings between nmdo::Cve and PostgreSQL CVE
-// See QueriesCommon.hpp for boost type mappings
+// ----------------------------------------------------------------------
+// nmdo:Cve <--> PostgreSQL CVE
+// ----------------------------------------------------------------------
 namespace pqxx {
   namespace nmdo = netmeld::datastore::objects;
 
-  template<>
-  struct PQXX_LIBEXPORT string_traits<nmdo::Cve>
+  template<> std::string const type_name<nmdo::Cve>  {"nmdo::Cve"};
+
+  template<> inline constexpr bool is_unquoted_safe<nmdo::Cve> {false};
+
+  template<> struct nullness<nmdo::Cve> : pqxx::no_null<nmdo::Cve> {};
+
+  template<> struct string_traits<nmdo::Cve>
   {
-    static const char* name();
-    static bool has_null();
-    static bool is_null(nmdo::Cve const&);
-    static nmdo::Cve null();
-    static void from_string(const char str[], nmdo::Cve& obj);
-    static std::string to_string(nmdo::Cve const& obj);
+    static constexpr bool converts_to_string    {true};
+    static constexpr bool converts_from_string  {true};
+    static zview to_buf(char*, char*, const nmdo::Cve&);
+    static char* into_buf(char*, char*, const nmdo::Cve&);
+    static std::size_t size_buffer(const nmdo::Cve&) noexcept;
+    static nmdo::Cve from_string(std::string_view);
   };
 }
-
 #endif //CVE_HPP

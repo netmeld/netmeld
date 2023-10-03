@@ -25,13 +25,13 @@
 // =============================================================================
 
 #include <boost/algorithm/string.hpp>
-#include <pqxx/pqxx>
 #include <cctype>
 #include <regex>
 
 #include <netmeld/datastore/objects/PortRange.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 #include <netmeld/datastore/utils/QueriesCommon.hpp>
+#include <netmeld/datastore/utils/NetmeldPostgresConversions.hpp>
 
 extern "C" {
 #include <netdb.h>
@@ -184,6 +184,7 @@ class Tool : public nmdt::AbstractDatastoreTool
 
 
       // SELECT DISTINCT queries against existing *_ac_* tables
+      const nmdo::PortRange anyPort {0, 65535};
 
       pqxx::result deviceRows =
         t.exec_prepared("select_raw_devices");
@@ -270,8 +271,8 @@ class Tool : public nmdt::AbstractDatastoreTool
             deviceId,
             "any-tcp",
             "tcp",
-            nmdo::PortRange{0, 65535},
-            nmdo::PortRange{0, 65535}
+            anyPort,
+            anyPort
         );
 
         // service: any-udp
@@ -291,8 +292,8 @@ class Tool : public nmdt::AbstractDatastoreTool
             deviceId,
             "any-udp",
             "udp",
-            nmdo::PortRange{0, 65535},
-            nmdo::PortRange{0, 65535}
+            anyPort,
+            anyPort
         );
 
         // service: any
@@ -312,8 +313,8 @@ class Tool : public nmdt::AbstractDatastoreTool
             deviceId,
             "any",
             "any",
-            nmdo::PortRange{0, 65535},
-            nmdo::PortRange{0, 65535}
+            anyPort,
+            anyPort
         );
       }
 

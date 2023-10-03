@@ -45,7 +45,8 @@ namespace nmcu = netmeld::core::utils;
 #endif
 
 #include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/phoenix.hpp>
+//#include <boost/spirit/include/phoenix.hpp>
+#include <boost/phoenix.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
 

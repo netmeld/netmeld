@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -148,51 +148,49 @@ namespace netmeld::datastore::objects {
 
 
 // ----------------------------------------------------------------------
-// nmdo::Cve <--> Postgresql CVE
+// nmdo::Cve <--> PostgreSQL CVE
 // ----------------------------------------------------------------------
 namespace pqxx {
-  const char*
-  string_traits<nmdo::Cve>::
-  name()
+  zview
+  string_traits<nmdo::Cve>::to_buf(char* begin, char* end, const nmdo::Cve& obj)
   {
-    return "netmeld::common::objects::Cve";
+    return generic_to_buf(begin, end, obj);
   }
 
-  bool
-  string_traits<nmdo::Cve>::
-  has_null()
+  char*
+  string_traits<nmdo::Cve>::into_buf(char* begin, char* end, const nmdo::Cve& obj)
   {
-    return false;
+    const auto budget {size_buffer(obj)};
+
+    if (internal::cmp_less((end - begin), budget))
+      throw conversion_overrun{
+        "Could not convert nmdo::Cve to string: too long for buffer."};
+
+    char* here = begin;
+    *here++ = '(';
+    *here += static_cast<char>(obj.getYear());
+    *here++ = ',';
+    *here++ = ' ';
+    *here += static_cast<char>(obj.getNumber());
+    *here++ = ')';
+    *here++ = '\0';
+
+    return here;
   }
 
-  bool
-  string_traits<nmdo::Cve>::
-  is_null(nmdo::Cve const&)
+  std::size_t
+  string_traits<nmdo::Cve>::size_buffer(const nmdo::Cve& obj) noexcept
   {
-    return false;
+    return sizeof obj.getYear()
+         + sizeof obj.getNumber()
+         + 4 // (, )
+         + 1 // zero-terminator
+         ;
   }
 
   nmdo::Cve
-  string_traits<nmdo::Cve>::
-  null()
+  string_traits<nmdo::Cve>::from_string(std::string_view text)
   {
-    internal::throw_null_conversion(name());
-    return nmdo::Cve(0, 0);
-  }
-
-  void
-  string_traits<nmdo::Cve>::
-  from_string(const char str[], nmdo::Cve& obj)
-  {
-    obj = nmdo::Cve(str);
-  }
-
-  std::string
-  string_traits<nmdo::Cve>::
-  to_string(nmdo::Cve const& obj)
-  {
-    std::ostringstream oss;
-    oss << '(' << obj.getYear() << ", " << obj.getNumber() << ')';
-    return oss.str();
+    return nmdo::Cve(std::string(text));
   }
 }

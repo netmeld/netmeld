@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -111,60 +111,42 @@ namespace netmeld::datastore::objects {
   {
     return os << obj.toString();
   }
-
 }
 
 
 // ----------------------------------------------------------------------
-// nmdo:PortRange <--> Postgresql PortRange
+// nmdo:PortRange <--> PostgreSQL PortRange
 // ----------------------------------------------------------------------
 namespace pqxx {
-
-  const char*
-  string_traits<nmdo::PortRange>::
-  name()
+  zview
+  string_traits<nmdo::PortRange>::to_buf(char* begin, char* end, const nmdo::PortRange& obj)
   {
-    return "netmeld::datastore::objects::PortRange";
+    return generic_to_buf(begin, end, obj);
   }
 
-
-  bool
-  string_traits<nmdo::PortRange>::
-  has_null()
+  char*
+  string_traits<nmdo::PortRange>::into_buf(char* begin, char* end, const nmdo::PortRange& obj)
   {
-    return false;
+    const std::string value {obj.toString()};
+    if (internal::cmp_greater_equal(std::size(value), end - begin))
+      throw conversion_overrun{
+        "Could not convert nmdo::PortRange to string: too long for buffer."};
+    value.copy(begin, std::size(value));
+    begin[std::size(value)] = '\0';
+    return begin + std::size(value) + 1;
   }
 
-
-  bool
-  string_traits<nmdo::PortRange>::
-  is_null(const nmdo::PortRange&)
+  std::size_t
+  string_traits<nmdo::PortRange>::size_buffer(const nmdo::PortRange& obj) noexcept
   {
-    return false;
+    return std::size(obj.toString())
+         + 1 // zero-terminator
+         ;
   }
-
 
   nmdo::PortRange
-  string_traits<nmdo::PortRange>::
-  null()
+  string_traits<nmdo::PortRange>::from_string(std::string_view text)
   {
-    return nmdo::PortRange(0, 0);
+    return nmdo::PortRange(std::string(text));
   }
-
-
-  void
-  string_traits<nmdo::PortRange>::
-  from_string(const char str[], nmdo::PortRange& obj)
-  {
-    obj = nmdo::PortRange(std::string(str));
-  }
-
-
-  std::string
-  string_traits<nmdo::PortRange>::
-  to_string(const nmdo::PortRange& obj)
-  {
-    return obj.toString();
-  }
-
 }

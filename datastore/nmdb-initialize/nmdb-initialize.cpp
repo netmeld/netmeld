@@ -118,7 +118,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         // If DB already exists, either quick or full erase
         LOG_DEBUG << "existsDb: " << dbConnectString << std::endl;
         pqxx::connection existsDb {dbConnectString};
-        existsDb.disconnect();
+        existsDb.close();
 
         LOG_INFO << "Database '" << dbName << "' already exists.\n"
                  << "Re-initialize the database [y/n]?";
@@ -173,7 +173,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       LOG_INFO << "Creating database '" << dbName << "'..." << std::endl;
       ntWork.exec("CREATE DATABASE " + dbName);
 
-      postgresDb.disconnect();
+      postgresDb.close();
     }
 
     void
@@ -256,7 +256,11 @@ class Tool : public nmdt::AbstractDatastoreTool
       }
 
       LOG_INFO << "Inserting MAC prefixes" << std::endl;
-      pqxx::stream_to stream(work, "vendor_mac_prefixes");
+      auto stream = pqxx::stream_to::table(
+          work
+        , "vendor_mac_prefixes"
+        , std::vector<std::string>{"mac_prefix", "vendor_name"}
+        );
       for (const auto& entry : macs) {
         stream << std::make_tuple(entry.first + ":000000", entry.second);
       }
