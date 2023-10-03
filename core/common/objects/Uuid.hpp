@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -81,22 +81,4 @@ namespace netmeld::core::objects {
       friend std::ostream& operator<<(std::ostream&, const Uuid&);
   };
 }
-
-// pqxx mappings between nmco::Uuid and PostgresSQL UUID
-#include <pqxx/pqxx>
-namespace pqxx {
-  namespace nmco = netmeld::core::objects;
-
-  template<>
-  struct PQXX_LIBEXPORT string_traits<nmco::Uuid>
-  {
-    static const char* name();
-    static bool has_null();
-    static bool is_null(const nmco::Uuid& obj);
-    static nmco::Uuid null();
-    static void from_string(const char str[], nmco::Uuid& obj);
-    static std::string to_string(const nmco::Uuid& obj);
-  };
-}
-
 #endif // UUID_HPP
