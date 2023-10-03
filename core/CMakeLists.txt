@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -38,7 +38,12 @@ nm_add_deb_description(${desc})
 #set(CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS ON
 #    CACHE INTERNAL CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS
 #   )
-set(deps "libboost-date-time1.74.0, libboost-program-options1.74.0, \
-libc6 (>= 2.25), libgcc-s1 (>= 3.0), libstdc++6 (>= 9)")
+set(deps "\
+ libboost-date-time${BOOST_PKG_NAME_VERSION},\
+ libboost-program-options${BOOST_PKG_NAME_VERSION},\
+ libc6 (>= 2.25),\
+ libgcc-s1 (>= 3.0),\
+ libstdc++6 (>= 9)\
+ ")
 nm_add_deb_depends(${deps})
 nm_add_deb_control_data(debian-control)

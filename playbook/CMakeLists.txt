@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -49,12 +49,22 @@ binaries necessary to orchestrate network scanning activities and \
 collect data in a standardized way for futher processing with the \
 Netmeld tool suite.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core, netmeld-datastore, \
-arping, nmap, macchanger, wireshark-common, \
-libyaml-cpp0.7 | libyaml-cpp0.8")
+set(deps "\
+  netmeld-core,\
+  netmeld-datastore,\
+  arping,\
+  nmap,\
+  macchanger,\
+  wireshark-common,\
+  libyaml-cpp0.7 | libyaml-cpp0.8\
+  ")
 nm_add_deb_depends(${deps})
-set(deps "xterm | tmux")
+set(deps "\
+  xterm | tmux\
+  ")
 nm_add_deb_recommends(${deps})
-set(deps "context")
+set(deps "\
+  context\
+  ")
 nm_add_deb_suggests(${deps})
 nm_add_deb_control_data(debian-control)
