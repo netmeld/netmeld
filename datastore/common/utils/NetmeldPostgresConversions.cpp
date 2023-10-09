@@ -30,6 +30,7 @@
 // ----------------------------------------------------------------------
 // nmco:Uuid <--> PostgreSQL UUID
 // ----------------------------------------------------------------------
+#include <netmeld/core/objects/Uuid.hpp>
 namespace pqxx {
   bool
   nullness<nmco::Uuid>::is_null(const nmco::Uuid& obj)
@@ -81,6 +82,7 @@ namespace pqxx {
 // ----------------------------------------------------------------------
 // nmco:Time <--> PostgreSQL TIMESTAMP
 // ----------------------------------------------------------------------
+#include <netmeld/core/objects/Time.hpp>
 namespace pqxx {
   bool
   nullness<nmco::Time>::is_null(const nmco::Time& obj)
@@ -124,5 +126,94 @@ namespace pqxx {
   string_traits<nmco::Time>::from_string(std::string_view text)
   {
     return nmco::Time(std::string(text));
+  }
+}
+
+
+// ----------------------------------------------------------------------
+// nmdo::Cve <--> PostgreSQL CVE
+// ----------------------------------------------------------------------
+#include <netmeld/datastore/objects/Cve.hpp>
+namespace pqxx {
+  zview
+  string_traits<nmdo::Cve>::to_buf(char* begin, char* end, const nmdo::Cve& obj)
+  {
+    return generic_to_buf(begin, end, obj);
+  }
+
+  char*
+  string_traits<nmdo::Cve>::into_buf(char* begin, char* end, const nmdo::Cve& obj)
+  {
+    const auto budget {size_buffer(obj)};
+
+    if (internal::cmp_less((end - begin), budget))
+      throw conversion_overrun{
+        "Could not convert nmdo::Cve to string: too long for buffer."};
+
+    char* here = begin;
+    *here++ = '(';
+    *here += static_cast<char>(obj.getYear());
+    *here++ = ',';
+    *here++ = ' ';
+    *here += static_cast<char>(obj.getNumber());
+    *here++ = ')';
+    *here++ = '\0';
+
+    return here;
+  }
+
+  std::size_t
+  string_traits<nmdo::Cve>::size_buffer(const nmdo::Cve& obj) noexcept
+  {
+    return sizeof obj.getYear()
+         + sizeof obj.getNumber()
+         + 4 // (, )
+         + 1 // zero-terminator
+         ;
+  }
+
+  nmdo::Cve
+  string_traits<nmdo::Cve>::from_string(std::string_view text)
+  {
+    return nmdo::Cve(std::string(text));
+  }
+}
+
+
+// ----------------------------------------------------------------------
+// nmdo:PortRange <--> PostgreSQL PortRange
+// ----------------------------------------------------------------------
+#include <netmeld/datastore/objects/PortRange.hpp>
+namespace pqxx {
+  zview
+  string_traits<nmdo::PortRange>::to_buf(char* begin, char* end, const nmdo::PortRange& obj)
+  {
+    return generic_to_buf(begin, end, obj);
+  }
+
+  char*
+  string_traits<nmdo::PortRange>::into_buf(char* begin, char* end, const nmdo::PortRange& obj)
+  {
+    const std::string value {obj.toString()};
+    if (internal::cmp_greater_equal(std::size(value), end - begin))
+      throw conversion_overrun{
+        "Could not convert nmdo::PortRange to string: too long for buffer."};
+    value.copy(begin, std::size(value));
+    begin[std::size(value)] = '\0';
+    return begin + std::size(value) + 1;
+  }
+
+  std::size_t
+  string_traits<nmdo::PortRange>::size_buffer(const nmdo::PortRange& obj) noexcept
+  {
+    return std::size(obj.toString())
+         + 1 // zero-terminator
+         ;
+  }
+
+  nmdo::PortRange
+  string_traits<nmdo::PortRange>::from_string(std::string_view text)
+  {
+    return nmdo::PortRange(std::string(text));
   }
 }

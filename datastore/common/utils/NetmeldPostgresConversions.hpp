@@ -29,11 +29,15 @@
 
 #include <pqxx/pqxx>
 
-#include <netmeld/core/objects/Uuid.hpp>
-#include <netmeld/core/objects/Time.hpp>
 
+// ======================================================================
+// Core type conversions
+// ======================================================================
+namespace netmeld::core::objects {
+  class Uuid;
+  class Time;
+}
 
-// Type conversions
 // ----------------------------------------------------------------------
 // nmco:Uuid <--> PostgreSQL UUID
 // ----------------------------------------------------------------------
@@ -90,6 +94,62 @@ namespace pqxx {
     static char* into_buf(char*, char*, const nmco::Time&);
     static std::size_t size_buffer(const nmco::Time&) noexcept;
     static nmco::Time from_string(std::string_view);
+  };
+}
+
+
+// ======================================================================
+// Datastore type conversions
+// ======================================================================
+namespace netmeld::datastore::objects {
+  class Cve;
+  class PortRange;
+}
+
+// ----------------------------------------------------------------------
+// nmdo:Cve <--> PostgreSQL CVE
+// ----------------------------------------------------------------------
+namespace pqxx {
+  namespace nmdo = netmeld::datastore::objects;
+
+  template<> std::string const type_name<nmdo::Cve>  {"nmdo::Cve"};
+
+  template<> inline constexpr bool is_unquoted_safe<nmdo::Cve> {false};
+
+  template<> struct nullness<nmdo::Cve> : pqxx::no_null<nmdo::Cve> {};
+
+  template<> struct string_traits<nmdo::Cve>
+  {
+    static constexpr bool converts_to_string    {true};
+    static constexpr bool converts_from_string  {true};
+    static zview to_buf(char*, char*, const nmdo::Cve&);
+    static char* into_buf(char*, char*, const nmdo::Cve&);
+    static std::size_t size_buffer(const nmdo::Cve&) noexcept;
+    static nmdo::Cve from_string(std::string_view);
+  };
+}
+
+
+// ----------------------------------------------------------------------
+// nmdo:PortRange <--> PostgreSQL PortRange
+// ----------------------------------------------------------------------
+namespace pqxx {
+  namespace nmdo = netmeld::datastore::objects;
+
+  template<> std::string const type_name<nmdo::PortRange>  {"nmdo::PortRange"};
+
+  template<> inline constexpr bool is_unquoted_safe<nmdo::PortRange> {false};
+
+  template<> struct nullness<nmdo::PortRange> : pqxx::no_null<nmdo::PortRange> {};
+
+  template<> struct string_traits<nmdo::PortRange>
+  {
+    static constexpr bool converts_to_string    {true};
+    static constexpr bool converts_from_string  {true};
+    static zview to_buf(char*, char*, const nmdo::PortRange&);
+    static char* into_buf(char*, char*, const nmdo::PortRange&);
+    static std::size_t size_buffer(const nmdo::PortRange&) noexcept;
+    static nmdo::PortRange from_string(std::string_view);
   };
 }
 #endif  /* NETMELD_POSTGRES_CONVERSIONS_HPP */

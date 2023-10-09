@@ -81,27 +81,4 @@ namespace netmeld::datastore::objects {
       bool operator==(const Cve&) const;
   };
 }
-
-// ----------------------------------------------------------------------
-// nmdo:Cve <--> PostgreSQL CVE
-// ----------------------------------------------------------------------
-namespace pqxx {
-  namespace nmdo = netmeld::datastore::objects;
-
-  template<> std::string const type_name<nmdo::Cve>  {"nmdo::Cve"};
-
-  template<> inline constexpr bool is_unquoted_safe<nmdo::Cve> {false};
-
-  template<> struct nullness<nmdo::Cve> : pqxx::no_null<nmdo::Cve> {};
-
-  template<> struct string_traits<nmdo::Cve>
-  {
-    static constexpr bool converts_to_string    {true};
-    static constexpr bool converts_from_string  {true};
-    static zview to_buf(char*, char*, const nmdo::Cve&);
-    static char* into_buf(char*, char*, const nmdo::Cve&);
-    static std::size_t size_buffer(const nmdo::Cve&) noexcept;
-    static nmdo::Cve from_string(std::string_view);
-  };
-}
 #endif //CVE_HPP

@@ -66,30 +66,4 @@ namespace netmeld::datastore::objects {
       friend std::ostream& operator<<(std::ostream&, const PortRange&);
   };
 }
-
-
-// ----------------------------------------------------------------------
-// nmdo:PortRange <--> PostgreSQL PortRange
-// ----------------------------------------------------------------------
-#include <pqxx/pqxx>
-
-namespace pqxx {
-  namespace nmdo = netmeld::datastore::objects;
-
-  template<> std::string const type_name<nmdo::PortRange>  {"nmdo::PortRange"};
-
-  template<> inline constexpr bool is_unquoted_safe<nmdo::PortRange> {false};
-
-  template<> struct nullness<nmdo::PortRange> : pqxx::no_null<nmdo::PortRange> {};
-
-  template<> struct string_traits<nmdo::PortRange>
-  {
-    static constexpr bool converts_to_string    {true};
-    static constexpr bool converts_from_string  {true};
-    static zview to_buf(char*, char*, const nmdo::PortRange&);
-    static char* into_buf(char*, char*, const nmdo::PortRange&);
-    static std::size_t size_buffer(const nmdo::PortRange&) noexcept;
-    static nmdo::PortRange from_string(std::string_view);
-  };
-}
 #endif // PORTRANGE_HPP
