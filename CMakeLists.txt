@@ -42,7 +42,7 @@ include(cmake/BuildHelpers.cmake)
 # Libraries that many things need to link against for various reasons
 # ----------------------------------------------------------------------
 
-set(BOOST_PKG_NAME_VERSION "1.81.0")
+set(BOOST_PKG_NAME_VERSION "1.74.0")
 find_package(Boost REQUIRED
   date_time
   iostreams
