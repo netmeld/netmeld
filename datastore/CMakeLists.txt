@@ -73,7 +73,8 @@ set(deps "\
 nm_add_deb_recommends(${deps})
 set(deps "\
   postgresql-contrib (>= 13),\
-  postgresql-autodoc (>= 13)\
+  postgresql-autodoc (>= 13),\
+  python3-psycopg (>= 3.1)\
   ")
 nm_add_deb_suggests(${deps})
 nm_add_deb_control_data(debian-control)

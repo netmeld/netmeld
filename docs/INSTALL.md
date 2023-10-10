@@ -62,7 +62,7 @@ sudo apt install \
 sudo apt install \
   help2man pandoc \
   graphviz \
-  postgresql-contrib postgresql-autodoc
+  postgresql-contrib postgresql-autodoc python3-psycopg
 ```
 
 
