@@ -1010,7 +1010,7 @@ namespace netmeld::datastore::utils {
        "UPDATE raw_ip_nets"
        " SET description = nullif($3, '')"
        " WHERE ($1 = tool_run_id)"
-       "       (network(($2)::INET) = ip_net)");
+       "   AND (network(($2)::INET) = ip_net)");
 
     // ----------------------------------------------------------------------
     // TABLE: ip_nets_extra_weights

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -111,60 +111,4 @@ namespace netmeld::datastore::objects {
   {
     return os << obj.toString();
   }
-
-}
-
-
-// ----------------------------------------------------------------------
-// nmdo:PortRange <--> Postgresql PortRange
-// ----------------------------------------------------------------------
-namespace pqxx {
-
-  const char*
-  string_traits<nmdo::PortRange>::
-  name()
-  {
-    return "netmeld::datastore::objects::PortRange";
-  }
-
-
-  bool
-  string_traits<nmdo::PortRange>::
-  has_null()
-  {
-    return false;
-  }
-
-
-  bool
-  string_traits<nmdo::PortRange>::
-  is_null(const nmdo::PortRange&)
-  {
-    return false;
-  }
-
-
-  nmdo::PortRange
-  string_traits<nmdo::PortRange>::
-  null()
-  {
-    return nmdo::PortRange(0, 0);
-  }
-
-
-  void
-  string_traits<nmdo::PortRange>::
-  from_string(const char str[], nmdo::PortRange& obj)
-  {
-    obj = nmdo::PortRange(std::string(str));
-  }
-
-
-  std::string
-  string_traits<nmdo::PortRange>::
-  to_string(const nmdo::PortRange& obj)
-  {
-    return obj.toString();
-  }
-
 }
