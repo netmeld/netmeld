@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -81,22 +81,4 @@ namespace netmeld::datastore::objects {
       bool operator==(const Cve&) const;
   };
 }
-
-// pqxx mappings between nmdo::Cve and PostgreSQL CVE
-// See QueriesCommon.hpp for boost type mappings
-namespace pqxx {
-  namespace nmdo = netmeld::datastore::objects;
-
-  template<>
-  struct PQXX_LIBEXPORT string_traits<nmdo::Cve>
-  {
-    static const char* name();
-    static bool has_null();
-    static bool is_null(nmdo::Cve const&);
-    static nmdo::Cve null();
-    static void from_string(const char str[], nmdo::Cve& obj);
-    static std::string to_string(nmdo::Cve const& obj);
-  };
-}
-
 #endif //CVE_HPP

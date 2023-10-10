@@ -27,8 +27,9 @@
 #ifndef IP_NETWORK_HPP
 #define IP_NETWORK_HPP
 
-#include <compare>
+#include <bitset>
 #include <boost/asio/ip/address.hpp>
+#include <compare>
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 

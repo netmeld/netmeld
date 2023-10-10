@@ -67,24 +67,4 @@ namespace netmeld::datastore::objects {
       friend std::ostream& operator<<(std::ostream&, const PortRange&);
   };
 }
-
-
-// pqxx mappings between nmco::PortRange and PostgresSQL PortRange custom type
-#include <pqxx/pqxx>
-
-namespace pqxx {
-  namespace nmdo = netmeld::datastore::objects;
-
-  template<>
-  struct PQXX_LIBEXPORT string_traits<nmdo::PortRange>
-  {
-    static const char* name();
-    static bool has_null();
-    static bool is_null(const nmdo::PortRange& obj);
-    static nmdo::PortRange null();
-    static void from_string(const char str[], nmdo::PortRange& obj);
-    static std::string to_string(const nmdo::PortRange& obj);
-  };
-}
-
 #endif // PORTRANGE_HPP

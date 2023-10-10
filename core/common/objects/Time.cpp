@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -157,58 +157,4 @@ namespace netmeld::core::objects {
     is >> t1.time;
     return is;
   }
-}
-
-
-// ----------------------------------------------------------------------
-// nmco::Time <--> Postgresql TIMESTAMP
-// ----------------------------------------------------------------------
-namespace pqxx {
-  const char*
-  string_traits<nmco::Time>::
-  name()
-  {
-    return "nmco::Time";
-  }
-
-
-  bool
-  string_traits<nmco::Time>::
-  has_null()
-  {
-    return true;
-  }
-
-
-  bool
-  string_traits<nmco::Time>::
-  is_null(nmco::Time const& obj)
-  {
-    return obj.isNull();
-  }
-
-
-  nmco::Time
-  string_traits<nmco::Time>::
-  null()
-  {
-    return nmco::Time(pt::not_a_date_time);
-  }
-
-
-  void
-  string_traits<nmco::Time>::
-  from_string(const char str[], nmco::Time& obj)
-  {
-    obj = nmco::Time(std::string(str));
-  }
-
-
-  std::string
-  string_traits<nmco::Time>::
-  to_string(nmco::Time const& obj)
-  {
-    return obj.toString();
-  }
-
 }

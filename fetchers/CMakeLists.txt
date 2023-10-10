@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -43,7 +43,12 @@ or expand capabilities through tool development, as well as the \
 tools necessary to collect data in a standardized way for further \
 processing with the Netmeld tool suite.")
 nm_add_deb_description(${desc})
-set(deps "bash")
+set(deps "\
+  bash\
+  ")
 nm_add_deb_depends(${deps})
-set(deps "openssh-client, ansible")
+set(deps "\
+  openssh-client,\
+  ansible\
+  ")
 nm_add_deb_recommends(${deps})

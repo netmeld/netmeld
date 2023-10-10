@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -143,56 +143,5 @@ namespace netmeld::datastore::objects {
   Cve::operator==(const Cve& rhs) const
   {
     return 0 == operator<=>(rhs);
-  }
-}
-
-
-// ----------------------------------------------------------------------
-// nmdo::Cve <--> Postgresql CVE
-// ----------------------------------------------------------------------
-namespace pqxx {
-  const char*
-  string_traits<nmdo::Cve>::
-  name()
-  {
-    return "netmeld::common::objects::Cve";
-  }
-
-  bool
-  string_traits<nmdo::Cve>::
-  has_null()
-  {
-    return false;
-  }
-
-  bool
-  string_traits<nmdo::Cve>::
-  is_null(nmdo::Cve const&)
-  {
-    return false;
-  }
-
-  nmdo::Cve
-  string_traits<nmdo::Cve>::
-  null()
-  {
-    internal::throw_null_conversion(name());
-    return nmdo::Cve(0, 0);
-  }
-
-  void
-  string_traits<nmdo::Cve>::
-  from_string(const char str[], nmdo::Cve& obj)
-  {
-    obj = nmdo::Cve(str);
-  }
-
-  std::string
-  string_traits<nmdo::Cve>::
-  to_string(nmdo::Cve const& obj)
-  {
-    std::ostringstream oss;
-    oss << '(' << obj.getYear() << ", " << obj.getNumber() << ')';
-    return oss.str();
   }
 }

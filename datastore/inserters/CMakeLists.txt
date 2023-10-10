@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -45,6 +45,9 @@ Netmeld tool suite.  Included are the library and headers necessary to \
 run or expand capabilities through tool development, as well as the \
 binaries necessary to insert targeted data into the Netmeld Datastore.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core, netmeld-datastore, \
-libboost-system1.74.0")
+set(deps "\
+ netmeld-core,\
+ netmeld-datastore,\
+ libboost-system${BOOST_PKG_NAME_VERSION}\
+ ")
 nm_add_deb_depends(${deps})
