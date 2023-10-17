@@ -256,11 +256,11 @@ Object alias identifiers are in parentheses next to the object name.
     - See ACR.addSrcIface().
   - ACR.addAction(ACLR.action)
   - ACR.addService(ACLRS.serviceId)
-  - ACR.enable(); Always enable
+  - ACR.enable();
     - The ACL object does not appear to allow for this concept.  The need
       was identified during AC development and usage.  ACL rules can be
-      defined but disabled.
-  - ACR.disable(); Don't add rule if disabled
+      defined but disabled.  Assuming ACL object rule is always enabled.
+  - ACR.disable();
     - See ACR.enable().
 - AcNetworkBook (ACNB)
   - ACNB.setId(ACLINS.ns)

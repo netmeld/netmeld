@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 
+#include <sstream>
+
 
 namespace netmeld::core::utils {
 
@@ -48,5 +50,25 @@ namespace netmeld::core::utils {
   std::vector<std::string> split(const std::string&, const char);
 
   std::string expandCiscoIfaceName(const std::string&);
+
+  template<typename It>
+  std::string toString(It begin, It end, const char sep)
+  {
+    std::ostringstream oss;
+    if (begin != end) {
+      oss << *begin;
+      ++begin;
+      for (; begin != end; ++begin) {
+        oss << sep << *begin;
+      }
+    }
+    return oss.str();
+  }
+
+  template<typename T>
+  std::string toString(const std::vector<T>& con, const char sep=' ')
+  {
+    return toString(std::cbegin(con), std::cend(con), sep);
+  }
 }
 #endif  /* STRING_UTILITIES_HPP */

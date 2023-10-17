@@ -27,6 +27,8 @@
 #include <netmeld/datastore/objects/AclService.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
+#include <netmeld/datastore/objects/AcServiceBook.hpp>
+
 namespace nmcu = netmeld::core::utils;
 
 
@@ -123,6 +125,33 @@ namespace netmeld::datastore::objects {
           includedId
           );
     }
+
+    if (addAcObjects) { // START -- Temporary logic for ACL to AC duplication
+      LOG_DEBUG << "AclService object creating AC object(s) to save\n"
+                << "AclService to save: " << toDebugString()
+                << std::endl;
+
+      { // -- AcServiceBook
+        AcServiceBook book;
+        book.addAclObjects = false; // don't create ACL objects (infinite loop)
+
+        book.setName(id);
+
+        std::ostringstream oss;
+        oss << protocol
+            << ':' << nmcu::toString(srcPortRanges, ',')
+            << ':' << nmcu::toString(dstPortRanges, ',')
+            ;
+        book.addData(oss.str());
+
+        for (const auto& iId : includedIds) {
+          book.addData(iId);
+        }
+
+        LOG_DEBUG << "AcServiceBook to save: " << book.toDebugString() << '\n';
+        book.save(t, toolRunId, deviceId);
+      }
+    } // END
   }
 
   std::string

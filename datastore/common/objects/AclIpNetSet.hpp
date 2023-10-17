@@ -48,6 +48,7 @@ namespace netmeld::datastore::objects {
       std::vector<std::string> hostnames;
       std::vector<std::tuple<std::string, std::string>> includedIds;
     public: // Variables should rarely appear at this scope
+      bool addAcObjects {true}; // Temporary for AC to ACL duplication
 
     // =========================================================================
     // Constructors

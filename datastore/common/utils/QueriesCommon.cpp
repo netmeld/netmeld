@@ -1542,7 +1542,7 @@ namespace netmeld::datastore::utils {
       EXISTS" query part).
     */
     db.prepare
-      ("select_ip_net_set_namespace", R"(
+      ("select_raw_device_ip_net_set_namespaces", R"(
         WITH cte1 AS (
           SELECT DISTINCT
             ip_net_set_namespace
@@ -1563,6 +1563,31 @@ namespace netmeld::datastore::utils {
           AND NOT EXISTS (SELECT * FROM cte1)
         )"
       );
+
+    db.prepare
+    ("select_raw_device_acl_zone_interfaces", R"(
+      SELECT DISTINCT
+        interface_name
+      FROM raw_device_acl_zones_interfaces
+      WHERE ($1 = tool_run_id)
+        AND ($2 = device_id)
+        AND zone_id = ANY(
+          SELECT DISTINCT
+            zone_id
+          FROM raw_device_acl_zones_bases
+          WHERE ($1 = tool_run_id)
+            AND ($2 = device_id)
+            AND ($3 = zone_id)
+          UNION
+          SELECT DISTINCT
+            included_id AS zone_id
+          FROM raw_device_acl_zones_includes
+          WHERE ($1 = tool_run_id)
+            AND ($2 = device_id)
+            AND ($3 = zone_id)
+        )
+      )"
+    );
 
 
 

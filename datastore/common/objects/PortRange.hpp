@@ -27,19 +27,22 @@
 #ifndef PORTRANGE_HPP
 #define PORTRANGE_HPP
 
-#include <cstdint>
-#include <string>
-#include <tuple>
+#include <netmeld/core/objects/AbstractObject.hpp>
+
+namespace nmco = netmeld::core::objects;
 
 namespace netmeld::datastore::objects {
 
-  class PortRange : public std::tuple<uint16_t, uint16_t>
+  class PortRange : public nmco::AbstractObject
   {
     // =========================================================================
     // Variables
     // =========================================================================
     private:
     protected:
+      uint16_t minPort {0};
+      uint16_t maxPort {0};
+
     public:
 
     // =========================================================================
@@ -60,11 +63,12 @@ namespace netmeld::datastore::objects {
 
     protected:
     public:
-      std::string toString() const;
+      std::string toDbString() const;
       std::string toDebugString() const;
-      std::string toHumanString() const;
+      std::string toString() const;
 
-      friend std::ostream& operator<<(std::ostream&, const PortRange&);
+      std::strong_ordering operator<=>(const PortRange&) const;
+      bool operator==(const PortRange&) const;
   };
 }
 #endif // PORTRANGE_HPP

@@ -33,162 +33,174 @@
 namespace nmdo = netmeld::datastore::objects;
 
 
+class TestPortRange : public nmdo::PortRange {
+  public:
+    TestPortRange(uint16_t l) : PortRange(l) {};
+    TestPortRange(uint16_t l, uint16_t h) : PortRange(l,h) {};
+    TestPortRange(const std::string& s) : PortRange(s) {};
+
+  public:
+    nmdo::PortRange::minPort;
+    nmdo::PortRange::maxPort;
+};
+
+
 BOOST_AUTO_TEST_CASE(testConstructorsAndToStrings)
 {
   // Constructors with numeric arguments:
 
   {
-    nmdo::PortRange portRange(0);  // Min port number
+    TestPortRange portRange(0);  // Min port number
 
-    BOOST_CHECK_EQUAL(0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(0, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(0, portRange.minPort);
+    BOOST_CHECK_EQUAL(0, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[0,0]", portRange.toString());
+    BOOST_CHECK_EQUAL("[0,0]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange(65535);  // Max port number
+    TestPortRange portRange(65535);  // Max port number
 
-    BOOST_CHECK_EQUAL(65535, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(65535, portRange.minPort);
+    BOOST_CHECK_EQUAL(65535, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[65535,65535]", portRange.toString());
+    BOOST_CHECK_EQUAL("[65535,65535]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange(22);
+    TestPortRange portRange(22);
 
-    BOOST_CHECK_EQUAL(22, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(22, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(22, portRange.minPort);
+    BOOST_CHECK_EQUAL(22, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[22,22]", portRange.toString());
+    BOOST_CHECK_EQUAL("[22,22]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("ssh");
+    TestPortRange portRange("ssh");
 
-    BOOST_CHECK_EQUAL(22, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(22, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(22, portRange.minPort);
+    BOOST_CHECK_EQUAL(22, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[22,22]", portRange.toString());
+    BOOST_CHECK_EQUAL("[22,22]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange(0, 65535);  // Full port range
+    TestPortRange portRange(0, 65535);  // Full port range
 
-    BOOST_CHECK_EQUAL(    0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(    0, portRange.minPort);
+    BOOST_CHECK_EQUAL(65535, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[0,65535]", portRange.toString());
+    BOOST_CHECK_EQUAL("[0,65535]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange(8000, 9999);  // Small port range
+    TestPortRange portRange(8000, 9999);  // Small port range
 
-    BOOST_CHECK_EQUAL(8000, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(9999, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(8000, portRange.minPort);
+    BOOST_CHECK_EQUAL(9999, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[8000,9999]", portRange.toString());
+    BOOST_CHECK_EQUAL("[8000,9999]", portRange.toDbString());
   }
 
   // Constructors with string arguments (including variations in whitespace):
 
   {
-    nmdo::PortRange portRange("[0,65535]");
+    TestPortRange portRange("[0,65535]");
 
-    BOOST_CHECK_EQUAL(    0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(    0, portRange.minPort);
+    BOOST_CHECK_EQUAL(65535, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[0,65535]", portRange.toString());
+    BOOST_CHECK_EQUAL("[0,65535]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("[0, 65535)");
+    TestPortRange portRange("[0, 65535)");
 
-    BOOST_CHECK_EQUAL(    0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65534, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(    0, portRange.minPort);
+    BOOST_CHECK_EQUAL(65534, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[0,65534]", portRange.toString());
+    BOOST_CHECK_EQUAL("[0,65534]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("( 0,65535 ]");
+    TestPortRange portRange("( 0,65535 ]");
 
-    BOOST_CHECK_EQUAL(    1, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(    1, portRange.minPort);
+    BOOST_CHECK_EQUAL(65535, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[1,65535]", portRange.toString());
+    BOOST_CHECK_EQUAL("[1,65535]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("( 0, 65535 )");
+    TestPortRange portRange("( 0, 65535 )");
 
-    BOOST_CHECK_EQUAL(    1, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65534, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(    1, portRange.minPort);
+    BOOST_CHECK_EQUAL(65534, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[1,65534]", portRange.toString());
+    BOOST_CHECK_EQUAL("[1,65534]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("1024-65535");
+    TestPortRange portRange("1024-65535");
 
-    BOOST_CHECK_EQUAL( 1024, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL( 1024, portRange.minPort);
+    BOOST_CHECK_EQUAL(65535, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[1024,65535]", portRange.toString());
+    BOOST_CHECK_EQUAL("[1024,65535]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("1024 -- 65535");
+    TestPortRange portRange("1024 -- 65535");
 
-    BOOST_CHECK_EQUAL( 1024, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL( 1024, portRange.minPort);
+    BOOST_CHECK_EQUAL(65535, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[1024,65535]", portRange.toString());
+    BOOST_CHECK_EQUAL("[1024,65535]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("443");
+    TestPortRange portRange("443");
 
-    BOOST_CHECK_EQUAL(443, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(443, portRange.minPort);
+    BOOST_CHECK_EQUAL(443, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[443,443]", portRange.toString());
+    BOOST_CHECK_EQUAL("[443,443]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("https");
+    TestPortRange portRange("https");
 
-    BOOST_CHECK_EQUAL(443, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(443, portRange.minPort);
+    BOOST_CHECK_EQUAL(443, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[443,443]", portRange.toString());
+    BOOST_CHECK_EQUAL("[443,443]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("http-https");
+    TestPortRange portRange("http-https");
 
-    BOOST_CHECK_EQUAL(80, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(80, portRange.minPort);
+    BOOST_CHECK_EQUAL(443, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[80,443]", portRange.toString());
+    BOOST_CHECK_EQUAL("[80,443]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange(">32767");
+    TestPortRange portRange(">32767");
 
-    BOOST_CHECK_EQUAL(32768, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(32768, portRange.minPort);
+    BOOST_CHECK_EQUAL(65535, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[32768,65535]", portRange.toString());
+    BOOST_CHECK_EQUAL("[32768,65535]", portRange.toDbString());
   }
 
   {
-    nmdo::PortRange portRange("<32767");
+    TestPortRange portRange("<32767");
 
-    BOOST_CHECK_EQUAL(0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(32766, std::get<1>(portRange));
+    BOOST_CHECK_EQUAL(0, portRange.minPort);
+    BOOST_CHECK_EQUAL(32766, portRange.maxPort);
 
-    BOOST_CHECK_EQUAL("[0,32766]", portRange.toString());
+    BOOST_CHECK_EQUAL("[0,32766]", portRange.toDbString());
   }
 }

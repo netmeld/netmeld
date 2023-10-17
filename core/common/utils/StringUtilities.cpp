@@ -52,33 +52,29 @@ namespace netmeld::core::utils {
     return text;
   }
 
+  //template<typename T>
+  //std::string
+  //toString(T begin, T end, const char sep)
+  //{
+  //  std::ostringstream oss;
+  //  if (begin != end) {
+  //    oss << *begin;
+  //    ++begin;
+  //    for (; begin != end; ++begin) {
+  //      oss << sep << *begin;
+  //    }
+  //  }
+  //  return oss.str();
+  //}
   std::string
   toString(const std::set<std::string>& con, const char sep)
   {
-    std::ostringstream oss;
-    if (!con.empty()) {
-      auto iter {con.begin()};
-      oss << *iter;
-      ++iter;
-      for (; iter != con.end(); ++iter) {
-        oss << sep << *iter;
-      }
-    }
-    return oss.str();
+    return toString(std::cbegin(con), std::cend(con), sep);
   }
   std::string
   toString(const std::vector<std::string>& con, const char sep)
   {
-    std::ostringstream oss;
-    if (!con.empty()) {
-      auto iter {con.begin()};
-      oss << *iter;
-      ++iter;
-      for (; iter != con.end(); ++iter) {
-        oss << sep << *iter;
-      }
-    }
-    return oss.str();
+    return toString(std::cbegin(con), std::cend(con), sep);
   }
 
   std::string

@@ -243,14 +243,14 @@ namespace netmeld::datastore::objects {
       }
     }
 
-    // START -- Temporary logic for AC to ACL duplication
-    if (true) {
-      LOG_DEBUG << "AcRule object creating ACL object(s) to save"
+    if (addAclObjects) { // START -- Temporary logic for AC to ACL duplication
+      LOG_DEBUG << "AcRule object creating ACL object(s) to save\n"
+                << "AcRule to save: " << toDebugString()
                 << std::endl;
-      LOG_DEBUG << "AcRule to save: " << toDebugString() << std::endl;
-      // -- save AclZone
-      {
+
+      { // -- save AclZone sources
         AclZone az;
+        //az.addAcObjects = false; // don't create AC objects (infinite loop)
         az.setId(srcId);
         for (const auto& srcIface : srcIfaces) {
           az.addIface(srcIface);
@@ -258,8 +258,9 @@ namespace netmeld::datastore::objects {
         LOG_DEBUG << "AclZone to save: " << az.toDebugString() << '\n';
         az.save(t, toolRunId, deviceId);
       }
-      {
+      { // -- save AclZone destinations
         AclZone az;
+        //az.addAcObjects = false; // don't create AC objects (infinite loop)
         az.setId(dstId);
         for (const auto& dstIface : dstIfaces) {
           az.addIface(dstIface);
@@ -297,7 +298,7 @@ namespace netmeld::datastore::objects {
                     << netSet << "--" << zoneId
                     << std::endl;
           pqxx::row nsRow {
-              t.exec_prepared1("select_ip_net_set_namespace"
+              t.exec_prepared1("select_raw_device_ip_net_set_namespaces"
                               , toolRunId
                               , deviceId
                               , netSet
@@ -314,6 +315,7 @@ namespace netmeld::datastore::objects {
         for (const auto& dst : dsts) {
           for (const auto& service : services) {
             AclRuleService ars;
+            ars.addAcObjects = false; // don't create AC objects (infinite loop)
             ars.setPriority(id);
             ars.setAction(action);
             ars.setIncomingZoneId(tSrcId);
@@ -332,8 +334,7 @@ namespace netmeld::datastore::objects {
           }
         }
       }
-    }
-    // END
+    } // END
   }
 
   // Utilized for full object data dump, for debug purposes

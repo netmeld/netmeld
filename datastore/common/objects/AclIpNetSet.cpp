@@ -27,6 +27,8 @@
 #include <netmeld/datastore/objects/AclIpNetSet.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
+#include <netmeld/datastore/objects/AcNetworkBook.hpp>
+
 namespace nmcu = netmeld::core::utils;
 
 
@@ -124,6 +126,39 @@ namespace netmeld::datastore::objects {
           std::get<1>(includedId)   // id
           );
     }
+
+    if (addAcObjects) { // START -- Temporary logic for ACL to AC duplication
+      LOG_DEBUG << "AclIpNetSet object creating AC object(s) to save\n"
+                << "AclIpNetSet to save: " << toDebugString()
+                << std::endl;
+
+      { // -- AcNetworkBook
+        AcNetworkBook book;
+        book.addAclObjects = false; // don't create ACL objects (infinite loop)
+
+        book.setId(ns);
+        book.setName(id);
+        for (const auto& ipNet : ipNets) {
+          book.addData(ipNet.toString());
+        }
+        for (const auto& hostname : hostnames) {
+          book.addData(hostname);
+        }
+        for (const auto& [iNs, iId] : includedIds) {
+          if (!iNs.empty() && iNs != ns) {
+            LOG_WARN << "Included namespace differs from"
+                     << " AclIpNetSet namespace -- skipping"
+                     << std::endl;
+            continue;
+          }
+
+          book.addData(iId);
+        }
+
+        LOG_DEBUG << "AcNetworkBook to save: " << book.toDebugString() << '\n';
+        book.save(t, toolRunId, deviceId);
+      }
+    } // END
   }
 
   std::string

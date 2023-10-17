@@ -47,6 +47,7 @@ namespace netmeld::datastore::objects {
       std::string dstIpNetSetId;
       std::string description;
     public: // Variables should rarely appear at this scope
+      bool addAcObjects {true}; // Temporary for AC to ACL duplication
 
     // =========================================================================
     // Constructors
@@ -80,5 +81,4 @@ namespace netmeld::datastore::objects {
       bool operator==(const AclRule&) const;
   };
 }
-
 #endif // ACL_RULE_HPP

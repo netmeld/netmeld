@@ -194,7 +194,7 @@ namespace pqxx {
   char*
   string_traits<nmdo::PortRange>::into_buf(char* begin, char* end, const nmdo::PortRange& obj)
   {
-    const std::string value {obj.toString()};
+    const std::string value {obj.toDbString()};
     if (internal::cmp_greater_equal(std::size(value), end - begin))
       throw conversion_overrun{
         "Could not convert nmdo::PortRange to string: too long for buffer."};
@@ -206,7 +206,7 @@ namespace pqxx {
   std::size_t
   string_traits<nmdo::PortRange>::size_buffer(const nmdo::PortRange& obj) noexcept
   {
-    return std::size(obj.toString())
+    return std::size(obj.toDbString())
          + 1 // zero-terminator
          ;
   }

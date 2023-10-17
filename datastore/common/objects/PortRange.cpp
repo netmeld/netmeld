@@ -25,21 +25,25 @@
 // =============================================================================
 
 #include <netmeld/datastore/objects/PortRange.hpp>
-#include <boost/format.hpp>
+
 #include <regex>
+
 
 namespace netmeld::datastore::objects {
 
   PortRange::PortRange(uint16_t port) :
-    std::tuple<uint16_t, uint16_t>(port, port)
+      minPort(port)
+    , maxPort(port)
   { }
 
   PortRange::PortRange(uint16_t portFirst, uint16_t portLast) :
-    std::tuple<uint16_t, uint16_t>(portFirst, portLast)
+      minPort(portFirst)
+    , maxPort(portLast)
   { }
 
   PortRange::PortRange(const std::string& _portRangeString) :
-    std::tuple<uint16_t, uint16_t>(0, 0)
+      minPort(0)
+    , maxPort(0)
   {
     const auto& portRangeString {
         translateFromTypicalServiceAlias(_portRangeString)
@@ -50,10 +54,10 @@ namespace netmeld::datastore::objects {
       std::regex r {R"(^([\[\(])\s*(\d{1,5})\s*,\s*(\d{1,5})\s*([\]\)])$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
-        std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[2]));
-        std::get<1>(*this) = static_cast<uint16_t>(std::stoul(m[3]));
-        if ("(" == m[1]) { ++std::get<0>(*this); }
-        if (")" == m[4]) { --std::get<1>(*this); }
+        minPort = static_cast<uint16_t>(std::stoul(m[2]));
+        maxPort = static_cast<uint16_t>(std::stoul(m[3]));
+        if ("(" == m[1]) { ++minPort; }
+        if (")" == m[4]) { --maxPort; }
         return;
       }
     }
@@ -63,8 +67,8 @@ namespace netmeld::datastore::objects {
       std::regex r {R"(^(\d{1,5})\s*-{1,2}\s*(\d{1,5})$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
-        std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
-        std::get<1>(*this) = static_cast<uint16_t>(std::stoul(m[2]));
+        minPort = static_cast<uint16_t>(std::stoul(m[1]));
+        maxPort = static_cast<uint16_t>(std::stoul(m[2]));
         return;
       }
     }
@@ -74,8 +78,8 @@ namespace netmeld::datastore::objects {
       std::regex r {R"(^(\d{1,5})$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
-        std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
-        std::get<1>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
+        minPort = static_cast<uint16_t>(std::stoul(m[1]));
+        maxPort = static_cast<uint16_t>(std::stoul(m[1]));
         return;
       }
     }
@@ -85,9 +89,9 @@ namespace netmeld::datastore::objects {
       std::regex r {R"(^>(\d{1,5})$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
-        std::get<0>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
-        std::get<1>(*this) = UINT16_MAX;
-        ++std::get<0>(*this);
+        minPort = static_cast<uint16_t>(std::stoul(m[1]));
+        maxPort = UINT16_MAX;
+        ++minPort;
       }
     }
 
@@ -96,9 +100,9 @@ namespace netmeld::datastore::objects {
       std::regex r {R"(^<(\d{1,5})$)"};
       std::smatch m;
       if (std::regex_match(portRangeString, m, r)) {
-        std::get<0>(*this) = 0;
-        std::get<1>(*this) = static_cast<uint16_t>(std::stoul(m[1]));
-        --std::get<1>(*this);
+        minPort = 0;
+        maxPort = static_cast<uint16_t>(std::stoul(m[1]));
+        --maxPort;
       }
     }
   }
@@ -106,9 +110,10 @@ namespace netmeld::datastore::objects {
   std::string
   PortRange::translateFromTypicalServiceAlias(const std::string& _data) const
   {
+    // ordered container; reverse sort (sort!) to ensure shorter
+    // spellings don't match first
     std::vector<std::tuple<std::string, std::string>> mappings {
           {"any", "0-65535"}
-        // reverse sort (sort!) to ensure shorter spellings don't match first
         // hyphenated first (prevents accidental early replacement)
         , {"ptp-general", "320"}
         , {"ptp-event", "319"}
@@ -165,20 +170,20 @@ namespace netmeld::datastore::objects {
   PortRange::toString() const
   {
     std::ostringstream oss;
-    oss << boost::format("[%1%,%2%]") % std::get<0>(*this) % std::get<1>(*this);
+    if (minPort == maxPort) {
+      oss << minPort;
+    } else {
+      oss << minPort << '-' << maxPort;
+    }
 
     return oss.str();
   }
 
   std::string
-  PortRange::toHumanString() const
+  PortRange::toDbString() const
   {
     std::ostringstream oss;
-    if (std::get<0>(*this) == std::get<1>(*this)) {
-      oss << boost::format("%1%") % std::get<0>(*this);
-    } else {
-      oss << boost::format("%1%-%2%") % std::get<0>(*this) % std::get<1>(*this);
-    }
+    oss << '[' << minPort << ',' << maxPort << ']';
 
     return oss.str();
   }
@@ -186,12 +191,24 @@ namespace netmeld::datastore::objects {
   std::string
   PortRange::toDebugString() const
   {
-    return toString();
+    return toDbString();
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const PortRange& obj)
+  std::strong_ordering
+  PortRange::operator<=>(const PortRange& rhs) const
   {
-    return os << obj.toString();
+    return std::tie( minPort
+                   , maxPort
+                   )
+       <=> std::tie( rhs.minPort
+                   , rhs.maxPort
+                   )
+      ;
+  }
+
+  bool
+  PortRange::operator==(const PortRange& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

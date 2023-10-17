@@ -685,7 +685,7 @@ class Tool : public nmdt::AbstractGraphTool
       } else if ("[0,65535]" == p) {
         oss << "any";
       } else {
-        oss << nmdo::PortRange(p).toHumanString();
+        oss << nmdo::PortRange(p);
       }
       return oss.str();
     }

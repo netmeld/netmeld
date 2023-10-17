@@ -73,11 +73,12 @@ namespace netmeld::datastore::objects {
       }
     }
 
-    // START -- Temporary logic for AC to ACL duplication
-    if (true) {
-      LOG_DEBUG << "AcServiceBook creating ACL object(s) to save\n";
-      // -- save AclService
-      {
+    if (addAclObjects) { // START -- Temporary logic for AC to ACL duplication
+      LOG_DEBUG << "AcServiceBook creating ACL object(s) to save\n"
+                << "AcServiceBook to save: " << toDebugString()
+                << std::endl;
+
+      { // -- save AclService
         for (const auto& entry : data) {
           std::vector<std::string> serviceParts;
           for (auto& token : nmcu::split(entry, ':')) {
@@ -89,6 +90,7 @@ namespace netmeld::datastore::objects {
           }
 
           AclService as;
+          as.addAcObjects = false; // don't create AC objects (infinite loop)
           as.setId(name);
           as.setProtocol(serviceParts[0]);
 
@@ -108,12 +110,10 @@ namespace netmeld::datastore::objects {
             as.addDstPortRange(any);
           }
 
-          LOG_DEBUG << "AclService to save: " << as.toDebugString()
-                    << std::endl;
+          LOG_DEBUG << "AclService to save: " << as.toDebugString() << '\n';
           as.save(t, toolRunId, deviceId);
         }
       }
-    }
-    // END
+    } // END
   }
 }

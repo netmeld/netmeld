@@ -79,37 +79,46 @@ namespace netmeld::datastore::objects {
       }
     }
 
-    // START -- Temporary logic for AC to ACL duplication
-    if (true) {
-      LOG_DEBUG << "AcNetworkBook creating ACL object(s) to save\n";
-      // create "any" nets in case not explicitly defined
-      // - vendors typically have built-in defaults
-      {
+    if (addAclObjects) { // START -- Temporary logic for AC to ACL duplication
+      LOG_DEBUG << "AcNetworkBook creating ACL object(s) to save\n"
+                << "AcNetworkBook to save: " << toDebugString()
+                << std::endl;
+
+      // "any" nets which are not always explicitly defined, but still used
+      //  - vendors typically have built-in defaults
+      { // -- save AclIpNetSet "any"
         AclIpNetSet ains;
+        ains.addAcObjects = false; // don't create AC objects (infinite loop)
         ains.setId("any", "global");
         ains.addIpNet(IpNetwork("0.0.0.0/0"));
         ains.addIpNet(IpNetwork("::/0"));
+        LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
         ains.save(t, toolRunId, deviceId);
       }
-      {
+      { // -- save AclIpNetSet "any4"
         AclIpNetSet ains;
+        ains.addAcObjects = false; // don't create AC objects (infinite loop)
         ains.setId("any4", "global"); // cisco
         ains.addIpNet(IpNetwork("0.0.0.0/0"));
         ains.save(t, toolRunId, deviceId);
         ains.setId("any-ipv4", "global"); // juniper
+        LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
         ains.save(t, toolRunId, deviceId);
       }
-      {
+      { // -- save AclIpNetSet "any6"
         AclIpNetSet ains;
+        ains.addAcObjects = false; // don't create AC objects (infinite loop)
         ains.setId("any6", "global"); //cisco
         ains.addIpNet(IpNetwork("::/0"));
         ains.save(t, toolRunId, deviceId);
         ains.setId("any-ipv6", "global"); // juniper
+        LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
         ains.save(t, toolRunId, deviceId);
       }
-      // -- save AclIpNetSet
-      {
+
+      { // -- save AclIpNetSet
         AclIpNetSet ains;
+        ains.addAcObjects = false; // don't create AC objects (infinite loop)
         ains.setId(name, id);
 
         std::regex rAny   {R"(^any[46]?$)"};
@@ -125,10 +134,10 @@ namespace netmeld::datastore::objects {
             ains.addHostname(entry);
           }
         }
+
         LOG_DEBUG << "AclIpNetSet to save: " << ains.toDebugString() << '\n';
         ains.save(t, toolRunId, deviceId);
       }
-    }
-    // END
+    } // END
   }
 }

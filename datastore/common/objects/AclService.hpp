@@ -44,6 +44,7 @@ namespace netmeld::datastore::objects {
       std::vector<PortRange> dstPortRanges;
       std::vector<std::string> includedIds;
     public: // Variables should rarely appear at this scope
+      bool addAcObjects {true}; // Temporary for AC to ACL duplication
 
     // =========================================================================
     // Constructors

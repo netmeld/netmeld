@@ -63,5 +63,4 @@ namespace netmeld::datastore::objects {
       bool operator==(const AclRuleService&) const;
   };
 }
-
 #endif // ACL_RULE_SERVICE_HPP

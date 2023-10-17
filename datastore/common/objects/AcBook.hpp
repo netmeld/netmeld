@@ -46,6 +46,7 @@ namespace netmeld::datastore::objects {
       std::set<TData>  data;
 
     public: // Variables should rarely appear at this scope
+      bool addAclObjects {true}; // Temporary for AC to ACL duplication
 
     // =========================================================================
     // Constructors and Destructors
