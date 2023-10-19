@@ -72,10 +72,19 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     {
       this->opts.removeRequiredOption("device-id");
       this->opts.addAdvancedOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>(),
-            "(Not used) Name of device.")
-          );
+            "device-id"
+          , po::value<std::string>()
+          , "(Not used) Name of device."
+          )
+        );
+
+      this->opts.addRequiredOption("prowler-version", std::make_tuple(
+            "prowler-version"
+          , po::value<uint16_t>()->default_value(3)
+          , "Which prowler version's JSON to process."
+            " Known change between v2 and v3."
+          )
+        );
 
       this->opts.removeOptionalOption("device-type");
       this->opts.removeOptionalOption("device-color");
@@ -85,15 +94,35 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     parseData() override
     {
       std::ifstream f {this->getDataPath().string()};
-
-      Parser parser;
-      std::string line;
+      const auto version {this->opts.template getValueAs<uint16_t>("prowler-version")};
 
       this->executionStart = nmco::Time();
-      while (std::getline(f, line)) { // output is a JSON lines file
-        parser.parseJsonLine(line);
+      try {
+        Parser parser;
+
+        if (2 == version) {
+          parser.fromJsonV2(f);
+        } else if (3 == version) {
+          parser.fromJsonV3(f);
+        } else {
+          LOG_WARN << "No valid version given; aborting\n";
+          std::exit(nmcu::Exit::FAILURE);
+        }
+
+        this->tResults = parser.getData();
+
+      } catch (json::out_of_range& ex) {
+        LOG_ERROR << "Parse error " << ex.what()
+                  << std::endl
+                  ;
+        std::exit(nmcu::Exit::FAILURE);
+      } catch (json::parse_error& ex) {
+        LOG_ERROR << "Parse error at byte " << ex.byte
+                  << " -- " << ex.what()
+                  << std::endl
+                  ;
+        std::exit(nmcu::Exit::FAILURE);
       }
-      this->tResults = parser.getData();
       this->executionStop = nmco::Time();
     }
 

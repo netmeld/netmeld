@@ -26,27 +26,57 @@
 
 #include "ProwlerData.hpp"
 
+#include <netmeld/core/utils/StringUtilities.hpp>
+
+namespace nmcu = netmeld::core::utils;
+
+
 namespace netmeld::datastore::objects {
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  /*{"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""}*/
-  ProwlerData::ProwlerData(const json& jline) :
-      accountNumber(jline["Account Number"])
-    , region(jline["Region"])
-    , control(jline["Control"])
-    , severity(jline["Severity"])
-    , status(jline["Status"])
-    , level(jline["Level"])
-    , controlId(jline["Control ID"])
-    , service(jline["Service"])
-    , risk(jline["Risk"])
-    , remediation(jline["Remediation"])
-    , documentationLink(jline["Doc link"])
-    , resourceId(jline["Resource ID"])
+  ProwlerData::ProwlerData(const json& jline)
   {
-    timestamp.readFormatted(jline["Timestamp"], "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
+    // TODO differences between v2 and v3 are significant enough that the
+    // DB needs to be modified and validation checks updated
+
+    bool isV2 {jline.contains("Account Number")};
+
+    switch(isV2) {
+      case true:
+        /* V2 -- {"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""} */
+        accountNumber = jline["Account Number"];
+        region = jline["Region"];
+        control = jline["Control"];
+        severity = nmcu::toLower(jline["Severity"]);
+        status = jline["Status"];
+        level = jline["Level"];
+        controlId = jline["Control ID"];
+        service = jline["Service"];
+        risk = jline["Risk"];
+        remediation = jline["Remediation"];
+        documentationLink = jline["Doc link"];
+        resourceId = jline["Resource ID"];
+        timestamp.readFormatted(jline["Timestamp"], "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
+        break;
+      case false:
+        /* V3 -- {"AssessmentStartTime":"", "FindingUniqueId": "", "Provider": "", "Profile": "", "AccountId": "", "OrganizationsInfo": "", "Region": "", "CheckID": "", "CheckTitle": "", "CheckType": [], "ServiceName": "", "SubServiceName": "", "Status": "", "StatusExtended": "", "Severity": "", "ResourceId": "", "ResourceArn": "", "ResourceTags": {}, "ResourceType": "", "ResourceDetails": "", "Description": "", "Risk": "", "RelatedUrl": "", "Remediation": { "Code": { "NativeIaC": "", "Terraform": "", "CLI": "", "Other": "" }, "Recommendation": { "Text": "", "Url": "" } }, "Categories": [], "Notes": "", "Compliance": {} */
+        accountNumber = jline["AccountId"];
+        region = jline["Region"];
+        control = jline["CheckTitle"];
+        severity = jline["Severity"];
+        status = jline["Status"];
+//        level = jline[""];
+        controlId = jline["CheckID"];
+        service = jline["ServiceName"];
+        risk = jline["Risk"];
+        remediation = jline["Remediation"]["Recommendation"]["Text"];
+        documentationLink = jline["Remediation"]["Recommendation"]["Url"];
+        resourceId = jline["ResourceId"];
+        timestamp.readFormatted(jline["AssessmentStartTime"], "%Y-%m-%dT%H:%M:%S"); // 2022-01-01T01:01:01
+        break;
+    }
   }
 
   // ===========================================================================
@@ -58,11 +88,11 @@ namespace netmeld::datastore::objects {
   {
     return !(
            accountNumber.empty()
-        || timestamp.isNull()
-        || region.empty()
-        || level.empty()
-        || controlId.empty()
-        || service.empty()
+//        || timestamp.isNull()
+//        || region.empty()
+//        || level.empty()
+//        || controlId.empty()
+//        || service.empty()
       );
   }
 

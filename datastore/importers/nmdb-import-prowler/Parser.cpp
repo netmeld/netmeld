@@ -25,6 +25,7 @@
 // =============================================================================
 
 #include <nlohmann/json.hpp>
+#include <string>
 
 #include "Parser.hpp"
 
@@ -37,9 +38,11 @@ Parser::Parser()
 {}
 
 void
-Parser::parseJsonLine(const std::string_view line)
+Parser::fromJsonV2(std::ifstream& _file)
 {
-  try {
+  // V2 output is a JSON lines file
+  std::string line;
+  while (std::getline(_file, line)) {
     json jline;
     jline = json::parse(line);
 
@@ -47,11 +50,22 @@ Parser::parseJsonLine(const std::string_view line)
     if (d != Data()) {
       r.emplace_back(d);
     }
-  } catch (json::parse_error& ex) {
-    LOG_WARN << "Parse error at byte " << ex.byte
-             << " for line -- " << line << std::endl;
   }
 }
+
+void
+Parser::fromJsonV3(std::ifstream& _file)
+{
+  // V3 output is a JSON array
+  auto dataArray = json::parse(_file);
+  for (const auto& entry : dataArray) {
+    Data d {entry};
+    if (d != Data()) {
+      r.emplace_back(d);
+    }
+  }
+}
+
 
 
 // =============================================================================

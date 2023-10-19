@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,6 +26,8 @@
 
 #ifndef PARSER_HPP
 #define PARSER_HPP
+
+#include <fstream>
 
 #include "ProwlerData.hpp"
 
@@ -61,7 +63,8 @@ class Parser
   // ===========================================================================
   private:
   public:
-    void parseJsonLine(const std::string_view);
+    void fromJsonV2(std::ifstream&);
+    void fromJsonV3(std::ifstream&);
     Result getData();
 };
 #endif // PARSER_HPP
