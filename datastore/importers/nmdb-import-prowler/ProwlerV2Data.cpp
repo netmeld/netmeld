@@ -24,59 +24,34 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "ProwlerData.hpp"
+#include "ProwlerV2Data.hpp"
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 namespace nmcu = netmeld::core::utils;
 
 
-namespace netmeld::datastore::objects {
+namespace netmeld::datastore::objects::prowler {
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  ProwlerData::ProwlerData(const json& jline)
+  /* V2 -- {"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""} */
+  ProwlerV2Data::ProwlerV2Data(const json& jline)
   {
-    // TODO differences between v2 and v3 are significant enough that the
-    // DB needs to be modified and validation checks updated
-
-    bool isV2 {jline.contains("Account Number")};
-
-    switch(isV2) {
-      case true:
-        /* V2 -- {"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""} */
-        accountNumber = jline["Account Number"];
-        region = jline["Region"];
-        control = jline["Control"];
-        severity = nmcu::toLower(jline["Severity"]);
-        status = jline["Status"];
-        level = jline["Level"];
-        controlId = jline["Control ID"];
-        service = jline["Service"];
-        risk = jline["Risk"];
-        remediation = jline["Remediation"];
-        documentationLink = jline["Doc link"];
-        resourceId = jline["Resource ID"];
-        timestamp.readFormatted(jline["Timestamp"], "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
-        break;
-      case false:
-        /* V3 -- {"AssessmentStartTime":"", "FindingUniqueId": "", "Provider": "", "Profile": "", "AccountId": "", "OrganizationsInfo": "", "Region": "", "CheckID": "", "CheckTitle": "", "CheckType": [], "ServiceName": "", "SubServiceName": "", "Status": "", "StatusExtended": "", "Severity": "", "ResourceId": "", "ResourceArn": "", "ResourceTags": {}, "ResourceType": "", "ResourceDetails": "", "Description": "", "Risk": "", "RelatedUrl": "", "Remediation": { "Code": { "NativeIaC": "", "Terraform": "", "CLI": "", "Other": "" }, "Recommendation": { "Text": "", "Url": "" } }, "Categories": [], "Notes": "", "Compliance": {} */
-        accountNumber = jline["AccountId"];
-        region = jline["Region"];
-        control = jline["CheckTitle"];
-        severity = jline["Severity"];
-        status = jline["Status"];
-//        level = jline[""];
-        controlId = jline["CheckID"];
-        service = jline["ServiceName"];
-        risk = jline["Risk"];
-        remediation = jline["Remediation"]["Recommendation"]["Text"];
-        documentationLink = jline["Remediation"]["Recommendation"]["Url"];
-        resourceId = jline["ResourceId"];
-        timestamp.readFormatted(jline["AssessmentStartTime"], "%Y-%m-%dT%H:%M:%S"); // 2022-01-01T01:01:01
-        break;
-    }
+    accountNumber = jline["Account Number"];
+    region = jline["Region"];
+    control = jline["Control"];
+    severity = nmcu::toLower(jline["Severity"]);
+    status = jline["Status"];
+    level = jline["Level"];
+    controlId = jline["Control ID"];
+    service = jline["Service"];
+    risk = jline["Risk"];
+    remediation = jline["Remediation"];
+    documentationLink = jline["Doc link"];
+    resourceId = jline["Resource ID"];
+    timestamp.readFormatted(jline["Timestamp"], "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
   }
 
   // ===========================================================================
@@ -84,24 +59,25 @@ namespace netmeld::datastore::objects {
   // ===========================================================================
 
   bool
-  ProwlerData::isValid() const
+  ProwlerV2Data::isValid() const
   {
+    // v2: accountNumber-timestamp-region-level-controlid-service
     return !(
            accountNumber.empty()
-//        || timestamp.isNull()
-//        || region.empty()
-//        || level.empty()
-//        || controlId.empty()
-//        || service.empty()
+        || timestamp.isNull()
+        || region.empty()
+        || level.empty()
+        || controlId.empty()
+        || service.empty()
       );
   }
 
   void
-  ProwlerData::save(pqxx::transaction_base& t,
+  ProwlerV2Data::save(pqxx::transaction_base& t,
                          const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
-      LOG_DEBUG << "ProwlerData object is not saving: " << toDebugString()
+      LOG_DEBUG << "ProwlerV2Data object is not saving: " << toDebugString()
                 << std::endl;
       return; // Always short circuit if invalid object
     }
@@ -110,7 +86,7 @@ namespace netmeld::datastore::objects {
     //         accountNumber, timestamp, region, level, controlId, service,
     //         resourceId
     //       However, resourceId can be NULL so problematic for the DB
-    t.exec_prepared("insert_raw_prowler_check",
+    t.exec_prepared("insert_raw_prowler_v2_check",
           toolRunId
         , accountNumber
         , timestamp
@@ -129,33 +105,32 @@ namespace netmeld::datastore::objects {
   }
 
   std::string
-  ProwlerData::toDebugString() const
+  ProwlerV2Data::toDebugString() const
   {
     std::ostringstream oss;
 
-    oss << "["; // opening bracket
-
-    oss << R"("accountNumber": ")" << accountNumber << R"(", )";
-    oss << R"("timestamp": ")" << timestamp << R"(", )";
-    oss << R"("region": ")" << region << R"(", )";
-    oss << R"("control": ")" << control << R"(", )";
-    oss << R"("severity": ")" << severity << R"(", )";
-    oss << R"("status": ")" << status << R"(", )";
-    oss << R"("level": ")" << level << R"(", )";
-    oss << R"("controlId": ")" << controlId << R"(", )";
-    oss << R"("service": ")" << service << R"(", )";
-    oss << R"("risk": ")" << risk << R"(", )";
-    oss << R"("remediation": ")" << remediation << R"(", )";
-    oss << R"("documentationLink": ")" << documentationLink << R"(", )";
-    oss << R"("resourceId": ")" << resourceId << R"(")";
-
-    oss << "]"; // closing bracket
+    oss << "["
+        << R"("accountNumber": ")" << accountNumber
+        << R"(", timestamp": ")" << timestamp
+        << R"(", region": ")" << region
+        << R"(", control": ")" << control
+        << R"(", severity": ")" << severity
+        << R"(", status": ")" << status
+        << R"(", level": ")" << level
+        << R"(", controlId": ")" << controlId
+        << R"(", service": ")" << service
+        << R"(", risk": ")" << risk
+        << R"(", remediation": ")" << remediation
+        << R"(", documentationLink": ")" << documentationLink
+        << R"(", resourceId": ")" << resourceId
+        << "]"
+      ;
 
     return oss.str();
   }
 
   std::strong_ordering
-  ProwlerData::operator<=>(const ProwlerData& rhs) const
+  ProwlerV2Data::operator<=>(const ProwlerV2Data& rhs) const
   {
     return std::tie( accountNumber
                    , timestamp
@@ -189,7 +164,7 @@ namespace netmeld::datastore::objects {
   }
 
   bool
-  ProwlerData::operator==(const ProwlerData& rhs) const
+  ProwlerV2Data::operator==(const ProwlerV2Data& rhs) const
   {
     return 0 == operator<=>(rhs);
   }

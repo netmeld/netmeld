@@ -41,29 +41,32 @@ void
 Parser::fromJsonV2(std::ifstream& _file)
 {
   // V2 output is a JSON lines file
+  Data d;
   std::string line;
   while (std::getline(_file, line)) {
-    json jline;
-    jline = json::parse(line);
-
-    Data d {jline};
-    if (d != Data()) {
-      r.emplace_back(d);
+    json jline = json::parse(line);
+    nmdop::ProwlerV2Data v2d {jline};
+    if (v2d != nmdop::ProwlerV2Data()) {
+      d.v2Data.push_back(v2d);
     }
   }
+  r.push_back(d);
 }
 
 void
 Parser::fromJsonV3(std::ifstream& _file)
 {
   // V3 output is a JSON array
+  Data d;
   auto dataArray = json::parse(_file);
   for (const auto& entry : dataArray) {
-    Data d {entry};
-    if (d != Data()) {
-      r.emplace_back(d);
+    LOG_DEBUG << "P1" << std::endl;
+    nmdop::ProwlerV3Data v3d {entry};
+    if (v3d != nmdop::ProwlerV3Data()) {
+      d.v3Data.push_back(v3d);
     }
   }
+  r.push_back(d);
 }
 
 

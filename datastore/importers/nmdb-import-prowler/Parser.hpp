@@ -29,15 +29,22 @@
 
 #include <fstream>
 
-#include "ProwlerData.hpp"
+#include "ProwlerV2Data.hpp"
+#include "ProwlerV3Data.hpp"
 
-namespace nmdo = netmeld::datastore::objects;
+namespace nmdop = netmeld::datastore::objects::prowler;
 
 
 // =============================================================================
 // Data containers
 // =============================================================================
-typedef nmdo::ProwlerData  Data;
+struct Data {
+  std::vector<nmdop::ProwlerV2Data> v2Data;
+  std::vector<nmdop::ProwlerV3Data> v3Data;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
+};
 typedef std::vector<Data>  Result;
 
 

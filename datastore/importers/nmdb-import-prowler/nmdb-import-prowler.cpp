@@ -133,9 +133,17 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& result : this->tResults) {
-        result.save(t, toolRunId, deviceId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
+      for (auto& results : this->tResults) {
+
+        for (auto& entry : results.v2Data) {
+          entry.save(t, toolRunId, deviceId);
+          LOG_DEBUG << entry.toDebugString() << std::endl;
+        }
+
+        for (auto& entry : results.v3Data) {
+          entry.save(t, toolRunId, deviceId);
+          LOG_DEBUG << entry.toDebugString() << std::endl;
+        }
       }
     }
 
