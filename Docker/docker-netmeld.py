@@ -1,7 +1,7 @@
 #!/usr/bin/python3 --
 
 # =============================================================================
-# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -59,7 +59,7 @@ def createHeader():
   fromDistro = "debian:testing-slim"
 
   print('FROM {0}'.format(fromDistro))
-  print('ENV DEBIAN_FRONTEND noninteractive')
+  print('ENV DEBIAN_FRONTEND=noninteractive')
   print('RUN useradd -m -s /bin/bash netmeld')
   print('WORKDIR /home/netmeld')
 
@@ -198,9 +198,9 @@ def buildDevelopment():
   packages+= ' libboost-program-options-dev'
   packages+= ' libboost-system-dev'
   packages+= ' libboost-test-dev'
-  packages+= ' libpqxx-dev'
+  packages+= ' libpq-dev'
   packages+= ' libpugixml-dev'
-  packages+= ' libpcap0.8-dev'
+  packages+= ' libpcap-dev'
   packages+= ' nlohmann-json3-dev'
   packages+= ' libyaml-cpp-dev'
   packages+= ' python3'
@@ -259,11 +259,13 @@ def buildTester():
 
   cleanUp()
 
-  print('COPY ./testing ./')
+  print('COPY ./testing /home/netmeld/')
   print('RUN chown -R netmeld:netmeld /home/netmeld')
   print('USER netmeld')
-  print('ENTRYPOINT ["/bin/bash", "run.sh"]')
-  print('CMD ["run"]')
+  print('RUN chmod +x /home/netmeld/run.sh')
+  #print('ENTRYPOINT ["/bin/bash", "-l", "-c"]')
+  print('ENTRYPOINT ["/bin/bash", "-l", "-c", "/home/netmeld/run.sh run"]')
+  #print('CMD ["run"]')
 
   return 0
 

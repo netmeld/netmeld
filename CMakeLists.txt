@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -28,8 +28,7 @@
 # CMake Settings
 # ----------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.0)
-#cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.18)
 set(TOOL_SUITE "netmeld")
 set(MODULE_NAME "netmeld")
 project(${TOOL_SUITE})
@@ -43,6 +42,7 @@ include(cmake/BuildHelpers.cmake)
 # Libraries that many things need to link against for various reasons
 # ----------------------------------------------------------------------
 
+set(BOOST_PKG_NAME_VERSION "1.74.0")
 find_package(Boost REQUIRED
   date_time
   iostreams
@@ -55,8 +55,25 @@ find_package(nlohmann_json REQUIRED)
 
 find_package(yaml-cpp REQUIRED)
 
-# Appears to not be linked by default
-link_libraries(stdc++fs)
+# ----------------------------------------------------------------------
+# 20230929 -- See: https://github.com/jtv/libpqxx/issues/732
+#             Stop-gap until external library/compiler issues resolved
+set(CMAKE_CXX_STANDARD 20)
+set(SKIP_BUILD_TEST ON)
+include(FetchContent)
+FetchContent_Declare(
+  libpqxx
+  GIT_REPOSITORY https://github.com/jtv/libpqxx.git
+  GIT_TAG 21afb0d6ec3d31424df6b7aac04c6b20c55c0a65 # 7.8.1 tag
+  GIT_PROGRESS YES
+)
+set(PQXX_LIBRARIES pqxx)
+FetchContent_MakeAvailable(libpqxx)
+# Silence warnings for this library we do not control
+target_compile_options(pqxx PRIVATE "-w")
+target_compile_options(pqxx INTERFACE "-w")
+
+# ----------------------------------------------------------------------
 
 
 # ----------------------------------------------------------------------

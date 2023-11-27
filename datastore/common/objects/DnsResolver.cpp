@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -98,13 +98,37 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
     oss << "[" // opening bracket
-        << ifaceName << ", "
-        << scopeDomain << ", "
-        << srcIpAddr << ", "
-        << dstIpAddr << ", "
-        << dstPort
+        << "ifaceName: " << ifaceName  << ", "
+        << "scopeDomain: " << scopeDomain  << ", "
+        << "srcIpAddr: " << srcIpAddr  << ", "
+        << "dstIpAddr: " << dstIpAddr  << ", "
+        << "dstPort: " << dstPort 
         << "]"; // closing bracket
 
     return oss.str();
+  }
+
+  std::partial_ordering
+  DnsResolver::operator<=>(const DnsResolver& rhs) const
+  {
+    return std::tie( ifaceName
+                   , scopeDomain
+                   , srcIpAddr
+                   , dstIpAddr
+                   , dstPort
+                   )
+       <=> std::tie( rhs.ifaceName
+                   , rhs.scopeDomain
+                   , rhs.srcIpAddr
+                   , rhs.dstIpAddr
+                   , rhs.dstPort
+                   )
+      ;
+  }
+
+  bool
+  DnsResolver::operator==(const DnsResolver& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

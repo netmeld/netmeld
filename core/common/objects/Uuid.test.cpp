@@ -112,4 +112,3 @@ BOOST_AUTO_TEST_CASE(testSetters)
     BOOST_CHECK_EQUAL(u1, uuid.toString());
   }
 }
-

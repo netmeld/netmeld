@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -95,16 +95,34 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << resolver
-        << ", "
-        << question
-        << ", "
-        << status
-        << ", "
-        << responseSections
-        << "]";
+        << "resolver: " << resolver << ", "
+        << "question: " << question << ", "
+        << "status: " << status << ", "
+        << "responseSections: " << responseSections <<
+        "]";
 
     return oss.str();
   }
 
+  std::partial_ordering
+  DnsLookup::operator<=>(const DnsLookup& rhs) const
+  {
+    return std::tie( resolver
+                   , question
+                   , status
+                   , responseSections
+                   )
+       <=> std::tie( rhs.resolver
+                   , rhs.question
+                   , rhs.status
+                   , rhs.responseSections
+                   )
+      ;
+  }
+
+  bool
+  DnsLookup::operator==(const DnsLookup& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }

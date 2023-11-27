@@ -116,18 +116,18 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "routeTableId: " << routeTableId
-        << ", vpcId: " << vpcId
-        << ", associations: " << associations
-        << ", isDefault: " << isDefault
-        << ", routes: " << routes
+        << "routeTableId: " << routeTableId << ", "
+        << "vpcId: " << vpcId << ", "
+        << "associations: " << associations << ", "
+        << "isDefault: " << isDefault << ", "
+        << "routes: " << routes
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   RouteTable::operator<=>(const RouteTable& rhs) const
   {
     return std::tie( routeTableId

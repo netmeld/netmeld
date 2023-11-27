@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -195,14 +195,12 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << name
-        << ", " << description
-        << ", " << std::boolalpha << isUp
-        << ", " << mediaType
-        << ", " << macAddr.toDebugString()
-        ;
-
-    oss << "]"; // closing bracket
+    oss << "name: " << name  << ", "
+        << "description: " << description  << ", "
+        << "isUp: " << std::boolalpha << isUp << ", "
+        << "mediaType: " << mediaType  << ", "
+        << "macAddr: " << macAddr .toDebugString()
+        << "]"; // closing bracket
 
     return oss.str();
   }
@@ -222,5 +220,33 @@ namespace netmeld::datastore::objects {
   Interface::setMtu(uint32_t _mtu)
   {
     mtu = _mtu;
+  }
+
+  std::partial_ordering
+  Interface::operator<=>(const Interface& rhs) const
+  {
+    return std::tie( name
+                   , description
+                   , mediaType
+                   , isUp
+                   , macAddr
+                   , flags
+                   , mtu
+                   )
+       <=> std::tie( rhs.name
+                   , rhs.description
+                   , rhs.mediaType
+                   , rhs.isUp
+                   , rhs.macAddr
+                   , rhs.flags
+                   , rhs.mtu
+                   )
+      ;
+  }
+
+  bool
+  Interface::operator==(const Interface& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

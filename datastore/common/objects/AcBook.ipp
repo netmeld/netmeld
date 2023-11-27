@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -115,16 +115,38 @@ AcBook<TData>::toDebugString() const
   std::ostringstream oss;
 
   oss << "[ " // opening bracket
-      << id << ", "
-      << name << ", "
+      << "id: " << id << ", "
+      << "name: " << name << ", "
       ;
 
-  oss << data
+  oss << "data: " << data
       ;
 
   oss << " ]"; // closing bracket
 
   return oss.str();
+}
+
+template<typename TData>
+std::strong_ordering
+AcBook<TData>::operator<=>(const AcBook<TData>& rhs) const
+{
+  return std::tie( id
+                 , name
+                 , data
+                 )
+     <=> std::tie( rhs.id
+                 , rhs.name
+                 , rhs.data
+                 )
+    ;
+}
+
+template<typename TData>
+bool
+AcBook<TData>::operator==(const AcBook<TData>& rhs) const
+{
+  return 0 == operator<=>(rhs);
 }
 
 // =============================================================================

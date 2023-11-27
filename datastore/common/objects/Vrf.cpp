@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -115,10 +115,33 @@ namespace netmeld::datastore::objects {
   Vrf::toDebugString() const
   {
     std::ostringstream oss;
+    
     oss << "[" // opening bracket
-        << vrfId
+        << "vrfId: " << vrfId << ", "
+        << "ifaces: " << ifaces << ", "
+        << "routes: " << routes
         << "]"; // closing bracket
 
     return oss.str();
+  }
+
+  std::partial_ordering
+  Vrf::operator<=>(const Vrf& rhs) const
+  {
+    return std::tie( vrfId
+                   , ifaces
+                   , routes
+                   )
+       <=> std::tie( rhs.vrfId
+                   , rhs.ifaces
+                   , rhs.routes
+                   )
+      ;
+  }
+
+  bool
+  Vrf::operator==(const Vrf& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

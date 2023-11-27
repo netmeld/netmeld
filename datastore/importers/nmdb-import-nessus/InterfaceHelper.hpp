@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -36,9 +36,10 @@ struct InterfaceWrapper
   nmdo::Interface interface;
   std::string deviceId;
 
-  InterfaceWrapper(nmdo::Interface& iface, const std::string& id) :
-    interface(iface), deviceId(id)
-  {}
+  InterfaceWrapper(nmdo::Interface&, const std::string&);
+
+  std::partial_ordering operator<=>(const InterfaceWrapper&) const;
+  bool operator==(const InterfaceWrapper&) const;
 };
 
 struct InterfaceHelper
@@ -47,6 +48,9 @@ struct InterfaceHelper
   std::map<std::string, InterfaceWrapper> interfaces;
 
   void add(nmdo::Interface&, const std::string&);
+
+  std::partial_ordering operator<=>(const InterfaceHelper&) const;
+  bool operator==(const InterfaceHelper&) const;
 };
 
 #endif //INTERFACE_HELPER

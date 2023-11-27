@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -34,7 +34,6 @@
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/parsers/ParserMacAddress.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 
 namespace nmdo = netmeld::datastore::objects;
@@ -46,11 +45,14 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 struct Data
 {
-  std::string                         domainName;
+  std::string                          domainName;
   nmdo::DeviceInformation              devInfo;
   std::vector<nmdo::InterfaceNetwork>  ifaces;
   std::vector<nmdo::Route>             routes;
   std::vector<nmdo::Service>           services;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data> Result;
 

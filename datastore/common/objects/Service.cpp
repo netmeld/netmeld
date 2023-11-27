@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -194,7 +194,7 @@ namespace netmeld::datastore::objects {
   Service::saveAsNetwork(pqxx::transaction_base& t,
                          const nmco::Uuid& toolRunId)
   {
-    if (srcAddress.isDefault()) {
+    if (srcAddress.hasUnsetPrefix()) {
       // Always use IPv4 default for datastore as only one null case
       srcAddress = IpAddress::getIpv4Default();
     }
@@ -223,17 +223,17 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
     oss << "["
         // Start of formatting
-        << dstAddress << ", "
-        << srcAddress << ", "
-        << isLocal << ", "
-        << interfaceName << ", "
-        << zone << ", "
-        << serviceName << ", "
-        << serviceDescription << ", "
-        << serviceReason << ", "
-        << protocol << ", "
-        << dstPorts << ", "
-        << srcPorts
+        << "dstAddress: " << dstAddress  << ", "
+        << "srcAddress: " << srcAddress  << ", "
+        << "isLocal: " << isLocal  << ", "
+        << "interfaceName: " << interfaceName  << ", "
+        << "zone: " << zone  << ", "
+        << "serviceName: " << serviceName  << ", "
+        << "serviceDescription: " << serviceDescription  << ", "
+        << "serviceReason: " << serviceReason  << ", "
+        << "protocol: " << protocol  << ", "
+        << "dstPorts: " << dstPorts  << ", "
+        << "srcPorts: " << srcPorts 
         // End of formatting
         << "]";
 

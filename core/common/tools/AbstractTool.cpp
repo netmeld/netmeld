@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -78,7 +78,10 @@ namespace netmeld::core::tools {
 
       return runTool();
     } catch (std::exception& e) {
-      LOG_ERROR << e.what() << std::endl;
+      LOG_ERROR << "Unhandled error: "
+                << typeid(e).name() << " -- " << e.what()
+                << std::endl
+                ;
       std::exit(nmcu::Exit::FAILURE);
     }
   }

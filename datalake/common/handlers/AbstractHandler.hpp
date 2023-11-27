@@ -69,7 +69,7 @@ namespace netmeld::datalake::handlers {
       virtual void removeLast(const std::string&, const std::string&) = 0;
 
       virtual std::vector<nmdlo::DataEntry>
-        getDataEntries(const nmco::Time& = {}) = 0;
+        getDataEntries(const nmco::Time& = {}, bool useIngestToolData = false) = 0;
   };
 }
 #endif // ABSTRACT_HANDLER_HPP

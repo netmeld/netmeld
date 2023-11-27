@@ -213,25 +213,25 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "interfaceId: " << interfaceId
-        << ", type: " << type
-        << ", description: " << description
-        << ", sourceDestinationCheck: " << sourceDestinationCheck
-        << ", status: " << status
-        << ", isUp: " << isUp
-        << ", subnetId: " << subnetId
-        << ", vpcId: " << vpcId
-        << ", attachment: " << attachment.toDebugString()
-        << ", securityGroups: " << securityGroups
-        << ", macAddr: " << macAddr
-        << ", cidrBlocks: " << cidrBlocks
+        << "interfaceId: " << interfaceId << ", "
+        << "type: " << type << ", "
+        << "description: " << description << ", "
+        << "sourceDestinationCheck: " << sourceDestinationCheck << ", "
+        << "status: " << status << ", "
+        << "isUp: " << isUp << ", "
+        << "subnetId: " << subnetId << ", "
+        << "vpcId: " << vpcId << ", "
+        << "attachment: " << attachment.toDebugString() << ", "
+        << "securityGroups: " << securityGroups << ", "
+        << "macAddr: " << macAddr << ", "
+        << "cidrBlocks: " << cidrBlocks
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   NetworkInterface::operator<=>(const NetworkInterface& rhs) const
   {
     return std::tie( interfaceId

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -780,18 +780,33 @@ namespace netmeld::datastore::utils {
     // ----------------------------------------------------------------------
 
     db.prepare
-      ("insert_raw_device_ip_route",
-       "INSERT INTO raw_device_ip_routes"
-       "  (tool_run_id, device_id, vrf_id, table_id, is_active, dst_ip_net,"
-       "   next_vrf_id, next_table_id, next_hop_ip_addr, outgoing_interface_name,"
-       "   protocol, administrative_distance, metric, description)"
-       " VALUES ($1, $2, $3, $4, $5, network(($6)::INET),"
-       "         nullif($7, ''), nullif($8, ''),"
-       "         host((nullif($9, '0.0.0.0/0'))::INET)::INET,"
-       "         nullif($10, ''),"
-       "         nullif($11, ''), $12, $13, nullif($14, ''))"
-       " ON CONFLICT"
-       " DO NOTHING");
+      ("insert_raw_device_ip_route", R"(
+          INSERT INTO raw_device_ip_routes(
+                tool_run_id, device_id, vrf_id, table_id, is_active
+              , dst_ip_net
+              , next_vrf_id
+              , next_table_id
+              , next_hop_ip_addr
+              , outgoing_interface_name
+              , protocol
+              , administrative_distance, metric
+              , description
+            )
+          VALUES (
+                $1, $2, $3, $4, $5
+              , network(($6)::INET)
+              , nullif($7, '')
+              , nullif($8, '')
+              , host((nullif($9, ''))::INET)::INET
+              , nullif($10, '')
+              , nullif($11, '')
+              , $12, $13
+              , nullif($14, '')
+            )
+          ON CONFLICT
+          DO NOTHING
+        )"
+      );
 
     // ----------------------------------------------------------------------
     // TABLE: raw_device_link_connections
@@ -995,7 +1010,7 @@ namespace netmeld::datastore::utils {
        "UPDATE raw_ip_nets"
        " SET description = nullif($3, '')"
        " WHERE ($1 = tool_run_id)"
-       "       (network(($2)::INET) = ip_net)");
+       "   AND (network(($2)::INET) = ip_net)");
 
     // ----------------------------------------------------------------------
     // TABLE: ip_nets_extra_weights

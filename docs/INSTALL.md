@@ -44,12 +44,12 @@ sudo apt update
 # Needed for complete tool set build
 sudo apt install \
   build-essential cmake \
-  libpqxx-dev \
+  libpq-dev \
   libboost-date-time-dev libboost-iostreams-dev \
     libboost-program-options-dev libboost-system-dev \
     libboost-test-dev libboost-regex-dev \
   libpugixml-dev nlohmann-json3-dev libyaml-cpp-dev \
-  libpcap0.8-dev
+  libpcap-dev
 
 # Needed for complete tool set execution; assumes prior installed
 sudo apt install \

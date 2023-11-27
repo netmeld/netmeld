@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -23,6 +23,8 @@
 // =============================================================================
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
+
+#include <boost/math/special_functions/relative_difference.hpp>
 
 #include <netmeld/datastore/objects/OperatingSystem.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
@@ -145,17 +147,41 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["; // opening bracket
-    oss << ipAddr.toDebugString() << ", "
-        << vendorName << ", "
-        << productName << ", "
-        << productVersion << ", "
-        << cpe << ", "
-        << accuracy << ", "
-        << hotfixs;
-
+    oss << "ipAddr: " << ipAddr .toDebugString() << ", "
+        << "vendorName: " << vendorName  << ", "
+        << "productName: " << productName  << ", "
+        << "productVersion: " << productVersion  << ", "
+        << "cpe: " << cpe  << ", "
+        << "accuracy: " << accuracy ;
     oss << "]"; // closing bracket
 
     return oss.str();
   }
 
+  std::partial_ordering
+  OperatingSystem::operator<=>(const OperatingSystem& rhs) const
+  {
+    if (!(boost::math::epsilon_difference(accuracy, rhs.accuracy) <= 1000.0)) {
+      return accuracy <=> rhs.accuracy;
+    }
+    return std::tie( ipAddr
+                   , vendorName
+                   , productName
+                   , productVersion
+                   , cpe
+                   )
+       <=> std::tie( rhs.ipAddr
+                   , rhs.vendorName
+                   , rhs.productName
+                   , rhs.productVersion
+                   , rhs.cpe
+                   )
+      ;
+  }
+
+  bool
+  OperatingSystem::operator==(const OperatingSystem& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }

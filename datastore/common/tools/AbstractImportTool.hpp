@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -44,10 +44,9 @@ namespace netmeld::datastore::tools {
     // =========================================================================
     // Variables
     // =========================================================================
-    private:
-      sfs::path   dataPath;
 
     protected:
+      sfs::path   dataPath;
       TResults    tResults;
 
       nmco::Uuid  toolRunId;
@@ -56,6 +55,7 @@ namespace netmeld::datastore::tools {
 
       nmdo::DeviceInformation devInfo;
 
+      bool preCommitTool {false};
 
     // =========================================================================
     // Constructors and Destructors
@@ -82,7 +82,7 @@ namespace netmeld::datastore::tools {
       const std::string getDeviceId() const;
       const nmco::Uuid  getToolRunId() const;
       virtual void addToolOptions() override;
-      virtual void parseData();
+      virtual void parseData() = 0;
       virtual void printHelp() const override;
       virtual int  runTool() override;
       virtual void setToolRunId();

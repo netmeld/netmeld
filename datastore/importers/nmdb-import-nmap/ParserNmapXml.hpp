@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -37,7 +37,6 @@
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/objects/TracerouteHop.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
 
 #include "NseResult.hpp"
 #include "SshAlgorithm.hpp"
@@ -45,7 +44,6 @@
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
-namespace nmdt = netmeld::datastore::tools;
 namespace nmdu = netmeld::datastore::utils;
 
 // =============================================================================
@@ -64,6 +62,9 @@ struct Data
   std::vector<SshAlgorithm>           sshAlgorithms;
 
   nmdo::ToolObservations              observations;
+
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
 };
 typedef std::vector<Data>  Result;
 

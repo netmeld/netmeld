@@ -1,1 +1,0 @@
-../../docs/process-dot-files.sh

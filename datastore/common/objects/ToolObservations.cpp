@@ -107,15 +107,31 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << "[ NOTABLES: " << notables << "]";
-    oss << "[ UNSUPPORTED FEATURES: " << unsupportedFeatures << "]";
+    oss << "notables: " << notables  << ", ";
+    oss << "unsupportedFeatures: " << unsupportedFeatures ;
 
     oss << "]"; // closing bracket
 
     return oss.str();
   }
 
-  // ===========================================================================
-  // Friends
-  // ===========================================================================
+  std::strong_ordering
+  ToolObservations::operator<=>(const ToolObservations& rhs) const
+  {
+    return std::tie( quiet
+                   , notables
+                   , unsupportedFeatures
+                   )
+       <=> std::tie( rhs.quiet
+                   , rhs.notables
+                   , rhs.unsupportedFeatures
+                   )
+      ;
+  }
+
+  bool
+  ToolObservations::operator==(const ToolObservations& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }

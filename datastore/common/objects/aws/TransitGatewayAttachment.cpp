@@ -139,21 +139,21 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "tgwAttachmentId: " << tgwAttachmentId
-        << ", tgwId: " << tgwId
-        << ", tgwOwnerId: " << tgwOwnerId
-        << ", resourceId: " << resourceId
-        << ", resourceOwnerId: " << resourceOwnerId
-        << ", resourceType: " << resourceType
-        << ", state: " << state
-        << ", associationState: " << associationState
+        << "tgwAttachmentId: " << tgwAttachmentId << ", "
+        << "tgwId: " << tgwId << ", "
+        << "tgwOwnerId: " << tgwOwnerId << ", "
+        << "resourceId: " << resourceId << ", "
+        << "resourceOwnerId: " << resourceOwnerId << ", "
+        << "resourceType: " << resourceType << ", "
+        << "state: " << state << ", "
+        << "associationState: " << associationState
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   TransitGatewayAttachment::operator<=>(const TransitGatewayAttachment& rhs) const
   {
     return std::tie( tgwAttachmentId

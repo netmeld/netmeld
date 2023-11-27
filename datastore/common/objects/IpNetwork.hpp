@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,8 +27,9 @@
 #ifndef IP_NETWORK_HPP
 #define IP_NETWORK_HPP
 
-#include <compare>
+#include <bitset>
 #include <boost/asio/ip/address.hpp>
+#include <compare>
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 
@@ -91,7 +92,7 @@ namespace netmeld::datastore::objects {
 
       uint8_t getPrefix() const;
 
-      bool isDefault() const;
+      bool hasUnsetPrefix() const;
       bool isValid() const override;
       bool isV4() const;
       bool isV6() const;

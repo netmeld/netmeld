@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -25,7 +25,7 @@
 // =============================================================================
 
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include "Parser.hpp"
@@ -35,7 +35,7 @@ namespace nmdt = netmeld::datastore::tools;
 
 
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -51,7 +51,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private: // Constructors should rarely appear at this scope
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       ("show ip route", PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -60,25 +60,30 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Methods
   // ===========================================================================
   private: // Methods part of internal API
-    // Overriden from AbstractImportTool
+    // Overriden from AbstractImportSpiritTool
     void
     specificInserts(pqxx::transaction_base& t) override
     {
       const auto& toolRunId{this->getToolRunId()};
       const auto& deviceId{this->getDeviceId()};
 
+      LOG_DEBUG << "Saving DeviceInformation\n";
       auto& deviceInfo{this->devInfo};
-      deviceInfo.setDeviceId(deviceId);
+      deviceInfo.setVendor("cisco");
       deviceInfo.save(t, toolRunId, deviceId);
+      LOG_DEBUG << deviceInfo.toDebugString() << std::endl;
 
       LOG_DEBUG << "Iterating over results\n";
-      for (auto& [vrfId, routes] : this->tResults) {
-        LOG_DEBUG << deviceInfo.toDebugString() << std::endl;
-        for (auto& route : routes) {
-          route.setVrfId(vrfId);
+      for (auto& vrf : this->tResults) {
+        LOG_DEBUG << "Iterating over Routes\n";
+        for (auto& route : vrf.routes) {
           route.save(t, toolRunId, deviceId);
           LOG_DEBUG << route.toDebugString() << std::endl;
         }
+
+        LOG_DEBUG << "Iterating over ToolObservations\n";
+        vrf.observations.save(t, toolRunId, deviceId);
+        LOG_DEBUG << vrf.observations.toDebugString() << std::endl;
       }
     }
 

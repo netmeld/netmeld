@@ -114,17 +114,17 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "naclId: " << naclId
-        << ", vpcId: " << vpcId
-        << ", subnetIds: " << subnetIds
-        << ", rules: " << rules
+        << "naclId: " << naclId << ", "
+        << "vpcId: " << vpcId << ", "
+        << "subnetIds: " << subnetIds << ", "
+        << "rules: " << rules
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   NetworkAcl::operator<=>(const NetworkAcl& rhs) const
   {
     return std::tie( naclId

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -39,6 +39,14 @@ namespace netmeld::core::objects {
     questionFqdn{},
     questionClass{},
     questionType{}
+  { }
+
+  DnsQuestion::DnsQuestion(const std::string& strQuestionFqdn,
+                           const std::string& strQuestionClass,
+                           const std::string& strQuestionType) :
+    questionFqdn{strQuestionFqdn},
+    questionClass{strQuestionClass},
+    questionType{strQuestionType}
   { }
 
   void
@@ -84,14 +92,31 @@ namespace netmeld::core::objects {
     std::ostringstream oss;
 
     oss << "["
-        << questionFqdn
-        << ", "
-        << questionClass
-        << ", "
-        << questionType
+        << "questionFqdn: " << questionFqdn << ", "
+        << "questionClass: " << questionClass << ", "
+        << "questionType: " << questionType 
         << "]";
 
     return oss.str();
   }
 
+  std::strong_ordering
+  DnsQuestion::operator<=>(const DnsQuestion& rhs) const
+  {
+    return std::tie( questionFqdn
+                   , questionClass
+                   , questionType
+                   )
+       <=> std::tie( rhs.questionFqdn
+                   , rhs.questionClass
+                   , rhs.questionType
+                   )
+      ;
+  }
+
+  bool
+  DnsQuestion::operator==(const DnsQuestion& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }

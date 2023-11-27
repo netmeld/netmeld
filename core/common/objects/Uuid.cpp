@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -67,7 +67,7 @@ namespace netmeld::core::objects {
     std::ostringstream oss;
 
     oss << "[";
-    oss << uuid;
+    oss << "uuid: " << uuid;
     oss << "]";
 
     return oss.str();
@@ -96,58 +96,5 @@ namespace netmeld::core::objects {
   operator<<(std::ostream& os, const Uuid& ao)
   {
     return os << ao.toString();
-  }
-}
-
-
-// ----------------------------------------------------------------------
-// nmco:Uuid <--> Postgresql UUID
-// ----------------------------------------------------------------------
-namespace pqxx {
-  const char*
-  string_traits<nmco::Uuid>::
-  name()
-  {
-    return "nmco::Uuid";
-  }
-
-
-  bool
-  string_traits<nmco::Uuid>::
-  has_null()
-  {
-    return true;
-  }
-
-
-  bool
-  string_traits<nmco::Uuid>::
-  is_null(const nmco::Uuid& obj)
-  {
-    return obj.isNull();
-  }
-
-
-  nmco::Uuid
-  string_traits<nmco::Uuid>::
-  null()
-  {
-    return nmco::Uuid(uuids::nil_uuid());
-  }
-
-
-  void
-  string_traits<nmco::Uuid>::
-  from_string(const char str[], nmco::Uuid& obj)
-  {
-    obj = nmco::Uuid(std::string(str));
-  }
-
-
-  std::string
-  string_traits<nmco::Uuid>::
-  to_string(const nmco::Uuid& obj)
-  {
-    return obj.toString();
   }
 }

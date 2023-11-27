@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -40,9 +40,9 @@
 #include <algorithm>
 #include <iterator>
 
-extern "C" {
-#include <netdb.h>
-}
+//extern "C" {
+//#include <netdb.h>
+//}
 
 
 namespace nmcu = netmeld::core::utils;
@@ -51,12 +51,66 @@ namespace nmdp = netmeld::datastore::parsers;
 namespace nmdu = netmeld::datastore::utils;
 
 
-Data
+Results
 Parser::getData()
 {
-  return data;
+  Results res;
+  res.emplace_back(data);
+  return res;
 }
 
+
+void
+Parser::handleXML(const pugi::xml_document& doc)
+{
+  const pugi::xml_node rpcReplyNode{doc.select_node("/rpc-reply").node()};
+  if (!rpcReplyNode) {
+    LOG_ERROR << "Could not find XML element: /rpc-reply"
+              << std::endl;
+    std::exit(nmcu::Exit::FAILURE);
+  }
+
+  for (const pugi::xml_node dataNode : rpcReplyNode.children()) {
+    const std::string dataNodeName{dataNode.name()};
+    if ("arp-table-information" == dataNodeName) {
+      parseArpTableInfo(dataNode);
+    }
+    else if ("cli" == dataNodeName) {
+      // Ignored: Metadata for the command-line interface.
+    }
+    else if ("configuration" == dataNodeName) {
+      parseConfig(dataNode);
+    }
+    else if ("ipv6-nd-information" == dataNodeName) {
+      parseIpv6NeighborInfo(dataNode);
+    }
+    else if (("l2ng-l2ald-rtb-mac-ip-db" == dataNodeName) ||
+             ("l2ng-l2ald-rtb-macdb"     == dataNodeName) ||
+             ("l2ng-l2rtb-evpn-arp-db"   == dataNodeName) ||
+             ("l2ng-l2rtb-evpn-nd-db"    == dataNodeName)) {
+      parseEthernetSwitching(dataNode);
+    }
+    else if ("lldp-neighbors-information" == dataNodeName) {
+      parseLldpNeighborInfo(dataNode);
+    }
+    else if ("output" == dataNodeName) {
+      // Ignored: Context-specific text for the device to output.
+      // Either ignored or handled in the parser for another element.
+    }
+    else if ("route-information" == dataNodeName) {
+      parseRouteInfo(dataNode);
+    }
+    else if ("xnm:error" == dataNodeName) {
+      parseError(dataNode);
+    }
+    else if ("xnm:warning" == dataNodeName) {
+      parseWarning(dataNode);
+    }
+    else {
+      parseUnsupported(dataNode);
+    }
+  }
+}
 
 void
 Parser::parseConfig(const pugi::xml_node& configNode)
@@ -507,6 +561,7 @@ Parser::parseConfigRoutingOptions(const pugi::xml_node& routingOptionsNode)
     if (discardMatch) {
       const std::string outgoingIfaceName{discardMatch.node().name()};
       route.setIfaceName(outgoingIfaceName);
+      route.setNullRoute(true);
     }
 
     const auto nextHopMatch{routeNode.select_node("next-hop[not(@inactive='inactive')]")};
@@ -661,8 +716,11 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
     };
     aclService.setId(applicationSetName);
 
-    for (const auto& applicationMatch :
-         applicationSetNode.select_nodes("application[not(@inactive='inactive')]")) {
+    const pugi::xpath_query query {
+        "application[not(@inactive='inactive')]|"
+        "application-set[not(@inactive='inactive')]"
+      };
+    for (const auto& applicationMatch : applicationSetNode.select_nodes(query)) {
       const pugi::xml_node applicationNode{applicationMatch.node()};
       const std::string applicationName{
         applicationNode.select_node("name").node().text().as_string()
@@ -1014,7 +1072,7 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
   };
 
   // Ignore ephemeral multicast routes where the destination
-  // is of the form "multicaseIp, unicastIp".
+  // is of the form "multicastIp, unicastIp".
   // There isn't a clean way to collapse these into standard routes
   // and they are so short lived that they aren't useful for
   // analysis of periodic data snapshots.
@@ -1036,6 +1094,14 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
 
     nmdo::Route route;
     route.setDstIpNet(dstIpNet);
+
+    // Init next-hop so route will save in cases a specific IP not known;
+    // this may be overridden later
+    if (dstIpNet.isV4()) {
+      route.setNextHopIpAddr(nmdo::IpAddress::getIpv4Default());
+    } else {
+      route.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
+    }
 
     const std::string activeTag{
       routeEntryNode.select_node("active-tag").node().text().as_string()
@@ -1083,6 +1149,7 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       };
       if ("Discard" == nhType) {
         route.setIfaceName("discard");
+        route.setNullRoute(true);
       }
     }
 
@@ -1148,7 +1215,10 @@ Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName.resize(ifaceName.find(" ["));
+      auto length {ifaceName.find(" [")};
+      if (length != std::string::npos) {
+        ifaceName.resize(length);
+      }
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{
@@ -1198,7 +1268,10 @@ Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
       std::string ifaceName{
         ifaceNameMatch.node().text().as_string()
       };
-      ifaceName.resize(ifaceName.find(" ["));
+      auto length {ifaceName.find(" [")};
+      if (length != std::string::npos) {
+        ifaceName.resize(length);
+      }
       ifaces[ifaceName].setName(ifaceName);
 
       const auto peerMacAddrMatch{

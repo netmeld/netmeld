@@ -121,17 +121,17 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "vpcId: " << vpcId
-        << ", ownerId: " << ownerId
-        << ", state: " << state
-        << ", cidrBlocks: " << cidrBlocks
+        << "vpcId: " << vpcId << ", "
+        << "ownerId: " << ownerId << ", "
+        << "state: " << state << ", "
+        << "cidrBlocks: " << cidrBlocks
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   Vpc::operator<=>(const Vpc& rhs) const
   {
     return std::tie( vpcId

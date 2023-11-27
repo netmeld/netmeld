@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -136,7 +136,10 @@ Parser::addIface2(const std::string& name,
   if (rtr.isValid()){
     nmdo::Route route;
     route.setIfaceName(name);
-    route.setDstIpNet(ip); // saves as both addr and net
+    if ("Null0" == name) {
+      route.setNullRoute(true);
+    }
+    route.setDstIpNet(ip);
     route.setNextHopIpAddr(rtr);
     d.routes.push_back(route);
   }
@@ -147,6 +150,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.push_back(d);
+
+  if (d != Data()) {
+    r.push_back(d);
+  }
+
   return r;
 }

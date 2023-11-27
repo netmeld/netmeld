@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -144,7 +144,9 @@ Parser::finalize()
   tgtIp.setResponding(responsive);
   responsive = false;
 
-  data.push_back(tgtIp);
+  if (tgtIp != nmdo::IpAddress()) {
+    data.push_back(tgtIp);
+  }
 }
 
 // Object return
@@ -152,5 +154,6 @@ Result
 Parser::getData()
 {
   Result r {data};
+
   return r;
 }

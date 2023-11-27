@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -80,12 +80,32 @@ namespace netmeld::datastore::objects {
   TracerouteHop::toDebugString() const
   {
     std::ostringstream oss;
-    oss << "[";
-    oss << hopIpAddr << ", "
-        << dstIpAddr << ", "
-        << hopCount;
-    oss << "]";
+    oss << "["
+        << "hopIpAddr: " << hopIpAddr  << ", "
+        << "dstIpAddr: " << dstIpAddr  << ", "
+        << "hopCount: " << hopCount 
+        << "]";
 
     return oss.str();
+  }
+
+  std::partial_ordering
+  TracerouteHop::operator<=>(const TracerouteHop& rhs) const
+  {
+    return std::tie( hopIpAddr
+                   , dstIpAddr
+                   , hopCount
+                   )
+       <=> std::tie( rhs.hopIpAddr
+                   , rhs.dstIpAddr
+                   , rhs.hopCount
+                   )
+      ;
+  }
+
+  bool
+  TracerouteHop::operator==(const TracerouteHop& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

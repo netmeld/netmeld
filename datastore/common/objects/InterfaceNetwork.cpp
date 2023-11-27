@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -325,49 +325,88 @@ namespace netmeld::datastore::objects {
 
     oss << "["; // opening bracket
 
-    oss << name
-        << ", " << description
-        << ", " << mediaType
-        << ", " << mode
-        << ", State:" << std::boolalpha << isUp
-        << ", DiscProtoEnabled:" << isDiscoveryProtocolEnabled
-        << ", " << macAddr.toDebugString()
+    oss << "name: " << name << ", "
+        << "description: " << description << ", "
+        << "mediaType: " << mediaType << ", "
+        << "mode: " << mode << ", " 
+        << "State:" << std::boolalpha << isUp << ", " 
+        << "DiscProtoEnabled: " << isDiscoveryProtocolEnabled << ", "
+        << "macAddr: " << macAddr .toDebugString() << ", "
         ;
 
-    oss << ", Port-Security: ["
-        << " State:" << isPortSecurityEnabled
-        << ", " << portSecurityMaxMacAddrs
-        << ", " << portSecurityViolationAction
-        << ", Sticky:" << isPortSecurityStickyMac
-        ;
-    oss  << ", Macs: [";
-    for (const auto& mac : learnedMacAddrs) {
-      oss << mac.toDebugString() << ", ";
-    }
-    oss << "]]";
-
-    oss  << ", ReachableMacs: [";
-    for (const auto& mac : reachableMacAddrs) {
-      oss << mac.toDebugString() << ", ";
-    }
-    oss << "]";
-
-    oss << ", Spanning-Tree: ["
-        << " Portfast:" << isPortfastEnabled
-        << ", BPDU Guard:" << isBpduGuardEnabled
-        << ", BPDU Filter:" << isBpduFilterEnabled
-        << " ]"
+    oss << "Port-Security: ["
+        << "State: " << isPortSecurityEnabled << ", "
+        << "portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs  << ", "
+        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", " 
+        << "Sticky :" << isPortSecurityStickyMac << "], "
         ;
 
-    oss << ", VLANs: [";
-    for (const auto& vlan : vlans) {
-      oss << vlan.toDebugString() << ", ";
-    }
-    oss << "]";
+    oss << "Macs: "  << learnedMacAddrs << ", ";
+
+    oss << "ReachableMacs: " << reachableMacAddrs << ", ";
+
+    oss << "Spanning-Tree: ["
+        << "Portfast: " << isPortfastEnabled << ", "
+        << "BPDU Guard: " << isBpduGuardEnabled << ", "
+        << "BPDU Filter: " << isBpduFilterEnabled
+        << "], "
+        ;
+
+    oss << "VLANs: " << vlans;
 
     oss << "]"; // closing bracket
 
     return oss.str();
+  }
+
+  std::partial_ordering
+  InterfaceNetwork::operator<=>(const InterfaceNetwork& rhs) const
+  {
+    return std::tie( name
+                   , description
+                   , isPartial
+                   , mediaType
+                   , isUp
+                   , isDiscoveryProtocolEnabled
+                   , macAddr
+                   , mode
+                   , isPortSecurityEnabled
+                   , portSecurityMaxMacAddrs
+                   , portSecurityViolationAction
+                   , isPortSecurityStickyMac
+                   , learnedMacAddrs
+                   , reachableMacAddrs
+                   , vlans
+                   , isBpduGuardEnabled
+                   , isBpduFilterEnabled
+                   , isPortfastEnabled
+                   )
+       <=> std::tie( rhs.name
+                   , rhs.description
+                   , rhs.isPartial
+                   , rhs.mediaType
+                   , rhs.isUp
+                   , rhs.isDiscoveryProtocolEnabled
+                   , rhs.macAddr
+                   , rhs.mode
+                   , rhs.isPortSecurityEnabled
+                   , rhs.portSecurityMaxMacAddrs
+                   , rhs.portSecurityViolationAction
+                   , rhs.isPortSecurityStickyMac
+                   , rhs.learnedMacAddrs
+                   , rhs.reachableMacAddrs
+                   , rhs.vlans
+                   , rhs.isBpduGuardEnabled
+                   , rhs.isBpduFilterEnabled
+                   , rhs.isPortfastEnabled
+                   )
+      ;
+  }
+
+  bool
+  InterfaceNetwork::operator==(const InterfaceNetwork& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 
   // ===========================================================================

@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -61,10 +61,11 @@ set(PROJECT_GNU_COMMON_FLAGS
   "-ftrapv"
   "-Wl,-z,relro"
   "-Wl,-z,now"
+  "-fPIC"
   )
 
 set(PROJECT_GNU_C_FLAGS
-  "-std=c17"
+  "-std=c18"
   "-Wbad-function-cast"
   "-Wc++-compat"
   "-Wmissing-prototypes"
@@ -76,8 +77,6 @@ set(PROJECT_GNU_C_FLAGS
   )
 
 set(PROJECT_GNU_CXX_FLAGS
-  # Following line needed to use boost libraries > 1.62 with cmake
-  #"-DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION"
   "-std=c++20"
   #"-Weffc++"
   "-Wnon-virtual-dtor"

@@ -120,18 +120,18 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "sgId: " << sgId
-        << ", name: " << name
-        << ", description: " << description
-        << ", vpcId: " << vpcId
-        << ", rules: " << rules
+        << "sgId: " << sgId << ", "
+        << "name: " << name << ", "
+        << "description: " << description << ", "
+        << "vpcId: " << vpcId << ", "
+        << "rules: " << rules
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   SecurityGroup::operator<=>(const SecurityGroup& rhs) const
   {
     return std::tie( sgId

@@ -131,18 +131,18 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "subnetId: " << subnetId
-        << ", vpcId: " << vpcId
-        << ", availabilityZone: " << availabilityZone
-        << ", subnetArn: " << subnetArn
-        << ", cidrBlocks: " << cidrBlocks
+        << "subnetId: " << subnetId << ", "
+        << "vpcId: " << vpcId << ", "
+        << "availabilityZone: " << availabilityZone << ", "
+        << "subnetArn: " << subnetArn << ", "
+        << "cidrBlocks: " << cidrBlocks
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   Subnet::operator<=>(const Subnet& rhs) const
   {
     return std::tie( subnetId

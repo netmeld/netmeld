@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -247,28 +247,55 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "[ " // opening bracket
-        << enabled << ", "
-        << id << ", ";
-
-    oss << srcId << ", "
-        << srcs
-        << srcIfaces
-        ;
-
-    oss << dstId << ", "
-        << dsts
-        << dstIfaces
-        ;
-
-    oss << services
-        << actions
-        ;
-
-    oss << description
-        ;
-
-    oss << "]"; // closing bracket
+        << "enabled:" << enabled << ", "
+        << "id: " << id << ", "
+        << "srcId: " << srcId << ", "
+        << "srcs: " << srcs << ", "
+        << "srcIfaces: " << srcIfaces << ", "
+        << "dstId: " << dstId << ", "
+        << "dsts: " << dsts << ", "
+        << "dstIfaces: " << dstIfaces << ", "
+        << "services: " << services << ", "
+        << "actions: " << actions << ", "
+        << "description: " << description
+        << "]"; // closing bracket
 
     return oss.str();
+  }
+
+  std::strong_ordering
+  AcRule::operator<=>(const AcRule& rhs) const
+  {
+    return std::tie( id
+                   , srcId
+                   , srcs
+                   , srcIfaces
+                   , dstId
+                   , dsts
+                   , dstIfaces
+                   , services
+                   , actions
+                   , description
+                   , enabled
+                   )
+       <=> std::tie( rhs.id
+                   , rhs.srcId
+                   , rhs.srcs
+                   , rhs.srcIfaces
+                   , rhs.dstId
+                   , rhs.dsts
+                   , rhs.dstIfaces
+                   , rhs.services
+                   , rhs.actions
+                   , rhs.description
+                   , rhs.enabled
+                   )
+      ;
+  }
+
+  bool
+  AcRule::operator==(const AcRule& rhs) const
+  {
+    return 0 == operator<=>(rhs);
   }
 }

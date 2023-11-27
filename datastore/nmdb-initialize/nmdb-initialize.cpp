@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -118,7 +118,7 @@ class Tool : public nmdt::AbstractDatastoreTool
         // If DB already exists, either quick or full erase
         LOG_DEBUG << "existsDb: " << dbConnectString << std::endl;
         pqxx::connection existsDb {dbConnectString};
-        existsDb.disconnect();
+        existsDb.close();
 
         LOG_INFO << "Database '" << dbName << "' already exists.\n"
                  << "Re-initialize the database [y/n]?";
@@ -135,7 +135,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           pqxx::nontransaction ntWork {db};
 
           LOG_INFO << "Cleaning tool_runs\n";
-          ntWork.exec("DELETE FROM tool_runs");
+          ntWork.exec("TRUNCATE FROM tool_runs RESTART IDENTITY CASCADE");
 
           pqxx::result tables = ntWork.exec(
               "SELECT relname AS populated_table"
@@ -146,7 +146,10 @@ class Tool : public nmdt::AbstractDatastoreTool
             std::string populatedTable;
             tableRow.at("populated_table").to(populatedTable);
             LOG_DEBUG << "Cleaning " << populatedTable << std::endl;
-            ntWork.exec("DELETE FROM " + populatedTable);
+            ntWork.exec("TRUNCATE FROM "
+                       + populatedTable
+                       + " RESTART IDENTITY CASCADE"
+                       );
           }
           return; // short circuit, easier logic
 
@@ -170,7 +173,7 @@ class Tool : public nmdt::AbstractDatastoreTool
       LOG_INFO << "Creating database '" << dbName << "'..." << std::endl;
       ntWork.exec("CREATE DATABASE " + dbName);
 
-      postgresDb.disconnect();
+      postgresDb.close();
     }
 
     void
@@ -180,14 +183,19 @@ class Tool : public nmdt::AbstractDatastoreTool
 
       auto schemaDir {opts.getValue("schema-dir")};
 
-      if (!schemaDir.empty()) {
-        for (auto& pathIter : sfs::recursive_directory_iterator(schemaDir)) {
-          auto& path {pathIter.path()};
-          if (sfs::is_regular_file(path) && ".sql" == path.extension()) {
-            schemas.push_back(path.string());
-          }
+      if (schemaDir.empty() || !sfs::exists(schemaDir)) {
+        LOG_ERROR << "No database schema; aborting initialization"
+                  << std::endl;
+        std::exit(nmcu::Exit::FAILURE);
+      }
+
+      for (auto& pathIter : sfs::recursive_directory_iterator(schemaDir)) {
+        auto& path {pathIter.path()};
+        if (sfs::is_regular_file(path) && ".sql" == path.extension()) {
+          schemas.push_back(path.string());
         }
       }
+
       auto const& extra {opts.getValues("extra-schema")};
       schemas.insert(schemas.end(), extra.begin(), extra.end());
 
@@ -212,7 +220,13 @@ class Tool : public nmdt::AbstractDatastoreTool
       std::ifstream sqlfile(filename);
       std::ostringstream statement;
       statement << sqlfile.rdbuf();
-      work.exec(statement.str());
+      try {
+        work.exec(statement.str());
+      } catch(const std::exception& e) {
+        LOG_ERROR << "Problem with schema file: " << filename << '\n'
+                  << e.what()
+                  ;
+      }
     }
 
     void
@@ -252,12 +266,22 @@ class Tool : public nmdt::AbstractDatastoreTool
         }
       }
 
-      LOG_INFO << "Inserting MAC prefixes" << std::endl;
-      pqxx::stream_to stream(work, "vendor_mac_prefixes");
-      for (const auto& entry : macs) {
-        stream << std::make_tuple(entry.first + ":000000", entry.second);
+      try {
+        auto stream = pqxx::stream_to::table(
+            work
+          , "vendor_mac_prefixes"
+          , std::vector<std::string>{"mac_prefix", "vendor_name"}
+          );
+        LOG_INFO << "Inserting MAC prefixes" << std::endl;
+        for (const auto& entry : macs) {
+          stream << std::make_tuple(entry.first + ":000000", entry.second);
+        }
+        stream.complete();
+      } catch(const std::exception& e) {
+        LOG_ERROR << "Failed to insert MAC prefixes; table does not exists\n"
+                  << e.what()
+                  ;
       }
-      stream.complete();
     }
 };
 

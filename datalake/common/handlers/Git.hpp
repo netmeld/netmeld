@@ -43,6 +43,8 @@ namespace netmeld::datalake::handlers {
       const std::string  CHECK_IN_PREFIX     {"check-in:"};
       const std::string  INGEST_TOOL_PREFIX  {"ingest-tool:"};
       const std::string  TOOL_ARGS_PREFIX    {"tool-args:"};
+      
+      std::string branchName;
 
       nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
 
@@ -62,7 +64,7 @@ namespace netmeld::datalake::handlers {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void setIngestToolData(nmdlo::DataEntry&, const std::string&);
+      void setIngestToolData(std::vector<nmdlo::DataEntry>&);
 
       bool alignRepo(const nmco::Time& = nmco::Time("infinity"));
       bool changeDirToRepo();
@@ -75,7 +77,7 @@ namespace netmeld::datalake::handlers {
       void removeLast(const std::string&, const std::string&) override;
 
       std::vector<nmdlo::DataEntry>
-        getDataEntries(const nmco::Time& = {}) override;
+        getDataEntries(const nmco::Time& = {}, bool useIngestToolData = false) override;
   };
 }
 #endif // HANDLER_GIT_HPP

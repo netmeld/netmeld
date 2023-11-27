@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -123,11 +123,11 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << port
-        << ", " << protocol
-        << ", " << ipAddr.toDebugString()
-        << ", " << state
-        << ", " << reason
+        << "port: " << port << ", "
+        << "protocol: " << protocol << ", "
+        << "ipAddr: " << ipAddr.toDebugString() << ", "
+        << "state: " << state << ", "
+        << "reason: " << reason
         << "]"
         ;
 
@@ -137,19 +137,19 @@ namespace netmeld::datastore::objects {
   std::partial_ordering
   Port::operator<=>(const Port& rhs) const
   {
-    if (auto cmp = port <=> rhs.port; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = state <=> rhs.state; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = reason <=> rhs.reason; 0 != cmp) {
-      return cmp;
-    }
-    return ipAddr <=> rhs.ipAddr;
+    return std::tie( port
+                   , protocol
+                   , state
+                   , reason
+                   , ipAddr
+                   )
+       <=> std::tie( rhs.port
+                   , rhs.protocol
+                   , rhs.state
+                   , rhs.reason
+                   , rhs.ipAddr
+                   )
+      ;
   }
 
   bool
@@ -157,4 +157,5 @@ namespace netmeld::datastore::objects {
   {
     return 0 == operator<=>(rhs);
   }
+
 }

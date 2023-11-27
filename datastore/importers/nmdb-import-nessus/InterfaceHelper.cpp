@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,6 +26,36 @@
 
 #include "InterfaceHelper.hpp"
 
+// ----------------------------------------------------------------------------
+// InterfaceWrapper
+// ----------------------------------------------------------------------------
+InterfaceWrapper::InterfaceWrapper(nmdo::Interface& iface
+                                  , const std::string& id
+                                  ) : interface(iface), deviceId(id)
+{}
+
+std::partial_ordering
+InterfaceWrapper::operator<=>(const InterfaceWrapper& rhs) const
+{
+  return std::tie( interface
+                 , deviceId
+                 )
+     <=> std::tie( rhs.interface
+                 , rhs.deviceId
+                 )
+    ;
+}
+
+bool
+InterfaceWrapper::operator==(const InterfaceWrapper& rhs) const
+{
+  return 0 == operator<=>(rhs);
+}
+
+
+// ----------------------------------------------------------------------------
+// InterfaceHelper
+// ----------------------------------------------------------------------------
 void
 InterfaceHelper::add(nmdo::Interface& iface, const std::string& deviceId)
 {
@@ -47,4 +77,20 @@ InterfaceHelper::add(nmdo::Interface& iface, const std::string& deviceId)
       wrapper.interface.addIpAddress(ip);
     }
   }
+}
+
+std::partial_ordering
+InterfaceHelper::operator<=>(const InterfaceHelper& rhs) const
+{
+  return std::tie( interfaces
+                 )
+     <=> std::tie( rhs.interfaces
+                 )
+    ;
+}
+
+bool
+InterfaceHelper::operator==(const InterfaceHelper& rhs) const
+{
+  return 0 == operator<=>(rhs);
 }

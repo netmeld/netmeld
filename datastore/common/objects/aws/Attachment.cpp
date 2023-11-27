@@ -85,16 +85,16 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "attachmentId: " << attachmentId
-        << ", status: " << status
-        << ", deleteOnTermination: " << deleteOnTermination
+        << "attachmentId: " << attachmentId << ", " 
+        << "status: " << status << ", " 
+        << "deleteOnTermination: " << deleteOnTermination
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   Attachment::operator<=>(const Attachment& rhs) const
   {
     return std::tie( attachmentId

@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -47,7 +47,11 @@ or expand capabilities through tool development, as well as the \
 binaries necessary to instantiate and manage a data lake compatible \
 with the Netmeld tool suite.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core")
+set(deps "\
+  netmeld-core\
+  ")
 nm_add_deb_depends(${deps})
-set(deps "git")
+set(deps "\
+  git\
+  ")
 nm_add_deb_recommends(${deps})

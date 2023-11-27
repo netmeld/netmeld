@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -40,6 +40,10 @@ Parser::Parser() : Parser::base_type(prestart)
     )
   ;
 
+  token =
+    +qi::ascii::graph
+  ;
+
   headers =
     qi::lit("Desired") > ignoredLine
     > qi::lit("|") > ignoredLine
@@ -64,22 +68,18 @@ Parser::Parser() : Parser::base_type(prestart)
   ;
 
   packageName =
-    +token
+    token
   ;
   version =
-    +token
+    token
   ;
 
   architecture =
-    +token
+    token
   ;
 
   description =
     +qi::ascii::print
-  ;
-
-  token =
-    +qi::ascii::graph
   ;
 
   ignoredLine =
@@ -123,6 +123,10 @@ Result
 Parser::getData()
 {
   Result r;
-  r.push_back(data);
+
+  if (data != Data()) {
+    r.push_back(data);
+  }
+
   return r;
 }

@@ -109,18 +109,18 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "pcxId: " << pcxId
-        << ", statusCode: " << statusCode
-        << ", statusMessage: " << statusMessage
-        << ", accepter: " << accepter
-        << ", requester: " << requester
+        << "pcxId: " << pcxId << ", "
+        << "statusCode: " << statusCode << ", "
+        << "statusMessage: " << statusMessage << ", "
+        << "accepter: " << accepter << ", "
+        << "requester: " << requester
         << ']'
         ;
 
     return oss.str();
   }
 
-  std::partial_ordering
+  std::strong_ordering
   VpcPeeringConnection::operator<=>(const VpcPeeringConnection& rhs) const
   {
     return std::tie( pcxId
