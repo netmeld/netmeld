@@ -31,7 +31,7 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-      ((systeminfo >> -qi::eol | qi::eol))[(qi::_val = pnx::bind(&Parser::getData, this))];
+      (*qi::eol > systeminfo > -qi::eol)[(qi::_val = pnx::bind(&Parser::getData, this))];
 
   token =
       +qi::ascii::graph;
@@ -64,8 +64,7 @@ Parser::Parser() : Parser::base_type(start)
       ("Domain: " > token > qi::eol); // see notes
 
   hotfix =
-    //   +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)] - qi::omit[qi::eol]) // add hotfixes here
-      +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&nmdo::OperatingSystem::addHotfix, &data.os, qi::_1)] - qi::omit[qi::eol]) // add hotfixes here
+      +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&nmdo::OperatingSystem::addHotfix, &data.os, qi::_1)] - qi::omit[qi::eol])
       ;
   hotfixs =
       ("Hotfix(s): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
@@ -97,13 +96,13 @@ Parser::Parser() : Parser::base_type(start)
 
   network_card =
       ('[' >> qi::lexeme[+qi::char_("0-9")] >> ']' >> qi::lit(':')
-      >> networkCardName[(pnx::bind(&Parser::addInterface, this, qi::_1))] >> qi::eol 
+      >> networkCardName[(pnx::bind(&Parser::addInterface, this, qi::_1))] >> qi::eol
       >> "Connection Name: "
-      > networkCardConnectionName[(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))] 
+      > networkCardConnectionName[(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))]
       >> qi::eol
       >> -(dhcpEnabledStatus >> qi::eol)
-      >> -("DHCP Server: " >> dhcpServer >> qi::eol) 
-      >> -("IP address(es)" >> qi::eol 
+      >> -("DHCP Server: " >> dhcpServer >> qi::eol)
+      >> -("IP address(es)" >> qi::eol
       > +('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: " >> ipAddr[(pnx::bind(&Parser::addIfaceIp, this, qi::_1))] >> qi::eol)) >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
   ;
   network_cards =
@@ -167,12 +166,10 @@ Parser::Parser() : Parser::base_type(start)
 void Parser::setDomain(const std::string &_string)
 {
   curDomain = _string;
-  //
 }
 
 void Parser::addHotfix(const std::string &_string)
 {
-    //get each argument hotfix and add it to gotfixes
   data.os.addHotfix(_string);
 }
 

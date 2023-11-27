@@ -181,20 +181,9 @@ class Parser :
       os_version,
       os_manufacturer,
       os_configuration,
-      os_build_type,
-      registered_owner,
-      registered_organization,
-      product_id,
-      original_install_date,
-      system_boot_time,
       system_manufacturer,
       system_model,
       system_type,
-      processors,
-      bios_version,
-      windows_directory,
-      system_directory,
-      boot_device,
       domain,
       hotfix,
       hyper_v,
@@ -210,25 +199,11 @@ class Parser :
   // ===========================================================================
   private:
     Result getData();
-    void setOSBuildType(const std::string&);
-    void setRegisteredOwner(const std::string&);
-    void setRegisteredOrganization(const std::string&);
-    void setProductID(const std::string&);
-    void setOriginalInstallDate(const std::string&);
-    void setSystemBootTime(const std::string&);
-    void setProcessors(const std::string&);
-    void setBIOSVersion(const std::string&);
-    void setWindowsDirectory(const std::string&);
-    void setSystemDirectory(const std::string&);
-    void setBootDevice(const std::string&);
     void setDomain(const std::string&);
-    void setLogonServer(const std::string&);
     void addHotfix(const std::string&);
     void addInterface(const std::string&);
     void addIfaceConnectName(const std::string&);
     void addIfaceIp(nmdo::IpAddress&);
     void setIfaceStatus(const std::string&);
-    void setHyperV(const std::string&);
-    void addSysteminfo(Systeminfo&);
 };
 #endif // PARSER_HPP

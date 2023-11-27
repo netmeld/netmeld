@@ -94,7 +94,7 @@ namespace netmeld::datastore::objects {
         ;
   }
 
-  std::string 
+  std::string
   OperatingSystem::ConvertVectorToPostgresArray(const std::vector<std::string>& vec) {
     std::string result = "{";
 
@@ -111,7 +111,7 @@ namespace netmeld::datastore::objects {
 
     result += "}";
     return result;
-}
+  }
 
 
   void

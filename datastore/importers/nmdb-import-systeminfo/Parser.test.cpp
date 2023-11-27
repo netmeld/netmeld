@@ -40,27 +40,213 @@ class TestParser : public Parser
 {
   public:
     using Parser::start;
-    using Parser::packageLine;
+    using Parser::hotfix;
+    using Parser::hotfixs;
+    using Parser::network_cards;
+    using Parser::network_card;
+    using Parser::ipAddressLine;
 };
+
+BOOST_AUTO_TEST_CASE(testNetworkCard)
+{
+  TestParser tp;
+  {
+    const auto& parserRule {tp.network_card};
+    std::vector<std::string> testsOk {
+      R"STR([01]: Realtek PCIe GbE Family Controller
+      Connection Name: Ethernet
+      DHCP Enabled:    Yes
+      IP address(es)
+      [01]: 192.168.0.2
+      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+      )STR"
+    };
+
+    std::vector<std::string> testsFail {
+      R"STR(Connection Name: Ethernet
+      DHCP Enabled:    Yes
+      IP address(es)
+      [01]: 192.168.0.2
+      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+      )STR", //Mising first string
+      R"STR([01]: Realtek PCIe GbE Family Controller
+      Connection Name:
+      DHCP Enabled:    Yes
+      IP address(es)
+      [01]: 192.168.0.2
+      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+      )STR", //Missing connection name
+      R"STR([01]: Realtek PCIe GbE Family Controller
+      Connection Name: Ethernet
+      DHCP Enabled:
+      IP address(es)
+      [01]: 192.168.0.2
+      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+      )STR", //Missing dhcp enabled data
+      R"STR([01]: Realtek PCIe GbE Family Controller
+      Connection Name: Ethernet
+      DHCP Enabled:    Yes
+      [01]: 192.168.0.2
+      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+      )STR", //Missing ipaddresses label
+      R"STR([01]: Realtek PCIe GbE Family Controller
+      Connection Name: Ethernet
+      DHCP Enabled:    Yes
+      IP address(es)
+      )STR" //Missing Ipaddress data
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'network_card': " << test);
+    }
+    for (const auto& test: testsFail) {
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'network_card fails': " << test);
+    }
+  }
+  {
+    const auto& parserRule {tp.ipAddressLine};
+    std::vector<std::string> testsOk {
+      R"STR(192.168.1.1)STR"
+    };
+
+    std::vector<std::string> testsFail {
+      R"STR(.168.1.1)STR", //Missing first octet
+      R"STR(192..1.1)STR",  //Missing second octet
+      R"STR(192.168..1)STR", //Missing vlan octet
+      R"STR(192.168.1.)STR", //Missing device octet
+      R"STR(192168.11)STR", //Only one period
+      R"STR(19216811)STR" //No periods
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'ipAddressLine': " << test);
+    }
+    for (const auto& test: testsFail) {
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'ipAddressLine fails': " << test);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testHotfixs)
+{
+  TestParser tp;
+  {
+    const auto& parserRule {tp.hotfixs};
+    std::vector<std::string> testsOk {
+      R"STR(Hotfix(s):           10 Hotfix(s) Installed.
+      [01]: KBXXXXXX
+      [02]: KBXXXXXX
+      [03]: KBXXXXXX
+      [04]: KBXXXXXX
+      [05]: KBXXXXXX
+      [06]: KBXXXXXX
+      [07]: KBXXXXXX
+      [08]: KBXXXXXX
+      [09]: KBXXXXXX
+      [10]: KBXXXXXX
+      )STR"
+    };
+    std::vector<std::string> testsFail {
+      R"STR(KBXXXXXX)STR", //Missing index
+      R"STR([01]: )STR"    //Missing Hotfix
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'hotfixs': " << test);
+    }
+    for (const auto& test: testsFail) {
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'hotfixs': " << test);
+    }
+  }
+  { // Singular Hotfix
+    const auto& parserRule {tp.hotfix};
+    std::vector<std::string> testsOk {
+      R"STR([01]: KBXXXXXX)STR"
+    };
+
+    std::vector<std::string> testsFail {
+      R"STR(KBXXXXXX)STR", //Missing index
+      R"STR([01]: )STR"    //Missing Hotfix
+    };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'hotfix': " << test);
+    }
+    for (const auto& test: testsFail) {
+      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
+                "Parse rule 'hotfix': " << test);
+    }
+  }
+}
 
 BOOST_AUTO_TEST_CASE(testWhole)
 {
   TestParser tp;
   const auto &parserRule {tp};
-
   std::vector<std::string> testsOk {
-    R"STR(polkit-libs                                            0.115-11.el8              x86_64              Libraries for polkit
-          geolite2-country                                    20180605-1.el8               noarch              Free IP geolocation country database
-          libevent                                               2.1.8-5.el8               x86_64              Abstract asynchronous event notification library
-          hwdata                                                 0.314-8.8.el8             noarch              Hardware identification and configuration data
-          libsolv                                               0.7.16-2.el8               x86_64              Package dependency solver
-          xkeyboard-config                                        2.28-1.el8               noarch              X Keyboard Extension configuration data
-          kernel-core                                           4.18.0-305.3.1.el8         x86_64              The Linux kernel
-          ncurses-base                                             6.1-7.20180224.el8      noarch              Descriptions of common terminals
-          initscripts                                         10.00.15-1.el8               x86_64              Basic support for legacy System V init scripts
-          dnf-data                                               4.4.2-11.el8              noarch              Common data and configuration files for DNF
-    )STR"
-  };
+    R"STR(
+          Host Name:           YourComputerName
+          OS Name:             Microsoft Windows 10 Pro
+          OS Version:          10.0.19042 N/A Build 19042
+          OS Manufacturer:     Microsoft Corporation
+          OS Configuration:    Standalone Workstation
+          OS Build Type:       Multiprocessor Free
+          Registered Owner:    Your Name
+          Registered Organization: 
+          Product ID:          XXXXX-XXXXX-XXXXX-XXXXX
+          Original Install Date: 01/01/2022, 12:00:00 AM
+          System Boot Time:    11/22/2023, 9:00:00 AM
+          System Manufacturer: Your Computer Manufacturer
+          System Model:        Your Computer Model
+          System Type:         x64-based PC
+          Processor(s):        1 Processor(s) Installed.
+                                [01]: Intel64 Family 6 Model 142 Stepping 9 GenuineIntel ~2.30 GHz
+          BIOS Version:        Your BIOS Version
+          Windows Directory:   C:\Windows
+          System Directory:    C:\Windows\system32
+          Boot Device:         \Device\HarddiskVolume1
+          System Locale:       en-us;English (United States)
+          Input Locale:        en-us;English (United States)
+          Time Zone:           (UTC-08:00) Pacific Time (US & Canada)
+          Total Physical Memory: 16,384 MB
+          Available Physical Memory: 8,192 MB
+          Virtual Memory: Max Size: 32,768 MB
+          Virtual Memory: Available: 20,480 MB
+          Virtual Memory: In Use: 12,288 MB
+          Page File Location(s): C:\pagefile.sys
+          Domain:              WORKGROUP
+          Logon Server:        \\YourLogonServer
+          Hotfix(s):           10 Hotfix(s) Installed.
+                                [01]: KBXXXXXX
+                                [02]: KBXXXXXX
+                                [03]: KBXXXXXX
+                                [04]: KBXXXXXX
+                                [05]: KBXXXXXX
+                                [06]: KBXXXXXX
+                                [07]: KBXXXXXX
+                                [08]: KBXXXXXX
+                                [09]: KBXXXXXX
+                                [10]: KBXXXXXX
+          Network Card(s):     2 NIC(s) Installed.
+                                [01]: Realtek PCIe GbE Family Controller
+                                  Connection Name: Ethernet
+                                  DHCP Enabled:    Yes
+                                  IP address(es)
+                                  [01]: 192.168.0.2
+                                  [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+                                [02]: Intel Wireless-AC 9560 160MHz
+                                  Connection Name: Wi-Fi
+                                  DHCP Enabled:    Yes
+                                  IP address(es)
+                                  [01]: 192.168.0.3
+                                  [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+          Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.
+
+          )STR"
+   };
 
   for (const auto& test : testsOk) {
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
