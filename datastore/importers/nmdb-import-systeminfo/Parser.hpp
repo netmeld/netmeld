@@ -74,14 +74,6 @@ struct Systeminfo
               << std::endl;
       return;
       }
-
-      // t.exec_prepared("insert_raw_packages",
-      //     toolRunId,
-      //     state,
-      //     name,
-      //     version,
-      //     architecture,
-      //     description);
   }
 
   std::string
@@ -102,7 +94,7 @@ struct Systeminfo
       oss << "System Directory:" << system_directory << ",\n ";
       oss << "Boot Device:" << boot_device << ",\n ";
       oss << "Hyper-V Requirements:" << hyper_v << ",\n ";
-      oss << "]"; // closing bracket
+      oss << "]";
       return oss.str();
   }
 
@@ -115,7 +107,9 @@ struct Systeminfo
 
 struct Data
 {
-  Systeminfo                              sysinfo_;
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
+
   nmdo::DeviceInformation                 devInfo;
   nmdo::OperatingSystem                   os;
   std::vector<std::string>                hotfixs;

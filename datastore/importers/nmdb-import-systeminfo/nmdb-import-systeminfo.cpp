@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/tools/AbstractImportTool.hpp>
+#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
 #include "Parser.hpp"
 
 namespace nmdt = netmeld::datastore::tools;
@@ -33,7 +33,7 @@ namespace nmdt = netmeld::datastore::tools;
 // Import tool definition
 // =============================================================================
 template<typename P, typename R>
-class Tool : public nmdt::AbstractImportTool<P,R>
+class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
   // ===========================================================================
   // Variables
@@ -48,7 +48,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   private:
   protected:
   public:
-    Tool() : nmdt::AbstractImportTool<P,R>
+    Tool() : nmdt::AbstractImportSpiritTool<P,R>
       (
        "systeminfo",           // command line tool imports data from
        PROGRAM_NAME,           // program name (set in CMakeLists.txt)
@@ -95,8 +95,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 // =============================================================================
 // Program entry point
 // =============================================================================
-int
-main(int argc, char** argv) {
-  Tool<Parser, Result> tool;
+int main(int argc, char** argv) {
+  Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
 }
