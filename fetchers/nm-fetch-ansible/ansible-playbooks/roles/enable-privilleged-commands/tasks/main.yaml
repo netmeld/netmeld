@@ -4,7 +4,7 @@
     cmd_list: "{{ cmd_list + [ item | combine({'become':'yes'}) ] }}"
   register:
   loop: "{{ pcmd_list | flatten(1) }}"
-  when: lookup('config', 'DEFAULT_BECOME_ASK_PASS')
+  when: "(lookup('config', 'DEFAULT_REMOTE_USER') == 'root') or lookup('config', 'DEFAULT_BECOME_ASK_PASS')"
 
 #- name: "Debugging data collection values"
 #  debug:
