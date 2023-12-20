@@ -27,6 +27,7 @@
 #include <regex>
 
 #include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 
@@ -98,6 +99,12 @@ class Tool : public nmct::AbstractTool
           );
 
       opts.addPositionalOption("password", -1);
+
+      opts.addAdvancedOption("store-in-db", std::make_tuple(
+            "store-in-db",
+            NULL_SEMANTIC,
+            "Used to store results in the database. Requires Netmeld and PostgreSQL."
+      ));
     }
 
   protected: // Methods part of subclass API
@@ -124,11 +131,19 @@ class Tool : public nmct::AbstractTool
 
       std::regex badChars("[^0-9a-fA-F]");
 
-      LOG_INFO << std::regex_replace(encPass, badChars, "")
-               << ": "
-               << oss.str()
-               << '\n'
-               ;
+      if (opts.exists("store-in-db")) {
+        if (nmcu::isCmdAvailable("nmdb-initialize") && nmcu::isCmdAvailable("psql")) {
+          LOG_INFO << "placeholder: storing '" + oss.str() + "' in database";
+        } else {
+          LOG_INFO << "warning: could not save to psql because Netmeld or Psql could not be found";
+        }
+      } else {
+        LOG_INFO << std::regex_replace(encPass, badChars, "")
+                 << ": "
+                 << oss.str()
+                 << '\n'
+                 ;
+      }
 
       return nmcu::Exit::SUCCESS;
     }

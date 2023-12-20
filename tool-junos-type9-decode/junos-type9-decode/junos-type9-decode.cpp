@@ -27,6 +27,7 @@
 #include <numeric>
 
 #include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 
@@ -144,6 +145,12 @@ class Tool : public nmct::AbstractTool
             NULL_SEMANTIC,
             "Generate lookup table instead of decode")
           );
+
+      opts.addAdvancedOption("store-in-db", std::make_tuple(
+            "store-in-db",
+            NULL_SEMANTIC,
+            "Used to store results in the database. Requires Netmeld and PostgreSQL."
+      ));
     }
 
     void
@@ -233,7 +240,15 @@ class Tool : public nmct::AbstractTool
         };
         auto decoded {decode(encoded)};
 
-        LOG_INFO << encoded << ": " << decoded << '\n';
+        if (opts.exists("store-in-db")) {
+          if (nmcu::isCmdAvailable("nmdb-initialize") && nmcu::isCmdAvailable("psql")) {
+            LOG_INFO << "placeholder: storing '" + decoded + "' in database";
+          } else {
+          LOG_INFO << "warning: could not save to psql because Netmeld or Psql could not be found";
+          }
+        } else {
+          LOG_INFO << encoded << ": " << decoded << '\n';
+        }
       }
       return nmcu::Exit::SUCCESS;
     }
