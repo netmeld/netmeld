@@ -39,72 +39,8 @@ namespace nmdp = netmeld::datastore::parsers;
 namespace nmdo = netmeld::datastore::objects;
 
 // =============================================================================
-// Data containers
+// Data Struct definition
 // =============================================================================
-struct Systeminfo
-{
-  std::string host_name; //deviceinfo deviceId
-  // std::string os_name; //os
-  // std::string os_version; //os
-  // std::string os_manufacturer; //os
-  // std::string os_configuration; //deviceinfo device type
-  std::string build_type; //nohome
-  std::string registered_owner; //nohome
-  std::string registered_organization; //can be blank //nohome
-  std::string product_id; //nohome
-  std::string original_install_date; //nohome
-  std::string system_boot_time; //nohome
-  // std::string system_manufacturer;  //deviceinfo
-  // std::string system_model; //deviceinfo
-  // std::string system_type; //deviceinfo
-  std::string processor; //nohome //nohome
-  std::string bios_version; // optional //nohome
-  std::string windows_directory; // optional //nohome
-  std::string system_directory; //nohome
-  std::string boot_device; // optional //nohome
-  std::string domain; //nohome
-  // std::map<std::string, nmdo::Interface> network_cards; //interface
-  std::string hyper_v; //nohome
-
-  void
-  save(pqxx::transaction_base& t, const nmco::Uuid& toolRunId, const std::string& deviceId)
-  {
-      if(!isValid() && !deviceId.empty()){
-          LOG_DEBUG << "Package object is not saving: " << toDebugString()
-              << std::endl;
-      return;
-      }
-  }
-
-  std::string
-  toDebugString() const
-  {
-      std::ostringstream oss;
-      oss << "["; // opening bracket
-      oss << "HostName: " << host_name << ",\n ";
-      oss << "OS Build Type: " << build_type << ",\n ";
-      oss << "Registered Owner: " << registered_owner << ",\n ";
-      oss << "Registered Organization: " << registered_organization << ",\n ";
-      oss << "Product ID: " << product_id << ",\n ";
-      oss << "Original Install Date: " << original_install_date << ",\n ";
-      oss << "System Boot Time: " << system_boot_time << ",\n ";
-      oss << "Processor(s):" << processor << ",\n ";
-      oss << "BIOS Version:" << bios_version << ",\n ";
-      oss << "Windows Directory:" << windows_directory << ",\n ";
-      oss << "System Directory:" << system_directory << ",\n ";
-      oss << "Boot Device:" << boot_device << ",\n ";
-      oss << "Hyper-V Requirements:" << hyper_v << ",\n ";
-      oss << "]";
-      return oss.str();
-  }
-
-  bool
-  isValid() const
-  {
-      return true;
-  }
-};
-
 struct Data
 {
   auto operator<=>(const Data&) const = default;
