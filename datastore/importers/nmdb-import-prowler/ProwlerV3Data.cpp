@@ -144,7 +144,9 @@ namespace netmeld::datastore::objects::prowler {
         for (const auto& [key, value] : jRemedi["Code"].items()) {
           if (static_cast<std::string>(value).empty()) {continue;}
           std::ostringstream oss;
-          oss << key << ": " << value;
+          oss << std::string(key)
+              << ": " << std::string(value)
+              ;
           temp.push_back(oss.str());
         }
         remediationCode = nmcu::toString(temp, '\n');
