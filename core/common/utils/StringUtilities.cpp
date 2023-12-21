@@ -79,6 +79,34 @@ namespace netmeld::core::utils {
     }
     return oss.str();
   }
+  std::string
+  toString(const std::set<std::string>& con, const std::string sep)
+  {
+    std::ostringstream oss;
+    if (!con.empty()) {
+      auto iter {con.begin()};
+      oss << *iter;
+      ++iter;
+      for (; iter != con.end(); ++iter) {
+        oss << sep << *iter;
+      }
+    }
+    return oss.str();
+  }
+  std::string
+  toString(const std::vector<std::string>& con, const std::string sep)
+  {
+    std::ostringstream oss;
+    if (!con.empty()) {
+      auto iter {con.begin()};
+      oss << *iter;
+      ++iter;
+      for (; iter != con.end(); ++iter) {
+        oss << sep << *iter;
+      }
+    }
+    return oss.str();
+  }
 
   std::string
   trim(const std::string& orig)

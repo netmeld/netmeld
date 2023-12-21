@@ -40,6 +40,8 @@ namespace netmeld::core::utils {
 
   std::string toString(const std::set<std::string>&, const char sep=' ');
   std::string toString(const std::vector<std::string>&, const char sep=' ');
+  std::string toString(const std::set<std::string>&, const std::string sep);
+  std::string toString(const std::vector<std::string>&, const std::string sep);
 
   std::string getSrvcString(const std::string&,
                             const std::string&, const std::string&);
