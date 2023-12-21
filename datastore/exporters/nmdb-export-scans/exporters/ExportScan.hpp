@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -33,7 +33,7 @@
 
 #include "../writers/Writer.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
 
   // ==========================================================================
   // Primary object
@@ -68,8 +68,11 @@ namespace netmeld::export_scans {
           pqxx::read_transaction&, const std::string&
         ) const;
 
+      virtual void finalize(const std::unique_ptr<Writer>&) const = 0;
+
     public: // Methods part of public API
-      virtual void exportScan(const std::unique_ptr<Writer>&) = 0;
+      virtual void exportTemplate(const std::unique_ptr<Writer>&) const = 0;
+      virtual void exportFromDb(const std::unique_ptr<Writer>&) = 0;
   };
 }
 #endif // EXPORT_SCAN_HPP
