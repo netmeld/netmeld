@@ -185,7 +185,7 @@ class Tool : public nmdt::AbstractExportTool
     void
     doExport(auto& exporter, auto& writer) {
       if (opts.exists("template")) {
-        LOG_DEBUG << "Exporting template data\n";        
+        LOG_DEBUG << "Exporting template data\n";
         exporter.exportTemplate(writer);
       } else {
         LOG_DEBUG << "Exporting DB data\n";

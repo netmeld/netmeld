@@ -43,7 +43,7 @@ namespace netmeld::datalake::handlers {
       const std::string  CHECK_IN_PREFIX     {"check-in:"};
       const std::string  INGEST_TOOL_PREFIX  {"ingest-tool:"};
       const std::string  TOOL_ARGS_PREFIX    {"tool-args:"};
-      
+
       std::string branchName;
 
       nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};

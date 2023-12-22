@@ -85,11 +85,11 @@ namespace netmeld::datastore::exporters::scans {
       };
     for (const auto& dstIp : ips) {
       std::vector<std::string> entry {
-          dstIp, "HOSTNAME" 
+          dstIp, "HOSTNAME"
         , "PORT", "PROTOCOL", "STATE", "REASON"
         , "SERVICE_NAME", "SERVICE_REASON"
         };
-      
+
       writer->addRow(entry);
     }
 

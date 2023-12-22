@@ -90,7 +90,7 @@ namespace netmeld::datastore::exporters::scans {
         , dstIp, "HOSTNAME"
         , "NUM", "PROTO", "STATE", "REASON"
         };
-      
+
       writer->addRow(entry);
     }
 

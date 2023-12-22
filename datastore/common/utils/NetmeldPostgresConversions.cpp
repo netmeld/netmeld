@@ -49,7 +49,7 @@ namespace pqxx {
   {
     return generic_to_buf(begin, end, obj);
   }
-  
+
   char*
   string_traits<nmco::Uuid>::into_buf(char* begin, char* end, const nmco::Uuid& obj)
   {

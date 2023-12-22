@@ -328,8 +328,8 @@ namespace netmeld::datastore::objects {
     oss << "name: " << name << ", "
         << "description: " << description << ", "
         << "mediaType: " << mediaType << ", "
-        << "mode: " << mode << ", " 
-        << "State:" << std::boolalpha << isUp << ", " 
+        << "mode: " << mode << ", "
+        << "State:" << std::boolalpha << isUp << ", "
         << "DiscProtoEnabled: " << isDiscoveryProtocolEnabled << ", "
         << "macAddr: " << macAddr .toDebugString() << ", "
         ;
@@ -337,7 +337,7 @@ namespace netmeld::datastore::objects {
     oss << "Port-Security: ["
         << "State: " << isPortSecurityEnabled << ", "
         << "portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs  << ", "
-        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", " 
+        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", "
         << "Sticky :" << isPortSecurityStickyMac << "], "
         ;
 
