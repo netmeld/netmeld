@@ -111,18 +111,18 @@ namespace netmeld::datastore::objects::prowler {
 
     oss << R"([)"
         << R"("accountNumber": ")" << accountNumber
-        << R"(", timestamp": ")" << timestamp
-        << R"(", region": ")" << region
-        << R"(", control": ")" << control
-        << R"(", severity": ")" << severity
-        << R"(", status": ")" << status
-        << R"(", level": ")" << level
-        << R"(", controlId": ")" << controlId
-        << R"(", service": ")" << service
-        << R"(", risk": ")" << risk
-        << R"(", remediation": ")" << remediation
-        << R"(", documentationLink": ")" << documentationLink
-        << R"(", resourceId": ")" << resourceId
+        << R"(", "timestamp": ")" << timestamp
+        << R"(", "region": ")" << region
+        << R"(", "control": ")" << control
+        << R"(", "severity": ")" << severity
+        << R"(", "status": ")" << status
+        << R"(", "level": ")" << level
+        << R"(", "controlId": ")" << controlId
+        << R"(", "service": ")" << service
+        << R"(", "risk": ")" << risk
+        << R"(", "remediation": ")" << remediation
+        << R"(", "documentationLink": ")" << documentationLink
+        << R"(", "resourceId": ")" << resourceId
         << R"("])"
       ;
 
