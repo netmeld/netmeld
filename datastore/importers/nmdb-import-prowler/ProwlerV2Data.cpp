@@ -109,7 +109,7 @@ namespace netmeld::datastore::objects::prowler {
   {
     std::ostringstream oss;
 
-    oss << "["
+    oss << R"([)"
         << R"("accountNumber": ")" << accountNumber
         << R"(", timestamp": ")" << timestamp
         << R"(", region": ")" << region
@@ -123,7 +123,7 @@ namespace netmeld::datastore::objects::prowler {
         << R"(", remediation": ")" << remediation
         << R"(", documentationLink": ")" << documentationLink
         << R"(", resourceId": ")" << resourceId
-        << "]"
+        << R"("])"
       ;
 
     return oss.str();
