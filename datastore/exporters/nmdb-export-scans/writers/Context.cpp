@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,9 +27,15 @@
 #include <sstream>
 #include <regex>
 
+#include <boost/algorithm/string.hpp>
+
 #include "Context.hpp"
 
-namespace netmeld::export_scans {
+#include <netmeld/core/utils/StringUtilities.hpp>
+
+namespace nmcu = netmeld::core::utils;
+
+namespace netmeld::datastore::exporters::scans {
   // ==========================================================================
   // Constructors
   // ==========================================================================
@@ -45,6 +51,33 @@ namespace netmeld::export_scans {
   Context::getExtension() const
   {
     return ".tex";
+  }
+
+  std::string
+  Context::escapeSpecial(const std::string& oldText) const
+  {
+    // ConTeXt special characters
+    const std::vector<std::pair<std::regex, std::string>> patterns {
+      // backslash replace
+      {std::regex(R"(\\)"), R"({\backslash})"},
+      // escape special characters
+      {std::regex(R"(#|_|\{|\}|\$|\|)"), R"(\$&)"},
+      // greater than
+      {std::regex(R"(>)"), R"(&gt;)"},
+      // less than
+      {std::regex(R"(<)"), R"(&lt;)"},
+      // new paragraph
+      {std::regex(R"((\r\n|\r|\n){2})"),
+        "\n\n\\PortionMark{TODO--Caption Classification}{}\n"},
+      //{std::regex(R"()", R"()")},
+    };
+
+    std::string cleanedText {oldText};
+    for (const auto& p : patterns) {
+      cleanedText = std::regex_replace(cleanedText, p.first, p.second);
+    }
+
+    return cleanedText;
   }
 
   std::string
@@ -141,32 +174,11 @@ namespace netmeld::export_scans {
 
     codeSetup(oss);
 
-    // ConTeXt special characters
-    std::vector<std::pair<std::regex, std::string>> patterns {
-      // backslash replace
-      {std::regex(R"(\\)"), R"({\backslash})"},
-      // escape special characters
-      {std::regex(R"(#|_|\$|\|)"), R"(\$&)"},
-      // greater than
-      {std::regex(R"(>)"), R"(&gt;)"},
-      // less than
-      {std::regex(R"(>)"), R"(&lt;)"},
-      // new paragraph
-      {std::regex(R"((\r\n|\r|\n){2})"),
-        "\n\n\\PortionMark{TODO--Caption Classification}{}\n"},
-      //{R"()", R"()"},
-    };
-
     for (const auto& row : rows) {
       std::string pluginId        {row[0]};
       std::string pluginSeverity  {row[1]};
       std::string pluginName      {row[2]};
-      std::string pluginDesc      {row[3]};
-
-      // replace special characters in description
-      for (const auto& p : patterns) {
-        pluginDesc = std::regex_replace(pluginDesc, p.first, p.second);
-      }
+      std::string pluginDesc      {escapeSpecial(row[3])};
 
       codeParagraphNessus(oss,
           pluginId, pluginSeverity, pluginName, pluginDesc
@@ -204,72 +216,53 @@ namespace netmeld::export_scans {
 
     codeSetup(oss);
 
-    // ConTeXt special characters
-    std::vector<std::pair<std::regex, std::string>> patterns {
-      // backslash replace
-      {std::regex(R"(\\)"), R"({\backslash})"},
-      // escape special characters
-      {std::regex(R"(#|_|\$|\|)"), R"(\$&)"},
-      // greater than
-      {std::regex(R"(>)"), R"(&gt;)"},
-      // less than
-      {std::regex(R"(>)"), R"(&lt;)"},
-      // new paragraph
-      {std::regex(R"((\r\n|\r|\n){2})"),
-        "\n\n\\PortionMark{TODO--Caption Classification}{}\n"},
-      //{R"()", R"()"},
-    };
-
-    std::string curService;
+    std::string curProvider;
+    std::string curAccountId;
+    std::string curServiceName;
+    std::string curSubServiceName;
     for (const auto& row : rows) {
-      std::string service     {row[0]};
-      std::string severity    {row[1]};
-      std::string controlId   {row[2]};
-      std::string level       {row[3]};
-      std::string control     {row[4]};
-      std::string risk        {row[5]};
-      std::string remediation {row[6]};
-      std::string docLink     {row[7]};
+      size_t i {0};
 
-      std::vector<std::string> rest(row.begin()+8, row.end());
-      size_t count {rest.size()};
+      std::string provider        {row.at(i++)};
+      std::string accountId       {row.at(i++)};
+      std::string serviceName     {row.at(i++)};
+      std::string subServiceName  {row.at(i++)};
+      std::string severity        {row.at(i++)};
+      std::string checkId         {row.at(i++)};
+      std::string description     {row.at(i++)};
+      std::string risk            {row.at(i++)};
+      std::string recommendation  {row.at(i++)};
+      std::string url             {escapeSpecial(row.at(i++))};
+      std::string code            {row.at(i++)};
 
-      if (curService != service) {
-        curService = service;
-        codeSectionProwler(oss, curService);
+      std::vector<std::string> impactedResources(row.begin()+i, row.end());
+
+      bool newChapter {  curProvider != provider
+                      || curAccountId != accountId
+                      };
+      if (newChapter)
+      {
+        LOG_DEBUG << "Adding new chapter and section\n";
+        curProvider = provider;
+        curAccountId = accountId;
+        codeChapterProwler(oss);
+        codeSectionProwler(oss, curProvider, curAccountId);
       }
 
-      // replace special characters
-      for (const auto& p : patterns) {
-        docLink = std::regex_replace(docLink, p.first, p.second);
+      bool newSection {  curServiceName != serviceName
+                      || curSubServiceName != subServiceName
+                      };
+      if (newSection) {
+        LOG_DEBUG << "Adding new subsection\n";
+        curServiceName = serviceName;
+        curSubServiceName = subServiceName;
+        codeSubSectionProwler(oss, curServiceName, curSubServiceName);
       }
 
-      codeSubsectionProwler(oss,
-          severity, controlId, level, control, risk, remediation, docLink, count
+      codeSubSubSectionProwler(oss
+          , severity, checkId, description, risk, recommendation, url
+          , code, impactedResources
         );
-
-      oss << '\n' << R"(\startalignment[nothyphenated,hanging,table])"
-          << '\n' << R"(\startnarrower[0.15in])"
-          << '\n' << R"({\tt)"
-          << '\n'
-          ;
-      for (size_t i {0}; i < count;) {
-        std::string resource {rest[i++]}; // intentional post increment
-
-        //oss << R"(  \type{)" << resource << '}';
-        oss << R"(  )" << resource;
-
-        if (i < count) {
-          oss << ",\n";
-        } else {
-          oss << "\n";
-        }
-      }
-      oss << R"(})"
-          << '\n' << R"(\stopnarrower)"
-          << '\n' << R"(\stopalignment)"
-          << "\n\n"
-          ;
     }
 
     codeTeardown(oss);
@@ -350,17 +343,18 @@ namespace netmeld::export_scans {
 	  oss << R"(
 % pre-config
 \doifundefined{DefaultFontName}{
-  \define\DefaultFontName{modern}
-  \define\DefaultFontSize{10pt}
+  \defineexpandable\DefaultFontName{modern}
+  \defineexpandable\DefaultFontSize{10pt}
   \setupwhitespace[big]
 }
 \doifundefined{PortionMark}{
-  %\define[2]\PortionMark{(#1 - #2)}
-  \define[2]\PortionMark{}
+  %\defineexpandable[2]\PortionMark{(#1 - #2)}
+  \defineexpandable[2]\PortionMark{}
 }
 \usetypescript[\DefaultFontName]
 \setupbodyfont[\DefaultFontName, \DefaultFontSize]
 \setupinteraction[state=start, color=blue, style=\tf]
+\setbreakpoints[compound]
 
 % start of document
 \starttext
@@ -622,52 +616,129 @@ namespace netmeld::export_scans {
   // Prowler
   // ------------------------------------------------------------
   void
+  Context::codeChapterProwler(auto& oss) const
+  {
+    oss << R"(
+% tool chapter
+\chapter[appendix:prowler]
+{\PortionMark{U}{} Prowler Consolidated Results}
+The following contains a summarized output of the
+Prowler\footnote{\goto{https://github.com/prowler-cloud/prowler}[url(https://github.com/prowler-cloud/prowler)]}
+tool results.
+These are only the checks which the tool flagged as fails.
+They are organized by cloud provider, account identifier, and service.
+)";
+  }
+
+  void
   Context::codeSectionProwler(auto& oss,
-      const auto& service
+      const auto& provider, const auto& accountId
     ) const
   {
     oss << R"(
-% service section
-\section[section:prowler-service-)" << service << R"(]
+% provider-account section
+\section[section:prowler-)" << provider << '-' << accountId << R"(]
 {
   \PortionMark{TODO--Caption Classification}{}
-  AWS Service: )" << service << R"(
+  Prowler Checks: )" << provider << " -- " << accountId << R"(
 })";
   }
 
   void
-  Context::codeSubsectionProwler(auto& oss,
-      const auto& severity, const auto& controlId, const auto& level,
-      const auto& control, const auto& risk, const auto& remediation,
-      const auto& docLink, const auto& count
+  Context::codeSubSectionProwler(auto& oss,
+      const auto& service, const auto& subService
     ) const
   {
+    std::string sectionAlias;
+    std::string serviceFullName;
+
+    if (subService.empty()) {
+      sectionAlias = service;
+      serviceFullName = service;
+    } else {
+      sectionAlias = service + '-' + subService;
+      serviceFullName = service + ", " + subService;
+    }
+
     oss << R"(
-\subsection[section:prowler-check-)" << controlId << R"(]
+% service section
+\subsection[section:prowler-service-)" << sectionAlias << R"(]
 {
   \PortionMark{TODO--Caption Classification}{}
-  Severity: )" << severity << R"(;
-  Control ID: )" << controlId << R"(;
-  Level: )" << level << R"(
+  Service: )" << serviceFullName << R"(
+})";
+  }
+
+  void
+  Context::codeSubSubSectionProwler(auto& oss,
+      const auto& severity, const auto& checkId,
+      const auto& description, const auto& risk, const auto& recommendation,
+      const auto& url, const auto& code, const auto& impactedResources
+    ) const
+  {
+    std::vector<std::string> lines;
+    boost::split(lines, code, boost::is_any_of("\n"));
+    std::map<std::string, std::string> codes;
+    for (const auto& line : lines) {
+      if (line.empty()) {continue;}
+      const auto idx {line.find_first_of(":")};
+      if (std::string::npos == idx) {
+        LOG_ERROR << "Code line is not in 'key: value' format: "
+                  << line << std::endl
+                  ;
+        std::exit(nmcu::Exit::FAILURE);
+      } else {
+        codes.emplace( line.substr(0, idx)
+                     , line.substr(idx + 2)
+                     );
+      }
+    }
+    oss << R"(
+\subsubsection[section:prowler-check-)" << checkId << R"(]
+{
+  \PortionMark{TODO--Caption Classification}{}
+  Severity: )" << severity << R"(;\\
+  Check ID: )" << checkId << R"(
 }
 
 \PortionMark{TODO--Caption Classification}{}
-Check: )" << control << R"(
+Check: )" << description << R"(
 
 \PortionMark{TODO--Caption Classification}{}
-Risk: )" << risk << R"(
+Risk: )" << (risk.empty() ? "N/A" : risk) << R"(
 
 \PortionMark{TODO--Caption Classification}{}
-Remediation: )" << remediation << R"(
+Recommendation: )" << recommendation << R"(
 
-\PortionMark{TODO--Caption Classification}{}
 \startalignment[nothyphenated,hanging,table]
-\goto{)" << docLink << R"(}[url()" << docLink << R"()]
+\startnarrower[0.15in]
+\startitemize[packed]
+  \item \goto{)" << url << R"(}[url()" << url << R"()]
+)";
+    for (const auto& [key, value] : codes) {
+      oss << R"(  \item )" << key << ":~";
+      if (value.starts_with("http")) {
+        const auto nvalue {escapeSpecial(value)};
+        oss << R"(\goto{)" << nvalue << R"(}[url()" << nvalue << R"()])";
+      } else {
+        oss << R"(\type<<)" << value << R"(>>)";
+      }
+      oss << '\n';
+    }
+    oss << R"(\stopitemize
+\stopnarrower
 \stopalignment
 
 \PortionMark{TODO--Caption Classification}{}
-{\bf )" << count << R"( affected resources}:
-)";
+{\bf )" << impactedResources.size() << R"( affected resources}:
+\startalignment[nothyphenated,hanging,table]
+\startnarrower[0.15in]
+{\tt
+  )" << nmcu::toString(impactedResources, ",\n  ") << R"(
+}
+\stopnarrower
+\stopalignment
+)" << "\n";
   }
 
 

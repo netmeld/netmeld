@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -28,6 +28,7 @@
 #define STRING_UTILITIES_HPP
 
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -38,12 +39,41 @@ namespace netmeld::core::utils {
   std::string toUpper(const std::string&);
   std::string trim(const std::string&);
 
-  std::string toString(const std::set<std::string>&, const char sep=' ');
-  std::string toString(const std::vector<std::string>&, const char sep=' ');
-
   std::string getSrvcString(const std::string&,
                             const std::string&, const std::string&);
 
   std::string expandCiscoIfaceName(const std::string&);
+
+  // ==========================================================================
+  // toString()
+  template<typename Iterator>
+  std::string
+  toString(Iterator begin, Iterator end, const std::string& sep)
+  {
+    std::ostringstream oss;
+    if (begin != end) {
+      oss << *begin;
+      ++begin;
+      for (; begin != end; ++begin) {
+        oss << sep << *begin;
+      }
+    }
+
+    return oss.str();
+  }
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const char sep=' ')
+  {
+    const std::string sSep {sep};
+    return toString(con.begin(), con.end(), sSep);
+  }
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const std::string& sep)
+  {
+    return toString(con.begin(), con.end(), sep);
+  }
+  // ==========================================================================
 }
 #endif  /* STRING_UTILITIES_HPP */

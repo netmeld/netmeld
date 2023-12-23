@@ -29,7 +29,7 @@
 
 #include "Csv.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ==========================================================================
   // Constructors
   // ==========================================================================
@@ -158,14 +158,18 @@ namespace netmeld::export_scans {
     std::ostringstream oss(std::ios_base::binary | std::ios_base::trunc);
 
     // add column headers
-    oss << R"("Service",)"
+    size_t colCount {12};
+    oss << R"("Provider",)"
+        << R"("Account ID",)"
+        << R"("Service Name",)"
+        << R"("Sub-Service Name",)"
         << R"("Severity",)"
-        << R"("Control ID",)"
-        << R"("Level",)"
-        << R"("Control",)"
+        << R"("Check ID",)"
+        << R"("Description",)"
         << R"("Risk",)"
-        << R"("Remediation",)"
-        << R"("Documentation Link",)"
+        << R"("Recommendation",)"
+        << R"("URL",)"
+        << R"("Code",)"
         << R"("Affected Resources")"
         << '\n'
         ;
@@ -173,12 +177,12 @@ namespace netmeld::export_scans {
     // add table rows
     for (const auto& row : rows) {
       size_t count {row.size()};
-      for (size_t i {0}; i < 8; i++) {
+      for (size_t i {0}; i < colCount; i++) {
         auto ccol {replaceAll(row[i], "\"", "\\\"")};
         oss << '"' << ccol << '"' << ',';
       }
       oss << '"';
-      for (size_t i {8}; i < count;) {
+      for (size_t i {colCount}; i < count;) {
         oss << row[i];
         i++;
 
