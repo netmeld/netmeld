@@ -85,12 +85,12 @@ class Tool : public nmdt::AbstractGraphTool
       opts.addRequiredOption("source", std::make_tuple(
             "source,s",
             po::value<std::string>()->required(),
-            "Source host or network for routes")
+            "Route(s) start at this IP/CIDR")
           );
       opts.addRequiredOption("destination", std::make_tuple(
             "destination,d",
             po::value<std::string>()->required(),
-            "Destination host or network for routes")
+            "Route(s) end at this IP/CIDR")
           );
     }
 
@@ -222,7 +222,7 @@ class Tool : public nmdt::AbstractGraphTool
           addVertex("oval", ipNet);
           addEdge(testStartIp, ipNet);
 
-          LOG_ERROR << "Route was found starting at: "
+          LOG_DEBUG << "Route was found starting at: "
                     << ipNet << "->" << id
                     << std::endl;
           addEdge(ipNet, id);
@@ -246,10 +246,10 @@ class Tool : public nmdt::AbstractGraphTool
         t.exec_prepared("select_hop_routes", testDestIp, deviceId, vrfId);
       for (const auto& route : routes) {
         const std::string nextHopIpAddr {route.at("next_hop_ip_addr").c_str()};
-        
+
         // found if node out IP is destination; else inspect further
         if ((testDestIp == nextHopIpAddr)) {
-          LOG_ERROR << "Route found ending at: "
+          LOG_DEBUG << "Route found ending at: "
                     << id << "->" << testDestIp
                     << std::endl;
           //addVertex("box", id);
@@ -261,7 +261,7 @@ class Tool : public nmdt::AbstractGraphTool
             t.exec_prepared("select_next_hops", nextHopIpAddr);
           // route entry for destination, but next hop not known
           if (0 == nextHops.size()) {
-            LOG_ERROR << "Possible route: "
+            LOG_DEBUG << "Possible route: "
                       << id << "->" << testDestIp
                       << std::endl;
             //addVertex("box", id);
@@ -276,7 +276,7 @@ class Tool : public nmdt::AbstractGraphTool
 
               if (!visited.contains(nextId)) {
                 visited.insert(nextId);
-                LOG_ERROR << "Visiting: "
+                LOG_DEBUG << "Visiting: "
                           << nextId
                           << std::endl;
 
@@ -288,7 +288,7 @@ class Tool : public nmdt::AbstractGraphTool
 
               if (vertexLookup.contains(nextId)) {
                 const std::string ipNet {nextHop.at("ip_net").c_str()};
-                LOG_ERROR << "NextHop was viable: "
+                LOG_DEBUG << "NextHop was viable: "
                           << ipNet << "->" << nextId
                           << std::endl;
                 addVertex("oval", ipNet);
