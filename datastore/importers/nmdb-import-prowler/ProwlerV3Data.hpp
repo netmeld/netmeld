@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,60 +24,82 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef HANDLER_GIT_HPP
-#define HANDLER_GIT_HPP
+#ifndef PROWLER_V3_DATA_HPP
+#define PROWLER_V3_DATA_HPP
 
-#include <netmeld/datalake/objects/DataEntry.hpp>
-#include <netmeld/datalake/handlers/AbstractHandler.hpp>
+#include <set>
+#include <nlohmann/json.hpp>
 
-namespace nmdlo = netmeld::datalake::objects;
+#include <netmeld/core/objects/Time.hpp>
+#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 
+using json = nlohmann::json;
+namespace nmco = netmeld::core::objects;
 
-namespace netmeld::datalake::handlers {
+namespace netmeld::datastore::objects::prowler {
 
-  class Git : public AbstractHandler {
+  class ProwlerV3Data : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
-      const std::string  CHECK_IN_PREFIX     {"check-in:"};
-      const std::string  INGEST_TOOL_PREFIX  {"ingest-tool:"};
-      const std::string  TOOL_ARGS_PREFIX    {"tool-args:"};
-
-      std::string branchName;
-
-      nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
-
     protected: // Variables intended for internal/subclass API
+      nmco::Time assessmentStartTime;
+      std::string findingUniqueId; // prowler-provider-checkid-accountid-region-resourceid
+      std::string provider;
+      std::string profile;
+      std::string accountId;
+      std::string organizationsInfo;
+      std::string region;
+      std::string checkId;
+      std::string checkTitle;
+      std::string checkTypes;
+      std::string serviceName;
+      std::string subServiceName;
+      std::string status;
+      std::string statusExtended;
+      std::string severity;
+      std::string resourceId;
+      std::string resourceArn;
+      std::string resourceTags;
+      std::string resourceType;
+      std::string resourceDetails;
+      std::string description;
+      std::string risk;
+      std::string relatedUrl;
+      std::string recommendation;
+      std::string recommendationUrl;
+      std::string remediationCode;
+      std::string categories;
+      std::string notes;
+      std::string compliance;
+
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
     // Constructors
     // =========================================================================
     private: // Constructors which should be hidden from API users
-      Git();
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      explicit Git(const std::string&);
+      ProwlerV3Data() = default;
+      explicit ProwlerV3Data(const json&);
 
     // =========================================================================
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void setIngestToolData(std::vector<nmdlo::DataEntry>&);
-
-      bool alignRepo(const nmco::Time& = nmco::Time("infinity"));
-      bool changeDirToRepo();
-
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void commit(nmdlo::DataEntry&) override;
-      void initialize() override;
-      void removeAll(const std::string&, const std::string&) override;
-      void removeLast(const std::string&, const std::string&) override;
+      bool isValid() const override;
+      void save(pqxx::transaction_base&,
+                const nmco::Uuid&, const std::string&) override;
 
-      std::vector<nmdlo::DataEntry>
-        getDataEntries(const nmco::Time& = {}, bool useIngestToolData = false) override;
+      // Utilized for full object data dump, for debug purposes
+      std::string toDebugString() const override;
+
+      std::strong_ordering operator<=>(const ProwlerV3Data&) const;
+      bool operator==(const ProwlerV3Data&) const;
   };
 }
-#endif // HANDLER_GIT_HPP
+#endif // PROWLER_V3_DATA_HPP

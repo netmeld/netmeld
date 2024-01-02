@@ -26,7 +26,8 @@
 
 add_executable(${TGT_TOOL}
     Parser.cpp
-    ProwlerData.cpp
+    ProwlerV2Data.cpp
+    ProwlerV3Data.cpp
     ${TGT_TOOL}.cpp
   )
 

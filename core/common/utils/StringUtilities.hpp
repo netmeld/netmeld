@@ -28,6 +28,7 @@
 #define STRING_UTILITIES_HPP
 
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -40,9 +41,6 @@ namespace netmeld::core::utils {
   std::string toUpper(const std::string&);
   std::string trim(const std::string&);
 
-  std::string toString(const std::set<std::string>&, const char sep=' ');
-  std::string toString(const std::vector<std::string>&, const char sep=' ');
-
   std::string getSrvcString(const std::string&,
                             const std::string&, const std::string&);
 
@@ -51,8 +49,11 @@ namespace netmeld::core::utils {
 
   std::string expandCiscoIfaceName(const std::string&);
 
-  template<typename It>
-  std::string toString(It begin, It end, const char sep)
+  // ==========================================================================
+  // toString()
+  template<typename Iterator>
+  std::string
+  toString(Iterator begin, Iterator end, const std::string& sep)
   {
     std::ostringstream oss;
     if (begin != end) {
@@ -62,13 +63,22 @@ namespace netmeld::core::utils {
         oss << sep << *begin;
       }
     }
+
     return oss.str();
   }
-
-  template<typename T>
-  std::string toString(const std::vector<T>& con, const char sep=' ')
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const char sep=' ')
   {
-    return toString(std::cbegin(con), std::cend(con), sep);
+    const std::string sSep {sep};
+    return toString(con.begin(), con.end(), sSep);
   }
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const std::string& sep)
+  {
+    return toString(con.begin(), con.end(), sep);
+  }
+  // ==========================================================================
 }
 #endif  /* STRING_UTILITIES_HPP */

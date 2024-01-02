@@ -98,11 +98,11 @@ CREATE TYPE RouteHop AS (
 -- Prowler severity enum to aid in sorting.
 -- ----------------------------------------------------------------------
 CREATE TYPE ProwlerSeverity AS ENUM (
-    'Critical'
-  , 'High'
-  , 'Medium'
-  , 'Low'
-  , 'Informational'
+    'critical'
+  , 'high'
+  , 'medium'
+  , 'low'
+  , 'informational'
 );
 
 -- ----------------------------------------------------------------------

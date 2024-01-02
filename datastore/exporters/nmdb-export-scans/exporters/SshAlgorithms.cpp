@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -30,47 +30,39 @@
 
 namespace nmcu = netmeld::core::utils;
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ========================================================================
   // Constructors
   // ========================================================================
   SshAlgorithms::SshAlgorithms(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
   {
-    db.prepare(
-      "select_ssh_algorithms",
-      R"(
-      SELECT DISTINCT
-        ip_addr, ssh_algo_type, ssh_algo_name
-      FROM ssh_host_algorithms
-      ORDER BY 1,2,3
+    db.prepare("select_ssh_algorithms", R"(
+        SELECT DISTINCT
+          ip_addr, ssh_algo_type, ssh_algo_name
+        FROM ssh_host_algorithms
+        ORDER BY 1,2,3
       )");
 
-    db.prepare(
-      "select_ssh_servers",
-      R"(
-      SELECT DISTINCT ip_addr
-      FROM ssh_host_algorithms
-      ORDER BY ip_addr
+    db.prepare("select_ssh_servers", R"(
+        SELECT DISTINCT ip_addr
+        FROM ssh_host_algorithms
+        ORDER BY ip_addr
       )");
 
-    db.prepare(
-      "select_ssh_algorithm_types",
-      R"(
-      SELECT DISTINCT ssh_algo_type
-      FROM ssh_host_algorithms
-      WHERE (ip_addr = ?)
-      ORDER BY ssh_algo_type
+    db.prepare("select_ssh_algorithm_types", R"(
+        SELECT DISTINCT ssh_algo_type
+        FROM ssh_host_algorithms
+        WHERE (ip_addr = $1)
+        ORDER BY ssh_algo_type
       )");
 
-    db.prepare(
-      "select_ssh_algorithm_names",
-      R"(
-      SELECT DISTINCT ssh_algo_name
-      FROM ssh_host_algorithms
-      WHERE (ip_addr = ?)
-        AND (ssh_algo_type = ?)
-      ORDER BY ssh_algo_name
+    db.prepare("select_ssh_algorithm_names", R"(
+        SELECT DISTINCT ssh_algo_name
+        FROM ssh_host_algorithms
+        WHERE (ip_addr = $1)
+          AND (ssh_algo_type = $2)
+        ORDER BY ssh_algo_name
       )");
   }
 
@@ -78,38 +70,40 @@ namespace netmeld::export_scans {
   // Methods
   // ========================================================================
   void
-  SshAlgorithms::exportTemplate(const auto& writer) const
+  SshAlgorithms::exportTemplate(const std::unique_ptr<Writer>& writer) const
   {
     std::vector<std::vector<std::string>> data {
-      { "IP", "HOSTNAME", "TYPE", "GOOD", good },
-      { "IP", "HOSTNAME", "TYPE", "NO_DETERMINATION", unk },
-      { "IP", "HOSTNAME", "TYPE", "BAD", bad },
-      { "IP_01", "HOSTNAME", "TYPE_01", "ALG_01", unk },
-      { "IP_02", "HOSTNAME", "TYPE_01", "ALG_01", unk },
-      { "IP_02", "HOSTNAME", "TYPE_02", "ALG_01", unk },
-      { "IP_02", "HOSTNAME", "TYPE_02", "ALG_02", unk },
-      { "IP_02", "HOSTNAME", "TYPE_03", "ALG_02", unk },
-      { "IP_03", "HOSTNAME", "TYPE_03", "ALG_02", unk },
-    };
+        { "IP", "HOSTNAME", "TYPE", "GOOD", good }
+      , { "IP", "HOSTNAME", "TYPE", "NO_DETERMINATION", unk }
+      , { "IP", "HOSTNAME", "TYPE", "BAD", bad }
+      , { "IP_01", "HOSTNAME", "TYPE_01", "ALG_01", unk }
+      , { "IP_02", "HOSTNAME", "TYPE_01", "ALG_01", unk }
+      , { "IP_02", "HOSTNAME", "TYPE_02", "ALG_01", unk }
+      , { "IP_02", "HOSTNAME", "TYPE_02", "ALG_02", unk }
+      , { "IP_02", "HOSTNAME", "TYPE_03", "ALG_02", unk }
+      , { "IP_03", "HOSTNAME", "TYPE_03", "ALG_02", unk }
+      };
+
     for (const auto& entry : data) {
       writer->addRow(entry);
     }
+
+    finalize(writer);
   }
 
   void
-  SshAlgorithms::exportFromDb(const auto& writer, const pqxx::result& records)
+  SshAlgorithms::exportFromDb(const std::unique_ptr<Writer>& writer)
   {
-    pqxx::read_transaction t {db};
+    pqxx::read_transaction rt {db};
+    for ( const auto& record
+        : rt.exec_prepared("select_ssh_algorithms")
+        )
+    {
+      std::string serverIp {record.at("ip_addr").c_str()};
+      std::string algoType {record.at("ssh_algo_type").c_str()};
+      std::string algoName {record.at("ssh_algo_name").c_str()};
 
-    for (const auto& record : records) {
-      std::string serverIp;
-      record.at("ip_addr").to(serverIp);
-      std::string algoType;
-      record.at("ssh_algo_type").to(algoType);
-      std::string algoName;
-      record.at("ssh_algo_name").to(algoName);
-
-      std::string hostname {getHostname(t, serverIp)};
+      std::string hostname {getHostname(rt, serverIp)};
 
       std::string color {unk};
       auto searchType {algorithms.find(nmcu::toLower(algoType))};
@@ -121,28 +115,19 @@ namespace netmeld::export_scans {
         }
       }
 
-      std::vector<std::string> data
+      std::vector<std::string> entry
         {serverIp, hostname, algoType, algoName, color};
 
-      writer->addRow(data);
+      writer->addRow(entry);
     }
 
-    t.abort();
+    finalize(writer);
   }
 
   void
-  SshAlgorithms::exportScan(const std::unique_ptr<Writer>& writer)
+  SshAlgorithms::finalize(const std::unique_ptr<Writer>& writer) const
   {
-    pqxx::read_transaction t {db};
-    pqxx::result sourceRows
-      {t.exec_prepared("select_ssh_algorithms")};
-    t.abort();
-
-    if (0 == sourceRows.size()) {
-      exportTemplate(writer);
-    } else {
-      exportFromDb(writer, sourceRows);
-    }
+    LOG_DEBUG << "Finalizing data output\n";
 
     std::string filename {"observed-ssh-algorithms"};
 

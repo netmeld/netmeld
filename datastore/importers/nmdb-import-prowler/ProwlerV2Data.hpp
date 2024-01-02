@@ -24,8 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef PROWLER_DATA_HPP
-#define PROWLER_DATA_HPP
+#ifndef PROWLER_V2_DATA_HPP
+#define PROWLER_V2_DATA_HPP
 
 #include <set>
 #include <nlohmann/json.hpp>
@@ -36,9 +36,9 @@
 using json = nlohmann::json;
 namespace nmco = netmeld::core::objects;
 
-namespace netmeld::datastore::objects {
+namespace netmeld::datastore::objects::prowler {
 
-  class ProwlerData : public AbstractDatastoreObject {
+  class ProwlerV2Data : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -66,8 +66,8 @@ namespace netmeld::datastore::objects {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      ProwlerData() = default;
-      explicit ProwlerData(const json&);
+      ProwlerV2Data() = default;
+      explicit ProwlerV2Data(const json&);
 
     // =========================================================================
     // Methods
@@ -82,8 +82,8 @@ namespace netmeld::datastore::objects {
       // Utilized for full object data dump, for debug purposes
       std::string toDebugString() const override;
 
-      std::strong_ordering operator<=>(const ProwlerData&) const;
-      bool operator==(const ProwlerData&) const;
+      std::strong_ordering operator<=>(const ProwlerV2Data&) const;
+      bool operator==(const ProwlerV2Data&) const;
   };
 }
-#endif // PROWLER_DATA_HPP
+#endif // PROWLER_V2_DATA_HPP

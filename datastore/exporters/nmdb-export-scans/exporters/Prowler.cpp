@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,128 +26,111 @@
 
 #include "Prowler.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ========================================================================
   // Constructors
   // ========================================================================
   Prowler::Prowler(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
   {
-    db.prepare(
-      "select_prowler_checks",
-      R"(
-      SELECT DISTINCT
-          service, severity
-        , control_id, level, control, risk, remediation
-        , documentation_link
-      FROM prowler_checks
-      WHERE status = 'FAIL'
-      ORDER BY service, severity asc, control_id asc
-      )");
+    db.prepare("select_prowler_checks", R"(
+        SELECT DISTINCT
+            provider, account_id
+          , service_name, sub_service_name
+          , severity, check_id, description, risk, recommendation
+            , recommendation_url
+          , remediation_code
+        FROM prowler_checks
+        WHERE status = 'FAIL'
+        ORDER BY provider, account_id
+               , service_name, sub_service_name desc
+               , severity asc, check_id asc
+        )"
+      );
 
-    db.prepare(
-      "select_prowler_check_resources",
-      R"(
-      SELECT DISTINCT resource_id
-      FROM prowler_checks
-      WHERE status = 'FAIL'
-        AND service = $1
-        AND severity = $2
-        AND control_id = $3
-        AND NOT resource_id = ''
-      ORDER BY resource_id
-      )");
+    db.prepare("select_prowler_check_resources", R"(
+        SELECT DISTINCT resource_id
+        FROM prowler_checks
+        WHERE status = 'FAIL'
+          AND provider = $1
+          AND account_id = $2
+          AND check_id = $3
+        ORDER BY resource_id
+        )"
+      );
   }
 
   // ========================================================================
   // Methods
   // ========================================================================
   void
-  Prowler::exportTemplate(const auto& writer) const
+  Prowler::exportTemplate(const std::unique_ptr<Writer>& writer) const
   {
     std::vector<std::vector<std::string>> data {
-        { "SERVICE_01", "SEVERITY_01",
-          "CTRL_ID_01", "LEVEL", "CONTROL", "RISK", "REMEDIATION", "LINK",
-          "RESOURCE_01",
+        // Everything filled in with extra resources
+        { "PROVIDER_01", "ACCOUNT_ID_01"
+        , "SERVICE_01", "SUB_SERVICE_01"
+        , "SEVERITY_01", "CHECK_ID_01"
+        , "DESCRIPTION", "RISK", "RECOMMENDATION", "URL", "CODE"
+        , "RESOURCE_01", "RESOURCE_02", "RESOURCE_03"
         },
-        { "SERVICE_01", "SEVERITY_01",
-          "CTRL_ID_02", "LEVEL", "CONTROL", "RISK", "REMEDIATION", "LINK",
-          "RESOURCE_01", "RESOURCE_02", "RESOURCE_03",
+        // Everything that could be empty
+        { "PROVIDER_01", "ACCOUNT_ID_01"
+        , "SERVICE_02", ""
+        , "SEVERITY_01", "CHECK_ID_01"
+        , "DESCRIPTION", "", "RECOMMENDATION", "URL", "CODE"
+        , //""
         },
-        { "SERVICE_01", "SEVERITY_02",
-          "CTRL_ID_01", "LEVEL", "CONTROL", "RISK", "REMEDIATION", "LINK",
-          "RESOURCE_01",
-        },
-        { "SERVICE_02", "SEVERITY_01",
-          "CTRL_ID_01", "LEVEL", "CONTROL", "RISK", "REMEDIATION", "LINK",
-          "RESOURCE_01",
+        // Everything filled in no extras
+        { "PROVIDER_02", "ACCOUNT_ID_01"
+        , "SERVICE_01", "SUB_SERVICE_01"
+        , "SEVERITY_01", "CHECK_ID_01"
+        , "DESCRIPTION", "RISK", "RECOMMENDATION", "URL", "CODE"
+        , "RESOURCE_01"
         },
       };
 
     for (const auto& entry : data) {
       writer->addRow(entry);
     }
+
+    finalize(writer);
   }
 
   void
-  Prowler::exportFromDb(const auto& writer, const pqxx::result& checks)
+  Prowler::exportFromDb(const std::unique_ptr<Writer>& writer)
   {
-    pqxx::read_transaction t {db};
-
-    for (const auto& check : checks) {
-      std::string service;
-      check.at("service").to(service);
-      std::string severity;
-      check.at("severity").to(severity);
-      std::string controlId;
-      check.at("control_id").to(controlId);
-      std::string level;
-      check.at("level").to(level);
-      std::string control;
-      check.at("control").to(control);
-      std::string risk;
-      check.at("risk").to(risk);
-      std::string remediation;
-      check.at("remediation").to(remediation);
-      std::string docLink;
-      check.at("documentation_link").to(docLink);
-
-      std::vector<std::string> data {
-          service, severity,
-          controlId, level, control, risk, remediation, docLink
-        };
-
-      pqxx::result resourceRows {
-          t.exec_prepared("select_prowler_check_resources",
-                          service, severity, controlId)
-        };
-
-      for (const auto& resourceRow : resourceRows) {
-        std::string resourceId;
-        resourceRow.at("resource_id").to(resourceId);
-
-        data.push_back(resourceId);
+    pqxx::read_transaction rt {db};
+    for ( const auto& check
+        : rt.exec_prepared("select_prowler_checks")
+        )
+    {
+      std::vector<std::string> data;
+      for (const auto& col : check) {
+        data.emplace_back(col.c_str());
       }
+
+      for ( const auto& resource
+          : rt.exec_prepared("select_prowler_check_resources"
+                            , check.at("provider").c_str()
+                            , check.at("account_id").c_str()
+                            , check.at("check_id").c_str()
+                            )
+          )
+      {
+        data.emplace_back(resource.at(0).c_str());
+      }
+
       writer->addRow(data);
     }
-    t.abort();
+
+    finalize(writer);
   }
 
   void
-  Prowler::exportScan(const std::unique_ptr<Writer>& writer)
+  Prowler::finalize(const std::unique_ptr<Writer>& writer) const
   {
-    pqxx::read_transaction t {db};
-    pqxx::result sourceRows
-      {t.exec_prepared("select_prowler_checks")};
-    t.abort();
-
-    if (0 == sourceRows.size()) {
-      exportTemplate(writer);
-    } else {
-      exportFromDb(writer, sourceRows);
-    }
-
-    LOG_DEBUG << "Got data, writing to file" << std::endl;
+    LOG_DEBUG << "Finalizing data output\n";
 
     std::string filename {"prowler-scan-results"};
 

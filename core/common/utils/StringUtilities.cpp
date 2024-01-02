@@ -25,9 +25,6 @@
 // =============================================================================
 
 #include <algorithm>
-#include <sstream>
-
-#include <boost/algorithm/string.hpp>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
@@ -50,31 +47,6 @@ namespace netmeld::core::utils {
     std::transform(text.begin(), text.end(), text.begin(),
         [](unsigned char c){ return std::toupper(c); });
     return text;
-  }
-
-  //template<typename T>
-  //std::string
-  //toString(T begin, T end, const char sep)
-  //{
-  //  std::ostringstream oss;
-  //  if (begin != end) {
-  //    oss << *begin;
-  //    ++begin;
-  //    for (; begin != end; ++begin) {
-  //      oss << sep << *begin;
-  //    }
-  //  }
-  //  return oss.str();
-  //}
-  std::string
-  toString(const std::set<std::string>& con, const char sep)
-  {
-    return toString(std::cbegin(con), std::cend(con), sep);
-  }
-  std::string
-  toString(const std::vector<std::string>& con, const char sep)
-  {
-    return toString(std::cbegin(con), std::cend(con), sep);
   }
 
   std::string

@@ -102,7 +102,7 @@ namespace netmeld::datastore::objects {
         << "scopeDomain: " << scopeDomain  << ", "
         << "srcIpAddr: " << srcIpAddr  << ", "
         << "dstIpAddr: " << dstIpAddr  << ", "
-        << "dstPort: " << dstPort 
+        << "dstPort: " << dstPort
         << "]"; // closing bracket
 
     return oss.str();

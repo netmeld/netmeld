@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -30,20 +30,21 @@
 #include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/tools/AbstractExportTool.hpp>
 
+#include "exporters/ExportScan.hpp"
 #include "exporters/InterNetwork.hpp"
 #include "exporters/IntraNetwork.hpp"
 #include "exporters/Nessus.hpp"
 #include "exporters/Prowler.hpp"
 #include "exporters/SshAlgorithms.hpp"
-#include "writers/Writer.hpp"
 #include "writers/Context.hpp"
 #include "writers/Csv.hpp"
+#include "writers/Writer.hpp"
 
 namespace nmcu = netmeld::core::utils;
 namespace nmdt = netmeld::datastore::tools;
 namespace nmdu = netmeld::datastore::utils;
 
-namespace nmes = netmeld::export_scans;
+namespace nmdes = netmeld::datastore::exporters::scans;
 
 
 // =============================================================================
@@ -86,42 +87,56 @@ class Tool : public nmdt::AbstractExportTool
     addToolOptions() override
     {
       opts.addRequiredOption("out-format", std::make_tuple(
-            "out-format",
-            po::value<std::string>()->default_value("context"),
-            "Export data to the specified format (context|csv)")
-          );
+            "out-format"
+          , po::value<std::string>()->default_value("context")
+          , "Export data to the specified format (context|csv)"
+          )
+        );
 
       opts.addOptionalOption("intra-network", std::make_tuple(
-            "intra-network",
-            NULL_SEMANTIC,
-            "Export Playbook intra-network scan information")
-          );
+           "intra-network"
+          , NULL_SEMANTIC
+          , "Export Playbook intra-network scan information"
+          )
+        );
       opts.addOptionalOption("inter-network", std::make_tuple(
-            "inter-network",
-            NULL_SEMANTIC,
-            "Export Playbook inter-network scan information")
-          );
+            "inter-network"
+          , NULL_SEMANTIC
+          , "Export Playbook inter-network scan information"
+          )
+        );
       opts.addOptionalOption("nessus", std::make_tuple(
-            "nessus",
-            NULL_SEMANTIC,
-            "Export Nessus scan information")
-          );
+            "nessus"
+          , NULL_SEMANTIC
+          , "Export Nessus scan information"
+          )
+        );
       opts.addOptionalOption("prowler", std::make_tuple(
-            "prowler",
-            NULL_SEMANTIC,
-            "Export Prowler scan information")
-          );
+            "prowler"
+          , NULL_SEMANTIC
+          , "Export Prowler scan information"
+          )
+        );
       opts.addOptionalOption("ssh", std::make_tuple(
-            "ssh",
-            NULL_SEMANTIC,
-            "Export SSH algorithm scan information")
-          );
+            "ssh"
+          , NULL_SEMANTIC
+          , "Export SSH algorithm scan information"
+          )
+        );
 
       opts.addOptionalOption("to-file", std::make_tuple(
-            "to-file",
-            NULL_SEMANTIC,
-            "Output to file (predefined naming) instead of STDOUT")
-          );
+            "to-file"
+          , NULL_SEMANTIC
+          , "Output to file (predefined naming) instead of STDOUT"
+          )
+        );
+
+      opts.addOptionalOption("template", std::make_tuple(
+            "template"
+          , NULL_SEMANTIC
+          , "Output template rather than actual data"
+          )
+        );
     }
 
     // Overriden from AbstractExportTool
@@ -130,41 +145,52 @@ class Tool : public nmdt::AbstractExportTool
     {
       const auto& dbConInfo {getDbConnectString()};
 
-      const auto& toFile    {opts.exists("to-file")};
-      const auto& outFormat {nmcu::toLower(opts.getValue("out-format"))};
+      const auto& toFile      {opts.exists("to-file")};
+      const auto& outFormat   {nmcu::toLower(opts.getValue("out-format"))};
 
-      std::unique_ptr<Writer> writer;
+      std::unique_ptr<nmdes::Writer> writer;
       if ("context" == outFormat) {
-        writer = std::make_unique<nmes::Context>(toFile);
+        writer = std::make_unique<nmdes::Context>(toFile);
       } else if ("csv" == outFormat) {
-        writer = std::make_unique<nmes::Csv>(toFile);
+        writer = std::make_unique<nmdes::Csv>(toFile);
       } else {
         LOG_ERROR << "Invalid output format, quitting." << std::endl;
         return nmcu::Exit::FAILURE;
       }
 
       if (opts.exists("intra-network")) {
-        nmes::IntraNetwork exporter {dbConInfo};
-        exporter.exportScan(writer);
+        nmdes::IntraNetwork exporter {dbConInfo};
+        doExport(exporter, writer);
       }
       if (opts.exists("inter-network")) {
-        nmes::InterNetwork exporter {dbConInfo};
-        exporter.exportScan(writer);
+        nmdes::InterNetwork exporter {dbConInfo};
+        doExport(exporter, writer);
       }
       if (opts.exists("nessus")) {
-        nmes::Nessus exporter {dbConInfo};
-        exporter.exportScan(writer);
+        nmdes::Nessus exporter {dbConInfo};
+        doExport(exporter, writer);
       }
       if (opts.exists("prowler")) {
-        nmes::Prowler exporter {dbConInfo};
-        exporter.exportScan(writer);
+        nmdes::Prowler exporter {dbConInfo};
+        doExport(exporter, writer);
       }
       if (opts.exists("ssh")) {
-        nmes::SshAlgorithms exporter {dbConInfo};
-        exporter.exportScan(writer);
+        nmdes::SshAlgorithms exporter {dbConInfo};
+        doExport(exporter, writer);
       }
 
       return nmcu::Exit::SUCCESS;
+    }
+
+    void
+    doExport(auto& exporter, auto& writer) {
+      if (opts.exists("template")) {
+        LOG_DEBUG << "Exporting template data\n";
+        exporter.exportTemplate(writer);
+      } else {
+        LOG_DEBUG << "Exporting DB data\n";
+        exporter.exportFromDb(writer);
+      }
     }
 
   protected: // Methods part of subclass API

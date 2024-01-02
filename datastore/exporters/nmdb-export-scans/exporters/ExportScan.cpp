@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,18 +26,20 @@
 
 #include "ExportScan.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ==========================================================================
   // Constructors
   // ==========================================================================
   ExportScan::ExportScan(const std::string& dbConnInfo) :
     db(dbConnInfo)
   {
-    db.prepare
-      ("select_network_scan_name",
-       "SELECT DISTINCT string_agg(device_id, ', ') as device_id"
-       " FROM device_ip_addrs"
-       " WHERE ($1 = ip_addr)");
+    db.prepare("select_network_scan_name", R"(
+        SELECT DISTINCT
+          string_agg(device_id, ', ') as device_id
+        FROM device_ip_addrs
+        WHERE ($1 = ip_addr)
+        )"
+      );
   }
 
 
@@ -46,13 +48,13 @@ namespace netmeld::export_scans {
   // ==========================================================================
   std::string
   ExportScan::getHostname(
-      pqxx::read_transaction& t, const std::string& targetIp
+      pqxx::read_transaction& rt, const std::string& targetIp
     ) const
   {
     std::string name {""};
 
     pqxx::result nameRows
-      {t.exec_prepared("select_network_scan_name", targetIp)};
+      {rt.exec_prepared("select_network_scan_name", targetIp)};
 
     size_t count {nameRows.size()};
     switch (count) {

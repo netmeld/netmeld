@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -29,126 +29,126 @@
 
 #include "ExportScan.hpp"
 
-namespace netmeld::export_scans {
-// ============================================================================
-// Primary object
-// ============================================================================
-class SshAlgorithms : public ExportScan {
-  // ========================================================================
-  // Variables
-  // ========================================================================
-  private: // Variables should generally be private
-    // colors
-    const std::string good  {"darkgreen"};
-    const std::string bad   {"red"};
-    const std::string unk   {"black"};
+namespace netmeld::datastore::exporters::scans {
+  // ==========================================================================
+  // Primary object
+  // ==========================================================================
+  class SshAlgorithms : public ExportScan {
+    // ========================================================================
+    // Variables
+    // ========================================================================
+    private: // Variables should generally be private
+      // colors
+      const std::string good  {"darkgreen"};
+      const std::string bad   {"red"};
+      const std::string unk   {"black"};
 
-    // algorithms: identified good/bad
-    // NOTE: separately called out for easier tracking
-    const std::map<std::string, std::string> algoComp
-    {
-    };
-    const std::map<std::string, std::string> algoEnc
-    {
-      {"aes128-ctr", good},
-      {"aes256-ctr", good},
-      {"aes128-gcm@openssh.com", good},
-      {"aes256-gcm@openssh.com", good},
+      // algorithms: identified good/bad
+      // NOTE: separately called out for easier tracking
+      const std::map<std::string, std::string> algoComp
+      {
+      };
+      const std::map<std::string, std::string> algoEnc
+      {
+        {"aes128-ctr", good},
+        {"aes256-ctr", good},
+        {"aes128-gcm@openssh.com", good},
+        {"aes256-gcm@openssh.com", good},
 
-      {"none", bad},
-      {"3des-cbc", bad},
-      {"blowfish-cbc", bad},
-      {"twofish-cbc", bad},
-      {"twofish128-cbc", bad},
-      {"twofish256-cbc", bad},
-      {"cast128-cbc", bad},
-      {"arcfour", bad},
-      {"arcfour128", bad},
-      {"arcfour256", bad},
-      {"aes128-cbc", bad},
-      {"aes192-cbc", bad},
-      {"aes256-cbc", bad},
-      {"rijndael128-cbc", bad},
-      {"rijndael192-cbc", bad},
-      {"rijndael256-cbc", bad},
-      {"rijndael-cbc@lysator.liu.se", bad}
-    };
-    const std::map<std::string, std::string> algoKex
-    {
-      {"curve25519-sha256", good},
-      {"curve25519-sha256@libssh.org", good},
-      {"diffie-hellman-group14-sha256", good},
-      {"diffie-hellman-group16-sha512", good},
-      {"diffie-hellman-group18-sha512", good},
-      {"diffie-hellman-group-exchange-sha256", good},
+        {"none", bad},
+        {"3des-cbc", bad},
+        {"blowfish-cbc", bad},
+        {"twofish-cbc", bad},
+        {"twofish128-cbc", bad},
+        {"twofish256-cbc", bad},
+        {"cast128-cbc", bad},
+        {"arcfour", bad},
+        {"arcfour128", bad},
+        {"arcfour256", bad},
+        {"aes128-cbc", bad},
+        {"aes192-cbc", bad},
+        {"aes256-cbc", bad},
+        {"rijndael128-cbc", bad},
+        {"rijndael192-cbc", bad},
+        {"rijndael256-cbc", bad},
+        {"rijndael-cbc@lysator.liu.se", bad}
+      };
+      const std::map<std::string, std::string> algoKex
+      {
+        {"curve25519-sha256", good},
+        {"curve25519-sha256@libssh.org", good},
+        {"diffie-hellman-group14-sha256", good},
+        {"diffie-hellman-group16-sha512", good},
+        {"diffie-hellman-group18-sha512", good},
+        {"diffie-hellman-group-exchange-sha256", good},
 
-      {"diffie-hellman-group1-sha1", bad},
-      {"diffie-hellman-group-exchange-sha1", bad}
-    };
-    const std::map<std::string, std::string> algoMac
-    {
-      {"hmac-sha2-256-etm@openssh.com", good},
-      {"hmac-sha2-512-etm@openssh.com", good},
-      {"umac-128-etm@openssh.com", good},
+        {"diffie-hellman-group1-sha1", bad},
+        {"diffie-hellman-group-exchange-sha1", bad}
+      };
+      const std::map<std::string, std::string> algoMac
+      {
+        {"hmac-sha2-256-etm@openssh.com", good},
+        {"hmac-sha2-512-etm@openssh.com", good},
+        {"umac-128-etm@openssh.com", good},
 
-      {"none", bad},
-      {"hmac-sha1-96", bad},
-      {"hmac-sha2-256-96", bad},
-      {"hmac-sha2-512-96", bad},
-      {"hmac-md5", bad},
-      {"hmac-md5-96", bad},
-      {"hmac-ripemd160", bad},
-      {"hmac-ripemd160@openssh.com", bad},
-      {"hmac-sha1-96-etm@openssh.com", bad},
-      {"hmac-md5-etm@openssh.com", bad},
-      {"hmac-md5-96-etm@openssh.com", bad},
-      {"hmac-ripemd160-etm@openssh.com", bad}
-    };
-    const std::map<std::string, std::string> algoKey
-    {
-      {"ssh-ed25519-cert-v01@openssh.com", good},
-      {"ssh-rsa-cert-v01@openssh.com", good},
-      {"ssh-ed25519", good},
-      {"ssh-rsa", good},
+        {"none", bad},
+        {"hmac-sha1-96", bad},
+        {"hmac-sha2-256-96", bad},
+        {"hmac-sha2-512-96", bad},
+        {"hmac-md5", bad},
+        {"hmac-md5-96", bad},
+        {"hmac-ripemd160", bad},
+        {"hmac-ripemd160@openssh.com", bad},
+        {"hmac-sha1-96-etm@openssh.com", bad},
+        {"hmac-md5-etm@openssh.com", bad},
+        {"hmac-md5-96-etm@openssh.com", bad},
+        {"hmac-ripemd160-etm@openssh.com", bad}
+      };
+      const std::map<std::string, std::string> algoKey
+      {
+        {"ssh-ed25519-cert-v01@openssh.com", good},
+        {"ssh-rsa-cert-v01@openssh.com", good},
+        {"ssh-ed25519", good},
+        {"ssh-rsa", good},
 
-      {"ssh-dss", bad},
-      {"ssh-rsa-cert-v00@openssh.com", bad},
-      {"ssh-dss-cert-v00@openssh.com", bad},
-      {"ssh-dss-cert-v01@openssh.com", bad}
-    };
+        {"ssh-dss", bad},
+        {"ssh-rsa-cert-v00@openssh.com", bad},
+        {"ssh-dss-cert-v00@openssh.com", bad},
+        {"ssh-dss-cert-v01@openssh.com", bad}
+      };
 
-    // NOTE: container for easier searching
-    const std::map<std::string, std::map<std::string, std::string>> algorithms
-    {
-      {"compression_algorithms", algoComp},
-      {"encryption_algorithms", algoEnc},
-      {"kex_algorithms", algoKex},
-      {"mac_algorithms", algoMac},
-      {"server_host_key_algorithms", algoKey},
-    };
+      // NOTE: container for easier searching
+      const std::map<std::string, std::map<std::string, std::string>> algorithms
+      {
+        {"compression_algorithms", algoComp},
+        {"encryption_algorithms", algoEnc},
+        {"kex_algorithms", algoKex},
+        {"mac_algorithms", algoMac},
+        {"server_host_key_algorithms", algoKey},
+      };
 
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+    protected: // Variables intended for internal/subclass API
+    public: // Variables should rarely appear at this scope
 
-  // ========================================================================
-  // Constructors
-  // ========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    SshAlgorithms() = delete;
-    explicit SshAlgorithms(const std::string&);
+    // ========================================================================
+    // Constructors
+    // ========================================================================
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
+      SshAlgorithms() = delete;
+      explicit SshAlgorithms(const std::string&);
 
-  // ========================================================================
-  // Methods
-  // ========================================================================
-  private: // Methods which should be hidden from API users
-    void exportTemplate(const auto&) const;
-    void exportFromDb(const auto&, const pqxx::result&);
+    // ========================================================================
+    // Methods
+    // ========================================================================
+    private: // Methods which should be hidden from API users
+    protected: // Methods part of subclass API
+      void finalize(const std::unique_ptr<Writer>&) const override;
 
-  protected: // Methods part of subclass API
-  public: // Methods part of public API
-    void exportScan(const std::unique_ptr<Writer>&) override;
-};
+    public: // Methods part of public API
+      void exportTemplate(const std::unique_ptr<Writer>&) const override;
+      void exportFromDb(const std::unique_ptr<Writer>&) override;
+  };
 }
 #endif // EXPORT_SCAN_SSH_ALGORITHMS_HPP

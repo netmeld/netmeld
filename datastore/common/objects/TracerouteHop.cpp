@@ -83,7 +83,7 @@ namespace netmeld::datastore::objects {
     oss << "["
         << "hopIpAddr: " << hopIpAddr  << ", "
         << "dstIpAddr: " << dstIpAddr  << ", "
-        << "hopCount: " << hopCount 
+        << "hopCount: " << hopCount
         << "]";
 
     return oss.str();

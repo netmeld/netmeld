@@ -85,8 +85,8 @@ namespace netmeld::datastore::objects::aws {
     std::ostringstream oss;
 
     oss << '['
-        << "attachmentId: " << attachmentId << ", " 
-        << "status: " << status << ", " 
+        << "attachmentId: " << attachmentId << ", "
+        << "status: " << status << ", "
         << "deleteOnTermination: " << deleteOnTermination
         << ']'
         ;

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -29,37 +29,39 @@
 
 #include "ExportScan.hpp"
 
-namespace netmeld::export_scans {
-// ============================================================================
-// Primary object
-// ============================================================================
-class Nessus : public ExportScan {
-  // ========================================================================
-  // Variables
-  // ========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+namespace netmeld::datastore::exporters::scans {
+  // ==========================================================================
+  // Primary object
+  // ==========================================================================
+  class Nessus : public ExportScan {
+    // ========================================================================
+    // Variables
+    // ========================================================================
+    private: // Variables should generally be private
+      const std::string filePrefix {"intra-network-from-"};
 
-  // ========================================================================
-  // Constructors
-  // ========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    Nessus() = delete;
-    explicit Nessus(const std::string&);
+    protected: // Variables intended for internal/subclass API
+    public: // Variables should rarely appear at this scope
 
-  // ========================================================================
-  // Methods
-  // ========================================================================
-  private: // Methods which should be hidden from API users
-    void exportTemplate(const auto&) const;
-    void exportFromDb(const auto&, const pqxx::result&);
+    // ========================================================================
+    // Constructors
+    // ========================================================================
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
+      Nessus() = delete;
+      explicit Nessus(const std::string&);
 
-  protected: // Methods part of subclass API
-  public: // Methods part of public API
-    void exportScan(const std::unique_ptr<Writer>&)override;
-};
+    // ========================================================================
+    // Methods
+    // ========================================================================
+    private: // Methods which should be hidden from API users
+    protected: // Methods part of subclass API
+      void finalize(const std::unique_ptr<Writer>&) const;
+
+    public: // Methods part of public API
+      void exportTemplate(const std::unique_ptr<Writer>&) const override;
+      void exportFromDb(const std::unique_ptr<Writer>&) override;
+  };
 }
 #endif // EXPORT_SCAN_NESSUS_HPP

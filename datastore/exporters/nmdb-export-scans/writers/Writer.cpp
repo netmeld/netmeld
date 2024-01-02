@@ -29,67 +29,67 @@
 #include <fstream>
 #include <sstream>
 
-#include <netmeld/core/utils/LoggerSingleton.hpp>
-
 #include "Writer.hpp"
 
-// =============================================================================
-// Constructors
-// =============================================================================
-Writer::Writer(bool _toFile) :
-  toFile(_toFile)
-{}
+namespace netmeld::datastore::exporters::scans {
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  Writer::Writer(bool _toFile) :
+    toFile(_toFile)
+  {}
 
 
-// =============================================================================
-// Methods
-// =============================================================================
-void
-Writer::addRow(const std::vector<std::string>& _row)
-{
-  rows.push_back(_row);
-}
-
-void
-Writer::clearData()
-{
-  rows.clear();
-}
-
-std::string
-Writer::replaceAll(
-    const std::string& source, const std::string& from, const std::string& to
-  ) const
-{
-  std::string str {source};
-  for (auto pos {str.find(from)};
-       pos != std::string::npos;
-       pos = str.find(from, pos))
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  void
+  Writer::addRow(const std::vector<std::string>& _row)
   {
-    str.replace(pos, from.length(), to);
-    pos += to.length();
+    rows.push_back(_row);
   }
 
-  return str;
-}
+  void
+  Writer::clearData()
+  {
+    rows.clear();
+  }
 
-void
-Writer::writeData(const std::string& filename, const std::string& data) const
-{
-  std::regex bs {"/"};
-  auto fullFilename {
-    std::regex_replace(filename, bs, "_") + getExtension()
-  };
+  std::string
+  Writer::replaceAll(
+      const std::string& source, const std::string& from, const std::string& to
+    ) const
+  {
+    std::string str {source};
+    for (auto pos {str.find(from)};
+         pos != std::string::npos;
+         pos = str.find(from, pos))
+    {
+      str.replace(pos, from.length(), to);
+      pos += to.length();
+    }
 
-  if (toFile) {
-    LOG_INFO << "Writing to file: " << fullFilename << std::endl;
-    std::ofstream ofs
-      {fullFilename, std::ios_base::binary | std::ios_base::trunc};
+    return str;
+  }
 
-    ofs << data << std::endl;
-    ofs.close();
-  } else {
-    LOG_INFO << "---START OF " << fullFilename << "---" << std::endl
-             << data << std::endl;
+  void
+  Writer::writeData(const std::string& filename, const std::string& data) const
+  {
+    std::regex bs {"/"};
+    auto fullFilename {
+      std::regex_replace(filename, bs, "_") + getExtension()
+    };
+
+    if (toFile) {
+      LOG_INFO << "Writing to file: " << fullFilename << std::endl;
+      std::ofstream ofs
+        {fullFilename, std::ios_base::binary | std::ios_base::trunc};
+
+      ofs << data << std::endl;
+      ofs.close();
+    } else {
+      LOG_INFO << "---START OF " << fullFilename << "---" << std::endl
+               << data << std::endl;
+    }
   }
 }

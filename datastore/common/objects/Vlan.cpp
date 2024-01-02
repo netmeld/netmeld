@@ -128,7 +128,7 @@ namespace netmeld::datastore::objects {
     oss << "[" // opening bracket
         << "vlanId: " << vlanId  << ", "
         << "ipNet: " << ipNet  << ", "
-        << "description: " << description 
+        << "description: " << description
         << "]"; // closing bracket
 
     return oss.str();

@@ -29,7 +29,7 @@
 
 #include "Writer.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ==========================================================================
   // Primary object
   // ==========================================================================

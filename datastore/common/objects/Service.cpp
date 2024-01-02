@@ -233,7 +233,7 @@ namespace netmeld::datastore::objects {
         << "serviceReason: " << serviceReason  << ", "
         << "protocol: " << protocol  << ", "
         << "dstPorts: " << dstPorts  << ", "
-        << "srcPorts: " << srcPorts 
+        << "srcPorts: " << srcPorts
         // End of formatting
         << "]";
 

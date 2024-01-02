@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -30,53 +30,56 @@
 #include <string>
 #include <vector>
 
-// =============================================================================
-// Primary object
-// =============================================================================
-class Writer {
-  // =========================================================================
-  // Variables
-  // =========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-    bool toFile {false};
+#include <netmeld/core/utils/LoggerSingleton.hpp>
 
-    std::vector<std::vector<std::string>> rows;
+namespace netmeld::datastore::exporters::scans {
+  // ===========================================================================
+  // Primary object
+  // ===========================================================================
+  class Writer {
+    // =========================================================================
+    // Variables
+    // =========================================================================
+    private: // Variables should generally be private
+    protected: // Variables intended for internal/subclass API
+      bool toFile {false};
 
-  public: // Variables should rarely appear at this scope
+      std::vector<std::vector<std::string>> rows;
 
-  // =========================================================================
-  // Constructors
-  // =========================================================================
-  private: // Constructors which should be hidden from API users
-  protected: // Constructors part of subclass API
-  public: // Constructors part of public API
-    Writer() = delete;
-    Writer(bool);
-    virtual ~Writer() = default;
+    public: // Variables should rarely appear at this scope
 
-  // =========================================================================
-  // Methods
-  // =========================================================================
-  private: // Methods which should be hidden from API users
-  protected: // Methods part of subclass API
-    std::string replaceAll(
-        const std::string&, const std::string&, const std::string&
-      ) const;
+    // =========================================================================
+    // Constructors
+    // =========================================================================
+    private: // Constructors which should be hidden from API users
+    protected: // Constructors part of subclass API
+    public: // Constructors part of public API
+      Writer() = delete;
+      Writer(bool);
+      virtual ~Writer() = default;
 
-    virtual std::string getExtension() const = 0;
+    // =========================================================================
+    // Methods
+    // =========================================================================
+    private: // Methods which should be hidden from API users
+    protected: // Methods part of subclass API
+      std::string replaceAll(
+          const std::string&, const std::string&, const std::string&
+        ) const;
 
-  public: // Methods part of public API
-    virtual void addRow(const std::vector<std::string>&);
-    virtual void clearData();
+      virtual std::string getExtension() const = 0;
 
-    virtual void writeData(const std::string&, const std::string&) const;
+    public: // Methods part of public API
+      virtual void addRow(const std::vector<std::string>&);
+      virtual void clearData();
 
-    virtual std::string getIntraNetwork(const std::string&) const = 0;
-    virtual std::string getInterNetwork(const std::string&) const = 0;
-    virtual std::string getNessus() const = 0;
-    virtual std::string getProwler() const = 0;
-    virtual std::string getSshAlgorithms() const = 0;
-};
+      virtual void writeData(const std::string&, const std::string&) const;
 
+      virtual std::string getIntraNetwork(const std::string&) const = 0;
+      virtual std::string getInterNetwork(const std::string&) const = 0;
+      virtual std::string getNessus() const = 0;
+      virtual std::string getProwler() const = 0;
+      virtual std::string getSshAlgorithms() const = 0;
+  };
+}
 #endif // WRITER_HPP
