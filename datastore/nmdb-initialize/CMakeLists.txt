@@ -29,6 +29,7 @@ add_executable(${TGT_TOOL}
   )
 
 target_link_libraries(${TGT_TOOL}
+  PUBLIC
     netmeld-datastore
   )
 

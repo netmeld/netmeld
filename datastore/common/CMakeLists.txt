@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -78,6 +78,7 @@ add_library(${TGT_LIBRARY} SHARED
 
     ./utils/QueriesCommon.cpp
     ./utils/ServiceFactory.cpp
+    ./utils/NetmeldPostgresConversions.cpp
   )
 target_include_directories(${TGT_LIBRARY}
   PUBLIC

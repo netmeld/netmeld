@@ -134,4 +134,3 @@ BOOST_AUTO_TEST_CASE(testSetters)
     BOOST_CHECK_EQUAL("2001-01-01T00:00:00.001000", time.toString());
   }
 }
-

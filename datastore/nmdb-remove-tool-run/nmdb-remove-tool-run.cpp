@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,10 +24,10 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <pqxx/pqxx>
-
 #include <netmeld/core/objects/Uuid.hpp>
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
+#include <netmeld/datastore/utils/NetmeldPostgresConversions.hpp>
+
 
 namespace nmco = netmeld::core::objects;
 namespace nmcu = netmeld::core::utils;
@@ -47,8 +47,8 @@ class Tool : public nmdt::AbstractDatastoreTool
     {
       opts.addRequiredOption("tool-run-id", std::make_tuple(
           "tool-run-id",
-          po::value<std::string>(),
-          "Tool run UUID to remove from the database."
+          po::value<std::vector<std::string>>()->multitoken(),
+          "Tool run UUID(s) to remove from the database."
           " Either --tool-run-id param or implicit last argument.")
         );
 
@@ -59,20 +59,32 @@ class Tool : public nmdt::AbstractDatastoreTool
     runTool() override
     {
       if (!opts.exists("tool-run-id")) {
-        LOG_WARN << "UUID not given.\n";
-
+        LOG_WARN << "UUID not given; not running"
+                 << std::endl;
       } else {
-        const auto& toolRunId {nmco::Uuid(opts.getValue("tool-run-id"))};
-
         pqxx::connection db {getDbConnectString()};
-        db.prepare
-        ("delete_tool_run",
-         "DELETE FROM tool_runs"
-         " WHERE (id = $1)");
+
+        db.prepare("delete_tool_run", R"(
+              DELETE FROM tool_runs
+              WHERE (id = $1)
+              )"
+            );
 
         pqxx::work t {db};
-        auto const& results {t.exec_prepared("delete_tool_run", toolRunId)};
-        LOG_INFO << "Removal count: " << results.affected_rows() << '\n';
+        for (const auto& uuidStr : opts.getValues("tool-run-id")) {
+          try {
+          const nmco::Uuid toolRunId {uuidStr};
+          const auto& results {t.exec_prepared("delete_tool_run", toolRunId)};
+
+          LOG_INFO << "Removal count for " << uuidStr
+                   << ": " << results.affected_rows() << '\n'
+                   ;
+          } catch (std::exception& e) {
+            LOG_WARN << "Skipping " << uuidStr
+                     << " as error encountered -- " << e.what()
+                     << std::endl;
+          }
+        }
 
         t.commit();
       }

@@ -32,6 +32,7 @@
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
 #include <netmeld/core/utils/Exit.hpp>
 #include <netmeld/datastore/utils/QueriesCommon.hpp>
+#include <netmeld/datastore/utils/NetmeldPostgresConversions.hpp>
 
 #include <netmeld/playbook/utils/QueriesPlaybook.hpp>
 

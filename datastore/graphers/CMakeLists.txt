@@ -44,7 +44,12 @@ Netmeld tool suite.  Included are the library and headers necessary to \
 run or expand capabilities through tool development, as well as the \
 binaries necessary to graph data from the Netmeld Datastore.")
 nm_add_deb_description(${desc})
-set(deps "netmeld-core, netmeld-datastore")
+set(deps "\
+  netmeld-core,\
+  netmeld-datastore\
+  ")
 nm_add_deb_depends(${deps})
-set(deps "graphviz")
+set(deps "\
+  graphviz\
+  ")
 nm_add_deb_recommends(${deps})
