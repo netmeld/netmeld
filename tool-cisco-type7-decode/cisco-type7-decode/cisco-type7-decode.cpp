@@ -104,7 +104,20 @@ class Tool : public nmct::AbstractTool
             "store-in-db",
             NULL_SEMANTIC,
             "Used to store results in the database. Requires Netmeld and PostgreSQL."
-      ));
+          ));
+
+      opts.addAdvancedOption("db-name", std::make_tuple(
+          "db-name",
+          po::value<std::string>()->default_value("site"),
+          "Database to connect to.")
+          );
+
+      opts.addAdvancedOption("db-args", std::make_tuple(
+          "db-args",
+          po::value<std::string>()->default_value(""),
+          "Additional database connection args."
+          " Space separated `key=value` libpqxx connection string parameters.")
+          );
     }
 
   protected: // Methods part of subclass API
@@ -130,19 +143,25 @@ class Tool : public nmct::AbstractTool
       }
 
       std::regex badChars("[^0-9a-fA-F]");
+      auto encoded = std::regex_replace(encPass, badChars, "");
+      auto decoded = oss.str();
 
       if (opts.exists("store-in-db")) {
         if (nmcu::isCmdAvailable("nmdb-initialize") && nmcu::isCmdAvailable("psql")) {
-          LOG_INFO << "placeholder: storing '" + oss.str() + "' in database";
+          nmcu::cmdExecOrExit(std::string("psql site -c \"insert into raw_tool_observations (tool_run_id, category, observation)")
+                  + "values ('32b2fd62-08ff-4d44-8da7-6fbd581a90c6', 'notable', 'Encoded: "
+                  + encoded
+                  + "\nDecoded: "
+                  + decoded
+                  + "') on conflict do nothing\"");
         } else {
-          LOG_INFO << "warning: could not save to psql because Netmeld or Psql could not be found";
+          LOG_INFO << "warning: could not save to psql because Netmeld or psql could not be found";
         }
       } else {
-        LOG_INFO << std::regex_replace(encPass, badChars, "")
+        LOG_INFO << encoded
                  << ": "
-                 << oss.str()
-                 << '\n'
-                 ;
+                 << decoded
+                 << '\n';
       }
 
       return nmcu::Exit::SUCCESS;
