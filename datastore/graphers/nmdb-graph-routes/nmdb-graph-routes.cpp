@@ -408,7 +408,7 @@ class Tool : public nmdt::AbstractGraphTool
           e = edgeLookup.at(dst).at(src);
         } else {
           bool inserted;
-          tie(e, inserted) = boost::add_edge(u, v, graph);
+          std::tie(e, inserted) = boost::add_edge(u, v, graph);
           edgeLookup[src][dst] = e;
         }
         if (!style.empty()) {
