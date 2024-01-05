@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -28,151 +28,10 @@
 
 #include <netmeld/datastore/tools/AbstractGraphTool.hpp>
 
+#include "GraphHelper.hpp"
+
 namespace nmdt = netmeld::datastore::tools;
 namespace nmcu = netmeld::core::utils;
-
-// ----------------------------------------------------------------------------
-// Graphing Helpers
-// ----------------------------------------------------------------------------
-struct VertexProperties
-{
-  std::string name;
-  // cppcheck-suppress unusedStructMember
-  std::string label;
-  // cppcheck-suppress unusedStructMember
-  std::string shape;
-  // cppcheck-suppress unusedStructMember
-  std::string style;
-  // cppcheck-suppress unusedStructMember
-  std::string fillcolor;
-
-  double distance     {std::numeric_limits<double>::infinity()};
-  // cppcheck-suppress unusedStructMember
-  double extraWeight  {0.0};
-};
-
-
-struct EdgeProperties
-{
-  // cppcheck-suppress unusedStructMember
-  std::string label;
-  // cppcheck-suppress unusedStructMember
-  std::string style;
-
-  // cppcheck-suppress unusedStructMember
-  std::string direction;
-  // cppcheck-suppress unusedStructMember
-  std::string arrowhead;
-  // cppcheck-suppress unusedStructMember
-  std::string arrowtail;
-
-  double weight {1.0};
-};
-
-
-using NetworkGraph =
-boost::adjacency_list<
-  boost::listS,         // OutEdgeList
-  boost::vecS,          // VertexList
-  boost::undirectedS,   // Directed/Undirected
-  VertexProperties,     // VertexProperties
-  EdgeProperties,       // EdgeProperties
-  boost::no_property    // GraphProperties
->;
-
-using Vertex = NetworkGraph::vertex_descriptor;
-using Edge   = NetworkGraph::edge_descriptor;
-
-const std::string nodeShape {"box"};
-const std::string netShape  {"oval"};
-
-class LabelWriter
-{
-  private:
-    const NetworkGraph& g_;
-
-  public:
-    explicit LabelWriter(const NetworkGraph& g) : g_(g) { }
-
-    void operator()(std::ostream& os, const Vertex& v) const
-    {
-      os << "[shape=\"" << g_[v].shape << "\", ";
-
-      if (!g_[v].style.empty()) {
-        os << "style=\"" << g_[v].style << "\", ";
-      }
-
-      if (!g_[v].fillcolor.empty()) {
-        os << "fillcolor=\"" << g_[v].fillcolor << "\", ";
-      }
-
-      os << "label=\"" << g_[v].label << "\"]";
-    }
-
-    void operator()(std::ostream& os, const Edge& e) const
-    {
-      const Vertex s {boost::source(e, g_)};
-      const Vertex t {boost::target(e, g_)};
-
-      const double distanceRatio {(g_[s].distance / g_[t].distance)};
-
-      os << "[";
-
-      if ((0.999 < distanceRatio) && (distanceRatio < 1.001)) {
-        os << "constraint=\"false\", ";
-      }
-
-      if (!g_[e].style.empty()) {
-        os << "style=\"" << g_[e].style << "\", ";
-      }
-
-      if (!g_[e].direction.empty()) {
-        os << "dir=\"" << g_[e].direction << "\", ";
-      }
-
-      if (!g_[e].arrowhead.empty()) {
-        os << "arrowhead=\"" << g_[e].arrowhead << "\", ";
-      }
-
-      if (!g_[e].arrowtail.empty()) {
-        os << "arrowtail=\"" << g_[e].arrowtail << "\", ";
-      }
-
-      os << "label=\"" << g_[e].label << "\"]";
-    }
-};
-
-class GraphWriter
-{
-  public:
-    void operator()(std::ostream& os) const
-    {
-      os << "splines=true;\n"
-         << "nodesep=1.00;\n"
-         << "ranksep=2.50;\n"
-         << "overlap=false;\n"
-         ;
-    }
-};
-
-class IsRedundantEdge
-{
-  private:
-    const NetworkGraph& g_;
-  public:
-    explicit IsRedundantEdge(const NetworkGraph& g) : g_(g) { }
-
-    bool operator()(Edge const& e) const
-    {
-      const Vertex s {boost::source(e, g_)};
-      const Vertex t {boost::target(e, g_)};
-
-      return (get<1>(boost::edge(t, s, g_))
-          && (   (g_[s].distance > g_[t].distance)
-              || ((s > t) && (g_[s].distance >= g_[t].distance))
-             ));
-    }
-};
 
 
 // ============================================================================
@@ -185,6 +44,12 @@ class Tool : public nmdt::AbstractGraphTool
 
     NetworkGraph graph;
 
+    const std::string nodeShape {"box"};
+    const std::string netShape  {"oval"};
+    // naively colorblind safe:
+    // - (use paul tol) https://davidmathlogic.com/colorblind/
+    const std::string green {"#117733"};
+
     const nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
 
     bool useIcons           {false};
@@ -195,13 +60,9 @@ class Tool : public nmdt::AbstractGraphTool
     std::string respondingState;
     bool        passRespondingState {false};
 
-    // naively colorblind safe:
-    // - (use paul tol) https://davidmathlogic.com/colorblind/
-    std::string green {"#117733"};
-
   public:
     Tool() : nmdt::AbstractGraphTool
-      ("--layer information",
+      ("targeted network layer information",
        PROGRAM_NAME, PROGRAM_VERSION)
     {}
 
@@ -209,8 +70,8 @@ class Tool : public nmdt::AbstractGraphTool
     {
       opts.addRequiredOption("layer", std::make_tuple(
           "layer,L",
-          po::value<std::string>()->required(),
-          "Layer of the network stack to graph")
+          po::value<unsigned int>()->required()->default_value(3),
+          "Layer (2,3) of the network stack to graph")
         );
       opts.addRequiredOption("device-id", std::make_tuple(
           "device-id",
@@ -257,8 +118,17 @@ class Tool : public nmdt::AbstractGraphTool
     {
       pqxx::connection db {getDbConnectString()};
 
-      db.prepare ("select_ip_nets_extra_weights"
-        , R"(
+      // Layer 2
+      db.prepare("select_device_connections", R"(
+          SELECT DISTINCT
+              self_device_id, self_interface_name
+            , peer_device_id, peer_interface_name
+          FROM device_connections
+          )"
+        );
+
+      // Layer 3
+      db.prepare ("select_ip_nets_extra_weights", R"(
           SELECT DISTINCT
               n.ip_net                      AS ip_net
             , COALESCE(w.extra_weight, 0.0) AS extra_weight
@@ -271,8 +141,32 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_network_descriptions"
-        , R"(
+      db.prepare("count_network_devices", R"(
+          SELECT
+            COUNT(dia.device_id)
+          FROM device_ip_addrs AS dia
+          JOIN ip_nets AS n
+            ON (dia.ip_addr <<= n.ip_net)
+          JOIN ip_addrs AS ia
+            ON (dia.ip_addr = ia.ip_addr)
+          WHERE ($1 = n.ip_net)
+            AND (ia.is_responding = ANY($2))
+          )"
+        );
+
+      db.prepare("select_network_vlan", R"(
+          SELECT DISTINCT
+              vlan AS vlan
+          FROM (
+            SELECT vlan, ip_net FROM vlans_ip_nets
+            UNION
+            SELECT vlan, ip_net FROM device_vlans_ip_nets
+          ) AS foo
+          WHERE ($1 = ip_net)
+          )"
+        );
+
+      db.prepare("select_network_descriptions", R"(
           SELECT DISTINCT
               (LOWER(TRIM(description))) AS description
           FROM (
@@ -286,21 +180,22 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_vlan_by_ip_net"
-        , R"(
+      db.prepare("select_network_connections", R"(
           SELECT DISTINCT
-              vlan AS vlan
-          FROM (
-            SELECT vlan, ip_net FROM vlans_ip_nets
-            UNION
-            SELECT vlan, ip_net FROM device_vlans_ip_nets
-          ) AS foo
-          WHERE ($1 = ip_net)
+              ia.ip_addr    AS ip_addr
+            , dia.device_id AS device_id
+          FROM ip_addrs AS ia
+          LEFT OUTER JOIN device_ip_addrs AS dia
+            ON (ia.ip_addr = dia.ip_addr)
+          JOIN ip_nets AS n
+            ON (ia.ip_addr <<= n.ip_net)
+          WHERE ($1 = n.ip_net) AND (ia.is_responding = ANY($2))
+          ORDER BY ia.ip_addr
           )"
         );
 
-      db.prepare("select_devices"
-        , R"(
+      // Common
+      db.prepare("select_devices", R"(
           SELECT DISTINCT
               d.device_id               AS device_id
             , dc.color                  AS device_color
@@ -316,8 +211,7 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_device_ifaces"
-        , R"(
+      db.prepare("select_device_interfaces", R"(
           SELECT DISTINCT
               dia.interface_name  AS interface_name
             , dia.ip_addr         AS ip_addr
@@ -338,23 +232,7 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_devices_in_network"
-        , R"(
-          SELECT DISTINCT
-              dia.device_id AS device_id
-          FROM device_ip_addrs AS dia
-          JOIN ip_nets AS n
-            ON (dia.ip_addr <<= n.ip_net)
-          JOIN ip_addrs AS ia
-            ON (dia.ip_addr = ia.ip_addr)
-          WHERE ($1 = n.ip_net)
-            AND (ia.is_responding = ANY($2))
-          ORDER BY dia.device_id
-          )"
-        );
-
-      db.prepare("select_mac_addrs_without_devices"
-        , R"(
+      db.prepare("select_mac_addrs_without_devices", R"(
           SELECT DISTINCT
               maia.ip_addr    AS ip_addr
             , mawd.mac_addr   AS mac_addr
@@ -369,8 +247,7 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_ip_addrs_without_devices"
-        , R"(
+      db.prepare("select_ip_addrs_without_devices", R"(
           SELECT DISTINCT
               iawd.ip_addr    AS ip_addr
             , maia.mac_addr   AS mac_addr
@@ -385,8 +262,7 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_hostnames_by_ip_addr"
-        , R"(
+      db.prepare("select_hostnames_by_ip_addr", R"(
           SELECT DISTINCT
               hostname
           FROM hostnames
@@ -395,40 +271,14 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_ip_addrs_and_devices_in_network"
-        , R"(
-          SELECT DISTINCT
-              ia.ip_addr    AS ip_addr
-            , dia.device_id AS device_id
-          FROM ip_addrs AS ia
-          LEFT OUTER JOIN device_ip_addrs AS dia
-            ON (ia.ip_addr = dia.ip_addr)
-          JOIN ip_nets AS n
-            ON (ia.ip_addr <<= n.ip_net)
-          WHERE ($1 = n.ip_net) AND (ia.is_responding = ANY($2))
-          ORDER BY ia.ip_addr
-          )"
-        );
-
-      db.prepare("select_device_connections"
-        , R"(
-          SELECT DISTINCT
-              self_device_id, self_interface_name
-            , peer_device_id, peer_interface_name
-          FROM device_connections
-          )"
-        );
-
-      db.prepare("select_device_virtualizations"
-        , R"(
+      db.prepare("select_device_virtualizations", R"(
           SELECT DISTINCT
               host_device_id, guest_device_id
           FROM device_virtualizations
           )"
         );
 
-      db.prepare("select_traceroutes"
-        , R"(
+      db.prepare("select_traceroutes", R"(
           SELECT DISTINCT
               origin   , last_hop
             , hop_count, next_hop_ip_addr
@@ -453,7 +303,7 @@ class Tool : public nmdt::AbstractGraphTool
         passRespondingState = true;
       }
 
-      int layer {std::stoi(opts.getValue("layer"))};
+      unsigned int layer {opts.getValueAs<unsigned int>("layer")};
       switch (layer) {
         case 2:
           buildLayer2Graph(db);
@@ -465,7 +315,7 @@ class Tool : public nmdt::AbstractGraphTool
           break;
       }
 
-      std::string const deviceId {nmcu::toLower(opts.getValue("device-id"))};
+      const std::string deviceId {nmcu::toLower(opts.getValue("device-id"))};
       if (!vertexLookup.count(deviceId)) {
         LOG_ERROR << "Specified device-id ("
                   << deviceId << ") not found in datastore"
@@ -503,82 +353,79 @@ class Tool : public nmdt::AbstractGraphTool
     void
     buildLayer2Graph(pqxx::connection& db)
     {
-      pqxx::work t {db};
+      pqxx::read_transaction rt {db};
 
       // Create a graph vertex (and label)
       // for each device.
-      createVertexForAssociated(t);
+      createVertexForAssociated(rt);
       // for each MAC address that is not yet associated with a device.
-      createVertexForUnassociated(t, "mac_addr");
+      createVertexForUnassociated(rt, "mac_addr");
 
       // Create graph edges that connect two physical ports.
-      pqxx::result physConnRows {t.exec_prepared("select_device_connections")};
-      for (const auto& physConnRow : physConnRows) {
-        std::string selfDeviceName;
-        physConnRow.at("self_device_id").to(selfDeviceName);
-        std::string peerDeviceName;
-        physConnRow.at("peer_device_id").to(peerDeviceName);
+      for ( const auto& physConnRow
+          : rt.exec_prepared("select_device_connections")
+          )
+      {
+        std::string selfDeviceName {physConnRow.at("self_device_id").c_str()};
+        std::string peerDeviceName {physConnRow.at("peer_device_id").c_str()};
 
         addBidirectionalEdge(selfDeviceName, peerDeviceName);
       }
-
-      t.commit();
     }
 
     void
     buildLayer3Graph(pqxx::connection& db)
     {
-      pqxx::work t {db};
+      pqxx::read_transaction rt {db};
 
       // Create a graph vertex (and label)
       // for each device.
-      createVertexForAssociated(t);
+      createVertexForAssociated(rt);
       // for each MAC address that is not yet associated with a device.
-      createVertexForUnassociated(t, "ip_addr");
+      createVertexForUnassociated(rt, "ip_addr");
 
       // Create a graph vertex for each IP network.
-      pqxx::result ipNetRows {t.exec_prepared("select_ip_nets_extra_weights")};
-      for (const auto& ipNetRow : ipNetRows) {
-        std::string ipNet;
-        ipNetRow.at("ip_net").to(ipNet);
-        double extraWeight;
-        ipNetRow.at("extra_weight").to(extraWeight);
+      for ( const auto& ipNetRow
+          : rt.exec_prepared("select_ip_nets_extra_weights")
+          )
+      {
+        std::string ipNet   {ipNetRow.at("ip_net").c_str()};
+        double extraWeight  {ipNetRow.at("extra_weight").as<double>()};
 
         // Skip empty subnets if requested
-        pqxx::result netConnection {
-            t.exec_prepared("select_devices_in_network", ipNet, respondingState)
-          };
-        if (removeEmptySubnets && netConnection.size() <= 1) {
-          continue;
+        if (removeEmptySubnets) {
+          pqxx::row count {
+              rt.exec_prepared1("count_network_devices"
+                               , ipNet, respondingState
+                               )
+            };
+          if (count[0].as<unsigned int>() <= 1) {
+            continue;
+          }
         }
 
-        std::string label {(ipNet + "\\n")};
+        std::ostringstream oss;
+        oss << ipNet << R"(\n)";
 
         // Add any VLAN tag information
-        pqxx::result vlanRows {
-            t.exec_prepared("select_vlan_by_ip_net", ipNet)
-          };
+        pqxx::result vlanRows {rt.exec_prepared("select_network_vlan", ipNet)};
         if (vlanRows.size()) {
-          label += "VLAN:";
+          oss << "VLAN:";
           for (const auto& vlanRow : vlanRows) {
-            uint16_t vlan;
-            vlanRow.at("vlan").to(vlan);
-            label += (" " + std::to_string(static_cast<uint32_t>(vlan)));
+            oss << " " << vlanRow.at("vlan").c_str();
           }
-          label += "\\n";
+          oss << R"(\n)";
         }
 
         // Add any IP net description
-        pqxx::result descRows {
-            t.exec_prepared("select_network_descriptions", ipNet)
-          };
-        for (const auto& descRow : descRows) {
-          std::string description;
-          descRow.at("description").to(description);
-          label += description + "\\n";
+        for ( const auto& descRow
+            : rt.exec_prepared("select_network_descriptions", ipNet)
+            )
+        {
+          oss << descRow.at("description").c_str() << R"(\n)";
         }
 
-        addNetVertex(ipNet, label, extraWeight);
+        addNetVertex(ipNet, oss.str(), extraWeight);
 
         // only connect responding IPs to subnets; unless want specific state
         std::string state {"{t}"};
@@ -588,42 +435,37 @@ class Tool : public nmdt::AbstractGraphTool
 
         // Create graph edges that connect the IP network to the devices and IP
         // addresses in that network.
-        pqxx::result ipAddrRows {
-            t.exec_prepared("select_ip_addrs_and_devices_in_network",
-                            ipNet, state)
-          };
-        for (const auto& ipAddrRow : ipAddrRows) {
-          std::string ipAddr;
-          ipAddrRow.at("ip_addr").to(ipAddr);
-          std::string deviceName;
-          ipAddrRow.at("device_id").to(deviceName);
+        for ( const auto& ipAddrRow
+            : rt.exec_prepared("select_network_connections", ipNet, state)
+            )
+        {
+          std::string ipAddr      {ipAddrRow.at("ip_addr").c_str()};
+          std::string deviceName  {ipAddrRow.at("device_id").c_str()};
 
-          std::string const vertexName {
+          const std::string vertexName {
               deviceName.size() ? (deviceName) : (ipAddr)
             };
 
           addBidirectionalEdge(ipNet, vertexName);
         }
       }
-
-      t.commit();
     }
 
     // Create graph edges that connect VM host and guest devices.
     void
     buildVirtualizationGraph(pqxx::connection& db)
     {
-      pqxx::work t {db};
+      pqxx::read_transaction rt {db};
 
-      pqxx::result vmRows {t.exec_prepared("select_device_virtualizations")};
-      for (const auto& vmRow : vmRows) {
-        std::string hostDeviceName;
-        vmRow.at("host_device_id").to(hostDeviceName);
-        std::string guestDeviceName;
-        vmRow.at("guest_device_id").to(guestDeviceName);
+      for ( const auto& vmRow
+          : rt.exec_prepared("select_device_virtualizations")
+          )
+      {
+        std::string hostDeviceName  {vmRow.at("host_device_id").c_str()};
+        std::string guestDeviceName {vmRow.at("guest_device_id").c_str()};
 
         if (!verticesExist(guestDeviceName, hostDeviceName)) {
-          LOG_DEBUG << "buildVirtualizationGraph: Adding edge without vertex: "
+          LOG_DEBUG << "(__FUNCTION__) Missing a vertex for edge: "
                     << guestDeviceName << " -- " << hostDeviceName
                     << std::endl;
           continue;
@@ -635,14 +477,12 @@ class Tool : public nmdt::AbstractGraphTool
         Edge e;
         bool inserted;
 
-        tie(e, inserted) = boost::add_edge(u, v, graph);
+        std::tie(e, inserted) = boost::add_edge(u, v, graph);
         if (inserted) {
           graph[e].style = "dashed";
           graph[e].direction = "forward";
         }
       }
-
-      t.commit();
     }
 
     // Create graph edges that represent hops found in traceroutes
@@ -653,21 +493,19 @@ class Tool : public nmdt::AbstractGraphTool
         return;
       }
 
-      pqxx::work t {db};
+      pqxx::read_transaction rt {db};
 
-      pqxx::result tracerouteRows {t.exec_prepared("select_traceroutes")};
-      for (const auto& tracerouteRow : tracerouteRows) {
-        std::string origin;
-        tracerouteRow.at("origin").to(origin);
-        std::string destination;
-        tracerouteRow.at("last_hop").to(destination);
-        std::string hopNumber;
-        tracerouteRow.at("hop_count").to(hopNumber);
-        std::string nextHop;
-        tracerouteRow.at("next_hop_ip_addr").to(nextHop);
+      for ( const auto& tracerouteRow
+          : rt.exec_prepared("select_traceroutes")
+          )
+      {
+        std::string origin    {tracerouteRow.at("origin").c_str()};
+        std::string lastHop   {tracerouteRow.at("last_hop").c_str()};
+        std::string hopNumber {tracerouteRow.at("hop_count").c_str()};
+        std::string nextHop   {tracerouteRow.at("next_hop_ip_addr").c_str()};
 
         if (!verticesExist(origin, nextHop)) {
-          LOG_DEBUG << "buildTracerouteGraph: Adding edge without vertex: "
+          LOG_DEBUG << "(__FUCTION__) Missing a vertex for edge: "
                     << origin << " -- " << nextHop
                     << std::endl;
           continue;
@@ -679,153 +517,148 @@ class Tool : public nmdt::AbstractGraphTool
         Edge e;
         bool inserted;
 
-        tie(e, inserted) = boost::add_edge(u, v, graph);
+        std::tie(e, inserted) = boost::add_edge(u, v, graph);
         if (inserted) {
           graph[e].style = "dashed";
           graph[e].direction = "forward";
 
-          const std::string hopLabel
-              {"hop " + hopNumber + " to " + destination};
-          if (graph[e].label.empty()) {
-            graph[e].label = hopLabel;
-          } else {
-            graph[e].label += '\n' + hopLabel;
+          std::ostringstream oss(graph[e].label, std::ios_base::ate);
+          if (oss.tellp() > 0) {
+            oss << '\n';            
           }
+          oss << std::format("hop {} to {}", hopNumber, lastHop);
+          graph[e].label = oss.str();
+
           graph[e].weight = 2.0;
         }
       }
-
-      t.commit();
     }
 
     void
-    createVertexForAssociated(pqxx::transaction_base& t)
+    createVertexForAssociated(pqxx::read_transaction& rt)
     {
-      pqxx::result deviceRows {t.exec_prepared("select_devices")};
-      for (const auto& deviceRow : deviceRows) {
-        std::string deviceName;
-        deviceRow.at("device_id").to(deviceName);
-        std::string deviceColor;
-        deviceRow.at("device_color").to(deviceColor);
-        std::string deviceType;
-        deviceRow.at("device_type").to(deviceType);
-        std::string vendor;
-        deviceRow.at("vendor").to(vendor);
-        std::string model;
-        deviceRow.at("model").to(model);
+      for ( const auto& deviceRow
+          : rt.exec_prepared("select_devices")
+          )
+      {
+        std::string deviceName  {deviceRow.at("device_id").c_str()};
+        std::string deviceColor {deviceRow.at("device_color").c_str()};
+        std::string deviceType  {deviceRow.at("device_type").c_str()};
+        std::string vendor      {deviceRow.at("vendor").c_str()};
+        std::string model       {deviceRow.at("model").c_str()};
 
-        std::string label {initVertexLabel(deviceType, deviceName)};
+        std::ostringstream oss;
 
-        label += ((!vendor.empty())
-                   ? "(" + vendor + ":" + model + ":" + deviceType + ")<br/>"
-                   : "") +
-                 "<br/>";
+        oss << initVertexLabel(deviceType, deviceName);
+        
+        if (!vendor.empty()) {
+          oss << std::format("({}:{}:{})<BR/>", vendor, model, deviceType);
+        }
+        oss << "<BR/>";
 
         // Add interface(s)
-        pqxx::result ifaceRows {
-            t.exec_prepared("select_device_ifaces", deviceName, respondingState)
-          };
         bool lPassRespondingState {passRespondingState};
-        for (const auto& ifaceRow : ifaceRows) {
-          std::string ipAddr;
-          ifaceRow.at("ip_addr").to(ipAddr);
-          std::string macAddr;
-          ifaceRow.at("mac_addr").to(macAddr);
-          std::string interfaceName;
-          ifaceRow.at("interface_name").to(interfaceName);
-          bool ipResponding;
-          ifaceRow.at("ip_responding").to(ipResponding); // pgxx: false if NULL
-          bool macResponding;
-          ifaceRow.at("mac_responding").to(macResponding); // pgxx: false if NULL
+        for ( const auto& ifaceRow
+            : rt.exec_prepared("select_device_interfaces"
+                              , deviceName, respondingState
+                              )
+            )
+        {
+          std::string ipAddr        {ifaceRow.at("ip_addr").c_str()};
+          std::string macAddr       {ifaceRow.at("mac_addr").c_str()};
+          std::string interfaceName {ifaceRow.at("interface_name").c_str()};
+          // NOTE: false if NULL
+          bool ipResponding   {ifaceRow.at("ip_responding").as<bool>(false)};
+          bool macResponding  {ifaceRow.at("mac_responding").as<bool>(false)};
 
+          // IP
           if (ipResponding && !ipAddr.empty()) {
-            label += R"(<font color=")" + green + R"(">)"
-                   + ipAddr
-                   + R"(</font> )";
+            oss << std::format(R"(<FONT color="{}">{}</FONT>)", green, ipAddr);
           } else {
-            label += ipAddr + " ";
+            oss << ipAddr;
           }
+          oss << ' ';
 
+          // MAC
+          oss << '[';
           if (macResponding && !macAddr.empty()) {
-            label += R"([<font color=")" + green + R"(">)"
-                   + macAddr
-                   + R"(</font>] )";
+            oss << std::format(R"(<FONT color="{}">{}</FONT>)", green, macAddr);
           } else {
-            label += "[" + macAddr + "] ";
+            oss << macAddr;
           }
+          oss << "] ";
 
-          label += "(" + interfaceName + ")"
-                 + "<br align=\"left\"/>";
+          // Interface name
+          oss << std::format(R"(({})<BR align="left"/>)", interfaceName);
 
-          // Add hostname(s)
-          label += getHostnames(t, ipAddr);
+          // Hostname(s)
+          oss << getHostnames(rt, ipAddr);
           lPassRespondingState = true;
         }
-        label += closeVertexLabel();
+
+        // Close out table syntax
+        oss << closeVertexLabel();
 
         if (lPassRespondingState) {
-          addNodeVertex(deviceName, label, deviceColor);
+          addNodeVertex(deviceName, oss.str(), deviceColor);
         }
       }
     }
 
     void
-    createVertexForUnassociated(pqxx::transaction_base& t,
+    createVertexForUnassociated(pqxx::read_transaction& rt,
                                 const std::string& type)
     {
       if (hideUnknown) { // short-circuit if we do not want unknowns
         return;
       }
 
-      pqxx::result addrRows {
-          t.exec_prepared("select_" + type + "s_without_devices",
-                          respondingState)
-        };
-      for (const auto& addrRow : addrRows) {
-        std::string ipAddr;
-        addrRow.at("ip_addr").to(ipAddr);
-        std::string macAddr;
-        addrRow.at("mac_addr").to(macAddr);
-        std::string vendor;
-        addrRow.at("vendor_name").to(vendor);
-        std::string addr {("ip_addr" == type ? ipAddr : macAddr)};
+      for ( const auto& addrRow
+          : rt.exec_prepared("select_" + type + "s_without_devices"
+                            , respondingState
+                            )
+          )
+      {
+        std::string ipAddr  {addrRow.at("ip_addr").c_str()};
+        std::string macAddr {addrRow.at("mac_addr").c_str()};
+        std::string vendor  {addrRow.at("vendor_name").c_str()};
+        std::string addr    {("ip_addr" == type ? ipAddr : macAddr)};
 
-        std::string label {initVertexLabel("unknown", "Unknown Device")};
+        std::ostringstream oss;
 
-        label += "<br/>";
+        oss << initVertexLabel("unknown", "Unknown Device") << "<BR/>";
 
         // Add unknown interface(s)
-        label += ipAddr + " "
-               + "[" + macAddr + "] "
-               + ((!vendor.empty())
-                   ? "<br align=\"left\"/>    {" + vendor + "}"
-                   : "")
-               + "<br align=\"left\"/>";
+        oss << std::format(R"({} [{}] <BR align="left"/>)", ipAddr, macAddr);
+        if (!vendor.empty()) {
+          oss << R"(    {)" << vendor << R"(}<BR align="left"/>)";
+        }
 
         // Add hostname(s)
-        label += getHostnames(t, ipAddr);
+        oss << getHostnames(rt, ipAddr);
 
-        label += closeVertexLabel();
+        // Close out table syntax
+        oss << closeVertexLabel();
 
-        addNodeVertex(addr, label);
+        addNodeVertex(addr, oss.str());
       }
     }
 
     std::string
     initVertexLabel(const std::string& typeName, const std::string& name)
     {
-      std::string label {"\" + <<TABLE border=\"0\" cellborder=\"0\"><TR>"};
-
-      label += getUseIconString(typeName);
-      label += "<td><font point-size=\"10\">" + name + "<br/>";
-
-      return label;
+      return std::format(R"(" + <<TABLE border="0" cellborder="0"><TR>{})"
+                         R"(<TD><FONT point-size="10">{}<BR/>)"
+                        , getUseIconString(typeName)
+                        , name
+                        )
+        ;
     }
 
     std::string
     closeVertexLabel()
     {
-      return "</font></td></TR></TABLE>> + \"";
+      return R"(</FONT></TD></TR></TABLE>> + ")";
     }
 
     void
@@ -840,7 +673,8 @@ class Tool : public nmdt::AbstractGraphTool
 
       graph[v].shape = nodeShape;
       graph[v].style = "filled";
-      if (!fillcolor.empty()) {
+      graph[v].fillcolor = fillcolor;
+      if (!fillcolor.empty()) { // once set, don't unset
         graph[v].fillcolor = fillcolor;
       }
     }
@@ -860,36 +694,32 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     std::string
-    getHostnames(pqxx::transaction_base& t, std::string ipAddr)
+    getHostnames(pqxx::read_transaction& rt, const std::string& ipAddr)
     {
-      std::string label {""};
-
-      if (!ipAddr.empty()) {
-        pqxx::result hostnameRows {
-            t.exec_prepared("select_hostnames_by_ip_addr", ipAddr)
-          };
-        for (const auto& hostnameRow : hostnameRows) {
-          std::string hostname;
-          hostnameRow.at("hostname").to(hostname);
-          label += ("        " + hostname + "<br align=\"left\"/>");
-        }
+      if (ipAddr.empty()) { // short-circuit
+        return "";
       }
 
-      return label;
+      std::ostringstream oss;
+      for ( const auto& row
+          : rt.exec_prepared("select_hostnames_by_ip_addr", ipAddr)
+          )
+      {
+        oss << std::format(R"({:>9}<BR align="left"/>)", row[0].c_str());
+      }
+
+      return oss.str();
     }
 
     std::string
-    getUseIconString(std::string deviceType)
+    getUseIconString(const std::string& deviceType)
     {
-      if (!useIcons) {
+      if (!useIcons) { // short-circuit
         return "";
       }
 
       sfs::path imagePath  {opts.getValue("icons-folder")};
       std::string iconPath {imagePath.string() + "/unknown.svg"};
-      std::string label {
-          "<TD width=\"60\" height=\"50\" fixedsize=\"true\"><IMG SRC=\""
-        };
 
       if (!deviceType.empty()) {
         for (auto& pathIter : sfs::recursive_directory_iterator(imagePath)) {
@@ -899,43 +729,46 @@ class Tool : public nmdt::AbstractGraphTool
                          fileName.begin(), fileName.end(),
                          [](auto a, auto b) {
                             return std::tolower(a) == std::tolower(b);
-                         })) {
+                         }))
+          {
             iconPath = fileName;
             break;
           }
         }
       }
 
-      label += iconPath + "\" scale=\"true\"/></TD>";
-
-      return label;
+      return std::format(R"(<TD width="60" height="50" fixedsize="true">)"
+                         R"(<IMG src="{}" scale="true"/></TD>)"
+                        , iconPath
+                        )
+        ;
     }
 
     void
-    addBidirectionalEdge(std::string orig, std::string dest)
+    addBidirectionalEdge(const std::string& orig, const std::string& dest)
     {
-
       if (!verticesExist(orig, dest)) {
-        LOG_DEBUG << "addBidirectionalEdge: Adding edge without vertex: "
+        LOG_DEBUG << "(__FUNCTION__) Missing a vertex for edge: "
                   << orig << " -- " << dest
                   << std::endl;
         return;
       }
 
-      const Vertex u {vertexLookup.at(orig)};
-      const Vertex v {vertexLookup.at(dest)};
+      const Vertex source {vertexLookup.at(orig)};
+      const Vertex target {vertexLookup.at(dest)};
 
-      // Add the edge in both "directions", "wrong direction" corrected later
-      if (!(get<1>(boost::edge(u, v, graph)) &&
-            get<1>(boost::edge(v, u, graph)))) {
-        Edge e;
+      // Ensure edges in both "directions", "wrong direction" corrected later
+      bool stEdgeExists {std::get<1>(boost::edge(source, target, graph))};
+      bool tsEdgeExists {std::get<1>(boost::edge(target, source, graph))};
+      if (!(stEdgeExists && tsEdgeExists)) {
+        Edge edge;
         bool inserted;
 
-        tie(e, inserted) = boost::add_edge(u, v, graph);
-        graph[e].weight += graph[u].extraWeight;
+        std::tie(edge, inserted) = boost::add_edge(source, target, graph);
+        graph[edge].weight += graph[source].extraWeight;
 
-        tie(e, inserted) = boost::add_edge(v, u, graph);
-        graph[e].weight += graph[u].extraWeight;
+        std::tie(edge, inserted) = boost::add_edge(target, source, graph);
+        graph[edge].weight += graph[source].extraWeight;
       }
     }
 
@@ -950,7 +783,7 @@ class Tool : public nmdt::AbstractGraphTool
       }
 
       if constexpr (sizeof...(rest) > 0) {
-        exist = exist && verticesExist(rest...);
+        exist = (exist && verticesExist(rest...));
       }
 
       return exist;
