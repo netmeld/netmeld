@@ -24,6 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <format>
 #include <regex>
 
 #include <netmeld/core/tools/AbstractTool.hpp>
@@ -148,18 +149,18 @@ class Tool : public nmct::AbstractTool
 
       if (opts.exists("store-in-db")) {
         if (nmcu::isCmdAvailable("nmdb-initialize") && nmcu::isCmdAvailable("psql")) {
-          nmcu::cmdExecOrExit(std::string("psql site -c \"insert into raw_tool_observations (tool_run_id, category, observation)")
-                  + "values ('32b2fd62-08ff-4d44-8da7-6fbd581a90c6', 'notable', 'Encoded: "
-                  + encoded
-                  + "\nDecoded: "
-                  + decoded
-                  + "') on conflict do nothing\"");
+          std::string dbName {opts.getValue("db-name")};
+          std::string dbArgs {opts.getValue("db-args")};
+          nmcu::cmdExecOrExit(
+              std::format(R"(psql {} --dbname={} -c "insert into raw_tool_observations (tool_run_id, category, observation) )"
+                          R"(values ('{}', '{}', 'Encoded: {}\nDecoded: {}') on conflict do nothing")",
+                          dbArgs, dbName, "32b2fd62-08ff-4d44-8da7-6fbd581a90c6", "notable", encoded, decoded));
         } else {
           LOG_INFO << "warning: could not save to psql because Netmeld or psql could not be found";
         }
       } else {
-        LOG_INFO << encoded
-                 << ": "
+        LOG_INFO << "Encoded: "<< encoded
+                 << "Decoded:"
                  << decoded
                  << '\n';
       }
