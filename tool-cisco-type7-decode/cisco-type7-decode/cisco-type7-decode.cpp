@@ -159,10 +159,7 @@ class Tool : public nmct::AbstractTool
           LOG_INFO << "warning: could not save to psql because Netmeld or psql could not be found";
         }
       } else {
-        LOG_INFO << "Encoded: "<< encoded
-                 << "Decoded:"
-                 << decoded
-                 << '\n';
+        LOG_INFO << encoded << ": " << decoded << '\n';
       }
 
       return nmcu::Exit::SUCCESS;
