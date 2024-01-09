@@ -1147,8 +1147,12 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       const std::string nhType{
         nhTypeMatch.node().text().as_string()
       };
-      if ("Discard" == nhType) {
+      if ("Discard" == nhType) { // drop
         route.setIfaceName("discard");
+        route.setNullRoute(true);
+      }
+      if ("Reject" == nhType) { // drop and send icmp
+        route.setIfaceName("reject");
         route.setNullRoute(true);
       }
     }
