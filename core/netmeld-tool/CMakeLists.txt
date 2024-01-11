@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -23,32 +23,13 @@
 # =============================================================================
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
-set(MODULE_VERSION "2.0")
 
-target_as_library(common)
-
-
-foreach(ITEM
-    netmeld-tool
+add_executable(${TGT_TOOL}
+    ${TGT_TOOL}.cpp
   )
-  target_as_tool(${ITEM})
-endforeach()
-# ----------------------------------------------------------------------
-# Deb Creation
-# ----------------------------------------------------------------------
-set(desc "This package contains the Core library and headers \
-necessary to run the Netmeld tool suite or expand capabilities \
-through tool development.")
-nm_add_deb_description(${desc})
-#set(CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS ON
-#    CACHE INTERNAL CPACK_DEBIAN_CORE_PACKAGE_SHLIBDEPS
-#   )
-set(deps "\
- libboost-date-time${BOOST_PKG_NAME_VERSION},\
- libboost-program-options${BOOST_PKG_NAME_VERSION},\
- libc6 (>= 2.25),\
- libgcc-s1 (>= 3.0),\
- libstdc++6 (>= 9)\
- ")
-nm_add_deb_depends(${deps})
-nm_add_deb_control_data(debian-control)
+
+target_link_libraries(${TGT_TOOL}
+    netmeld-datastore
+  )
+
+nm_install_bin(${TGT_TOOL})
