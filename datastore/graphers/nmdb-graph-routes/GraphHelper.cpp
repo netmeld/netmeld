@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,43 +24,67 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <format>
+
 #include "GraphHelper.hpp"
+
+
+//==============================================================================
+// IsRedundantEdge
+//==============================================================================
+IsRedundantEdge::IsRedundantEdge(const RouteGraph& _g) : graph(_g)
+{}
+
+bool
+IsRedundantEdge::operator()(const Edge& e) const
+{
+  const Vertex s {boost::source(e, graph)};
+  const Vertex t {boost::target(e, graph)};
+
+  bool otherEdgeExists  {std::get<1>(boost::edge(t, s, graph))};
+  bool sFarther1        {graph[s].distance > graph[t].distance};
+  bool sFarther2        {(s > t) && (graph[s].distance >= graph[t].distance)};
+
+  return otherEdgeExists && (sFarther1 || sFarther2);
+}
+
 
 //==============================================================================
 // LabelWriter
 //==============================================================================
-LabelWriter::LabelWriter(const RouteGraph& _graph) :
-  graph(_graph)
+LabelWriter::LabelWriter(const RouteGraph& _graph) : graph(_graph)
 {}
 
 void
-LabelWriter::operator()(std::ostream& os, Vertex const& v) const
+LabelWriter::operator()(std::ostream& os, const Vertex& v) const
 {
-  os << "["
-     << R"(shape=")" << graph[v].shape << '"'
-     << R"(, style=")" << graph[v].style << '"'
-     << R"(, fillcolor=")" << graph[v].fillcolor << '"'
-     << R"(, label=")" << graph[v].label << '"'
-     << "]";
+  os << std::format(R"([shape="{}", style="{}", fillcolor="{}", label="{}"])"
+                   , graph[v].shape
+                   , graph[v].style
+                   , graph[v].fillcolor
+                   , graph[v].label
+                   )
+     ;
 }
 
 void
-LabelWriter::operator()(std::ostream& os, Edge const& e) const
+LabelWriter::operator()(std::ostream& os, const Edge& e) const
 {
-  Vertex const s = boost::source(e, graph);
-  Vertex const t = boost::target(e, graph);
+  const Vertex s {boost::source(e, graph)};
+  const Vertex t {boost::target(e, graph)};
 
-  double const distance_ratio = (graph[s].distance / graph[t].distance);
-  std::string constraint;
-  if ((0.999 < distance_ratio) && (distance_ratio < 1.001)) {
-    constraint = ", constraint=false";
-  }
+  const double distanceRatio {(graph[s].distance / graph[t].distance)};
 
-  os << "["
-     << R"(label=")" << graph[e].label << '"'
-     << R"(, style=")" << graph[e].style << '"'
-     << constraint
-     << "]";
+  os << std::format(R"([constraint="{}", style="{}", dir="{}")"
+                    R"(, arrowhead="{}", arrowtail="{}", label="{}"])"
+                   , !((0.999 < distanceRatio) && (distanceRatio < 1.001))
+                   , graph[e].style
+                   , graph[e].direction
+                   , graph[e].arrowhead
+                   , graph[e].arrowtail
+                   , graph[e].label
+                   )
+     ;
 }
 
 

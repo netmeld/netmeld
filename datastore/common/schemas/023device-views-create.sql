@@ -234,6 +234,35 @@ GROUP BY
   , metric
 HAVING (max(outgoing_interface_name) IS NULL)
 ;
+-- TODO ? fully simplified
+--SELECT DISTINCT
+--    device_id                                   AS device_id
+--  , vrf_id                                      AS vrf_id
+--  , table_id                                    AS table_id
+--  , is_active                                   AS is_active
+--  , dst_ip_net                                  AS dst_ip_net
+--  , next_vrf_id                                 AS next_vrf_id
+--  , next_table_id                               AS next_table_id
+--  , next_hop_ip_addr                            AS next_hop_ip_addr
+--  , max(COALESCE(outgoing_interface_name), '')  AS outgoing_interface_name
+--  , protocol                                    AS protocol
+--  , administrative_distance                     AS administrative_distance
+--  , metric                                      AS metric
+--  , max(COALESCE(description, ''))              AS description
+--FROM raw_device_ip_routes
+--GROUP BY
+--    device_id
+--  , vrf_id
+--  , table_id
+--  , is_active
+--  , dst_ip_net
+--  , next_vrf_id
+--  , next_table_id
+--  , next_hop_ip_addr
+--  , protocol
+--  , administrative_distance
+--  , metric
+--;
 
 
 CREATE OR REPLACE VIEW device_ip_route_connections AS

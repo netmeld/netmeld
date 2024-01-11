@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,8 +42,8 @@ struct VertexProperties
   std::string style;
   std::string fillcolor;
 
-  double distance = std::numeric_limits<double>::infinity();
-  double extra_weight = 0.0;
+  double distance {std::numeric_limits<double>::infinity()};
+  double extra_weight {0.0};
 };
 
 struct EdgeProperties
@@ -51,7 +51,11 @@ struct EdgeProperties
   std::string label;
   std::string style;
 
-  double weight = 1.0;
+  std::string direction;
+  std::string arrowhead;
+  std::string arrowtail;
+
+  double weight {1.0};
 };
 
 
@@ -60,7 +64,7 @@ boost::adjacency_list<
   boost::listS,        // OutEdgeList
   boost::vecS,         // VertexList
   //boost::directedS,    // Directed/Undirected
-  boost::undirectedS,    // Directed/Undirected
+  boost::undirectedS,  // Directed/Undirected
   VertexProperties,    // VertexProperties
   EdgeProperties,      // EdgeProperties
   boost::no_property   // GraphProperties
@@ -73,20 +77,11 @@ using Edge   = RouteGraph::edge_descriptor;
 class IsRedundantEdge
 {
   private:
-    const RouteGraph& g_;
+    const RouteGraph& graph;
   public:
-    explicit IsRedundantEdge(const RouteGraph& g) : g_(g) { }
+    explicit IsRedundantEdge(const RouteGraph&);
 
-    bool operator()(Edge const& e) const
-    {
-      const Vertex s {boost::source(e, g_)};
-      const Vertex t {boost::target(e, g_)};
-
-      return (get<1>(boost::edge(t, s, g_))
-          && (   (g_[s].distance > g_[t].distance)
-              || ((s > t) && (g_[s].distance >= g_[t].distance))
-             ));
-    }
+    bool operator()(const Edge&) const;
 };
 
 
@@ -96,13 +91,13 @@ class IsRedundantEdge
 class LabelWriter
 {
   private:
-    RouteGraph const& graph;
+    const RouteGraph& graph;
 
   public:
     explicit LabelWriter(const RouteGraph&);
 
-    void operator()(std::ostream&, Vertex const&) const;
-    void operator()(std::ostream&, Edge const&) const;
+    void operator()(std::ostream&, const Vertex&) const;
+    void operator()(std::ostream&, const Edge&) const;
 
 };
 
