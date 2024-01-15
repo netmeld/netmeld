@@ -174,6 +174,14 @@ class Tool : public nmdt::AbstractGraphTool
                 ELSE
                   (2^(128 - MASKLEN(dst_ip_net)))
               END AS count
+            , CASE
+                WHEN (COALESCE(MAX(outgoing_interface_name), '')
+                      IN ('discard', 'null0', 'reject')
+                     ) THEN
+                  true
+                ELSE
+                  false
+              END AS is_blackhole
           FROM device_ip_routes
           WHERE is_active
 --            AND $1 <<= dst_ip_net
@@ -282,12 +290,14 @@ class Tool : public nmdt::AbstractGraphTool
           )
       {
         const std::string nextHopIpAddr {route.at("next_hop_ip_addr").c_str()};
+        const std::string dstIpNet      {route.at("dst_ip_net").c_str()};
         const double hostCount          {route.at("count").as<double>()};
+        bool isBlackhole                {route.at("is_blackhole").as<bool>()};
 
         // Except for default route, routes can not overlap
         LOG_DEBUG << std::format("Route: On {} -- to {} via {} ({})\n"
                                 , id
-                                , route.at("dst_ip_net").c_str()
+                                , dstIpNet
                                 , nextHopIpAddr
                                 , route.at("outgoing_interface_name").c_str()
                                 )
@@ -304,11 +314,18 @@ class Tool : public nmdt::AbstractGraphTool
           hostsToCover -= hostCount;
         }
 
-        // last hop found IP/CIDR is destination; else inspect further
-        if (testDestIp == nextHopIpAddr) {
+        // last hop found; IP/CIDR is destination
+        if (testDestIp == nextHopIpAddr || testDestIp == dstIpNet) {
           LOG_DEBUG << "Final hop found\n";
           addVertexRoute(route, inIfaceName);
           addEdge(id, testDestIp);
+        }
+        // last hop found; route ultimately discards packets
+        else if (isBlackhole) {
+          LOG_DEBUG << "Blackhole route found\n";
+          addVertexRoute(route, inIfaceName);
+          addVertex("octagon", "Blackhole");
+          addEdge(id, "Blackhole");
         }
         // route via interface, possible unknown next hop (i.e., no arp data)
         else if (nextHopIpAddr.empty()) {
@@ -383,20 +400,19 @@ class Tool : public nmdt::AbstractGraphTool
 
       if (!vertexDetails.contains(id)) {
         vertexDetails.emplace(id, std::set<std::string>());
+        addVertex("box", id);
       }
 
       if (!noRouteDetails) {
         vertexDetails.at(id).insert(
-            std::format(R"(From {} to {} via {}/{}<br align="left"/>)"
+            std::format(R"(From {} to {} via {} ({})<br align="left"/>)"
                        , inIfaceName
                        , route.at("dst_ip_net").c_str()
-                       , route.at("outgoing_interface_name").c_str()
                        , route.at("next_hop_ip_addr").c_str()
+                       , route.at("outgoing_interface_name").c_str()
                        )
           );
       }
-
-      addVertex("box", id);
     }
 
     void
