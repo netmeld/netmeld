@@ -53,24 +53,23 @@ Parser::Parser() : Parser::base_type(start)
     *(  (qi::lit("no cdp") >> (qi::lit("run") | qi::lit("enable")) > qi::eol)
            [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
 
-      | ((qi::string("PIX") | qi::string("ASA"))
-         >> qi::lit("Version") > *token > qi::eol)
-          [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
+      | ( (qi::string("PIX") | qi::string("ASA"))
+        >> qi::lit("Version") > *token > qi::eol
+        ) [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
 
       | (qi::lit("spanning-tree mode") >> token >> qi::eol)
 
-      | (qi::lit("spanning-tree mst configuration") >> qi::eol >>
-         *(indent >>
-           (qi::omit[tokens]) >>
-           qi::eol)
+      | (qi::lit("spanning-tree mst configuration") >> qi::eol
+        >> *(indent >> (qi::omit[tokens]) >> qi::eol)
         )
 
-      | (qi::lit("spanning-tree portfast") >>
-          (  qi::lit("bpduguard")
+      | (qi::lit("spanning-tree portfast")
+        >> ( qi::lit("bpduguard")
                [(pnx::bind(&Parser::globalBpduGuardEnabled, this) = true)]
            | qi::lit("bpdufilter")
                [(pnx::bind(&Parser::globalBpduFilterEnabled, this) = true)]
-          ) > *token > qi::eol)
+           ) > *token > qi::eol
+        )
 
       | (qi::lit("aaa ") >> tokens >> qi::eol)
             [(pnx::bind(&Parser::deviceAaaAdd, this, qi::_1))]
@@ -78,6 +77,7 @@ Parser::Parser() : Parser::base_type(start)
       | globalServices
 
       | domainData
+      | vrfInstance
       | (interface)
           [(pnx::bind(&Parser::vlanAddIfaceData, this))]
       | routerId
@@ -171,6 +171,18 @@ Parser::Parser() : Parser::base_type(start)
     ) [(qi::_val = pnx::bind(&Parser::expandVlanNumberRangeList, this, qi::_a, qi::_b))]
     ;
 
+  vrfInstance =
+    (qi::lit("vrf instance") > token > qi::eol)
+        [(pnx::bind([&](const std::string& val)
+                    {d.vrfs.emplace(val, nmdo::Vrf(val));}, qi::_1))]
+    > *(indent
+      >> ( (qi::lit("description") > tokens)
+         | (qi::omit[+token]) // Ignore all other settings
+         )
+      > qi::eol
+      )
+    ;
+
   interface =
     qi::no_skip[qi::lit("interface")] >>
     (  (token >> token > qi::eol)
@@ -233,6 +245,10 @@ Parser::Parser() : Parser::base_type(start)
        | (qi::lit("nameif") >> token)
             [(pnx::bind([&](const std::string& val)
                         {ifaceAliases.emplace(val, tgtIface);}, qi::_1))]
+
+       | (qi::lit("vrf") >> token)
+            [(pnx::bind([&](const std::string& val)
+                        {d.vrfs[val].addIface(tgtIface->getName());}, qi::_1))]
 
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
@@ -407,37 +423,37 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   accessPolicyRelated =
-    (  (qi::lit("policy-map") >> policyMap)
-     | (qi::lit("class-map") >> classMap)
-     | aclRuleBook [(pnx::bind(&Parser::aclRuleBookAdd, this, qi::_1))]
-       // access-group ac-list {in|out} interface ifaceName
-     | (qi::lit("access-group") >> token >> token >>
-        qi::lit("interface") >> token)
-          [(pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3))]
+    ( (qi::lit("policy-map") >> policyMap)
+    | (qi::lit("class-map") >> classMap)
+    | aclRuleBook [(pnx::bind(&Parser::aclRuleBookAdd, this, qi::_1))]
+      // access-group ac-list {in|out} interface ifaceName
+    | (qi::lit("access-group") >> token >> token >> qi::lit("interface") >> token)
+         [(pnx::bind(&Parser::createAccessGroup, this, qi::_1, qi::_2, qi::_3))]
     )
     ;
 
   policyMap =
-    token [(qi::_a = qi::_1)] >> qi::eol >>
-    *(  (indent >> qi::lit("class") >> token >> qi::eol)
-          [(pnx::bind(&Parser::updatePolicyMap, this, qi::_a, qi::_1))]
-      | qi::omit[(+indent >> tokens >> qi::eol)]
-    )
+    token [(qi::_a = qi::_1)] >> qi::eol
+    >> *((indent >> qi::lit("class") >> token >> qi::eol)
+              [(pnx::bind(&Parser::updatePolicyMap, this, qi::_a, qi::_1))]
+       | qi::omit[(+indent >> tokens >> qi::eol)]
+       )
     ;
 
   classMap =
-    qi::omit[token] >> token [(qi::_a = qi::_1)] >> qi::eol >>
-    *(  (indent >> qi::lit("match access-group name") >> token >> qi::eol)
-          [(pnx::bind(&Parser::updateClassMap, this, qi::_a, qi::_1))]
-      | qi::omit[(+indent >> tokens >> qi::eol)]
-    )
+    qi::omit[token] >> token [(qi::_a = qi::_1)] >> qi::eol
+    >> *((indent >> qi::lit("match access-group name") >> token >> qi::eol)
+            [(pnx::bind(&Parser::updateClassMap, this, qi::_a, qi::_1))]
+       | qi::omit[(+indent >> tokens >> qi::eol)]
+       )
     ;
 
   // General Helper(s)
   ipMask =
     (ipAddr >> +qi::ascii::blank >> ipAddr)
-      [(pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_3),
-        qi::_val = qi::_1)]
+      [(pnx::bind(&nmdo::IpAddress::setNetmask, &qi::_1, qi::_3)
+      , qi::_val = qi::_1
+      )]
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(

@@ -141,6 +141,13 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           LOG_DEBUG << result.toDebugString() << '\n';
         }
 
+        LOG_DEBUG << "Iterating over vrfs\n";
+        for (auto& [_, result] : results.vrfs) {
+          LOG_DEBUG << result.toDebugString() << '\n';
+          result.save(t, toolRunId, deviceId);
+        }
+
+
         const std::vector<std::string> vlanIfacePrefixes{
             "Vlan", "Vlan ",
             "vlan", "vlan ",
