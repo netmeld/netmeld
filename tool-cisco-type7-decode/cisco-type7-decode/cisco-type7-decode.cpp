@@ -104,7 +104,7 @@ class Tool : public nmct::AbstractTool
       opts.addAdvancedOption("store-in-db", std::make_tuple(
             "store-in-db",
             NULL_SEMANTIC,
-            "Used to store results in the database. Requires Netmeld and PostgreSQL."
+            "Used to store results in the database. Requires 'psql' binary."
           ));
 
       opts.addAdvancedOption("db-name", std::make_tuple(
@@ -148,7 +148,7 @@ class Tool : public nmct::AbstractTool
       auto decoded = oss.str();
 
       if (opts.exists("store-in-db")) {
-        if (nmcu::isCmdAvailable("nmdb-initialize") && nmcu::isCmdAvailable("psql")) {
+        if (nmcu::isCmdAvailable("psql")) {
           std::string dbName {opts.getValue("db-name")};
           std::string dbArgs {opts.getValue("db-args")};
           nmcu::cmdExecOrExit(
