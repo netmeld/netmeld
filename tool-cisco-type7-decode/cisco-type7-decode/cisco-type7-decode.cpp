@@ -146,6 +146,7 @@ class Tool : public nmct::AbstractTool
       std::regex badChars("[^0-9a-fA-F]");
       auto encoded = std::regex_replace(encPass, badChars, "");
       auto decoded = oss.str();
+      LOG_INFO << encoded << ": " << decoded << '\n';
 
       if (opts.exists("store-in-db")) {
         if (nmcu::isCmdAvailable("psql")) {
@@ -158,10 +159,7 @@ class Tool : public nmct::AbstractTool
         } else {
           LOG_INFO << "warning: could not save to psql because Netmeld or psql could not be found";
         }
-      } else {
-        LOG_INFO << encoded << ": " << decoded << '\n';
       }
-
       return nmcu::Exit::SUCCESS;
     }
 

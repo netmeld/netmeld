@@ -253,6 +253,7 @@ class Tool : public nmct::AbstractTool
           nmdp::fromString<Parser, Result>(opts.getValue("password"))
         };
         auto decoded {decode(encoded)};
+        LOG_INFO << encoded << ": " << decoded << '\n';
 
         if (opts.exists("store-in-db")) {
           if (nmcu::isCmdAvailable("psql")) {
@@ -265,8 +266,6 @@ class Tool : public nmct::AbstractTool
           } else {
             LOG_INFO << "warning: could not save to psql because Netmeld or psql could not be found";
           }
-        } else {
-          LOG_INFO << encoded << ": " << decoded << '\n';
         }
       }
       return nmcu::Exit::SUCCESS;
