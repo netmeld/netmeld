@@ -157,7 +157,7 @@ class Tool : public nmct::AbstractTool
                           R"(values ('{}', '{}', 'Encoded: {}\nDecoded: {}') on conflict do nothing")",
                           dbArgs, dbName, "32b2fd62-08ff-4d44-8da7-6fbd581a90c6", "notable", encoded, decoded));
         } else {
-          LOG_INFO << "warning: could not save to psql because Netmeld or psql could not be found";
+          LOG_WARN << "Could not store, 'psql' was not found\n";
         }
       }
       return nmcu::Exit::SUCCESS;
