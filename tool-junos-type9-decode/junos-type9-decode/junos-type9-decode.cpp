@@ -260,9 +260,15 @@ class Tool : public nmct::AbstractTool
             std::string dbName {opts.getValue("db-name")};
             std::string dbArgs {opts.getValue("db-args")};
             nmcu::cmdExecOrExit(
-              std::format(R"(psql {} --dbname={} -c "insert into raw_tool_observations (tool_run_id, category, observation) )"
-                          R"(values ('{}', '{}', 'Encoded: {}\nDecoded: {}') on conflict do nothing")",
-                          dbArgs, dbName, "32b2fd62-08ff-4d44-8da7-6fbd581a90c6", "notable", encoded, decoded));
+                std::format(R"(psql "{} dbname={}" -c)"
+                            R"(  "INSERT INTO raw_tool_observations)"
+                              "     (tool_run_id, category, observation)"
+                              "   VALUES"
+                              "     ('{}', '{}', 'Encoded: {}\nDecoded: {}')"
+                            R"(   ON CONFLICT DO NOTHING")",
+                            dbArgs, dbName,
+                            "32b2fd62-08ff-4d44-8da7-6fbd581a90c6", "notable",
+                            encoded, decoded));
           } else {
             LOG_WARN << "Could not store, 'psql' was not found\n";
           }
