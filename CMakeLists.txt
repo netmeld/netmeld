@@ -107,7 +107,9 @@ foreach(ITEM
     datastore
     fetchers
     playbook
+    tool-cisco-type7-decode
     tool-clw
+    tool-junos-type9-decode
   )
   target_as_module(${ITEM})
 endforeach()
