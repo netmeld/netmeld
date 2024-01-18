@@ -69,11 +69,10 @@ class Tool : public nmdt::AbstractGraphTool
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractGraphTool
-      (
-       "help blurb",    // help blurb, prefixed with:
-                        //   "Create dot formatted graph of "
-       PROGRAM_NAME,    // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION  // program version (set in CMakeLists.txt)
+      ( // help blurb, prefixed with: "Create dot formatted graph of "
+        "routes between two points"
+      , PROGRAM_NAME    // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION // program version (set in CMakeLists.txt)
       )
     {}
 
@@ -87,20 +86,23 @@ class Tool : public nmdt::AbstractGraphTool
     addToolOptions() override
     {
       opts.addRequiredOption("source", std::make_tuple(
-            "source,s",
-            po::value<std::string>()->required(),
-            "Route(s) start at this IP/CIDR")
+              "source,s"
+            , po::value<std::string>()->required()
+            , "Route(s) start at this IP/CIDR"
+            )
           );
       opts.addRequiredOption("destination", std::make_tuple(
-            "destination,d",
-            po::value<std::string>()->required(),
-            "Route(s) end at this IP/CIDR")
+              "destination,d"
+            , po::value<std::string>()->required()
+            , "Route(s) end at this IP/CIDR"
+            )
           );
 
       opts.addOptionalOption("no-route-details", std::make_tuple(
-            "no-route-details",
-            NULL_SEMANTIC,
-            "Do not show route details on hops")
+              "no-route-details"
+            , NULL_SEMANTIC
+            , "Do not show route details on hops"
+            )
           );
     }
 
@@ -119,12 +121,14 @@ class Tool : public nmdt::AbstractGraphTool
 
       buildRouteGraph(db);
 
-      boost::write_graphviz
-        (std::cout, graph,
-         LabelWriter(graph),   // VertexPropertyWriter
-         LabelWriter(graph),   // EdgePropertyWriter
-         GraphWriter(),        // GraphPropertyWriter
-         boost::get(&VertexProperties::name, graph));  // VertexID
+      boost::write_graphviz( std::cout          // std::ostream
+                           , graph              // VertexAndEdgeListGraph
+                           , LabelWriter(graph) // VertexPropertyWriter
+                           , LabelWriter(graph) // EdgePropertyWriter
+                           , GraphWriter()      // GraphPropertyWriter
+                           // VertexID
+                           , std::get(&VertexProperties::name, graph)
+                           );
 
       return nmcu::Exit::SUCCESS;
     }
