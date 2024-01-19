@@ -77,6 +77,11 @@ function(target_as_module target)
   add_custom_target("${TGT_MODULE}" DEPENDS ${prior_tgt_module})
   add_custom_target("${TGT_MODULE_TEST}" DEPENDS ${TGT_MODULE})
   add_dependencies(${prior_tgt_module_test} ${TGT_MODULE_TEST})
+
+  get_property(tmp GLOBAL PROPERTY RAW_MODULE_LIST)
+  list(APPEND tmp ${target})
+  set_property(GLOBAL PROPERTY RAW_MODULE_LIST ${tmp})
+
   nm_add_generic("${target}")
   #cpack_add_component(${TGT_MODULE})
 endfunction()
@@ -85,6 +90,11 @@ function(target_as_tool target)
   set(TGT_TOOL_TEST "${TGT_MODULE_TEST}.${target}")
   get_timestamp(${target} TGT_VERSION)
   add_dependencies("${TGT_MODULE}" "${TGT_TOOL}")
+
+  get_property(tmp GLOBAL PROPERTY RAW_TOOL_LIST)
+  list(APPEND tmp ${target})
+  set_property(GLOBAL PROPERTY RAW_TOOL_LIST ${tmp})
+
   nm_add_generic("${target}")
 endfunction()
 function(target_as_library target)
@@ -321,4 +331,138 @@ function(add_tool_suite_man target_comp)
       DESTINATION share/man/man7
     )
   endif()
+endfunction()
+
+
+# Define a function to extract categories
+function(extract_categories tool_names)
+set(dbtmp "")
+set(dltmp "")
+set(modtmp "")
+set(tooltmp "")
+set(fetchtmp "")
+    foreach(tool_name ${tool_names})
+        # Split the tool name into parts using hyphen as a delimiter
+        string(REGEX MATCHALL "[^\\-]+" parts ${tool_name})
+        list(LENGTH parts num_parts)
+
+        #tools in root directory
+        if(NOT tool_name MATCHES "nm")
+            list(APPEND modtmp "tool")
+            list(APPEND tooltmp "${tool_name}")
+            message("Other Tools")
+        elseif (num_parts GREATER_EQUAL 3)
+          list(GET parts 0 module)  # The module is the tool
+          list(GET parts 1 action)  # The category is the second part
+          
+          #----- If we want to branch to sub sub sub commands here is wehere we have to do the logic
+          #----- For now I concatinate everything after name including name
+          list(SUBLIST parts 2 -1 name_parts)  # Exclude the first two parts (module abbreviation and category)
+          list(JOIN name_parts "-" name)  # Join the remaining parts into a string named "name"
+          
+          #Setting globals
+          list(APPEND modtmp "${module}")
+          if(${module} STREQUAL "nmdb")
+            list(APPEND dbtmp "${action}")
+          endif()
+          if(${module} STREQUAL "nmdl")
+            list(APPEND dltmp "${action}")
+          endif()
+          if(${module} STREQUAL "nmfetch")
+            list(APPEND fetchtmp "${action}")
+          endif()
+          
+          # left off here need to figure out each name for each action aka apk for importers and so on
+
+          message("[3 Part] Tool: ${tool_name}, Module: ${module}, Action: ${action}, Name: ${name}")
+        elseif(num_parts EQUAL 2)
+          list(GET parts 0 module)  # The module of the tool
+          list(GET parts 1 name)  # The name is the second part
+          message("[2 Part] Tool: ${tool_name}, Module: ${module}, Name: ${name}")
+
+          #Storage of lists
+          list(APPEND modtmp "${module}")
+          if(${module} STREQUAL "nmdb")
+            list(APPEND dbtmp "${name}")
+          endif()
+          if(${module} STREQUAL "nmdl")
+            list(APPEND dltmp "${name}")
+          endif()
+          if(${module} STREQUAL "nmfetch")
+            list(APPEND fetchtmp "${name}")
+          endif()
+
+        else()
+          message("Tool: ${tool_name}, Unable to extract category")
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES modtmp)
+    list(REMOVE_DUPLICATES dbtmp)
+    list(REMOVE_DUPLICATES dltmp)
+    list(REMOVE_DUPLICATES tooltmp)
+    list(REMOVE_DUPLICATES fetchtmp)
+    string(REPLACE ";" " " modules "${modtmp}") # Clean further (nm before db and dl )But also need to change nm to nmf but also need to figure out tool-
+    string(REPLACE "netmeld" " " modules "${modules}")
+    string(REPLACE "nm" " " modules "${modules}")
+    string(REPLACE ";" " " dbActions "${dbtmp}")
+    string(REPLACE ";" " " dlActions "${dltmp}")
+    string(REPLACE ";" " " toolActions "${tooltmp}")
+    string(REPLACE ";" " " fetchActions "${fetchtmp}")
+    set(MODULES_LIST "${modules}" PARENT_SCOPE)
+    set(dbActions "${dbActions}" PARENT_SCOPE)
+    set(dlActions "${dlActions}" PARENT_SCOPE)
+    set(toolActions "${toolActions}" PARENT_SCOPE)
+    set(fetchActions "${fetchActions}" PARENT_SCOPE)
+endfunction()
+
+
+# A Function that generates the bash completion dynammically
+function(generate_bash_completion_script OUTPUT_FILE MODULES dbActions dlActions toolActions fetchActions)
+    set(completion_script_content "# _netmeld_completion Bash completion\n\n")
+    
+    # Generate subcommands based on modules
+    set(completion_script_content "${completion_script_content}_netmeld_completion() {\n")
+    set(completion_script_content "${completion_script_content}    local cur prev\n")
+    set(completion_script_content "${completion_script_content}    cur=\"\${COMP_WORDS[COMP_CWORD]}\"\n")
+    set(completion_script_content "${completion_script_content}    prev=\"\${COMP_WORDS[COMP_CWORD-1]}\"\n")
+    set(completion_script_content "${completion_script_content}    if [[ \${prev} == *\"netmeld-tool\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}        modules=\"${MODULES}\"\n")
+    set(completion_script_content "${completion_script_content}        COMPREPLY=(\$(compgen -W \"\$modules\" -- \"\${cur}\"))\n")
+    set(completion_script_content "${completion_script_content}        return 0\n")
+    set(completion_script_content "${completion_script_content}    fi\n")
+    set(completion_script_content "${completion_script_content}\n")
+    
+    # Iterate through modules and for each module place the correct options
+    # I can still make this dynamic with a foreach loop over the modules
+    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"db\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}    sub_opts=\"${dbActions}\"\n")
+    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}    return 0\n")
+    set(completion_script_content "${completion_script_content}fi\n")
+
+    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"dl\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}    sub_opts=\"${dlActions}\"\n")
+    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}    return 0\n")
+    set(completion_script_content "${completion_script_content}fi\n")
+
+    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"tool\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}    sub_opts=\"${toolActions}\"\n")
+    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}    return 0\n")
+    set(completion_script_content "${completion_script_content}fi\n")
+
+    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"fetch\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}    sub_opts=\"${fetchActions}\"\n")
+    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}    return 0\n")
+    set(completion_script_content "${completion_script_content}fi\n")
+
+
+    # Add main completion function
+    set(completion_script_content "${completion_script_content}}\n")
+    set(completion_script_content "${completion_script_content}complete -F _netmeld netmeld\n\n")
+    
+    # Write content to the output file
+    file(WRITE ${OUTPUT_FILE} "${completion_script_content}")
 endfunction()

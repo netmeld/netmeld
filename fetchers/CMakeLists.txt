@@ -27,8 +27,8 @@
 set(MODULE_VERSION "2.0")
 
 foreach(ITEM
-    nm-fetch-ssh
-    nm-fetch-ansible
+    nmfetch-ssh
+    nmfetch-ansible
   )
   target_as_tool(${ITEM})
 endforeach()

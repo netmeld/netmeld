@@ -84,6 +84,18 @@ set(NETMELD_DB_NAME "site")
 set(NETMELD_SCHEMA_DIR "schemas")
 set(NETMELD_IMAGE_DIR "images")
 
+set_property(GLOBAL PROPERTY RAW_TOOLS_LIST "")
+set_property(GLOBAL PROPERTY RAW_MODULE_LIST "")
+
+set(MODULES "")
+set(CATEGORIES "")
+set(dbActions "")
+set(dlActions "")
+set(toolActions "")
+set(fetchActions "")
+
+set(NAMES "")
+
 add_compile_definitions(
   NETMELD_CONF_DIR="${CMAKE_INSTALL_PREFIX}/${NETMELD_CONF_DIR}"
   NETMELD_DB_NAME="${NETMELD_DB_NAME}"
@@ -112,6 +124,51 @@ foreach(ITEM
   target_as_module(${ITEM})
 endforeach()
 
+# Some important variables
+# ${tool_name} = Tool Name
+# ${CMAKE_CURRENT_BINARY_DIR} = Current binary directory
+# 
+
+# Bash Completion Stuff
+# The targets are populated to a global list TARGET_LIST in BuildHelpers
+get_property(raw_modules GLOBAL PROPERTY RAW_MODULE_LIST)
+get_property(raw_tools GLOBAL PROPERTY RAW_TOOL_LIST)
+
+# Data Cleanup
+#string(REGEX REPLACE ";" " " MODULES_LIST "${raw_modules}")
+#message("Replace: ${MODULES_LIST}")
+
+# Replace semicolons with spaces
+string(REPLACE ";" " " TOOL_LIST_SPACE "${raw_tools}")
+#message("Replace: ${TOOL_LIST_SPACE}")
+
+string(REPLACE ";" " " actions "${CATEGORIES}")
+
+# Split the TOOL_LIST_SPACE into a list of tool names
+string(REGEX MATCHALL "[^ ]+" TOOL_NAMES ${TOOL_LIST_SPACE})
+#message("REGEX MATCHALL: ${TOOL_NAMES}")
+
+# Call the function with the TOOL_NAMES
+extract_categories("${TOOL_NAMES}")
+
+
+## TODO
+# ended today with trying to minimize the modules to only the necessary ones and not the
+# secondary modules aka only (datalake, datastore, docs, fetchers, playbook, tool)
+# Probably need to try and either use the modules list or the list generated from
+# the extract_categories. The only issue is that the completions would be 
+# netmeld db import or netmeld dl import instead of datastore or datalake
+
+# Generate Bash Completion file
+generate_bash_completion_script(${CMAKE_CURRENT_BINARY_DIR}/nm-completions.sh "${MODULES_LIST}" "${dbActions}" "${dlActions}" "${toolActions}" "${fetchActions}")
+
+# --------- DEBUG PRINTS ---------
+# Print the updated COMMAND_LIST
+#message("Updated COMMAND_LIST: ${COMMAND_LIST}")
+#message("Binary_DIR:  ${CMAKE_BINARY_DIR}")
+#message("MODULES: ${modules}")
+message("MODULES: ${MODULES_LIST} dbActions: ${dbActions} dlActions: ${dlActions}  fetchActions: ${fetchActions} toolActions: ${toolActions} TOOLS: ${NAMES}")
+# --------------------------------
 
 #set(TGT_MODULE "fake-module")
 #add_custom_target("${TGT_MODULE}" DEPENDS "${TOOL_SUITE}")
