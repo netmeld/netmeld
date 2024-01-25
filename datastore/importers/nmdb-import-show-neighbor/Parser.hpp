@@ -60,6 +60,7 @@ class Parser :
       arpCiscoIos,
       arpCiscoNxos,
       arpCiscoWlc,
+      arpJuniperConfig,
       ndp,
       ndpArista,
       ndpCiscoIos,
@@ -70,6 +71,7 @@ class Parser :
       arpHeaderCiscoIos,
       arpHeaderCiscoNxos,
       arpHeaderCiscoWlc,
+      arpHeaderJuniper,
       ndpHeaderArista,
       ndpHeaderCiscoIos,
       ndpHeaderCiscoIosDetail;
@@ -80,6 +82,7 @@ class Parser :
       arpEntryCiscoIos,
       arpEntryCiscoNxos,
       arpEntryCiscoWlc,
+      arpEntryJuniper,
       ndpEntryArista,
       ndpEntryCiscoIos,
       ndpEntryCiscoIosDetail;

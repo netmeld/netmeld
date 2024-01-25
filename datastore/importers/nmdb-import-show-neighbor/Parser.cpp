@@ -50,6 +50,7 @@ Parser::Parser() : Parser::base_type(start)
     | arpCiscoIos
     | arpCiscoNxos
     //| arpCiscoWlc
+    | arpJuniperConfig
     )
     ;
 
@@ -193,6 +194,34 @@ Parser::Parser() : Parser::base_type(start)
       token >>
       token[(qi::_a = qi::_1)] >>
       token >>
+      (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    ;
+
+  // =============================================================================
+  // ARP: Juniper Config
+  // =============================================================================
+
+  arpJuniperConfig =
+    arpHeaderJuniper >>
+    *arpEntryJuniper
+    ;
+
+  arpHeaderJuniper =
+    qi::lit("MAC Address") >>
+    qi::lit("Address") >>
+    qi::lit("Name") >>
+    qi::lit("Interface") >>
+    (qi::eol | qi::eoi)
+    ;
+
+  arpEntryJuniper =
+    ( macAddr[(qi::_b = qi::_1)] >>
+      ipv4Addr[(qi::_c = qi::_1)] >>
+      token >>
+      iface[(qi::_a = qi::_1)] >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
        pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
