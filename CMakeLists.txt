@@ -93,6 +93,7 @@ set(dbActions "")
 set(dlActions "")
 set(toolActions "")
 set(fetchActions "")
+set(importNames "")
 
 set(NAMES "")
 
@@ -160,7 +161,7 @@ extract_categories("${TOOL_NAMES}")
 # netmeld db import or netmeld dl import instead of datastore or datalake
 
 # Generate Bash Completion file
-generate_bash_completion_script(${CMAKE_CURRENT_BINARY_DIR}/nm-completions.sh "${MODULES_LIST}" "${dbActions}" "${dlActions}" "${toolActions}" "${fetchActions}")
+generate_bash_completion_script(${CMAKE_CURRENT_BINARY_DIR}/nm-completions.sh "${MODULES_LIST}" "${dbActions}" "${dlActions}" "${toolActions}" "${fetchActions}" "${importNames}")
 
 # --------- DEBUG PRINTS ---------
 # Print the updated COMMAND_LIST

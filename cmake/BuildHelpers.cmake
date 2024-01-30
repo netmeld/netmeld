@@ -341,6 +341,7 @@ set(dltmp "")
 set(modtmp "")
 set(tooltmp "")
 set(fetchtmp "")
+set(importtmp "")
     foreach(tool_name ${tool_names})
         # Split the tool name into parts using hyphen as a delimiter
         string(REGEX MATCHALL "[^\\-]+" parts ${tool_name})
@@ -371,9 +372,13 @@ set(fetchtmp "")
           if(${module} STREQUAL "nmfetch")
             list(APPEND fetchtmp "${action}")
           endif()
-          
+
           # left off here need to figure out each name for each action aka apk for importers and so on
 
+          if(${action} STREQUAL "import")
+            list(APPEND importtmp "${name}") 
+          endif()
+          
           message("[3 Part] Tool: ${tool_name}, Module: ${module}, Action: ${action}, Name: ${name}")
         elseif(num_parts EQUAL 2)
           list(GET parts 0 module)  # The module of the tool
@@ -401,6 +406,7 @@ set(fetchtmp "")
     list(REMOVE_DUPLICATES dltmp)
     list(REMOVE_DUPLICATES tooltmp)
     list(REMOVE_DUPLICATES fetchtmp)
+    list(REMOVE_DUPLICATES importtmp)
     string(REPLACE ";" " " modules "${modtmp}") # Clean further (nm before db and dl )But also need to change nm to nmf but also need to figure out tool-
     string(REPLACE "netmeld" " " modules "${modules}")
     string(REPLACE "nm" " " modules "${modules}")
@@ -408,16 +414,18 @@ set(fetchtmp "")
     string(REPLACE ";" " " dlActions "${dltmp}")
     string(REPLACE ";" " " toolActions "${tooltmp}")
     string(REPLACE ";" " " fetchActions "${fetchtmp}")
+    string(REPLACE ";" " " importNames "${importtmp}")
     set(MODULES_LIST "${modules}" PARENT_SCOPE)
     set(dbActions "${dbActions}" PARENT_SCOPE)
     set(dlActions "${dlActions}" PARENT_SCOPE)
     set(toolActions "${toolActions}" PARENT_SCOPE)
     set(fetchActions "${fetchActions}" PARENT_SCOPE)
+    set(importNames "${importNames}" PARENT_SCOPE)
 endfunction()
 
 
 # A Function that generates the bash completion dynammically
-function(generate_bash_completion_script OUTPUT_FILE MODULES dbActions dlActions toolActions fetchActions)
+function(generate_bash_completion_script OUTPUT_FILE MODULES dbActions dlActions toolActions fetchActions importNames)
     set(completion_script_content "# _netmeld_completion Bash completion\n\n")
     
     # Generate subcommands based on modules
@@ -434,34 +442,40 @@ function(generate_bash_completion_script OUTPUT_FILE MODULES dbActions dlActions
     
     # Iterate through modules and for each module place the correct options
     # I can still make this dynamic with a foreach loop over the modules
-    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"db\"* ]]; then\n")
-    set(completion_script_content "${completion_script_content}    sub_opts=\"${dbActions}\"\n")
-    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
-    set(completion_script_content "${completion_script_content}    return 0\n")
-    set(completion_script_content "${completion_script_content}fi\n")
+    set(completion_script_content "${completion_script_content}    if [[ \${prev} == *\"db\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}        sub_opts=\"${dbActions}\"\n")
+    set(completion_script_content "${completion_script_content}        COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}        return 0\n")
+    set(completion_script_content "${completion_script_content}    fi\n")
 
-    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"dl\"* ]]; then\n")
-    set(completion_script_content "${completion_script_content}    sub_opts=\"${dlActions}\"\n")
-    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
-    set(completion_script_content "${completion_script_content}    return 0\n")
-    set(completion_script_content "${completion_script_content}fi\n")
+    set(completion_script_content "${completion_script_content}    if [[ \${prev} == *\"dl\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}        sub_opts=\"${dlActions}\"\n")
+    set(completion_script_content "${completion_script_content}        COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}        return 0\n")
+    set(completion_script_content "${completion_script_content}    fi\n")
 
-    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"tool\"* ]]; then\n")
-    set(completion_script_content "${completion_script_content}    sub_opts=\"${toolActions}\"\n")
-    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
-    set(completion_script_content "${completion_script_content}    return 0\n")
-    set(completion_script_content "${completion_script_content}fi\n")
+    set(completion_script_content "${completion_script_content}    if [[ \${prev} == *\"tool\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}        sub_opts=\"${toolActions}\"\n")
+    set(completion_script_content "${completion_script_content}        COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}        return 0\n")
+    set(completion_script_content "${completion_script_content}    fi\n")
 
-    set(completion_script_content "${completion_script_content}if [[ \${prev} == *\"fetch\"* ]]; then\n")
-    set(completion_script_content "${completion_script_content}    sub_opts=\"${fetchActions}\"\n")
-    set(completion_script_content "${completion_script_content}    COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
-    set(completion_script_content "${completion_script_content}    return 0\n")
-    set(completion_script_content "${completion_script_content}fi\n")
+    set(completion_script_content "${completion_script_content}    if [[ \${prev} == *\"fetch\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}        sub_opts=\"${fetchActions}\"\n")
+    set(completion_script_content "${completion_script_content}        COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}        return 0\n")
+    set(completion_script_content "${completion_script_content}    fi\n")
+
+    set(completion_script_content "${completion_script_content}    if [[ \${prev} == *\"import\"* ]]; then\n")
+    set(completion_script_content "${completion_script_content}        sub_opts=\"${importNames}\"\n")
+    set(completion_script_content "${completion_script_content}        COMPREPLY=(\$(compgen -W \"\$sub_opts\" -- \${cur}))\n")
+    set(completion_script_content "${completion_script_content}        return 0\n")
+    set(completion_script_content "${completion_script_content}    fi\n")
 
 
     # Add main completion function
-    set(completion_script_content "${completion_script_content}}\n")
-    set(completion_script_content "${completion_script_content}complete -F _netmeld netmeld\n\n")
+    set(completion_script_content "${completion_script_content}}\n\n")
+    set(completion_script_content "${completion_script_content}complete -F _netmeld_completion netmeld-tool\n\n")
     
     # Write content to the output file
     file(WRITE ${OUTPUT_FILE} "${completion_script_content}")

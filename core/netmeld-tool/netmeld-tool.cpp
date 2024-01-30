@@ -134,9 +134,9 @@ int main(int argc, char* argv[]) {
         std::cerr << "Invalid device ID: " << deviceId << "\n";
         return 1;
     }
-    if (command == "database") {
+    if (command == "db") {
         if (argc < 3) {
-            std::cerr << "Usage: netmeld database <subcommand>\n";
+            std::cerr << "Usage: netmeld db <subcommand>\n";
             return 1;
         }
         std::string subcommand = argv[2];
@@ -147,8 +147,9 @@ int main(int argc, char* argv[]) {
                 std::string command = it->second + " --data-path " + dataPath + " --device-id " + deviceId;
                 std::cout << command;
                 std::system(command.c_str());
+                // std::string = "nm" + argv[1] + argv[2] + 
             } else {
-                std::cerr << "Unknown 'database import' subcommand: " << subsubcommand << "\n";
+                std::cerr << "Unknown 'database import' subcommand: " << subcommand << "\n";
             }
         } else if (subcommand == "insert") {
             std::string subsubcommand = argv[3];
