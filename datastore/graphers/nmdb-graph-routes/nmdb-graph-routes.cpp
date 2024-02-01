@@ -162,7 +162,6 @@ class Tool : public nmdt::AbstractGraphTool
               device_id
             , vrf_id
             , table_id
---            , is_active
             , dst_ip_net
             , next_vrf_id
             , next_table_id
@@ -192,13 +191,9 @@ class Tool : public nmdt::AbstractGraphTool
             AND $1 && dst_ip_net
             AND $2 = device_id
             AND $3 = COALESCE(vrf_id, '')
---            AND NOT (COALESCE(outgoing_interface_name, '')
---                     IN ('discard', 'null0', 'reject')
---                    )
           GROUP BY  device_id
                   , vrf_id
                   , table_id
---                  , is_active
                   , dst_ip_net
                   , next_vrf_id
                   , next_table_id
@@ -226,6 +221,50 @@ class Tool : public nmdt::AbstractGraphTool
                 ELSE
                   (2^(128 - MASKLEN($1)))
               END AS max_host_count
+          )"
+        );
+
+      db.prepare("select_zone_ids", R"(
+            SELECT
+              ARRAY_AGG(DISTINCT zone_id)
+            FROM device_acl_zones
+            WHERE interface_name = $1
+          )"
+        );
+      db.prepare("select_zone_ids", R"(
+            SELECT
+              ARRAY_AGG(DISTINCT ip_net_set_id)
+            FROM device_acl_ip_nets
+            WHERE device_id = $1
+            AND ip_net && $2
+          )"
+        );
+      db.prepare("select_acl_rules", R"(
+          SELECT DISTINCT
+              protocol
+            , src_port_range
+            , RANGE_AGG(dst_port_range)
+          FROM device_acl_services
+          WHERE device_id = $1
+            AND service_id IN (
+              SELECT DISTINCT
+                service_id
+              FROM device_acl_rules_all
+              WHERE src_ip_net_set_id in (
+                SELECT DISTINCT
+                  ip_net_set_id
+                FROM device_acl_ip_nets
+                WHERE device_id = $1
+                  AND ip_net && $2
+              )
+              AND incoming_zone_id IN $3
+              AND outgoing_zone_id IN $4
+            )
+          GROUP BY  protocol
+                  , src_port_range
+          ORDER BY  protocol
+                  , src_port_range
+                  , dst_port_range
           )"
         );
     }
@@ -509,12 +548,19 @@ class Tool : public nmdt::AbstractGraphTool
       }
     }
 
-  std::string
-  getLookupId(const std::string& v1, const std::string& v2)
-  {
-    return std::format("{}::{}", v1, v2);
-  }
+    std::string
+    getLookupId(const std::string& v1, const std::string& v2)
+    {
+      return std::format("{}::{}", v1, v2);
+    }
 
+    void
+    dumpAclData()
+    {
+      for ( const auto& acl
+          : rt.exec_prepared("select_next_hops")
+          )
+    }
 
   protected: // Methods part of subclass API
   public: // Methods part of public API
