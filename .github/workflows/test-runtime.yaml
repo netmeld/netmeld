@@ -21,5 +21,6 @@ jobs:
           python3 docker-netmeld.py tester > Dockerfile \
             && docker build --no-cache --tag "netmeld-tester" . \
             && rm Dockerfile
-          docker run --rm -t netmeld-tester
+          docker run --rm -t netmeld-tester \
+            || core.setFailed('Not all tests passed')
           docker image rm netmeld-tester
