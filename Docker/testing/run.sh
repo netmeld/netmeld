@@ -52,7 +52,7 @@ function run_tests()
 {
   sudo service postgresql restart;
   create_test_data;
-  python3 test.py || exit=1;
+  python3 test.py || exit 1;
   sudo service postgresql stop;
 }
 
