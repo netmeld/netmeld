@@ -37,7 +37,7 @@ def run_commands(commands):
     allSuccess = run_command(command) and allSuccess
 
   if allSuccess:
-    logging.info("All command(s) ran successfully")
+    logging.info("All block of command(s) ran successfully")
     return 0
   else:
     logging.info("Some command(s) failed")
@@ -47,6 +47,8 @@ def run_commands(commands):
 def test_nmTools():
   commands = [
     "clw ls",
+    "cisco-type7-decode --password 046E1803362E595C260E0B240619050A2D",
+    "junos-type9-decode --password '$9$EeDcKWxNb4oGuOWxNd4oz36A01reW-VY5QclvM-daZUi.5/9p'",
   ]
 
   return run_commands(commands)
@@ -72,6 +74,7 @@ def test_nmDatastore():
     # Other
     "nmdb-analyze-data --example",
     "nmdb-convert-acls",
+    "nmdb-remove-tool-run 12345678-1234-1234-1234-123456789012",
     # Exporters
     "nmdb-export-port-list -TUYD",
     "nmdb-export-query -q 'select * from tool_runs'",
@@ -111,7 +114,8 @@ def test_nmDatastore():
     "nmdb-import-pcap --device-id test d4",
     "nmdb-import-ping --device-id test d1",
     "nmdb-import-powerconnect --device-id test d1",
-    "nmdb-import-prowler --device-id test d1",
+    "nmdb-import-prowler --prowler-version 2 --device-id test d1",
+    "nmdb-import-prowler --prowler-version 3 --device-id test d3",
     "nmdb-import-rpm-query --device-id test d1",
     "nmdb-import-show-cdp-neighbor --device-id test d1",
     "nmdb-import-show-inventory --device-id test d1",
@@ -130,8 +134,6 @@ def test_nmDatastore():
     "nmdb-graph-ac --device-id test",
     "nmdb-graph-aws",
     "nmdb-graph-network --device-id test --layer 3",
-    # Other
-    "nmdb-remove-tool-run 12345678-1234-1234-1234-123456789012",
   ]
 
   return run_commands(commands)
@@ -152,8 +154,6 @@ def test_nmPlaybook():
     "nmdb-playbook-insert-source  --inter-network --interface test1 --ip-addr 10.0.0.10 --stage 1",
     "nmdb-playbook --inter-network",
     #"nmdb-playbook-nessus",
-    "cisco-type7-decode --password 046E1803362E595C260E0B240619050A2D",
-    "junos-type9-decode --password '$9$EeDcKWxNb4oGuOWxNd4oz36A01reW-VY5QclvM-daZUi.5/9p'",
   ]
   return run_commands(commands)
 
@@ -161,13 +161,15 @@ def test_nmPlaybook():
 def main():
   #logging.basicConfig(level=logging.DEBUG)
   logging.basicConfig(level=logging.INFO)
-  test_nmTools()
-  test_nmDatalake()
-  test_nmDatastore()
-  test_nmFetchers()
-  test_nmPlaybook()
 
-  return 0
+  anyError = 0 # success return value
+  anyError = test_nmTools() or anyError
+  anyError = test_nmDatalake() or anyError
+  anyError = test_nmDatastore() or anyError
+  anyError = test_nmFetchers() or anyError
+  anyError = test_nmPlaybook() or anyError
+
+  return anyError
 
 
 if __name__ == "__main__":
