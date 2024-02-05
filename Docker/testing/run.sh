@@ -57,7 +57,7 @@ function run_tests()
 }
 
 if [ "run" = "$1" ]; then
-  run_tests
+  run_tests;
   exit 0;
 fi;
 
