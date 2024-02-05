@@ -16,7 +16,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Docker build and test
-        id: build_and_test
         run: |
           cd Docker
           python3 docker-netmeld.py tester > Dockerfile \
