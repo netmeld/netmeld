@@ -162,12 +162,12 @@ def main():
   #logging.basicConfig(level=logging.DEBUG)
   logging.basicConfig(level=logging.INFO)
 
-  anyError = 0
-  anyError = test_nmTools() and anyError
-  anyError = test_nmDatalake() and anyError
-  anyError = test_nmDatastore() and anyError
-  anyError = test_nmFetchers() and anyError
-  anyError = test_nmPlaybook() and anyError
+  anyError = 0 # success return value
+  anyError = test_nmTools() or anyError
+  anyError = test_nmDatalake() or anyError
+  anyError = test_nmDatastore() or anyError
+  anyError = test_nmFetchers() or anyError
+  anyError = test_nmPlaybook() or anyError
 
   return anyError
 
