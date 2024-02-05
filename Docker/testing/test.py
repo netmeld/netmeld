@@ -37,7 +37,7 @@ def run_commands(commands):
     allSuccess = run_command(command) and allSuccess
 
   if allSuccess:
-    logging.info("All command(s) ran successfully")
+    logging.info("All block of command(s) ran successfully")
     return 0
   else:
     logging.info("Some command(s) failed")
