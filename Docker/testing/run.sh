@@ -56,7 +56,6 @@ function run_tests()
   sudo service postgresql stop;
 }
 
-errors=0;
 if [ "run" = "$1" ]; then
   run_tests
   exit 0;
