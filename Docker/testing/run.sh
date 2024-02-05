@@ -52,15 +52,14 @@ function run_tests()
 {
   sudo service postgresql restart;
   create_test_data;
-  python3 test.py;
-  rc=$?;
+  python3 test.py || exit=1;
   sudo service postgresql stop;
-
-  return $rc
 }
 
+errors=0;
 if [ "run" = "$1" ]; then
-  exit $(run_tests);
+  run_tests
+  exit 0;
 fi;
 
 exec "$@";
