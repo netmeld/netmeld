@@ -23,13 +23,4 @@ jobs:
             && docker build --no-cache --tag "netmeld-tester" . \
             && rm Dockerfile
           docker run --rm -t netmeld-tester
-          echo "::set-output name=failures::$?"
           docker image rm netmeld-tester
-
-
-      - name: Check for failing tests
-        if: ${{ steps.build_and_test.outputs.failures != 0 }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.setFailed('Some tests failed')
