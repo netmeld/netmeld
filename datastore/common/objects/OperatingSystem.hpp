@@ -70,7 +70,6 @@ namespace netmeld::datastore::objects {
       void setProductVersion(const std::string&);
       void setCpe(const std::string&);
       void setAccuracy(const double);
-      void setHotfixs(const std::vector<std::string>&);
       void addHotfix(const std::string&);
 
       bool isValid() const override;
