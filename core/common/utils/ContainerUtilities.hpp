@@ -24,65 +24,31 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MAIN
-#include <boost/test/unit_test.hpp>
+#ifndef CONTAINER_UTILITIES_HPP
+#define CONTAINER_UTILITIES_HPP
 
-#include <netmeld/core/utils/StringUtilities.hpp>
+#include <sstream>
+#include <string>
 
-namespace nmcu = netmeld::core::utils;
 
-BOOST_AUTO_TEST_CASE(testToLower)
-{
-  std::map<std::string, std::string> tests {
-      {"A", "a"}
-    , {"Abc", "abc"}
-    , {"AbC", "abc"}
-    , {"123", "123"}
-    , {" aBc DeF ", " abc def "}
-    , {"", ""}
-    };
+namespace netmeld::core::utils {
 
-  for (const auto& [key, value] : tests) {
-    BOOST_TEST(value == nmcu::toLower(key));
-  }
+  // ==========================================================================
+  // toString()
+  template<typename Iterator>
+  std::string toString(Iterator, Iterator, const std::string&);
+
+  template<typename SequenceContainer>
+  std::string toString(const SequenceContainer&, const char=' ');
+
+  template<typename SequenceContainer>
+  std::string toString(const SequenceContainer&, const std::string&);
+  // ==========================================================================
+
+  template<typename SequenceContainer, typename T>
+  void pushBackIfUnique(SequenceContainer* const, const T&);
 }
 
-BOOST_AUTO_TEST_CASE(testToUpper)
-{
-  std::map<std::string, std::string> tests {
-      {"A", "A"}
-    , {"Abc", "ABC"}
-    , {"AbC", "ABC"}
-    , {"123", "123"}
-    , {" aBc DeF ", " ABC DEF "}
-    , {"", ""}
-    };
+#include "ContainerUtilities.ipp"
 
-  for (const auto& [key, value] : tests) {
-    BOOST_TEST(value == nmcu::toUpper(key));
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testTrim)
-{
-  std::map<std::string, std::string> tests {
-      {"a", "a"}
-    , {" B ", "B"}
-    , {" c", "c"}
-    , {"D ", "D"}
-    , {"  e     ", "e"}
-    , {" aBc DeF ", "aBc DeF"}
-    , {"       ", ""}
-    };
-
-  for (const auto& [key, value] : tests) {
-    BOOST_TEST(value == nmcu::trim(key));
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testGetSrvcString)
-{
-  BOOST_TEST("a:b:c" == nmcu::getSrvcString("a", "b", "c"));
-  BOOST_TEST("1:2:3" == nmcu::getSrvcString("1", "2", "3"));
-}
+#endif  /* CONTAINER_UTILITIES_HPP */

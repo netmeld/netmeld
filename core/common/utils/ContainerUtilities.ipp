@@ -24,65 +24,51 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MAIN
-#include <boost/test/unit_test.hpp>
+// NOTE This implementation is included in the header (at the end) since it
+//      leverages templating.
 
-#include <netmeld/core/utils/StringUtilities.hpp>
+#include <algorithm>
 
-namespace nmcu = netmeld::core::utils;
+namespace netmeld::core::utils {
 
-BOOST_AUTO_TEST_CASE(testToLower)
-{
-  std::map<std::string, std::string> tests {
-      {"A", "a"}
-    , {"Abc", "abc"}
-    , {"AbC", "abc"}
-    , {"123", "123"}
-    , {" aBc DeF ", " abc def "}
-    , {"", ""}
-    };
+  // ==========================================================================
+  // toString()
+  template<typename Iterator>
+  std::string
+  toString(Iterator begin, Iterator end, const std::string& sep)
+  {
+    std::ostringstream oss;
+    if (begin != end) {
+      oss << *begin;
+      ++begin;
+      for (; begin != end; ++begin) {
+        oss << sep << *begin;
+      }
+    }
 
-  for (const auto& [key, value] : tests) {
-    BOOST_TEST(value == nmcu::toLower(key));
+    return oss.str();
   }
-}
-
-BOOST_AUTO_TEST_CASE(testToUpper)
-{
-  std::map<std::string, std::string> tests {
-      {"A", "A"}
-    , {"Abc", "ABC"}
-    , {"AbC", "ABC"}
-    , {"123", "123"}
-    , {" aBc DeF ", " ABC DEF "}
-    , {"", ""}
-    };
-
-  for (const auto& [key, value] : tests) {
-    BOOST_TEST(value == nmcu::toUpper(key));
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const char sep)
+  {
+    const std::string sSep {sep};
+    return toString(con.begin(), con.end(), sSep);
   }
-}
-
-BOOST_AUTO_TEST_CASE(testTrim)
-{
-  std::map<std::string, std::string> tests {
-      {"a", "a"}
-    , {" B ", "B"}
-    , {" c", "c"}
-    , {"D ", "D"}
-    , {"  e     ", "e"}
-    , {" aBc DeF ", "aBc DeF"}
-    , {"       ", ""}
-    };
-
-  for (const auto& [key, value] : tests) {
-    BOOST_TEST(value == nmcu::trim(key));
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const std::string& sep)
+  {
+    return toString(con.begin(), con.end(), sep);
   }
-}
+  // ==========================================================================
 
-BOOST_AUTO_TEST_CASE(testGetSrvcString)
-{
-  BOOST_TEST("a:b:c" == nmcu::getSrvcString("a", "b", "c"));
-  BOOST_TEST("1:2:3" == nmcu::getSrvcString("1", "2", "3"));
+  template<typename SequenceContainer, typename T>
+  void
+  pushBackIfUnique(SequenceContainer* const con, const T& item)
+  {
+    if (std::find(con->begin(), con->end(), item) == con->end()) {
+      con->push_back(item);
+    }
+  }
 }
