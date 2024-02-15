@@ -80,7 +80,7 @@ namespace netmeld::datastore::objects {
   void
   OperatingSystem::addHotfix(const std::string& _string)
   {
-    hotfixs.push_back(_string);
+    hotfixes.push_back(_string);
   }
 
   bool
