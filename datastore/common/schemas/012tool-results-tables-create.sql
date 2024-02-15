@@ -801,6 +801,7 @@ CREATE TABLE raw_operating_systems (
   , product_version             TEXT            NULL
   , cpe                         TEXT            NULL
   , accuracy                    FLOAT           NULL
+  , hotfixes                    ARRAY           NULL
   , FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
@@ -814,7 +815,7 @@ CREATE UNIQUE INDEX raw_operating_systems_idx_unique
 ON raw_operating_systems(
   HASH_CHAIN( tool_run_id::TEXT, ip_addr::TEXT
             , vendor_name, product_name, product_version
-            , cpe, accuracy::TEXT
+            , cpe, accuracy::TEXT, hotfixes
             )
 );
 
@@ -839,6 +840,9 @@ ON raw_operating_systems(cpe);
 
 CREATE INDEX raw_operating_systems_idx_accuracy
 ON raw_operating_systems(accuracy);
+
+CREATE INDEX raw_operating_systems_idx_hotfixes
+ON raw_operating_systems(hotfixes);
 
 
 -- ----------------------------------------------------------------------
