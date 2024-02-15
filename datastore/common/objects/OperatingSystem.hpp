@@ -45,7 +45,7 @@ namespace netmeld::datastore::objects {
       std::string   productVersion;
       std::string   cpe;
       double        accuracy {0.0}; // FLOAT in DB, is 15 digits of percision
-      std::vector<std::string> hotfixs;
+      std::vector<std::string> hotfixes;
 
     public:
 
