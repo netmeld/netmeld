@@ -126,8 +126,9 @@ namespace netmeld::datastore::objects {
                 << std::endl;
       return;
     }
-    //Add conditional
-    ipAddr.save(t, toolRunId, deviceId);
+    if (!ipAddr.empty()) { 
+      ipAddr.save(t, toolRunId, deviceId);
+    }
 
     t.exec_prepared("insert_raw_operating_system",
         toolRunId,
