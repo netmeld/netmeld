@@ -51,7 +51,14 @@ BOOST_AUTO_TEST_CASE(testParts)
       // user@host> show arp
 R"(MAC Address       Address         Name                     Interface
 00:e0:81:22:fd:74 192.168.64.10   firewall.my.net          fxp0.0
-00:04:5a:65:78:e1 192.168.65.13   lab.my.net               fxp0.0)"
+00:04:5a:65:78:e1 192.168.65.13   lab.my.net               fxp0.0)",
+      // user@host> show arp no-resolve
+R"(MAC Address       Address         Interface     Flags
+00:90:69:96:00:01 10.10.45.5      fe-0/0/1.0    none
+00:00:00:00:00:01 200.200.200.1   fe-0/0/0.0    permanent published
+00:00:00:00:00:02 200.200.200.2   fe-0/0/0.0    permanent
+00:90:69:91:b0:00 200.200.200.3   fe-0/0/0.0    none
+Total entries: 4)"
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),

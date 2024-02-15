@@ -206,27 +206,38 @@ Parser::Parser() : Parser::base_type(start)
 
   arpJuniperConfig =
     arpHeaderJuniper >>
-    *arpEntryJuniper
+    *arpEntryJuniper >>
+    *arpFooterJuniper
     ;
 
   arpHeaderJuniper =
     qi::lit("MAC Address") >>
     qi::lit("Address") >>
-    qi::lit("Name") >>
+    -qi::lit("Name") >>
     qi::lit("Interface") >>
+    -qi::lit("Flags") >>
+    -qi::lit("TTE") >>
     (qi::eol | qi::eoi)
     ;
 
   arpEntryJuniper =
     ( macAddr[(qi::_b = qi::_1)] >>
       ipv4Addr[(qi::_c = qi::_1)] >>
-      token >>
+      -token >>
       iface[(qi::_a = qi::_1)] >>
+      *token >>
+      -qi::int_ >>
       (qi::eol | qi::eoi)
     )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
        pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
+
+  arpFooterJuniper =
+    qi::lit("Total entries:") >>
+    qi::int_ >>
+    (qi::eol | qi::eoi)
+  ;
 
   // =============================================================================
   // NDP Rules
@@ -359,6 +370,7 @@ Parser::Parser() : Parser::base_type(start)
       (arpCiscoIos)       (arpHeaderCiscoIos)       (arpEntryCiscoIos)
       (arpCiscoNxos)      (arpHeaderCiscoNxos)      (arpEntryCiscoNxos)
       (arpCiscoWlc)       (arpHeaderCiscoWlc)       (arpEntryCiscoWlc)
+      (arpJuniperConfig) (arpHeaderJuniper) (arpEntryJuniper) (arpFooterJuniper)
       // NDP
       (ndpArista)         (ndpHeaderArista)         (ndpEntryArista)
       (ndpCiscoIos)       (ndpHeaderCiscoIos)       (ndpEntryCiscoIos)

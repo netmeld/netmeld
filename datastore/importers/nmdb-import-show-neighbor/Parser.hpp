@@ -72,6 +72,7 @@ class Parser :
       arpHeaderCiscoNxos,
       arpHeaderCiscoWlc,
       arpHeaderJuniper,
+      arpFooterJuniper,
       ndpHeaderArista,
       ndpHeaderCiscoIos,
       ndpHeaderCiscoIosDetail;
