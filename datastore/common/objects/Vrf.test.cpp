@@ -39,6 +39,8 @@ class TestVrf : public nmdo::Vrf {
     explicit TestVrf(const std::string& _vrfId) : Vrf(_vrfId) {};
 
   public:
+    std::string getId()
+    { return vrfId; }
     std::vector<std::string> getIfaces()
     { return ifaces; }
 };

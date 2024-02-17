@@ -124,7 +124,7 @@ Parser::Parser() : Parser::base_type(start)
   //   nextHop == [ip/prefix | ip | iface]
   route =
     (qi::lit("ipv6") | qi::lit("ip")) >> qi::lit("route") >>
-    -(qi::lit("vrf") >> token) [(pnx::bind(&Parser::vrfId, this) = qi::_1)] >>
+    -(qi::lit("vrf") >> token [(pnx::bind(&Parser::vrfId, this) = qi::_1)]) >>
        // ip_mask ip
     (  (ipMask >> ipAddr)
          [(pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2))]
