@@ -24,6 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 #include <netmeld/datastore/tools/AbstractGraphTool.hpp>
 
 #include "GraphHelper.hpp"
@@ -49,14 +50,18 @@ class Tool : public nmdt::AbstractGraphTool
     std::set<std::string> visited;
 
     // TODO
-    std::string testStartIp;
-    std::string testDestIp;
+    std::string firstHop;
+    std::string finalHop;
 
     bool noRouteDetails {false};
 
-    std::map<std::string, std::set<std::string>> vertexDetails;
+    //std::map<std::string, std::set<std::string>>    routeDetails;
+    std::map<std::string, std::vector<std::string>> routeDetails;
+    std::map<std::string, std::vector<std::string>> aclDetails;
 
     double maxHostCount {0}; // PostgreSQL BIGINT is 8 bytes
+    std::map<std::string, std::map<std::string, std::map<std::string, double>>>
+      hostCountReductions;
 
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
@@ -127,7 +132,7 @@ class Tool : public nmdt::AbstractGraphTool
                            , LabelWriter(graph) // EdgePropertyWriter
                            , GraphWriter()      // GraphPropertyWriter
                            // VertexID
-                           , std::get(&VertexProperties::name, graph)
+                           , boost::get(&VertexProperties::name, graph)
                            );
 
       return nmcu::Exit::SUCCESS;
@@ -136,8 +141,8 @@ class Tool : public nmdt::AbstractGraphTool
     void
     processOptions()
     {
-      testStartIp = opts.getValue("source");
-      testDestIp  = opts.getValue("destination");
+      firstHop = opts.getValue("source");
+      finalHop  = opts.getValue("destination");
 
       noRouteDetails = opts.exists("no-route-details");
     }
@@ -167,16 +172,6 @@ class Tool : public nmdt::AbstractGraphTool
             , next_table_id
             , next_hop_ip_addr
             , max(outgoing_interface_name) AS outgoing_interface_name
---            , protocol
---            , administrative_distance
---            , metric
---            , description
-            , CASE
-                WHEN family(dst_ip_net) = 4 THEN
-                  (2^(32 - MASKLEN(dst_ip_net)))
-                ELSE
-                  (2^(128 - MASKLEN(dst_ip_net)))
-              END AS count
             , CASE
                 WHEN (COALESCE(MAX(outgoing_interface_name), '')
                       IN ('discard', 'null0', 'reject')
@@ -187,7 +182,6 @@ class Tool : public nmdt::AbstractGraphTool
               END AS is_blackhole
           FROM device_ip_routes
           WHERE is_active
---            AND $1 <<= dst_ip_net
             AND $1 && dst_ip_net
             AND $2 = device_id
             AND $3 = COALESCE(vrf_id, '')
@@ -199,6 +193,42 @@ class Tool : public nmdt::AbstractGraphTool
                   , next_table_id
                   , next_hop_ip_addr
           ORDER BY dst_ip_net DESC
+          )"
+        );
+      db.prepare("unique_host_coverage", R"(
+          WITH cte1 AS (SELECT DISTINCT
+                            device_id
+                          , vrf_id
+                          , dst_ip_net
+                        FROM device_ip_routes
+                        WHERE $1 && dst_ip_net
+                       ),
+               cte2 AS (SELECT DISTINCT
+                            t1.*
+                          , NULLIF(t2.dst_ip_net, '0/0'::INET) AS larger
+                        FROM cte1 AS t1
+                        LEFT JOIN cte1 AS t2
+                          ON (   t1.device_id = t2.device_id
+                             AND t1.vrf_id = t2.vrf_id
+                             AND t1.dst_ip_net << t2.dst_ip_net
+                             )
+                       )
+          SELECT DISTINCT
+              device_id
+            , vrf_id
+            , dst_ip_net
+            , MIN(CASE WHEN larger IS NOT NULL THEN
+                    0
+                  ELSE
+                    CASE WHEN family(dst_ip_net) = 4 THEN
+                      (2^(32 - MASKLEN(dst_ip_net)))
+                    ELSE
+                      (2^(128 - MASKLEN(dst_ip_net)))
+                    END
+                  END
+              ) AS reduce_by
+          FROM cte2
+          GROUP BY device_id, vrf_id, dst_ip_net
           )"
         );
       db.prepare("select_next_hops", R"(
@@ -224,47 +254,33 @@ class Tool : public nmdt::AbstractGraphTool
           )"
         );
 
-      db.prepare("select_zone_ids", R"(
-            SELECT
-              ARRAY_AGG(DISTINCT zone_id)
-            FROM device_acl_zones
-            WHERE interface_name = $1
-          )"
-        );
-      db.prepare("select_zone_ids", R"(
-            SELECT
-              ARRAY_AGG(DISTINCT ip_net_set_id)
-            FROM device_acl_ip_nets
-            WHERE device_id = $1
-            AND ip_net && $2
-          )"
-        );
       db.prepare("select_acl_rules", R"(
-          SELECT DISTINCT
-              protocol
-            , src_port_range
-            , RANGE_AGG(dst_port_range)
-          FROM device_acl_services
+          SELECT DISTINCT *
+          FROM device_acl_rules_all
           WHERE device_id = $1
-            AND service_id IN (
+            AND incoming_zone_id in (
               SELECT DISTINCT
-                service_id
-              FROM device_acl_rules_all
-              WHERE src_ip_net_set_id in (
-                SELECT DISTINCT
-                  ip_net_set_id
-                FROM device_acl_ip_nets
-                WHERE device_id = $1
-                  AND ip_net && $2
-              )
-              AND incoming_zone_id IN $3
-              AND outgoing_zone_id IN $4
+                zone_id
+              FROM raw_device_acl_zones_interfaces
+              WHERE device_id = $1
+                AND interface_name = $3
+              UNION SELECT 'any'
             )
-          GROUP BY  protocol
-                  , src_port_range
-          ORDER BY  protocol
-                  , src_port_range
-                  , dst_port_range
+            AND outgoing_zone_id in (
+              SELECT DISTINCT
+                zone_id
+              FROM raw_device_acl_zones_interfaces
+              WHERE device_id = $1
+                AND interface_name = $4
+              UNION SELECT 'any'
+            )
+            AND dst_ip_net_set_id in (
+              SELECT ip_net_set_id
+              FROM device_acl_ip_nets
+              WHERE device_id = $1
+                AND ip_net && $2
+              )
+          ORDER BY priority
           )"
         );
     }
@@ -274,13 +290,24 @@ class Tool : public nmdt::AbstractGraphTool
     {
       pqxx::read_transaction rt {db};
 
-      maxHostCount = (rt.exec_prepared1("count_max_hosts", testDestIp)
+      maxHostCount = (rt.exec_prepared1("count_max_hosts", finalHop)
                      )[0].as<double>()
         ;
+      LOG_DEBUG << "Number of hosts in final hop: " << maxHostCount
+                << std::endl;
+      for (const auto& row
+          : rt.exec_prepared("unique_host_coverage", finalHop)
+          )
+      {
+        // device_id, vrf_id, dst_ip_net, reduced_by
+        hostCountReductions[row[0].c_str()][row[1].c_str()][row[2].c_str()] =
+            row[3].as<double>()
+          ;
+      }
 
       // TODO
       findRoutesBetweenPoints(rt);
-      addVertexDetails();
+      addRouteVertexDetails();
 
       finalizeVertices();
     }
@@ -289,23 +316,25 @@ class Tool : public nmdt::AbstractGraphTool
     findRoutesBetweenPoints(pqxx::read_transaction& rt)
     {
       // add source and destination nodes
-      addVertex("box", testStartIp);
-      addVertex("box", testDestIp);
+      addVertex("box", firstHop);
+      addVertex("box", finalHop);
 
       for ( const auto& nextHop
-          : rt.exec_prepared("select_initial_hops", testStartIp)
+          : rt.exec_prepared("select_initial_hops", firstHop)
           )
       {
+        LOG_DEBUG << "Processing next initial hop\n";
+
         const std::string deviceId    {nextHop.at("device_id").c_str()};
         const std::string vrfId       {nextHop.at("vrf_id").c_str()};
         const std::string ipNet       {nextHop.at("ip_net").c_str()};
         const std::string inIfaceName {nextHop.at("interface_name").c_str()};
 
-        const std::string id {getLookupId(vrfId, deviceId)};
+        const std::string id {getLookupId(deviceId, vrfId)};
         getPossibleRoutes(rt, deviceId, vrfId, inIfaceName);
         if (vertexLookup.count(id)) {
           addVertex("oval", ipNet);
-          addEdge(testStartIp, ipNet);
+          addEdge(firstHop, ipNet);
 
           LOG_DEBUG << "Route was found starting at: "
                     << ipNet << "->" << id
@@ -323,18 +352,17 @@ class Tool : public nmdt::AbstractGraphTool
                      , const std::string& inIfaceName
                      )
     {
-      const std::string id {getLookupId(vrfId, deviceId)};
+      const std::string id {getLookupId(deviceId, vrfId)};
 
       // process hop route(s) where destination is reachable
       // - empty if no routes, otherwise a route is known
       auto hostsToCover {maxHostCount};
       for ( const auto& route
-          : rt.exec_prepared("select_hop_routes", testDestIp, deviceId, vrfId)
+          : rt.exec_prepared("select_hop_routes", finalHop, deviceId, vrfId)
           )
       {
         const std::string nextHopIpAddr {route.at("next_hop_ip_addr").c_str()};
         const std::string dstIpNet      {route.at("dst_ip_net").c_str()};
-        const double hostCount          {route.at("count").as<double>()};
         bool isBlackhole                {route.at("is_blackhole").as<bool>()};
 
         // Except for default route, routes can not overlap
@@ -349,6 +377,7 @@ class Tool : public nmdt::AbstractGraphTool
           LOG_DEBUG << "Skipping un-reachable route\n";
           continue;
         } else { // paths left to cover
+          double hostCount = hostCountReductions[deviceId][vrfId][dstIpNet];
           LOG_DEBUG << std::format("Route covers {} of {} hosts left\n"
                                   , hostCount
                                   , hostsToCover
@@ -358,10 +387,10 @@ class Tool : public nmdt::AbstractGraphTool
         }
 
         // last hop found; IP/CIDR is destination
-        if (testDestIp == nextHopIpAddr || testDestIp == dstIpNet) {
+        if (finalHop == nextHopIpAddr || finalHop == dstIpNet) {
           LOG_DEBUG << "Final hop found\n";
           addVertexRoute(route, inIfaceName);
-          addEdge(id, testDestIp);
+          addEdge(id, finalHop);
         }
         // last hop found; route ultimately discards packets
         else if (isBlackhole) {
@@ -392,14 +421,14 @@ class Tool : public nmdt::AbstractGraphTool
           if (0 == nextHops.size()) {
             LOG_DEBUG << "Possible final hop found\n";
             addVertexRoute(route, inIfaceName);
-            addEdge(id, testDestIp, "dashed");
+            addEdge(id, finalHop, "dashed");
           } else {
             LOG_DEBUG << "More valid hops found\n";
             for (const auto& nextHop : nextHops) {
               const std::string nextDeviceId  {nextHop.at("device_id").c_str()};
               const std::string nextVrfId     {nextHop.at("vrf_id").c_str()};
 
-              const std::string nextId {getLookupId(nextVrfId, nextDeviceId)};
+              const std::string nextId {getLookupId(nextDeviceId, nextVrfId)};
 
               LOG_DEBUG << std::format("From {}, examining {}\n", id, nextId);
               if (!visited.contains(nextId)) {
@@ -419,7 +448,16 @@ class Tool : public nmdt::AbstractGraphTool
                                         )
                           ;
                 const std::string ipNet {nextHop.at("ip_net").c_str()};
-                addVertex("oval", ipNet);
+                //addVertex("oval", ipNet);
+                std::string aclData {
+                  dumpAclData( rt
+                             , deviceId
+                             , ipNet
+                             , inIfaceName
+                             , route.at("outgoing_interface_name").c_str()
+                             )
+                  };
+                addVertex("oval", ipNet, aclData);
                 addEdge(ipNet, nextId);
                 addVertexRoute(route, inIfaceName);
                 addEdge(id, ipNet);
@@ -436,25 +474,35 @@ class Tool : public nmdt::AbstractGraphTool
                   )
     {
       const std::string id {
-          getLookupId( route.at("vrf_id").c_str()
-                     , route.at("device_id").c_str()
+          getLookupId( route.at("device_id").c_str()
+                     , route.at("vrf_id").c_str()
                      )
         };
 
-      if (!vertexDetails.contains(id)) {
-        vertexDetails.emplace(id, std::set<std::string>());
+      if (!routeDetails.contains(id)) {
+        //routeDetails.emplace(id, std::set<std::string>());
+        routeDetails.insert({id, std::vector<std::string>()});
         addVertex("box", id);
       }
+      auto& routes {routeDetails.at(id)};
 
       if (!noRouteDetails) {
-        vertexDetails.at(id).insert(
-            std::format(R"(From {} to {} via {} ({})<br align="left"/>)"
+        std::string rte {
+            std::format(R"([{} &rarr; {}] nextHop {} for {}<br align="left"/>)"
                        , inIfaceName
-                       , route.at("dst_ip_net").c_str()
-                       , route.at("next_hop_ip_addr").c_str()
                        , route.at("outgoing_interface_name").c_str()
+                       , route.at("next_hop_ip_addr").c_str()
+                       , route.at("dst_ip_net").c_str()
                        )
-          );
+            //std::format(R"({} &rarr; {} via {} ({})<br align="left"/>)"
+            //           , inIfaceName
+            //           , route.at("dst_ip_net").c_str()
+            //           , route.at("next_hop_ip_addr").c_str()
+            //           , route.at("outgoing_interface_name").c_str()
+            //           )
+          };
+        nmcu::pushBackIfUnique(&routes, rte);
+//        routeDetails.at(id).insert();
       }
     }
 
@@ -464,7 +512,7 @@ class Tool : public nmdt::AbstractGraphTool
              , const std::string& label=""
              )
     {
-      LOG_DEBUG << std::format("Vertex: {} () -- {}\n", id, shape, label);
+      LOG_DEBUG << std::format("Vertex: {} {} -- {}\n", id, shape, label);
 
       std::string mLabel {label};
       if (!vertexLookup.count(id)) {
@@ -495,9 +543,9 @@ class Tool : public nmdt::AbstractGraphTool
     }
 
     void
-    addVertexDetails()
+    addRouteVertexDetails()
     {
-      for (const auto& [vertex, dataSet] : vertexDetails) {
+      for (const auto& [vertex, dataSet] : routeDetails) {
         for (const auto& data : dataSet) {
           addVertex("box", vertex, data);
         }
@@ -554,12 +602,54 @@ class Tool : public nmdt::AbstractGraphTool
       return std::format("{}::{}", v1, v2);
     }
 
-    void
-    dumpAclData()
+    std::string
+    dumpAclData( pqxx::read_transaction& rt
+               , const std::string& id, const std::string& net
+               , const std::string& in, const std::string& out
+               )
     {
+      if (false) {return "";} // TODO option noAclDetails
+
+      /* TODO where to add this?
+          - subnet: what about multi-in/out
+          - route: lots of duplication
+          - 2nd column: re-work needed
+      */
+      std::string aclDetailKey {id+net+in+out};
+      if (aclDetails.contains(aclDetailKey)) {return "";} // don't repeat logic
+
+      const std::string prefix {
+          std::format(R"({} [{} &rarr; {}]:)", id, in, out)
+        };
+
+      std::vector<std::string> rules;
+
+      bool foundOne {false};
+      std::string rule;
       for ( const auto& acl
-          : rt.exec_prepared("select_next_hops")
+          : rt.exec_prepared("select_acl_rules", id, net, in, out)
           )
+      {
+        foundOne = true;
+        const std::string action  {acl.at("action").c_str()};
+        const std::string src     {acl.at("src_ip_net_set_id").c_str()};
+        const std::string dst     {acl.at("dst_ip_net_set_id").c_str()};
+        const std::string service {acl.at("service_id").c_str()};
+
+        rule = std::format(R"({} {} {} {} {}<br align="left"/>)"
+                          , prefix
+                          , action, src, dst, service
+                          )
+          ;
+        nmcu::pushBackIfUnique(&rules, rule);
+      }
+      if (!foundOne) {
+        rule = std::format(R"({} no-known-acls<br align="left"/>)", prefix);
+        nmcu::pushBackIfUnique(&rules, rule);
+      }
+      aclDetails.insert({aclDetailKey, rules});
+
+      return nmcu::toString(rules);
     }
 
   protected: // Methods part of subclass API
