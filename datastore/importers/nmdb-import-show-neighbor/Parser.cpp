@@ -213,7 +213,7 @@ Parser::Parser() : Parser::base_type(start)
   arpHeaderJuniper =
     qi::lit("MAC Address") >>
     qi::lit("Address") >>
-    -qi::lit("Name") >>
+    -(qi::lit("Name")[(pnx::ref(nameColExists) = true)]) >>
     qi::lit("Interface") >>
     -qi::lit("Flags") >>
     -qi::lit("TTE") >>
@@ -223,7 +223,7 @@ Parser::Parser() : Parser::base_type(start)
   arpEntryJuniper =
     ( macAddr[(qi::_b = qi::_1)] >>
       ipv4Addr[(qi::_c = qi::_1)] >>
-      -token >>
+      -(qi::eps(pnx::ref(nameColExists)) > token) >>
       iface[(qi::_a = qi::_1)] >>
       *token >>
       -qi::int_ >>

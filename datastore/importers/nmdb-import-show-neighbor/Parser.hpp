@@ -104,6 +104,9 @@ class Parser :
     // Supporting data structures
     Data d;
 
+    // Supporting variables
+    bool nameColExists {false};
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
