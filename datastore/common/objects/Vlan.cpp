@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -79,8 +79,8 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Vlan::save(pqxx::transaction_base& t,
-             const nmco::Uuid& toolRunId, const std::string& deviceId)
+  Vlan::save( pqxx::transaction_base& t
+            , const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid()) {
       LOG_DEBUG << "Vlan object is not saving: " << toDebugString()
@@ -89,34 +89,38 @@ namespace netmeld::datastore::objects {
     }
 
     if (deviceId.empty()) {
-      t.exec_prepared("insert_raw_vlan",
-          toolRunId,
-          vlanId,
-          description);
+      t.exec_prepared( "insert_raw_vlan"
+                     , toolRunId
+                     , vlanId
+                     , description
+                     );
 
       // Associate VLAN to network
-      ipNet.save(t, toolRunId, deviceId);
       if (ipNet.isValid()) {
-        t.exec_prepared("insert_raw_vlan_ip_net",
-            toolRunId,
-            vlanId,
-            ipNet.toString());
+        ipNet.save(t, toolRunId, deviceId);
+        t.exec_prepared( "insert_raw_vlan_ip_net"
+                       , toolRunId
+                       , vlanId
+                       , ipNet.toString()
+                       );
       }
     } else {
-      t.exec_prepared("insert_raw_device_vlan",
-          toolRunId,
-          deviceId,
-          vlanId,
-          description);
+      t.exec_prepared( "insert_raw_device_vlan"
+                     , toolRunId
+                     , deviceId
+                     , vlanId
+                     , description
+                     );
 
       // Associate VLAN to network
-      ipNet.save(t, toolRunId, deviceId);
       if (ipNet.isValid()) {
-        t.exec_prepared("insert_raw_device_vlan_ip_net",
-            toolRunId,
-            deviceId,
-            vlanId,
-            ipNet.toString());
+        ipNet.save(t, toolRunId, deviceId);
+        t.exec_prepared( "insert_raw_device_vlan_ip_net"
+                       , toolRunId
+                       , deviceId
+                       , vlanId
+                       , ipNet.toString()
+                       );
       }
     }
   }
@@ -126,9 +130,9 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
     oss << "[" // opening bracket
-        << "vlanId: " << vlanId  << ", "
-        << "ipNet: " << ipNet  << ", "
-        << "description: " << description
+        << "vlanId: " << vlanId
+        << ", ipNet: " << ipNet
+        << ", description: " << description
         << "]"; // closing bracket
 
     return oss.str();
@@ -137,13 +141,15 @@ namespace netmeld::datastore::objects {
   std::partial_ordering
   Vlan::operator<=>(const Vlan& rhs) const
   {
-    if (auto cmp = vlanId <=> rhs.vlanId; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = description <=> rhs.description; 0 != cmp) {
-      return cmp;
-    }
-    return ipNet <=> rhs.ipNet;
+    return std::tie( vlanId
+                   , description
+                   , ipNet
+                   )
+       <=> std::tie( rhs.vlanId
+                   , rhs.description
+                   , rhs.ipNet
+                   )
+      ;
   }
 
   bool

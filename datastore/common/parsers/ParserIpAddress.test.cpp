@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -37,83 +37,81 @@ namespace nmdp = netmeld::datastore::parsers;
 
 BOOST_AUTO_TEST_CASE(testWellformedWithPrefix)
 {
-  std::vector<std::string> ips =
-  {
-    "0.0.0.0/0",
-    "::/0",
-    "1.2.3.4/1",
-    "255.255.255.255/32",
-    "1.12.255.0/24",
-    "12.1.4.255/10",
-    "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128",
-    "ffff::ffff/64",
-    "ffff::/8",
-    "::ffff/15",
-    "2001:db8:1::23:456:789/48"
-  };
+  std::vector<std::string> ips {
+      "0.0.0.0/0"
+    , "::/0"
+    , "1.2.3.4/1"
+    , "255.255.255.255/32"
+    , "1.12.255.0/24"
+    , "12.1.4.255/10"
+    , "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128"
+    , "ffff:ffff:ffff:ffff:ffff:ffff::/64"
+    , "ffff:ffff:ffff:ffff:ffff::ffff/64"
+    , "::ffff:ffff:ffff:ffff:ffff:ffff/64"
+    , "ffff::ffff/64"
+    , "ffff::/8"
+    , "::ffff/15"
+    , "2001:db8:1::23:456:789/48"
+    };
 
   for (const auto& ip : ips) {
     auto temp = nmdp::fromString<nmdp::ParserIpAddress, nmdo::IpAddress>(ip);
-    BOOST_CHECK_EQUAL(ip, temp.toString());
+    BOOST_TEST(ip == temp.toString());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testWellformedNoPrefixV4)
 {
-  std::vector<std::string> ips =
-  {
-    "0.0.0.0",
-    "1.2.3.4",
-    "255.255.255.255"
-  };
+  std::vector<std::string> ips {
+      "0.0.0.0"
+    , "1.2.3.4"
+    , "255.255.255.255"
+    };
 
   for (const auto& ip : ips) {
     auto temp = nmdp::fromString<nmdp::ParserIpv4Address, nmdo::IpAddress>(ip);
     auto tempIp = ip + "/32";
-    BOOST_CHECK_EQUAL(tempIp, temp.toString());
+    BOOST_TEST(tempIp == temp.toString());
   }
 
   for (const auto& ip : ips) {
     auto temp = nmdp::fromString<nmdp::ParserIpAddress, nmdo::IpAddress>(ip);
     auto tempIp = ip + "/32";
-    BOOST_CHECK_EQUAL(tempIp, temp.toString());
+    BOOST_TEST(tempIp == temp.toString());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testWellformedNoPrefixV6)
 {
-  std::vector<std::string> ips =
-  {
-    "::",
-    "::1",
-    "2001:db8:1:a::ffff",
-    "2001:db8:1:a:b:23:456:789"
-  };
+  std::vector<std::string> ips {
+      "::"
+    , "::1"
+    , "2001:db8:1:a::ffff"
+    , "2001:db8:1:a:b:23:456:789"
+    };
 
   for (const auto& ip : ips) {
     auto temp = nmdp::fromString<nmdp::ParserIpv6Address, nmdo::IpAddress>(ip);
     auto tempIp = ip + "/128";
-    BOOST_CHECK_EQUAL(tempIp, temp.toString());
+    BOOST_TEST(tempIp == temp.toString());
   }
 
   for (const auto& ip : ips) {
     auto temp = nmdp::fromString<nmdp::ParserIpAddress, nmdo::IpAddress>(ip);
     auto tempIp = ip + "/128";
-    BOOST_CHECK_EQUAL(tempIp, temp.toString());
+    BOOST_TEST(tempIp == temp.toString());
   }
 }
 
 BOOST_AUTO_TEST_CASE(testMalformedNotFullyParsed)
 {
-  std::vector<std::string> ips =
-  {
-    "::1:",
-    "1.2.3.1001",
-    "255.255.255.255/5.255.255.255",
-    "1.1.1.1/g",
-    //"ffff:ffff:ffff:ffff::ffff:ffff:ffff:ffff/128" will pass, but std::exit()
-    "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffg/128"
-  };
+  std::vector<std::string> ips {
+      "::1:"
+    , "255.255.255.255/5.255.255.255"
+    , "1.1.1.1/g"
+    , "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    , "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffg/128"
+    };
 
   for (const auto& ip : ips) {
     nmdo::IpAddress result;
@@ -122,19 +120,21 @@ BOOST_AUTO_TEST_CASE(testMalformedNotFullyParsed)
     nmdp::IstreamIter i(dataStream), e;
     bool const success = qi::parse(i, e, nmdp::ParserIpAddress(), result);
 
-    BOOST_CHECK(success);
-    BOOST_CHECK(i != e);
+    BOOST_TEST(success, "Parser incorrectly failed on: " << ip);
+    BOOST_TEST((i != e), "Incorrect full parse on: " << ip);
   }
 }
 
 BOOST_AUTO_TEST_CASE(testMalformedParseFail)
 {
-  std::vector<std::string> ips =
-  {
-    "2001:db8:1:a:b",
-    "192.168 .1.10",
-    //"1.1.1.256", will pass, but std::exit()
-    "ffff:ffff:ffff:ffff:ffff:ffff:ffff:gfff/128"
+  std::vector<std::string> ips {
+      "1.2.3.1001"
+    , "2001:db8:1:a:b"
+    , "192.168 .1.10"
+    , "1.1.1.256"
+    , "aa:bb:cc:dd:ee:ff"
+    , "ffff:ffff:ffff:ffff::ffff:ffff:ffff:ffff"
+    , "ffff:ffff:ffff:ffff:ffff:ffff:ffff:gfff/128"
   };
 
   for (const auto& ip : ips) {
@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(testMalformedParseFail)
     nmdp::IstreamIter i(dataStream), e;
     bool const success = qi::parse(i, e, nmdp::ParserIpAddress(), result);
 
-    BOOST_CHECK(!success);
-    BOOST_CHECK(i != e);
+    BOOST_TEST(!success, "Parser incorrectly succeeded on: " << ip);
+    BOOST_TEST((i != e), "Incorrect full parse on: " << ip);
     std::cout << result << std::endl;
   }
 }
