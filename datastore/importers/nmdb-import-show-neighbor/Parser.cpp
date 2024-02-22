@@ -205,8 +205,8 @@ Parser::Parser() : Parser::base_type(start)
   // =============================================================================
 
   arpJuniperConfig =
-    arpHeaderJuniper >>
-    *arpEntryJuniper >>
+    arpHeaderJuniper >
+    *arpEntryJuniper >
     -arpFooterJuniper
     ;
 
