@@ -17,5 +17,5 @@ remote host and displays the results locally, then the following would process
 it and save the data to a file called `inventory.txt` in the current working
 directory.
 ```
-... | nmdb-import-show-inventory --device-id switch inventory.txt --pipe
+... | nmdb-import-arista-show-inventory --device-id switch inventory.txt --pipe
 ```
