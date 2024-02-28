@@ -50,6 +50,14 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       LOG_DEBUG << "Iterating over results\n";
       for (auto& result : this->tResults) {
         result.setDeviceId(deviceId);
+        if (this->opts.exists("device-type") &&
+            result.getDeviceType().empty())
+        {
+          result.setDeviceType(this->opts.getValue("device-type"));
+        }
+        if (this->opts.exists("device-color")) {
+          result.setDeviceColor(this->opts.getValue("device-color"));
+        }
 
         // Standardize on chassis for variations
         std::regex chassisTest("chassis|1", std::regex::icase);
