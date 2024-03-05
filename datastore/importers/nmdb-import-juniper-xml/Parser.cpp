@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,6 +27,7 @@
 
 #include "Parser.hpp"
 
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
@@ -818,7 +819,7 @@ Parser::parseConfigApplicationOrTerm(const pugi::xml_node& applicationNode)
 std::vector<nmdo::AclRuleService>
 Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
 {
-  std::vector<nmdo::AclRuleService> aclRules;
+  std::vector<nmdo::AclRuleService> rules;
   size_t ruleId{0};
 
   ruleId = 0;
@@ -826,11 +827,11 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
        policiesNode.select_nodes(
          "policy[not(@inactive='inactive')]/policy[not(@inactive='inactive')]")) {
     const pugi::xml_node policyNode{policyMatch.node()};
-    auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
+    auto rulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
-        aclRulesToAdd.begin(),
-        aclRulesToAdd.end(),
-        std::back_inserter(aclRules)
+        rulesToAdd.begin(),
+        rulesToAdd.end(),
+        std::back_inserter(rules)
         );
     ++ruleId;
   }
@@ -839,23 +840,23 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
   for (const auto& policyMatch :
        policiesNode.select_nodes("global/policy[not(@inactive='inactive')]")) {
     const pugi::xml_node policyNode{policyMatch.node()};
-    auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
+    auto rulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
-        aclRulesToAdd.begin(),
-        aclRulesToAdd.end(),
-        std::back_inserter(aclRules)
+        rulesToAdd.begin(),
+        rulesToAdd.end(),
+        std::back_inserter(rules)
         );
     ++ruleId;
   }
 
-  return aclRules;
+  return rules;
 }
 
 
 std::vector<nmdo::AclRuleService>
 Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
 {
-  std::vector<nmdo::AclRuleService> aclRules;
+  std::vector<nmdo::AclRuleService> rules;
 
   const std::string description{
     policyNode.select_node("name").node().text().as_string()
@@ -967,14 +968,14 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
             aclRule.setDstIpNetSetId(dstIpNetSetId, dstIpNetSetNamespace);
             aclRule.setServiceId(serviceId);
             aclRule.setDescription(description);
-            aclRules.emplace_back(aclRule);
+            rules.emplace_back(aclRule);
           }
         }
       }
     }
   }
 
-  return aclRules;
+  return rules;
 }
 
 
