@@ -234,8 +234,9 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   arpFooterJuniper =
-    qi::lit("Total entries:") >>
-    qi::int_ >>
+    qi::lit("Total entries:") >
+    qi::int_ >
+    *(token | qi::eol) >
     (qi::eol | qi::eoi)
   ;
 
