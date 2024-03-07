@@ -59,13 +59,13 @@ Parser::Parser() : Parser::base_type(start)
   // -----------------------------------------------------------------------------
 
   arpArista =
-    arpHeaderArista >>
+    arpHeaderArista >
     *arpEntryArista
     ;
 
   arpHeaderArista =
     -(qi::lit("VRF:") >> token >> qi::eol) >>
-    qi::lit("Address") >>
+    (qi::lit("Address") || qi::lit("IPv6 Address")) >>
     qi::lit("Age") >> token >>
     qi::lit("Hardware Addr") >>
     qi::lit("Interface") >>
@@ -73,7 +73,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   arpEntryArista =
-    ( ipv4Addr[(qi::_c = qi::_1)] >>
+    ( (ipv4Addr[(qi::_c = qi::_1)] || ipv6Addr[(qi::_c = qi::_1)])>>
       age >>
       macAddr[(qi::_b = qi::_1)] >>
       iface[(qi::_a = qi::_1)] >>
@@ -89,17 +89,17 @@ Parser::Parser() : Parser::base_type(start)
   // -----------------------------------------------------------------------------
 
   arpCiscoIos =
-    arpHeaderCiscoIos >>
+    arpHeaderCiscoIos >
     *arpEntryCiscoIos
     ;
 
   arpHeaderCiscoIos =
-    qi::lit("Protocol") >>
-    qi::lit("Address") >>
-    qi::lit("Age (min)") >>
-    qi::lit("Hardware Addr") >>
-    qi::lit("Type") >>
-    qi::lit("Interface") >>
+    qi::lit("Protocol") >
+    qi::lit("Address") >
+    qi::lit("Age (min)") >
+    qi::lit("Hardware Addr") >
+    qi::lit("Type") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
@@ -123,7 +123,7 @@ Parser::Parser() : Parser::base_type(start)
   // -----------------------------------------------------------------------------
 
   arpCiscoNxos =
-    arpHeaderCiscoNxos >>
+    arpHeaderCiscoNxos >
     *arpEntryCiscoNxos
     ;
 
@@ -138,11 +138,11 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("Total number of entries:") >>
     qi::omit[qi::int_] >>
     qi::eol >>
-    qi::lit("Address") >>
-    qi::lit("Age") >>
-    qi::lit("MAC Address") >>
-    qi::lit("Interface") >>
-    qi::lit("Flags") >>
+    qi::lit("Address") >
+    qi::lit("Age") >
+    qi::lit("MAC Address") >
+    qi::lit("Interface") >
+    qi::lit("Flags") >
     (qi::eol | qi::eoi)
     ;
 
@@ -165,7 +165,7 @@ Parser::Parser() : Parser::base_type(start)
   // -----------------------------------------------------------------------------
 
   arpCiscoWlc =
-    arpHeaderCiscoWlc >>
+    arpHeaderCiscoWlc >
     *arpEntryCiscoWlc
     ;
 
@@ -211,12 +211,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   arpHeaderJuniper =
-    qi::lit("MAC Address") >>
-    qi::lit("Address") >>
-    -(qi::lit("Name")[(pnx::ref(nameColExists) = true)]) >>
-    qi::lit("Interface") >>
-    -qi::lit("Flags") >>
-    -qi::lit("TTE") >>
+    qi::lit("MAC Address") >
+    qi::lit("Address") >
+    -(qi::lit("Name")[(pnx::ref(nameColExists) = true)]) >
+    qi::lit("Interface") >
+    -qi::lit("Flags") >
+    -qi::lit("TTE") >
     (qi::eol | qi::eoi)
     ;
 
@@ -256,17 +256,17 @@ Parser::Parser() : Parser::base_type(start)
   // -----------------------------------------------------------------------------
 
   ndpArista =
-    ndpHeaderArista >>
+    ndpHeaderArista >
     *ndpEntryArista
     ;
 
   ndpHeaderArista =
     -(qi::lit("VRF:") >> token >> qi::eol) >>
-    qi::lit("IPv6 Address") >>
-    qi::lit("Age") >>
-    qi::lit("Hardware Addr") >>
-    qi::lit("State") >>
-    qi::lit("Interface") >>
+    qi::lit("IPv6 Address") >
+    qi::lit("Age") >
+    qi::lit("Hardware Addr") >
+    qi::lit("State") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
@@ -288,21 +288,21 @@ Parser::Parser() : Parser::base_type(start)
   // -----------------------------------------------------------------------------
 
   ndpCiscoIos =
-    ndpHeaderCiscoIos >>
+    ndpHeaderCiscoIos >
     *ndpEntryCiscoIos
     ;
 
   ndpCiscoIosDetail =
-    ndpHeaderCiscoIosDetail >>
+    ndpHeaderCiscoIosDetail >
     *ndpEntryCiscoIosDetail
     ;
 
   ndpHeaderCiscoIos =
-    qi::lit("IPv6 Address") >>
-    qi::lit("Age") >>
-    qi::lit("Link-layer Addr") >>
-    qi::lit("State") >>
-    qi::lit("Interface") >>
+    qi::lit("IPv6 Address") >
+    qi::lit("Age") >
+    qi::lit("Link-layer Addr") >
+    qi::lit("State") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
@@ -319,12 +319,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   ndpHeaderCiscoIosDetail =
-    qi::lit("IPv6 Address") >>
-    qi::lit("TRLV") >>
-    qi::lit("Age") >>
-    qi::lit("Link-layer Addr") >>
-    qi::lit("State") >>
-    qi::lit("Interface") >>
+    qi::lit("IPv6 Address") >
+    qi::lit("TRLV") >
+    qi::lit("Age") >
+    qi::lit("Link-layer Addr") >
+    qi::lit("State") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
