@@ -421,6 +421,14 @@ Address Age       MAC Address     Interface Flags
 , R"(MAC Address       Address         Name                     Interface
 00:e0:81:22:fd:74 192.168.64.10   firewall.my.net          fxp0.0
 00:04:5a:65:78:e1 192.168.65.13   lab.my.net               fxp0.0)"
+, R"(MAC Address       Address         Interface           Flags
+00:11:22:33:44:55 1.2.3.4        Ethernet1           none
+00:11:22:33:44:55 1.2.3.4        Ethernet1 [local.1] none
+Total entries: 2)"
+, R"(MAC Address       Address         Interface           Flags
+Total entries: 0
+
+{master:0})"
   };
   for (const auto& test : testsOk) {
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
