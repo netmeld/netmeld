@@ -320,7 +320,8 @@ BOOST_AUTO_TEST_CASE(testArpJuniperParts)
     std::vector<std::string> testsOk {
       // MAC Address, IP Address, Interface, Flags
       "00:11:22:33:44:55 1.2.3.4      fxp0.0    none\n",
-      "00:11:22:33:44:55 1.2.3.4   fxp0.0    permanent published\n"
+      "00:11:22:33:44:55 1.2.3.4   fxp0.0    permanent published\n",
+      "00:11:22:33:44:55 1.2.3.4   fxp0.0 [ge-0/0/0]    none\n"
     };
     for (const auto& test : testsOk) {
         nmdo::InterfaceNetwork out;
