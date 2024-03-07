@@ -39,6 +39,7 @@ using qi::ascii::blank;
 class TestParser : public Parser {
     public:
       using Parser::arpJuniperConfig;
+      using Parser::nameColExists;
 
       using Parser::arpHeaderArista;
       using Parser::arpHeaderCiscoIos;
@@ -308,41 +309,21 @@ BOOST_AUTO_TEST_CASE(testArpJuniperParts)
 {
   TestParser tp;
   {
-    // No Name
-    const auto& parserRule {tp.arpEntryJuniper};
-
-    nmdo::MacAddress fma {"00:11:22:33:44:55"};
-    fma.addIpAddress(nmdo::IpAddress("1.2.3.4"));
-    nmdo::InterfaceNetwork fin;
-    fin.setName("fxp0.0");
-    fin.addReachableMac(fma);
-
-    std::vector<std::string> testsOk {
-      // MAC Address, IP Address, Interface, Flags
-      "00:11:22:33:44:55 1.2.3.4      fxp0.0    none\n",
-      "00:11:22:33:44:55 1.2.3.4   fxp0.0    permanent published\n",
-      "00:11:22:33:44:55 1.2.3.4   fxp0.0 [ge-0/0/0]    none\n"
-    };
-    for (const auto& test : testsOk) {
-        nmdo::InterfaceNetwork out;
-      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-                 "Parse rule 'arpEntryJuniper': " << test);
-      BOOST_TEST(fin == out);
-    }
-
-  }
-  {
-      // Parse Header with Name
+      // Parse Header
       const auto& parserRule {tp.arpHeaderJuniper};
+      const auto& nameFound {tp.nameColExists};
 
-      std::vector<std::string> testsOk {
-          "MAC Address       Address         Name                     Interface"
-      };
-      for (const auto& test : testsOk) {
-          BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank)
-                  , "Parse rule 'arpHeaderJuniper': " << test
-                  );
-      }
+      std::string headerNoName = "MAC Address       Address         Interface        Flags";
+      BOOST_TEST(nmdp::test(headerNoName.c_str(), parserRule, blank)
+                , "Parse rule 'arpHeaderJuniper': " << headerNoName
+                );
+      BOOST_TEST(nameFound == false);
+
+      std::string headerName = "MAC Address       Address         Name                     Interface";
+      BOOST_TEST(nmdp::test(headerName.c_str(), parserRule, blank)
+                , "Parse rule 'arpHeaderJuniper': " << headerName
+                );
+      BOOST_TEST(nameFound == true);
   }
   {
     // Name included
@@ -354,11 +335,25 @@ BOOST_AUTO_TEST_CASE(testArpJuniperParts)
     fin.setName("fxp0.0");
     fin.addReachableMac(fma);
 
-    std::vector<std::string> testsOk {
+    std::vector<std::string> testsName {
       // MAC Address, IP Address, Name, Interface
       "00:11:22:33:44:55 1.2.3.4   firewall.my.net          fxp0.0\n"
     };
-    for (const auto& test : testsOk) {
+    std::vector<std::string> testsNoName {
+      // MAC Address, IP Address, Interface, Flags
+      "00:11:22:33:44:55 1.2.3.4      fxp0.0    none\n",
+      "00:11:22:33:44:55 1.2.3.4   fxp0.0    permanent published\n",
+      "00:11:22:33:44:55 1.2.3.4   fxp0.0 [ge-0/0/0]    none\n"
+    };
+    tp.nameColExists = true;
+    for (const auto& test : testsName) {
+        nmdo::InterfaceNetwork out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                 "Parse rule 'arpEntryJuniper': " << test);
+      BOOST_TEST(fin == out);
+    }
+    tp.nameColExists = false;
+    for (const auto& test : testsNoName) {
         nmdo::InterfaceNetwork out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
                  "Parse rule 'arpEntryJuniper': " << test);
