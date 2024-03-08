@@ -55,7 +55,6 @@ class Tool : public nmdt::AbstractGraphTool
 
     bool noRouteDetails {false};
 
-    //std::map<std::string, std::set<std::string>>    routeDetails;
     std::map<std::string, std::vector<std::string>> routeDetails;
     std::map<std::string, std::vector<std::string>> aclDetails;
 
@@ -409,6 +408,8 @@ class Tool : public nmdt::AbstractGraphTool
             NOTE: probably leverage nextHops and adjust logic to combine
             above/below.
           */
+          addVertexRoute(route, inIfaceName);
+          addEdge(id, finalHop, "dashed");
         }
         // route via IP
         else {
@@ -433,7 +434,7 @@ class Tool : public nmdt::AbstractGraphTool
               LOG_DEBUG << std::format("From {}, examining {}\n", id, nextId);
               if (!visited.contains(nextId)) {
                 LOG_DEBUG << "Checking unvisitied next hop\n";
-                visited.insert(nextId);
+                visited.emplace(nextId);
                 // continue along path until can't
                 const std::string nextInIfaceName
                   {nextHop.at("interface_name").c_str()};
@@ -480,8 +481,7 @@ class Tool : public nmdt::AbstractGraphTool
         };
 
       if (!routeDetails.contains(id)) {
-        //routeDetails.emplace(id, std::set<std::string>());
-        routeDetails.insert({id, std::vector<std::string>()});
+        routeDetails.emplace(id, std::vector<std::string>());
         addVertex("box", id);
       }
       auto& routes {routeDetails.at(id)};
@@ -494,15 +494,8 @@ class Tool : public nmdt::AbstractGraphTool
                        , route.at("next_hop_ip_addr").c_str()
                        , route.at("dst_ip_net").c_str()
                        )
-            //std::format(R"({} &rarr; {} via {} ({})<br align="left"/>)"
-            //           , inIfaceName
-            //           , route.at("dst_ip_net").c_str()
-            //           , route.at("next_hop_ip_addr").c_str()
-            //           , route.at("outgoing_interface_name").c_str()
-            //           )
           };
         nmcu::pushBackIfUnique(&routes, rte);
-//        routeDetails.at(id).insert();
       }
     }
 
@@ -572,17 +565,18 @@ class Tool : public nmdt::AbstractGraphTool
         const auto u {vertexLookup.at(src)};
         const auto v {vertexLookup.at(dst)};
 
+        bool inserted {false};
         Edge e;
         if (edgeLookup.contains(src) && edgeLookup[src].contains(dst)) {
           e = edgeLookup.at(src).at(dst);
         } else if (edgeLookup.contains(dst) && edgeLookup[dst].contains(src)) {
           e = edgeLookup.at(dst).at(src);
         } else {
-          bool inserted;
           std::tie(e, inserted) = boost::add_edge(u, v, graph);
           edgeLookup[src][dst] = e;
         }
-        if (!style.empty()) {
+        // Known next hop is a solid line; always prefer them
+        if (inserted || style.empty() || !graph[e].style.empty()) {
           graph[e].style = style;
         }
       } catch (const std::exception& e) {
@@ -647,7 +641,7 @@ class Tool : public nmdt::AbstractGraphTool
         rule = std::format(R"({} no-known-acls<br align="left"/>)", prefix);
         nmcu::pushBackIfUnique(&rules, rule);
       }
-      aclDetails.insert({aclDetailKey, rules});
+      aclDetails.emplace(aclDetailKey, rules);
 
       return nmcu::toString(rules);
     }
