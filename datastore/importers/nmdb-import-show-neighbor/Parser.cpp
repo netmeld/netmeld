@@ -65,7 +65,7 @@ Parser::Parser() : Parser::base_type(start)
 
   arpHeaderArista =
     -(qi::lit("VRF:") >> token >> qi::eol) >>
-    (qi::lit("Address") || qi::lit("IPv6 Address")) >>
+    qi::lit("Address") >>
     qi::lit("Age") >> token >>
     qi::lit("Hardware Addr") >>
     qi::lit("Interface") >>
@@ -73,7 +73,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   arpEntryArista =
-    ( (ipv4Addr[(qi::_c = qi::_1)] || ipv6Addr[(qi::_c = qi::_1)])>>
+    ( ipv4Addr[(qi::_c = qi::_1)] >>
       age >>
       macAddr[(qi::_b = qi::_1)] >>
       iface[(qi::_a = qi::_1)] >>

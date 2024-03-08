@@ -46,12 +46,14 @@ class TestParser : public Parser {
       using Parser::arpHeaderCiscoNxos;
       using Parser::arpHeaderCiscoWlc;
       using Parser::arpHeaderJuniper;
+      using Parser::ndpHeaderArista;
 
       using Parser::arpEntryArista;
       using Parser::arpEntryCiscoIos;
       using Parser::arpEntryCiscoNxos;
       using Parser::arpEntryCiscoWlc;
       using Parser::arpEntryJuniper;
+      using Parser::ndpEntryArista;
 };
 
 BOOST_AUTO_TEST_CASE(testAristaParts)
@@ -65,11 +67,6 @@ BOOST_AUTO_TEST_CASE(testAristaParts)
       , "  Address\tAge (sec)\tHardware Addr\tInterface   \n"
       , "Address Age (sec) Hardware Addr Interface\n"
       , "VRF: vrf-name\nAddress\tAge (sec)\tHardware Addr\tInterface\n"
-      /* TODO 20240219
-        Disabled as parser logic does not currently support IPv6 for Arista
-      , "IPv6 Address\tAge\tHardware Addr\tState\tInterface\n"
-      , "VRF: vrf-name\nIPv6 Address\tAge\tHardware Addr\tState\tInterface\n"
-      */
       };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank)
@@ -99,10 +96,21 @@ BOOST_AUTO_TEST_CASE(testAristaParts)
       BOOST_TEST(tin == out);
     }
   }
-  /* TODO 20240219
-    Disabled as parser logic does not currently support IPv6 for Arista
   {
-    const auto& parserRule {tp.arpEntryArista};
+    const auto& parserRule {tp.ndpHeaderArista};
+
+    std::vector<std::string> testsOk {
+        "IPv6 Address\tAge\tHardware Addr\tState\tInterface\n"
+      , "VRF: vrf-name\nIPv6 Address\tAge\tHardware Addr\tState\tInterface\n"
+      };
+    for (const auto& test : testsOk) {
+      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank)
+                , "Parse rule 'ndpHeaderArista': " << test
+                );
+    }
+  }
+  {
+    const auto& parserRule {tp.ndpEntryArista};
 
     nmdo::MacAddress tma {"1234.1234.1234"};
     tma.addIpAddress(nmdo::IpAddress("1::2"));
@@ -118,12 +126,11 @@ BOOST_AUTO_TEST_CASE(testAristaParts)
     for (const auto& test : testsOk) {
       nmdo::InterfaceNetwork out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank)
-                , "Parse rule 'arpEntryArista': " << test
+                , "Parse rule 'ndpEntryArista': " << test
                 );
       BOOST_TEST(tin == out);
     }
   }
-  */
 }
 
 BOOST_AUTO_TEST_CASE(testCiscoIosParts)
@@ -379,12 +386,11 @@ Address Age (sec) Hardware Addr   Interface
 1.2.3.4 0:00:00   1234.1234.1234  Ethernet1, Other
 )"
   /* TODO 20240219
-    Disabled as parser logic does not currently support IPv6 for Arista
+    Disabled as parser logic does not currently support IPv6 for Arista */
 , R"(IPv6 Address     Age Hardware Addr    State Interface
 1::2         0:00:01 1234.1234.1234   REACH Ethernet1
 1::2         0:00:01 1234.1234.1234   REACH Ethernet1, Other
 )"
-  */
   // Cisco IOS
 , R"(Protocol  Address Age (min) Hardware Addr   Type  Interface
 Internet  1.2.3.4 0         1234.1234.1234  ARPA  Ethernet1
