@@ -385,8 +385,6 @@ Address Age (sec) Hardware Addr   Interface
 1.2.3.4 1:23:45   1234.1234.1234  Ethernet1
 1.2.3.4 0:00:00   1234.1234.1234  Ethernet1, Other
 )"
-  /* TODO 20240219
-    Disabled as parser logic does not currently support IPv6 for Arista */
 , R"(IPv6 Address     Age Hardware Addr    State Interface
 1::2         0:00:01 1234.1234.1234   REACH Ethernet1
 1::2         0:00:01 1234.1234.1234   REACH Ethernet1, Other
