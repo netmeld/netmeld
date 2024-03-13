@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(testHotfixs)
 BOOST_AUTO_TEST_CASE(testWhole)
 {
   TestParser tp;
-  const auto &parserRule {tp};
+  const auto& parserRule {tp};
   std::vector<std::string> testsOk {
     R"STR(
           Host Name:           YourComputerName

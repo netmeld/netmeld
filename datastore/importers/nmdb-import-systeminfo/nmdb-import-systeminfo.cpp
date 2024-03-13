@@ -67,15 +67,15 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
       for (auto& results : this->tResults) {
 
-        LOG_DEBUG << "Iterating over Device Information\n";
+        LOG_DEBUG << "Iterating over DeviceInformation\n";
         results.devInfo.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.devInfo.toDebugString() << "\n";
 
-        LOG_DEBUG << "Iterating over Operating System\n";
+        LOG_DEBUG << "Iterating over OperatingSystems\n";
         results.os.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.os.toDebugString() << "\n";
 
-        LOG_DEBUG << "Iterating over network_cards\n";
+        LOG_DEBUG << "Iterating over Interfaces\n";
         for (auto& [_, result] : results.network_cards)
         {
           result.save(t, toolRunId, deviceId);
