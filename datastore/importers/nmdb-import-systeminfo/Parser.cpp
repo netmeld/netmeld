@@ -163,17 +163,17 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
 
-void Parser::setDomain(const std::string &_string)
+void Parser::setDomain(const std::string& _string)
 {
   curDomain = _string;
 }
 
-void Parser::addHotfix(const std::string &_string)
+void Parser::addHotfix(const std::string& _string)
 {
   data.os.addHotfix(_string);
 }
 
-void Parser::addInterface(const std::string &_name)
+void Parser::addInterface(const std::string& _name)
 {
   nmdo::Interface iface;
   iface.setName(_name);
@@ -181,10 +181,12 @@ void Parser::addInterface(const std::string &_name)
   data.network_cards[curIfaceName] = iface;
 }
 
-void Parser::addIfaceConnectName(const std::string &_connectionname)
+void Parser::addIfaceConnectName(const std::string& _connectionname)
 {
-  auto &iface{data.network_cards[curIfaceName]};
-  if (_connectionname.find("Wi-Fi") != std::string::npos || _connectionname.find("Bluetooth") != std::string::npos)
+  auto& iface{data.network_cards[curIfaceName]};
+  if (  _connectionname.find("Wi-Fi") != std::string::npos
+     || _connectionname.find("Bluetooth") != std::string::npos
+     )
   {
     iface.setMediaType(_connectionname);
   }
@@ -192,18 +194,18 @@ void Parser::addIfaceConnectName(const std::string &_connectionname)
   iface.setDescription(_connectionname);
 }
 
-void Parser::addIfaceIp(nmdo::IpAddress &_ipAddr)
+void Parser::addIfaceIp(nmdo::IpAddress& _ipAddr)
 {
-  auto &iface{data.network_cards[curIfaceName]};
+  auto& iface{data.network_cards[curIfaceName]};
   std::string fqdn = data.devInfo.getDeviceId() + '.' + curDomain;
   _ipAddr.addAlias(fqdn, "from systeminfo");
   data.os.setIpAddr(_ipAddr);
   iface.addIpAddress(_ipAddr);
 }
 
-void Parser::setIfaceStatus(const std::string &_status)
+void Parser::setIfaceStatus(const std::string& _status)
 {
-  auto &iface{data.network_cards[curIfaceName]};
+  auto& iface{data.network_cards[curIfaceName]};
   iface.setDown();
 }
 

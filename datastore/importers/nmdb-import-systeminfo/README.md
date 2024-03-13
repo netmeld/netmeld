@@ -1,31 +1,23 @@
 DESCRIPTION
 ===========
 
-Parse and import the output of the
-`systeminfo`
-command on Windows
-systems into the Netmeld framework for later analysis. Import's output
-based on device-id.
+Parse and import the output from the `systeminfo` command
+on modern Windows systems.
 
 EXAMPLES
 ========
 
-Gather package output from target with
+Process the target data for the device `workstation` from a local file.
 ```
-systeminfo > systeminfoOutput.txt
-```
-
-Process the target data for the device workstation from a local file
-```
-nmdb-import-systeminfo --device-id <workstation> systeminfoOutput.txt
+nmdb-import-systeminfo --device-id workstation systeminfo.txt
 ```
 
 Assuming `...` is some command chain which retrieves the target data from a
 remote host and displays the results locally, then the following would
-process it and save the data to a file called `systeminfoOutput.txt` in the current
+process it and save the data to a file called `systeminfo.txt` in the current
 working directory.
 ```
-... | nmdb-import-systeminfo --pipe --device-id <workstation> packages.txt
+... | nmdb-import-systeminfo --pipe --device-id workstation systeminfo.txt
 ```
 TROUBLESHOOTING
 ========
