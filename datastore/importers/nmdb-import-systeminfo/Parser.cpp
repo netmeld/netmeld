@@ -61,7 +61,7 @@ Parser::Parser() : Parser::base_type(start)
         ("System Type: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceType, &data.devInfo, qi::_1)] > qi::eol);
 
     domain =
-        ("Domain: " > token > qi::eol); // see notes
+        ("Domain: " > token > qi::eol); 
 
     hotfix =
         +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)] - qi::omit[qi::eol]);
