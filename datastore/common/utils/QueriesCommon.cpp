@@ -950,10 +950,21 @@ namespace netmeld::datastore::utils {
       ("insert_raw_operating_system",
        "INSERT INTO raw_operating_systems AS orig"
        "  (tool_run_id, ip_addr,"
-       "   vendor_name, product_name, product_version, cpe, accuracy, hotfixs)"
+       "   vendor_name, product_name, product_version, cpe, accuracy)"
        " VALUES ($1, host(($2)::INET)::INET,"
        "         nullif($3, ''), nullif($4, ''), nullif($5, ''),"
-       "         nullif($6, ''), $7, $8)"
+       "         nullif($6, ''), $7)"
+       " ON CONFLICT"
+       " DO NOTHING");
+
+    // ----------------------------------------------------------------------
+    // TABLE: raw_hotfixes
+    // ----------------------------------------------------------------------
+    db.prepare
+      ("insert_raw_hotfix",
+       "INSERT INTO raw_hotfixes"
+       "  (tool_run_id, hotfix)"
+       " VALUES ($1, $2)"
        " ON CONFLICT"
        " DO NOTHING");
 
