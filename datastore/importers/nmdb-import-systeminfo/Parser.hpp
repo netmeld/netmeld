@@ -48,7 +48,7 @@ struct Data
 
   nmdo::DeviceInformation                 devInfo;
   nmdo::OperatingSystem                   os;
-  std::vector<std::string>                hotfixs;
+  std::vector<std::string>                hotfixes;
   std::map<std::string, nmdo::Interface>  network_cards;
   nmdo::ToolObservations                  observations;
 };
@@ -84,7 +84,7 @@ class Parser :
       systeminfo;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-      hotfixs,
+      hotfixes,
       networkCardName,
       networkCardConnectionName,
       dhcpServer,

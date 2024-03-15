@@ -66,8 +66,8 @@ Parser::Parser() : Parser::base_type(start)
   hotfix =
       +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&nmdo::OperatingSystem::addHotfix, &data.os, qi::_1)] - qi::omit[qi::eol])
       ;
-  hotfixs =
-      ("Hotfix(s): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
+  hotfixes =
+      ("Hotfix(es): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
 
   networkCardName =
       qi::lexeme[+(qi::ascii::char_ - qi::eol)];
@@ -126,7 +126,7 @@ Parser::Parser() : Parser::base_type(start)
       > *(qi::char_ - qi::lit("Domain:"))
       > domain[pnx::bind(&Parser::setDomain, this, qi::_1)]
       > *(qi::char_ - qi::lit("Hotfix"))
-      > hotfixs
+      > hotfixes
       > network_cards
       > hyper_v;
   ;
@@ -146,7 +146,7 @@ Parser::Parser() : Parser::base_type(start)
       (system_model)
       (system_type)
       (domain)
-      (hotfixs)
+      (hotfixes)
       (hotfix)
       (network_cards)
       (network_card)
