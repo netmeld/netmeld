@@ -4,6 +4,16 @@ DESCRIPTION
 Parse and import the output from the `systeminfo` command
 on modern Windows systems.
 
+The output from `systeminfo` is in Unicode 16 little endian format with CRLF line endings. Follow these steps to convert it:
+
+1. Convert the encoding from UTF-16 to US-ASCII: 
+    `iconv -f UTF-16 -t US-ASCII ~/systeminfo.txt -o ~/systeminfoascii.txt`
+2. Convert any remaining non-ASCII characters with `uni2ascii`.
+3. Remove all '\r' characters: 
+    `tr -d '\r' < ~/systeminfoascii.txt > ~/systeminfoascii2.txt`
+4. Remove the first line (which is a newline character): 
+    `tail -n +2 ~/systeminfoascii2.txt > ~/systeminfoascii3.txt`
+
 EXAMPLES
 ========
 
@@ -19,7 +29,4 @@ working directory.
 ```
 ... | nmdb-import-systeminfo --pipe --device-id workstation systeminfo.txt
 ```
-TROUBLESHOOTING
-========
 
-There is trouble with the actual output from systeminfo. It is unicode 16 little endian with crlf so you can convert it with `iconv -f UTF-16 -t US-ASCII ~/systeminfo.txt -o ~/systeminfoascii.txt` and then I had to convert it using `uni2ascii` and then I had to remove all the '\r' with `cat systeminfoascii2.txt | tr -d '\r' > ~/systeminfoascii3.txt` and then I had to remove the first line which was a /n `cat ~/systeminfoascii.txt | tail -n +2 > systeminfoascii2.txt`
