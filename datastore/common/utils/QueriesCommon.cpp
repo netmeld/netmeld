@@ -961,9 +961,9 @@ namespace netmeld::datastore::utils {
     // TABLE: raw_hotfixes
     // ----------------------------------------------------------------------
     db.prepare
-      ("insert_raw_hotfix",
+      ("insert_raw_hotfixes",
        "INSERT INTO raw_hotfixes"
-       "  (tool_run_id, hotfix)"
+       "  (tool_run_id, hotfixes)"
        " VALUES ($1, $2)"
        " ON CONFLICT"
        " DO NOTHING");

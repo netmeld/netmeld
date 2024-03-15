@@ -660,7 +660,7 @@ LEFT JOIN raw_hotfixes AS hf ON os.tool_run_id = hf.tool_run_id
 
 CREATE VIEW hotfixes AS
 SELECT DISTINCT
-    hotfix                      AS hotfix
+    hotfixes                      AS hotfixes
 FROM raw_hotfixes
 ;
 
