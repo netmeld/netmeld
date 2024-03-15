@@ -65,8 +65,9 @@ Parser::Parser() : Parser::base_type(start)
 
     hotfix =
         +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)] - qi::omit[qi::eol]);
+    
     hotfixes =
-        ("Hotfix(es): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
+        ("Hotfix(s): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
 
     networkCardName =
         qi::lexeme[+(qi::ascii::char_ - qi::eol)];
