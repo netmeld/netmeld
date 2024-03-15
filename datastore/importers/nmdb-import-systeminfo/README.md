@@ -29,4 +29,3 @@ working directory.
 ```
 ... | nmdb-import-systeminfo --pipe --device-id workstation systeminfo.txt
 ```
-
