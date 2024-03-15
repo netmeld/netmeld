@@ -77,12 +77,6 @@ namespace netmeld::datastore::objects {
     accuracy = _accuracy;
   }
 
-  void
-  OperatingSystem::addHotfix(const std::string& _string)
-  {
-    hotfixes.push_back(_string);
-  }
-
   bool
   OperatingSystem::isValid() const
   {
@@ -95,23 +89,6 @@ namespace netmeld::datastore::objects {
             )
         ;
   }
-
-  std::string
-  OperatingSystem::ConvertVectorToPostgresArray(const std::vector<std::string>& vec) {
-    std::string result = "{";
-
-    for (const auto& element : vec) {
-        result += "'" + element + "',";
-    }
-
-    if (!vec.empty()) {
-        result.pop_back();
-    }
-
-    result += "}";
-    return result;
-  }
-
 
   void
   OperatingSystem::save(pqxx::transaction_base& t,
@@ -134,8 +111,7 @@ namespace netmeld::datastore::objects {
         productName,
         productVersion,
         cpe,
-        accuracy,
-        ConvertVectorToPostgresArray(hotfixs)
+        accuracy
         );
   }
 
@@ -145,7 +121,7 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["; 
-    oss << "ipAddr: " << ipAddr .toDebugString() << ", "
+    oss << "ipAddr: " << ipAddr.toDebugString() << ", "
         << "vendorName: " << vendorName  << ", "
         << "productName: " << productName  << ", "
         << "productVersion: " << productVersion  << ", "

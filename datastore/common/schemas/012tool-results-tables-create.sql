@@ -845,8 +845,8 @@ ON raw_operating_systems(accuracy);
 
 CREATE TABLE raw_hotfixes (
       tool_run_id                 UUID            NOT NULL
-    , hotfix                      TEXT            NOT NULL
-    , PRIMARY KEY (tool_run_id, hotfix)
+    , hotfixes                    TEXT ARRAY      NOT NULL
+    , PRIMARY KEY (tool_run_id, hotfixes)
     , FOREIGN KEY (tool_run_id)
           REFERENCES tool_runs(id)
           ON DELETE CASCADE

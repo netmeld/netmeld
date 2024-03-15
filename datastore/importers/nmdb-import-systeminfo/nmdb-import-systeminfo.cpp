@@ -75,6 +75,10 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         results.os.save(t, toolRunId, deviceId);
         LOG_DEBUG << results.os.toDebugString() << "\n";
 
+        LOG_DEBUG << "Iterating over Hotfixes\n";
+        t.exec_prepared("insert_raw_hotfix", toolRunId, ConvertVectorToPostgresArray(results.hotfixes););
+        LOG_DEBUG << hotfix << "\n";
+
         LOG_DEBUG << "Iterating over Interfaces\n";
         for (auto& [_, result] : results.network_cards)
         {
@@ -87,7 +91,21 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         LOG_DEBUG << results.observations.toDebugString() << "\n";
       }
     }
+    std::string
+    ConvertVectorToPostgresArray(const std::vector<std::string>& vec) {
+      std::string result = "{";
 
+      for (const auto& element : vec) {
+          result += "'" + element + "',";
+      }
+
+      if (!vec.empty()) {
+          result.pop_back();
+      }
+
+      result += "}";
+      return result;
+    }
   protected:
   public:
 };
