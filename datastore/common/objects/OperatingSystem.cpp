@@ -100,7 +100,7 @@ namespace netmeld::datastore::objects {
                 << std::endl;
       return;
     }
-    if (!ipAddr.empty()) { 
+    if (ipAddr.isValid()) { 
       ipAddr.save(t, toolRunId, deviceId);
     }
 
