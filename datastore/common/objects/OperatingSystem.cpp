@@ -101,13 +101,10 @@ namespace netmeld::datastore::objects {
     std::string result = "{";
 
     for (const auto& element : vec) {
-        // Escape special characters and handle NULL elements if needed
-        // You might need additional logic here depending on your data
         result += "'" + element + "',";
     }
 
     if (!vec.empty()) {
-        // Remove the trailing comma
         result.pop_back();
     }
 
@@ -147,14 +144,14 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "["; // opening bracket
+    oss << "["; 
     oss << "ipAddr: " << ipAddr .toDebugString() << ", "
         << "vendorName: " << vendorName  << ", "
         << "productName: " << productName  << ", "
         << "productVersion: " << productVersion  << ", "
         << "cpe: " << cpe  << ", "
         << "accuracy: " << accuracy ;
-    oss << "]"; // closing bracket
+    oss << "]";
 
     return oss.str();
   }
