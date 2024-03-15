@@ -78,9 +78,7 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      ignoredLine;
-
-    qi::rule<nmdp::IstreamIter, Systeminfo(), qi::ascii::blank_type>
+      ignoredLine,
       systeminfo;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>

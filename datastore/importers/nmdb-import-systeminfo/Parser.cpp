@@ -120,7 +120,7 @@ void Parser::setDomain(const std::string &_string)
 
 void Parser::addHotfix(const std::string &_string)
 {
-    data.os.addHotfix(_string);
+    data.hotfixes.push_back(_string);
 }
 
 void Parser::addInterface(const std::string &_name)
