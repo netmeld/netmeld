@@ -644,14 +644,24 @@ FROM raw_ssh_host_algorithms
 
 CREATE VIEW operating_systems AS
 SELECT DISTINCT
-    ip_addr                     AS ip_addr,
-    vendor_name                 AS vendor_name,
-    product_name                AS product_name,
-    product_version             AS product_version,
-    cpe                         AS cpe,
-    accuracy                    AS accuracy,
-    hotfixs                     AS hotfixs
-FROM raw_operating_systems
+    os.ip_addr                     AS ip_addr,
+    os.vendor_name                 AS vendor_name,
+    os.product_name                AS product_name,
+    os.product_version             AS product_version,
+    os.cpe                         AS cpe,
+    os.accuracy                    AS accuracy,
+    hf.hotfixes                    AS hotfixes
+FROM raw_operating_systems AS os
+LEFT JOIN raw_hotfixes AS hf ON os.tool_run_id = hf.tool_run_id
+;
+
+
+-- ----------------------------------------------------------------------
+
+CREATE VIEW hotfixes AS
+SELECT DISTINCT
+    hotfix                      AS hotfix
+FROM raw_hotfixes
 ;
 
 
@@ -667,6 +677,7 @@ FROM raw_tool_observations AS rto
 LEFT OUTER JOIN tool_runs AS tr
    ON (rto.tool_run_id = tr.id)
 ;
+
 
 -- ----------------------------------------------------------------------
 

@@ -801,7 +801,6 @@ CREATE TABLE raw_operating_systems (
   , product_version             TEXT            NULL
   , cpe                         TEXT            NULL
   , accuracy                    FLOAT           NULL
-  , hotfixes                    ARRAY           NULL
   , FOREIGN KEY (tool_run_id, ip_addr)
         REFERENCES raw_ip_addrs(tool_run_id, ip_addr)
         ON DELETE CASCADE
@@ -815,7 +814,7 @@ CREATE UNIQUE INDEX raw_operating_systems_idx_unique
 ON raw_operating_systems(
   HASH_CHAIN( tool_run_id::TEXT, ip_addr::TEXT
             , vendor_name, product_name, product_version
-            , cpe, accuracy::TEXT, hotfixes
+            , cpe, accuracy::TEXT
             )
 );
 
@@ -841,9 +840,22 @@ ON raw_operating_systems(cpe);
 CREATE INDEX raw_operating_systems_idx_accuracy
 ON raw_operating_systems(accuracy);
 
-CREATE INDEX raw_operating_systems_idx_hotfixes
-ON raw_operating_systems(hotfixes);
 
+-- ----------------------------------------------------------------------
+
+CREATE TABLE raw_hotfixes (
+      tool_run_id                 UUID            NOT NULL
+    , hotfix                      TEXT            NOT NULL
+    , PRIMARY KEY (tool_run_id, hotfix)
+    , FOREIGN KEY (tool_run_id)
+          REFERENCES tool_runs(id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE
+);
+
+-- Partial indexes
+CREATE INDEX raw_hotfixes_idx_tool_run_id
+ON raw_hotfixes(tool_run_id);
 
 -- ----------------------------------------------------------------------
 
