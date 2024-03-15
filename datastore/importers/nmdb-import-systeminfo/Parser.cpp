@@ -64,7 +64,7 @@ Parser::Parser() : Parser::base_type(start)
       ("Domain: " > token > qi::eol); // see notes
 
   hotfix =
-      +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&nmdo::OperatingSystem::addHotfix, &data.os, qi::_1)] - qi::omit[qi::eol])
+      +("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)] - qi::omit[qi::eol])
       ;
   hotfixes =
       ("Hotfix(es): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));

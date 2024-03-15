@@ -39,7 +39,7 @@ class TestParser : public Parser
   public:
     using Parser::start;
     using Parser::hotfix;
-    using Parser::hotfixs;
+    using Parser::hotfixes;
     using Parser::network_cards;
     using Parser::network_card;
     using Parser::ipAddressLine;
@@ -127,11 +127,11 @@ BOOST_AUTO_TEST_CASE(testNetworkCard)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testHotfixs)
+BOOST_AUTO_TEST_CASE(testhotfixes)
 {
   TestParser tp;
   {
-    const auto& parserRule {tp.hotfixs};
+    const auto& parserRule {tp.hotfixes};
     std::vector<std::string> testsOk {
       R"STR(Hotfix(s):           10 Hotfix(s) Installed.
       [01]: KBXXXXXX
@@ -152,11 +152,11 @@ BOOST_AUTO_TEST_CASE(testHotfixs)
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'hotfixs': " << test);
+                "Parse rule 'hotfixes': " << test);
     }
     for (const auto& test: testsFail) {
       BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'hotfixs': " << test);
+                "Parse rule 'hotfixes': " << test);
     }
   }
   { // Singular Hotfix
