@@ -29,8 +29,6 @@ set(MODULE_VERSION "2.0")
 target_as_library(common)
 
 foreach(ITEM
-    cisco-type7-decode
-    junos-type9-decode
     nmdb-playbook
     nmdb-playbook-insert-router
     nmdb-playbook-insert-source

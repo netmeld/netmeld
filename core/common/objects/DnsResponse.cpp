@@ -137,7 +137,7 @@ namespace netmeld::core::objects {
         << "responseClass: " << responseClass << ", "
         << "responseType: " << responseType << ", "
         << "responseTtl: " << responseTtl << ", "
-        << "responseData: " << responseData 
+        << "responseData: " << responseData
         << "]";
 
     return oss.str();

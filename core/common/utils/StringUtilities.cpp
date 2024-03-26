@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -25,8 +25,6 @@
 // =============================================================================
 
 #include <algorithm>
-#include <sstream>
-#include <boost/algorithm/string.hpp>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
@@ -49,35 +47,6 @@ namespace netmeld::core::utils {
     std::transform(text.begin(), text.end(), text.begin(),
         [](unsigned char c){ return std::toupper(c); });
     return text;
-  }
-
-  std::string
-  toString(const std::set<std::string>& con, const char sep)
-  {
-    std::ostringstream oss;
-    if (!con.empty()) {
-      auto iter {con.begin()};
-      oss << *iter;
-      ++iter;
-      for (; iter != con.end(); ++iter) {
-        oss << sep << *iter;
-      }
-    }
-    return oss.str();
-  }
-  std::string
-  toString(const std::vector<std::string>& con, const char sep)
-  {
-    std::ostringstream oss;
-    if (!con.empty()) {
-      auto iter {con.begin()};
-      oss << *iter;
-      ++iter;
-      for (; iter != con.end(); ++iter) {
-        oss << sep << *iter;
-      }
-    }
-    return oss.str();
   }
 
   std::string
@@ -119,7 +88,7 @@ namespace netmeld::core::utils {
     // the interface names obtained from the running configuration.
     std::string ifaceName{toLower(_ifaceName)};
 
-    boost::trim(ifaceName);
+    trim(ifaceName);
 
     // Ethernet variations (ordered by speed)
     if (ifaceName.starts_with("et") &&

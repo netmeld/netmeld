@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,54 +26,46 @@
 
 #include "InterNetwork.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ========================================================================
   // Constructors
   // ========================================================================
   InterNetwork::InterNetwork(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
   {
-    db.prepare(
-      "select_internetwork_scan_source",
-      R"(
-      SELECT DISTINCT src_ip_addr
-      FROM inter_network_ports
-      ORDER BY src_ip_addr
+    db.prepare("select_internetwork_scan_source", R"(
+        SELECT DISTINCT src_ip_addr
+        FROM inter_network_ports
+        ORDER BY src_ip_addr
       )");
 
-    db.prepare(
-      "select_internetwork_scan_router",
-      R"(
-      SELECT DISTINCT next_hop_ip_addr
-      FROM inter_network_ports
-      WHERE ($1 = src_ip_addr)
-      ORDER BY next_hop_ip_addr
+    db.prepare("select_internetwork_scan_router", R"(
+        SELECT DISTINCT next_hop_ip_addr
+        FROM inter_network_ports
+        WHERE ($1 = src_ip_addr)
+        ORDER BY next_hop_ip_addr
       )");
 
-    db.prepare(
-      "select_internetwork_scan_destination",
-      R"(
-      SELECT DISTINCT dst_ip_addr
-      FROM inter_network_ports
-      WHERE ($1 = src_ip_addr)
-        AND ($2 = next_hop_ip_addr)
-      ORDER BY dst_ip_addr
+    db.prepare("select_internetwork_scan_destination", R"(
+        SELECT DISTINCT dst_ip_addr
+        FROM inter_network_ports
+        WHERE ($1 = src_ip_addr)
+          AND ($2 = next_hop_ip_addr)
+        ORDER BY dst_ip_addr
       )");
 
-    db.prepare(
-      "select_internetwork_scan_port",
-      R"(
-      SELECT DISTINCT
-        protocol, port, port_state, port_reason
-      FROM inter_network_ports
-      WHERE ($1 = src_ip_addr)
-        AND ($2 = next_hop_ip_addr)
-        AND ($3 = dst_ip_addr)
-        AND ( ( ( ('open' = port_state) OR ('closed' = port_state) )
-                AND NOT ( ('ip' = protocol) OR ('' = protocol)
-                          OR ('-1' = port) ) )
-              OR ( ('-1' = port) AND ('open' = port_state) ) )
-      ORDER BY protocol, port, port_state, port_reason
+    db.prepare("select_internetwork_scan_port", R"(
+        SELECT DISTINCT
+          protocol, port, port_state, port_reason
+        FROM inter_network_ports
+        WHERE ($1 = src_ip_addr)
+          AND ($2 = next_hop_ip_addr)
+          AND ($3 = dst_ip_addr)
+          AND ( ( ( ('open' = port_state) OR ('closed' = port_state) )
+                  AND NOT ( ('ip' = protocol) OR ('' = protocol)
+                            OR ('-1' = port) ) )
+                OR ( ('-1' = port) AND ('open' = port_state) ) )
+        ORDER BY protocol, port, port_state, port_reason
       )");
   }
 
@@ -81,111 +73,99 @@ namespace netmeld::export_scans {
   // Methods
   // ========================================================================
   void
-  InterNetwork::exportTemplate(const auto& writer) const
+  InterNetwork::exportTemplate(const std::unique_ptr<Writer>& writer) const
   {
-    std::vector<std::vector<std::string>> data {
-      { "RTR_IP_01", "HOSTNAME", "DST_IP_01", "HOSTNAME",
-        "NUM", "PROTO", "STATE", "REASON"
-      },
-      { "RTR_IP_02", "HOSTNAME", "DST_IP_02", "HOSTNAME",
-        "NUM", "PROTO", "STATE", "REASON"
-      },
-      { "RTR_IP_02", "HOSTNAME", "DST_IP_03", "HOSTNAME",
-        "NUM", "PROTO", "STATE", "REASON"
-      },
-      { "RTR_IP_03", "HOSTNAME", "DST_IP_04", "HOSTNAME",
-        "NUM", "PROTO", "STATE", "REASON"
-      },
-      { "RTR_IP_03", "HOSTNAME", "DST_IP_04", "HOSTNAME",
-        "NUM", "PROTO", "STATE", "REASON"
-      },
-      { "RTR_IP_04", "HOSTNAME", "DST_IP_04", "HOSTNAME",
-        "NUM", "PROTO", "STATE", "REASON"
-      },
-    };
-    for (const auto& entry : data) {
+    std::vector<std::tuple<std::string, std::string>> tuples {
+        { "RTR_IP_01", "DST_IP_01" }
+      , { "RTR_IP_02", "DST_IP_02" }
+      , { "RTR_IP_02", "DST_IP_03" }
+      , { "RTR_IP_03", "DST_IP_04" }
+      , { "RTR_IP_03", "DST_IP_04" }
+      , { "RTR_IP_04", "DST_IP_04" }
+      };
+
+    for (const auto& [rtrIp, dstIp] : tuples) {
+      std::vector<std::string> entry {
+          rtrIp, "HOSTNAME"
+        , dstIp, "HOSTNAME"
+        , "NUM", "PROTO", "STATE", "REASON"
+        };
+
       writer->addRow(entry);
     }
+
+    finalize(writer);
   }
 
   void
-  InterNetwork::exportFromDb(const auto& writer, const std::string& srcIp)
+  InterNetwork::exportFromDb(const std::unique_ptr<Writer>& writer)
   {
-    pqxx::read_transaction t {db};
+    bool empty {true};
+    pqxx::read_transaction rt {db};
+    for ( const auto& sourceRow
+        : rt.exec_prepared("select_internetwork_scan_source")
+        )
+    {
+      empty = false;
+      srcIp = sourceRow.at(0).c_str();
 
-    pqxx::result routerRows
-      {t.exec_prepared("select_internetwork_scan_router", srcIp)};
-    for (const auto& routerRow : routerRows) {
-      std::string rtrIp;
-      routerRow.at("next_hop_ip_addr").to(rtrIp);
+      for ( const auto& routerRow
+          : rt.exec_prepared("select_internetwork_scan_router", srcIp)
+          )
+      {
+        std::string rtrIp   {routerRow.at("next_hop_ip_addr").c_str()};
+        std::string rtrName {getHostname(rt, rtrIp)};
 
-      std::string rtrName {getHostname(t, rtrIp)};
+        for ( const auto& destinationRow
+            : rt.exec_prepared("select_internetwork_scan_destination"
+                              , srcIp, rtrIp
+                              )
+            )
+        {
+          std::string dstIp     {destinationRow.at("dst_ip_addr").c_str()};
+          std::string dstIpName {getHostname(rt, dstIp)};
 
-      pqxx::result destinationRows {
-        t.exec_prepared("select_internetwork_scan_destination", srcIp, rtrIp)
-      };
-      for (const auto& destinationRow : destinationRows) {
-        std::string dstIp;
-        destinationRow.at("dst_ip_addr").to(dstIp);
+          for ( const auto& portRow
+              : rt.exec_prepared("select_internetwork_scan_port"
+                                , srcIp, rtrIp, dstIp
+                                )
+              )
+          {
+            std::string protocol    {portRow.at("protocol").c_str()};
+            std::string port        {portRow.at("port").c_str()};
+            std::string portState   {portRow.at("port_state").c_str()};
+            std::string portReason  {portRow.at("port_reason").c_str()};
 
-        std::string dstIpName {getHostname(t, dstIp)};
+            if ("-1" == port) {
+              port = "other";
+            }
 
-        pqxx::result portRows {
-          t.exec_prepared("select_internetwork_scan_port",
-              srcIp, rtrIp, dstIp)
-        };
-        for (const auto& portRow : portRows) {
-          std::string protocol;
-          portRow.at("protocol").to(protocol);
-          std::string port;
-          portRow.at("port").to(port);
-          std::string portState;
-          portRow.at("port_state").to(portState);
-          std::string portReason;
-          portRow.at("port_reason").to(portReason);
-
-          if ("-1" == port) {
-            port = "other";
+            std::vector<std::string> entry {
+                rtrIp, rtrName
+              , dstIp, dstIpName
+              , port, protocol, portState, portReason
+            };
+            writer->addRow(entry);
           }
-
-          std::vector<std::string> data {
-            rtrIp, rtrName, dstIp, dstIpName,
-            port, protocol, portState, portReason
-          };
-          writer->addRow(data);
         }
       }
+
+      finalize(writer);
     }
-    t.abort();
+
+    if (empty) {
+      finalize(writer);
+    }
   }
 
   void
-  InterNetwork::exportScan(const std::unique_ptr<Writer>& writer)
+  InterNetwork::finalize(const std::unique_ptr<Writer>& writer) const
   {
-    pqxx::read_transaction t {db};
+    LOG_DEBUG << "Finalizing data output\n";
 
-    pqxx::result sourceRows
-      {t.exec_prepared("select_internetwork_scan_source")};
-    t.abort();
+    std::string filename {"inter-network-from-" + srcIp};
 
-    auto fWrite = [&](const std::string& srcIp) {
-      writer->writeData(
-        "inter-network-from-" + srcIp,
-        writer->getInterNetwork(srcIp)
-      );
-      writer->clearData();
-    };
-
-    std::string srcIp {"IP/CIDR"};
-    if (0 == sourceRows.size()) {
-      exportTemplate(writer);
-      fWrite(srcIp);
-    } else {
-      for (const auto& sourceRow : sourceRows) {
-        sourceRow.at("src_ip_addr").to(srcIp);
-        exportFromDb(writer, srcIp);
-        fWrite(srcIp);
-      }
-    }
+    writer->writeData(filename, writer->getInterNetwork(srcIp));
+    writer->clearData();
   }
 }

@@ -77,7 +77,7 @@ class Tool : public nmdt::AbstractDatastoreTool
           const auto& results {t.exec_prepared("delete_tool_run", toolRunId)};
 
           LOG_INFO << "Removal count for " << uuidStr
-                   << ": " << std::size(results) << '\n'
+                   << ": " << results.affected_rows() << '\n'
                    ;
           } catch (std::exception& e) {
             LOG_WARN << "Skipping " << uuidStr

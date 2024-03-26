@@ -94,7 +94,7 @@ namespace netmeld::core::objects {
     oss << "["
         << "questionFqdn: " << questionFqdn << ", "
         << "questionClass: " << questionClass << ", "
-        << "questionType: " << questionType 
+        << "questionType: " << questionType
         << "]";
 
     return oss.str();
