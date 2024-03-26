@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -40,6 +40,12 @@ namespace netmeld::datastore::objects {
   OperatingSystem::OperatingSystem(const IpAddress& _ipAddr) :
     ipAddr(_ipAddr)
   {}
+
+  void
+  OperatingSystem::setIpAddr(const IpAddress& _ipAddr)
+  {
+    ipAddr = _ipAddr;
+  }
 
   void
   OperatingSystem::setVendorName(const std::string& _name)
@@ -94,8 +100,9 @@ namespace netmeld::datastore::objects {
                 << std::endl;
       return;
     }
-
-    ipAddr.save(t, toolRunId, deviceId);
+    if (ipAddr.isValid()) { 
+      ipAddr.save(t, toolRunId, deviceId);
+    }
 
     t.exec_prepared("insert_raw_operating_system",
         toolRunId,
@@ -104,7 +111,8 @@ namespace netmeld::datastore::objects {
         productName,
         productVersion,
         cpe,
-        accuracy);
+        accuracy
+        );
   }
 
   std::string
@@ -112,14 +120,14 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "["; // opening bracket
-    oss << "ipAddr: " << ipAddr .toDebugString() << ", "
+    oss << "["; 
+    oss << "ipAddr: " << ipAddr.toDebugString() << ", "
         << "vendorName: " << vendorName  << ", "
         << "productName: " << productName  << ", "
         << "productVersion: " << productVersion  << ", "
         << "cpe: " << cpe  << ", "
         << "accuracy: " << accuracy ;
-    oss << "]"; // closing bracket
+    oss << "]";
 
     return oss.str();
   }
