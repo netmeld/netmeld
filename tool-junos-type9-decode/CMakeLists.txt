@@ -1,5 +1,5 @@
-# =============================================================================
-# Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
+#=============================================================================
+# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -24,27 +24,22 @@
 # Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 # =============================================================================
 
-add_executable(${TGT_TOOL}
-    Parser.cpp
-    ${TGT_TOOL}.cpp
-  )
-
-target_link_libraries(${TGT_TOOL}
-    netmeld-datastore
-  )
-
-nm_install_bin(${TGT_TOOL})
+set(MODULE_VERSION "2.0")
 
 foreach(ITEM
-    Parser
+    junos-type9-decode
   )
-  nm_add_test(${ITEM})
-  target_sources(${TGT_TEST}
-    PRIVATE
-      ${ITEM}.hpp
-      ${ITEM}.cpp
-    )
-  target_link_libraries(${TGT_TEST}
-      netmeld-datastore
-    )
+  target_as_tool(${ITEM})
 endforeach()
+
+
+# ----------------------------------------------------------------------
+# Deb Creation
+# ----------------------------------------------------------------------
+set(desc "This package provides the Junos Type 9 Decoder tool \
+for the Netmeld tool suite.")
+nm_add_deb_description(${desc})
+set(deps "\
+  netmeld-core\
+  ")
+nm_add_deb_depends(${deps})
