@@ -582,7 +582,7 @@ Parser::routeAddIface( const nmdo::IpAddress& dstIpNet
 {
   nmdo::Route routeRule;
   routeRule.setDstIpNet(dstIpNet);
-  routeRule.setIfaceName(rtrIface);
+  routeRule.setOutIfaceName(rtrIface);
   if (dstIpNet.isV4()) {
     routeRule.setNextHopIpAddr(nmdo::IpAddress::getIpv4Default());
   } else {

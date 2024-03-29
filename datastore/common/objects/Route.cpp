@@ -72,9 +72,9 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Route::setIfaceName(const std::string& _ifaceName)
+  Route::setOutIfaceName(const std::string& _outIfaceName)
   {
-    ifaceName = nmcu::toLower(_ifaceName);
+    outIfaceName = nmcu::toLower(_outIfaceName);
   }
 
   void
@@ -162,7 +162,7 @@ namespace netmeld::datastore::objects {
   //      && dstIpNet.hasUnsetPrefix()
   //    };
   //  bool ifaceRoute { // case: route via interface
-  //         !ifaceName.empty()
+  //         !outIfaceName.empty()
   //      && nextHopIpAddr.hasUnsetPrefix()
   //      && !dstIpNet.hasUnsetPrefix()
   //    };
@@ -200,6 +200,14 @@ namespace netmeld::datastore::objects {
     dstIpNet.save(t, toolRunId, deviceId);
     nextHopIpAddr.save(t, toolRunId, deviceId);
 
+    if (!vrfId.empty()) {
+      t.exec_prepared( "insert_raw_device_vrf"
+                     , toolRunId
+                     , deviceId
+                     , vrfId
+                     );
+    }
+
     t.exec_prepared("insert_raw_device_ip_route"
       , toolRunId
       , deviceId // insert converts to lower
@@ -210,7 +218,7 @@ namespace netmeld::datastore::objects {
       , nextVrfId // insert converts '' to null
       , nextTableId // insert converts '' to null
       , getNextHopIpAddrString() // insert converts '' to null
-      , ifaceName // insert converts '' to null
+      , outIfaceName // insert converts '' to null
       , protocol // insert converts to lower and '' to null
       , adminDistance
       , metric
@@ -229,7 +237,7 @@ namespace netmeld::datastore::objects {
 
     t.exec_prepared("insert_tool_run_ip_route"
       , toolRunId
-      , ifaceName
+      , outIfaceName
       , dstIpNet.toString()
       , getNextHopIpAddrString()
       );
@@ -248,7 +256,7 @@ namespace netmeld::datastore::objects {
         << ", nextVrfId: " << nextVrfId
         << ", netxtTableId: " << nextTableId
         << ", nextHopIpAddr: " << nextHopIpAddr.toDebugString()
-        << ", ifaceName: " << ifaceName
+        << ", outIfaceName: " << outIfaceName
         << ", protocol: " << protocol
         << ", adminDistance: " << adminDistance
         << ", metric: " << metric
@@ -269,7 +277,7 @@ namespace netmeld::datastore::objects {
                    , nextVrfId
                    , nextTableId
                    , nextHopIpAddr
-                   , ifaceName
+                   , outIfaceName
                    , protocol
                    , description
                    , adminDistance
@@ -283,7 +291,7 @@ namespace netmeld::datastore::objects {
                    , rhs.nextVrfId
                    , rhs.nextTableId
                    , rhs.nextHopIpAddr
-                   , rhs.ifaceName
+                   , rhs.outIfaceName
                    , rhs.protocol
                    , rhs.description
                    , rhs.adminDistance

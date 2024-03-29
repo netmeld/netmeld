@@ -233,7 +233,7 @@ Parser::Parser() : Parser::base_type(start)
     (  (ipAddr >> semicolon)
          [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
      | token
-         [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+         [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))]
     ) >> qi::eol
     ;
   // END OF: routing-options {...}

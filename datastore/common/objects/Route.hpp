@@ -54,7 +54,7 @@ namespace netmeld::datastore::objects {
       std::string nextVrfId;
       std::string nextTableId;
       IpAddress   nextHopIpAddr;
-      std::string ifaceName;
+      std::string outIfaceName;
       std::string protocol;
       std::string description;
 
@@ -90,7 +90,7 @@ namespace netmeld::datastore::objects {
       void setNextVrfId(const std::string&);
       void setNextTableId(const std::string&);
       void setNextHopIpAddr(const IpAddress&);
-      void setIfaceName(const std::string&);
+      void setOutIfaceName(const std::string&);
       void setProtocol(const std::string&);
       void setDescription(const std::string&);
       void setAdminDistance(size_t);

@@ -561,7 +561,7 @@ Parser::parseConfigRoutingOptions(const pugi::xml_node& routingOptionsNode)
     const auto discardMatch{routeNode.select_node("discard[not(@inactive='inactive')]")};
     if (discardMatch) {
       const std::string outgoingIfaceName{discardMatch.node().name()};
-      route.setIfaceName(outgoingIfaceName);
+      route.setOutIfaceName(outgoingIfaceName);
       route.setNullRoute(true);
     }
 
@@ -1149,11 +1149,11 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
         nhTypeMatch.node().text().as_string()
       };
       if ("Discard" == nhType) { // drop
-        route.setIfaceName("discard");
+        route.setOutIfaceName("discard");
         route.setNullRoute(true);
       }
       if ("Reject" == nhType) { // drop and send icmp
-        route.setIfaceName("reject");
+        route.setOutIfaceName("reject");
         route.setNullRoute(true);
       }
     }
@@ -1193,7 +1193,7 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       const std::string ifaceName{
         nextHopViaMatch.node().text().as_string()
       };
-      route.setIfaceName(ifaceName);
+      route.setOutIfaceName(ifaceName);
     }
 
     routes.emplace_back(route);
