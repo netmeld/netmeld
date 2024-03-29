@@ -49,11 +49,11 @@ class Tool : public nmdt::AbstractGraphTool
 
     std::set<std::string> visited;
 
-    // TODO
     std::string firstHop;
     std::string finalHop;
 
-    bool noRouteDetails {false};
+    bool addRouteDetails  {false};
+    bool addAclDetails    {false};
 
     std::map<std::string, std::vector<std::string>> routeDetails;
     std::map<std::string, std::vector<std::string>> aclDetails;
@@ -102,10 +102,17 @@ class Tool : public nmdt::AbstractGraphTool
             )
           );
 
-      opts.addOptionalOption("no-route-details", std::make_tuple(
-              "no-route-details"
+      opts.addOptionalOption("add-route-details", std::make_tuple(
+              "add-route-details"
             , NULL_SEMANTIC
-            , "Do not show route details on hops"
+            , "Add route details to hops"
+            )
+          );
+
+      opts.addOptionalOption("add-acl-details", std::make_tuple(
+              "add-acl-details"
+            , NULL_SEMANTIC
+            , "Add ACL details to subnets"
             )
           );
     }
@@ -120,8 +127,6 @@ class Tool : public nmdt::AbstractGraphTool
       nmdu::dbPrepareCommon(db);
 
       dbPrepareToolSpecific(db);
-
-      // TODO control flags
 
       buildRouteGraph(db);
 
@@ -141,9 +146,10 @@ class Tool : public nmdt::AbstractGraphTool
     processOptions()
     {
       firstHop = opts.getValue("source");
-      finalHop  = opts.getValue("destination");
+      finalHop = opts.getValue("destination");
 
-      noRouteDetails = opts.exists("no-route-details");
+      addRouteDetails = opts.exists("add-route-details");
+      addAclDetails   = opts.exists("add-acl-details");
     }
 
     void
@@ -304,7 +310,6 @@ class Tool : public nmdt::AbstractGraphTool
           ;
       }
 
-      // TODO
       findRoutesBetweenPoints(rt);
       addRouteVertexDetails();
 
@@ -486,7 +491,7 @@ class Tool : public nmdt::AbstractGraphTool
       }
       auto& routes {routeDetails.at(id)};
 
-      if (!noRouteDetails) {
+      if (addRouteDetails) {
         std::string rte {
             std::format(R"([{} &rarr; {}] nextHop {} for {}<br align="left"/>)"
                        , inIfaceName
@@ -602,7 +607,7 @@ class Tool : public nmdt::AbstractGraphTool
                , const std::string& in, const std::string& out
                )
     {
-      if (false) {return "";} // TODO option noAclDetails
+      if (!addAclDetails) {return "";} // short circuit
 
       /* TODO where to add this?
           - subnet: what about multi-in/out
