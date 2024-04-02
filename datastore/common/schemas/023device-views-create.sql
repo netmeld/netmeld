@@ -244,11 +244,12 @@ HAVING (max(outgoing_interface_name) IS NULL)
 --  , next_vrf_id                                 AS next_vrf_id
 --  , next_table_id                               AS next_table_id
 --  , next_hop_ip_addr                            AS next_hop_ip_addr
---  , max(COALESCE(outgoing_interface_name), '')  AS outgoing_interface_name
+--  , nullif(max(COALESCE(outgoing_interface_name), ''), '')
+--                                                AS outgoing_interface_name
 --  , protocol                                    AS protocol
 --  , administrative_distance                     AS administrative_distance
 --  , metric                                      AS metric
---  , max(COALESCE(description, ''))              AS description
+--  , nullif(max(COALESCE(description, '')), '')  AS description
 --FROM raw_device_ip_routes
 --GROUP BY
 --    device_id
