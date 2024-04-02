@@ -349,8 +349,8 @@ namespace netmeld::datastore::objects {
         << ", macAddr: " << macAddr.toDebugString()
         << ", mode: " << mode
         << ", isPortSecurityEnabled: " << isPortSecurityEnabled
-        << ", portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs 
-        << ", portSecurityViolationAction: " << portSecurityViolationAction 
+        << ", portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs
+        << ", portSecurityViolationAction: " << portSecurityViolationAction
         << ", isPortSecurityStickyMac:" << isPortSecurityStickyMac
         << ", learnedMacAddrs: "  << learnedMacAddrs
         << ", reachableMacs: " << reachableMacAddrs

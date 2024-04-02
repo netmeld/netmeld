@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(testRules)
     for (const auto& test : testsOkValidRoute) {
       nmdo::Route out;
       BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
-                , "Rule 'ipv4Route': " << test 
+                , "Rule 'ipv4Route': " << test
                 );
       const auto debugStr {out.toDebugString()};
       BOOST_TEST(out.isValid()

@@ -524,7 +524,7 @@ class Tool : public nmdt::AbstractGraphTool
 
           std::ostringstream oss(graph[e].label, std::ios_base::ate);
           if (oss.tellp() > 0) {
-            oss << '\n';            
+            oss << '\n';
           }
           oss << std::format("hop {} to {}", hopNumber, lastHop);
           graph[e].label = oss.str();
@@ -550,7 +550,7 @@ class Tool : public nmdt::AbstractGraphTool
         std::ostringstream oss;
 
         oss << initVertexLabel(deviceType, deviceName);
-        
+
         if (!vendor.empty()) {
           oss << std::format("({}:{}:{})<BR/>", vendor, model, deviceType);
         }
