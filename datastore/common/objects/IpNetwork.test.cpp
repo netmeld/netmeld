@@ -86,9 +86,9 @@ BOOST_AUTO_TEST_CASE(testSettersSimple)
 {
   {
     const std::vector<std::tuple<std::string, size_t>> testsOk {
-      {"1.2.3.4", 32}
+        {"1.2.3.4", 32}
       , {"1:2:3:4:5:6:7:8", 128}
-    , };
+      };
 
     for (const auto& [ip, prefix] : testsOk) {
       TestIpNetwork ipNet {ip, ""};

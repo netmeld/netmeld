@@ -344,7 +344,7 @@ namespace netmeld::datastore::objects {
         << ", description: " << description
         << ", isPartial: " << isPartial
         << ", mediaType: " << mediaType
-        << ", isUp:" << std::boolalpha << isUp
+        << ", isUp: " << std::boolalpha << isUp
         << ", isDiscoveryProtocolEnabled: " << isDiscoveryProtocolEnabled
         << ", macAddr: " << macAddr.toDebugString()
         << ", mode: " << mode
