@@ -36,28 +36,28 @@ Parser::Parser() : Parser::base_type(start)
     token =
         +qi::ascii::graph;
 
-    host_name =
+    hostName =
         ("Host Name: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] > qi::eol);
 
-    os_name =
+    osName =
         ("OS Name: " > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)][pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)] > qi::eol);
 
-    os_version =
+    osVersion =
         ("OS Version: " > token[pnx::bind(&nmdo::OperatingSystem::setProductVersion, &data.os, qi::_1)] > qi::eol);
 
-    os_manufacturer =
+    osManufacturer =
         ("OS Manufacturer: " > token[pnx::bind(&nmdo::OperatingSystem::setVendorName, &data.os, qi::_1)] > qi::eol);
 
-    os_configuration =
+    osConfiguration =
         ("OS Configuration: " > token[pnx::bind(&nmdo::DeviceInformation::setDescription, &data.devInfo, qi::_1)] > qi::eol);
 
-    system_manufacturer =
+    systemManufacturer =
         ("System Manufacturer: " > token[pnx::bind(&nmdo::DeviceInformation::setVendor, &data.devInfo, qi::_1)] > qi::eol);
 
-    system_model =
+    systemModel =
         ("System Model: " > token[pnx::bind(&nmdo::DeviceInformation::setModel, &data.devInfo, qi::_1)] > qi::eol);
 
-    system_type =
+    systemType =
         ("System Type: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceType, &data.devInfo, qi::_1)] > qi::eol);
 
     domain =
@@ -90,24 +90,24 @@ Parser::Parser() : Parser::base_type(start)
     networkCardStatus =
         +qi::ascii::graph;
 
-    network_card =
+    networkCard =
         ('[' >> qi::lexeme[+qi::char_("0-9")] >> ']' >> qi::lit(':') >> networkCardName[(pnx::bind(&Parser::addInterface, this, qi::_1))] >> qi::eol >> "Connection Name: " > networkCardConnectionName[(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))] >> qi::eol >> -(dhcpEnabledStatus >> qi::eol) >> -("DHCP Server: " >> dhcpServer >> qi::eol) >> -("IP address(es)" >> qi::eol > +('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: " >> ipAddr[(pnx::bind(&Parser::addIfaceIp, this, qi::_1))] >> qi::eol)) >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
     ;
-    network_cards =
+    networkCards =
         qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > +network_card;
 
-    hyper_v =
+    hyperV =
         ("Hyper-V Requirements: " > token > qi::eol);
 
     systeminfo =
-        host_name > os_name > os_version > os_manufacturer > os_configuration > *(qi::char_ - qi::lit("System Manufacturer:")) > system_manufacturer > system_model > system_type > *(qi::char_ - qi::lit("Domain:")) > domain[pnx::bind(&Parser::setDomain, this, qi::_1)] > *(qi::char_ - qi::lit("Hotfix")) > hotfixes > network_cards > hyper_v;
+        hostName > osName > osVersion > osManufacturer > osConfiguration > *(qi::char_ - qi::lit("System Manufacturer:")) > systemManufacturer > systemModel > systemType > *(qi::char_ - qi::lit("Domain:")) > domain[pnx::bind(&Parser::setDomain, this, qi::_1)] > *(qi::char_ - qi::lit("Hotfix")) > hotfixes > networkCards > hyperV;
     ;
     ignoredLine =
         (qi::ascii::print > -qi::eol) | +qi::eol;
 
     // Allows for error handling and debugging of qi.
     BOOST_SPIRIT_DEBUG_NODES(
-        (start)(systeminfo)(host_name)(os_name)(os_version)(os_manufacturer)(os_configuration)(system_manufacturer)(system_model)(system_type)(domain)(hotfixes)(hotfix)(network_cards)(network_card)(dhcpServer)(dhcpEnabledStatus)(ipAddressLine)(networkCardName)(networkCardConnectionName)(networkCardStatus));
+        (start)(systeminfo)(hostName)(osName)(osVersion)(osManufacturer)(osConfiguration)(systemManufacturer)(systemModel)(systemType)(domain)(hotfixes)(hotfix)(networkCards)(networkCard)(dhcpServer)(dhcpEnabledStatus)(ipAddressLine)(networkCardName)(networkCardConnectionName)(networkCardStatus));
 }
 
 // =============================================================================

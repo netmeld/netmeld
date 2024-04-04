@@ -78,8 +78,7 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      ignoredLine,
-      systeminfo;
+      ignoredLine;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       hotfixes,
@@ -91,30 +90,30 @@ class Parser :
     ;
 
     qi::rule<nmdp::IstreamIter, std::vector<std::string>(), qi::ascii::blank_type>
-      ipaddresssection
+      ipAddressSection
     ;
 
     qi::rule<nmdp::IstreamIter, bool(), qi::ascii::blank_type>
       dhcpEnabledStatus;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-     network_card;
+     networkCard;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-     network_cards;
+     networkCards;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-      host_name,
-      os_name,
-      os_version,
-      os_manufacturer,
-      os_configuration,
-      system_manufacturer,
-      system_model,
-      system_type,
+      hostName,
+      osName,
+      osVersion,
+      osManufacturer,
+      osConfiguration,
+      systemManufacturer,
+      systemModel,
+      systemType,
       domain,
       hotfix,
-      hyper_v,
+      hyperV,
       token;
   // ===========================================================================
   // Constructors
