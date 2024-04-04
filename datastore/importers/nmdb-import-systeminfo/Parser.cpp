@@ -40,7 +40,9 @@ Parser::Parser() : Parser::base_type(start)
         ("Host Name: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] > qi::eol);
 
     osName =
-        ("OS Name: " > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)][pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)] > qi::eol);
+        ("OS Name: " > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)][pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)] 
+        > qi::eol
+        );
 
     osVersion =
         ("OS Version: " > token[pnx::bind(&nmdo::OperatingSystem::setProductVersion, &data.os, qi::_1)] > qi::eol);
@@ -91,7 +93,21 @@ Parser::Parser() : Parser::base_type(start)
         +qi::ascii::graph;
 
     networkCard =
-        ('[' >> qi::lexeme[+qi::char_("0-9")] >> ']' >> qi::lit(':') >> networkCardName[(pnx::bind(&Parser::addInterface, this, qi::_1))] >> qi::eol >> "Connection Name: " > networkCardConnectionName[(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))] >> qi::eol >> -(dhcpEnabledStatus >> qi::eol) >> -("DHCP Server: " >> dhcpServer >> qi::eol) >> -("IP address(es)" >> qi::eol > +('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: " >> ipAddr[(pnx::bind(&Parser::addIfaceIp, this, qi::_1))] >> qi::eol)) >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
+        ('[' >> qi::lexeme[+qi::char_("0-9")] >> ']' >> qi::lit(':') 
+        >> networkCardName[(pnx::bind(&Parser::addInterface, this, qi::_1))] 
+        >> qi::eol 
+        >> "Connection Name: " 
+        > networkCardConnectionName[(pnx::bind(&Parser::addIfaceConnectName, this, qi::_1))] 
+        >> qi::eol 
+        >> -(dhcpEnabledStatus 
+        >> qi::eol) 
+        >> -("DHCP Server: " 
+        >> dhcpServer >> qi::eol) 
+        >> -("IP address(es)" 
+        >> qi::eol 
+        > +('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: "
+        >> ipAddr[(pnx::bind(&Parser::addIfaceIp, this, qi::_1))] >> qi::eol)) 
+        >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
     ;
     networkCards =
         qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > +network_card;
@@ -100,14 +116,48 @@ Parser::Parser() : Parser::base_type(start)
         ("Hyper-V Requirements: " > token > qi::eol);
 
     systeminfo =
-        hostName > osName > osVersion > osManufacturer > osConfiguration > *(qi::char_ - qi::lit("System Manufacturer:")) > systemManufacturer > systemModel > systemType > *(qi::char_ - qi::lit("Domain:")) > domain[pnx::bind(&Parser::setDomain, this, qi::_1)] > *(qi::char_ - qi::lit("Hotfix")) > hotfixes > networkCards > hyperV;
+        hostName 
+        > osName
+        > osVersion 
+        > osManufacturer 
+        > osConfiguration 
+        > *(qi::char_ - qi::lit("System Manufacturer:")) 
+        > systemManufacturer 
+        > systemModel 
+        > systemType 
+        > *(qi::char_ - qi::lit("Domain:"))
+        > domain[pnx::bind(&Parser::setDomain, this, qi::_1)] 
+        > *(qi::char_ - qi::lit("Hotfix")) 
+        > hotfixes 
+        > networkCards 
+        > hyperV;
     ;
     ignoredLine =
         (qi::ascii::print > -qi::eol) | +qi::eol;
 
     // Allows for error handling and debugging of qi.
     BOOST_SPIRIT_DEBUG_NODES(
-        (start)(systeminfo)(hostName)(osName)(osVersion)(osManufacturer)(osConfiguration)(systemManufacturer)(systemModel)(systemType)(domain)(hotfixes)(hotfix)(networkCards)(networkCard)(dhcpServer)(dhcpEnabledStatus)(ipAddressLine)(networkCardName)(networkCardConnectionName)(networkCardStatus));
+        (start)
+        (systeminfo)
+        (hostName)
+        (osName)
+        (osVersion)
+        (osManufacturer)
+        (osConfiguration)
+        (systemManufacturer)
+        (systemModel)
+        (systemType)
+        (domain)
+        (hotfixes)
+        (hotfix)
+        (networkCards)
+        (networkCard)
+        (dhcpServer)
+        (dhcpEnabledStatus)
+        (ipAddressLine)
+        (networkCardName)
+        (networkCardConnectionName)
+        (networkCardStatus));
 }
 
 // =============================================================================
