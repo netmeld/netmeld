@@ -1,3 +1,28 @@
+// =============================================================================
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
+// (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// =============================================================================
+// Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
+// =============================================================================
 
 #include "Parser.hpp"
 #include <netmeld/core/utils/StringUtilities.hpp>
@@ -11,270 +36,398 @@ typedef std::vector<DevInfo>     Result;
 
 Parser::Parser() : Parser::base_type(start)
 {
-    auto generateStringFieldRule = [this](size_t idx, std::string dashes)
-    {
-        this->stringFieldRules[idx] = 
-        qi::lexeme[
-            qi::as_string[
-            qi::repeat(1, static_cast<int>(dashes.size()))[qi::print]
-            ]
-        ][qi::_val = qi::_1];
 
-        if (idx == 0) {
-            BOOST_SPIRIT_DEBUG_NODES(
-            (stringFieldRules[0])
-            )
-        } else if (idx == 1) {
-            BOOST_SPIRIT_DEBUG_NODES(
-            (stringFieldRules[1])
-            )
-        } else if (idx == 2) {
-            BOOST_SPIRIT_DEBUG_NODES(
-            (stringFieldRules[2])
-            )
-        } else if (idx == 3) {
-            BOOST_SPIRIT_DEBUG_NODES(
-            (stringFieldRules[3])
-            )
-        } else {
-            BOOST_SPIRIT_DEBUG_NODES(
-            (stringFieldRules[idx])
-            )
+    auto extractKeyVals = [](
+                            std::string &keyLine,
+                            std::vector<int> &kvLengths,
+                            std::vector<std::string> &valueLines,
+                            KeyValVec &keyVals
+                            )
+    {
+
+        keyVals.resize(valueLines.size());
+        std::vector<std::string> keys;
+        auto keyLineIt = keyLine.begin();
+        for (size_t i = 0; i < kvLengths.size(); ++i) {
+            qi::phrase_parse(
+                keyLineIt,
+                keyLine.end(),
+                (
+                    qi::lexeme
+                    [
+                        qi::as_string[qi::repeat(0, kvLengths[i])[qi::print]]
+                    ]
+                    [(
+                        pnx::bind(
+                            [&keys](auto str){
+                                keys.emplace_back(nmcu::trim(str));
+                            }, qi::_1
+                        )
+                    )]
+                
+                ),
+                qi::ascii::space
+                
+            );
         }
-    };
-
-    auto generatePowerSupplyRule = [this](int repeatCount)
-    {
-        auto &repeatRule = this->repeatPowerSupplyRule;
-        auto &rule = this->powerSupplyRule;
-        repeatRule = 
-            qi::repeat(repeatCount - 1)[rule >> qi::eol] >> rule;
-    };
-
-    auto generateFanModuleRule = [this](int repeatCount)
-    {
-        auto &repeatRule = this->repeatFanModuleRule;
-        auto &rule = this->fanModuleRule;
-        repeatRule = 
-            qi::repeat(repeatCount - 1)[rule >> qi::eol] >> rule;
-    };
-
-    auto generatePortRule = [this](int repeatCount)
-    {
-        auto &repeatRule = this->repeatPortRule;
-        auto &rule = this->portRule;
-        if (repeatCount == 1) {
-            repeatRule = rule;
-            return;
+        for (size_t i = 0; i < valueLines.size(); ++i) {
+            auto valueLine = valueLines[i];
+            auto valueLineIt = valueLine.begin();
+            for (size_t j = 0; j < kvLengths.size(); ++j) {
+                std::string key = keys[j];
+                qi::phrase_parse(
+                    valueLineIt,
+                    valueLine.end(),
+                    (
+                        qi::lexeme
+                        [
+                            qi::as_string[qi::repeat(0, kvLengths[j])[qi::print]]
+                        ]
+                        [(
+                            pnx::bind(
+                                [i, key, &keyVals](auto str){
+                                    std::string trimmedStr{nmcu::trim(str)};
+                                    keyVals[i].emplace(key, trimmedStr);
+                                }, qi::_1
+                            )
+                        )]
+                    
+                    ),
+                    qi::ascii::space
+                    
+                );
+            }
         }
-        repeatRule = 
-            qi::repeat(repeatCount - 1)[rule >> qi::eol] >> rule;
+
     };
 
-    auto generateTransceiverRule = [this](int repeatCount)
-    {
-        auto &repeatRule = this->repeatTransceiverRule;
-        auto &rule = this->transceiverRule;
-        repeatRule = 
-            qi::repeat(0, repeatCount - 1)[rule >> qi::eol] >> rule;
-    };
 
     start =
-        *qi::eol >> -(deviceInfo % +qi::eol) >> *qi::eol
+        *qi::eol >>
+        -(deviceInfo % +qi::eol)
+        [(
+            [this](){
+                systemInformationEntry.clear();
+            }
+        )] >>
+        *qi::eol
     ;
 
     deviceInfo =
-        systemInformation[qi::_val = qi::_1] > +qi::eol >
-        systemPowerSupply > +qi::eol >>
-        systemFanModule > +qi::eol >
-        systemPorts > +qi::eol >
-        systemTransceiverSlots
+        handleSection
+        [
+            pnx::bind(
+                [](auto &a, auto &b){
+                    a = b.devInfo;
+                }, qi::_val, qi::_1
+            )
+        ]
+    ;
+
+    placeholder = qi::repeat(0)[!qi::lit("__PLACEHOLDER__")];
+    
+    handleSection =
+        systemInformationStart
+        [(
+            pnx::bind(
+                [this](auto &a, auto &b){
+                    a.devInfo = b;
+                    std::cout << a.devInfo.toDebugString() << std::endl;
+                    std::cout << b.toDebugString() << std::endl;
+                }, qi::_val, qi::_1
+            )
+        )] ||
+        systemPowerSupplyStart ||
+        systemFanModuleStart ||
+        systemPortStart ||
+        systemTransceiverStart ||
+        systemStorageStart ||
+        placeholder
+    ;
+
+    entryRuleBase =
+        (
+            grabLine >> qi::eol >>
+            qi::repeat
+            [
+                countDashes
+            ]
+        
+            >> qi::eol >>
+            ((!qi::eol >> grabLine) % qi::eol)
+        )
+        [
+            pnx::bind(
+                [](std::string &keyLine,
+                   std::vector<int> &kvLengths,
+                   std::vector<std::string> &valueLines,
+                   std::tuple<std::string, std::vector<int>, std::vector<std::string>>& entryData)
+                {
+                    entryData = {
+                        std::move(keyLine),
+                        std::move(kvLengths),
+                        std::move(valueLines)
+                    };
+                }, qi::_1, qi::_2, qi::_3, qi::_val
+            )
+        ]
+    ;
+
+    systemInformationStart =
+        qi::lit("System information") >>
+        qi::eol >> 
+        systemInformation
+        [(
+            pnx::bind(
+                [this](DevInfo &devInfo){
+                    devInfo.setModel(systemInformationEntry.at(0)["Model"]);
+                    devInfo.setDescription(systemInformationEntry.at(0)["Description"]);
+                    devInfo.setHardwareRevision(systemInformationEntry.at(0)["HW Version"]);
+                    devInfo.setSerialNumber(systemInformationEntry.at(0)["Serial Number"]);
+                }, qi::_val
+            )
+        )] 
     ;
 
     systemInformation =
-        qi::lit("System information") >> qi::eol >>
-        (systemInformationRow1 >> *qi::eol >>
-        systemInformationRow2)[(
-            pnx::bind([](auto &val, auto &row1, auto &row2, std::string vendor){
-                val.setModel(row1[0]);
-                val.setDescription(row1[1]);
-                val.setHardwareRevision(row2[0]);
-                val.setSerialNumber(row2[1]);
-                val.setVendor(vendor);
-                for (auto x : row1) {
-                    std::cout << "1: [" << x << "]";
-                }
-                for (auto x : row2) {
-                    std::cout << "1: [" << x << "]";
-                }
-            }, qi::_val, qi::_1, qi::_2, this->VENDOR)
-        )]
+        systemInformationEntryRule >>
+        (
+            *qi::eol >> 
+            (
+                handleSection || 
+                systemInformation
+                
+            )
+        )
     ;
 
-    systemInformationRow1 =
-        qi::lit("Model") >> qi::lit("Description") >> qi::eol >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 0, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 1, qi::_1)
-        ]] >>
-        qi::eol >>
-        stringFieldRules[0][(
-            pnx::bind(
-                [](auto &vec, auto model){
-                    vec.emplace_back(nmcu::trim(model));
-                }, qi::_val, qi::_1
-            )
-        )] >>
-        stringFieldRules[1][(
-            pnx::bind(
-                [](auto &vec, auto desc){
-                    vec.emplace_back(nmcu::trim(desc));
-                }, qi::_val, qi::_1
+    systemInformationEntryRule =
+        entryRuleBase
+        [(
+            pnx::bind
+            (
+                [this, extractKeyVals](auto &entryData)
+                {
+                    extractKeyVals(
+                        std::get<std::string>(entryData),
+                        std::get<std::vector<int>>(entryData),
+                        std::get<std::vector<std::string>>(entryData),
+                        systemInformationEntry
+                    );
+                }, qi::_1
             )
         )]
     ;
 
-    systemInformationRow2 =
-        qi::lit("HW Version") >> qi::lit("Serial Number") >> qi::lit("Mfg Date") >> qi::eol >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 0, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 1, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 2, qi::_1)
-        ]] >>
-        qi::eol >>
-        stringFieldRules[0][(
-            pnx::bind(
-                [](auto &vec, auto hwVer){
-                    vec.emplace_back(nmcu::trim(hwVer));
-                }, qi::_val, qi::_1
-            )
-        )] >>
-        stringFieldRules[1][(
-            pnx::bind(
-                [](auto &vec, auto serNum){
-                    vec.emplace_back(nmcu::trim(serNum));
-                }, qi::_val, qi::_1
-            )
-        )] >>
-        stringFieldRules[2][(
-            pnx::bind(
-                [](auto &vec, auto mfgDate){
-                    vec.emplace_back(nmcu::trim(mfgDate));
-                }, qi::_val, qi::_1
-            )
-        )]
+    systemPowerSupplyStart =
+        (
+            qi::lit("System has") >>
+            qi::int_
+            
+            >> 
+            qi::lit("power supply slot") >> -qi::lit('s') >> qi::eol
+        ) >>
+        systemPowerSupply
     ;
 
     systemPowerSupply =
-        qi::lit("System has") >> 
-        qi::int_[
-            pnx::bind(generatePowerSupplyRule, qi::_1)
-        ] >> 
-        "power supply slots" >> qi::eol >>
-        qi::lit("Slot") >> qi::lit("Model") >> qi::lit("Serial Number")  >> qi::eol >>
-        qi::lexeme[qi::as_string[+qi::string("-")]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 0, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 1, qi::_1)
-        ]] >> 
-        qi::eol >> 
-        repeatPowerSupplyRule
+        systemPowerSupplyEntryRule >>
+        (
+            *qi::eol >> (handleSection || systemPowerSupply)
+        )
     ;
 
-    powerSupplyRule =
-        qi::int_ >>
-        stringFieldRules[0] >>
-        stringFieldRules[1]
+    systemPowerSupplyEntryRule =
+        entryRuleBase
+        [(
+            pnx::bind
+            (
+                [this, extractKeyVals](auto &entryData)
+                {
+                    extractKeyVals(
+                        std::get<std::string>(entryData),
+                        std::get<std::vector<int>>(entryData),
+                        std::get<std::vector<std::string>>(entryData),
+                        powerSupplyEntries
+                    );
+                }, qi::_1
+            )
+        )]
+    ;
+
+    systemFanModuleStart =
+        (
+            (
+                qi::lit("System has") >>
+                qi::int_
+                
+                >> 
+                qi::lit("fan module") >> -qi::lit('s') >> qi::eol
+            ) >>
+            systemFanModule
+        )
     ;
 
     systemFanModule =
-        qi::lit("System has") >> 
-        qi::int_[
-            pnx::bind(generateFanModuleRule, qi::_1)
-        ] >> 
-        "fan modules" >> qi::eol >>
-        qi::lit("Module") >> qi::lit("Number of Fans") >>
-        qi::lit("Model") >> qi::lit("Serial Number")  >> qi::eol >>
-        qi::lexeme[qi::as_string[+qi::string("-")]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 0, qi::_1)
-        ]] >> 
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 1, qi::_1)
-        ]] >> 
-        qi::eol >> 
-        repeatFanModuleRule
+        systemFanModuleEntryRule >>
+        (
+            *qi::eol >> (handleSection || systemFanModule)
+        )
     ;
 
-    fanModuleRule =
-        qi::int_ >>
-        qi::int_ >>
-        stringFieldRules[0] >>
-        stringFieldRules[1]
+    systemFanModuleEntryRule =
+        entryRuleBase
+        [(
+            pnx::bind
+            (
+                [this, extractKeyVals](auto &entryData)
+                {
+                    extractKeyVals(
+                        std::get<std::string>(entryData),
+                        std::get<std::vector<int>>(entryData),
+                        std::get<std::vector<std::string>>(entryData),
+                        fanModuleEntries
+                    );
+                }, qi::_1
+            )
+        )]
     ;
 
-    systemPorts =
-        qi::lit("System has") >> 
-        qi::int_[
-            pnx::bind(generatePortRule, 2)
-        ] >> 
-        "ports" >> qi::eol >>
-        qi::lit("Type") >> qi::lit("Count") >> qi::eol >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 0, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")]] >>
-        qi::eol >>
-        repeatPortRule
+    systemPortStart =
+        (
+            (
+                qi::lit("System has") >>
+                qi::int_
+                
+                >> 
+                qi::lit("port") >> -qi::lit('s') >> qi::eol
+            ) >>
+            systemPort
+        )
     ;
 
-    portRule = 
-        stringFieldRules[0] >>
-        qi::int_
+    systemPort =
+        systemPortEntryRule >>
+        (
+            *qi::eol >> (handleSection || systemPort)
+        )
     ;
 
-    systemTransceiverSlots =
-        qi::lit("System has") >> 
-        qi::int_[
-            pnx::bind(generateTransceiverRule, qi::_1)
-
-        ] >> 
-        "transceiver slots" >> qi::eol >>
-        qi::lit("Port") >> qi::lit("Manufacturer") >>
-        qi::lit("Model") >> qi::lit("Serial Number") >>
-        qi::lit("Rev") >> qi::eol >>
-        qi::lexeme[qi::as_string[+qi::string("-")]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 0, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 1, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 2, qi::_1)
-        ]] >>
-        qi::lexeme[qi::as_string[+qi::string("-")][
-            pnx::bind(generateStringFieldRule, 3, qi::_1)
-        ]] >>
-        qi::eol >>
-        repeatTransceiverRule
+    systemPortEntryRule =
+        entryRuleBase
+        [(
+            pnx::bind
+            (
+                [this, extractKeyVals](auto &entryData)
+                {
+                    extractKeyVals(
+                        std::get<std::string>(entryData),
+                        std::get<std::vector<int>>(entryData),
+                        std::get<std::vector<std::string>>(entryData),
+                        portEntries
+                    );
+                }, qi::_1
+            )
+        )]
     ;
 
-    transceiverRule = 
-        qi::int_ >>
-        stringFieldRules[0] >>
-        stringFieldRules[1] >>
-        stringFieldRules[2] >>
-        stringFieldRules[3]
+    systemTransceiverStart =
+        (
+            (
+                qi::lit("System has") >>
+                qi::int_
+                
+                >> 
+                -qi::lit("switched") >> qi::lit("transceiver slot") >>
+                -qi::lit('s') >> qi::eol
+            ) >>
+            systemTransceiver
+        ) 
+    ;
+
+    systemTransceiver =
+        systemTransceiverEntryRule >>
+        (
+            *qi::eol >> (handleSection || systemTransceiver)
+        )
+    ;
+
+    systemTransceiverEntryRule =
+        entryRuleBase
+        [(
+            pnx::bind
+            (
+                [this, extractKeyVals](auto &entryData)
+                {
+                    extractKeyVals(
+                        std::get<std::string>(entryData),
+                        std::get<std::vector<int>>(entryData),
+                        std::get<std::vector<std::string>>(entryData),
+                        transceiverSlotEntries
+                    );
+                }, qi::_1
+            )
+        )]
+    ;
+
+    systemStorageStart =
+        (
+            (
+                qi::lit("System has") >>
+                qi::int_
+                
+                >> 
+                qi::lit("storage device") >> -qi::lit('s') >> qi::eol
+            )>>
+            systemStorage
+        )
+    ;
+
+    systemStorage =
+        systemStorageEntryRule >>
+        (
+            *qi::eol >> (handleSection || systemStorage)
+        )
+    ;
+
+    systemStorageEntryRule =
+        entryRuleBase
+        [(
+            pnx::bind
+            (
+                [this, extractKeyVals](auto &entryData)
+                {
+                    extractKeyVals(
+                        std::get<std::string>(entryData),
+                        std::get<std::vector<int>>(entryData),
+                        std::get<std::vector<std::string>>(entryData),
+                        storageDeviceEntries
+                    );
+                }, qi::_1
+            )
+        )]
+    ;
+
+    grabLine = 
+        qi::lexeme
+        [
+            qi::as_string[qi::repeat[qi::print]]
+        ]
+        [
+            qi::_val = qi::_1
+        ]
+    ;
+
+    countDashes =
+        qi::lexeme
+        [
+            qi::as_string[+qi::char_('-')]
+        ]
+        [(
+            qi::_val = pnx::bind([](auto &str){
+                return str.size();
+            }, qi::_1)
+        )]
     ;
 
     token =
@@ -288,17 +441,16 @@ Parser::Parser() : Parser::base_type(start)
     BOOST_SPIRIT_DEBUG_NODES(
         (start)
         (deviceInfo)
+        (handleSection)
         (systemInformation)
-        (systemInformationRow1)
-        (systemInformationRow2)
+        //(systemInformationEntryRule)
         (systemPowerSupply)
-        (powerSupplyRule)
         (systemFanModule)
-        (fanModuleRule)
-        (systemPorts)
-        (portRule)
-        (systemTransceiverSlots)
-        (transceiverRule)
-        //(token)
-        );
+        (systemPort)
+        (systemTransceiver)
+        (systemStorage)
+        (grabLine)
+        (countDashes)
+        //(ignoredLine)
+    );
 }
