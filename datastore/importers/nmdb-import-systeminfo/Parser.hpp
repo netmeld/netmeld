@@ -86,9 +86,6 @@ class Parser :
       domain,
       token;
 
-    qi::rule<nmdp::IstreamIter, bool(), qi::ascii::blank_type>
-      dhcpEnabledStatus;
-
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       ignoredLine,
       hostName,
@@ -101,6 +98,7 @@ class Parser :
       systemType,
       hotfix,
       hyperV,
+      dhcpEnabledStatus,
       networkCard,
       networkCards,
       systemInfo;

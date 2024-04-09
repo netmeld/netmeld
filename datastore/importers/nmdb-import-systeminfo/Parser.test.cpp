@@ -40,16 +40,15 @@ class TestParser : public Parser
     using Parser::start;
     using Parser::hotfix;
     using Parser::hotfixes;
-    using Parser::network_cards;
-    using Parser::network_card;
-    using Parser::ipAddressLine;
+    using Parser::networkCards;
+    using Parser::networkCard;
 };
 
 BOOST_AUTO_TEST_CASE(testNetworkCard)
 {
   TestParser tp;
   {
-    const auto& parserRule {tp.network_card};
+    const auto& parserRule {tp.networkCard};
     std::vector<std::string> testsOk {
       R"STR([01]: Realtek PCIe GbE Family Controller
       Connection Name: Ethernet
@@ -57,6 +56,15 @@ BOOST_AUTO_TEST_CASE(testNetworkCard)
       IP address(es)
       [01]: 192.168.0.2
       [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+      )STR",
+      R"STR([05]: Intel(R) Wi-Fi 6 AX200 160MHz
+      Connection Name: Wi-Fi
+      DHCP Enabled:    Yes
+      DHCP Server:     192.168.1.1
+      IP address(es)
+      [01]: 192.168.1.51
+      [02]: fe80::564:ab07:4c1a:6834
+      [03]: 2601:8c0:d00:f5b0::1cfe
       )STR"
     };
 
@@ -95,34 +103,11 @@ BOOST_AUTO_TEST_CASE(testNetworkCard)
     };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'network_card': " << test);
+                "Parse rule 'networkCard': " << test);
     }
     for (const auto& test: testsFail) {
       BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'network_card fails': " << test);
-    }
-  }
-  {
-    const auto& parserRule {tp.ipAddressLine};
-    std::vector<std::string> testsOk {
-      R"STR(192.168.1.1)STR"
-    };
-
-    std::vector<std::string> testsFail {
-      R"STR(.168.1.1)STR", //Missing first octet
-      R"STR(192..1.1)STR",  //Missing second octet
-      R"STR(192.168..1)STR", //Missing vlan octet
-      R"STR(192.168.1.)STR", //Missing device octet
-      R"STR(192168.11)STR", //Only one period
-      R"STR(19216811)STR" //No periods
-    };
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'ipAddressLine': " << test);
-    }
-    for (const auto& test: testsFail) {
-      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'ipAddressLine fails': " << test);
+                "Parse rule 'networkCard fails': " << test);
     }
   }
 }
