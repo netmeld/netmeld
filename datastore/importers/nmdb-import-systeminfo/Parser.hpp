@@ -97,6 +97,9 @@ class Parser :
       dhcpEnabledStatus;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+      systemInfo;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
      networkCard;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>

@@ -31,7 +31,7 @@
 Parser::Parser() : Parser::base_type(start)
 {
     start =
-        (*qi::eol > systeminfo > -qi::eol)[(qi::_val = pnx::bind(&Parser::getData, this))];
+        (*qi::eol > systemInfo > -qi::eol)[(qi::_val = pnx::bind(&Parser::getData, this))];
 
     token =
         +qi::ascii::graph;
@@ -66,8 +66,8 @@ Parser::Parser() : Parser::base_type(start)
         ("Domain: " > token > qi::eol); 
 
     hotfix =
-        ("[" >> qi::ascii::digit >> qi::ascii::digit >> "]:" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)]);
-    
+        ("[" >> +qi::ascii::digit >> "]:" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)]);
+
     hotfixes =
         ("Hotfix(s): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
 
@@ -76,12 +76,6 @@ Parser::Parser() : Parser::base_type(start)
 
     networkCardConnectionName =
         qi::lexeme[+(qi::ascii::char_ - qi::eol)];
-
-    ipAddressLine =
-        qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_ >> '.' >> qi::int_;
-
-    ipaddresssection =
-        +qi::ascii::graph;
 
     dhcpServer =
         qi::lexeme[+(qi::char_ - qi::eol)];
@@ -110,12 +104,12 @@ Parser::Parser() : Parser::base_type(start)
         >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
     ;
     networkCards =
-        qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > +network_card;
+        qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > +networkCard;
 
     hyperV =
         ("Hyper-V Requirements: " > token > qi::eol);
 
-    systeminfo =
+    systemInfo =
         hostName 
         > osName
         > osVersion 
@@ -138,7 +132,7 @@ Parser::Parser() : Parser::base_type(start)
     // Allows for error handling and debugging of qi.
     BOOST_SPIRIT_DEBUG_NODES(
         (start)
-        (systeminfo)
+        (systemInfo)
         (hostName)
         (osName)
         (osVersion)
@@ -154,7 +148,6 @@ Parser::Parser() : Parser::base_type(start)
         (networkCard)
         (dhcpServer)
         (dhcpEnabledStatus)
-        (ipAddressLine)
         (networkCardName)
         (networkCardConnectionName)
         (networkCardStatus));
