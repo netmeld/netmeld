@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -29,7 +29,7 @@
 
 #include "Writer.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ==========================================================================
   // Primary object
   // ==========================================================================
@@ -56,6 +56,7 @@ namespace netmeld::export_scans {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
       std::string getExtension() const override;
+      std::string escapeSpecial(const std::string&) const;
 
     public: // Methods part of public API
       std::string getInterNetwork(const std::string&) const override;
@@ -74,32 +75,34 @@ namespace netmeld::export_scans {
       void codeTableClose(auto&) const; // generic close a ConTeXt table
 
       void codeTableIntra(auto&, const auto&) const;
-      void codeRowIntra(auto&,
-          const auto&, const auto&, const auto&, const auto&, const auto&,
-          const auto&, const auto&
+      void codeRowIntra(auto&
+        , const auto&, const auto&, const auto&, const auto&, const auto&
+        , const auto&, const auto&
         ) const;
 
       void codeTableInter(auto&, const auto&) const;
-      void codeRowInter(auto&,
-          const auto&, const auto&, const auto&, const auto&, const auto&,
-          const auto&, const auto&
+      void codeRowInter(auto&
+        , const auto&, const auto&, const auto&, const auto&, const auto&
+        , const auto&, const auto&
         ) const;
 
-      void codeParagraphNessus(auto&,
-          const auto&, const auto&, const auto&, const auto&
+      void codeParagraphNessus(auto&
+        , const auto&, const auto&, const auto&, const auto&
         ) const;
 
-      void codeSectionProwler(auto&, const auto&) const;
-      void codeSubsectionProwler(auto&,
-          const auto&, const auto&, const auto&, const auto&, const auto&,
-          const auto&, const auto&, const auto&
+      void codeChapterProwler(auto&) const;
+      void codeSectionProwler(auto&, const auto&, const auto&) const;
+      void codeSubSectionProwler(auto&, const auto&, const auto&) const;
+      void codeSubSubSectionProwler(auto&
+        , const auto&, const auto&, const auto&, const auto&
+        , const auto&, const auto&, const auto&, const auto&
         ) const;
 
 
       void codeTableSsh(auto&) const;
-      void codeRowSsh(auto&,
-          const auto&, const auto&, const auto&, const auto&, const auto&,
-          const auto&, const auto&, const auto&
+      void codeRowSsh(auto&
+        , const auto&, const auto&, const auto&, const auto&, const auto&
+        , const auto&, const auto&, const auto&
         ) const;
   };
 }

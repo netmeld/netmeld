@@ -883,7 +883,7 @@ ON raw_tool_observations(observation);
 
 -- ----------------------------------------------------------------------
 
-CREATE TABLE raw_prowler_checks (
+CREATE TABLE raw_prowler_v2_checks (
       tool_run_id                 UUID            NOT NULL
     , account_number              TEXT            NULL
     , timestamp                   TIMESTAMP       NULL
@@ -907,8 +907,8 @@ CREATE TABLE raw_prowler_checks (
 -- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
 -- Create UNIQUE expressional index with substitutions of NULL values
 -- for use with `ON CONFLICT` guards against duplicate data.
-CREATE UNIQUE INDEX raw_prowler_checks_idx_unique
-ON raw_prowler_checks(
+CREATE UNIQUE INDEX raw_prowler_v2_checks_idx_unique
+ON raw_prowler_v2_checks(
   HASH_CHAIN( tool_run_id::TEXT, account_number, AS_TEXT(timestamp)
             , region, level, control_id, service, status, AS_TEXT(severity)
             , control, risk, remediation, documentation_link, resource_id
@@ -916,47 +916,195 @@ ON raw_prowler_checks(
 );
 
 -- Partial indexes
-CREATE INDEX raw_prowler_checks_idx_tool_run_id
-ON raw_prowler_checks(tool_run_id);
+CREATE INDEX raw_prowler_v2_checks_idx_tool_run_id
+ON raw_prowler_v2_checks(tool_run_id);
 
-CREATE INDEX raw_prowler_checks_idx_account_number
-ON raw_prowler_checks(account_number);
+CREATE INDEX raw_prowler_v2_checks_idx_account_number
+ON raw_prowler_v2_checks(account_number);
 
-CREATE INDEX raw_prowler_checks_idx_timestamp
-ON raw_prowler_checks(timestamp);
+CREATE INDEX raw_prowler_v2_checks_idx_timestamp
+ON raw_prowler_v2_checks(timestamp);
 
-CREATE INDEX raw_prowler_checks_idx_region
-ON raw_prowler_checks(region);
+CREATE INDEX raw_prowler_v2_checks_idx_region
+ON raw_prowler_v2_checks(region);
 
-CREATE INDEX raw_prowler_checks_idx_level
-ON raw_prowler_checks(level);
+CREATE INDEX raw_prowler_v2_checks_idx_level
+ON raw_prowler_v2_checks(level);
 
-CREATE INDEX raw_prowler_checks_idx_control_id
-ON raw_prowler_checks(control_id);
+CREATE INDEX raw_prowler_v2_checks_idx_control_id
+ON raw_prowler_v2_checks(control_id);
 
-CREATE INDEX raw_prowler_checks_idx_service
-ON raw_prowler_checks(service);
+CREATE INDEX raw_prowler_v2_checks_idx_service
+ON raw_prowler_v2_checks(service);
 
-CREATE INDEX raw_prowler_checks_idx_status
-ON raw_prowler_checks(status);
+CREATE INDEX raw_prowler_v2_checks_idx_status
+ON raw_prowler_v2_checks(status);
 
-CREATE INDEX raw_prowler_checks_idx_severity
-ON raw_prowler_checks(severity);
+CREATE INDEX raw_prowler_v2_checks_idx_severity
+ON raw_prowler_v2_checks(severity);
 
-CREATE INDEX raw_prowler_checks_idx_control
-ON raw_prowler_checks(control);
+CREATE INDEX raw_prowler_v2_checks_idx_control
+ON raw_prowler_v2_checks(control);
 
-CREATE INDEX raw_prowler_checks_idx_risk
-ON raw_prowler_checks(risk);
+CREATE INDEX raw_prowler_v2_checks_idx_risk
+ON raw_prowler_v2_checks(risk);
 
-CREATE INDEX raw_prowler_checks_idx_remediation
-ON raw_prowler_checks(remediation);
+CREATE INDEX raw_prowler_v2_checks_idx_remediation
+ON raw_prowler_v2_checks(remediation);
 
-CREATE INDEX raw_prowler_checks_idx_documentation_link
-ON raw_prowler_checks(documentation_link);
+CREATE INDEX raw_prowler_v2_checks_idx_documentation_link
+ON raw_prowler_v2_checks(documentation_link);
 
-CREATE INDEX raw_prowler_checks_idx_resource_id
-ON raw_prowler_checks(resource_id);
+CREATE INDEX raw_prowler_v2_checks_idx_resource_id
+ON raw_prowler_v2_checks(resource_id);
+
+
+-- ----------------------------------------------------------------------
+
+CREATE TABLE raw_prowler_v3_checks (
+      tool_run_id                 UUID            NOT NULL
+    , assessment_start_time       TIMESTAMP       NOT NULL
+    , finding_unique_id           TEXT            NOT NULL
+    , provider                    TEXT            NOT NULL
+    , profile                     TEXT            NOT NULL
+    , account_id                  TEXT            NOT NULL
+    , organizations_info          TEXT            NULL
+    , region                      TEXT            NOT NULL
+    , check_id                    TEXT            NOT NULL
+    , check_title                 TEXT            NOT NULL
+    , check_types                 TEXT            NULL
+    , service_name                TEXT            NOT NULL
+    , sub_service_name            TEXT            NULL
+    , status                      TEXT            NOT NULL
+    , status_extended             TEXT            NOT NULL
+    , severity                    ProwlerSeverity NOT NULL
+    , resource_id                 TEXT            NOT NULL
+    , resource_arn                TEXT            NULL
+    , resource_tags               TEXT            NULL
+    , resource_type               TEXT            NOT NULL
+    , resource_details            TEXT            NULL
+    , description                 TEXT            NOT NULL
+    , risk                        TEXT            NULL
+    , related_url                 TEXT            NULL
+    , recommendation              TEXT            NOT NULL
+    , recommendation_url          TEXT            NOT NULL
+    , remediation_code            TEXT            NULL
+    , categories                  TEXT            NULL
+    , notes                       TEXT            NULL
+    , compliance                  TEXT            NULL
+    , FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
+-- Create UNIQUE expressional index with substitutions of NULL values
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_prowler_v3_checks_idx_unique
+ON raw_prowler_v3_checks(
+  HASH_CHAIN( tool_run_id::TEXT, AS_TEXT(assessment_start_time)
+            , finding_unique_id, provider, profile, account_id
+            , organizations_info, region, check_id, check_title
+            , check_types, service_name, sub_service_name, status
+            , status_extended, AS_TEXT(severity), resource_id
+            , resource_arn, resource_tags, resource_type
+            , resource_details, description, risk, related_url
+            , recommendation, recommendation_url, remediation_code
+            , categories, notes, compliance
+            )
+);
+
+-- Partial indexes
+CREATE INDEX raw_prowler_v3_checks_idx_tool_run_id
+ON raw_prowler_v3_checks(tool_run_id);
+
+CREATE INDEX raw_prowler_v3_checks_idx_assessment_start_time
+ON raw_prowler_v3_checks(assessment_start_time);
+
+CREATE INDEX raw_prowler_v3_checks_idx_finding_unique_id
+ON raw_prowler_v3_checks(finding_unique_id);
+
+CREATE INDEX raw_prowler_v3_checks_idx_provider
+ON raw_prowler_v3_checks(provider);
+
+CREATE INDEX raw_prowler_v3_checks_idx_profile
+ON raw_prowler_v3_checks(profile);
+
+CREATE INDEX raw_prowler_v3_checks_idx_account_id
+ON raw_prowler_v3_checks(account_id);
+
+CREATE INDEX raw_prowler_v3_checks_idx_organizations_info
+ON raw_prowler_v3_checks(organizations_info);
+
+CREATE INDEX raw_prowler_v3_checks_idx_region
+ON raw_prowler_v3_checks(region);
+
+CREATE INDEX raw_prowler_v3_checks_idx_check_id
+ON raw_prowler_v3_checks(check_id);
+
+CREATE INDEX raw_prowler_v3_checks_idx_check_title
+ON raw_prowler_v3_checks(check_title);
+
+CREATE INDEX raw_prowler_v3_checks_idx_check_types
+ON raw_prowler_v3_checks(check_types);
+
+CREATE INDEX raw_prowler_v3_checks_idx_service_name
+ON raw_prowler_v3_checks(service_name);
+
+CREATE INDEX raw_prowler_v3_checks_idx_sub_service_name
+ON raw_prowler_v3_checks(sub_service_name);
+
+CREATE INDEX raw_prowler_v3_checks_idx_status
+ON raw_prowler_v3_checks(status);
+
+CREATE INDEX raw_prowler_v3_checks_idx_status_extended
+ON raw_prowler_v3_checks(status_extended);
+
+CREATE INDEX raw_prowler_v3_checks_idx_severity
+ON raw_prowler_v3_checks(severity);
+
+CREATE INDEX raw_prowler_v3_checks_idx_resource_id
+ON raw_prowler_v3_checks(resource_id);
+
+CREATE INDEX raw_prowler_v3_checks_idx_resource_arn
+ON raw_prowler_v3_checks(resource_arn);
+
+CREATE INDEX raw_prowler_v3_checks_idx_resource_tags
+ON raw_prowler_v3_checks(resource_tags);
+
+CREATE INDEX raw_prowler_v3_checks_idx_resource_type
+ON raw_prowler_v3_checks(resource_type);
+
+CREATE INDEX raw_prowler_v3_checks_idx_resource_details
+ON raw_prowler_v3_checks(resource_details);
+
+CREATE INDEX raw_prowler_v3_checks_idx_description
+ON raw_prowler_v3_checks(description);
+
+CREATE INDEX raw_prowler_v3_checks_idx_risk
+ON raw_prowler_v3_checks(risk);
+
+CREATE INDEX raw_prowler_v3_checks_idx_related_url
+ON raw_prowler_v3_checks(related_url);
+
+CREATE INDEX raw_prowler_v3_checks_idx_recommendation
+ON raw_prowler_v3_checks(recommendation);
+
+CREATE INDEX raw_prowler_v3_checks_idx_recommendation_url
+ON raw_prowler_v3_checks(recommendation_url);
+
+CREATE INDEX raw_prowler_v3_checks_idx_remediation_code
+ON raw_prowler_v3_checks(remediation_code);
+
+CREATE INDEX raw_prowler_v3_checks_idx_categories
+ON raw_prowler_v3_checks(categories);
+
+CREATE INDEX raw_prowler_v3_checks_idx_notes
+ON raw_prowler_v3_checks(notes);
+
+CREATE INDEX raw_prowler_v3_checks_idx_compliance
+ON raw_prowler_v3_checks(compliance);
 
 
 -- ----------------------------------------------------------------------

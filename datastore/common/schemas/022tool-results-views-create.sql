@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -682,6 +682,61 @@ LEFT OUTER JOIN tool_runs AS tr
 -- ----------------------------------------------------------------------
 
 CREATE VIEW prowler_checks AS
+WITH cte1 AS (
+  SELECT DISTINCT
+      'aws'                       AS provider
+    , account_number              AS account_id
+    , region                      AS region
+    , control_id                  AS check_id
+    , NULL                        AS check_title
+    , service                     AS service_name
+    , NULL                        AS sub_service_name
+    , status                      AS status
+    , severity                    AS severity
+    , NULL                        AS status_extended
+    , resource_id                 AS resource_id
+    , control                     AS description
+    , risk                        AS risk
+    , NULL                        AS related_url
+    , remediation                 AS recommendation
+    , documentation_link          AS recommendation_url
+    , NULL                        AS remediation_code
+    , level                       AS compliance
+  FROM raw_prowler_v2_checks
+), cte2 AS (
+  SELECT DISTINCT
+      provider
+    , account_id
+    , region
+    , check_id
+    , check_title
+    , service_name
+    , sub_service_name
+    , status
+    , severity
+    , status_extended
+    , resource_id
+    , description
+    , risk
+    , related_url
+    , recommendation
+    , recommendation_url
+    , remediation_code
+    , compliance
+  FROM raw_prowler_v3_checks
+)
+SELECT DISTINCT
+  *
+FROM cte1
+UNION
+SELECT DISTINCT
+  *
+FROM cte2
+;
+
+-- ----------------------------------------------------------------------
+
+CREATE VIEW prowler_v2_checks AS
 SELECT DISTINCT
     account_number              AS account_number
   , timestamp                   AS timestamp
@@ -696,7 +751,7 @@ SELECT DISTINCT
   , remediation                 AS remediation
   , documentation_link          AS documentation_link
   , resource_id                 AS resource_id
-FROM raw_prowler_checks AS rpc
+FROM raw_prowler_v2_checks AS rpv2c
 ORDER BY account_number, region, level, control_id, service,
          status, severity, resource_id
 ;

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,29 +26,25 @@
 
 #include "Nessus.hpp"
 
-namespace netmeld::export_scans {
+namespace netmeld::datastore::exporters::scans {
   // ========================================================================
   // Constructors
   // ========================================================================
   Nessus::Nessus(const std::string& dbConnInfo) :
     ExportScan(dbConnInfo)
   {
-    db.prepare(
-      "select_nessus_plugins",
-      R"(
-      SELECT DISTINCT
-        plugin_id, plugin_name, severity, description, solution
-      FROM nessus_results
-      ORDER BY severity desc, plugin_id asc
+    db.prepare("select_nessus_plugins", R"(
+        SELECT DISTINCT
+          plugin_id, plugin_name, severity, description, solution
+        FROM nessus_results
+        ORDER BY severity desc, plugin_id asc
       )");
 
-    db.prepare(
-      "select_nessus_destinations",
-      R"(
-      SELECT DISTINCT ip_addr
-      FROM nessus_results
-      WHERE (plugin_id = $1)
-      ORDER BY ip_addr
+    db.prepare("select_nessus_destinations", R"(
+        SELECT DISTINCT ip_addr
+        FROM nessus_results
+        WHERE (plugin_id = $1)
+        ORDER BY ip_addr
       )");
   }
 
@@ -56,80 +52,70 @@ namespace netmeld::export_scans {
   // Methods
   // ========================================================================
   void
-  Nessus::exportTemplate(const auto& writer) const
+  Nessus::exportTemplate(const std::unique_ptr<Writer>& writer) const
   {
     std::vector<std::vector<std::string>> data {
-      { "ID_01", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
-        "IP_01", "HOSTNAME",
-      },
-      { "ID_02", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
-        "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
-        "IP_03", "HOSTNAME", "IP_04", "HOSTNAME",
-      },
-      { "ID_03", "MODERATE", "PLUGIN_NAME", "DESCRIPTION",
-        "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
-      },
-      { "ID_04", "LOW", "PLUGIN_NAME", "DESCRIPTION",
-        "IP_01", "HOSTNAME",
-      },
-    };
+        { "ID_01", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
+          "IP_01", "HOSTNAME",
+        }
+      , { "ID_02", "HIGH", "PLUGIN_NAME", "DESCRIPTION",
+          "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
+          "IP_03", "HOSTNAME", "IP_04", "HOSTNAME",
+        }
+      , { "ID_03", "MODERATE", "PLUGIN_NAME", "DESCRIPTION",
+          "IP_01", "HOSTNAME", "IP_02", "HOSTNAME",
+        }
+      , { "ID_04", "LOW", "PLUGIN_NAME", "DESCRIPTION",
+          "IP_01", "HOSTNAME",
+        }
+      };
     for (const auto& entry : data) {
       writer->addRow(entry);
     }
+
+    finalize(writer);
   }
 
   void
-  Nessus::exportFromDb(const auto& writer, const pqxx::result& plugins)
+  Nessus::exportFromDb(const std::unique_ptr<Writer>& writer)
   {
-    pqxx::read_transaction t {db};
+    pqxx::read_transaction rt {db};
+    for ( const auto& plugin
+        : rt.exec_prepared("select_nessus_plugins")
+        )
+    {
+      std::string id          {plugin.at("plugin_id").c_str()};
+      std::string name        {plugin.at("plugin_name").c_str()};
+      std::string severity    {plugin.at("severity").c_str()};
+      std::string description {plugin.at("description").c_str()};
 
-    for (const auto& plugin : plugins) {
-      std::string id;
-      plugin.at("plugin_id").to(id);
-      std::string name;
-      plugin.at("plugin_name").to(name);
-      std::string severity;
-      plugin.at("severity").to(severity);
-      std::string description;
-      plugin.at("description").to(description);
+      std::vector<std::string> entry {id, severity, name, description};
 
-      std::vector<std::string> data
-        {id, severity, name, description};
+      for ( const auto& destinationRow
+          : rt.exec_prepared("select_nessus_destinations", id)
+          )
+      {
+        std::string ipAddr      {destinationRow.at("ip_addr").c_str()};
+        std::string ipAddrName  {getHostname(rt, ipAddr)};
 
-      pqxx::result destinationRows
-        {t.exec_prepared("select_nessus_destinations", id)};
-
-      for (const auto& destinationRow : destinationRows) {
-        std::string ipAddr;
-        destinationRow.at("ip_addr").to(ipAddr);
-
-        std::string ipAddrName {getHostname(t, ipAddr)};
-
-        data.push_back(ipAddr);
-        data.push_back(ipAddrName);
+        entry.push_back(ipAddr);
+        entry.push_back(ipAddrName);
       }
-      writer->addRow(data);
+
+      writer->addRow(entry);
     }
-    t.abort();
+
+    finalize(writer);
   }
 
   void
-  Nessus::exportScan(const std::unique_ptr<Writer>& writer)
+  Nessus::finalize(const std::unique_ptr<Writer>& writer) const
   {
-    pqxx::read_transaction t {db};
-    pqxx::result sourceRows
-      {t.exec_prepared("select_nessus_plugins")};
-    t.abort();
-
-    if (0 == sourceRows.size()) {
-      exportTemplate(writer);
-    } else {
-      exportFromDb(writer, sourceRows);
-    }
+    LOG_DEBUG << "Finalizing data output\n";
 
     std::string filename {"nessus-scan-results"};
 
-    writer->writeData(filename, writer->getNessus());
+    writer->writeData(filename, writer->getProwler());
     writer->clearData();
   }
 }

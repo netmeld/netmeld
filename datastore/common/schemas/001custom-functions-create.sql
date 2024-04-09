@@ -77,12 +77,12 @@ DECLARE
   val TEXT;
 BEGIN
   CASE severity
-  WHEN 'Critical'       THEN val='Critical';
-  WHEN 'High'           THEN val='High';
-  WHEN 'Medium'         THEN val='Medium';
-  WHEN 'Low'            THEN val='Low';
-  WHEN 'Informational'  THEN val='Informational';
-  ELSE                       val='Undefined';
+  WHEN 'critical'       THEN val='critical';
+  WHEN 'high'           THEN val='high';
+  WHEN 'medium'         THEN val='medium';
+  WHEN 'low'            THEN val='low';
+  WHEN 'informational'  THEN val='informational';
+  ELSE                       val='undefined';
   END CASE;
   RETURN val;
 END;

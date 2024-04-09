@@ -68,7 +68,7 @@ namespace netmeld::datalake::handlers {
     std::ostringstream oss;
     std::string branch{this->branchName};
     if (this->branchName.empty()) {
-    
+
       oss << "git branch --show-current";
       branch = {nmcu::trim(nmcu::cmdExecOut(oss.str()))};
       oss.str("");
