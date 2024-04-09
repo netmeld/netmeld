@@ -37,39 +37,59 @@ Parser::Parser() : Parser::base_type(start)
         +qi::ascii::graph;
 
     hostName =
-        ("Host Name: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] > qi::eol);
+        ("Host Name: " 
+        > token[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] 
+        > qi::eol);
 
     osName =
-        ("OS Name: " > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)][pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)] 
-        > qi::eol
-        );
+        ("OS Name: " 
+        > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)][pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)] 
+        > qi::eol);
 
     osVersion =
-        ("OS Version: " > token[pnx::bind(&nmdo::OperatingSystem::setProductVersion, &data.os, qi::_1)] > qi::eol);
+        ("OS Version: " 
+        > token[pnx::bind(&nmdo::OperatingSystem::setProductVersion, &data.os, qi::_1)] 
+        > qi::eol);
 
     osManufacturer =
-        ("OS Manufacturer: " > token[pnx::bind(&nmdo::OperatingSystem::setVendorName, &data.os, qi::_1)] > qi::eol);
+        ("OS Manufacturer: " 
+        > token[pnx::bind(&nmdo::OperatingSystem::setVendorName, &data.os, qi::_1)] 
+        > qi::eol);
 
     osConfiguration =
-        ("OS Configuration: " > token[pnx::bind(&nmdo::DeviceInformation::setDescription, &data.devInfo, qi::_1)] > qi::eol);
+        ("OS Configuration: " 
+        > token[pnx::bind(&nmdo::DeviceInformation::setDescription, &data.devInfo, qi::_1)] 
+        > qi::eol);
 
     systemManufacturer =
-        ("System Manufacturer: " > token[pnx::bind(&nmdo::DeviceInformation::setVendor, &data.devInfo, qi::_1)] > qi::eol);
+        ("System Manufacturer: " 
+        > token[pnx::bind(&nmdo::DeviceInformation::setVendor, &data.devInfo, qi::_1)] 
+        > qi::eol);
 
     systemModel =
-        ("System Model: " > token[pnx::bind(&nmdo::DeviceInformation::setModel, &data.devInfo, qi::_1)] > qi::eol);
+        ("System Model: " 
+        > token[pnx::bind(&nmdo::DeviceInformation::setModel, &data.devInfo, qi::_1)] 
+        > qi::eol);
 
     systemType =
-        ("System Type: " > token[pnx::bind(&nmdo::DeviceInformation::setDeviceType, &data.devInfo, qi::_1)] > qi::eol);
+        ("System Type: "
+        > token[pnx::bind(&nmdo::DeviceInformation::setDeviceType, &data.devInfo, qi::_1)] 
+        > qi::eol);
 
     domain =
-        ("Domain: " > token > qi::eol); 
+        ("Domain: " 
+        > token 
+        > qi::eol); 
 
     hotfix =
-        ("[" >> +qi::ascii::digit >> "]:" > token[pnx::bind(&Parser::addHotfix, this, qi::_1)]);
+        ("[" >> +qi::ascii::digit >> "]:" 
+        > token[pnx::bind(&Parser::addHotfix, this, qi::_1)]);
 
     hotfixes =
-        ("Hotfix(s): " >> (+qi::ascii::print - qi::eol) >> qi::eol > *(hotfix > qi::eol));
+        ("Hotfix(s): " 
+        >> (+qi::ascii::print - qi::eol) 
+        >> qi::eol
+        > *(hotfix > qi::eol));
 
     networkCardName =
         qi::lexeme[+(qi::ascii::char_ - qi::eol)];
@@ -81,7 +101,8 @@ Parser::Parser() : Parser::base_type(start)
         qi::lexeme[+(qi::char_ - qi::eol)];
     ;
     dhcpEnabledStatus =
-        qi::lit("DHCP Enabled:") >> (qi::lit("Yes") | qi::lit("No"));
+        qi::lit("DHCP Enabled:") 
+        >> (qi::lit("Yes") | qi::lit("No"));
 
     networkCardStatus =
         +qi::ascii::graph;
@@ -101,13 +122,16 @@ Parser::Parser() : Parser::base_type(start)
         >> qi::eol 
         > +('[' >> qi::lexeme[+qi::char_("0-9")] >> "]: "
         >> ipAddr[(pnx::bind(&Parser::addIfaceIp, this, qi::_1))] >> qi::eol)) 
-        >> -("Status: " >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] >> qi::eol));
+        >> -("Status: " 
+            >> networkCardStatus[(pnx::bind(&Parser::setIfaceStatus, this, qi::_1))] 
+            >> qi::eol)
+        );
     ;
     networkCards =
-        qi::lit("Network Card(s):") >> +qi::ascii::print > qi::eol > +networkCard;
-
-    hyperV =
-        ("Hyper-V Requirements: " > token > qi::eol);
+        qi::lit("Network Card(s):") 
+        >> +qi::ascii::print 
+        > qi::eol 
+        > +networkCard;
 
     systemInfo =
         hostName 
@@ -124,7 +148,7 @@ Parser::Parser() : Parser::base_type(start)
         > *(qi::char_ - qi::lit("Hotfix")) //Skip to hotfixes
         > -hotfixes 
         > -networkCards 
-        > -hyperV;
+        > qi::omit[*(qi::char_ - qi::eoi)]; //omit the rest of sysinfo (aka hyper-v)
     ;
     ignoredLine =
         (qi::ascii::print > -qi::eol) | +qi::eol;
