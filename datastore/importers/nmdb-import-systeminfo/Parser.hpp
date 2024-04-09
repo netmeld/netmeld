@@ -77,35 +77,20 @@ class Parser :
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      ignoredLine;
-
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
       hotfixes,
       networkCardName,
       networkCardConnectionName,
       dhcpServer,
       networkCardStatus,
-      ipAddressLine
-    ;
-
-    qi::rule<nmdp::IstreamIter, std::vector<std::string>(), qi::ascii::blank_type>
-      ipAddressSection
-    ;
+      domain,
+      token;
 
     qi::rule<nmdp::IstreamIter, bool(), qi::ascii::blank_type>
       dhcpEnabledStatus;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      systemInfo;
-
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-     networkCard;
-
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-     networkCards;
-
-    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+      ignoredLine,
       hostName,
       osName,
       osVersion,
@@ -114,10 +99,12 @@ class Parser :
       systemManufacturer,
       systemModel,
       systemType,
-      domain,
       hotfix,
       hyperV,
-      token;
+      networkCard,
+      networkCards,
+      systemInfo;
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -129,7 +116,6 @@ class Parser :
   // ===========================================================================
   private:
     Result getData();
-    void setDomain(const std::string&);
     void addHotfix(const std::string&);
     void addInterface(const std::string&);
     void addIfaceConnectName(const std::string&);

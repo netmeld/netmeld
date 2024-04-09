@@ -115,16 +115,16 @@ Parser::Parser() : Parser::base_type(start)
         > osVersion 
         > osManufacturer 
         > osConfiguration 
-        > *(qi::char_ - qi::lit("System Manufacturer:")) 
+        > *(qi::char_ - qi::lit("System Manufacturer:")) //Skip to system manufacturer
         > systemManufacturer 
         > systemModel 
         > systemType 
-        > *(qi::char_ - qi::lit("Domain:"))
-        > domain[pnx::bind(&Parser::setDomain, this, qi::_1)] 
-        > *(qi::char_ - qi::lit("Hotfix")) 
-        > hotfixes 
-        > networkCards 
-        > hyperV;
+        > *(qi::char_ - qi::lit("Domain:")) //Skip to domain
+        > -domain[pnx::ref(curDomain) = qi::_1] 
+        > *(qi::char_ - qi::lit("Hotfix")) //Skip to hotfixes
+        > -hotfixes 
+        > -networkCards 
+        > -hyperV;
     ;
     ignoredLine =
         (qi::ascii::print > -qi::eol) | +qi::eol;
@@ -156,11 +156,6 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-
-void Parser::setDomain(const std::string &_string)
-{
-    curDomain = _string;
-}
 
 void Parser::addHotfix(const std::string &_string)
 {
