@@ -104,12 +104,17 @@ Parser::Parser() : Parser::base_type(start)
 
     start =
         *qi::eol >>
-        -(deviceInfo % +qi::eol)
-        [(
-            [this](){
-                systemInformationEntry.clear();
-            }
-        )] >>
+        -(
+        deviceInfo
+        [
+            pnx::bind(
+                [this](auto &devInfoVec, auto &devInfo)
+                {
+                    a.emplace_back(std::move(b));
+                }, qi::_val, qi::_1
+            )
+        ] % +qi::eol)
+         >>
         *qi::eol
     ;
 
