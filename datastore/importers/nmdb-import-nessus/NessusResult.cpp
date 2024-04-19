@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -34,8 +34,8 @@ NessusResult::isValid() const
 }
 
 void
-NessusResult::save(pqxx::transaction_base& t,
-                   const nmco::Uuid& toolRunId, const std::string& deviceId)
+NessusResult::save( pqxx::transaction_base& t
+                  , const nmco::Uuid& toolRunId, const std::string& deviceId)
 {
   if (!isValid()) {
     LOG_DEBUG << "NessusResult object is not saving: " << toDebugString()
@@ -45,38 +45,48 @@ NessusResult::save(pqxx::transaction_base& t,
 
   port.save(t, toolRunId, deviceId);
 
-  t.exec_prepared("insert_raw_nessus_result",
-      toolRunId,
-      port.getIpAddress().toString(),
-      port.getProtocol(),
-      port.getPort(),
-      pluginId,
-      pluginName,
-      pluginFamily,
-      pluginType,
-      pluginOutput,
-      severity,
-      description,
-      solution);
+  t.exec_prepared( "insert_raw_nessus_result"
+                 , toolRunId
+                 , port.getIpAddress().toString()
+                 , port.getProtocol()
+                 , port.getPort()
+                 , pluginId
+                 , pluginName
+                 , pluginFamily
+                 , pluginType
+                 , pluginOutput
+                 , severity
+                 , description
+                 , solution
+                 );
 }
 
 std::string
-NessusResult::toString() const
+NessusResult::toDebugString() const
 {
+  const auto& textSnippet = [&](const std::string& text) {
+      size_t count {50};
+      std::string snippet;
+      if (text.size() > count) {
+        snippet = text.substr(0, count) + "...SNIPPED...";
+      } else {
+        snippet = text;
+      }
+      return snippet;
+    };
   std::ostringstream oss;
-  oss << "[";
-  oss << port.getIpAddress().toString() << ", "
-      << port.getProtocol() << ", "
-      << port.getPort() << ", "
-      << pluginId << ", "
-      << pluginName << ", "
-      << pluginFamily << ", "
-      << pluginType << ", "
-      << pluginOutput << ", "
-      << severity << ", "
-      << description << ", "
-      << solution;
-  oss << "]";
+  oss << "["
+      << "port: " << port.toDebugString()
+      << ", pluginId: " << pluginId
+      << ", pluginName: " << pluginName
+      << ", pluginFamily: " << pluginFamily
+      << ", pluginType: " << pluginType
+      << ", pluginOutput: " << textSnippet(pluginOutput)
+      << ", severity: " << severity
+      << ", description: " << textSnippet(description)
+      << ", solution: " << solution
+      << "]"
+      ;
 
   return oss.str();
 }
