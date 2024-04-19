@@ -57,7 +57,6 @@ struct Data
   std::vector<nmdo::Port>              ports;
   std::vector<nmdo::TracerouteHop>     tracerouteHops;
   std::vector<NessusResult>            nessusResults;
-  //std::set<NessusResult>            nessusResults;
   std::vector<nmdo::Cve>               cves;
   std::vector<MetasploitModule>        metasploitModules;
   std::map<nmdo::IpAddress, InterfaceHelper>     interfaces;
