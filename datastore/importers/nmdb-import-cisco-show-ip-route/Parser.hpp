@@ -61,8 +61,9 @@ class Parser:
   // ===========================================================================
   private:
   protected:
-    std::string currVrf;
-    std::string currProtocol;
+    const std::string DEFAULT_VRF_ID  {"default"};
+    std::string       currVrf         {DEFAULT_VRF_ID};
+    std::string       currProtocol;
 
     unsigned int currAdminDistance {0};
     unsigned int currMetric {0};

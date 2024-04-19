@@ -228,6 +228,7 @@ Parser::Parser() : Parser::base_type(start)
                               , qi::_1
                               )
                    )
+        , pnx::bind(&nmdo::Route::setVrfId, &qi::_val, pnx::ref(DEFAULT_VRF_ID))
       )] >>
     qi::lit("next-hop") >>
     (  (ipAddr >> semicolon)

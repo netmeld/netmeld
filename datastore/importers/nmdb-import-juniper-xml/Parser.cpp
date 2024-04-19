@@ -246,8 +246,9 @@ Parser::parseConfig(const pugi::xml_node& configNode)
   for (const auto& routingOptionsMatch :
        configNode.select_nodes("routing-options[not(@inactive='inactive')]")) {
     const pugi::xml_node routingOptionsNode{routingOptionsMatch.node()};
-    for (const auto& route : parseConfigRoutingOptions(routingOptionsNode)) {
-      logicalSystem.vrfs[""].addRoute(route);
+    for (auto& route : parseConfigRoutingOptions(routingOptionsNode)) {
+      route.setVrfId(DEFAULT_VRF_ID);
+      logicalSystem.vrfs[DEFAULT_VRF_ID].addRoute(route);
     }
   }
 
@@ -499,6 +500,9 @@ Parser::parseConfigRoutingInstances(const pugi::xml_node& routingInstancesNode,
     const std::map<std::string, netmeld::datastore::objects::InterfaceNetwork>& ifaces)
 {
   std::map<std::string, nmdo::Vrf> vrfs;
+
+  // add default
+  vrfs[DEFAULT_VRF_ID].setId(DEFAULT_VRF_ID);
 
   for (const auto& routingInstanceMatch :
        routingInstancesNode.select_nodes("instance[not(@inactive='inactive')]")) {

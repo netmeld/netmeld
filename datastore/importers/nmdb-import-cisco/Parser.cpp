@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -172,8 +172,9 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   vrfInstance =
-    (qi::lit("vrf instance") > token > qi::eol)
-        [(pnx::bind([&](const std::string& val)
+    (qi::lit("vrf") >> (qi::lit("definition") | qi::lit("instance"))
+    > token > qi::eol
+    ) [(pnx::bind([&](const std::string& val)
                     {d.vrfs.emplace(val, nmdo::Vrf(val));}, qi::_1))]
     > *(indent
       >> ( (qi::lit("description") > tokens)
@@ -230,10 +231,10 @@ Parser::Parser() : Parser::base_type(start)
               pnx::bind(&nmdo::InterfaceNetwork::addIpAddress,
                         pnx::bind(&Parser::tgtIface, this), qi::_1))]
 
-       | (qi::lit("ip helper-address")
-          >> -((qi::lit("vrf") > qi::omit[token]) | qi::lit("global"))
-          >> ipAddr > -tokens)
-            [(pnx::bind(&Parser::serviceAddDhcp, this, qi::_1))]
+       | (  qi::lit("ip helper-address")
+         >> -((qi::lit("vrf") > qi::omit[token]) | qi::lit("global"))
+         >> ipAddr > -tokens
+         ) [(pnx::bind(&Parser::serviceAddDhcp, this, qi::_1))]
        | (qi::lit("ip dhcp relay address") >> ipAddr)
             [(pnx::bind(&Parser::serviceAddDhcp, this, qi::_1))]
 
@@ -246,9 +247,15 @@ Parser::Parser() : Parser::base_type(start)
             [(pnx::bind([&](const std::string& val)
                         {ifaceAliases.emplace(val, tgtIface);}, qi::_1))]
 
-       | (qi::lit("vrf") >> token)
-            [(pnx::bind([&](const std::string& val)
-                        {d.vrfs[val].addIface(tgtIface->getName());}, qi::_1))]
+       | (  qi::lit("vrf") >> -(qi::lit("member") | qi::lit("forwarding"))
+         >> token
+         ) [(pnx::bind([&](const std::string& val) {
+                          d.vrfs[val].setId(val);
+                          d.vrfs[val].addIface(tgtIface->getName());
+                        }
+                      , qi::_1
+                      )
+           )]
 
        /* START: No examples of these, cannot verify */
        // HSRP, virtual IP target for redundant network setup
@@ -570,6 +577,8 @@ Parser::routeAddIp( const nmdo::IpAddress& dstIpNet
   if (!vrfId.empty()) {
     routeRule.setVrfId(vrfId);
     vrfId = "";
+  } else {
+    routeRule.setVrfId(DEFAULT_VRF_ID);
   }
 
   d.routes.push_back(routeRule);
@@ -597,6 +606,8 @@ Parser::routeAddIface( const nmdo::IpAddress& dstIpNet
   if (!vrfId.empty()) {
     routeRule.setVrfId(vrfId);
     vrfId = "";
+  } else {
+    routeRule.setVrfId(DEFAULT_VRF_ID);
   }
 
   d.routes.push_back(routeRule);

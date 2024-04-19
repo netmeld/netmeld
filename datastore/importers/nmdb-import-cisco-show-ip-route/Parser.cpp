@@ -333,7 +333,7 @@ Parser::finalizeVrfData(Data& _d)
   _d.observations = currObservations;
 
   // clear curr's
-  currVrf = "";
+  currVrf = DEFAULT_VRF_ID;
   currProtocol = "";
   currAdminDistance = 0;
   currMetric = 0;
