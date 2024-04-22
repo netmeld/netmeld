@@ -391,7 +391,10 @@ class Tool : public nmdt::AbstractGraphTool
         }
 
         // last hop found; IP/CIDR is destination
-        if (finalHop == nextHopIpAddr || finalHop == dstIpNet) {
+        if (  (finalHop == nextHopIpAddr)
+           || (finalHop == dstIpNet && nextHopIpAddr == "0.0.0.0")
+           )
+        {
           LOG_DEBUG << "Final hop found\n";
           addVertexRoute(route, inIfaceName);
           addEdge(id, finalHop);
@@ -500,7 +503,7 @@ class Tool : public nmdt::AbstractGraphTool
                        , route.at("dst_ip_net").c_str()
                        )
           };
-        nmcu::pushBackIfUnique(&routes, rte);
+        nmcu::addIfUnique(&routes, rte);
       }
     }
 
@@ -640,11 +643,11 @@ class Tool : public nmdt::AbstractGraphTool
                           , action, src, dst, service
                           )
           ;
-        nmcu::pushBackIfUnique(&rules, rule);
+        nmcu::addIfUnique(&rules, rule);
       }
       if (!foundOne) {
         rule = std::format(R"({} no-known-acls<br align="left"/>)", prefix);
-        nmcu::pushBackIfUnique(&rules, rule);
+        nmcu::addIfUnique(&rules, rule);
       }
       aclDetails.emplace(aclDetailKey, rules);
 

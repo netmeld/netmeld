@@ -46,7 +46,7 @@ namespace netmeld::core::utils {
   // ==========================================================================
 
   template<typename SequenceContainer, typename T>
-  void pushBackIfUnique(SequenceContainer* const, const T&);
+  void addIfUnique(SequenceContainer* const, const T&);
 }
 
 #include "ContainerUtilities.ipp"

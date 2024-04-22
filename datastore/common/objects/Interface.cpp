@@ -160,8 +160,8 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Interface::saveAsMetadata(pqxx::transaction_base& t
-                            , const nmco::Uuid& toolRunId)
+  Interface::saveAsMetadata( pqxx::transaction_base& t
+                           , const nmco::Uuid& toolRunId)
   {
     if (!isValid()) {
       LOG_DEBUG << "Interface object is not saving as metadata: "

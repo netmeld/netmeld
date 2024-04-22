@@ -61,10 +61,10 @@ BOOST_AUTO_TEST_CASE(testUniquePushBack)
 
     for (const auto& item : {"a", "a", "bb", "c", "bb"}) {
       sink.push_back(item);
-      nmcu::pushBackIfUnique(&test, item);
+      nmcu::addIfUnique(&test, item);
     }
     for (const std::string& item : sink) {
-      nmcu::pushBackIfUnique(&test, item);
+      nmcu::addIfUnique(&test, item);
     }
 
     BOOST_TEST(control == test);

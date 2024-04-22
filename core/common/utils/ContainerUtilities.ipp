@@ -65,10 +65,10 @@ namespace netmeld::core::utils {
 
   template<typename SequenceContainer, typename T>
   void
-  pushBackIfUnique(SequenceContainer* const con, const T& item)
+  addIfUnique(SequenceContainer* const con, const T& item)
   {
     if (std::find(con->begin(), con->end(), item) == con->end()) {
-      con->push_back(item);
+      con->emplace_back(item);
     }
   }
 }

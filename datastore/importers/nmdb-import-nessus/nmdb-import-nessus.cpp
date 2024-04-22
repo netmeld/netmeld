@@ -304,7 +304,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       port.setReason(portReason);
 
       //data.ports.push_back(port);
-      nmcu::pushBackIfUnique(&data.ports, port);
+      nmcu::addIfUnique(&data.ports, port);
 
       NessusResult nr;
       nr.port = port;
@@ -317,7 +317,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       nr.description = description;
       nr.solution = solution;
 
-      nmcu::pushBackIfUnique(&data.nessusResults, nr);
+      nmcu::addIfUnique(&data.nessusResults, nr);
       //data.nessusResults.push_back(nr);
       //data.nessusResults.emplace(nr);
 
@@ -329,7 +329,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         cve.setPort(port);
         cve.setPluginId(pluginId);
         //data.cves.push_back(cve);
-        nmcu::pushBackIfUnique(&data.cves, cve);
+        nmcu::addIfUnique(&data.cves, cve);
       }
 
       // Extract Metasploit modules
@@ -344,7 +344,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         mm.name = name;
 
         //data.metasploitModules.push_back(mm);
-        nmcu::pushBackIfUnique(&data.metasploitModules, mm);
+        nmcu::addIfUnique(&data.metasploitModules, mm);
       }
 
       // Extract Interface mappings from 3 different plugins
@@ -404,7 +404,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         }
 
         //data.ipAddrs.push_back(ipAddr);
-        nmcu::pushBackIfUnique(&data.ipAddrs, ipAddr);
+        nmcu::addIfUnique(&data.ipAddrs, ipAddr);
       }
 
       // Extract Mac Address
@@ -425,7 +425,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
             nmdo::MacAddress macAddr(*it);
             macAddr.setResponding(isResponding);
             //data.macAddrs.push_back(macAddr);
-            nmcu::pushBackIfUnique(&data.macAddrs, macAddr);
+            nmcu::addIfUnique(&data.macAddrs, macAddr);
           }
 
           if (1 == macCount) { // If only one found, associate MAC-to-IP
@@ -449,7 +449,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           os.setAccuracy(1.0);
 
           //data.oses.push_back(os);
-          nmcu::pushBackIfUnique(&data.oses, os);
+          nmcu::addIfUnique(&data.oses, os);
         }
       }
 
@@ -469,7 +469,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
             )));
 
           //data.tracerouteHops.emplace_back(tracerouteHop);
-          nmcu::pushBackIfUnique(&data.tracerouteHops, tracerouteHop);
+          nmcu::addIfUnique(&data.tracerouteHops, tracerouteHop);
         }
       }
 

@@ -63,13 +63,13 @@ namespace netmeld::datastore::objects {
   void
   AcRule::addSrc(const std::string& _value)
   {
-    nmcu::pushBackIfUnique(&srcs, _value);
+    nmcu::addIfUnique(&srcs, _value);
   }
 
   void
   AcRule::addSrcIface(const std::string& _value)
   {
-    nmcu::pushBackIfUnique(&srcIfaces, _value);
+    nmcu::addIfUnique(&srcIfaces, _value);
   }
 
   void
@@ -81,25 +81,25 @@ namespace netmeld::datastore::objects {
   void
   AcRule::addDst(const std::string& _value)
   {
-    nmcu::pushBackIfUnique(&dsts, _value);
+    nmcu::addIfUnique(&dsts, _value);
   }
 
   void
   AcRule::addDstIface(const std::string& _value)
   {
-    nmcu::pushBackIfUnique(&dstIfaces, _value);
+    nmcu::addIfUnique(&dstIfaces, _value);
   }
 
   void
   AcRule::addAction(const std::string& _value)
   {
-    nmcu::pushBackIfUnique(&actions, _value);
+    nmcu::addIfUnique(&actions, _value);
   }
 
   void
   AcRule::addService(const std::string& _value)
   {
-    nmcu::pushBackIfUnique(&services, _value);
+    nmcu::addIfUnique(&services, _value);
   }
 
   void
