@@ -70,6 +70,8 @@ class Parser :
     Data d;
     bool isCdpEnabled {true};
 
+    const std::string DEFAULT_VRF_ID {"default"};
+
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;

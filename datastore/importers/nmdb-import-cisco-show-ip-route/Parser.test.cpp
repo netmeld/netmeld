@@ -498,7 +498,7 @@ garbage at the end
     BOOST_TEST(4 == out.size());
     BOOST_TEST(1 == out[0].routes.size());
     debugStr = out[0].routes[0].toDebugString();
-    nmdp::testInString(debugStr, "vrfId: ,");
+    nmdp::testInString(debugStr, "vrfId: default,");
     BOOST_TEST(2 == out[1].routes.size());
     debugStr = out[1].routes[0].toDebugString();
     nmdp::testInString(debugStr, "vrfId: no-space-and-space,");

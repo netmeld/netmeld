@@ -141,6 +141,7 @@ Parser::addIface2(const std::string& name,
     }
     route.setDstIpNet(ip);
     route.setNextHopIpAddr(rtr);
+    route.setVrfId(DEFAULT_VRF_ID);
     d.routes.push_back(route);
   }
 }

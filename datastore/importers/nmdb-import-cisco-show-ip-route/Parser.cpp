@@ -64,9 +64,8 @@ Parser::Parser() : Parser::base_type(start)
 
   vrfName %=
     -qi::lit('"')
-    >> ( (qi::lit("default") > qi::attr(std::string()))
-       | qi::as_string[+(qi::ascii::graph - qi::lit('"'))]
-       ) [(pnx::ref(currVrf) = qi::_1)]
+    >> (qi::as_string[+(qi::ascii::graph - qi::lit('"'))])
+          [(pnx::ref(currVrf) = qi::_1)]
     >> -qi::lit('"')
     ;
 
