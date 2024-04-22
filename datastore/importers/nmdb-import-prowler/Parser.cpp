@@ -51,7 +51,7 @@ Parser::fromJsonV2(std::ifstream& _file)
         d.v2Data.push_back(v2d);
       }
     } else {
-      std::cerr << "Malformed input: Empty JSON data." << std::endl;
+      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
     }
   }
   r.push_back(d);
@@ -71,7 +71,7 @@ Parser::fromJsonV3(std::ifstream& _file)
         d.v3Data.push_back(v3d);
       }
     } else {
-      std::cerr << "Malformed input: Empty JSON data." << std::endl;
+      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
     }
   }
   r.push_back(d);
