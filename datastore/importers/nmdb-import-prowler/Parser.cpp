@@ -65,7 +65,6 @@ Parser::fromJsonV3(std::ifstream& _file)
   auto dataArray = json::parse(_file);
   for (const auto& entry : dataArray) {
     if (!entry.empty()) {
-      LOG_DEBUG << "P1" << std::endl;
       nmdop::ProwlerV3Data v3d {entry};
       if (v3d != nmdop::ProwlerV3Data()) {
         d.v3Data.push_back(v3d);
