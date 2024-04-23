@@ -343,7 +343,6 @@ Parser::Parser() : Parser::base_type(start)
     token =
         +qi::ascii::graph
     ;
-        (handleSection)
 
     ignoredLine =
         (+token > -qi::eol) | +qi::eol
