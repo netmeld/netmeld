@@ -49,9 +49,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 
       LOG_DEBUG << "Iterating over results\n";
       for (auto& result : this->tResults) {
-        result.setDeviceId(deviceId);
-        result.save(t, toolRunId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
+        result.devInfo.setDeviceId(deviceId);
+        result.devInfo.save(t, toolRunId);
+        LOG_DEBUG << result.devInfo.toDebugString() << std::endl;
       }
     }
 };

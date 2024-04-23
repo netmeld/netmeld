@@ -38,8 +38,54 @@
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 
-typedef nmdo::DeviceInformation  DevInfo;
-typedef std::vector<DevInfo>     Result;
+typedef nmdo::DeviceInformation DevInfo;
+
+struct PowerSupplySlotEntry {
+  int slot;
+  std::string model;
+  std::string serialNumber;
+};
+
+struct FanModuleEntry {
+  int moduleNumber;
+  int numberOfFans;
+  std::string model;
+  std::string serialNumber;
+};
+
+struct PortsEntry {
+  std::string type;
+  int count;
+};
+
+struct TransceiverSlotEntry {
+  int port;
+  std::string manufacturer;
+
+};
+
+struct StorageDeviceEntry {
+  std::string mount;
+  std::string type;
+  std::string model;
+  std::string serialNumber;
+  std::string rev;
+  int sizeGB;
+    };
+
+struct ParserOutput {
+  DevInfo devInfo;
+  std::vector<PowerSupplySlotEntry> powerSupplySlots;
+  std::vector<FanModuleEntry> fanModules;
+  std::vector<PortsEntry> ports;
+  std::vector<TransceiverSlotEntry> transceiverSlots;
+  std::vector<StorageDeviceEntry> storageDevices;
+
+  std::strong_ordering operator<=>(const ParserOutput&) const;
+  bool operator==(const ParserOutput&) const;
+};
+
+typedef std::vector<ParserOutput> Result;
 typedef std::vector<std::unordered_map<std::string, std::string>> KeyValVec;
 
 class Parser:
@@ -58,49 +104,7 @@ class Parser:
     ;
 
 
-    struct PowerSupplySlotEntry {
-      int slot;
-      std::string model;
-      std::string serialNumber;
-    };
-
-    struct FanModuleEntry {
-      int moduleNumber;
-      int numberOfFans;
-      std::string model;
-      std::string serialNumber;
-    };
-
-    struct PortsEntry {
-      std::string type;
-      int count;
-    };
-
-    struct TransceiverSlotEntry {
-      int port;
-      std::string manufacturer;
-
-    };
-
-    struct StorageDeviceEntry {
-      std::string mount;
-      std::string type;
-      std::string model;
-      std::string serialNumber;
-      std::string rev;
-      int sizeGB;
-    };
-
-    struct ParserOutput {
-      DevInfo devInfo;
-      std::vector<PowerSupplySlotEntry> powerSupplySlots;
-      std::vector<FanModuleEntry> fanModules;
-      std::vector<PortsEntry> ports;
-      std::vector<TransceiverSlotEntry> transceiverSlots;
-      std::vector<StorageDeviceEntry> storageDevices;
-    };
     
-
 
   public:
 
@@ -109,7 +113,7 @@ class Parser:
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmdp::IstreamIter, DevInfo(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, ParserOutput(), qi::ascii::blank_type>
       deviceInfo;
 
     qi::rule<nmdp::IstreamIter, DevInfo(), qi::ascii::blank_type>
@@ -154,11 +158,7 @@ class Parser:
     qi::rule<nmdp::IstreamIter, StorageDeviceEntry(), qi::ascii::blank_type>
       systemStorageEntryRule;
 
-    qi::rule<nmdp::IstreamIter, ParserOutput(), qi::ascii::blank_type>
-      handleSection
-    ;
-
-    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, std::string()>
       grabLine
     ;
 
@@ -171,16 +171,13 @@ class Parser:
       entryRuleBase
     ;
 
-    qi::rule<nmdp::IstreamIter, int(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, int(), qi::locals<unsigned int>>
       countDashes
     ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
       token;
 
-    std::array<qi::rule<nmdp::IstreamIter, std::string()>, 4>
-      stringFieldRules;
-
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      ignoredLine, placeholder;
+      ignoredLine;
 };

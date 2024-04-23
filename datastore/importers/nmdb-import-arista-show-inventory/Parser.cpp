@@ -31,8 +31,17 @@ namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmcu = netmeld::core::utils;
 
-typedef nmdo::DeviceInformation  DevInfo;
-typedef std::vector<DevInfo>     Result;
+std::strong_ordering
+ParserOutput::operator<=>(const ParserOutput& rhs) const
+{
+    return devInfo <=> rhs.devInfo;
+}
+
+bool
+ParserOutput::operator==(const ParserOutput& rhs) const
+{
+    return 0 == operator<=>(rhs);
+}
 
 Parser::Parser() : Parser::base_type(start)
 {
@@ -45,57 +54,15 @@ Parser::Parser() : Parser::base_type(start)
                             )
     {
 
-        keyVals.resize(valueLines.size());
-        std::vector<std::string> keys;
-        auto keyLineIt = keyLine.begin();
-        for (size_t i = 0; i < kvLengths.size(); ++i) {
-            qi::phrase_parse(
-                keyLineIt,
-                keyLine.end(),
-                (
-                    qi::lexeme
-                    [
-                        qi::as_string[qi::repeat(0, kvLengths[i])[qi::print]]
-                    ]
-                    [(
-                        pnx::bind(
-                            [&keys](auto str){
-                                keys.emplace_back(nmcu::trim(str));
-                            }, qi::_1
-                        )
-                    )]
-                
-                ),
-                qi::ascii::space
-                
-            );
-        }
+        keyVals.resize(0 >= valueLines.size() ? 1 : valueLines.size());
         for (size_t i = 0; i < valueLines.size(); ++i) {
-            auto valueLine = valueLines[i];
-            auto valueLineIt = valueLine.begin();
-            for (size_t j = 0; j < kvLengths.size(); ++j) {
-                std::string key = keys[j];
-                qi::phrase_parse(
-                    valueLineIt,
-                    valueLine.end(),
-                    (
-                        qi::lexeme
-                        [
-                            qi::as_string[qi::repeat(0, kvLengths[j])[qi::print]]
-                        ]
-                        [(
-                            pnx::bind(
-                                [i, key, &keyVals](auto str){
-                                    std::string trimmedStr{nmcu::trim(str)};
-                                    keyVals[i].emplace(key, trimmedStr);
-                                }, qi::_1
-                            )
-                        )]
-                    
-                    ),
-                    qi::ascii::space
-                    
-                );
+            const auto& valueLine {valueLines[i]};
+            size_t lastPos {0};
+            for (const auto& kvLength : kvLengths) {
+                const auto key   {nmcu::trim(keyLine.substr(lastPos, kvLength))};
+                const auto value {nmcu::trim(valueLine.substr(lastPos, kvLength))};
+                keyVals[i].emplace(key, value);
+                lastPos += kvLength + 1;  // +1 for space separator
             }
         }
 
@@ -104,61 +71,33 @@ Parser::Parser() : Parser::base_type(start)
 
     start =
         *qi::eol >>
-        -(
-        deviceInfo
-        [
-            pnx::bind(
-                [this](auto &devInfoVec, auto &devInfo)
-                {
-                    a.emplace_back(std::move(b));
-                }, qi::_val, qi::_1
-            )
-        ] % +qi::eol)
+        -(deviceInfo % +qi::eol)
          >>
         *qi::eol
     ;
 
     deviceInfo =
-        handleSection
-        [
-            pnx::bind(
-                [](auto &a, auto &b){
-                    a = b.devInfo;
-                }, qi::_val, qi::_1
-            )
-        ]
-    ;
-
-    placeholder = qi::repeat(0)[!qi::lit("__PLACEHOLDER__")];
-    
-    handleSection =
-        systemInformationStart
-        [(
-            pnx::bind(
-                [this](auto &a, auto &b){
-                    a.devInfo = b;
-                    std::cout << a.devInfo.toDebugString() << std::endl;
-                    std::cout << b.toDebugString() << std::endl;
-                }, qi::_val, qi::_1
-            )
-        )] ||
-        systemPowerSupplyStart ||
-        systemFanModuleStart ||
-        systemPortStart ||
-        systemTransceiverStart ||
-        systemStorageStart ||
-        placeholder
+        +(
+            systemInformationStart
+            [(
+                pnx::bind(
+                    [this](auto &a, auto &b){
+                        a.devInfo = b;
+                    }, qi::_val, qi::_1
+                )
+            )] ||
+            systemPowerSupplyStart ||
+            systemFanModuleStart ||
+            systemPortStart ||
+            systemTransceiverStart ||
+            systemStorageStart
+        )
     ;
 
     entryRuleBase =
         (
-            grabLine >> qi::eol >>
-            qi::repeat
-            [
-                countDashes
-            ]
-        
-            >> qi::eol >>
+            !(&qi::lit("System ")) >> grabLine >> qi::eol >>
+            +countDashes >> qi::eol >>
             ((!qi::eol >> grabLine) % qi::eol)
         )
         [
@@ -180,11 +119,12 @@ Parser::Parser() : Parser::base_type(start)
 
     systemInformationStart =
         qi::lit("System information") >>
-        qi::eol >> 
+        qi::eol >>
         systemInformation
         [(
             pnx::bind(
                 [this](DevInfo &devInfo){
+                    devInfo.setVendor(this->VENDOR);
                     devInfo.setModel(systemInformationEntry.at(0)["Model"]);
                     devInfo.setDescription(systemInformationEntry.at(0)["Description"]);
                     devInfo.setHardwareRevision(systemInformationEntry.at(0)["HW Version"]);
@@ -195,15 +135,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
     systemInformation =
-        systemInformationEntryRule >>
-        (
-            *qi::eol >> 
-            (
-                handleSection || 
-                systemInformation
-                
-            )
-        )
+        +(systemInformationEntryRule >> *qi::eol)
     ;
 
     systemInformationEntryRule =
@@ -236,10 +168,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
     systemPowerSupply =
-        systemPowerSupplyEntryRule >>
-        (
-            *qi::eol >> (handleSection || systemPowerSupply)
-        )
+        +(systemPowerSupplyEntryRule >> *qi::eol)
     ;
 
     systemPowerSupplyEntryRule =
@@ -274,10 +203,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
     systemFanModule =
-        systemFanModuleEntryRule >>
-        (
-            *qi::eol >> (handleSection || systemFanModule)
-        )
+        +(systemFanModuleEntryRule >> *qi::eol)
     ;
 
     systemFanModuleEntryRule =
@@ -312,10 +238,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
     systemPort =
-        systemPortEntryRule >>
-        (
-            *qi::eol >> (handleSection || systemPort)
-        )
+        +(systemPortEntryRule >> *qi::eol)
     ;
 
     systemPortEntryRule =
@@ -351,10 +274,8 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
     systemTransceiver =
-        systemTransceiverEntryRule >>
-        (
-            *qi::eol >> (handleSection || systemTransceiver)
-        )
+        +(systemTransceiverEntryRule >> *qi::eol)
+
     ;
 
     systemTransceiverEntryRule =
@@ -389,10 +310,8 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
     systemStorage =
-        systemStorageEntryRule >>
-        (
-            *qi::eol >> (handleSection || systemStorage)
-        )
+        +(systemStorageEntryRule >> *qi::eol)
+
     ;
 
     systemStorageEntryRule =
@@ -414,25 +333,11 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
     grabLine = 
-        qi::lexeme
-        [
-            qi::as_string[qi::repeat[qi::print]]
-        ]
-        [
-            qi::_val = qi::_1
-        ]
+        *qi::print
     ;
 
     countDashes =
-        qi::lexeme
-        [
-            qi::as_string[+qi::char_('-')]
-        ]
-        [(
-            qi::_val = pnx::bind([](auto &str){
-                return str.size();
-            }, qi::_1)
-        )]
+        (+qi::lit('-')[qi::_a++]) [qi::_val = qi::_a]
     ;
 
     token =
