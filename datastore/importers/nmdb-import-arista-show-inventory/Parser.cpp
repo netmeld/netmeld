@@ -343,6 +343,7 @@ Parser::Parser() : Parser::base_type(start)
     token =
         +qi::ascii::graph
     ;
+        (handleSection)
 
     ignoredLine =
         (+token > -qi::eol) | +qi::eol
@@ -351,7 +352,6 @@ Parser::Parser() : Parser::base_type(start)
     BOOST_SPIRIT_DEBUG_NODES(
         (start)
         (deviceInfo)
-        (handleSection)
         (systemInformation)
         //(systemInformationEntryRule)
         (systemPowerSupply)
