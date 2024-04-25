@@ -163,8 +163,8 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 
         LOG_DEBUG << "Iterating over Cves\n";
         for (auto& result : results.cves) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
           result.save(t, toolRunId, "");
+          LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
         LOG_DEBUG << "Iterating over MetasploitModules\n";
@@ -302,8 +302,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       port.setPort(portNum);
       port.setState(portState);
       port.setReason(portReason);
-
-      //data.ports.push_back(port);
       nmcu::addIfUnique(&data.ports, port);
 
       NessusResult nr;
@@ -316,10 +314,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       nr.severity = severity;
       nr.description = description;
       nr.solution = solution;
-
       nmcu::addIfUnique(&data.nessusResults, nr);
-      //data.nessusResults.push_back(nr);
-      //data.nessusResults.emplace(nr);
 
       // Extract CVE identifiers
       for (const auto& cveItem : reportItemNode.select_nodes("cve")) {
@@ -328,7 +323,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         nmdo::Cve cve(cveNode.text().as_string());
         cve.setPort(port);
         cve.setPluginId(pluginId);
-        //data.cves.push_back(cve);
         nmcu::addIfUnique(&data.cves, cve);
       }
 
@@ -342,8 +336,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         mm.port = port;
         mm.pluginId = pluginId;
         mm.name = name;
-
-        //data.metasploitModules.push_back(mm);
         nmcu::addIfUnique(&data.metasploitModules, mm);
       }
 
@@ -402,8 +394,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         for (const auto& hostTag : hostTags) {
           ipAddr.addAlias(hostTag.node().text().as_string(), "nessus scan");
         }
-
-        //data.ipAddrs.push_back(ipAddr);
         nmcu::addIfUnique(&data.ipAddrs, ipAddr);
       }
 
@@ -424,7 +414,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           for (auto it = tokens.begin(); it != tokens.end(); ++it, ++macCount) {
             nmdo::MacAddress macAddr(*it);
             macAddr.setResponding(isResponding);
-            //data.macAddrs.push_back(macAddr);
             nmcu::addIfUnique(&data.macAddrs, macAddr);
           }
 
@@ -447,8 +436,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           nmdo::OperatingSystem os(ipAddr);
           os.setCpe(cpe);
           os.setAccuracy(1.0);
-
-          //data.oses.push_back(os);
           nmcu::addIfUnique(&data.oses, os);
         }
       }
@@ -467,8 +454,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           tracerouteHop.setHopCount(static_cast<uint32_t>(std::stoul(
               std::string{tagNode.attribute("name").as_string()}.substr(15)
             )));
-
-          //data.tracerouteHops.emplace_back(tracerouteHop);
           nmcu::addIfUnique(&data.tracerouteHops, tracerouteHop);
         }
       }
