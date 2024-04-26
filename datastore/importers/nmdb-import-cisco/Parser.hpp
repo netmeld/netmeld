@@ -189,7 +189,7 @@ class Parser :
     std::string  curRuleSrcPort {""};
     std::string  curRuleDstPort {""};
 
-    const std::string DEFAULT_VRF_ID  {"default"};
+    const std::string DEFAULT_VRF_ID  {""};//{"default"};
     std::string       vrfId           {""};
 
   // ===========================================================================

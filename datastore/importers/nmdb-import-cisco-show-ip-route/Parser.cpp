@@ -322,6 +322,9 @@ Parser::determineNullRoute(nmdo::Route& _route, const std::string& _ifaceName)
 void
 Parser::addRouteToData(Data& _d, nmdo::Route& _route)
 {
+  if ("default" == currVrf) {
+    currVrf = DEFAULT_VRF_ID;
+  }
   _route.setVrfId(currVrf);
   _d.routes.push_back(_route);
 }

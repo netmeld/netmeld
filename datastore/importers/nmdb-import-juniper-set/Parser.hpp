@@ -117,7 +117,7 @@ class Parser:
 
     size_t curRuleId;
 
-    const std::string DEFAULT_VRF_ID {"master"};
+    const std::string DEFAULT_VRF_ID {""};//{"master"};
 
 
   // ===========================================================================

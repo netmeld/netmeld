@@ -151,7 +151,7 @@ class Parser
   private:
     Data data;
 
-    const std::string DEFAULT_VRF_ID {"master"};
+    const std::string DEFAULT_VRF_ID {""};//{"master"};
 };
 
 #endif  /* PARSER_HPP */

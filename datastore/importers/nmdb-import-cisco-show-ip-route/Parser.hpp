@@ -61,7 +61,7 @@ class Parser:
   // ===========================================================================
   private:
   protected:
-    const std::string DEFAULT_VRF_ID  {"default"};
+    const std::string DEFAULT_VRF_ID  {""};//{"default"};
     std::string       currVrf         {DEFAULT_VRF_ID};
     std::string       currProtocol;
 

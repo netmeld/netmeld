@@ -153,7 +153,7 @@ class Parser:
 
     std::multimap<std::string, std::string> ifaceVlanMembers;
 
-    const std::string DEFAULT_VRF_ID {"master"};
+    const std::string DEFAULT_VRF_ID {""};//{"master"};
 
   // ===========================================================================
   // Constructors
