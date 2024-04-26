@@ -342,16 +342,16 @@ namespace netmeld::datastore::objects {
     oss << "["; // opening bracket
     oss << "name: " << name
         << ", description: " << description
-        << ", isPartial: " << isPartial
+        << ", isPartial: " << std::boolalpha << isPartial
         << ", mediaType: " << mediaType
-        << ", isUp: " << std::boolalpha << isUp
+        << ", isUp: " << isUp
         << ", isDiscoveryProtocolEnabled: " << isDiscoveryProtocolEnabled
         << ", macAddr: " << macAddr.toDebugString()
         << ", mode: " << mode
         << ", isPortSecurityEnabled: " << isPortSecurityEnabled
         << ", portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs
         << ", portSecurityViolationAction: " << portSecurityViolationAction
-        << ", isPortSecurityStickyMac:" << isPortSecurityStickyMac
+        << ", isPortSecurityStickyMac: " << isPortSecurityStickyMac
         << ", learnedMacAddrs: "  << learnedMacAddrs
         << ", reachableMacs: " << reachableMacAddrs
         << ", vlans: " << vlans
