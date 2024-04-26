@@ -184,7 +184,7 @@ class Tool : public nmdt::AbstractGraphTool
                   true
                 ELSE
                   false
-              END AS is_blackhole
+              END AS is_null_route
           FROM device_ip_routes
           WHERE is_active
             AND $1 && dst_ip_net
@@ -236,7 +236,7 @@ class Tool : public nmdt::AbstractGraphTool
           GROUP BY device_id, vrf_id, dst_ip_net
           )"
         );
-      db.prepare("select_next_hops", R"(
+      db.prepare("select_next_hops_by_ip", R"(
           SELECT DISTINCT
               device_id
             , vrf_id
@@ -245,6 +245,19 @@ class Tool : public nmdt::AbstractGraphTool
             , ip_net
           FROM device_vrfs_ip_addrs
           WHERE ip_addr = $1
+          ORDER BY device_id, vrf_id
+          )"
+        );
+      db.prepare("select_next_hops_by_device_vrf", R"(
+          SELECT DISTINCT
+              device_id
+            , vrf_id
+            , interface_name
+            , ip_addr
+            , ip_net
+          FROM device_vrfs_ip_addrs
+          WHERE device_id = $1
+            AND vrf_id = $2
           ORDER BY device_id, vrf_id
           )"
         );
@@ -327,14 +340,18 @@ class Tool : public nmdt::AbstractGraphTool
           : rt.exec_prepared("select_initial_hops", firstHop)
           )
       {
-        LOG_DEBUG << "Processing next initial hop\n";
-
         const std::string deviceId    {nextHop.at("device_id").c_str()};
         const std::string vrfId       {nextHop.at("vrf_id").c_str()};
         const std::string ipNet       {nextHop.at("ip_net").c_str()};
         const std::string inIfaceName {nextHop.at("interface_name").c_str()};
+        const std::string id          {getLookupId(deviceId, vrfId)};
 
-        const std::string id {getLookupId(deviceId, vrfId)};
+        LOG_DEBUG << std::format( "Processing initial hop: {}--{}--{}\n"
+                                , id
+                                , inIfaceName
+                                , ipNet
+                                );
+
         getPossibleRoutes(rt, deviceId, vrfId, inIfaceName);
         if (vertexLookup.count(id)) {
           addVertex("oval", ipNet);
@@ -367,10 +384,9 @@ class Tool : public nmdt::AbstractGraphTool
       {
         const std::string nextHopIpAddr {route.at("next_hop_ip_addr").c_str()};
         const std::string dstIpNet      {route.at("dst_ip_net").c_str()};
-        bool isBlackhole                {route.at("is_blackhole").as<bool>()};
+        bool isNullRoute                {route.at("is_null_route").as<bool>()};
 
-        // Except for default route, routes can not overlap
-        LOG_DEBUG << std::format("Route: On {} -- to {} via {} ({})\n"
+        LOG_DEBUG << std::format( "Route: On {} -- to {} via {} ({})\n"
                                 , id
                                 , dstIpNet
                                 , nextHopIpAddr
@@ -382,7 +398,7 @@ class Tool : public nmdt::AbstractGraphTool
           continue;
         } else { // paths left to cover
           double hostCount = hostCountReductions[deviceId][vrfId][dstIpNet];
-          LOG_DEBUG << std::format("Route covers {} of {} hosts left\n"
+          LOG_DEBUG << std::format( "Route covers {} of {} hosts left\n"
                                   , hostCount
                                   , hostsToCover
                                   )
@@ -400,39 +416,38 @@ class Tool : public nmdt::AbstractGraphTool
           addEdge(id, finalHop);
         }
         // last hop found; route ultimately discards packets
-        else if (isBlackhole) {
-          LOG_DEBUG << "Blackhole route found\n";
-          addVertexRoute(route, inIfaceName);
-          addVertex("octagon", "Blackhole");
-          addEdge(id, "Blackhole");
+        else if (isNullRoute) {
+          LOG_DEBUG << "Null route found\n";
+          addVertexRoute(route, inIfaceName, isNullRoute);
+          addVertex("octagon", "Null Route");
+          addEdge(id, "Null Route");
         }
-        // route via interface, possible unknown next hop (i.e., no arp data)
-        else if (nextHopIpAddr.empty()) {
-          LOG_DEBUG << "Routing via interface\n";
-          /* TODO
-            - if next hop device known, use it
-            - else connect to endpoint with dotted line
-
-            NOTE: probably leverage nextHops and adjust logic to combine
-            above/below.
-          */
-          addVertexRoute(route, inIfaceName);
-          addEdge(id, finalHop, "dashed");
-        }
-        // route via IP
+        // route via IP or interface
         else {
-          LOG_DEBUG << "Routing via IP\n";
-          // can be multiple next hops (e.g. failover)
-          pqxx::result nextHops {
-              rt.exec_prepared("select_next_hops", nextHopIpAddr)
-            };
+          pqxx::result nextHops;
+          if (nextHopIpAddr.empty()) {
+            LOG_DEBUG << "Routing via interface\n";
+            nextHops = rt.exec_prepared( "select_next_hops_by_device_vrf"
+                                       , deviceId
+                                       , route.at("next_vrf_id").c_str()
+                                       );
+          } else {
+            LOG_DEBUG << "Routing via IP\n";
+            nextHops = rt.exec_prepared( "select_next_hops_by_ip"
+                                       , nextHopIpAddr
+                                       );
+          }
+
           // route entry for destination, but next hop not known
           if (0 == nextHops.size()) {
             LOG_DEBUG << "Possible final hop found\n";
             addVertexRoute(route, inIfaceName);
             addEdge(id, finalHop, "dashed");
-          } else {
+          }
+          // route entry for destination and next hop known
+          else {
             LOG_DEBUG << "More valid hops found\n";
+            // can be multiple next hops (e.g. failover)
             for (const auto& nextHop : nextHops) {
               const std::string nextDeviceId  {nextHop.at("device_id").c_str()};
               const std::string nextVrfId     {nextHop.at("vrf_id").c_str()};
@@ -450,14 +465,12 @@ class Tool : public nmdt::AbstractGraphTool
               }
 
               if (vertexLookup.contains(nextId)) {
-                LOG_DEBUG << std::format("Connecting viable next hop:"
-                                         "{} -> {}\n"
+                LOG_DEBUG << std::format( "Add viable next hop: {} -> {}\n"
                                         , id
                                         , nextId
                                         )
                           ;
                 const std::string ipNet {nextHop.at("ip_net").c_str()};
-                //addVertex("oval", ipNet);
                 std::string aclData {
                   dumpAclData( rt
                              , deviceId
@@ -480,6 +493,7 @@ class Tool : public nmdt::AbstractGraphTool
     void
     addVertexRoute( const auto& route
                   , const std::string& inIfaceName
+                  , const bool isNullRoute=false
                   )
     {
       const std::string id {
@@ -495,11 +509,15 @@ class Tool : public nmdt::AbstractGraphTool
       auto& routes {routeDetails.at(id)};
 
       if (addRouteDetails) {
+        std::string nhIpAddr {"null"};
+        if (!isNullRoute) {
+          nhIpAddr = route.at("next_hop_ip_addr").c_str();
+        }
         std::string rte {
-            std::format(R"([{} &rarr; {}] nextHop {} for {}<br align="left"/>)"
+            std::format( R"([{} &rarr; {}] nextHop {} for {}<br align="left"/>)"
                        , inIfaceName
                        , route.at("outgoing_interface_name").c_str()
-                       , route.at("next_hop_ip_addr").c_str()
+                       , nhIpAddr
                        , route.at("dst_ip_net").c_str()
                        )
           };
@@ -535,9 +553,9 @@ class Tool : public nmdt::AbstractGraphTool
     std::string
     getLabelHeader(const std::string& id)
     {
-      return std::format(R"(" + <<table border="0" cellborder="0"><tr>)"
-                         R"(<td></td>)" // empty icon
-                         R"(<td><font point-size="11">{}<br/>)"
+      return std::format( R"(" + <<table border="0" cellborder="0"><tr>)"
+                          R"(<td></td>)" // empty icon
+                          R"(<td><font point-size="11">{}<br/>)"
                         , id
                         )
         ;
@@ -564,7 +582,7 @@ class Tool : public nmdt::AbstractGraphTool
     void
     addEdge( const std::string& src
            , const std::string& dst
-           , const std::string& style=""
+           , const std::string& style="" // default, solid line
            )
     {
       LOG_DEBUG << std::format("Edge: {} <-> {}\n", src, dst);
@@ -612,11 +630,6 @@ class Tool : public nmdt::AbstractGraphTool
     {
       if (!addAclDetails) {return "";} // short circuit
 
-      /* TODO where to add this?
-          - subnet: what about multi-in/out
-          - route: lots of duplication
-          - 2nd column: re-work needed
-      */
       std::string aclDetailKey {id+net+in+out};
       if (aclDetails.contains(aclDetailKey)) {return "";} // don't repeat logic
 
