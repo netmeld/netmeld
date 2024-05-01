@@ -54,7 +54,9 @@ Parser::fromJsonV2(std::ifstream& _file)
       LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
     }
   }
-  r.emplace_back(d);
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
 }
 
 void
@@ -73,7 +75,9 @@ Parser::fromJsonV3(std::ifstream& _file)
       LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
     }
   }
-  r.emplace_back(d);
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
 }
 
 
