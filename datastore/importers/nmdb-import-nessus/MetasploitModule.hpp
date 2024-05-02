@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,7 +42,7 @@ class MetasploitModule : public nmdo::AbstractDatastoreObject
   public:
     bool isValid() const override;
     void save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&) override;
-    std::string toString() const;
+    std::string toDebugString() const;
 
     std::partial_ordering operator<=>(const MetasploitModule&) const;
     bool operator==(const MetasploitModule&) const;

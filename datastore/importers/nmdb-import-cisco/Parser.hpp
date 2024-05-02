@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -34,6 +34,7 @@
 #include <netmeld/datastore/objects/Service.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/objects/Vlan.hpp>
+#include <netmeld/datastore/objects/Vrf.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/parsers/ParserMacAddress.hpp>
@@ -64,6 +65,7 @@ struct Data
   nmdo::ToolObservations               observations;
 
   std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
+  std::map<std::string, nmdo::Vrf>               vrfs;
   std::map<uint16_t, std::set<std::string>> portChannels;
 
   std::vector<nmdo::Route>             routes;
@@ -113,6 +115,10 @@ class Parser :
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
              qi::locals<uint8_t>>
       interface
+      ;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+        vrfInstance
       ;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
@@ -182,6 +188,9 @@ class Parser :
     std::string  curRuleProtocol {""};
     std::string  curRuleSrcPort {""};
     std::string  curRuleDstPort {""};
+
+    const std::string DEFAULT_VRF_ID  {""};//{"default"};
+    std::string       vrfId           {""};
 
   // ===========================================================================
   // Constructors

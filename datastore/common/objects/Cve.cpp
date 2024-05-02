@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -92,13 +92,14 @@ namespace netmeld::datastore::objects {
 
     port.save(t, toolRunId, _deviceId);
 
-    t.exec_prepared("insert_raw_nessus_result_cve",
-      toolRunId,
-      port.getIpAddress().toString(),
-      port.getProtocol(),
-      port.getPort(),
-      pluginId,
-      *this);
+    t.exec_prepared("insert_raw_nessus_result_cve"
+                   , toolRunId
+                   , port.getIpAddress().toString()
+                   , port.getProtocol()
+                   , port.getPort()
+                   , pluginId
+                   , *this
+                   );
   }
 
   std::string
@@ -114,12 +115,13 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "[";
-    oss << "year: " << year << ", "
-        << "number: " << number << ", "
-        << "port: " << port.toDebugString() << ", "
-        << "pluginId: " << pluginId;
-    oss << "]";
+    oss << "["
+        << "year: " << year
+        << ", number: " << number
+        << ", port: " << port.toDebugString()
+        << ", pluginId: " << pluginId
+        << "]"
+        ;
 
     return oss.str();
   }
@@ -127,16 +129,17 @@ namespace netmeld::datastore::objects {
   std::partial_ordering
   Cve::operator<=>(const Cve& rhs) const
   {
-    if (auto cmp = year <=> rhs.year; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = number <=> rhs.number; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = port <=> rhs.port; 0 != cmp) {
-      return cmp;
-    }
-    return pluginId <=> rhs.pluginId;
+    return std::tie( year
+                   , number
+                   , port
+                   , pluginId
+                   )
+       <=> std::tie( year
+                   , number
+                   , port
+                   , pluginId
+                   )
+      ;
   }
 
   bool

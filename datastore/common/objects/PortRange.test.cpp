@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -202,5 +202,41 @@ BOOST_AUTO_TEST_CASE(testConstructorsAndToStrings)
     BOOST_CHECK_EQUAL(32766, portRange.maxPort);
 
     BOOST_CHECK_EQUAL("[0,32766]", portRange.toDbString());
+  }
+
+  {
+    nmdo::PortRange portRange("https");
+
+    BOOST_CHECK_EQUAL(443, std::get<0>(portRange));
+    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+
+    BOOST_CHECK_EQUAL("[443,443]", portRange.toString());
+  }
+
+  {
+    nmdo::PortRange portRange("http-https");
+
+    BOOST_CHECK_EQUAL(80, std::get<0>(portRange));
+    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+
+    BOOST_CHECK_EQUAL("[80,443]", portRange.toString());
+  }
+
+  {
+    nmdo::PortRange portRange(">32767");
+
+    BOOST_CHECK_EQUAL(32768, std::get<0>(portRange));
+    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+
+    BOOST_CHECK_EQUAL("[32768,65535]", portRange.toString());
+  }
+
+  {
+    nmdo::PortRange portRange("<32767");
+
+    BOOST_CHECK_EQUAL(0, std::get<0>(portRange));
+    BOOST_CHECK_EQUAL(32766, std::get<1>(portRange));
+
+    BOOST_CHECK_EQUAL("[0,32766]", portRange.toString());
   }
 }

@@ -37,7 +37,7 @@ extern "C" {
 
 #include <netmeld/core/utils/ForkExec.hpp>
 #include <netmeld/core/utils/LoggerSingleton.hpp>
-#include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 
 
 namespace netmeld::core::utils {

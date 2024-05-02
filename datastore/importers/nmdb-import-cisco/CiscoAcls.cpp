@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,9 +24,15 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <netmeld/core/utils/ContainerUtilities.hpp>
+#include <netmeld/core/utils/StringUtilities.hpp>
+
 #include "CiscoAcls.hpp"
 
+
+namespace nmcu = netmeld::core::utils;
 namespace nmdsic = netmeld::datastore::importers::cisco;
+
 
 namespace netmeld::datastore::importers::cisco {
   // ===========================================================================
@@ -534,9 +540,11 @@ namespace netmeld::datastore::importers::cisco {
   {
     bool isContiguous {ipAddr.setMask(mask)};
     if (!isContiguous) {
-      std::ostringstream oss;
-      oss << "IpAddress (" << ipAddr
-          << ") set with non-contiguous wildcard netmask (" << mask << ")";
+      LOG_WARN << std::format("IpAddress ({}) set with non-contiguous"
+                              " wildcard netmask ({})"
+                             , ipAddr.toString()
+                             , mask.toString()
+                             );
     }
 
     return ipAddr.toString();
@@ -567,9 +575,10 @@ namespace netmeld::datastore::importers::cisco {
     if (curRuleSrcPort.empty() && curRuleDstPort.empty()) {
       oss << curRuleProtocol;
     } else {
-      oss << nmcu::getSrvcString(curRuleProtocol,
-                                 curRuleSrcPort,
-                                 curRuleDstPort);
+      oss << nmcu::getSrvcString( curRuleProtocol
+                                , curRuleSrcPort
+                                , curRuleDstPort
+                                );
     }
 
     if (!curRuleOptions.empty()) {

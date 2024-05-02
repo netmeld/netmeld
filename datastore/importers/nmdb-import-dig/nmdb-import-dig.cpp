@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -53,10 +53,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      (
-       "dig",                 // command line tool imports data from
-       PROGRAM_NAME,          // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION        // program version (set in CMakeLists.txt)
+      ( "dig"             // command line tool imports data from
+      , PROGRAM_NAME      // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION   // program version (set in CMakeLists.txt)
       )
     {}
 
@@ -75,6 +74,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       LOG_DEBUG << "Iterating over results\n";
       for (auto& dnsLookup : this->tResults) {
         dnsLookup.save(t, toolRunId, deviceId);
+        LOG_DEBUG << dnsLookup.toDebugString() << std::endl;
       }
     }
 
@@ -84,10 +84,11 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
     {
       this->opts.removeRequiredOption("device-id");
       this->opts.addOptionalOption("device-id", std::make_tuple(
-            "device-id",
-            po::value<std::string>(),
-            "(Not used) Name of device.")
-          );
+            "device-id"
+          , po::value<std::string>()
+          , "(Not used) Name of device."
+          )
+        );
 
       this->opts.removeOptionalOption("device-type");
       this->opts.removeOptionalOption("device-color");

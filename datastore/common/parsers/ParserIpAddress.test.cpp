@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(testWellformedWithPrefix)
     , "ffff::ffff/64"
     , "ffff::/8"
     , "::ffff/15"
-    , "2001:db8::23:456:789/48"
+    , "2001:db8:1::23:456:789/48"
     };
 
   for (const auto& ip : ips) {
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(testWellformedNoPrefixV6)
       "::"
     , "::1"
     , "2001:db8:1:a::ffff"
-    , "2001:db8:1:a:0:23:456:789"
+    , "2001:db8:1:a:b:23:456:789"
     };
 
   for (const auto& ip : ips) {

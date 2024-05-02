@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -41,24 +41,25 @@ Parser::Parser() : Parser::base_type(start)
      )
     ;
 
-  // =============================================================================
+  // ===========================================================================
   // ARP Rules
-  // =============================================================================
+  // ===========================================================================
 
   arp =
     ( arpArista
     | arpCiscoIos
     | arpCiscoNxos
     //| arpCiscoWlc
+    | arpJuniperConfig
     )
     ;
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // ARP: Arista
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   arpArista =
-    arpHeaderArista >>
+    arpHeaderArista >
     *arpEntryArista
     ;
 
@@ -83,22 +84,22 @@ Parser::Parser() : Parser::base_type(start)
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // ARP: Cisco IOS
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   arpCiscoIos =
-    arpHeaderCiscoIos >>
+    arpHeaderCiscoIos >
     *arpEntryCiscoIos
     ;
 
   arpHeaderCiscoIos =
-    qi::lit("Protocol") >>
-    qi::lit("Address") >>
-    qi::lit("Age (min)") >>
-    qi::lit("Hardware Addr") >>
-    qi::lit("Type") >>
-    qi::lit("Interface") >>
+    qi::lit("Protocol") >
+    qi::lit("Address") >
+    qi::lit("Age (min)") >
+    qi::lit("Hardware Addr") >
+    qi::lit("Type") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
@@ -117,12 +118,12 @@ Parser::Parser() : Parser::base_type(start)
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // ARP: Cisco NXOS
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   arpCiscoNxos =
-    arpHeaderCiscoNxos >>
+    arpHeaderCiscoNxos >
     *arpEntryCiscoNxos
     ;
 
@@ -137,11 +138,11 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("Total number of entries:") >>
     qi::omit[qi::int_] >>
     qi::eol >>
-    qi::lit("Address") >>
-    qi::lit("Age") >>
-    qi::lit("MAC Address") >>
-    qi::lit("Interface") >>
-    qi::lit("Flags") >>
+    qi::lit("Address") >
+    qi::lit("Age") >
+    qi::lit("MAC Address") >
+    qi::lit("Interface") >
+    qi::lit("Flags") >
     (qi::eol | qi::eoi)
     ;
 
@@ -159,12 +160,12 @@ Parser::Parser() : Parser::base_type(start)
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // ARP: Cisco WLC and WISM
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   arpCiscoWlc =
-    arpHeaderCiscoWlc >>
+    arpHeaderCiscoWlc >
     *arpEntryCiscoWlc
     ;
 
@@ -199,9 +200,49 @@ Parser::Parser() : Parser::base_type(start)
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
-  // =============================================================================
+  // ===========================================================================
+  // ARP: Juniper Config
+  // ===========================================================================
+
+  arpJuniperConfig =
+    arpHeaderJuniper >
+    *arpEntryJuniper >
+    -arpFooterJuniper
+    ;
+
+  arpHeaderJuniper =
+    qi::lit("MAC Address") >
+    qi::lit("Address") >
+    -(qi::lit("Name")[(pnx::ref(nameColExists) = true)]) >
+    qi::lit("Interface") >
+    -qi::lit("Flags") >
+    -qi::lit("TTE") >
+    (qi::eol | qi::eoi)
+    ;
+
+  arpEntryJuniper =
+    ( macAddr[(qi::_b = qi::_1)] >>
+      ipv4Addr[(qi::_c = qi::_1)] >>
+      -(qi::eps(pnx::ref(nameColExists)) > token) >>
+      iface[(qi::_a = qi::_1)] >>
+      *token >>
+      -qi::int_ >>
+      (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
+       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
+       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    ;
+
+  arpFooterJuniper =
+    qi::lit("Total entries:") >
+    qi::int_ >
+    *(token | qi::eol) >
+    (qi::eol | qi::eoi)
+  ;
+
+  // ===========================================================================
   // NDP Rules
-  // =============================================================================
+  // ===========================================================================
 
   ndp =
     ( ndpArista
@@ -210,22 +251,22 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // NDP: Arista
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   ndpArista =
-    ndpHeaderArista >>
+    ndpHeaderArista >
     *ndpEntryArista
     ;
 
   ndpHeaderArista =
     -(qi::lit("VRF:") >> token >> qi::eol) >>
-    qi::lit("IPv6 Address") >>
-    qi::lit("Age") >>
-    qi::lit("Hardware Addr") >>
-    qi::lit("State") >>
-    qi::lit("Interface") >>
+    qi::lit("IPv6 Address") >
+    qi::lit("Age") >
+    qi::lit("Hardware Addr") >
+    qi::lit("State") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
@@ -242,26 +283,26 @@ Parser::Parser() : Parser::base_type(start)
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // NDP: Cisco
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   ndpCiscoIos =
-    ndpHeaderCiscoIos >>
+    ndpHeaderCiscoIos >
     *ndpEntryCiscoIos
     ;
 
   ndpCiscoIosDetail =
-    ndpHeaderCiscoIosDetail >>
+    ndpHeaderCiscoIosDetail >
     *ndpEntryCiscoIosDetail
     ;
 
   ndpHeaderCiscoIos =
-    qi::lit("IPv6 Address") >>
-    qi::lit("Age") >>
-    qi::lit("Link-layer Addr") >>
-    qi::lit("State") >>
-    qi::lit("Interface") >>
+    qi::lit("IPv6 Address") >
+    qi::lit("Age") >
+    qi::lit("Link-layer Addr") >
+    qi::lit("State") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
@@ -278,12 +319,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   ndpHeaderCiscoIosDetail =
-    qi::lit("IPv6 Address") >>
-    qi::lit("TRLV") >>
-    qi::lit("Age") >>
-    qi::lit("Link-layer Addr") >>
-    qi::lit("State") >>
-    qi::lit("Interface") >>
+    qi::lit("IPv6 Address") >
+    qi::lit("TRLV") >
+    qi::lit("Age") >
+    qi::lit("Link-layer Addr") >
+    qi::lit("State") >
+    qi::lit("Interface") >
     (qi::eol | qi::eoi)
     ;
 
@@ -300,7 +341,7 @@ Parser::Parser() : Parser::base_type(start)
        pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
     ;
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   age =
     +(qi::ascii::graph)
@@ -330,6 +371,7 @@ Parser::Parser() : Parser::base_type(start)
       (arpCiscoIos)       (arpHeaderCiscoIos)       (arpEntryCiscoIos)
       (arpCiscoNxos)      (arpHeaderCiscoNxos)      (arpEntryCiscoNxos)
       (arpCiscoWlc)       (arpHeaderCiscoWlc)       (arpEntryCiscoWlc)
+      (arpJuniperConfig) (arpHeaderJuniper) (arpEntryJuniper) (arpFooterJuniper)
       // NDP
       (ndpArista)         (ndpHeaderArista)         (ndpEntryArista)
       (ndpCiscoIos)       (ndpHeaderCiscoIos)       (ndpEntryCiscoIos)

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -37,6 +37,7 @@
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 #include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 
 #include "InterfaceHelper.hpp"
 #include "MetasploitModule.hpp"
@@ -124,46 +125,55 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
 
       for (auto& results : this->tResults) {
+        LOG_DEBUG << "Iterating over MacAddrs\n";
         for (auto& result : results.macAddrs) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over IpAddrs\n";
         for (auto& result : results.ipAddrs) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over Oses\n";
         for (auto& result : results.oses) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over Ports\n";
         for (auto& result : results.ports) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over TracerouteHops\n";
         for (auto& result : results.tracerouteHops) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over NessusResults\n";
         for (auto& result : results.nessusResults) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over Cves\n";
         for (auto& result : results.cves) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over MetasploitModules\n";
         for (auto& result : results.metasploitModules) {
           result.save(t, toolRunId, "");
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over Interfaces\n";
         for (auto& helper : results.interfaces) {
           for (auto& wrapMap : std::get<1>(helper).interfaces) {
             nmdo::DeviceInformation devInfo;
@@ -292,8 +302,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       port.setPort(portNum);
       port.setState(portState);
       port.setReason(portReason);
-
-      data.ports.push_back(port);
+      nmcu::addIfUnique(&data.ports, port);
 
       NessusResult nr;
       nr.port = port;
@@ -305,8 +314,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       nr.severity = severity;
       nr.description = description;
       nr.solution = solution;
-
-      data.nessusResults.push_back(nr);
+      nmcu::addIfUnique(&data.nessusResults, nr);
 
       // Extract CVE identifiers
       for (const auto& cveItem : reportItemNode.select_nodes("cve")) {
@@ -315,7 +323,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         nmdo::Cve cve(cveNode.text().as_string());
         cve.setPort(port);
         cve.setPluginId(pluginId);
-        data.cves.push_back(cve);
+        nmcu::addIfUnique(&data.cves, cve);
       }
 
       // Extract Metasploit modules
@@ -328,8 +336,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         mm.port = port;
         mm.pluginId = pluginId;
         mm.name = name;
-
-        data.metasploitModules.push_back(mm);
+        nmcu::addIfUnique(&data.metasploitModules, mm);
       }
 
       // Extract Interface mappings from 3 different plugins
@@ -387,8 +394,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         for (const auto& hostTag : hostTags) {
           ipAddr.addAlias(hostTag.node().text().as_string(), "nessus scan");
         }
-
-        data.ipAddrs.push_back(ipAddr);
+        nmcu::addIfUnique(&data.ipAddrs, ipAddr);
       }
 
       // Extract Mac Address
@@ -408,7 +414,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           for (auto it = tokens.begin(); it != tokens.end(); ++it, ++macCount) {
             nmdo::MacAddress macAddr(*it);
             macAddr.setResponding(isResponding);
-            data.macAddrs.push_back(macAddr);
+            nmcu::addIfUnique(&data.macAddrs, macAddr);
           }
 
           if (1 == macCount) { // If only one found, associate MAC-to-IP
@@ -430,8 +436,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           nmdo::OperatingSystem os(ipAddr);
           os.setCpe(cpe);
           os.setAccuracy(1.0);
-
-          data.oses.push_back(os);
+          nmcu::addIfUnique(&data.oses, os);
         }
       }
 
@@ -449,8 +454,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           tracerouteHop.setHopCount(static_cast<uint32_t>(std::stoul(
               std::string{tagNode.attribute("name").as_string()}.substr(15)
             )));
-
-          data.tracerouteHops.emplace_back(tracerouteHop);
+          nmcu::addIfUnique(&data.tracerouteHops, tracerouteHop);
         }
       }
 

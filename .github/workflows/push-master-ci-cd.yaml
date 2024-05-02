@@ -10,7 +10,7 @@ jobs:
     container: netmeld/netmeld-dev:latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Configure
       run: cmake -S . -B build
@@ -32,7 +32,7 @@ jobs:
         cpack
 
     - name: Upload Deb Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: netmeld-debs
         path: build/*.deb
@@ -44,7 +44,7 @@ jobs:
 
     steps:
     - name: Download All Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
 
     - name: Prepare For Packaging
       run: |
@@ -52,7 +52,7 @@ jobs:
         find . -iname "*.deb" -print | zip --junk-paths artifacts -@
 
     - name: Upload All Debs Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: all-debs
         path: artifacts.zip

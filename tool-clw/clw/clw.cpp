@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,6 +27,7 @@
 #include <netmeld/core/tools/AbstractTool.hpp>
 #include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/core/utils/ForkExec.hpp>
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 #include <netmeld/core/objects/Time.hpp>
 #include <netmeld/core/objects/Uuid.hpp>
 
@@ -75,10 +76,9 @@ class Tool : public nmct::AbstractTool
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
     Tool() : nmct::AbstractTool
-      (
-       "Netmeld command line wrapper",  // short description
-       PROGRAM_NAME,    // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION  // program version (set in CMakeLists.txt)
+      ( "Netmeld command line wrapper"  // short description
+      , PROGRAM_NAME    // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION  // program version (set in CMakeLists.txt)
       )
     {}
 
@@ -98,37 +98,39 @@ class Tool : public nmct::AbstractTool
 
       // Re-add select standard options, no short opts
       opts.addOptionalOption("zzzzzzzzzzhelp", std::make_tuple(
-            "help",
-            NULL_SEMANTIC,
-            "Show this help message, then exit.")
-          );
+            "help"
+          , NULL_SEMANTIC
+          , "Show this help message, then exit."
+          )
+        );
       opts.addOptionalOption("zzzzzzzzzzversion", std::make_tuple(
-            "version",
-            NULL_SEMANTIC,
-            "Show version information, then exit.")
-          );
+            "version"
+          , NULL_SEMANTIC
+          , "Show version information, then exit.")
+        );
       opts.addAdvancedOption("zzzzzzzzzzverbosity", std::make_tuple(
-            "verbosity",
-            po::value<nmcu::Severity>()->default_value(
-              nmcu::LoggerSingleton::getInstance().getLevel()),
-            "Alter verbosity level of tool.  See `man syslog` for levels."
+            "verbosity"
+          , po::value<nmcu::Severity>()->default_value(
+              nmcu::LoggerSingleton::getInstance().getLevel()
             )
-          );
+          , "Alter verbosity level of tool.  See `man syslog` for levels."
+          )
+        );
 
       // Add tool specific option(s)
       opts.addRequiredOption("command", std::make_tuple(
-            "command",
-            po::value<std::vector<std::string>>()->multitoken()->required(),
-            "Command to wrap")
-          );
+            "command"
+          , po::value<std::vector<std::string>>()->multitoken()->required()
+          , "Command to wrap")
+        );
       opts.addPositionalOption("command", -1);
     }
 
     template<typename Data>
     void
-    writeToFile(sfs::path const& path, const Data& data)
+    writeToFile(const std::string& filename, const Data& data)
     {
-      std::ofstream ofs {path};
+      std::ofstream ofs {toolRunResults/filename};
       ofs << data << std::endl;
       ofs.close();
     }
@@ -160,9 +162,9 @@ class Tool : public nmct::AbstractTool
 
       // Important configuration files in /etc/
       sfs::create_directories(dir + "etc");
-      std::vector<std::string> etc_files = {
-            "/etc/hosts",
-            "/etc/resolv.conf"
+      std::vector<std::string> etc_files {
+          "/etc/hosts"
+        , "/etc/resolv.conf"
         };
 
       for (const auto& file : etc_files) {
@@ -215,12 +217,12 @@ class Tool : public nmct::AbstractTool
 
       if (limitedNetworkCommands) {
         sfs::create_directories(dir + "/proc/net");
-        std::vector<std::string> procFiles = {
-              "/proc/net/arp",
-              "/proc/net/dev",
-              "/proc/net/fib_trie",
-              "/proc/net/route",
-              "/proc/net/wireless"
+        std::vector<std::string> procFiles {
+            "/proc/net/arp"
+          , "/proc/net/dev"
+          , "/proc/net/fib_trie"
+          , "/proc/net/route"
+          , "/proc/net/wireless"
           };
         for (const auto& file : procFiles) {
           if (sfs::exists(file)) {
@@ -234,15 +236,23 @@ class Tool : public nmct::AbstractTool
 
       // Firewall rules
       if (nmcu::isCmdAvailable("/sbin/iptables")) {
-        nmcu::cmdExecOrExit("/sbin/iptables-save --counters >> " + dir
-                   + "ip4_tables_save.txt");
-        nmcu::cmdExecOrExit("/sbin/ip6tables-save --counters >> " + dir
-                  + "ip6_tables_save.txt");
+        nmcu::cmdExecOrExit( "/sbin/iptables-save --counters >> "
+                           + dir
+                           + "ip4_tables_save.txt"
+                           );
+        nmcu::cmdExecOrExit( "/sbin/ip6tables-save --counters >> "
+                           + dir
+                           + "ip6_tables_save.txt"
+                           );
       } else if (nmcu::isCmdAvailable("iptables")) {
-        nmcu::cmdExecOrExit("iptables-save --counters >> " + dir
-                   + "ip4_tables_save.txt");
-        nmcu::cmdExecOrExit("ip6tables-save --counters >> " + dir
-                  + "ip6_tables_save.txt");
+        nmcu::cmdExecOrExit("iptables-save --counters >> "
+                           + dir
+                           + "ip4_tables_save.txt"
+                           );
+        nmcu::cmdExecOrExit("ip6tables-save --counters >> "
+                           + dir
+                           + "ip6_tables_save.txt"
+                           );
       } else {
         // warn the following message instead
         LOG_WARN << "iptables not found, no firewall information collected"
@@ -337,17 +347,15 @@ class Tool : public nmct::AbstractTool
 
             // Record meta-data about this tool run.
             writeToFile<nmco::Uuid>
-              (toolRunResults/"tool_run_id.txt", toolRunId);
+              ("tool_run_id.txt", toolRunId);
             writeToFile<nmco::Time>
-              (toolRunResults/"timestamp_start.txt", timestampStart);
+              ("timestamp_start.txt", timestampStart);
 
             writeToFile<std::string>
-              (toolRunResults/"command_line_original.txt",
-              nmcu::toString(args));
+              ("command_line_original.txt" , nmcu::toString(args));
             netmeld::utils::augmentArgs(args, toolRunResults);
             writeToFile<std::string>
-              (toolRunResults/"command_line_modified.txt",
-               nmcu::toString(args));
+              ("command_line_modified.txt" , nmcu::toString(args));
 
             createConfigFiles(toolRunResults);
             createNetworkFiles(toolRunResults);
@@ -475,7 +483,7 @@ class Tool : public nmct::AbstractTool
             waitpid(pid, &childResult, 0);
 
             writeToFile<nmco::Time>
-              (toolRunResults/"timestamp_end.txt", nmco::Time());
+              ("timestamp_end.txt", nmco::Time());
 
             // Make toolRunResults (and everything in it) read-only.
             if (true) {
@@ -488,9 +496,9 @@ class Tool : public nmct::AbstractTool
             // Import toolRunResults into the default database.
             if (nmcu::isCmdAvailable("nmdb-import-clw")) {
               std::vector<std::string> importCmd {
-                "nmdb-import-clw",
-                toolRunResults.string()
-              };
+                  "nmdb-import-clw"
+                , toolRunResults.string()
+                };
 
               nmcu::forkExecWait(importCmd);
             }

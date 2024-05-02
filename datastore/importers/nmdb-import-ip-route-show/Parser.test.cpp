@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
       nmdo::Route expected;
       expected.setDstIpNet(dstIpNet);
       expected.setNextHopIpAddr(nextHop);
-      expected.setIfaceName("eth0");
+      expected.setOutIfaceName("eth0");
       for (const auto& test : testsOkv4) {
         nmdo::Route out;
         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank)
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
       nmdo::Route expected;
       expected.setDstIpNet(dstIpNet);
       expected.setNextHopIpAddr(nextHop);
-      expected.setIfaceName("eth0");
+      expected.setOutIfaceName("eth0");
       for (const auto& test : testsOkv6) {
         nmdo::Route out;
         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank)
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
       nmdo::Route expected;
       expected.setDstIpNet(dstIp);
       expected.setNextHopIpAddr(nextHop);
-      expected.setIfaceName("eth0");
+      expected.setOutIfaceName("eth0");
       for (const auto& test : testsOkv4) {
         nmdo::Route out;
         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank)
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
       nmdo::Route expected;
       expected.setDstIpNet(dstIpNet);
       expected.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
-      expected.setIfaceName("eth0");
+      expected.setOutIfaceName("eth0");
       for (const auto& test : testsOkv6) {
         nmdo::Route out;
         BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank)

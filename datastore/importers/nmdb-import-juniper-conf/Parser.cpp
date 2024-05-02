@@ -228,12 +228,13 @@ Parser::Parser() : Parser::base_type(start)
                               , qi::_1
                               )
                    )
+        , pnx::bind(&nmdo::Route::setVrfId, &qi::_val, pnx::ref(DEFAULT_VRF_ID))
       )] >>
     qi::lit("next-hop") >>
     (  (ipAddr >> semicolon)
          [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
      | token
-         [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+         [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))]
     ) >> qi::eol
     ;
   // END OF: routing-options {...}

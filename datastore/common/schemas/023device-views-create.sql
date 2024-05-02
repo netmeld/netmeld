@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -183,43 +183,22 @@ JOIN mac_addrs_ip_addrs AS maia
 -- ----------------------------------------------------------------------
 
 CREATE VIEW device_ip_routes AS
--- All routes with an explicit next-VRF or outgoing interface:
 SELECT DISTINCT
-    device_id                     AS device_id
-  , vrf_id                        AS vrf_id
-  , table_id                      AS table_id
-  , is_active                     AS is_active
-  , dst_ip_net                    AS dst_ip_net
-  , next_vrf_id                   AS next_vrf_id
-  , next_table_id                 AS next_table_id
-  , next_hop_ip_addr              AS next_hop_ip_addr
-  , outgoing_interface_name       AS outgoing_interface_name
-  , protocol                      AS protocol
-  , administrative_distance       AS administrative_distance
-  , metric                        AS metric
-  , description                   AS description
+    device_id                                   AS device_id
+  , vrf_id                                      AS vrf_id
+  , table_id                                    AS table_id
+  , is_active                                   AS is_active
+  , dst_ip_net                                  AS dst_ip_net
+  , next_vrf_id                                 AS next_vrf_id
+  , next_table_id                               AS next_table_id
+  , next_hop_ip_addr                            AS next_hop_ip_addr
+  , nullif(max(COALESCE(outgoing_interface_name, '')), '')
+                                                AS outgoing_interface_name
+  , protocol                                    AS protocol
+  , administrative_distance                     AS administrative_distance
+  , metric                                      AS metric
+  , nullif(max(COALESCE(description, '')), '')  AS description
 FROM raw_device_ip_routes
-WHERE (next_vrf_id IS NOT NULL)
-   OR (outgoing_interface_name IS NOT NULL)
-UNION
--- Only retain routes with a NULL outgoing interface when there are not
--- any, otherwise identical, routes with a non-NULL outgoing interface:
-SELECT
-    device_id                     AS device_id
-  , vrf_id                        AS vrf_id
-  , table_id                      AS table_id
-  , is_active                     AS is_active
-  , dst_ip_net                    AS dst_ip_net
-  , next_vrf_id                   AS next_vrf_id
-  , next_table_id                 AS next_table_id
-  , next_hop_ip_addr              AS next_hop_ip_addr
-  , max(outgoing_interface_name)  AS outgoing_interface_name
-  , protocol                      AS protocol
-  , administrative_distance       AS administrative_distance
-  , metric                        AS metric
-  , max(description)              AS description
-FROM raw_device_ip_routes
-WHERE (next_vrf_id IS NULL)
 GROUP BY
     device_id
   , vrf_id
@@ -232,7 +211,6 @@ GROUP BY
   , protocol
   , administrative_distance
   , metric
-HAVING (max(outgoing_interface_name) IS NULL)
 ;
 
 

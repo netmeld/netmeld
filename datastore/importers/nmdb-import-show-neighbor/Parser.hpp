@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -51,7 +51,7 @@ class Parser :
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables are always private
+  protected: // Variables are always private
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start,
@@ -60,6 +60,7 @@ class Parser :
       arpCiscoIos,
       arpCiscoNxos,
       arpCiscoWlc,
+      arpJuniperConfig,
       ndp,
       ndpArista,
       ndpCiscoIos,
@@ -70,6 +71,8 @@ class Parser :
       arpHeaderCiscoIos,
       arpHeaderCiscoNxos,
       arpHeaderCiscoWlc,
+      arpHeaderJuniper,
+      arpFooterJuniper,
       ndpHeaderArista,
       ndpHeaderCiscoIos,
       ndpHeaderCiscoIosDetail;
@@ -80,6 +83,7 @@ class Parser :
       arpEntryCiscoIos,
       arpEntryCiscoNxos,
       arpEntryCiscoWlc,
+      arpEntryJuniper,
       ndpEntryArista,
       ndpEntryCiscoIos,
       ndpEntryCiscoIosDetail;
@@ -99,6 +103,9 @@ class Parser :
 
     // Supporting data structures
     Data d;
+
+    // Supporting variables
+    bool nameColExists {false};
 
   // ===========================================================================
   // Constructors

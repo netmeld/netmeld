@@ -227,12 +227,14 @@ Parser::Parser() : Parser::base_type(start)
 void
 Parser::setIfaceRoute(const std::string& _iface, const nmdo::IpAddress& _ip)
 {
+  d.routes[_iface].setVrfId(DEFAULT_VRF_ID);
   d.routes[_iface].setDstIpNet(_ip);
 }
 
 void
 Parser::setIfaceGateway(const std::string& _iface, const nmdo::IpAddress& _ip)
 {
+  d.routes[_iface].setVrfId(DEFAULT_VRF_ID);
   d.routes[_iface].setNextHopIpAddr(_ip);
 }
 

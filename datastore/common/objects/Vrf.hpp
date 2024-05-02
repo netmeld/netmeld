@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -61,14 +61,16 @@ namespace netmeld::datastore::objects {
     protected:
     public:
       void setId(const std::string&);
-      std::string getId() const;
 
       void addIface(const std::string&);
       void addRoute(const Route&);
       void merge(const Vrf&);
 
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
+      bool isValid() const;
+      void save( pqxx::transaction_base&
+               , const nmco::Uuid&
+               , const std::string&
+               ) override;
 
       std::string toDebugString() const override;
 

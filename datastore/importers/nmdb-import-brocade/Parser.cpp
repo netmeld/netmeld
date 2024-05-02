@@ -146,7 +146,7 @@ Parser::addIfaceRoute(const nmdo::IpAddress& rtrIp,
 {
   nmdo::Route route;
   route.setNextHopIpAddr(rtrIp);
-  route.setIfaceName(ifaceName);
+  route.setOutIfaceName(ifaceName);
 
   d.routes.push_back(route);
 }

@@ -29,8 +29,10 @@
 #include <pqxx/pqxx>
 
 #include <netmeld/datastore/tools/AbstractDatastoreTool.hpp>
+#include <netmeld/datastore/utils/QueriesCommon.hpp>
 
 namespace nmdt = netmeld::datastore::tools;
+namespace nmdu = netmeld::datastore::utils;
 namespace nmcu = netmeld::core::utils;
 
 
@@ -99,6 +101,8 @@ class Tool : public nmdt::AbstractDatastoreTool
       loadMacPrefixes(work);
 
       work.commit();
+
+      nmdu::dbPrepareCommon(db);
 
       return nmcu::Exit::SUCCESS;
     }

@@ -49,7 +49,7 @@ Parser::Parser() : Parser::base_type(start)
         [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
     ) >>
     ifaceName
-      [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))] >>
+      [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))] >>
     distance
       [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, qi::_1))] >>
     qi::lit('/') >>
@@ -74,7 +74,7 @@ Parser::Parser() : Parser::base_type(start)
     ) >>
     -qi::eol >>
     ifaceName
-      [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))] >>
+      [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))] >>
     distance
       [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, qi::_1))] >>
     qi::lit('/') >>

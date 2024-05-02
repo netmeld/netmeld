@@ -78,8 +78,7 @@ namespace netmeld::core::tools {
 
       return runTool();
     } catch (std::exception& e) {
-      LOG_ERROR << "Unhandled error: "
-                << typeid(e).name() << " -- " << e.what()
+      LOG_ERROR << typeid(e).name() << " -- " << e.what()
                 << std::endl
                 ;
       std::exit(nmcu::Exit::FAILURE);

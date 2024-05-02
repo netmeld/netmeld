@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -61,8 +61,12 @@ class Parser:
   // ===========================================================================
   private:
   protected:
-    std::string currVrf;
-    std::string currProtocol;
+    const std::string DEFAULT_VRF_ID  {""};//{"default"};
+    std::string       currVrf         {DEFAULT_VRF_ID};
+    std::string       currProtocol;
+
+    unsigned int currAdminDistance {0};
+    unsigned int currMetric {0};
 
     nmdo::IpNetwork currDstIpNet;
 
@@ -165,6 +169,7 @@ class Parser:
     qi::rule<nmdp::IstreamIter, std::string()>
         csvToken
       , token
+      , egressVrf
       ;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
@@ -174,6 +179,7 @@ class Parser:
 
     qi::rule<nmdp::IstreamIter>
         vrfName
+      , altRoutePath
       ;
 
     qi::rule<nmdp::IstreamIter, void(nmdo::Route&), qi::ascii::blank_type>
@@ -203,18 +209,13 @@ class Parser:
   // Methods
   // ===========================================================================
   private:
-    void setCurrDstIpNet(const nmdo::IpNetwork&);
-    void setCurrProtocol(const std::string&);
     void determineNullRoute(nmdo::Route&, const std::string&);
     void addRouteToData(Data&, nmdo::Route&);
     void addUnsupported(const std::string&);
     void finalizeVrfData(Data&);
     void updateProtocol(nmdo::Route&, const std::string&);
     void updateDstIpNet(nmdo::Route&, nmdo::IpNetwork&);
-
-    nmdo::IpNetwork getCurrDstIpNet();
-    std::string getCurrProtocol();
-    std::string getTypeCodeValue(const std::string&);
+    void updateDistanceMetric(nmdo::Route&, unsigned int, unsigned int);
 };
 
 #endif // PARSER_HPP

@@ -31,6 +31,7 @@ foreach(ITEM
     nmdb-graph-ac
     nmdb-graph-aws
     nmdb-graph-network
+    nmdb-graph-routes
   )
   target_as_tool(${ITEM})
 endforeach()

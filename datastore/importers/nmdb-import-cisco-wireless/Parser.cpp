@@ -135,12 +135,13 @@ Parser::addIface2(const std::string& name,
 
   if (rtr.isValid()){
     nmdo::Route route;
-    route.setIfaceName(name);
+    route.setOutIfaceName(name);
     if ("Null0" == name) {
       route.setNullRoute(true);
     }
     route.setDstIpNet(ip);
     route.setNextHopIpAddr(rtr);
+    route.setVrfId(DEFAULT_VRF_ID);
     d.routes.push_back(route);
   }
 }

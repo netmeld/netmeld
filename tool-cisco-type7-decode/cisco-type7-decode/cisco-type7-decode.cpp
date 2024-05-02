@@ -24,9 +24,11 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <format>
 #include <regex>
 
 #include <netmeld/core/tools/AbstractTool.hpp>
+#include <netmeld/core/utils/CmdExec.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 
@@ -98,6 +100,25 @@ class Tool : public nmct::AbstractTool
           );
 
       opts.addPositionalOption("password", -1);
+
+      opts.addAdvancedOption("store-in-db", std::make_tuple(
+            "store-in-db",
+            NULL_SEMANTIC,
+            "Used to store results in the database. Requires 'psql' binary."
+          ));
+
+      opts.addAdvancedOption("db-name", std::make_tuple(
+          "db-name",
+          po::value<std::string>()->default_value("site"),
+          "Database to connect to.")
+          );
+
+      opts.addAdvancedOption("db-args", std::make_tuple(
+          "db-args",
+          po::value<std::string>()->default_value(""),
+          "Additional database connection args."
+          " Space separated `key=value` libpqxx connection string parameters.")
+          );
     }
 
   protected: // Methods part of subclass API
@@ -123,13 +144,28 @@ class Tool : public nmct::AbstractTool
       }
 
       std::regex badChars("[^0-9a-fA-F]");
+      auto encoded = std::regex_replace(encPass, badChars, "");
+      auto decoded = oss.str();
+      LOG_INFO << encoded << ": " << decoded << '\n';
 
-      LOG_INFO << std::regex_replace(encPass, badChars, "")
-               << ": "
-               << oss.str()
-               << '\n'
-               ;
-
+      if (opts.exists("store-in-db")) {
+        if (nmcu::isCmdAvailable("psql")) {
+          std::string dbName {opts.getValue("db-name")};
+          std::string dbArgs {opts.getValue("db-args")};
+          nmcu::cmdExecOrExit(
+              std::format(R"(psql "{} dbname={}" -c)"
+                          R"(  "INSERT INTO raw_tool_observations)"
+                            "     (tool_run_id, category, observation)"
+                            "   VALUES"
+                            "     ('{}', '{}', 'Encoded: {}\nDecoded: {}')"
+                          R"(   ON CONFLICT DO NOTHING")",
+                          dbArgs, dbName,
+                          "32b2fd62-08ff-4d44-8da7-6fbd581a90c6", "notable",
+                          encoded, decoded));
+        } else {
+          LOG_WARN << "Could not store, 'psql' was not found\n";
+        }
+      }
       return nmcu::Exit::SUCCESS;
     }
 
