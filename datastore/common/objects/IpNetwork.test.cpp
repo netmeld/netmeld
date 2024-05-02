@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -57,8 +57,8 @@ class TestIpNetwork : public nmdo::IpNetwork {
     { return extraWeight; }
 
     template<size_t n>
-      std::bitset<n> getBits() const
-      { return asBitset<n>(); }
+    std::bitset<n> getBits() const
+    { return asBitset<n>(); }
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -86,9 +86,9 @@ BOOST_AUTO_TEST_CASE(testSettersSimple)
 {
   {
     const std::vector<std::tuple<std::string, size_t>> testsOk {
-      {"1.2.3.4", 32},
-      {"1:2:3:4:5:6:7:8", 128},
-    };
+        {"1.2.3.4", 32}
+      , {"1:2:3:4:5:6:7:8", 128}
+      };
 
     for (const auto& [ip, prefix] : testsOk) {
       TestIpNetwork ipNet {ip, ""};
@@ -192,18 +192,18 @@ BOOST_AUTO_TEST_CASE(testSettersIpAsBits)
   {
     const std::vector<std::tuple<size_t, std::string>> tests {
       // hex, ip
-      {0x0, "0.0.0.0"},
-      {0xff, "0.0.0.255"},
-      {0xffff, "0.0.255.255"},
-      {0xffffff, "0.255.255.255"},
-      {0xffffffff, "255.255.255.255"},
-      {0xff00ff00, "255.0.255.0"},
-      {0x00ff00ff, "0.255.0.255"},
-      {0x01010101, "1.1.1.1"},
-      {0x02020202, "2.2.2.2"},
-      {0x04040404, "4.4.4.4"},
-      {0x08080808, "8.8.8.8"},
-    };
+        {0x0, "0.0.0.0"}
+      , {0xff, "0.0.0.255"}
+      , {0xffff, "0.0.255.255"}
+      , {0xffffff, "0.255.255.255"}
+      , {0xffffffff, "255.255.255.255"}
+      , {0xff00ff00, "255.0.255.0"}
+      , {0x00ff00ff, "0.255.0.255"}
+      , {0x01010101, "1.1.1.1"}
+      , {0x02020202, "2.2.2.2"}
+      , {0x04040404, "4.4.4.4"}
+      , {0x08080808, "8.8.8.8"}
+      };
     const size_t bits = 32;
     for (const auto& [hex, ipStr] : tests) {
       TestIpNetwork ip {ipStr, ""};
@@ -214,35 +214,33 @@ BOOST_AUTO_TEST_CASE(testSettersIpAsBits)
   {
     const std::vector<std::tuple<size_t, size_t, std::string>> tests {
       // hi, lo, ip
-      {0x0, 0x0,
-        "::"},
-      {0x0, 0xffff,
-        "::ffff"},
-      {0x0, 0xffffffff,
-        "::ffff:ffff"},
-      {0x0, 0xffffffffffff,
-        "::ffff:ffff:ffff"},
-      {0x0, 0xffffffffffffffff,
-        "::ffff:ffff:ffff:ffff"},
-      {0xffff, 0xffffffffffffffff,
-        "::ffff:ffff:ffff:ffff:ffff"},
-      {0xffffffff, 0xffffffffffffffff,
-        "::ffff:ffff:ffff:ffff:ffff:ffff"},
-      {0xffffffffffff, 0xffffffffffffffff,
-        "::ffff:ffff:ffff:ffff:ffff:ffff:ffff"},
-      {0xffffffffffffffff, 0xffffffffffffffff,
-        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"},
-      {0x0001000100010001, 0x0001000100010001,
-        "1:1:1:1:1:1:1:1"},
-      {0x0010001000100010, 0x0010001000100010,
-        "10:10:10:10:10:10:10:10"},
-      {0x0100010001000100, 0x0100010001000100,
-        "100:100:100:100:100:100:100:100"},
-      {0x1000100010001000, 0x1000100010001000,
-        "1000:1000:1000:1000:1000:1000:1000:1000"},
-      {0x1001100110011001, 0x1001100110011001,
-        "1001:1001:1001:1001:1001:1001:1001:1001"},
-    };
+        {0x0, 0x0
+        , "::"}
+      , {0x0, 0xffff
+        , "::ffff"}
+      , {0x0, 0xffffffff
+        , "::ffff:ffff"}
+      , {0x0, 0xffffffffffff
+        , "::ffff:ffff:ffff"}
+      , {0x0, 0xffffffffffffffff
+        , "::ffff:ffff:ffff:ffff"}
+      , {0xffff, 0xffffffffffffffff
+        , "::ffff:ffff:ffff:ffff:ffff"}
+      , {0xffffffff, 0xffffffffffffffff
+        , "::ffff:ffff:ffff:ffff:ffff:ffff"}
+      , {0xffffffffffffffff, 0xffffffffffffffff
+        , "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"}
+      , {0x0001000100010001, 0x0001000100010001
+        , "1:1:1:1:1:1:1:1"}
+      , {0x0010001000100010, 0x0010001000100010
+        , "10:10:10:10:10:10:10:10"}
+      , {0x0100010001000100, 0x0100010001000100
+        , "100:100:100:100:100:100:100:100"}
+      , {0x1000100010001000, 0x1000100010001000
+        , "1000:1000:1000:1000:1000:1000:1000:1000"}
+      , {0x1001100110011001, 0x1001100110011001
+        , "1001:1001:1001:1001:1001:1001:1001:1001"}
+      };
     const size_t bits = 128;
     for (const auto& [hi, lo, ipStr] : tests) {
       TestIpNetwork ip {ipStr, ""};
@@ -383,10 +381,10 @@ BOOST_AUTO_TEST_CASE(testSettersMask)
   {
     TestIpNetwork ipNet {"1234:5678:abcd:ef01:2345:6789:0abc:def0", ""};
     std::vector<std::tuple<unsigned int, std::string>> masks {
-      {128, "ffff:0000:ffff::0"},
-      {128, "ffff:ffaf::0"},
-      {128, "1:1:1:1:1:1:1:1"},
-    };
+        {128, "ffff:0000:ffff::0"}
+      , {128, "ffff:ffaf::0"}
+      , {128, "1:1:1:1:1:1:1:1"}
+      };
 
     for (const auto& [prefix, mask] : masks) {
       ipNet.setNetmask(nmdo::IpNetwork(mask));
@@ -396,10 +394,10 @@ BOOST_AUTO_TEST_CASE(testSettersMask)
 
   {
     std::vector<std::tuple<unsigned int, std::string>> masks {
-      {32, "0.0.0.27"},
-      {32, "0.1.0.1"},
-      {32, "1.1.1.1"},
-    };
+        {32, "0.0.0.27"}
+      , {32, "0.1.0.1"}
+      , {32, "1.1.1.1"}
+      };
 
     for (const auto& [prefix, mask] : masks) {
       TestIpNetwork ipMask;

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -53,12 +53,6 @@ namespace netmeld::datastore::objects {
     vrfId = _vrfId;
   }
 
-  std::string
-  Vrf::getId() const
-  {
-    return vrfId;
-  }
-
   void
   Vrf::addIface(const std::string& iface)
   {
@@ -74,36 +68,48 @@ namespace netmeld::datastore::objects {
   void
   Vrf::merge(const Vrf& other)
   {
-    std::copy(
-        other.ifaces.begin(),
-        other.ifaces.end(),
-        std::back_inserter(ifaces)
-        );
+    std::copy( other.ifaces.begin()
+             , other.ifaces.end()
+             , std::back_inserter(ifaces)
+             );
 
-    std::copy(
-        other.routes.begin(),
-        other.routes.end(),
-        std::back_inserter(routes)
-        );
+    std::copy( other.routes.begin()
+             , other.routes.end()
+             , std::back_inserter(routes)
+             );
+  }
+
+  bool
+  Vrf::isValid() const
+  {
+    return !vrfId.empty();
   }
 
   void
-  Vrf::save(pqxx::transaction_base& t,
-            const nmco::Uuid& toolRunId, const std::string& deviceId)
+  Vrf::save( pqxx::transaction_base& t
+           , const nmco::Uuid& toolRunId
+           , const std::string& deviceId
+           )
   {
-    t.exec_prepared("insert_raw_device_vrf",
-        toolRunId,
-        deviceId,
-        vrfId
-        );
+    if (!isValid()) {
+      LOG_DEBUG << "Vrf object is not saving: " << toDebugString()
+                << std::endl;
+      return;
+    }
+
+    t.exec_prepared( "insert_raw_device_vrf"
+                   , toolRunId
+                   , deviceId
+                   , vrfId
+                   );
 
     for (const auto& iface : ifaces) {
-      t.exec_prepared("insert_raw_device_vrf_interface",
-          toolRunId,
-          deviceId,
-          vrfId,
-          iface
-          );
+      t.exec_prepared( "insert_raw_device_vrf_interface"
+                     , toolRunId
+                     , deviceId
+                     , vrfId
+                     , iface
+                     );
     }
 
     for (auto& route : routes) {
@@ -116,11 +122,12 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "[" // opening bracket
-        << "vrfId: " << vrfId << ", "
-        << "ifaces: " << ifaces << ", "
-        << "routes: " << routes
-        << "]"; // closing bracket
+    oss << "["
+        << "vrfId: " << vrfId
+        << ", ifaces: " << ifaces
+        << ", routes: " << routes
+        << "]"
+        ;
 
     return oss.str();
   }

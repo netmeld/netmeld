@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -72,8 +72,8 @@ namespace netmeld::datastore::objects {
       void setDstIpNetSetId(const std::string&, const std::string& = "");
       void setDescription(const std::string&);
 
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
+      virtual void save( pqxx::transaction_base&
+                       , const nmco::Uuid&, const std::string&) override;
       std::string toDebugString() const override;
 
       std::strong_ordering operator<=>(const AclRule&) const;

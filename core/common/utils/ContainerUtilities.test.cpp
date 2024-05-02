@@ -24,35 +24,49 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef NESSUS_RESULT
-#define NESSUS_RESULT
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/Port.hpp>
+#include <netmeld/core/utils/ContainerUtilities.hpp>
+#include <vector>
+#include <set>
 
-namespace nmdo = netmeld::datastore::objects;
+namespace nmcu = netmeld::core::utils;
 
-class NessusResult : public nmdo::AbstractDatastoreObject
+BOOST_AUTO_TEST_CASE(testToString)
 {
-  public:
-    nmdo::Port    port;
-    unsigned int  pluginId;
-    std::string   pluginName;
-    std::string   pluginFamily;
-    std::string   pluginType;
-    std::string   pluginOutput;
-    unsigned int  severity;
-    std::string   description;
-    std::string   solution;
+  {
+    std::set<std::string> test {"a", "b", "c"};
 
-  public:
-    bool isValid() const override;
-    void save( pqxx::transaction_base&
-             , const nmco::Uuid&, const std::string&) override;
-    std::string toDebugString() const;
+    BOOST_TEST("a b c" == nmcu::toString(test));
+    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
+    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
+  }
+  {
+    std::vector<std::string> test {"a", "b", "c"};
 
-    std::partial_ordering operator<=>(const NessusResult&) const;
-    bool operator==(const NessusResult&) const;
-};
+    BOOST_TEST("a b c" == nmcu::toString(test));
+    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
+    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
+  }
+}
 
-#endif //NESSUS_RESULT
+BOOST_AUTO_TEST_CASE(testUniquePushBack)
+{
+  std::vector<std::string> control {"a", "bb", "c"};
+  {
+    std::vector<std::string> test;
+    std::vector<std::string> sink;
+
+    for (const auto& item : {"a", "a", "bb", "c", "bb"}) {
+      sink.push_back(item);
+      nmcu::addIfUnique(&test, item);
+    }
+    for (const std::string& item : sink) {
+      nmcu::addIfUnique(&test, item);
+    }
+
+    BOOST_TEST(control == test);
+  }
+}

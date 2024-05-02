@@ -110,12 +110,14 @@ class Parser:
     std::string                         tgtIface;
     std::map<std::string, std::string>  zoneIfaceBook;
 
-    const std::string DEFAULT_ZONE = "global";
+    const std::string DEFAULT_ZONE {"global"};
 
     std::string bookName {DEFAULT_ZONE};
     std::string tgtZone  {DEFAULT_ZONE};
 
     size_t curRuleId;
+
+    const std::string DEFAULT_VRF_ID {""};//{"master"};
 
 
   // ===========================================================================

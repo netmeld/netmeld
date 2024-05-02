@@ -370,7 +370,7 @@ Parser::parseConfigVirtualRouter(const pugi::xml_node& virtualRouterNode)
         staticRouteEntryNode.select_node("interface")
       };
       if (interfaceMatch) {
-        route.setIfaceName(interfaceMatch.node().text().as_string());
+        route.setOutIfaceName(interfaceMatch.node().text().as_string());
       }
 
       const auto metricMatch{

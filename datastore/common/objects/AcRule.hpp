@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -73,8 +73,6 @@ namespace netmeld::datastore::objects {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void smartVectorAdd(const std::string&, std::vector<std::string>* const);
-
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setRuleId(const size_t);
