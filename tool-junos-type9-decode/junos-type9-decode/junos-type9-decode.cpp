@@ -43,11 +43,6 @@ class Tool : public nmct::AbstractTool
   // Variables
   // ===========================================================================
   private:   // Variables intented for internal only use
-    std::string encoded {""};
-
-  protected: // Variables intended for internal/subclass API
-    std::string decoded {""};
-
     // Used for lookup table generation
     const std::vector<std::string> keyFamilies {
         "QzF3n6/9CAtpu0O"
@@ -113,6 +108,10 @@ class Tool : public nmct::AbstractTool
       , {'s', 1} , {'t', 3} , {'u', 3} , {'v', 2} , {'w', 1} , {'x', 2}
       , {'y', 2} , {'z', 3}
       };
+
+  protected: // Variables intended for internal/subclass API
+    std::string encoded {""};
+    std::string decoded {""};
 
   public: // Variables should rarely appear at this scope
 
