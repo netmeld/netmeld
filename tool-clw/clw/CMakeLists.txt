@@ -1,5 +1,5 @@
 #=============================================================================
-# Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -32,5 +32,19 @@ add_executable(${TGT_TOOL}
 target_link_libraries(${TGT_TOOL}
     netmeld-core
   )
+
+foreach(ITEM
+    AugmentArgs
+  )
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+    )
+  target_link_libraries(${TGT_TEST}
+      netmeld-core
+    )
+endforeach()
 
 nm_install_bin(${TGT_TOOL})
