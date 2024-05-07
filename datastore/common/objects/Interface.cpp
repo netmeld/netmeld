@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -78,6 +78,7 @@ namespace netmeld::datastore::objects {
   void
   Interface::addIpAddress(const IpAddress& ipAddr)
   {
+    if (ipAddr == IpAddress()) { return; } // don't add defaults
     macAddr.addIpAddress(ipAddr);
   }
 
@@ -109,8 +110,8 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Interface::save(pqxx::transaction_base& t,
-                  const nmco::Uuid& toolRunId, const std::string& deviceId)
+  Interface::save( pqxx::transaction_base& t
+                 , const nmco::Uuid& toolRunId, const std::string& deviceId)
   {
     if (!isValid() && !deviceId.empty()) {
       LOG_DEBUG << "Interface object is not saving: " << toDebugString()
@@ -119,45 +120,48 @@ namespace netmeld::datastore::objects {
     }
 
     //LOG_DEBUG << "Inserting interface" << std::endl;
-    t.exec_prepared("insert_raw_device_interface",
-      toolRunId,
-      deviceId,
-      name,
-      mediaType,
-      isUp,
-      description);
+    t.exec_prepared( "insert_raw_device_interface"
+                   , toolRunId
+                   , deviceId
+                   , name
+                   , mediaType
+                   , isUp
+                   , description
+                   );
 
     macAddr.setResponding(isUp);
     macAddr.save(t, toolRunId, deviceId);
 
     // Tie interface to MAC
     if (macAddr.isValid()) {
-      t.exec_prepared("insert_raw_device_mac_addr",
-        toolRunId,
-        deviceId,
-        name,
-        macAddr.toString());
+      t.exec_prepared( "insert_raw_device_mac_addr"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , macAddr.toString()
+                     );
     } else {
       LOG_WARN << "Invalid MAC for: "
-           << deviceId << ", " << name << ", " << macAddr
-           << std::endl;
+               << deviceId << ", " << name << ", " << macAddr
+               << std::endl;
     }
 
     // Tie interface to IP
     for (const auto& ipAddr : macAddr.getIpAddresses()) {
       if (!ipAddr.isValid()) { continue; }
 
-      t.exec_prepared("insert_raw_device_ip_addr",
-        toolRunId,
-        deviceId,
-        name,
-        ipAddr.toString());
+      t.exec_prepared( "insert_raw_device_ip_addr"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , ipAddr.toString()
+                     );
     }
   }
 
   void
-  Interface::saveAsMetadata(pqxx::transaction_base& t,
-                            const nmco::Uuid& toolRunId)
+  Interface::saveAsMetadata( pqxx::transaction_base& t
+                           , const nmco::Uuid& toolRunId)
   {
     if (!isValid()) {
       LOG_DEBUG << "Interface object is not saving as metadata: "
@@ -165,26 +169,29 @@ namespace netmeld::datastore::objects {
       return;
     }
 
-    t.exec_prepared("insert_tool_run_interface",
-      toolRunId,
-      name,
-      mediaType,
-      isUp);
+    t.exec_prepared( "insert_tool_run_interface"
+                   , toolRunId
+                   , name
+                   , mediaType
+                   , isUp
+                   );
 
     if (macAddr.isValid()) {
-      t.exec_prepared("insert_tool_run_mac_addr",
-        toolRunId,
-        name,
-        macAddr.toString());
+      t.exec_prepared( "insert_tool_run_mac_addr"
+                     , toolRunId
+                     , name
+                     , macAddr.toString()
+                     );
     }
 
     for (const auto& ipAddr : macAddr.getIpAddresses()) {
       if (!ipAddr.isValid()) { continue; }
 
-      t.exec_prepared("insert_tool_run_ip_addr",
-        toolRunId,
-        name,
-        ipAddr.toString());
+      t.exec_prepared( "insert_tool_run_ip_addr"
+                     , toolRunId
+                     , name
+                     , ipAddr.toString()
+                     );
     }
   }
 
@@ -193,14 +200,14 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "["; // opening bracket
-
-    oss << "name: " << name  << ", "
-        << "description: " << description  << ", "
-        << "isUp: " << std::boolalpha << isUp << ", "
-        << "mediaType: " << mediaType  << ", "
-        << "macAddr: " << macAddr .toDebugString()
-        << "]"; // closing bracket
+    oss << "[" // opening bracket
+        << "name: " << name
+        << ", description: " << description
+        << ", isUp: " << std::boolalpha << isUp
+        << ", mediaType: " << mediaType
+        << ", macAddr: " << macAddr.toDebugString()
+        << "]" // closing bracket
+        ;
 
     return oss.str();
   }
@@ -210,10 +217,15 @@ namespace netmeld::datastore::objects {
   {
     flags = _flags;
 
-    if (flags.find(",UP") != std::string::npos ||
-        flags.find("<UP") != std::string::npos)
-    { setUp(); }
-    else { setDown(); }
+    if (  flags.find(",UP") != std::string::npos
+       || flags.find("<UP") != std::string::npos
+       )
+    {
+      setUp();
+    }
+    else {
+      setDown();
+    }
   }
 
   void

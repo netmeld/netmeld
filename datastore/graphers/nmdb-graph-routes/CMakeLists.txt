@@ -33,20 +33,6 @@ target_link_libraries(${TGT_TOOL}
     netmeld-datastore
   )
 
+# The following is commented out as we don't want to actually install templates
 nm_install_bin(${TGT_TOOL})
-
-foreach(ITEM
-    cisco.svg
-    desktop.svg
-    docker.svg
-    firewall.svg
-    internet.svg
-    juniper.svg
-    router.svg
-    server.svg
-    switch.svg
-    unknown.svg
-    vm.svg
-  )
-  nm_install_conf("images/${ITEM}" "${NETMELD_IMAGE_DIR}")
-endforeach()
+#nm_install_conf(file dir)

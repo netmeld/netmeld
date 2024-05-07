@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -64,9 +64,8 @@ Parser::Parser() : Parser::base_type(start)
 
   vrfName %=
     -qi::lit('"')
-    >> ( (qi::lit("default") > qi::attr(std::string()))
-       | qi::as_string[+(qi::ascii::graph - qi::lit('"'))]
-       ) [(pnx::bind(&Parser::currVrf, this) = qi::_1)]
+    >> (qi::as_string[+(qi::ascii::graph - qi::lit('"'))])
+          [(pnx::ref(currVrf) = qi::_1)]
     >> -qi::lit('"')
     ;
 
@@ -94,8 +93,7 @@ Parser::Parser() : Parser::base_type(start)
     | ( ipv4TypeCodeDstIpNet(qi::_val) >> -qi::eol
       >> ( ( qi::lit("is directly connected")
            > -(qi::lit("(source VRF ") > csvToken)
-           ) [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, 0)
-             , pnx::bind(&nmdo::Route::setMetric, &qi::_val, 0)
+           ) [(pnx::bind(&Parser::updateDistanceMetric, this , qi::_val, 0, 0)
              , pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val
                         , nmdo::IpAddress::getIpv4Default()
                         )
@@ -109,7 +107,7 @@ Parser::Parser() : Parser::base_type(start)
          )
       > -(qi::lit(",") >> uptime)
       > -(qi::lit(",") >> ifaceName(qi::_val))
-      > -(qi::lit("(egress VRF ") > csvToken)
+      > -egressVrf [(pnx::bind(&nmdo::Route::setNextVrfId, &qi::_val, qi::_1))]
       )
     )
     ;
@@ -143,11 +141,10 @@ Parser::Parser() : Parser::base_type(start)
       > ( (rtrIpv6Addr(qi::_val) > qi::lit(",") > ifaceName(qi::_val))
         | (ifaceName(qi::_val))
         )
-      > -(qi::lit("(egress VRF ") > qi::omit[csvToken])
+      > -egressVrf [(pnx::bind(&nmdo::Route::setNextVrfId, &qi::_val, qi::_1))]
       > -(qi::lit(", receive"))
       > -(qi::lit(", directly connected")
-             [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, 0)
-             , pnx::bind(&nmdo::Route::setMetric, &qi::_val, 0)
+             [(pnx::bind(&Parser::updateDistanceMetric, this , qi::_val, 0, 0)
              , pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val
                         , nmdo::IpAddress::getIpv6Default()
                         )
@@ -170,7 +167,7 @@ Parser::Parser() : Parser::base_type(start)
   ipv4TypeCodeDstIpNet =
     typeCode(qi::_r1)
     >> ( (dstIpv4Net(qi::_r1))
-       | (token >> ipv4Addr) [(pnx::bind(&Parser::addUnsupported, this
+       | (token >> ipv4Addr) [(pnx::bind( &Parser::addUnsupported, this
                                         , "Subnet alias -- " + qi::_1
                                         )
                              )]
@@ -182,14 +179,22 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   distanceMetric = // [distance/metric]
-    (qi::lit('[') > qi::uint_ > qi::lit('/') > qi::uint_ > qi::lit(']'))
-        [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_r1, qi::_1)
-        , pnx::bind(&nmdo::Route::setMetric, &qi::_r1, qi::_2)
+    ( ( qi::lit('[') > qi::uint_ > qi::lit('/') > qi::uint_ > qi::lit(']')
+      ) [(pnx::bind( &Parser::updateDistanceMetric, this
+                   , qi::_r1, qi::_1, qi::_2
+                   )
         )]
+    | (altRoutePath) [(pnx::bind( &Parser::updateDistanceMetric, this
+                                , qi::_r1
+                                , pnx::ref(currAdminDistance)
+                                , pnx::ref(currMetric)
+                                )
+                     )]
+    )
     ;
 
   typeCode =
-    ( (&qi::lit('[') > qi::attr(pnx::bind(&Parser::currProtocol, this)))
+    ( (altRoutePath > qi::attr(pnx::ref(currProtocol)))
     | (qi::as_string[qi::repeat(5)[qi::char_]])
     ) [(pnx::bind(&Parser::updateProtocol, this, qi::_r1, qi::_1))]
     ;
@@ -200,7 +205,7 @@ Parser::Parser() : Parser::base_type(start)
 
   dstIpv4Net =
     ( (ipv4Net)
-    | (&qi::lit('[') > qi::attr(pnx::bind(&Parser::currDstIpNet, this)))
+    | (altRoutePath > qi::attr(pnx::ref(currDstIpNet)))
     ) [(pnx::bind(&Parser::updateDstIpNet, this, qi::_r1, qi::_1))]
     ;
 
@@ -214,11 +219,17 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
+  altRoutePath =
+    ( &qi::lit('[')
+    | &qi::lit("via")
+    )
+    ;
+
   rtrIpv4Addr =
     ( (ipv4Addr)
           [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_r1, qi::_1))]
     | (csvToken)
-          [(pnx::bind(&Parser::addUnsupported, this
+          [(pnx::bind( &Parser::addUnsupported, this
                      , "Router alias -- " + qi::_1
                      )
           )]
@@ -241,9 +252,13 @@ Parser::Parser() : Parser::base_type(start)
 
   ifaceName =
     (!&qi::lit('['))
-    > csvToken [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_r1, qi::_1)
+    > csvToken [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_r1, qi::_1)
                , pnx::bind(&Parser::determineNullRoute, this, qi::_r1, qi::_1)
                )]
+    ;
+
+  egressVrf =
+    qi::lit("(egress VRF ") > +(qi::ascii::graph - qi::lit(')')) > qi::lit(')')
     ;
 
   ignoredLine =
@@ -260,31 +275,38 @@ Parser::Parser() : Parser::base_type(start)
 
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
+      (altRoutePath)
+      (codesLegend)
+      (distanceMetric)
+      (dstIpv4Net)
+      (dstIpv6Net)
+      (egressVrf)
+      (ifaceName)
+      (ipv4Net)
+      (ipv4Route)
+      (ipv4RouteIos)
+      (ipv4RouteNxos)
+      (ipv4RouteHeader)
+      (ipv4TypeCodeDstIpNet)
+      (ipv6Net)
+      (ipv6Route)
+      (ipv6RouteIos)
+      (ipv6RouteNxos)
+      (ipv6TypeCodeDstIpNet)
+      (rtrIpv4Addr)
+      (rtrIpv6Addr)
+      (type)
+      (typeCode)
+      (uptime)
       (vrf)
       (vrfHeader)
       (vrfHeaderIos)
       (vrfHeaderNxos)
-      (codesLegend)
-      (ipv4Route)
-      (ipv4RouteIos)
-      (ipv4RouteNxos)
-      (ipv6Route)
-      (ipv6RouteIos)
-      (ipv6RouteNxos)
-      (ipv4TypeCodeDstIpNet)
-      (ipv6TypeCodeDstIpNet)
-      (dstIpv4Net)
-      (ipv4Net)
-      (rtrIpv4Addr)
-      (dstIpv6Net)
-      (rtrIpv6Addr)
-      (typeCode)
-      (distanceMetric)
-      (uptime)
-      (ifaceName)
+      (vrfName)
       //(csvToken)
       //(token)
       //(ignoredLine)
+      //(codesLegend)
       );
 }
 
@@ -300,6 +322,9 @@ Parser::determineNullRoute(nmdo::Route& _route, const std::string& _ifaceName)
 void
 Parser::addRouteToData(Data& _d, nmdo::Route& _route)
 {
+  if ("default" == currVrf) {
+    currVrf = DEFAULT_VRF_ID;
+  }
   _route.setVrfId(currVrf);
   _d.routes.push_back(_route);
 }
@@ -310,8 +335,10 @@ Parser::finalizeVrfData(Data& _d)
   _d.observations = currObservations;
 
   // clear curr's
-  currVrf = "";
+  currVrf = DEFAULT_VRF_ID;
   currProtocol = "";
+  currAdminDistance = 0;
+  currMetric = 0;
   currDstIpNet = nmdo::IpNetwork();
   currObservations = nmdo::ToolObservations();
 }
@@ -342,4 +369,16 @@ Parser::updateDstIpNet(nmdo::Route& _route, nmdo::IpNetwork& _dstIpNet)
 {
   _route.setDstIpNet(_dstIpNet);
   currDstIpNet = _dstIpNet;
+}
+
+void
+Parser::updateDistanceMetric( nmdo::Route& _route
+                            , unsigned int adminDistance
+                            , unsigned int metric
+                            )
+{
+  _route.setAdminDistance(adminDistance);
+  currAdminDistance = adminDistance;
+  _route.setMetric(metric);
+  currMetric = metric;
 }

@@ -24,35 +24,31 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef NESSUS_RESULT
-#define NESSUS_RESULT
+#ifndef CONTAINER_UTILITIES_HPP
+#define CONTAINER_UTILITIES_HPP
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/Port.hpp>
+#include <sstream>
+#include <string>
 
-namespace nmdo = netmeld::datastore::objects;
 
-class NessusResult : public nmdo::AbstractDatastoreObject
-{
-  public:
-    nmdo::Port    port;
-    unsigned int  pluginId;
-    std::string   pluginName;
-    std::string   pluginFamily;
-    std::string   pluginType;
-    std::string   pluginOutput;
-    unsigned int  severity;
-    std::string   description;
-    std::string   solution;
+namespace netmeld::core::utils {
 
-  public:
-    bool isValid() const override;
-    void save( pqxx::transaction_base&
-             , const nmco::Uuid&, const std::string&) override;
-    std::string toDebugString() const;
+  // ==========================================================================
+  // toString()
+  template<typename Iterator>
+  std::string toString(Iterator, Iterator, const std::string&);
 
-    std::partial_ordering operator<=>(const NessusResult&) const;
-    bool operator==(const NessusResult&) const;
-};
+  template<typename SequenceContainer>
+  std::string toString(const SequenceContainer&, const char=' ');
 
-#endif //NESSUS_RESULT
+  template<typename SequenceContainer>
+  std::string toString(const SequenceContainer&, const std::string&);
+  // ==========================================================================
+
+  template<typename SequenceContainer, typename T>
+  void addIfUnique(SequenceContainer* const, const T&);
+}
+
+#include "ContainerUtilities.ipp"
+
+#endif  /* CONTAINER_UTILITIES_HPP */

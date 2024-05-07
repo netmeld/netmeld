@@ -24,35 +24,51 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef NESSUS_RESULT
-#define NESSUS_RESULT
+// NOTE This implementation is included in the header (at the end) since it
+//      leverages templating.
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
-#include <netmeld/datastore/objects/Port.hpp>
+#include <algorithm>
 
-namespace nmdo = netmeld::datastore::objects;
+namespace netmeld::core::utils {
 
-class NessusResult : public nmdo::AbstractDatastoreObject
-{
-  public:
-    nmdo::Port    port;
-    unsigned int  pluginId;
-    std::string   pluginName;
-    std::string   pluginFamily;
-    std::string   pluginType;
-    std::string   pluginOutput;
-    unsigned int  severity;
-    std::string   description;
-    std::string   solution;
+  // ==========================================================================
+  // toString()
+  template<typename Iterator>
+  std::string
+  toString(Iterator begin, Iterator end, const std::string& sep)
+  {
+    std::ostringstream oss;
+    if (begin != end) {
+      oss << *begin;
+      ++begin;
+      for (; begin != end; ++begin) {
+        oss << sep << *begin;
+      }
+    }
 
-  public:
-    bool isValid() const override;
-    void save( pqxx::transaction_base&
-             , const nmco::Uuid&, const std::string&) override;
-    std::string toDebugString() const;
+    return oss.str();
+  }
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const char sep)
+  {
+    const std::string sSep {sep};
+    return toString(con.begin(), con.end(), sSep);
+  }
+  template<typename SequenceContainer>
+  std::string
+  toString(const SequenceContainer& con, const std::string& sep)
+  {
+    return toString(con.begin(), con.end(), sep);
+  }
+  // ==========================================================================
 
-    std::partial_ordering operator<=>(const NessusResult&) const;
-    bool operator==(const NessusResult&) const;
-};
-
-#endif //NESSUS_RESULT
+  template<typename SequenceContainer, typename T>
+  void
+  addIfUnique(SequenceContainer* const con, const T& item)
+  {
+    if (std::find(con->begin(), con->end(), item) == con->end()) {
+      con->emplace_back(item);
+    }
+  }
+}

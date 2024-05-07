@@ -57,7 +57,7 @@ class TestRoute : public nmdo::Route {
     { return nextHopIpAddr; }
 
     std::string getIfaceName() const
-    { return ifaceName; }
+    { return outIfaceName; }
 
     std::string getProtocol() const
     { return protocol; }
@@ -130,8 +130,8 @@ BOOST_AUTO_TEST_CASE(testSetters)
   {
     TestRoute route;
 
-    route.setIfaceName("ifaceName");
-    BOOST_CHECK_EQUAL("ifacename", route.getIfaceName());
+    route.setOutIfaceName("outIfaceName");
+    BOOST_CHECK_EQUAL("outifacename", route.getIfaceName());
   }
 
   {
