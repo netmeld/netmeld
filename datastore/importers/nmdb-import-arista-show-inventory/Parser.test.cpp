@@ -238,59 +238,17 @@ class TestParser : public Parser {
 
     static constexpr std::string wholeOk1() {
       return
-        "System information\n"
-          "Model                    \n"
-          "------------------------ \n"
-          "MODEL-1234        \n"
-        "\n"
-          "Description                                                \n"
-          "---------------------------------------------------------- \n"
-          "This is MODEL-1234\n"
-        "\n"
-          "HW Version  Serial Number  Mfg Date   Epoch \n"
-          "----------- -------------- ---------- ----- \n"
-          "12.34       SNUM-123456    2024-04-01 01.00 \n"
-        "\n"
-        "System has 2 power supply slots\n"
-          "Slot Model            Serial Number    \n"
-          "---- ---------------- ---------------- \n"
-          "1    POW-SUP-MOD      SNUM-SUP-12      \n"
-          "2    POW-SUP-MOD      SNUM-SUP-34      \n"
-        "\n"
-        "System has 4 fan modules\n"
-          "Module  Number of Fans  Model            Serial Number    \n"
-          "------- --------------- ---------------- ---------------- \n"
-          "1       1               FAN-MOD-123      N/A              \n"
-          "2       1               FAN-MOD-123      N/A              \n"
-          "3       1               FAN-MOD-123      N/A              \n"
-          "4       1               FAN-MOD-123      N/A              \n"
-        "\n"
-        "System has 10 ports\n"
-          "Type               Count\n"
-          "------------------ ----\n"
-          "Management         1   \n"
-          "Switched           9   \n"
-        "\n"
-        "System has 5 switched transceiver slots\n"
-          "Port Manufacturer     Model            Serial Number    Rev \n"
-          "---- ---------------- ---------------- ---------------- ----\n"
-          "1    Not Present                                            \n"
-          "2    Manufacturer-Co  TRA-MOD-1        SNUM-TRA-123     1   \n"
-          "3    Manufacturer-Co  TRA-MOD-3        SNUM-TRA-234     2   \n"
-          "4    Manufacturer-Co  TRA-MOD-2        SNUM-TRA-345     3   \n"
-          "5    Manufacturer-Co  TRA-MOD-5        SNUM-TRA-456     4   \n"
-        "\n"
-        "System has 2 storage devices\n"
-          "Mount      Type Model              Serial Number        Rev      \n"
-          "---------- ---- -----------------  -------------------- -------- \n"
-          "/mnt/flash eMMC StorCo STO-MOD-A   FLA-1234             0.0      \n"
-          "/mnt/drive SSD  SSD Co STO-MOD-B   SSD-1234567890       1.1      \n"
-        "\n"
-          "Size (GB) \n"
-          "--------- \n"
-          "30        \n"
-          "400       \n"
-        "\n"
+        sysInfoOk1() + sysStorageOk1() +
+        sysFanOk1() + sysPortOk1() +
+        sysTransceiverOk1() + sysPowerOk1()
+      ;
+    }
+
+    static constexpr std::string wholeOk2() {
+      return
+        sysInfoOk2() + sysStorageOk2() +
+        sysFanOk2() + sysPortOk2() +
+        sysTransceiverOk1() + sysPowerOk2()
       ;
     }
 
@@ -385,7 +343,8 @@ BOOST_AUTO_TEST_CASE(testWhole)
   const auto& parserRule {tp};
 
   std::vector<std::string> testsOk {
-    TestParser::wholeOk1()
+    TestParser::wholeOk1(),
+    TestParser::wholeOk2()
   };
   for (const auto& test : testsOk) {
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
