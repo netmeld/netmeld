@@ -238,7 +238,7 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "[ " // opening bracket
-        << "enabled:" << enabled << ", "
+        << "enabled: " << std::boolalpha << enabled << ", "
         << "id: " << id << ", "
         << "srcId: " << srcId << ", "
         << "srcs: " << srcs << ", "
