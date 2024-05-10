@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -52,59 +52,67 @@ class Parser:
   // ===========================================================================
   // Variables
   // ===========================================================================
+  // Rules
   private:
-    // Rules
+    nmdp::ParserDomainName  resourceFqdn;
+    nmdp::ParserIpAddress   ipAddr;
+    
+  protected:
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start;
+        start
+      ;
 
     qi::rule<nmdp::IstreamIter, nmdo::DnsLookup(), qi::ascii::blank_type>
-      dnsLookup;
-
-    qi::rule<nmdp::IstreamIter, nmco::DnsQuestion(), qi::ascii::blank_type>
-      questionSection;
-
-    qi::rule<nmdp::IstreamIter, DnsResponseSection(), qi::ascii::blank_type>
-      responseSection;
+        dnsLookup
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-      statusHeader,
-      questionSectionHeader,
-      responseSectionHeader;
+        statusHeader
+      , questionSectionHeader
+      , responseSectionHeader
+      ;
 
     qi::rule<nmdp::IstreamIter, nmco::DnsQuestion(), qi::ascii::blank_type>
-      questionRecord;
+        questionSection
+      , questionRecord
+      ;
+
+    qi::rule<nmdp::IstreamIter, DnsResponseSection(), qi::ascii::blank_type>
+        responseSection
+      ;
 
     qi::rule<nmdp::IstreamIter, nmco::DnsResponses(), qi::ascii::blank_type>
-      responseRecords;
+        responseRecords
+      ;
 
     qi::rule<nmdp::IstreamIter, nmco::DnsResponse(), qi::ascii::blank_type>
-      responseRecord;
+        responseRecord
+      ;
 
     qi::rule<nmdp::IstreamIter, nmdo::Port(), qi::ascii::blank_type>
-      serverFooter,
-      receivedFooter;
+        serverFooter
+      , receivedFooter
+      ;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      tryingHeader,
-      optPseudoSection;
-
-    nmdp::ParserDomainName
-      resourceFqdn;
-
-    nmdp::ParserIpAddress
-      ipAddr;
+        tryingHeader
+      , optPseudoSection
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      resourceClass,
-      resourceType,
-      resourceData,
-      token;
+        resourceClass
+      , resourceType
+      , resourceData
+      , token
+      ;
 
     qi::rule<nmdp::IstreamIter, uint32_t()>
-      resourceTtl;
+        resourceTtl
+      ;
 
     qi::rule<nmdp::IstreamIter>
-      comment;
+        comment
+      ;
 
   // ===========================================================================
   // Constructors
@@ -115,9 +123,5 @@ class Parser:
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private:
-
-    Result getData();
 };
-
 #endif // PARSER_HPP
