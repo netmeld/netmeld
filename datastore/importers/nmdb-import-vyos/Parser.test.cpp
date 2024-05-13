@@ -498,7 +498,7 @@ BOOST_AUTO_TEST_CASE(testRuleFirewall)
         BOOST_TEST(0 == rb.first);
         const auto tStr1 {rb.second.toDebugString()};
         nmdp::testInString( tStr1
-                          , "[ enabled: true, id: 1000000"
+                          , "[enabled: true, id: 1000000"
                             ", srcId: global, srcs: [], srcIfaces: []"
                             ", dstId: global, dsts: [], dstIfaces: []"
                             ", services: [all::], actions: [daction]"
