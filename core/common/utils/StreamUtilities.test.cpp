@@ -35,7 +35,7 @@ namespace nmcu = netmeld::core::utils;
 BOOST_AUTO_TEST_CASE(testOstreamVector)
 {
   using nmcu::operator<<;
-  
+
   std::ostringstream oss;
 
   std::vector<size_t> testEmpty;
@@ -58,9 +58,9 @@ BOOST_AUTO_TEST_CASE(testOstreamVector)
 BOOST_AUTO_TEST_CASE(testOstreamSet)
 {
   using nmcu::operator<<;
-  
+
   std::ostringstream oss;
-  
+
   std::set<size_t> testEmpty;
   oss.str("");
   oss << testEmpty;
@@ -81,9 +81,9 @@ BOOST_AUTO_TEST_CASE(testOstreamSet)
 BOOST_AUTO_TEST_CASE(testOstreamMap)
 {
   using nmcu::operator<<;
-  
+
   std::ostringstream oss;
-  
+
   std::map<size_t, size_t> testEmpty;
   oss.str("");
   oss << testEmpty;
@@ -115,7 +115,17 @@ BOOST_AUTO_TEST_CASE(testOstreamMap)
 
 BOOST_AUTO_TEST_CASE(testOstreamTup)
 {
-  // TODO
+  using nmcu::operator<<;
+
+  std::ostringstream oss;
+
+  oss.str("");
+  oss << std::make_tuple("abc");
+  BOOST_TEST("[abc]" == oss.str());
+
+  oss.str("");
+  oss << std::make_tuple("abc", 123, 456);
+  BOOST_TEST("[abc, 123, 456]" == oss.str());
 }
 
 BOOST_AUTO_TEST_CASE(testOstreamAny)
