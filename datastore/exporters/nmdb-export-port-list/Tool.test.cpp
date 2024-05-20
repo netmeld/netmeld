@@ -24,58 +24,56 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include "Parser.hpp"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
-// =============================================================================
-// Parser logic
-// =============================================================================
-Parser::Parser() : Parser::base_type(start)
+#define UNIT_TESTING
+#include "nmdb-export-port-list.cpp"
+
+class TestTool : public Tool
 {
-  start =
-    *(line)
-    ;
+  public:
+    using Tool::portsStringFromBitset;
+    using Tool::addNmapPorts;
 
-  line =
-    ( (portRange >> -(comment) >> qi::eol)
-    | (comment >> qi::eol)
-    | (qi::eol)
-    )
-    ;
+    using Tool::runTool;
+    using Tool::opts;
+};
 
-  const auto makeData =
-      pnx::bind([](const std::string& a, const size_t b, const size_t c) {
-                  Data d;
-                  d.protocols = a;
-                  if (0 == c) { d.portRange = nmdo::PortRange(b);     }
-                  else        { d.portRange = nmdo::PortRange(b, c);  }
-                  return d;
-               }
-               , qi::_1, qi::_2, qi::_3
-               )
-    ;
-  portRange =
-    ( (protocol >> qi::lit(':') >> qi::uint_ >> qi::lit('-') >> qi::uint_)
-        [(qi::_val = makeData
-        , qi::_pass = qi::_2 < qi::_3
-        )]
-    | (protocol >> qi::lit(':') >> qi::uint_ >> qi::attr(0))
-        [qi::_val = makeData]
-    )
-    ;
+BOOST_AUTO_TEST_CASE(testPortsStringFromBitset)
+{
+  TestTool    tt;
+  std::string out;
+  std::bitset<65536> bitset;
 
-  protocol =
-    +(qi::char_("TUY"))
-    ;
+  // all zeroes
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("" == out);
 
-  comment =
-    (qi::lit('#') >> *(qi::ascii::graph | qi::ascii::blank))
-    ;
+  // all ones
+  bitset.flip();
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("0-65535," == out);
 
-  BOOST_SPIRIT_DEBUG_NODES(
-      (start)
-      (line)
-      (portRange)
-      (protocol)
-      (comment)
-    );
+  // reset to all zeroes
+  bitset.flip();
+  
+  // single
+  bitset.set(22);
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("22," == out);
+
+  // gap
+  bitset.set(80);
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("22,80," == out);
+
+  // singles, gaps, and ranges
+  for (size_t i {0}; i < 10; ++i) {
+    bitset.set(10000+i);
+  }
+  bitset.set(20000);
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("22,80,10000-10009,20000," == out);
 }
