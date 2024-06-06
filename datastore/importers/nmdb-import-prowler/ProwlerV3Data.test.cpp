@@ -155,4 +155,45 @@ namespace netmeld::datastore::objects::prowler {
         BOOST_TEST(data.recommendationUrl == "https://example.com");
         BOOST_TEST(data.remediationCode == "Code1: Value1\nCode2: Value2");
     }
+
+    BOOST_AUTO_TEST_CASE(ConstructorTestNoData)
+    {
+        json jline = json::parse("{}");
+
+        // Create an instance of ProwlerV3Data using the constructor
+        TestProwlerV3Data emptyData(jline);
+        TestProwlerV3Data defaultData;
+
+        // Perform assertions to verify that the ProwlerV3Data object constructed from empty JSON
+        // is equal to ProwlerV3Data's default state
+        // BOOST_TEST(defaultData.assessmentStartTime.toString() == emptyData.assessmentStartTime.toString());
+        BOOST_TEST(defaultData.findingUniqueId == emptyData.findingUniqueId);
+        BOOST_TEST(defaultData.provider == emptyData.provider);
+        BOOST_TEST(defaultData.profile == emptyData.profile);
+        BOOST_TEST(defaultData.accountId == emptyData.accountId);
+        BOOST_TEST(defaultData.region == emptyData.region);
+        BOOST_TEST(defaultData.checkId == emptyData.checkId);
+        BOOST_TEST(defaultData.checkTitle == emptyData.checkTitle);
+        BOOST_TEST(defaultData.serviceName == emptyData.serviceName);
+        BOOST_TEST(defaultData.subServiceName == emptyData.subServiceName);
+        BOOST_TEST(defaultData.status == emptyData.status);
+        BOOST_TEST(defaultData.statusExtended == emptyData.statusExtended);
+        BOOST_TEST(defaultData.severity == emptyData.severity);
+        BOOST_TEST(defaultData.resourceId == emptyData.resourceId);
+        BOOST_TEST(defaultData.resourceArn == emptyData.resourceArn);
+        BOOST_TEST(defaultData.resourceType == emptyData.resourceType);
+        BOOST_TEST(defaultData.resourceDetails == emptyData.resourceDetails);
+        BOOST_TEST(defaultData.description == emptyData.description);
+        BOOST_TEST(defaultData.risk == emptyData.risk);
+        BOOST_TEST(defaultData.relatedUrl == emptyData.relatedUrl);
+        BOOST_TEST(defaultData.notes == emptyData.notes);
+        BOOST_TEST(defaultData.checkTypes == emptyData.checkTypes);
+        BOOST_TEST(defaultData.categories == emptyData.categories);
+        BOOST_TEST(defaultData.organizationsInfo == emptyData.organizationsInfo);
+        BOOST_TEST(defaultData.resourceTags == emptyData.resourceTags);
+        BOOST_TEST(defaultData.compliance == emptyData.compliance);
+        BOOST_TEST(defaultData.recommendation == emptyData.recommendation);
+        BOOST_TEST(defaultData.recommendationUrl == emptyData.recommendationUrl);
+        BOOST_TEST(defaultData.remediationCode == emptyData.remediationCode);
+    }
 }

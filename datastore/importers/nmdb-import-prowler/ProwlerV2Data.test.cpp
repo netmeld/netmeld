@@ -91,4 +91,29 @@ namespace netmeld::datastore::objects::prowler {
         BOOST_TEST(data.resourceId == "i-1234567890abcdef0");
         BOOST_TEST(data.timestamp.toString() == "2022-01-01T01:01:01");
     }
+
+    BOOST_AUTO_TEST_CASE(ConstructorTestNoData)
+    {
+        json jline = json::parse("{}");
+
+        // Create an instance of ProwlerV3Data using the constructor
+        TestProwlerV2Data emptyData(jline);
+        TestProwlerV2Data defaultData;
+
+        // Perform assertions to verify that the ProwlerV3Data object constructed from empty JSON
+        // is equal to ProwlerV3Data's default state
+        BOOST_TEST(defaultData.accountNumber == emptyData.accountNumber);
+        BOOST_TEST(defaultData.region == emptyData.region);
+        BOOST_TEST(defaultData.control == emptyData.control);
+        BOOST_TEST(defaultData.severity == emptyData.severity); // Assuming toLower works as expected
+        BOOST_TEST(defaultData.status == emptyData.status);
+        BOOST_TEST(defaultData.level == emptyData.level);
+        BOOST_TEST(defaultData.controlId == emptyData.controlId);
+        BOOST_TEST(defaultData.service == emptyData.service);
+        BOOST_TEST(defaultData.risk == emptyData.risk);
+        BOOST_TEST(defaultData.remediation == emptyData.remediation);
+        BOOST_TEST(defaultData.documentationLink == emptyData.documentationLink);
+        BOOST_TEST(defaultData.resourceId == emptyData.resourceId);
+        // BOOST_TEST(defaultData.timestamp.toString() == emptyData.timestamp.toString());
+    }
 }
