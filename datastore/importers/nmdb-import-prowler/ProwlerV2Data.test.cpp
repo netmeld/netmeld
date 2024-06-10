@@ -102,18 +102,6 @@ namespace netmeld::datastore::objects::prowler {
 
         // Perform assertions to verify that the ProwlerV3Data object constructed from empty JSON
         // is equal to ProwlerV3Data's default state
-        BOOST_TEST(defaultData.accountNumber == emptyData.accountNumber);
-        BOOST_TEST(defaultData.region == emptyData.region);
-        BOOST_TEST(defaultData.control == emptyData.control);
-        BOOST_TEST(defaultData.severity == emptyData.severity); // Assuming toLower works as expected
-        BOOST_TEST(defaultData.status == emptyData.status);
-        BOOST_TEST(defaultData.level == emptyData.level);
-        BOOST_TEST(defaultData.controlId == emptyData.controlId);
-        BOOST_TEST(defaultData.service == emptyData.service);
-        BOOST_TEST(defaultData.risk == emptyData.risk);
-        BOOST_TEST(defaultData.remediation == emptyData.remediation);
-        BOOST_TEST(defaultData.documentationLink == emptyData.documentationLink);
-        BOOST_TEST(defaultData.resourceId == emptyData.resourceId);
-        // BOOST_TEST(defaultData.timestamp.toString() == emptyData.timestamp.toString());
+        BOOST_TEST(defaultData == emptyData);
     }
 }

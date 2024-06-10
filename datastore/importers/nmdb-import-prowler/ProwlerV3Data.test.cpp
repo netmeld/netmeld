@@ -166,7 +166,6 @@ namespace netmeld::datastore::objects::prowler {
 
         // Perform assertions to verify that the ProwlerV3Data object constructed from empty JSON
         // is equal to ProwlerV3Data's default state
-        // BOOST_TEST(defaultData.assessmentStartTime.toString() == emptyData.assessmentStartTime.toString());
         BOOST_TEST(defaultData == emptyData);
     }
 }
