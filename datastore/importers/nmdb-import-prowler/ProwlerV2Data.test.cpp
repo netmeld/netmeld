@@ -77,19 +77,19 @@ namespace netmeld::datastore::objects::prowler {
         TestProwlerV2Data data(jline);
 
         // Verify that the fields are correctly populated using BOOST_TEST
-        BOOST_TEST(data.accountNumber == "123456789");
-        BOOST_TEST(data.region == "us-east-1");
-        BOOST_TEST(data.control == "Some Control");
-        BOOST_TEST(data.severity == "high"); // Assuming toLower works as expected
-        BOOST_TEST(data.status == "Passed");
-        BOOST_TEST(data.level == "2");
-        BOOST_TEST(data.controlId == "C-12345");
-        BOOST_TEST(data.service == "EC2");
-        BOOST_TEST(data.risk == "Medium");
-        BOOST_TEST(data.remediation == "Apply patch");
-        BOOST_TEST(data.documentationLink == "http://example.com/doc");
-        BOOST_TEST(data.resourceId == "i-1234567890abcdef0");
-        BOOST_TEST(data.timestamp.toString() == "2022-01-01T01:01:01");
+        BOOST_TEST("123456789" == data.accountNumber);
+        BOOST_TEST("us-east-1" == data.region);
+        BOOST_TEST("Some Control" == data.control);
+        BOOST_TEST("high" == data.severity); // Assuming toLower works as expected
+        BOOST_TEST("Passed" == data.status);
+        BOOST_TEST("2" == data.level);
+        BOOST_TEST("C-12345" == data.controlId);
+        BOOST_TEST("EC2" == data.service);
+        BOOST_TEST("Medium" == data.risk);
+        BOOST_TEST("Apply patch" == data.remediation);
+        BOOST_TEST("http://example.com/doc" == data.documentationLink);
+        BOOST_TEST("i-1234567890abcdef0" == data.resourceId);
+        BOOST_TEST("2022-01-01T01:01:01" == data.timestamp.toString());
     }
 
     BOOST_AUTO_TEST_CASE(ConstructorTestNoData)

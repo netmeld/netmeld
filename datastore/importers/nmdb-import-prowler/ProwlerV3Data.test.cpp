@@ -125,35 +125,35 @@ namespace netmeld::datastore::objects::prowler {
         TestProwlerV3Data data(jline);
 
         // Perform assertions to verify the values are correctly assigned
-        BOOST_TEST(data.assessmentStartTime.toString() == "2024-05-30T10:00:00");
-        BOOST_TEST(data.findingUniqueId == "123456");
-        BOOST_TEST(data.provider == "ACME");
-        BOOST_TEST(data.profile == "Default");
-        BOOST_TEST(data.accountId == "1234567890");
-        BOOST_TEST(data.region == "us-west-2");
-        BOOST_TEST(data.checkId == "CHECK-001");
-        BOOST_TEST(data.checkTitle == "Example Check");
-        BOOST_TEST(data.serviceName == "Example Service");
-        BOOST_TEST(data.subServiceName == "Example Subservice");
-        BOOST_TEST(data.status == "Open");
-        BOOST_TEST(data.statusExtended == "In Progress");
-        BOOST_TEST(data.severity == "High");
-        BOOST_TEST(data.resourceId == "resource-123");
-        BOOST_TEST(data.resourceArn == "arn:aws:example");
-        BOOST_TEST(data.resourceType == "Example Resource");
-        BOOST_TEST(data.resourceDetails == "Example details");
-        BOOST_TEST(data.description == "Example description");
-        BOOST_TEST(data.risk == "High");
-        BOOST_TEST(data.relatedUrl == "https://example.com");
-        BOOST_TEST(data.notes == "Example notes");
-        BOOST_TEST(data.checkTypes == "Type1\nType2");
-        BOOST_TEST(data.categories == "Category1\nCategory2");
-        BOOST_TEST(data.organizationsInfo == "Key1: \"Value1\"\nKey2: \"Value2\"");
-        BOOST_TEST(data.resourceTags == "Tag1: \"Value1\"\nTag2: \"Value2\"");
-        BOOST_TEST(data.compliance == "Key1\n- Value1\n- Value2\nKey2\n- Value3");
-        BOOST_TEST(data.recommendation == "Example recommendation");
-        BOOST_TEST(data.recommendationUrl == "https://example.com");
-        BOOST_TEST(data.remediationCode == "Code1: Value1\nCode2: Value2");
+        BOOST_TEST("2024-05-30T10:00:00" == data.assessmentStartTime.toString());
+        BOOST_TEST("123456" == data.findingUniqueId);
+        BOOST_TEST("ACME" == data.provider);
+        BOOST_TEST("Default" == data.profile);
+        BOOST_TEST("1234567890" == data.accountId);
+        BOOST_TEST("us-west-2" == data.region);
+        BOOST_TEST("CHECK-001" == data.checkId);
+        BOOST_TEST("Example Check" == data.checkTitle);
+        BOOST_TEST("Example Service" == data.serviceName);
+        BOOST_TEST("Example Subservice" == data.subServiceName);
+        BOOST_TEST("Open" == data.status);
+        BOOST_TEST("In Progress" == data.statusExtended);
+        BOOST_TEST("High" == data.severity);
+        BOOST_TEST("resource-123" == data.resourceId);
+        BOOST_TEST("arn:aws:example" == data.resourceArn);
+        BOOST_TEST("Example Resource" == data.resourceType);
+        BOOST_TEST("Example details" == data.resourceDetails);
+        BOOST_TEST("Example description" == data.description);
+        BOOST_TEST("High" == data.risk);
+        BOOST_TEST("https://example.com" == data.relatedUrl);
+        BOOST_TEST("Example notes" == data.notes);
+        BOOST_TEST("Type1\nType2" == data.checkTypes);
+        BOOST_TEST("Category1\nCategory2" == data.categories);
+        BOOST_TEST("Key1: \"Value1\"\nKey2: \"Value2\"" == data.organizationsInfo);
+        BOOST_TEST("Tag1: \"Value1\"\nTag2: \"Value2\"" == data.resourceTags);
+        BOOST_TEST("Key1\n- Value1\n- Value2\nKey2\n- Value3" == data.compliance);
+        BOOST_TEST("Example recommendation" == data.recommendation);
+        BOOST_TEST("https://example.com" == data.recommendationUrl);
+        BOOST_TEST("Code1: Value1\nCode2: Value2" == data.remediationCode);
     }
 
     BOOST_AUTO_TEST_CASE(ConstructorTestNoData)
