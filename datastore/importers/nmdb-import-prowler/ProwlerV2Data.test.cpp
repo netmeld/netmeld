@@ -104,4 +104,22 @@ namespace netmeld::datastore::objects::prowler {
         // is equal to ProwlerV3Data's default state
         BOOST_TEST(defaultData == emptyData);
     }
+
+    BOOST_AUTO_TEST_CASE(SpaceshipOperatorTest)
+    {
+        // Create two ProwlerV2Data objects using the default constructor
+        TestProwlerV2Data data1;
+        TestProwlerV2Data data2;
+
+        // Verify that these objects are equal
+        BOOST_TEST((data1 == data2));
+
+        // Change the timestap value for data 1 and verify that the objects are still equal
+        data2.timestamp = nmco::Time();
+        BOOST_TEST(data1 == data2);
+
+        // Change account number and verify that the two objects are no longer equal
+        data1.accountNumber = "999999999";
+        BOOST_TEST(data1 != data2);
+    }
 }
