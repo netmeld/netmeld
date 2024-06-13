@@ -39,19 +39,19 @@ namespace netmeld::datastore::objects::prowler {
   /* V2 -- {"Profile":"","Account Number":"","Control":"","Message":"","Severity":"","Status":"","Scored":"","Level":"","Control ID":"","Region":"","Timestamp":"","Compliance":"","Service":"","CAF Epic":"","Risk":"","Remediation":"","Doc link":"","Resource ID":"","Account Email":"","Account Name":"","Account ARN":"","Account Organization":"","Account tags":""} */
   ProwlerV2Data::ProwlerV2Data(const json& jline)
   {
-    accountNumber = jline["Account Number"];
-    region = jline["Region"];
-    control = jline["Control"];
-    severity = nmcu::toLower(jline["Severity"]);
-    status = jline["Status"];
-    level = jline["Level"];
-    controlId = jline["Control ID"];
-    service = jline["Service"];
-    risk = jline["Risk"];
-    remediation = jline["Remediation"];
-    documentationLink = jline["Doc link"];
-    resourceId = jline["Resource ID"];
-    timestamp.readFormatted(jline["Timestamp"], "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
+    accountNumber = jline.value("Account Number", "");
+    region = jline.value("Region", "");
+    control = jline.value("Control", "");
+    severity = nmcu::toLower(jline.value("Severity", ""));
+    status = jline.value("Status", "");
+    level = jline.value("Level", "");
+    controlId = jline.value("Control ID", "");
+    service = jline.value("Service", "");
+    risk = jline.value("Risk", "");
+    remediation = jline.value("Remediation", "");
+    documentationLink = jline.value("Doc link", "");
+    resourceId = jline.value("Resource ID", "");
+    timestamp.readFormatted(jline.value("Timestamp", ""), "%Y-%m-%dT%H:%M:%SZ"); // 2022-01-01T01:01:01Z
   }
 
   // ===========================================================================
