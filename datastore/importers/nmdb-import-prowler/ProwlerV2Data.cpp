@@ -133,7 +133,7 @@ namespace netmeld::datastore::objects::prowler {
   ProwlerV2Data::operator<=>(const ProwlerV2Data& rhs) const
   {
     return std::tie( accountNumber
-                   , timestamp
+                   // , timestamp
                    , region
                    , control
                    , severity
@@ -147,7 +147,7 @@ namespace netmeld::datastore::objects::prowler {
                    , resourceId
                    )
        <=> std::tie( rhs.accountNumber
-                   , rhs.timestamp
+                   // , rhs.timestamp
                    , rhs.region
                    , rhs.control
                    , rhs.severity
