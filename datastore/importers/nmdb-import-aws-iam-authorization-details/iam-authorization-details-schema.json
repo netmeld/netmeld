@@ -1,0 +1,183 @@
+{
+  "GroupDetailList": [  // a table
+    {
+      "Arn": "string",
+      "AttachedManagedPolicies": [  // separate table associated by Arn
+        {
+          "PolicyArn": "string",
+          "PolicyName": "string"
+        }
+      ],
+      "CreateDate": "string",  // not really needed
+      "GroupId": "string",
+      "GroupName": "string",
+      "GroupPolicyList": [  // separate table associated by Arn
+        {
+          "PolicyDocument": {
+            "Statement": [  // this logic or block is repeated elsewhere
+              {
+                "Action": "string|[string]",
+                "Condition": "JSON",
+                "Effect": "string",
+                "Resource":  "string|[string]",
+                "Sid": "string"
+              }
+            ],
+            "Version": "string"  // not really needed
+          },
+          "PolicyName": "string"
+        }
+      ],
+      "Path": "string"
+    }
+  ],
+  "Policies": [  // a table
+    {
+      "Arn": "string",
+      "AttachmentCount": "number",
+      "CreateDate": "string",  // not really needed
+      "DefaultVersionId": "string",
+      "IsAttachable": "boolean",
+      "Path": "string",
+      "PermissionsBoundaryUsageCount": "number",
+      "PolicyId": "string",
+      "PolicyName": "string",
+      "PolicyVersionList": [  // separate table associated by Arn
+        {
+          "CreateDate": "string",  // not really needed
+          "Document": {
+            "Statement": [  // this logic or block is repeated elsewhere
+              {
+                "Action": "string|[string]",
+                "Condition": "JSON",
+                "Effect": "string",
+                "Resource":  "string|[string]",
+                "Sid": "string"
+              }
+            ],
+            "Version": "string"  // not really needed
+          },
+          "IsDefaultVersion": "boolean",
+          "VersionId": "string"
+        }
+      ],
+      "UpdateDate": "string"  // not really needed
+    }
+  ],
+  "RoleDetailList": [  // a table
+    {
+      "Arn": "string",
+      "AssumeRolePolicyDocument": {  // separate table associated by Arn
+        "Statement": [  // this logic or block is repeated elsewhere
+          {
+            "Action": "string|[string]",
+            "Condition": "JSON",
+            "Effect": "string",
+            "Principal": "JSON",
+            "Sid": "string"
+          }
+        ],
+        "Version": "string"  // not really needed
+      },
+      "AttachedManagedPolicies": [  // separate table associated by Arn
+        {
+          "PolicyArn": "string",
+          "PolicyName": "string"
+        }
+      ],
+      "CreateDate": "string",  // not really needed
+      "InstanceProfileList": [  // separate table associated by Arn
+        {
+          "Arn": "string",
+          "CreateDate": "string",  // not really needed
+          "InstanceProfileId": "string",
+          "InstanceProfileName": "string",
+          "Path": "string",
+          "Roles": [  // basically roles inside a role
+            {
+              "Arn": "string",
+              "AssumeRolePolicyDocument": {  // separate table associated by Arn
+                "Statement": [  // this logic or block is repeated elsewhere
+                  {
+                    "Action": "string|[string]",
+                    "Condition": "JSON",
+                    "Effect": "string",
+                    "Principal": "JSON",
+                    "Sid": "string"
+                  }
+                ],
+                "Version": "string"  // not really needed
+              },
+              "CreateDate": "string",
+              "Path": "string",
+              "RoleId": "string",
+              "RoleName": "string"
+            }
+          ]
+        }
+      ],
+      "Path": "string",
+      "PermissionsBoundary": {  // separate table associated by Arn
+        "PermissionsBoundaryArn": "string",
+        "PermissionsBoundaryType": "string"
+      },
+      "RoleId": "string",
+      "RoleLastUsed": "JSON",
+      "RoleName": "string",
+      "RolePolicyList": [  // separate table associated by Arn
+        {
+          "PolicyDocument": {
+            "Statement": [  // this logic or block is repeated elsewhere
+              {
+                "Action": "string|[string]",
+                "Condition": "JSON",
+                "Effect": "string",
+                "Resource":  "string|[string]",
+                "Sid": "string"
+              }
+            ],
+            "Version": "string"  // not really needed
+          },
+          "PolicyName": "string"
+        }
+      ],
+      "Tags": "JSON"
+    }
+  ],
+  "UserDetailList": [  // a table
+    {
+      "Arn": "string",
+      "AttachedManagedPolicies": [  // separate table associated by Arn
+        {
+          "PolicyArn": "string",
+          "PolicyName": "string"
+        }
+      ],
+      "CreateDate": "string",  // not really needed
+      "GroupList": [  // separate table associated by Arn
+        "string"
+      ],
+      "Path": "string",
+      "Tags": "JSON",
+      "UserId": "string",
+      "UserName": "string",
+      "UserPolicyList": [  // separate table associated by Arn
+        {
+          "PolicyDocument": {
+            "Statement": [  // this logic or block is repeated elsewhere
+              {
+                "Action": "string|[string]",
+                "Condition": "JSON",
+                "Effect": "string",
+                "Resource":  "string|[string]",
+                "Sid": "string"
+              }
+            ],
+            "Version": "string"  // not really needed
+          },
+          "PolicyName": "string"
+        }
+      ]
+    }
+  ]
+}
