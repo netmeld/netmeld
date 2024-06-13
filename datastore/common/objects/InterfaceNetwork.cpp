@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -49,18 +49,21 @@ namespace netmeld::datastore::objects {
   void
   InterfaceNetwork::addIpAddress(const IpAddress& _ipAddr)
   {
+    if (_ipAddr == IpAddress()) { return; } // don't add defaults
     macAddr.addIpAddress(_ipAddr);
   }
 
   void
   InterfaceNetwork::addPortSecurityStickyMac(const MacAddress& _macAddr)
   {
+    if (_macAddr == MacAddress()) { return; } // don't add defaults
     learnedMacAddrs.insert(_macAddr);
   }
 
   void
   InterfaceNetwork::addReachableMac(const MacAddress& _macAddr)
   {
+    if (_macAddr == MacAddress()) { return; } // don't add defaults
     reachableMacAddrs.insert(_macAddr);
   }
 
@@ -201,9 +204,10 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  InterfaceNetwork::save(pqxx::transaction_base& t,
-                         const nmco::Uuid& toolRunId,
-                         const std::string& deviceId)
+  InterfaceNetwork::save( pqxx::transaction_base& t
+                        , const nmco::Uuid& toolRunId
+                        , const std::string& deviceId
+                        )
   {
     if (!isValid() && !deviceId.empty()) {
       LOG_DEBUG << "InterfaceNetwork object is not saving: " << toDebugString()
@@ -211,48 +215,54 @@ namespace netmeld::datastore::objects {
       return;
     }
 
-    t.exec_prepared("insert_raw_device_interface",
-      toolRunId,
-      deviceId,
-      name,
-      mediaType,
-      isUp,
-      description);
+    t.exec_prepared( "insert_raw_device_interface"
+                   , toolRunId
+                   , deviceId
+                   , name
+                   , mediaType
+                   , isUp
+                   , description
+                   );
 
     if (!isPartial) {
-      t.exec_prepared("insert_raw_device_interfaces_cdp",
-        toolRunId,
-        deviceId,
-        name,
-        isDiscoveryProtocolEnabled);
+      t.exec_prepared( "insert_raw_device_interfaces_cdp"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , isDiscoveryProtocolEnabled
+                     );
 
-      t.exec_prepared("insert_raw_device_interfaces_bpdu",
-        toolRunId,
-        deviceId,
-        name,
-        isBpduGuardEnabled,
-        isBpduFilterEnabled);
+      t.exec_prepared( "insert_raw_device_interfaces_bpdu"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , isBpduGuardEnabled
+                     , isBpduFilterEnabled
+                     );
 
-      t.exec_prepared("insert_raw_device_interfaces_portfast",
-        toolRunId,
-        deviceId,
-        name,
-        isPortfastEnabled);
+      t.exec_prepared( "insert_raw_device_interfaces_portfast"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , isPortfastEnabled
+                     );
 
-      t.exec_prepared("insert_raw_device_interfaces_mode",
-        toolRunId,
-        deviceId,
-        name,
-        mode);
+      t.exec_prepared( "insert_raw_device_interfaces_mode"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , mode
+                     );
 
-      t.exec_prepared("insert_raw_device_interfaces_port_security",
-        toolRunId,
-        deviceId,
-        name,
-        isPortSecurityEnabled,
-        isPortSecurityStickyMac,
-        portSecurityMaxMacAddrs,
-        portSecurityViolationAction);
+      t.exec_prepared( "insert_raw_device_interfaces_port_security"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , isPortSecurityEnabled
+                     , isPortSecurityStickyMac
+                     , portSecurityMaxMacAddrs
+                     , portSecurityViolationAction
+                     );
     }
 
     for (auto mac : learnedMacAddrs) {
@@ -260,17 +270,19 @@ namespace netmeld::datastore::objects {
 
       if (!mac.isValid()) { continue; }
 
-      t.exec_prepared("insert_raw_device_link_connection",
-        toolRunId,
-        deviceId,
-        name,
-        mac.toString());
+      t.exec_prepared( "insert_raw_device_link_connection"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , mac.toString()
+                     );
 
-      t.exec_prepared("insert_raw_device_interfaces_port_security_mac_addr",
-        toolRunId,
-        deviceId,
-        name,
-        mac.toString());
+      t.exec_prepared( "insert_raw_device_interfaces_port_security_mac_addr"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , mac.toString()
+                     );
     }
 
     for (auto mac : reachableMacAddrs) {
@@ -278,42 +290,46 @@ namespace netmeld::datastore::objects {
 
       if (!mac.isValid()) { continue; }
 
-      t.exec_prepared("insert_raw_device_link_connection",
-        toolRunId,
-        deviceId,
-        name,
-        mac.toString());
+      t.exec_prepared( "insert_raw_device_link_connection"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , mac.toString()
+                     );
     }
 
     macAddr.setResponding(isUp);
     macAddr.save(t, toolRunId, deviceId);
 
     if (macAddr.isValid()) {
-      t.exec_prepared("insert_raw_device_mac_addr",
-        toolRunId,
-        deviceId,
-        name,
-        macAddr.toString());
+      t.exec_prepared( "insert_raw_device_mac_addr"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , macAddr.toString()
+                     );
     }
 
     for (const auto& ipAddr : macAddr.getIpAddresses()) {
       if (!ipAddr.isValid()) { continue; }
-      t.exec_prepared("insert_raw_device_ip_addr",
-        toolRunId,
-        deviceId,
-        name,
-        ipAddr.toString());
+      t.exec_prepared( "insert_raw_device_ip_addr"
+                     , toolRunId
+                     , deviceId
+                     , name
+                     , ipAddr.toString()
+                     );
     }
 
     for (auto vlan : vlans) {
       vlan.save(t, toolRunId, deviceId);
 
       if (vlan.isValid()) {
-        t.exec_prepared("insert_raw_device_interfaces_vlan",
-          toolRunId,
-          deviceId,
-          name,
-          vlan.getVlanId());
+        t.exec_prepared( "insert_raw_device_interfaces_vlan"
+                       , toolRunId
+                       , deviceId
+                       , name
+                       , vlan.getVlanId()
+                       );
       }
     }
   }
@@ -324,36 +340,25 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["; // opening bracket
-
-    oss << "name: " << name << ", "
-        << "description: " << description << ", "
-        << "mediaType: " << mediaType << ", "
-        << "mode: " << mode << ", "
-        << "State:" << std::boolalpha << isUp << ", "
-        << "DiscProtoEnabled: " << isDiscoveryProtocolEnabled << ", "
-        << "macAddr: " << macAddr .toDebugString() << ", "
+    oss << "name: " << name
+        << ", description: " << description
+        << ", isPartial: " << std::boolalpha << isPartial
+        << ", mediaType: " << mediaType
+        << ", isUp: " << isUp
+        << ", isDiscoveryProtocolEnabled: " << isDiscoveryProtocolEnabled
+        << ", macAddr: " << macAddr.toDebugString()
+        << ", mode: " << mode
+        << ", isPortSecurityEnabled: " << isPortSecurityEnabled
+        << ", portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs
+        << ", portSecurityViolationAction: " << portSecurityViolationAction
+        << ", isPortSecurityStickyMac: " << isPortSecurityStickyMac
+        << ", learnedMacAddrs: "  << learnedMacAddrs
+        << ", reachableMacs: " << reachableMacAddrs
+        << ", vlans: " << vlans
+        << ", isPortfastEnabled: " << isPortfastEnabled
+        << ", isBpduGuardEnabled: " << isBpduGuardEnabled
+        << ", isBpduFilterEnabled: " << isBpduFilterEnabled
         ;
-
-    oss << "Port-Security: ["
-        << "State: " << isPortSecurityEnabled << ", "
-        << "portSecurityMaxMacAddrs: " << portSecurityMaxMacAddrs  << ", "
-        << "portSecurityViolationAction: " << portSecurityViolationAction  << ", "
-        << "Sticky :" << isPortSecurityStickyMac << "], "
-        ;
-
-    oss << "Macs: "  << learnedMacAddrs << ", ";
-
-    oss << "ReachableMacs: " << reachableMacAddrs << ", ";
-
-    oss << "Spanning-Tree: ["
-        << "Portfast: " << isPortfastEnabled << ", "
-        << "BPDU Guard: " << isBpduGuardEnabled << ", "
-        << "BPDU Filter: " << isBpduFilterEnabled
-        << "], "
-        ;
-
-    oss << "VLANs: " << vlans;
-
     oss << "]"; // closing bracket
 
     return oss.str();

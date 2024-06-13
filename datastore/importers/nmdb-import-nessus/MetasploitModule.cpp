@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -33,8 +33,8 @@ MetasploitModule::isValid() const
 }
 
 void
-MetasploitModule::save(pqxx::transaction_base& t,
-                       const nmco::Uuid& toolRunId, const std::string& deviceId)
+MetasploitModule::save( pqxx::transaction_base& t
+                      , const nmco::Uuid& toolRunId, const std::string& deviceId)
 {
   if (!isValid()) {
     LOG_DEBUG << "MetasploitModule object is not saving: " << toDebugString()
@@ -44,26 +44,26 @@ MetasploitModule::save(pqxx::transaction_base& t,
 
   port.save(t, toolRunId, deviceId);
 
-  t.exec_prepared("insert_raw_nessus_result_metasploit_module",
-      toolRunId,
-      port.getIpAddress().toString(),
-      port.getProtocol(),
-      port.getPort(),
-      pluginId,
-      name);
+  t.exec_prepared("insert_raw_nessus_result_metasploit_module"
+                 , toolRunId
+                 , port.getIpAddress().toString()
+                 , port.getProtocol()
+                 , port.getPort()
+                 , pluginId
+                 , name
+                 );
 }
 
 std::string
-MetasploitModule::toString() const
+MetasploitModule::toDebugString() const
 {
   std::ostringstream oss;
-  oss << "[";
-  oss << port.getIpAddress().toString() << ", "
-      << port.getProtocol() << ", "
-      << port.getPort() << ", "
-      << pluginId << ", "
-      << name;
-  oss << "]";
+  oss << "["
+      << "port: " << port.toDebugString()
+      << ", pluginId: " << pluginId
+      << ", name: " << name
+      << "]"
+      ;
 
   return oss.str();
 }

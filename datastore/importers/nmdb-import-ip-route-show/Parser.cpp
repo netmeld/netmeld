@@ -40,7 +40,7 @@ Parser::Parser() : Parser::base_type(start)
     dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
     >> qi::lit("via")
     >> nextHopIp [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
-    >> ifaceName [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+    >> ifaceName [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))]
     >> qi::omit[*token]
     >> qi::eol [pnx::bind(&Parser::ensureSameFamily, this, qi::_val)]
     ;
@@ -48,7 +48,7 @@ Parser::Parser() : Parser::base_type(start)
   route =
     dstIpNet [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))]
     >> ifaceName
-        [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1)
+        [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1)
         , pnx::bind(&Parser::curNextHop, this) = pnx::bind([&]()
                         {
                           if (curDestNet.isV4()) {

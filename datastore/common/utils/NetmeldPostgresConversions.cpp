@@ -147,19 +147,16 @@ namespace pqxx {
     const auto budget {size_buffer(obj)};
 
     if (internal::cmp_less((end - begin), budget))
-      throw conversion_overrun{
-        "Could not convert nmdo::Cve to string: too long for buffer."};
+      throw conversion_overrun {
+          "Could not convert nmdo::Cve to string: too long for buffer."
+        };
 
-    char* here = begin;
-    *here++ = '(';
-    *here += static_cast<char>(obj.getYear());
-    *here++ = ',';
-    *here++ = ' ';
-    *here += static_cast<char>(obj.getNumber());
-    *here++ = ')';
-    *here++ = '\0';
+    const auto& temp {std::format("({},{})", obj.getYear(), obj.getNumber())};
+    size_t count {temp.size() + 1}; // +1 null terminator
 
-    return here;
+    std::memcpy(begin, temp.c_str(), count);
+
+    return &begin[count];
   }
 
   std::size_t

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,6 +27,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
+#include <regex>
 
 #include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 
@@ -55,9 +56,9 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"permit", "permit"},
-      {" deny ", "deny"},
-    };
+        {"permit", "permit"}
+      , {" deny ", "deny"}
+      };
     for (const auto& [test, format] : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
@@ -74,14 +75,14 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"0", "0"},
-      {"255", "255"},
-      {"ip", "ip"},
-      {"TCP", "TCP"},
-      {"icmp", "icmp"},
-      {"object SOI", "SOI"},
-      {"object-group PGI_SGI", "PGI_SGI"},
-    };
+        {"0", "0"}
+      , {"255", "255"}
+      , {"ip", "ip"}
+      , {"TCP", "TCP"}
+      , {"icmp", "icmp"}
+      , {"object SOI", "SOI"}
+      , {"object-group PGI_SGI", "PGI_SGI"}
+      };
     for (const auto& [test, format] : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
       BOOST_TEST(format == tpca.curRuleProtocol);
@@ -95,47 +96,49 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"host 1.2.3.4", "1.2.3.4/32"},
-      {"host 1234::aBcD", "1234::abcd/128"},
-      {"any ", "any"},
-      {"any4 ", "any4"},
-      {"any6 ", "any6"},
-      {"1.2.3.4/24", "1.2.3.4/24"},
-      {"1234::aBcD/112", "1234::abcd/112"},
-      {"object-group NGI", "NGI"},
-      {"object NOI", "NOI"},
-      {"interface IF/AC.E", "IF/AC.E"},
-      {"1.2.3.4 127.255.255.255", "1.2.3.4/1"},        // WILDCARD
-      {"1.2.3.4 128.0.0.0", "1.2.3.4/1"},              // NETMASK
-      {"1.2.3.4 0.0.0.1", "1.2.3.4/31"},               // WILDCARD
-      {"1.2.3.4 255.255.255.254", "1.2.3.4/31"},       // NETMASK
-      {"1::2 0:0:0:0:ffff:ffff:ffff:ffff", "1::2/64"}, // WILDCARD
-      {"1::2 ffff:ffff:ffff:ffff:0:0:0:0", "1::2/64"}, // NETMASK
-    };
+        {"host 1.2.3.4", "1.2.3.4/32"}
+      , {"host 1234::aBcD", "1234::abcd/128"}
+      , {"any ", "any"}
+      , {"any4 ", "any4"}
+      , {"any6 ", "any6"}
+      , {"1.2.3.4/24", "1.2.3.4/24"}
+      , {"1234::aBcD/112", "1234::abcd/112"}
+      , {"object-group NGI", "NGI"}
+      , {"object NOI", "NOI"}
+      , {"interface IF/AC.E", "IF/AC.E"}
+      , {"1.2.3.4 127.255.255.255", "1.2.3.4/1"}        // WILDCARD
+      , {"1.2.3.4 128.0.0.0", "1.2.3.4/1"}              // NETMASK
+      , {"1.2.3.4 0.0.0.1", "1.2.3.4/31"}               // WILDCARD
+      , {"1.2.3.4 255.255.255.254", "1.2.3.4/31"}       // NETMASK
+      , {"1::2 0:0:0:0:ffff:ffff:ffff:ffff", "1::2/64"} // WILDCARD
+      , {"1::2 ffff:ffff:ffff:ffff:0:0:0:0", "1::2/64"} // NETMASK
+    	};
     for (const auto& [test, format] : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
       BOOST_TEST(format == out);
       out.clear();
       const auto& testSpace = ' ' + test + ' ';
-      BOOST_TEST(nmdp::testAttr(testSpace.c_str(),
-                 parserRule, out, blank, false));
+      BOOST_TEST(nmdp::testAttr( testSpace.c_str()
+                               , parserRule, out, blank, false
+                               )
+                );
       BOOST_TEST(format == out);
     }
     // BAD
     std::vector<std::string> testsBad {
       // {test}
-      {"host 1.2.3.4/24"},
-      {"host 1234::aBcD/112"},
-      {"1.2.3.4 1.2.3.4/24"},
-      {"1234::aBcD 1234::aBcD/112"},
-      {"1.2.3.4 0.0.0.0"},
-      {"1.2.3.4 255.255.255.255"},
+        {"host 1.2.3.4/24"}
+      , {"host 1234::aBcD/112"}
+      , {"1.2.3.4 1.2.3.4/24"}
+      , {"1234::aBcD 1234::aBcD/112"}
+      , {"1.2.3.4 0.0.0.0"}
+      , {"1.2.3.4 255.255.255.255"}
       // always needs a space or newline after
-      {"any"},
-      {"any4"},
-      {"any6"},
-    };
+      , {"any"}
+      , {"any4"}
+      , {"any6"}
+      };
     for (const auto& test : testsBad) {
       std::string out;
       BOOST_TEST(!nmdp::testAttr(test.c_str(), parserRule, out, blank));
@@ -147,10 +150,10 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"1.2.3.4", "1.2.3.4"},
-      {"1.2.3.4 ", "1.2.3.4"},
-      {" 1234::aBcD ", "1234::aBcD"},
-    };
+        {"1.2.3.4", "1.2.3.4"}
+      , {"1.2.3.4 ", "1.2.3.4"}
+      , {" 1234::aBcD ", "1234::aBcD"}
+      };
     for (const auto& [test, format] : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
@@ -168,17 +171,20 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"eq 123", "123"},
-      {"eq http", "http"},
-      {"neq 123", "!123"},
-      {"neq http", "!http"},
-      {"lt 123", "<123"},
-      {"lt http", "<http"},
-      {"gt 123", ">123"},
-      {"gt http", ">http"},
-      {"range 123 456", "123-456"},
-      {"range http https", "http-https"}, // Really doesn't make sense though
-    };
+        {"eq 123", "123"}
+      , {"eq 123 456", "123,456"}
+      , {"eq http", "http"}
+      , {"eq http 8080 https 8443", "http,8080,https,8443"}
+      , {"neq 123", "!123"}
+      , {"neq 123 456", "!123,456"}
+      , {"neq http", "!http"}
+      , {"lt 123", "<123"}
+      , {"lt http", "<http"}
+      , {"gt 123", ">123"}
+      , {"gt http", ">http"}
+      , {"range 123 456", "123-456"}
+      , {"range http https", "http-https"}  // Really doesn't make sense though
+      };
     for (const auto& [test, format] : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
@@ -186,6 +192,7 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     }
     // BAD
     BOOST_TEST(!nmdp::test("qe 123", parserRule, blank, false));
+    BOOST_TEST(!nmdp::test("eq 123 log", parserRule, blank, true));
     // -- The parser is 'keyword > token', so limited checkable bad cases
   }
 
@@ -194,21 +201,22 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::tuple<std::string, std::string>> testsOk {
       // {test, expected format}
-      {"log", "log"},
-      {" log ", "log"},
-      {"log-input", "log-input"},
-      {"log default", "log default"},
-      {"log disable", "log disable"},
-      {"log 0 interval 1", "log 0 interval 1"},
-      {"log interval 600", "log interval 600"},
-      {"log 7", "log 7"},
-      {"log warning", "log warning"},
-    };
+        {"log", "log"}
+      , {" log ", "log"}
+      , {"log-input", "log-input"}
+      , {"log default", "log default"}
+      , {"log disable", "log disable"}
+      , {"log 0 interval 1", "log 0 interval 1"}
+      , {"log interval 600", "log interval 600"}
+      , {"log 7", "log 7"}
+      , {"log warning", "log warning"}
+      };
     for (const auto& [test, format] : testsOk) {
       tpca.initCurRule();
       std::string out;
-      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-                 "parse: " << test);
+      BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+                , "parse: " << test
+                );
       BOOST_TEST("" == out);
       nmdo::AcRule temp = tpca.curRule;
       BOOST_TEST(format == temp.getActions().at(0));
@@ -222,16 +230,16 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::string> testsOk {
       // {test}
-      {"0"},
-      {"255"},
-      {"0 0"},
-      {"255 255"},
-      {"100 1"},
-      {"1 100"},
-      {"echo"},
-      {"general-parameter-problem"},
-      {"object-group IGI"},
-    };
+        {"0"}
+      , {"255"}
+      , {"0 0"}
+      , {"255 255"}
+      , {"100 1"}
+      , {"1 100"}
+      , {"echo"}
+      , {"general-parameter-problem"}
+      , {"object-group IGI"}
+      };
     for (const auto& test : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
@@ -244,12 +252,12 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::string> testsOk {
       // {test}
-      {"user SOMEDOM\\myUser"},
-      {"user any"},
-      {"user none"},
-      {"user-group SOMEDOM\\\\myGroup"},
-      {"object-group-user UGI"},
-    };
+        {R"(user SOMEDOM\myUser)"}
+      , {"user any"}
+      , {"user none"}
+      , {R"(user-group SOMEDOM\\myGroup)"}
+      , {"object-group-user UGI"}
+      };
     for (const auto& test : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
@@ -262,10 +270,10 @@ BOOST_AUTO_TEST_CASE(testAclRules)
     // OK
     std::vector<std::string> testsOk {
       // {test}
-      {"security-group name someName"},
-      {"security-group tag someTag"},
-      {"object-group-security SGI"},
-    };
+        {"security-group name someName"}
+      , {"security-group tag someTag"}
+      , {"object-group-security SGI"}
+      };
     for (const auto& test : testsOk) {
       std::string out;
       BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank));
@@ -295,7 +303,8 @@ KEY: (unless otherwise stated)
                   | IPv6/PREFIX
                   | any
                  )
-  PORT_ARG    -- (  ( lt | gt | eq | neq ) PORT
+  PORT_ARG    -- (  ( eq | neq ) PORT ...
+                  | ( lt | gt ) PORT
                   | range PORT PORT
                  )
   ICMP_ARG    -- ( ICMP_TYPE [ ICMP_CODE ] | ICMP_MESSAGE )
@@ -319,15 +328,15 @@ BOOST_AUTO_TEST_CASE(testIosStandardRuleLine)
   {
     const std::string fullText {
       "permit 1.2.3.4 0.0.0.255 log\n"
-    };
+    	};
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::tuple<std::string, std::string>> replaces {
-      {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"permit", "deny"},
-    };
+        {"1.2.3.4 0.0.0.255", "host 1.2.3.4"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"permit", "deny"}
+      };
     for (const auto& [toReplace, replace] : replaces) {
       std::string testReplace = fullText;
       auto locReplace {testReplace.find(toReplace)};
@@ -345,7 +354,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
   {
     const std::string fullText {
       "access-list TEST permit any\n"
-    };
+    	};
 
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
   }
@@ -356,7 +365,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
       " permit any log\n"
       " remark crazy rule\n"
       " deny   any\n"
-    };
+      };
 
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
@@ -387,7 +396,7 @@ BOOST_AUTO_TEST_CASE(testIosStandard)
       " permit any\n"
       " remark crazy rule\n"
       " deny   any\n"
-    };
+      };
 
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
   }
@@ -429,27 +438,27 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       " 1.2.3.4 0.0.0.255 range 123 456"
       " established precedence 7 tos 15"
       " log time-range RANGE_NAME\n"
-    };
+      };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
-      {" established"},
-      {" precedence 7"},
-      {" tos 15"},
-      {" time-range RANGE_NAME"},
-      {" range 123 456"},
-      {" range 123 456"},
-    };
+        {" established"}
+      , {" precedence 7"}
+      , {" tos 15"}
+      , {" time-range RANGE_NAME"}
+      , {" range 123 456"}
+      , {" range 123 456"}
+      };
     const std::vector<std::tuple<std::string, std::string>> replaces {
-      {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
-      {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"range 123 456", "eq 123"},
-      {"range 123 456", "eq 123"},
-    };
+        {"1.2.3.4 0.0.0.255", "host 1.2.3.4"}
+      , {"1.2.3.4 0.0.0.255", "host 1.2.3.4"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"range 123 456", "eq 123"}
+      , {"range 123 456", "eq 123"}
+      };
     std::string testRemoval = fullText;
     for (const auto& removal : removals) {
       auto locRemoval {testRemoval.find(removal)};
@@ -488,20 +497,20 @@ BOOST_AUTO_TEST_CASE(testIosExtendedRuleLine)
       " 1.2.3.4 0.0.0.255 0 0"
       " established precedence 7 tos 15"
       " log time-range RANGE_NAME\n"
-    };
+    	};
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
-      {" established"},
-      {" precedence 7"},
-      {" tos 15"},
-      {" time-range RANGE_NAME"},
-    };
+        {" established"}
+      , {" precedence 7"}
+      , {" tos 15"}
+      , {" time-range RANGE_NAME"}
+      };
     const std::vector<std::tuple<std::string, std::string>> replaces {
-      {"0 0", "255 255"},
-      {"0 0", "administratively-prohibited"},
-      {"0 0", "unreachable"},
-    };
+        {"0 0", "255 255"}
+      , {"0 0", "administratively-prohibited"}
+      , {"0 0", "unreachable"}
+      };
     std::string testRemoval = fullText;
     for (const auto& removal : removals) {
       auto locRemoval {testRemoval.find(removal)};
@@ -541,13 +550,13 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
   {
     const std::string fullText {
       "access-list TEST dynamic NAME timeout 5 permit ip any any\n"
-    };
+      };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
-      {" timeout 5"},
-      {" dynamic NAME"},
-    };
+        {" timeout 5"}
+      , {" dynamic NAME"}
+      };
     std::string testRemoval = fullText;
     for (const auto& removal : removals) {
       auto locRemoval {testRemoval.find(removal)};
@@ -563,11 +572,11 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
       " permit ip any any\n"
       " remark crazy rule\n"
       " deny   ip any any\n"
-    };
+      };
     const std::vector<std::string> removals {
-      {" timeout 5"},
-      {" dynamic NAME"},
-    };
+        {" timeout 5"}
+      , {" dynamic NAME"}
+      };
     std::string test = fullText;
     for (const auto& removal : removals) {
       test = test.erase(test.find(removal), removal.size());
@@ -601,7 +610,7 @@ BOOST_AUTO_TEST_CASE(testIosExtended)
       " permit ip any any\n"
       " remark crazy rule\n"
       " deny   ip any any\n"
-    };
+      };
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
   }
 }
@@ -633,7 +642,7 @@ BOOST_AUTO_TEST_CASE(testIosRemark)
   {
     const std::string full {
       "access-list TEST remark crazy rules\n"
-    };
+      };
 
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(full, TestCiscoAcls(), result, blank));
@@ -701,7 +710,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandardRuleLine)
   {
     const std::string fullText {
       "permit any\n"
-    };
+    	};
 
     BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
@@ -714,7 +723,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandard)
   {
     const std::string fullText {
       "access-list TEST permit any\n"
-    };
+      };
 
     BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
@@ -725,7 +734,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandard)
       " 20 permit any\n"
       " 30 remark crazy rule\n"
       " 40 deny   any\n"
-    };
+      };
 
     BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
@@ -736,7 +745,7 @@ BOOST_AUTO_TEST_CASE(testNxosStandard)
       " 20 permit any\n"
       " 30 remark crazy rule\n"
       " 40 deny   any\n"
-    };
+      };
 
     BOOST_TEST(!nmdp::test(fullText.c_str(), parserRule, blank));
   }
@@ -764,28 +773,28 @@ BOOST_AUTO_TEST_CASE(testNxosExtendedRuleLine)
       " 1.2.3.4 0.0.0.255 range 123 456"
       " established fragments precedence 7 tos 15"
       " log time-range RANGE_NAME\n"
-    };
+      };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
-      {" established"},
-      {" fragments"},
-      {" precedence 7"},
-      {" tos 15"},
-      {" time-range RANGE_NAME"},
-      {" range 123 456"},
-      {" range 123 456"},
-    };
+        {" established"}
+      , {" fragments"}
+      , {" precedence 7"}
+      , {" tos 15"}
+      , {" time-range RANGE_NAME"}
+      , {" range 123 456"}
+      , {" range 123 456"}
+      };
     const std::vector<std::tuple<std::string, std::string>> replaces {
-      {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
-      {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"range 123 456", "eq 123"},
-      {"range 123 456", "eq 123"},
-    };
+        {"1.2.3.4 0.0.0.255", "host 1.2.3.4"}
+      , {"1.2.3.4 0.0.0.255", "host 1.2.3.4"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"range 123 456", "eq 123"}
+      , {"range 123 456", "eq 123"}
+      };
     std::string testRemoval = fullText;
     for (const auto& removal : removals) {
       auto locRemoval {testRemoval.find(removal)};
@@ -829,11 +838,11 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
       " 20 permit ip any any\n"
       " 30 remark crazy rule\n"
       " 40 deny   ip any any\n"
-    };
+      };
     const std::vector<std::string> removals {
-      {" timeout 5"},
-      {" dynamic NAME"},
-    };
+        {" timeout 5"}
+      , {" dynamic NAME"}
+      };
     std::string test = fullText;
     for (const auto& removal : removals) {
       test = test.erase(test.find(removal), removal.size());
@@ -873,7 +882,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
       " 110 deny   ip any any\n"
       " 120 remark ignored rule\n"
       " 130 some other line rule that should not match\n"
-    };
+      };
 
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
@@ -892,7 +901,7 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     const std::string fullText {
       "ipv6 access-list TEST\n"
       " 10 permit ipv6 any 1234:1234:1234:123::/59\n"
-    };
+      };
 
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
@@ -905,6 +914,46 @@ BOOST_AUTO_TEST_CASE(testNxosExtended)
     BOOST_TEST("permit" == aclBook.at(1).getActions().at(0));
     const auto& ignoredRules = tpca.ignoredRuleData;
     BOOST_TEST(0 == ignoredRules.size());
+  }
+    {
+    TestCiscoAcls tpca;
+    const std::string fullText {
+      "ip access-list TEST\n"
+      "  01 permit udp any any established\n"
+      "  02 permit udp any any established log\n"
+      "  03 permit udp any any eq 1 2\n"
+      "  04 permit udp any any eq 1 2 log\n"
+      "  05 permit udp any any eq 1 2 established log\n"
+      "  06 permit udp any any eq 1 ttl eq 5 2\n"
+      "  07 permit udp any eq 1 2 any eq 1 2\n"
+      "  08 permit udp host 1.1.1.1 eq 1 2 host 2.2.2.2 eq 1 2\n"
+      "  09 permit udp 1.1.1.1/32 eq 1 2 2.2.2.2/32 eq 1 2 established log\n"
+    };
+
+    nmdsic::Result result;
+    BOOST_TEST(nmdp::testAttr(fullText, tpca, result, blank));
+
+    const auto& aclBookName  {result.first};
+    BOOST_TEST("TEST" == aclBookName);
+    const auto& aclBook  {result.second};
+    BOOST_TEST(9 == aclBook.size());
+
+    auto regexLambda = [](const auto& a, const auto& b) {
+        std::regex r(b);
+        bool match {std::regex_search(a, r)};
+        BOOST_TEST(match, "regex '" << b << "' not in " << a);
+      };
+    const auto srcs     {R"(, srcs: \[(any|1.1.1.1|1.1.1.1/32)\], )"};
+    const auto dsts     {R"(, dsts: \[(any|2.2.2.2|2.2.2.2/32)\], )"};
+    const auto services {R"(, services: \[udp(::?1,2)*(--established)?\], )"};
+    const auto actions  {R"(, actions: \[permit(, log)?\], )"};
+    for (const auto& [id, aclLine] : aclBook) {
+      const auto& dbg {aclLine.toDebugString()};
+      regexLambda(dbg, srcs);
+      regexLambda(dbg, dsts);
+      regexLambda(dbg, services);
+      regexLambda(dbg, actions);
+    }
   }
 }
 /* NOTE: Below is a one-liner, wrapped for clarity
@@ -923,28 +972,28 @@ BOOST_AUTO_TEST_CASE(testNxosRemarkRuleLine)
   const auto& parserRule = tpca.nxosRemarkRuleLine;
   {
     const std::vector<std::string> tests {
-      {"10 remark some\n"},
-      {"100 remark s r t\n"},
-    };
+        {"10 remark some\n"}
+      , {"100 remark s r t\n"}
+      };
     for (const auto& test : tests) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank));
     }
   }
   {
     const std::vector<std::string> tests {
-      {"10 remark \n"},
-      {"10 remark\n"},
-    };
+        {"10 remark \n"}
+      , {"10 remark\n"}
+      };
     for (const auto& test : tests) {
       BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank, false));
     }
   }
   {
     const std::vector<std::string> tests {
-      {"10\n"},
-      {"\n"},
-      {""},
-    };
+        {"10\n"}
+      , {"\n"}
+      , {""}
+      };
     for (const auto& test : tests) {
       BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank, false));
     }
@@ -1011,17 +1060,17 @@ BOOST_AUTO_TEST_CASE(testAsaStandardRuleLine)
   {
     const std::string fullText {
       "permit 1.2.3.4 0.0.0.255\n"
-    };
+      };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::tuple<std::string, std::string>> replaces {
-      {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"1.2.3.4 0.0.0.255", "any4"},
-      {"1.2.3.4 0.0.0.255", "any6"},
-      {"permit", "deny"},
-    };
+        {"1.2.3.4 0.0.0.255", "host 1.2.3.4"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"1.2.3.4 0.0.0.255", "any4"}
+      , {"1.2.3.4 0.0.0.255", "any6"}
+      , {"permit", "deny"}
+      };
     for (const auto& [toReplace, replace] : replaces) {
       std::string testReplace = fullText;
       auto locReplace {testReplace.find(toReplace)};
@@ -1042,7 +1091,7 @@ BOOST_AUTO_TEST_CASE(testAsaStandard)
     const std::string fullText {
       "access-list TEST standard permit any\n"
       "access-list TEST standard deny any\n"
-    };
+    	};
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank, false));
 
     nmdsic::Result result;
@@ -1082,38 +1131,38 @@ BOOST_AUTO_TEST_CASE(testAsaExtendedRuleLine)
       " security-group name SGN1 1.2.3.4 0.0.0.255 range 123 456"
       " security-group name SGN2 1.2.3.4 0.0.0.255 range 123 456"
       " log 5 interval 10 time-range RANGE_NAME inactive\n"
-    };
+      };
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank));
 
     const std::vector<std::string> removals {
-      {" inactive"},
-      {" time-range RANGE_NAME"},
-      {" log 5 interval 10"},
-      {" security-group name SGN2"},
-      {" security-group name SGN1"},
-      {" range 123 456"},
-      {" range 123 456"},
-    };
+        {" inactive"}
+      , {" time-range RANGE_NAME"}
+      , {" log 5 interval 10"}
+      , {" security-group name SGN2"}
+      , {" security-group name SGN1"}
+      , {" range 123 456"}
+      , {" range 123 456"}
+    	};
     const std::vector<std::tuple<std::string, std::string>> replaces {
-      {"security-group name SGN1", "security-group tag SGT1"},
-      {"security-group name SGN2", "security-group tag SGT2"},
-      {"security-group tag SGT1", "object-group-security OGSEC1"},
-      {"security-group tag SGT2", "object-group-security OGSEC2"},
-      {"object-group-security OGSEC1", "user domain\\name"},
-      {"user domain\\name", "user any"},
-      {"user any", "user none"},
-      {"user none", "user-group domain\\group"},
-      {"user-group domain\\group", "object-group-user UGI"},
-      {"1.2.3.4 0.0.0.255", "host 1.2.3.4"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "1.2.3.4/24"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"1.2.3.4 0.0.0.255", "any"},
-      {"range 123 456", "eq 123"},
-      {"range 123 456", "eq 123"},
-      {"log 5 interval 10", "log warnings"},
-      {"log 5 interval 10", "log"},
-    };
+        {"security-group name SGN1", "security-group tag SGT1"}
+      , {"security-group name SGN2", "security-group tag SGT2"}
+      , {"security-group tag SGT1", "object-group-security OGSEC1"}
+      , {"security-group tag SGT2", "object-group-security OGSEC2"}
+      , {"object-group-security OGSEC1", "user domain\\name"}
+      , {"user domain\\name", "user any"}
+      , {"user any", "user none"}
+      , {"user none", "user-group domain\\group"}
+      , {"user-group domain\\group", "object-group-user UGI"}
+      , {"1.2.3.4 0.0.0.255", "host 1.2.3.4"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "1.2.3.4/24"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"1.2.3.4 0.0.0.255", "any"}
+      , {"range 123 456", "eq 123"}
+      , {"range 123 456", "eq 123"}
+      , {"log 5 interval 10", "log warnings"}
+      , {"log 5 interval 10", "log"}
+    	};
     std::string testRemoval = fullText;
     for (const auto& removal : removals) {
       auto locRemoval {testRemoval.find(removal)};
@@ -1154,7 +1203,7 @@ BOOST_AUTO_TEST_CASE(testAsaExtended)
     const std::string fullText {
       "access-list TEST extended permit ip user any any any\n"
       "access-list TEST extended deny ip any any\n"
-    };
+    	};
     BOOST_TEST(nmdp::test(fullText.c_str(), parserRule, blank, false));
 
     nmdsic::Result result;
@@ -1200,7 +1249,7 @@ BOOST_AUTO_TEST_CASE(testAsaRemark)
   {
     const std::string full {
       "access-list TEST remark - crazy rules\n"
-    };
+    	};
 
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(full, TestCiscoAcls(), result, blank));
@@ -1270,7 +1319,7 @@ BOOST_AUTO_TEST_CASE(testAsaEthertype)
     const std::string fullText {
       "access-list TEST ethertype permit any\n"
       "access-list TEST ethertype deny any\n"
-    };
+    	};
 
     nmdsic::Result result;
     BOOST_TEST(nmdp::testAttr(fullText, TestCiscoAcls(), result, blank));

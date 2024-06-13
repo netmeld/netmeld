@@ -31,7 +31,7 @@
 
 #include "Context.hpp"
 
-#include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 
 namespace nmcu = netmeld::core::utils;
 

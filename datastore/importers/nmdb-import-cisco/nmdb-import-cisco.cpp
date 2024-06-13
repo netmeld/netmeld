@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -104,7 +104,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
               dnsSearchDomain);
         }
 
-        // 04-03-2019 NOTE: Manually saving here because we do not have nor
         LOG_DEBUG << "Iteration over AAAs\n";
         for (auto& result : results.aaas) {
           // 04-03-2019 NOTE: Manually saving here because we do not have nor
@@ -140,6 +139,13 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }
+
+        LOG_DEBUG << "Iterating over vrfs\n";
+        for (auto& [_, result] : results.vrfs) {
+          LOG_DEBUG << result.toDebugString() << '\n';
+          result.save(t, toolRunId, deviceId);
+        }
+
 
         const std::vector<std::string> vlanIfacePrefixes{
             "Vlan", "Vlan ",

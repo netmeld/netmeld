@@ -109,21 +109,21 @@ Parser::Parser() : Parser::base_type(start)
        | ( qi::string("Discard")
          | qi::string("MultiDiscard")
          | qi::string("Reject")
-         ) [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+         ) [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))]
        | (-qi::lit(">") >>
           -(qi::lit("to") >> rtrIpAddr)
              [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
          )
        ) >>
        -(qi::lit("via") >> ifaceName)
-          [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+          [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))]
       )
     | ((-qi::lit(">") >>
         (qi::lit("to") >> rtrIpAddr)
           [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
        ) >>
        -(qi::lit("via") >> ifaceName)
-          [(pnx::bind(&nmdo::Route::setIfaceName, &qi::_val, qi::_1))]
+          [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))]
       )
     ) >>
     +qi::eol

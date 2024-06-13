@@ -26,6 +26,7 @@
 
 
 foreach(ITEM
+    ContainerUtilities
     StringUtilities
   )
   nm_add_test(${ITEM})

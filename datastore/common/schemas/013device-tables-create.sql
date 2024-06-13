@@ -1,5 +1,5 @@
 -- =============================================================================
--- Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+-- Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 -- (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 -- Government retains certain rights in this software.
 --
@@ -425,8 +425,8 @@ ON raw_device_vrfs_interfaces(device_id, vrf_id, interface_name);
 CREATE TABLE raw_device_ip_routes (
     tool_run_id                 UUID            NOT NULL
   , device_id                   TEXT            NOT NULL
-  , vrf_id                      TEXT            NOT NULL
-  , table_id                    TEXT            NOT NULL
+  , vrf_id                      TEXT            NULL
+  , table_id                    TEXT            NULL
   , is_active                   BOOLEAN         NOT NULL
   , dst_ip_net                  CIDR            NOT NULL
   , next_vrf_id                 TEXT            NULL
@@ -446,6 +446,18 @@ CREATE TABLE raw_device_ip_routes (
   , CHECK (  ((next_vrf_id IS NULL) = (next_table_id IS NULL))
           OR (next_hop_ip_addr IS NOT NULL)
           )
+);
+-- Since this table lacks a PRIMARY KEY and allows NULLs (>2):
+-- Create UNIQUE expressional index with substitutions of NULL values
+-- for use with `ON CONFLICT` guards against duplicate data.
+CREATE UNIQUE INDEX raw_device_ip_routes_idx_unique
+ON raw_device_ip_routes(
+  HASH_CHAIN(
+      tool_run_id::TEXT, device_id, vrf_id, table_id, is_active::TEXT
+    , dst_ip_net::TEXT, next_vrf_id, next_table_id
+    , next_hop_ip_addr::TEXT, outgoing_interface_name
+    , protocol, administrative_distance::TEXT, metric::TEXT, description
+    )
 );
 
 -- Partial indexes

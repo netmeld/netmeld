@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,13 +42,12 @@ namespace netmeld::datastore::parsers {
       ParserIpv4Address() : ParserIpv4Address::base_type(start)
       {
         start =
-          qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()] >>
-          ( (qi::as_string[ipv4])
-            [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
-            >>
-            -(qi::lit('/') >> prefix)
-            [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
-          )
+          qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()]
+          >> (  (qi::as_string[ipv4])
+                [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
+             >> -(qi::lit('/') >> prefix)
+                [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
+             )
           ;
 
         ipv4 = // currently this expects chars, so octet can't return uints
@@ -57,12 +56,12 @@ namespace netmeld::datastore::parsers {
           qi::hold[octet >> qi::repeat(3)[qi::char_('.') >> octet]]
           ;
 
-        octet = // unless changes occur in Boost, time waster for bounds checks
-          (qi::repeat(1,3)[qi::ascii::digit])
+        octet %=
+          qi::raw[qi::uint_ [qi::_pass = (qi::_1 <= 255)]]
           ;
 
         prefix %=
-          qi::uint_ >> qi::eps[qi::_pass = (qi::_val >= 0 && qi::_val <= 32)]
+          qi::uint_ [qi::_pass = (qi::_1 <= 32)]
           ;
 
         BOOST_SPIRIT_DEBUG_NODES((start)(ipv4)(prefix));
@@ -72,10 +71,11 @@ namespace netmeld::datastore::parsers {
         start;
 
       qi::rule<IstreamIter, std::string()>
-        ipv4,
-        octet;
+          ipv4
+        , octet
+        ;
 
-      qi::rule<IstreamIter, unsigned int>
+      qi::rule<IstreamIter, unsigned int()>
         prefix;
   };
 
@@ -83,6 +83,10 @@ namespace netmeld::datastore::parsers {
   class ParserIpv6Address :
     public qi::grammar<IstreamIter, nmdo::IpAddress()>
   {
+    protected:
+      unsigned char h16Count  {0};
+      bool          colons    {false};
+
     public:
       ParserIpv6Address() : ParserIpv6Address::base_type(start)
       {
@@ -96,31 +100,62 @@ namespace netmeld::datastore::parsers {
           )
           ;
 
-        ipv6 =
-          // ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-            qi::hold[h16 >> qi::repeat(7)[qi::hold[qi::char_(':') >> h16]]]
-          // _____
-          // ffff::ffff
-          | qi::hold[qi::repeat(1,7)[qi::hold[h16 >> qi::char_(':')]] >>
-                     qi::repeat(1,7)[qi::hold[qi::char_(':') >> h16]]]
-          // _____
-          // ffff::
-          | qi::hold[qi::repeat(1,7)[qi::hold[h16 >> qi::char_(':')]] >>
-                     qi::char_(':')]
-          //  _____
-          // ::ffff
-          | qi::hold[qi::char_(':') >>
-                     qi::repeat(1,7)[qi::hold[qi::char_(':') >> h16]]]
-          // ::
-          | qi::hold[qi::string("::")]
+        ipv6 %=
+          ( addrFull
+          | addrShortenedMiddle
+          | addrShortenedEnd
+          | addrShortenedStart
+          | addrOnlyColons
+          ) >> qi::eps(  ( pnx::ref(colons) && (pnx::ref(h16Count) <= 6))
+                      || (!pnx::ref(colons) && (pnx::ref(h16Count) == 8))
+                      )
           ;
 
-        h16 =
-          (qi::repeat(1,4)[qi::ascii::xdigit])
+        resetConstraints =
+          qi::eps [(pnx::ref(colons) = false, pnx::ref(h16Count) = 0)]
+          ;
+
+        addrFull %= // e.g., ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+          resetConstraints
+          >> qi::hold[h16 >> qi::repeat(7)[qi::hold[qi::char_(':') >> h16]]]
+          ;
+
+        addrShortenedMiddle %= // e.g., ffff::ffff
+          resetConstraints
+          >> qi::hold[  qi::repeat(1,6)[qi::hold[h16 >> qi::char_(':')]]
+                     >> qi::repeat(1,6)[qi::hold[qi::char_(':') >> h16]]
+                     ]
+          >> qi::eps [pnx::ref(colons) = true]
+          ;
+
+        addrShortenedEnd %= // e.g., ffff::
+          resetConstraints
+          >> qi::hold[  qi::repeat(1,6)[qi::hold[h16 >> qi::char_(':')]]
+                     >> qi::char_(':')
+                     ]
+          >> qi::eps [pnx::ref(colons) = true]
+          ;
+
+        addrShortenedStart %= // e.g., ::ffff
+          resetConstraints
+          >> qi::hold[  qi::char_(':')
+                     >> qi::repeat(1,6)[qi::hold[qi::char_(':') >> h16]]
+                     ]
+          >> qi::eps [pnx::ref(colons) = true]
+          ;
+
+        addrOnlyColons %= // i.e., ::
+          resetConstraints
+          >> qi::hold[qi::string("::")]
+          >> qi::eps [pnx::ref(colons) = true]
+          ;
+
+        h16 %=
+          (qi::repeat(1,4)[qi::ascii::xdigit]) [pnx::ref(h16Count)++]
           ;
 
         prefix %=
-          qi::uint_ >> qi::eps[qi::_pass = (qi::_val >= 0 && qi::_val <= 128)]
+          qi::uint_ [qi::_pass = (qi::_val <= 128)]
           ;
 
         BOOST_SPIRIT_DEBUG_NODES((start)(ipv6)(prefix)(h16));
@@ -130,11 +165,19 @@ namespace netmeld::datastore::parsers {
         start;
 
       qi::rule<IstreamIter, std::string()>
-        ipv6,
-        h16;
+          ipv6
+        , addrFull
+        , addrShortenedMiddle
+        , addrShortenedEnd
+        , addrShortenedStart
+        , addrOnlyColons
+        , h16;
 
       qi::rule<IstreamIter, unsigned int>
         prefix;
+
+      qi::rule<IstreamIter>
+        resetConstraints;
   };
 
 
