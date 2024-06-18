@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
 {
   TestParser tp;
   const auto& parserRule {tp.start};
-  
+
   {
     const std::string test {R"(
             NAME: "abc def", DESCR: "abc def"
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
 
             NAME: "ghi 123", DESCR: "ghi"
             PID: ghi-12345678901234, VID: v1234, SN: b1234567890
-            
+
             NAME: "abc def", DESCR: "abc def"
             PID: abc-123           , VID: v123 , SN: c1234567890
          )"
