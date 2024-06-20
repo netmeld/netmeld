@@ -24,63 +24,56 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <regex>
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-#include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
-#include "Parser.hpp"
+#include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
-namespace nmdt = netmeld::datastore::tools;
+namespace nmdo = netmeld::datastore::objects;
+namespace nmdp = netmeld::datastore::parsers;
 
-template<typename P, typename R>
-class Tool : public nmdt::AbstractImportSpiritTool<P,R>
+// =============================================================================
+// Data containers
+// =============================================================================
+typedef nmdo::DeviceInformation Data;
+typedef std::vector<Data>       Result;
+
+
+// =============================================================================
+// Parser definition
+// =============================================================================
+class Parser :
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
+  private:
+    const std::string VENDOR {"Cisco"};
+
+  protected:
+    // Rules
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+      start;
+
+    qi::rule<nmdp::IstreamIter, Data, qi::ascii::blank_type>
+      deviceInfo;
+
+    qi::rule<nmdp::IstreamIter, std::string()>
+      token;
+
+    qi::rule<nmdp::IstreamIter>
+      notDeviceInfoData;
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
   public:
-    Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      ("show inventory"   // command line tool imports data from
-      , PROGRAM_NAME      // program name (set in CMakeLists.txt)
-      , PROGRAM_VERSION   // program version (set in CMakeLists.txt)
-      )
-    {}
+    Parser();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private:
-    void
-    specificInserts(pqxx::transaction_base& t) override
-    {
-      const auto& toolRunId {this->getToolRunId()};
-      const auto& deviceId  {this->getDeviceId()};
-
-      LOG_DEBUG << "Iterating over results\n";
-      for (auto& result : this->tResults) {
-        result.setDeviceId(deviceId);
-
-        // Standardize on chassis for variations
-        std::regex chassisTest("chassis|1", std::regex::icase);
-        if (std::regex_match(result.getDeviceType(), chassisTest)) {
-          result.setDeviceType("chassis");
-        }
-
-        result.save(t, toolRunId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
-      }
-    }
 };
-
-// =============================================================================
-// Program entry point
-// =============================================================================
-int
-main (int argc, char** argv)
-{
-  Tool<Parser, Result> tool;
-  return tool.start(argc, argv);
-}
+#endif // PARSER_HPP
