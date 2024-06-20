@@ -121,6 +121,51 @@ BOOST_AUTO_TEST_CASE(testWhole)
 {
   {
     const auto& parserRule {TestParser()};
+    std::vector <std::string> testsOk {
+      R"STR(Capability Codes: R - Router, T - Trans-Bridge, B - Source-Route-Bridge
+                  S - Switch, H - Host, I - IGMP, r - Repeater,
+                  V - VoIP-Phone, D - Remotely-Managed-Device,
+                  s - Supports-STP-Dispute
+
+
+Device-ID          Local Intrfce  Hldtme Capability  Platform      Port ID
+HOST1.domain        Eth1/1         123    R S I s   ABC-123          Gig1/2
+host2.domain(abc123)
+                    Gig1/1         123    R S       ABC-123-ABC-123- Ten1/2
+      )STR"
+    };
+    for (const auto& test : testsOk) {
+      Result out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                "Parse rule 'testWhole': " << test);
+    }
+  }
+  {
+    const auto& parserRule {TestParser()};
+    std::vector <std::string> testsOk {
+      R"STR(Capability Codes: R - Router, T - Trans Bridge, B - Source Route Bridge
+                  S - Switch, H - Host, I - IGMP, r - Repeater, P - Phone,
+                  D - Remote, C - CVTA, M - Two-port Mac Relay
+
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+HOST1.domain
+                 Gig 1/1/2         173             R S I  ABC123    Gig 2/4/0/1
+host2.domain
+                 Ten 1/1/1         165              R B   123ABC    Eth 1/4/0/1
+host3(abc123)
+                 Ten 1/1/1         165            R S I C Abc-D1234 mgmt0
+
+Total cdp entries displayed : 3
+      )STR"
+    };
+    for (const auto& test : testsOk) {
+      Result out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+                "Parse rule 'testWhole': " << test);
+    }
+  }
+  {
+    const auto& parserRule {TestParser()};
     std::vector<std::string> testsOk {
       R"STR(
 ---------------------------------------------

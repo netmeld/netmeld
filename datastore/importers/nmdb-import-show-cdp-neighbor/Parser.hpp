@@ -79,8 +79,15 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      config,
+      iosConfig,
+      iosEntry,
       header,
+      nxosConfig,
+      nxosEntry,
+      capabilityCodes,
+      entryCount,
+      detailConfig,
+      detailHeader,
       deviceData,
       ipAddressValue,
       platformValue,
@@ -91,7 +98,8 @@ class Parser :
       hostnameValue;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      token;
+      token,
+      capability;
 
     nmdp::ParserIpAddress   ipAddr;
 

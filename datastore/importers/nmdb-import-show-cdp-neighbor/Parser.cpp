@@ -36,11 +36,68 @@ namespace nmcu = netmeld::core::utils;
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    config
+    (detailConfig | iosConfig | nxosConfig)
       [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
-  config =
+  // show cdp neighbor (ios)
+  iosConfig =
+    *(qi::eol)
+    >> capabilityCodes >> *qi::eol
+    >> header >> *(iosEntry) >> *qi::eol
+    >> entryCount
+    ;
+
+  header =
+    qi::lit("Device-ID")
+    >> qi::lit("Local Intrfce")
+    >> qi::lit("Holdtme")
+    >> qi::lit("Capability")
+    >> qi::lit("Platform")
+    >> qi::lit("Port ID")
+    ;
+
+  iosEntry =
+      token // Device-ID
+      >> qi::eol // Is the newline here optional?
+      >> token >> +qi::char_ // Local Intrfce [Use char_ to match the /'s as well as the numbers]
+      >> token // Holdtme
+      >> +capability // Capability
+      >> token // Platform
+      >> token >> +qi::char_ // Port ID
+    ;
+
+  capabilityCodes =
+    qi::lit("Compatability Codes:")
+    >> *ignoredLine // Do we need these? Or just eat them up?
+    >> qi::eol
+    ;
+
+  entryCount =
+    qi::lit("Total cdp entries displayed:")
+    >> +(qi::ascii::graph)
+    >> qi::eol
+    ;
+
+  // show cdp neighbor (nxos)
+  nxosConfig =
+    *(qi::eol)
+    >> capabilityCodes >> *qi::eol
+    >> header >> *(nxosEntry)
+    ;
+
+  nxosEntry =
+      token // Device-ID
+      >> token >> +qi::char_ // Local Intrfce [Use char_ to match the /'s as well as the numbers]
+      >> token // Holdtme
+      >> +capability // Capability
+      >> token // Platform
+      >> token >> +qi::char_ // Port ID
+    ;
+
+  // show cdp neighbor detail
+
+  detailConfig =
     *(qi::eol)
     >> *(header >> deviceData) [(pnx::bind(&Parser::finalizeData, this))]
     ;
@@ -100,10 +157,21 @@ Parser::Parser() : Parser::base_type(start)
     +token > qi::eol
     ;
 
+  capability =
+    qi::char_("RTBSHIrPDCM")
+    ;
+
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
-      (config)
-      (header) (deviceData)
+      (iosConfig)
+      (iosEntry)
+      (capabilityCodes)
+      (entryCount)
+      (nxosConfig)
+      (nxosEntry)
+      (header)
+      (detailConfig)
+      (detailHeader) (deviceData)
       (hostnameValue)
       (ipAddressValue)
       (platformValue)
