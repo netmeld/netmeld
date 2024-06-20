@@ -38,3 +38,18 @@ target_link_libraries(${TGT_TOOL}
 # The following is commented out as we don't want to actually install templates
 nm_install_bin(${TGT_TOOL})
 #nm_install_include(file dir)
+
+foreach(ITEM
+    ProwlerV2Data
+    ProwlerV3Data
+  )
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+      )
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
+endforeach()

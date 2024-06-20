@@ -47,10 +47,14 @@ Parser::fromJsonV2(std::ifstream& _file)
     json jline = json::parse(line);
     nmdop::ProwlerV2Data v2d {jline};
     if (v2d != nmdop::ProwlerV2Data()) {
-      d.v2Data.push_back(v2d);
+      d.v2Data.emplace_back(v2d);
+    } else {
+      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
     }
   }
-  r.push_back(d);
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
 }
 
 void
@@ -60,13 +64,16 @@ Parser::fromJsonV3(std::ifstream& _file)
   Data d;
   auto dataArray = json::parse(_file);
   for (const auto& entry : dataArray) {
-    LOG_DEBUG << "P1" << std::endl;
     nmdop::ProwlerV3Data v3d {entry};
     if (v3d != nmdop::ProwlerV3Data()) {
-      d.v3Data.push_back(v3d);
+      d.v3Data.emplace_back(v3d);
+    } else {
+      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
     }
   }
-  r.push_back(d);
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
 }
 
 
