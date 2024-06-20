@@ -45,11 +45,9 @@ Parser::fromJsonV2(std::ifstream& _file)
   std::string line;
   while (std::getline(_file, line)) {
     json jline = json::parse(line);
-    if (!jline.empty()) {
-      nmdop::ProwlerV2Data v2d {jline};
-      if (v2d != nmdop::ProwlerV2Data()) {
-        d.v2Data.emplace_back(v2d);
-      }
+    nmdop::ProwlerV2Data v2d {jline};
+    if (v2d != nmdop::ProwlerV2Data()) {
+      d.v2Data.emplace_back(v2d);
     } else {
       LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
     }
