@@ -37,6 +37,7 @@ Parser::Parser() : Parser::base_type(start)
     +( arp
      | ndp
      | errorMessage
+     | ignoredLine
      | qi::eol
      )
     ;
@@ -50,7 +51,7 @@ Parser::Parser() : Parser::base_type(start)
     | arpCiscoIos
     | arpCiscoNxos
     //| arpCiscoWlc
-    | arpJuniperConfig
+    | arpJuniperConf
     )
     ;
 
@@ -59,29 +60,29 @@ Parser::Parser() : Parser::base_type(start)
   // ---------------------------------------------------------------------------
 
   arpArista =
-    arpHeaderArista >
-    *arpEntryArista
+    arpHeaderArista > *arpEntryArista
     ;
 
   arpHeaderArista =
-    -(qi::lit("VRF:") >> token >> qi::eol) >>
-    qi::lit("Address") >>
-    qi::lit("Age") >> token >>
-    qi::lit("Hardware Addr") >>
-    qi::lit("Interface") >>
-    (qi::eol | qi::eoi)
+    -(qi::lit("VRF:") >> token >> qi::eol)
+    >> qi::lit("Address")
+    >> qi::lit("Age") >> token
+    >> qi::lit("Hardware Addr")
+    >> qi::lit("Interface")
+    > (qi::eol | qi::eoi)
     ;
 
   arpEntryArista =
-    ( ipv4Addr[(qi::_c = qi::_1)] >>
-      age >>
-      macAddr[(qi::_b = qi::_1)] >>
-      iface[(qi::_a = qi::_1)] >>
-      -(qi::lit(",") >> +(qi::char_ - qi::eol)) >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    (  ipv4Addr[(qi::_c = qi::_1)]
+    >> age
+    >> macAddr[(qi::_b = qi::_1)]
+    >> iface[(qi::_a = qi::_1)]
+    >> -(qi::lit(",") >> +(qi::char_ - qi::eol))
+    > (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
   // ---------------------------------------------------------------------------
@@ -89,33 +90,33 @@ Parser::Parser() : Parser::base_type(start)
   // ---------------------------------------------------------------------------
 
   arpCiscoIos =
-    arpHeaderCiscoIos >
-    *arpEntryCiscoIos
+    arpHeaderCiscoIos > *arpEntryCiscoIos
     ;
 
   arpHeaderCiscoIos =
-    qi::lit("Protocol") >
-    qi::lit("Address") >
-    qi::lit("Age (min)") >
-    qi::lit("Hardware Addr") >
-    qi::lit("Type") >
-    qi::lit("Interface") >
-    (qi::eol | qi::eoi)
+    qi::lit("Protocol")
+    >> qi::lit("Address")
+    >> qi::lit("Age (min)")
+    >> qi::lit("Hardware Addr")
+    >> qi::lit("Type")
+    >> qi::lit("Interface")
+    > (qi::eol | qi::eoi)
     ;
 
   arpEntryCiscoIos =
-    ( qi::lit("Internet") >>
-      ipv4Addr[(qi::_c = qi::_1)] >>
-      age >>
-      ( qi::lit("Incomplete")
-      | macAddr[(qi::_b = qi::_1)]
-      ) >>
-      token >>
-      -(iface[(qi::_a = qi::_1)]) >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    (  qi::lit("Internet")
+    >> ipv4Addr[(qi::_c = qi::_1)]
+    >> age
+    >> ( qi::lit("Incomplete")
+       | macAddr[(qi::_b = qi::_1)]
+       )
+    >> token
+    >> -(iface[(qi::_a = qi::_1)])
+    >  (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
   // ---------------------------------------------------------------------------
@@ -123,41 +124,41 @@ Parser::Parser() : Parser::base_type(start)
   // ---------------------------------------------------------------------------
 
   arpCiscoNxos =
-    arpHeaderCiscoNxos >
-    *arpEntryCiscoNxos
+    arpHeaderCiscoNxos > *arpEntryCiscoNxos
     ;
 
   arpHeaderCiscoNxos =
-    *( !qi::lit("IP ARP Table for context") >>
-       *(qi::char_ - qi::eol) >>
-       qi::eol
-     ) >>
-    qi::lit("IP ARP Table for context") >>
-    token >>
-    qi::eol >>
-    qi::lit("Total number of entries:") >>
-    qi::omit[qi::int_] >>
-    qi::eol >>
-    qi::lit("Address") >
-    qi::lit("Age") >
-    qi::lit("MAC Address") >
-    qi::lit("Interface") >
-    qi::lit("Flags") >
-    (qi::eol | qi::eoi)
+    *( !qi::lit("IP ARP Table for context")
+    >> *(qi::char_ - qi::eol)
+    >> qi::eol
+    )
+    >> qi::lit("IP ARP Table for context")
+    >> token
+    >> qi::eol
+    >> qi::lit("Total number of entries:")
+    >> qi::omit[qi::int_]
+    >> qi::eol
+    >> qi::lit("Address")
+    >> qi::lit("Age")
+    >> qi::lit("MAC Address")
+    >> qi::lit("Interface")
+    >> qi::lit("Flags")
+    >  (qi::eol | qi::eoi)
     ;
 
   arpEntryCiscoNxos =
-    ( ipv4Addr[(qi::_c = qi::_1)] >>
-      age >>
-      ( qi::lit("INCOMPLETE")
-      | macAddr[(qi::_b = qi::_1)]
-      ) >>
-      iface[(qi::_a = qi::_1)] >>
-      qi::omit[*(qi::char_ - qi::eol)] >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    (  ipv4Addr[(qi::_c = qi::_1)]
+    >> age
+    >> ( qi::lit("INCOMPLETE")
+       | macAddr[(qi::_b = qi::_1)]
+       )
+    >> iface[(qi::_a = qi::_1)]
+    >> qi::omit[*(qi::char_ - qi::eol)]
+    >  (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
   // ---------------------------------------------------------------------------
@@ -165,23 +166,22 @@ Parser::Parser() : Parser::base_type(start)
   // ---------------------------------------------------------------------------
 
   arpCiscoWlc =
-    arpHeaderCiscoWlc >
-    *arpEntryCiscoWlc
+    arpHeaderCiscoWlc > *arpEntryCiscoWlc
     ;
 
   arpHeaderCiscoWlc =
-    *qi::eol >>
-    qi::lit("Number of arp entries") >>
-    qi::omit[+(qi::char_ - qi::eol)] >>
-    +qi::eol >>
-    qi::lit("MAC Address") >>
-    qi::lit("IP Address") >>
-    qi::lit("Port") >>
-    qi::lit("VLAN") >>
-    qi::lit("Type") >>
-    qi::eol >>
-    +(qi::lit("-") | qi::lit(" ")) >>
-    (qi::eol | qi::eoi)
+    *qi::eol
+    >> qi::lit("Number of arp entries")
+    >> qi::omit[+(qi::char_ - qi::eol)]
+    >> +qi::eol
+    >> qi::lit("MAC Address")
+    >> qi::lit("IP Address")
+    >> qi::lit("Port")
+    >> qi::lit("VLAN")
+    >> qi::lit("Type")
+    >> qi::eol
+    >> +(qi::lit("-") | qi::lit(" "))
+    >  (qi::eol | qi::eoi)
     ;
 
   // Problem is the WLC/WISM ARP output contains Port and VLAN,
@@ -189,55 +189,55 @@ Parser::Parser() : Parser::base_type(start)
   // Also, the VLAN ID can't just be expanded to something like "Vlan N"
   // because those aren't what the interfaces are called in the config.
   arpEntryCiscoWlc =
-    ( macAddr[(qi::_b = qi::_1)] >>
-      ipv4Addr[(qi::_c = qi::_1)] >>
-      token >>
-      token[(qi::_a = qi::_1)] >>
-      token >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    (  macAddr[(qi::_b = qi::_1)]
+    >> ipv4Addr[(qi::_c = qi::_1)]
+    >> token
+    >> token[(qi::_a = qi::_1)]
+    >> token
+    >  (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
-  // ===========================================================================
-  // ARP: Juniper Config
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
+  // ARP: Juniper Conf
+  // ---------------------------------------------------------------------------
 
-  arpJuniperConfig =
-    arpHeaderJuniper >
-    *arpEntryJuniper >
-    -arpFooterJuniper
+  arpJuniperConf =
+    arpHeaderJuniper > *arpEntryJuniper > -arpFooterJuniper
     ;
 
   arpHeaderJuniper =
-    qi::lit("MAC Address") >
-    qi::lit("Address") >
-    -(qi::lit("Name")[(pnx::ref(nameColExists) = true)]) >
-    qi::lit("Interface") >
-    -qi::lit("Flags") >
-    -qi::lit("TTE") >
-    (qi::eol | qi::eoi)
+    qi::lit("MAC Address")
+    >> qi::lit("Address")
+    >> -(qi::lit("Name")[(pnx::ref(nameColExists) = true)])
+    >> qi::lit("Interface")
+    >> -qi::lit("Flags")
+    >> -qi::lit("TTE")
+    >  (qi::eol | qi::eoi)
     ;
 
   arpEntryJuniper =
-    ( macAddr[(qi::_b = qi::_1)] >>
-      ipv4Addr[(qi::_c = qi::_1)] >>
-      -(qi::eps(pnx::ref(nameColExists)) > token) >>
-      iface[(qi::_a = qi::_1)] >>
-      *token >>
-      -qi::int_ >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    (  macAddr[(qi::_b = qi::_1)]
+    >> ipv4Addr[(qi::_c = qi::_1)]
+    >> -(qi::eps(pnx::ref(nameColExists)) > token)
+    >> iface[(qi::_a = qi::_1)]
+    >> *token
+    >> -qi::int_
+    >  (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
   arpFooterJuniper =
-    qi::lit("Total entries:") >
-    qi::int_ >
-    *(token | qi::eol) >
-    (qi::eol | qi::eoi)
+    qi::lit("Total entries:")
+    >> qi::int_
+    >> *(token | qi::eol)
+    >  (qi::eol | qi::eoi)
   ;
 
   // ===========================================================================
@@ -247,7 +247,7 @@ Parser::Parser() : Parser::base_type(start)
   ndp =
     ( ndpArista
     | ndpCiscoIos
-    | ndpCiscoIosDetail
+    | ndpCiscoNxos
     )
     ;
 
@@ -256,89 +256,112 @@ Parser::Parser() : Parser::base_type(start)
   // ---------------------------------------------------------------------------
 
   ndpArista =
-    ndpHeaderArista >
-    *ndpEntryArista
+    ndpHeaderArista > *ndpEntryArista
     ;
 
   ndpHeaderArista =
-    -(qi::lit("VRF:") >> token >> qi::eol) >>
-    qi::lit("IPv6 Address") >
-    qi::lit("Age") >
-    qi::lit("Hardware Addr") >
-    qi::lit("State") >
-    qi::lit("Interface") >
-    (qi::eol | qi::eoi)
+    -(qi::lit("VRF:") >> token >> qi::eol)
+    >> qi::lit("IPv6 Address")
+    >> qi::lit("Age")
+    >> qi::lit("Hardware Addr")
+    >> qi::lit("State")
+    >> qi::lit("Interface")
+    >  (qi::eol | qi::eoi)
     ;
 
   ndpEntryArista =
-    ( ipv6Addr[(qi::_c = qi::_1)] >>
-      age >>
-      macAddr[(qi::_b = qi::_1)] >>
-      token >>
-      iface[(qi::_a = qi::_1)] >>
-      -(qi::lit(",") >> +(qi::char_ - qi::eol)) >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    ( ipv6Addr[(qi::_c = qi::_1)]
+    >> age
+    >> macAddr[(qi::_b = qi::_1)]
+    >> token
+    >> iface[(qi::_a = qi::_1)]
+    >> -(qi::lit(",") >> +(qi::char_ - qi::eol))
+    >  (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
   // ---------------------------------------------------------------------------
-  // NDP: Cisco
+  // NDP: Cisco IOS
   // ---------------------------------------------------------------------------
 
   ndpCiscoIos =
-    ndpHeaderCiscoIos >
-    *ndpEntryCiscoIos
-    ;
-
-  ndpCiscoIosDetail =
-    ndpHeaderCiscoIosDetail >
-    *ndpEntryCiscoIosDetail
+    ndpHeaderCiscoIos > *ndpEntryCiscoIos
     ;
 
   ndpHeaderCiscoIos =
-    qi::lit("IPv6 Address") >
-    qi::lit("Age") >
-    qi::lit("Link-layer Addr") >
-    qi::lit("State") >
-    qi::lit("Interface") >
-    (qi::eol | qi::eoi)
+    qi::lit("IPv6 Address")
+    >> -(qi::lit("TRLV")[(pnx::ref(trlvColExists) = true)])
+    >> qi::lit("Age")
+    >> qi::lit("Link-layer Addr")
+    >> qi::lit("State")
+    >> qi::lit("Interface")
+    >  (qi::eol | qi::eoi)
     ;
 
   ndpEntryCiscoIos =
-    ( ipv6Addr[(qi::_c = qi::_1)] >>
-      age >>
-      macAddr[(qi::_b = qi::_1)] >>
-      token >>
-      iface[(qi::_a = qi::_1)] >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+    (  ipv6Addr[(qi::_c = qi::_1)]
+    >> -(qi::eps(pnx::ref(trlvColExists)) > token)
+    >> age
+    >> ( qi::lit("-")
+       | macAddr[(qi::_b = qi::_1)]
+       )
+    >> token
+    >> iface[(qi::_a = qi::_1)]
+    >  (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
-  ndpHeaderCiscoIosDetail =
-    qi::lit("IPv6 Address") >
-    qi::lit("TRLV") >
-    qi::lit("Age") >
-    qi::lit("Link-layer Addr") >
-    qi::lit("State") >
-    qi::lit("Interface") >
-    (qi::eol | qi::eoi)
+  // ---------------------------------------------------------------------------
+  // NDP: Cisco NXOS
+  // ---------------------------------------------------------------------------
+
+  ndpCiscoNxos =
+    ndpHeaderCiscoNxos > *ndpEntryCiscoNxos
     ;
 
-  ndpEntryCiscoIosDetail =
-    ( ipv6Addr[(qi::_c = qi::_1)] >>
-      token >>
-      age >>
-      macAddr[(qi::_b = qi::_1)] >>
-      token >>
-      iface[(qi::_a = qi::_1)] >>
-      (qi::eol | qi::eoi)
-    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a),
-       pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c),
-       pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b))]
+  ndpHeaderCiscoNxos =
+    *( !qi::lit("IPv6 Adjacency Table for VRF")
+    >> *(qi::char_ - qi::eol)
+    >> qi::eol
+    )
+    >> qi::lit("IPv6 Adjacency Table for VRF")
+    >> token
+    >> qi::eol
+    >> qi::lit("Total number of entries:")
+    >> qi::omit[qi::int_]
+    >> qi::eol
+    >> qi::lit("Address")
+    >> qi::lit("Age")
+    >> qi::lit("MAC Address")
+    >> qi::lit("Pref")
+    >> qi::lit("Source")
+    >> qi::lit("Interface")
+    >> *token
+    >  (qi::eol | qi::eoi)
+    ;
+
+  ndpEntryCiscoNxos =
+    (  ipv6Addr[(qi::_c = qi::_1)]
+    >> qi::eol
+    >> age
+    >> ( qi::lit("INCOMPLETE")
+       | macAddr[(qi::_b = qi::_1)]
+       )
+    >> token
+    >> token
+    >> iface[(qi::_a = qi::_1)]
+    >> *token
+    >  (qi::eol | qi::eoi)
+    )[(pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_a)
+     , pnx::bind(&nmdo::MacAddress::addIpAddress, &qi::_b, qi::_c)
+     , pnx::bind(&nmdo::InterfaceNetwork::addReachableMac, &qi::_val, qi::_b)
+     )]
     ;
 
   // ---------------------------------------------------------------------------
@@ -356,8 +379,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   errorMessage =
-    -(qi::lit(">") >> *(qi::char_ - qi::eol) >> qi::eol) >>
-    (qi::lit("%") >> *(qi::char_ - qi::eol) >> qi::eol)
+    -(qi::lit(">") >> *(qi::char_ - qi::eol) >> qi::eol)
+    >> (qi::lit("%") >> *(qi::char_ - qi::eol) >> qi::eol)
+    ;
+
+  ignoredLine =
+    +(qi::char_ - qi::eol) > -qi::eol
     ;
 
 
@@ -367,15 +394,15 @@ Parser::Parser() : Parser::base_type(start)
       (iface)
       (errorMessage)
       // ARP
-      (arpArista)         (arpHeaderArista)         (arpEntryArista)
-      (arpCiscoIos)       (arpHeaderCiscoIos)       (arpEntryCiscoIos)
-      (arpCiscoNxos)      (arpHeaderCiscoNxos)      (arpEntryCiscoNxos)
-      (arpCiscoWlc)       (arpHeaderCiscoWlc)       (arpEntryCiscoWlc)
-      (arpJuniperConfig) (arpHeaderJuniper) (arpEntryJuniper) (arpFooterJuniper)
+      (arpArista)       (arpHeaderArista)     (arpEntryArista)
+      (arpCiscoIos)     (arpHeaderCiscoIos)   (arpEntryCiscoIos)
+      (arpCiscoNxos)    (arpHeaderCiscoNxos)  (arpEntryCiscoNxos)
+      (arpCiscoWlc)     (arpHeaderCiscoWlc)   (arpEntryCiscoWlc)
+      (arpJuniperConf)  (arpHeaderJuniper)    (arpEntryJuniper)   (arpFooterJuniper)
       // NDP
       (ndpArista)         (ndpHeaderArista)         (ndpEntryArista)
       (ndpCiscoIos)       (ndpHeaderCiscoIos)       (ndpEntryCiscoIos)
-      (ndpCiscoIosDetail) (ndpHeaderCiscoIosDetail) (ndpEntryCiscoIosDetail)
+      (ndpCiscoNxos)      (ndpHeaderCiscoNxos)      (ndpEntryCiscoNxos)
       );
 }
 
