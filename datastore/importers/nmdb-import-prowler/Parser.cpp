@@ -68,7 +68,7 @@ Parser::fromJsonV3(std::ifstream& _file)
   for (const auto& entry : dataArray) {
       nmdop::ProwlerV3Data v3d {entry};
       //  if v3d contains meaningful data
-      if ((v3d <=> nmdop::ProwlerV3Data()) != std::strong_ordering::equal) {
+      if ((v3d != nmdop::ProwlerV3Data())) {
         d.v3Data.emplace_back(v3d);
       } else {
         LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
