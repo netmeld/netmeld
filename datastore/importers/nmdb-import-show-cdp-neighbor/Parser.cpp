@@ -58,13 +58,17 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   iosEntry =
-      token // Device-ID
+      deviceId // Device-ID
       >> qi::eol // Is the newline here optional?
       >> token >> +qi::char_ // Local Intrfce [Use char_ to match the /'s as well as the numbers]
       >> token // Holdtme
       >> +capability // Capability
       >> token // Platform
       >> token >> +qi::char_ // Port ID
+    ;
+
+  deviceId =
+    +(token | qi::lit("."))
     ;
 
   capabilityCodes =
@@ -87,7 +91,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   nxosEntry =
-      token // Device-ID
+      deviceId // Device-ID
       >> token >> +qi::char_ // Local Intrfce [Use char_ to match the /'s as well as the numbers]
       >> token // Holdtme
       >> +capability // Capability

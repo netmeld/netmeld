@@ -81,6 +81,7 @@ class Parser :
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       iosConfig,
       iosEntry,
+      deviceId,
       header,
       nxosConfig,
       nxosEntry,
