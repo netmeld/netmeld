@@ -167,6 +167,15 @@ BOOST_AUTO_TEST_CASE(testRules)
       , R"(1.2.3.255/32, ubest/mbest: 2/0, attached
               *via 1.2.3.1, nic, [0/0], 1w2d, local)"
       , R"(   *via 1.2.3.2, nic, [0/0], 1w2d, direct)"
+// TODO routes via Null0, drops
+      , R"(1.2.3.0/24, ubest/mbest: 1/0
+              *via Null0, [1/2], 1w2d, ospfv3-100, discard)"
+// TODO routes via internal route; same config
+      , R"(1.2.3.0/24, ubest/mbest: 1/0
+              *via 1.2.3.4, [1/2], 1w2d, bgp-123, internal, tag 123)"
+// TODO routes via internal route; possible other config
+      , R"(1.2.3.0/24, ubest/mbest: 1/0
+              *via 1.2.3.4%default, [1/2], 1d2h, bgp-123, external, tag 123 (mpls-vpn))"
       };
 
     for (const auto& test : testsOkValidRoute) {
@@ -280,6 +289,15 @@ BOOST_AUTO_TEST_CASE(testRules)
               *via 1::1/64, nic, [1/2], 1w2d, direct)"
       , R"(1::/64, ubest/mbest: 1/0
               *via 1::1/64, nic, [1/2], 1w2d, eigrp-100, external, tag 1)"
+// TODO routes via Null0, drops
+      , R"(1::/48, ubest/mbest: 1/0
+              *via Null0, [1/2], 1w2d, ospfv3-100, discard)"
+// TODO routes via internal route; same config
+      , R"(1::/128, ubest/mbest: 1/0
+              *via 1::1/128, [1/2], 1w2d, bgp-123, internal, tag 123)"
+// TODO routes via internal route; other config
+      , R"(1::/128, ubest/mbest: 1/0
+              *via ::f:1.2.3.4%default:IPv4, [1/2], 1d2h, bgp-123, external, tag 123 (mpls-vpn))"
       };
 
     for (const auto& test : testsOkValidRoute) {
