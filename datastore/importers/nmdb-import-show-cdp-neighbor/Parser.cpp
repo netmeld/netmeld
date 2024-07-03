@@ -36,7 +36,7 @@ namespace nmcu = netmeld::core::utils;
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    (detailConfig | iosConfig | nxosConfig)
+    (iosConfig | detailConfig | nxosConfig)
       [(qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
@@ -44,41 +44,43 @@ Parser::Parser() : Parser::base_type(start)
   iosConfig =
     *(qi::eol)
     >> capabilityCodes >> *qi::eol
-    >> header >> *(iosEntry) >> *qi::eol
-    >> entryCount
+    >> iosHeader >> *(iosEntry) >> *qi::eol
+    >> -entryCount
     ;
 
-  header =
-    qi::lit("Device-ID")
+  iosHeader =
+    (qi::lit("Device") >> -qi::lit("-") >> qi::lit("ID"))
     >> qi::lit("Local Intrfce")
-    >> qi::lit("Holdtme")
+    >> (qi::lit("Holdtme") | qi::lit("Hldtme"))
     >> qi::lit("Capability")
     >> qi::lit("Platform")
     >> qi::lit("Port ID")
+    >> qi::eol
     ;
 
   iosEntry =
       deviceId // Device-ID
-      >> qi::eol // Is the newline here optional?
-      >> token >> +qi::char_ // Local Intrfce [Use char_ to match the /'s as well as the numbers]
+      >> -qi::eol
+      >> token >> -token // Local Intrfc
       >> token // Holdtme
       >> +capability // Capability
       >> token // Platform
-      >> token >> +qi::char_ // Port ID
+      >> token >> -token // Port ID
+      >> qi::eol
     ;
 
   deviceId =
-    +(token | qi::lit("."))
+    token
     ;
 
   capabilityCodes =
-    qi::lit("Compatability Codes:")
+    qi::lit("Capability Codes:")
     >> *ignoredLine // Do we need these? Or just eat them up?
     >> qi::eol
     ;
 
   entryCount =
-    qi::lit("Total cdp entries displayed:")
+    qi::lit("Total cdp entries displayed :")
     >> +(qi::ascii::graph)
     >> qi::eol
     ;
@@ -162,12 +164,13 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   capability =
-    qi::char_("RTBSHIrPDCM")
+    qi::char_("RTBSHIrPDCMs")
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (iosConfig)
+      (iosHeader)
       (iosEntry)
       (capabilityCodes)
       (entryCount)
