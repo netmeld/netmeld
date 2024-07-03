@@ -63,7 +63,7 @@ Parser::Parser() : Parser::base_type(start)
       >> -qi::eol
       >> token >> -token // Local Intrfc
       >> token // Holdtme
-      >> +capability // Capability
+      >> *capability // Capability
       >> token // Platform
       >> token >> -token // Port ID
       >> qi::eol
