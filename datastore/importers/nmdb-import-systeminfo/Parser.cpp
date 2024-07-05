@@ -208,7 +208,7 @@ void Parser::addIfaceConnectName(const std::string &_connectionname)
 void Parser::addIfaceIp(nmdo::IpAddress &_ipAddr)
 {
     auto &iface{data.network_cards[curIfaceName]};
-    std::string fqdn = data.devInfo.getDeviceId() + '.' + curDomain;
+    std::string fqdn {data.devInfo.getDeviceId() + '.' + curDomain};
     _ipAddr.addAlias(fqdn, "from systeminfo");
     data.os.setIpAddr(_ipAddr);
     iface.addIpAddress(_ipAddr);
