@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,35 +38,16 @@ class TestRoute : public nmdo::Route {
     TestRoute() : Route() {};
 
   public:
-    std::string getVrfId() const
-    { return vrfId; }
-
-    std::string getTableId() const
-    { return tableId; }
-
-    nmdo::IpNetwork getDstIpNet() const
-    { return dstIpNet; }
-
-    std::string getNextVrfId() const
-    { return nextVrfId; }
-
-    std::string getNextTableId() const
-    { return nextTableId; }
-
-    nmdo::IpAddress getNextHopIpAddr() const
-    { return nextHopIpAddr; }
-
-    std::string getIfaceName() const
-    { return outIfaceName; }
-
-    std::string getProtocol() const
-    { return protocol; }
-
-    size_t getAdminDistance() const
-    { return adminDistance; }
-
-    size_t getMetric() const
-    { return metric; }
+    using Route::vrfId;
+    using Route::tableId;
+    using Route::dstIpNet;
+    using Route::nextVrfId;
+    using Route::nextTableId;
+    using Route::nextHopIpAddr;
+    using Route::outIfaceName;
+    using Route::protocol;
+    using Route::adminDistance;
+    using Route::metric;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -75,9 +56,9 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestRoute route;
 
-    BOOST_CHECK_EQUAL(ipAddr, route.getDstIpNet());
-    BOOST_CHECK_EQUAL(ipAddr, route.getNextHopIpAddr());
-    BOOST_CHECK(route.getIfaceName().empty());
+    BOOST_TEST(ipAddr == route.dstIpNet);
+    BOOST_TEST(ipAddr == route.nextHopIpAddr);
+    BOOST_TEST(route.outIfaceName.empty());
   }
 }
 
@@ -87,28 +68,28 @@ BOOST_AUTO_TEST_CASE(testSetters)
     TestRoute route;
 
     route.setVrfId("someVrfId");
-    BOOST_CHECK_EQUAL("someVrfId", route.getVrfId());
+    BOOST_TEST("someVrfId" == route.vrfId);
   }
 
   {
     TestRoute route;
 
     route.setNextVrfId("someVrfId");
-    BOOST_CHECK_EQUAL("someVrfId", route.getNextVrfId());
+    BOOST_TEST("someVrfId" == route.nextVrfId);
   }
 
   {
     TestRoute route;
 
     route.setTableId("someTableId");
-    BOOST_CHECK_EQUAL("someTableId", route.getTableId());
+    BOOST_TEST("someTableId" == route.tableId);
   }
 
   {
     TestRoute route;
 
     route.setNextTableId("someTableId");
-    BOOST_CHECK_EQUAL("someTableId", route.getNextTableId());
+    BOOST_TEST("someTableId" == route.nextTableId);
   }
 
   {
@@ -116,7 +97,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
     route.setDstIpNet(ipAddr);
-    BOOST_CHECK_EQUAL(ipAddr, route.getDstIpNet());
+    BOOST_TEST(ipAddr == route.dstIpNet);
   }
 
   {
@@ -124,35 +105,35 @@ BOOST_AUTO_TEST_CASE(testSetters)
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
     route.setNextHopIpAddr(ipAddr);
-    BOOST_CHECK_EQUAL(ipAddr, route.getNextHopIpAddr());
+    BOOST_TEST(ipAddr == route.nextHopIpAddr);
   }
 
   {
     TestRoute route;
 
     route.setOutIfaceName("outIfaceName");
-    BOOST_CHECK_EQUAL("outifacename", route.getIfaceName());
+    BOOST_TEST("outifacename" == route.outIfaceName);
   }
 
   {
     TestRoute route;
 
     route.setProtocol("OSPF");
-    BOOST_CHECK_EQUAL("ospf", route.getProtocol());
+    BOOST_TEST("ospf" == route.protocol);
   }
 
   {
     TestRoute route;
 
     route.setAdminDistance(42);
-    BOOST_CHECK_EQUAL(42, route.getAdminDistance());
+    BOOST_TEST(42 == route.adminDistance);
   }
 
   {
     TestRoute route;
 
     route.setMetric(1000);
-    BOOST_CHECK_EQUAL(1000, route.getMetric());
+    BOOST_TEST(1000 == route.metric);
   }
 
   {
@@ -160,15 +141,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
     nmdo::IpAddress tv1;
     nmdo::IpAddress tv2 {"1.2.3.4/24"};
 
-    BOOST_CHECK("" == route.getNextHopIpAddrString());
+    BOOST_TEST("" == route.getNextHopIpAddrString());
     route.setNextHopIpAddr(tv2);
-    BOOST_CHECK(tv2.toString() == route.getNextHopIpAddrString());
+    BOOST_TEST(tv2.toString() == route.getNextHopIpAddrString());
     route.setNullRoute(true);
-    BOOST_CHECK("" == route.getNextHopIpAddrString());
+    BOOST_TEST("" == route.getNextHopIpAddrString());
     route.setNullRoute(false);
-    BOOST_CHECK(tv2.toString() == route.getNextHopIpAddrString());
+    BOOST_TEST(tv2.toString() == route.getNextHopIpAddrString());
     route.setNextHopIpAddr(tv1);
-    BOOST_CHECK("" == route.getNextHopIpAddrString());
+    BOOST_TEST("" == route.getNextHopIpAddrString());
   }
 }
 
@@ -180,31 +161,40 @@ BOOST_AUTO_TEST_CASE(testValidity)
     {
       TestRoute route;
 
-      BOOST_CHECK(!route.isValid());
+      BOOST_TEST(!route.isValid());
       route.setDstIpNet(ipAddr);
-      BOOST_CHECK(!route.isValid());
+      BOOST_TEST(!route.isValid());
       route.setNullRoute(true);
-      BOOST_CHECK(route.isValid());
+      BOOST_TEST(route.isValid());
     }
     {
       TestRoute route;
 
-      BOOST_CHECK(!route.isValid());
+      BOOST_TEST(!route.isValid());
       route.setDstIpNet(ipAddr);
-      BOOST_CHECK(!route.isValid());
+      BOOST_TEST(!route.isValid());
       route.setNextHopIpAddr(ipAddr);
-      BOOST_CHECK(route.isValid());
+      BOOST_TEST(route.isValid());
     }
     {
       TestRoute route;
 
-      BOOST_CHECK(!route.isValid());
+      BOOST_TEST(!route.isValid());
       route.setDstIpNet(ipAddr);
-      BOOST_CHECK(!route.isValid());
+      BOOST_TEST(!route.isValid());
       route.setNextVrfId("test");
-      BOOST_CHECK(!route.isValid());
+      BOOST_TEST(!route.isValid());
       route.setNextTableId("test");
-      BOOST_CHECK(route.isValid());
+      BOOST_TEST(route.isValid());
+    }
+    {
+      TestRoute route;
+
+      BOOST_TEST(!route.isValid());
+      route.setDstIpNet(ipAddr);
+      BOOST_TEST(!route.isValid());
+      route.setOutIfaceName("test");
+      BOOST_TEST(route.isValid());
     }
   }
 
@@ -212,10 +202,10 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestRoute route;
     nmdo::IpAddress ipAddr;
 
-    BOOST_CHECK(ipAddr.hasUnsetPrefix());
+    BOOST_TEST(ipAddr.hasUnsetPrefix());
     route.setNextHopIpAddr(ipAddr);
-    BOOST_CHECK(!route.isValid());
+    BOOST_TEST(!route.isValid());
     route.setDstIpNet(ipAddr);
-    BOOST_CHECK(!route.isValid());
+    BOOST_TEST(!route.isValid());
   }
 }
