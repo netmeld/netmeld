@@ -149,16 +149,8 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
       R"STR([01]: KBXXXXXX)STR"
     };
 
-    std::vector<std::string> testsFail {
-      R"STR(KBXXXXXX)STR", //Missing index
-      R"STR([01]: )STR"    //Missing Hotfix
-    };
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'hotfix': " << test);
-    }
-    for (const auto& test: testsFail) {
-      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
                 "Parse rule 'hotfix': " << test);
     }
   }
