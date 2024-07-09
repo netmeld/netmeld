@@ -36,8 +36,8 @@ namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 
 
-#include <netmeld/core/utils/LoggerSingleton.hpp>
-namespace nmcu = netmeld::core::utils;
+//#include <netmeld/core/utils/LoggerSingleton.hpp>
+//namespace nmcu = netmeld::core::utils;
 
 BOOST_AUTO_TEST_CASE(testWellformedWithPrefix)
 {

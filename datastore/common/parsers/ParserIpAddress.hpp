@@ -44,9 +44,9 @@ namespace netmeld::datastore::parsers {
         start =
           qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()]
           >> (  (qi::as_string[ipv4])
-                [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
+                  [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
              >> -(qi::lit('/') >> prefix)
-                [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
+                  [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
              )
           ;
 
@@ -90,51 +90,68 @@ namespace netmeld::datastore::parsers {
     public:
       ParserIpv6Address() : ParserIpv6Address::base_type(start)
       {
-        using namespace qi;
-
         start =
-          qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()] >>
-          ( (qi::as_string[ipv6])
-            [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
-            >>
-            -(qi::lit('/') >> prefix)
-            [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
-          )
+          qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()]
+          >> (  (qi::as_string[ipv6])
+                  [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
+             >> -(qi::lit('/') >> prefix)
+                  [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
+             )
           ;
 
-        /*
-        */
-        //ms96
-        ls32 = hold[(h16 >> char_(':') >> h16)] | ipv4Addr.ipv4;
-        ipv6 =
+        ipv6 = // ms96 + ls32
           // 1:2:3:4:5:6:(7:8|1.2.3.4)
-            hold[(repeat(6)[h16 >> char_(':')] >> ls32)]
+            qi::hold[( qi::repeat(6)[h16 >> qi::char_(':')] >> ls32)]
           // ::1:2:3:4:(5:6|1.2.3.4)
-          | hold[(string("::") >> repeat(4)[h16 >> char_(':')] >> ls32)]
+          | qi::hold[( qi::string("::")
+                    >> qi::repeat(4)[h16 >> qi::char_(':')] >> ls32
+                    )]
           // ::1:2:3:(4:5|1.2.3.4)
-          | hold[(string("::") >> repeat(3)[h16 >> char_(':')] >> ls32)]
+          | qi::hold[( qi::string("::")
+                    >> qi::repeat(3)[h16 >> qi::char_(':')] >> ls32
+                    )]
           // ::1:2:(3:4|1.2.3.4)
-          | hold[(string("::") >> repeat(2)[h16 >> char_(':')] >> ls32)]
+          | qi::hold[( qi::string("::")
+                    >> qi::repeat(2)[h16 >> qi::char_(':')] >> ls32
+                    )]
           // ::1:(2:3|1.2.3.4)
-          | hold[(string("::") >> h16 >> char_(':') >> ls32)]
+          | qi::hold[( qi::string("::") >> h16 >> qi::char_(':') >> ls32)]
           // ::(1:2|1.2.3.4)
-          | hold[(string("::") >> ls32)]
+          | qi::hold[(qi::string("::") >> ls32)]
           // ::1
-          | hold[(string("::") >> h16)]
+          | qi::hold[(qi::string("::") >> h16)]
           // ::
-          | hold[string("::")]
+          | qi::hold[qi::string("::")]
           // 1::2:3:4:(5:6|1.2.3.4)
-          | hold[(h16 >> string("::") >> repeat(3)[h16 >> char_(':')] >> ls32)]
+          | qi::hold[( h16 >> qi::string("::")
+                    >> qi::repeat(3)[h16 >> qi::char_(':')] >> ls32
+                    )]
           // (1|1:2)::3:4:(5:6|1.2.3.4)
-          | hold[(repeat(1,2)[h16 >> char_(':')] >> char_(':') >> repeat(2)[h16 >> char_(':')] >> ls32)]
+          | qi::hold[( qi::repeat(1,2)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> qi::repeat(2)[h16 >> qi::char_(':')]
+                    >> ls32
+                    )]
           // (1|1:2|1:2:3)::4:(5:6|1.2.3.4)
-          | hold[(repeat(1,3)[h16 >> char_(':')] >> char_(':') >> h16 >> char_(':') >> ls32)]
+          | qi::hold[( qi::repeat(1,3)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> h16 >> qi::char_(':') >> ls32
+                    )]
           // (1|1:2|1:2:3|1:2:3:4)::(5:6|1.2.3.4)
-          | hold[(repeat(1,4)[h16 >> char_(':')] >> char_(':') >> ls32)]
+          | qi::hold[( qi::repeat(1,4)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> ls32
+                    )]
           // (1|1:2|1:2:3|1:2:3:4|1:2:3:4:5)::6
-          | hold[(repeat(1,5)[h16 >> char_(':')] >> char_(':') >> h16)]
+          | qi::hold[( qi::repeat(1,5)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> h16
+                    )]
           // (1|1:2|1:2:3|1:2:3:4|1:2:3:4:5|1:2:3:4:5:6)::
-          | hold[(repeat(1,6)[h16 >> char_(':')] >> char_(':'))]
+          | qi::hold[( qi::repeat(1,6)[h16 >> qi::char_(':')]
+                    >> qi::char_(':')
+                    )]
+          ;
+
+        ls32 =
+            qi::hold[(h16 >> qi::char_(':') >> h16)]
+          | ipv4Addr.ipv4
           ;
 
         h16 %=
