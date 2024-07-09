@@ -50,6 +50,8 @@ Parser::Parser() : Parser::base_type(start)
     >> *((!vrfHeader) >> (ignoredLine | qi::eol))
     ;
 
+  // ----- VRF header related -----
+
   vrfHeader =
     ( (vrfHeaderIos > qi::eps(pnx::ref(isIos) = true))
     | (vrfHeaderNxos > qi::eps(pnx::ref(isNxos) = true))
@@ -107,6 +109,8 @@ Parser::Parser() : Parser::base_type(start)
     >> qi::char_("rR") >> qi::lit("outing ")
     > qi::eps[(pnx::ref(isIpv6) = true)]
     ;
+
+  // ----- IPv4 route table related -----
 
   ipv4Route %=
     qi::eps[(pnx::ref(curIfaceName) = "")]
@@ -200,6 +204,8 @@ Parser::Parser() : Parser::base_type(start)
     | ifaceName(qi::_r1)
     ;
 
+  // ----- IPv6 route table related -----
+
   ipv6Route %=
     qi::eps[(pnx::ref(curIfaceName) = "")]
     >> ( (qi::eps(pnx::ref(isIos)) >> ipv6RouteIos)
@@ -267,6 +273,8 @@ Parser::Parser() : Parser::base_type(start)
     ipv6Addr [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_r1, qi::_1))]
     > -egressVrf(qi::_r1)
     ;
+
+  // ----- Both v4/6 related -----
 
   distanceMetric = // [distance/metric]
     ( ( qi::lit('[') > qi::uint_ > qi::lit('/') > qi::uint_ > qi::lit(']')
