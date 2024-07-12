@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -36,156 +36,186 @@ namespace nmcu = netmeld::core::utils;
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    (iosConfig | detailConfig | nxosConfig)
-      [(qi::_val = pnx::bind(&Parser::getData, this))]
-    ;
-
-  // show cdp neighbor (ios)
-  iosConfig =
-    *(qi::eol)
-    >> capabilityCodes >> *qi::eol
-    >> iosHeader >> *(iosEntry) >> *qi::eol
-    >> -entryCount
-    ;
-
-  iosHeader =
-    (qi::lit("Device") >> -qi::lit("-") >> qi::lit("ID"))
-    >> qi::lit("Local Intrfce")
-    >> (qi::lit("Holdtme") | qi::lit("Hldtme"))
-    >> qi::lit("Capability")
-    >> qi::lit("Platform")
-    >> qi::lit("Port ID")
-    >> qi::eol
-    ;
-
-  iosEntry =
-      deviceId // Device-ID
-      >> -qi::eol
-      >> token >> -token // Local Intrfc
-      >> token // Holdtme
-      >> *capability // Capability
-      >> token // Platform
-      >> token >> -token // Port ID
-      >> qi::eol
-    ;
-
-  deviceId =
-    token
-    ;
-
-  capabilityCodes =
-    qi::lit("Capability Codes:")
-    >> *ignoredLine // Do we need these? Or just eat them up?
-    >> qi::eol
-    ;
-
-  entryCount =
-    qi::lit("Total cdp entries displayed :")
-    >> +(qi::ascii::graph)
-    >> qi::eol
-    ;
-
-  // show cdp neighbor (nxos)
-  nxosConfig =
-    *(qi::eol)
-    >> capabilityCodes >> *qi::eol
-    >> header >> *(nxosEntry)
-    ;
-
-  nxosEntry =
-      deviceId // Device-ID
-      >> token >> +qi::char_ // Local Intrfce [Use char_ to match the /'s as well as the numbers]
-      >> token // Holdtme
-      >> +capability // Capability
-      >> token // Platform
-      >> token >> +qi::char_ // Port ID
-    ;
-
-  // show cdp neighbor detail
-
-  detailConfig =
-    *(qi::eol)
-    >> *(header >> deviceData) [(pnx::bind(&Parser::finalizeData, this))]
-    ;
-
-  header =
-    +qi::char_('-') > qi::eol
-    ;
-
-  deviceData =
-    +( hostnameValue
-     | ipAddressValue
-     | platformValue
-     | interfaceValue
-     | ((!header) >> ignoredLine)
-     | qi::eol
+    +(( noDetailConfig
+      | detailConfig
+      ) [(qi::_val = pnx::bind(&Parser::getData, this))]
+    | ignoredLine
     )
     ;
 
-  hostnameValue =
-    (  (qi::lit("Device") > (+qi::ascii::blank | qi::lit('-')) > qi::lit("ID:"))
-     | (qi::lit("SysName:"))
-    ) > -(+qi::ascii::blank)
-    > token [(pnx::bind(&NeighborData::curHostname, &nd)
-              = pnx::bind(&nmcu::toLower, qi::_1))]
+  // ----- no detail, IOS or NXOS -----
+
+  noDetailConfig =
+    noDetailCapabilityCodes
+    > noDetailHeader
+    > *noDetailEntry [(pnx::bind(&Parser::finalizeData, this))]
+    > *qi::eol
+    > -noDetailEntryCount
+    > *qi::eol
+    ;
+
+  noDetailCapabilityCodes =
+    qi::lit("Capability Codes: ") > ignoredLine
+    > *(!&qi::lit("Device") >> ignoredLine)
+    ;
+
+  noDetailHeader =
+    (qi::lit("Device-ID") | qi::lit("Device ID"))
+    > qi::lit("Local Intrfce")
+    > (qi::lit("Holdtme") | qi::lit("Hldtme"))
+    > qi::lit("Capability")
+    > qi::lit("Platform")
+    > qi::lit("Port ID")
     > qi::eol
     ;
 
-  ipAddressValue =
-    qi::lit("IP") > -(qi::lit("v") > qi::char_("46"))
-    > -(qi::char_("aA") > qi::lit("ddress:"))
+  noDetailEntry =
+    noDetailDeviceId [(pnx::ref(nd.curHostname) = qi::_1)]
+    > noDetailLocalIface
+    > noDetailHoldtime
+    > noDetailCapability
+    > noDetailPlatform [(pnx::ref(nd.curModel) = qi::_1)]
+    > noDetailPortId [(pnx::ref(nd.curIfaceName) = qi::_1)]
+    > -qi::eol
+    ;
+
+  noDetailEntryCount =
+    qi::lit("Total ") > ignoredLine
+    ;
+
+  noDetailDeviceId =
+    token
+    > -qi::eol
+    ;
+
+  noDetailLocalIface =
+    token
+    > -( qi::ascii::blank
+      >> (+qi::ascii::digit >> +(qi::char_('/') >> +qi::ascii::digit))
+      )
+    ;
+
+  noDetailHoldtime =
+    qi::uint_
+    ;
+
+  noDetailCapability =
+    *(qi::ascii::graph >> qi::ascii::blank)
+    ;
+
+  // Variable size field of chars and whitespace, best guess min of "Platform"
+  noDetailPlatform =
+    qi::repeat(1,8)[ (qi::ascii::graph >> &qi::ascii::graph)
+                   | (qi::ascii::graph >> &qi::ascii::blank)
+                   | (qi::ascii::blank >> &qi::ascii::graph)
+                   ]
+    > -(&qi::ascii::graph > token)
+    ;
+
+  noDetailPortId =
+    +((qi::ascii::graph)
+    | (qi::ascii::blank >> &qi::ascii::graph)
+    )
+    ;
+
+  // ----- detail, IOS or NXOS -----
+
+  detailConfig =
+    +( detailHeader
+    >> detailEntry
+    ) [(pnx::bind(&Parser::finalizeData, this))]
+    ;
+
+  detailHeader =
+    +qi::char_('-') > qi::eol
+    ;
+
+  detailEntry =
+    +(detailDeviceId
+    | detailIpAddress
+    | detailPlatform
+    | detailInterface
+    | ((!detailHeader) >> ignoredLine)
+    | qi::eol
+    )
+    ;
+
+  detailDeviceId =
+    ( qi::lit("Device ID:")
+    | qi::lit("Device-ID:")
+    | qi::lit("SysName:")
+    ) > token [(pnx::ref(nd.curHostname) = qi::_1)]
+    > qi::eol
+    ;
+
+  detailIpAddress =
+    qi::lit("IP")
+    >> -(qi::lit("v4") | qi::lit("v6"))
+    >> -(qi::char_("aA") >> qi::lit("ddress:"))
     > ipAddr
       [(pnx::bind([&](nmdo::IpAddress val){nd.ipAddrs.push_back(val);}, qi::_1))]
     > *token
     > qi::eol
     ;
 
-  platformValue =
-    qi::lit("Platform:")
-    > token [(pnx::bind(&NeighborData::curVendor, &nd) = qi::_1)]
-    > token [(pnx::bind(&NeighborData::curModel, &nd) = qi::_1)]
+  detailPlatform =
+    qi::lit("Platform: ")
+    > ( (csvToken >> !qi::lit(',') >> csvToken)
+          [(pnx::ref(nd.curVendor) = qi::_1
+          , pnx::ref(nd.curModel)  = qi::_2
+          )]
+      | (csvToken) [(pnx::ref(nd.curModel) = qi::_1)]
+      )
     > *token
     > qi::eol
     ;
 
-  interfaceValue =
-    qi::lit("Interface:") > token
-    > qi::lit("Port ID (outgoing port):")
-    > token [(pnx::bind(&NeighborData::curIfaceName, &nd) = qi::_1)]
+  detailInterface =
+    qi::lit("Interface: ") > token
+    > qi::lit("Port ID (outgoing port): ")
+    > token [(pnx::ref(nd.curIfaceName) = qi::_1)]
     > qi::eol
     ;
+
+  // ----- common usage -----
 
   token =
     +qi::ascii::graph
     ;
 
-  ignoredLine =
-    +token > qi::eol
+  csvToken =
+    +(qi::ascii::graph - qi::char_(','))
     ;
 
-  capability =
-    qi::char_("RTBSHIrPDCMs")
+  ignoredLine =
+      (+token > qi::eol)
+    | (qi::eol)
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
-      (iosConfig)
-      (iosHeader)
-      (iosEntry)
-      (capabilityCodes)
-      (entryCount)
-      (nxosConfig)
-      (nxosEntry)
-      (header)
       (detailConfig)
-      (detailHeader) (deviceData)
-      (hostnameValue)
-      (ipAddressValue)
-      (platformValue)
-      (interfaceValue)
+        (detailHeader)
+          (detailEntry)
+            (detailDeviceId)
+            (detailInterface)
+            (detailIpAddress)
+            (detailPlatform)
+        (noDetailConfig)
+          (noDetailCapabilityCodes)
+          (noDetailHeader)
+          (noDetailEntry)
+            (noDetailDeviceId)
+            (noDetailLocalIface)
+            (noDetailHoldtime)
+            (noDetailCapability)
+            (noDetailPlatform)
+            (noDetailPortId)
+          (noDetailEntryCount)
       //(ignoredLine)
       //(token)
-      );
+      //(csvToken)
+    );
 }
 
 // =============================================================================
@@ -247,6 +277,14 @@ void
 Parser::finalizeData()
 {
   if (!nd.curHostname.empty()) {
+    // normalize hostname
+    auto temp {nd.curHostname};
+    auto pos = temp.find('(');
+    if (std::string::npos != pos) {
+      temp = temp.substr(0, pos);
+    }
+    nd.curHostname = nmcu::toLower(temp);
+
     updateIpAddrs();
     updateInterfaces();
     updateDeviceInformation();
