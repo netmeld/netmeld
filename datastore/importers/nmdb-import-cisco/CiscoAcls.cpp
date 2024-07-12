@@ -549,7 +549,7 @@ namespace netmeld::datastore::importers::cisco {
     bool isContiguous {ipAddr.setMask(mask)};
     if (!isContiguous) {
       LOG_WARN << std::format("IpAddress ({}) set with non-contiguous"
-                              " wildcard netmask ({})"
+                              " wildcard netmask ({})\n"
                              , ipAddr.toString()
                              , mask.toString()
                              );
