@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -57,6 +57,9 @@ struct NeighborData {
   std::string curVendor     {""};
   std::string curModel      {""};
   std::vector<nmdo::IpAddress>  ipAddrs;
+
+  auto operator<=>(const NeighborData&) const = default;
+  bool operator==(const NeighborData&) const = default;
 };
 
 
@@ -70,28 +73,43 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+  protected:
     Data d;
     NeighborData nd;
 
-  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      config,
-      header,
-      deviceData,
-      ipAddressValue,
-      platformValue,
-      interfaceValue,
-      ignoredLine;
-
-    qi::rule<nmdp::IstreamIter>
-      hostnameValue;
+        detailConfig
+      , detailDeviceId
+      , detailEntry
+      , detailHeader
+      , detailInterface
+      , detailIpAddress
+      , detailPlatform
+      , ignoredLine
+      , noDetailCapabilityCodes
+      , noDetailConfig
+      , noDetailEntry
+      , noDetailEntryCount
+      , noDetailHeader
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      token;
+        noDetailDeviceId
+      , noDetailPlatform
+      , noDetailPortId
+      , token
+      , csvToken
+      ;
+
+    qi::rule<nmdp::IstreamIter>
+        noDetailCapability
+      , noDetailHoldtime
+      , noDetailLocalIface
+      ;
 
     nmdp::ParserIpAddress   ipAddr;
 
