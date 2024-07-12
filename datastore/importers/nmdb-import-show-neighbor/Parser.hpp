@@ -54,47 +54,53 @@ class Parser :
   protected: // Variables are always private
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start,
-      arp,
-      arpArista,
-      arpCiscoIos,
-      arpCiscoNxos,
-      arpCiscoWlc,
-      arpJuniperConfig,
-      ndp,
-      ndpArista,
-      ndpCiscoIos,
-      ndpCiscoIosDetail;
+        start
+      , arp
+      , arpArista
+      , arpCiscoIos
+      , arpCiscoNxos
+      , arpCiscoWlc
+      , arpJuniperConf
+      , ndp
+      , ndpArista
+      , ndpCiscoIos // handles `... neighbors detail` as well
+      , ndpCiscoNxos
+      ;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      arpHeaderArista,
-      arpHeaderCiscoIos,
-      arpHeaderCiscoNxos,
-      arpHeaderCiscoWlc,
-      arpHeaderJuniper,
-      arpFooterJuniper,
-      ndpHeaderArista,
-      ndpHeaderCiscoIos,
-      ndpHeaderCiscoIosDetail;
+        arpHeaderArista
+      , arpHeaderCiscoIos
+      , arpHeaderCiscoNxos
+      , arpHeaderCiscoWlc
+      , arpHeaderJuniper
+      , arpFooterJuniper
+      , ndpHeaderArista
+      , ndpHeaderCiscoIos
+      , ndpHeaderCiscoNxos
+      ;
 
-    qi::rule<nmdp::IstreamIter, nmdo::InterfaceNetwork(), qi::ascii::blank_type,
-             qi::locals<std::string, nmdo::MacAddress, nmdo::IpAddress>>
-      arpEntryArista,
-      arpEntryCiscoIos,
-      arpEntryCiscoNxos,
-      arpEntryCiscoWlc,
-      arpEntryJuniper,
-      ndpEntryArista,
-      ndpEntryCiscoIos,
-      ndpEntryCiscoIosDetail;
+    qi::rule< nmdp::IstreamIter, nmdo::InterfaceNetwork(), qi::ascii::blank_type
+            , qi::locals<std::string, nmdo::MacAddress, nmdo::IpAddress>>
+        arpEntryArista
+      , arpEntryCiscoIos
+      , arpEntryCiscoNxos
+      , arpEntryCiscoWlc
+      , arpEntryJuniper
+      , ndpEntryArista
+      , ndpEntryCiscoIos
+      , ndpEntryCiscoNxos
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      iface,
-      token;
+        iface
+      , token
+      ;
 
     qi::rule<nmdp::IstreamIter>
-      age,
-      errorMessage;
+        age
+      , errorMessage
+      , ignoredLine
+      ;
 
     nmdp::ParserIpv4Address ipv4Addr;
     nmdp::ParserIpv6Address ipv6Addr;
@@ -105,7 +111,8 @@ class Parser :
     Data d;
 
     // Supporting variables
-    bool nameColExists {false};
+    bool nameColExists  {false};
+    bool trlvColExists  {false};
 
   // ===========================================================================
   // Constructors

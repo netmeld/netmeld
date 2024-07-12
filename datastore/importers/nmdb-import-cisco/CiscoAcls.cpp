@@ -59,8 +59,17 @@ namespace netmeld::datastore::importers::cisco {
     // IOS
     //====
     iosRule =
-      (iosRemark | iosStandard | iosExtended | iosIpv6)
+      (iosIgnored | iosRemark | iosStandard | iosExtended | iosIpv6)
       ;
+
+    iosIgnored =
+      ipv46 >> qi::lit("access-list")
+      >> ( qi::lit("log-update threshold")
+         | (qi::lit("logging") >> (qi::lit("interval") | qi::lit("rate-limit")))
+         )
+      > *token
+      ;
+
 
     iosRemark =
       qi::lit("access-list ") >> bookName >> iosRemarkRuleLine

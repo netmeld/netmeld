@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,65 +24,53 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <nlohmann/json.hpp>
-#include <string>
-
 #include "Parser.hpp"
-
-using json = nlohmann::json;
 
 // =============================================================================
 // Parser logic
 // =============================================================================
-Parser::Parser()
-{}
-
-void
-Parser::fromJsonV2(std::ifstream& _file)
+Parser::Parser() : Parser::base_type(start)
 {
-  // V2 output is a JSON lines file
-  Data d;
-  std::string line;
-  while (std::getline(_file, line)) {
-    json jline = json::parse(line);
-    nmdop::ProwlerV2Data v2d {jline};
-    if (v2d != nmdop::ProwlerV2Data()) {
-      d.v2Data.emplace_back(v2d);
-    } else {
-      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
-    }
-  }
-  if (d != Data()) {
-    r.emplace_back(d);
-  }
+  start =
+    *notDeviceInfoData
+    >> -(deviceInfo % +qi::eol)
+    > *notDeviceInfoData
+    ;
+
+  deviceInfo =
+    ( qi::lit("NAME:") > token > -qi::lit(',')
+    > qi::lit("DESCR:") > token > qi::eol
+    > qi::lit("PID:") > token > -qi::lit(',')
+    > qi::lit("VID:") > token > -qi::lit(',')
+    > qi::lit("SN:") > token
+    ) [( qi::_val = pnx::construct<Data>()
+       , pnx::bind(&Data::setVendor, &qi::_val, VENDOR)
+       , pnx::bind(&Data::setDeviceType, &qi::_val, qi::_1)
+       , pnx::bind(&Data::setDescription, &qi::_val, qi::_2)
+       , pnx::bind(&Data::setModel, &qi::_val, qi::_3)
+       , pnx::bind(&Data::setHardwareRevision, &qi::_val, qi::_4)
+       , pnx::bind(&Data::setSerialNumber, &qi::_val, qi::_5)
+      )]
+    ;
+
+  token =
+      (qi::lit('"') >> +(~qi::char_('"')) > qi::lit('"'))
+    | (+(~qi::char_(" ,") - qi::eol) | qi::attr(""))
+    ;
+
+  notDeviceInfoData =
+      +(qi::eol)
+    | +(qi::char_ - qi::lit("NAME:"))
+    ;
+
+  BOOST_SPIRIT_DEBUG_NODES(
+      (start)
+      (deviceInfo)
+      (notDeviceInfoData)
+      //(token)
+      );
 }
-
-void
-Parser::fromJsonV3(std::ifstream& _file)
-{
-  // V3 output is a JSON array
-  Data d;
-  auto dataArray = json::parse(_file);
-  for (const auto& entry : dataArray) {
-    nmdop::ProwlerV3Data v3d {entry};
-    if (v3d != nmdop::ProwlerV3Data()) {
-      d.v3Data.emplace_back(v3d);
-    } else {
-      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
-    }
-  }
-  if (d != Data()) {
-    r.emplace_back(d);
-  }
-}
-
-
 
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-Result
-Parser::getData()
-{
-  return r;
-}
