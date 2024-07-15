@@ -68,7 +68,7 @@ namespace netmeld::core::utils {
       std::string temp = token;
       std::transform(temp.begin(), temp.end(), temp.begin(), ::toupper);
       unsigned long i = 0;
-      for (auto text : sevTexts) {
+      for (const auto& text : sevTexts) {
         if (text == temp) {
           value = i;
           break;
