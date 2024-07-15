@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -57,7 +57,7 @@ namespace netmeld::datalake::objects {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors and destructors part of public API
-      virtual ~DataEntry() = default;
+      virtual ~DataEntry() override = default;
       DataEntry();
 
     // =========================================================================
@@ -68,14 +68,15 @@ namespace netmeld::datalake::objects {
     public: // Methods part of public API
       bool isPipedData() const;
 
-      std::string getCommitter() const;
-      std::string getDataPath() const;
-      std::string getDeviceId() const;
+      const std::string& getCommitter() const;
+      const std::string& getDataPath() const;
+      const std::string& getDeviceId() const;
+      const std::string& getIngestTool() const;
+      const std::string& getNewName() const;
+      const std::string& getToolArgs() const;
+
       std::string getIngestCmd() const;
-      std::string getIngestTool() const;
-      std::string getNewName() const;
       std::string getSaveName() const;
-      std::string getToolArgs() const;
 
       void setCommitter(const std::string&);
       void setDataPath(const std::string&);
