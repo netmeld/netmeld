@@ -46,6 +46,8 @@ EOF
 }
 EOF
 
+  # empty json
+  echo '{}' > d6
 }
 
 function run_tests()

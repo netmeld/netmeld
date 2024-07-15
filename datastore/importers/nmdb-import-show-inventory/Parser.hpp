@@ -28,39 +28,16 @@
 #define PARSER_HPP
 
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
-#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
-#include <netmeld/datastore/parsers/ParserDomainName.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
 
-
 // =============================================================================
 // Data containers
 // =============================================================================
-struct Data {
-  std::vector<nmdo::IpAddress>         ipAddrs;
-  std::vector<nmdo::DeviceInformation> devInfos;
-
-  std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
-
-  auto operator<=>(const Data&) const = default;
-  bool operator==(const Data&) const = default;
-};
-typedef std::vector<Data>  Result;
-
-struct NeighborData {
-  std::string curHostname   {""};
-  std::string curIfaceName  {""};
-  std::string curVendor     {""};
-  std::string curModel      {""};
-  std::vector<nmdo::IpAddress>  ipAddrs;
-
-  auto operator<=>(const NeighborData&) const = default;
-  bool operator==(const NeighborData&) const = default;
-};
+typedef nmdo::DeviceInformation Data;
+typedef std::vector<Data>       Result;
 
 
 // =============================================================================
@@ -73,64 +50,30 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
-  protected:
-    Data d;
-    NeighborData nd;
+    const std::string VENDOR {"Cisco"};
 
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-        detailConfig
-      , detailDeviceId
-      , detailEntry
-      , detailHeader
-      , detailInterface
-      , detailIpAddress
-      , detailPlatform
-      , ignoredLine
-      , noDetailCapabilityCodes
-      , noDetailConfig
-      , noDetailEntry
-      , noDetailEntryCount
-      , noDetailHeader
-      ;
+    qi::rule<nmdp::IstreamIter, Data, qi::ascii::blank_type>
+      deviceInfo;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-        noDetailDeviceId
-      , noDetailPlatform
-      , noDetailPortId
-      , token
-      , csvToken
-      ;
+      token;
 
     qi::rule<nmdp::IstreamIter>
-        noDetailCapability
-      , noDetailHoldtime
-      , noDetailLocalIface
-      ;
-
-    nmdp::ParserIpAddress   ipAddr;
+      notDeviceInfoData;
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  public: // Constructor is only default and must be public
+  public:
     Parser();
 
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private:
-    std::string getDevice(const std::string&);
-
-    void updateIpAddrs();
-    void updateInterfaces();
-    void updateDeviceInformation();
-    void finalizeData();
-
-    // Object return
-    Result getData();
 };
 #endif // PARSER_HPP

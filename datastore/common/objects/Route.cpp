@@ -133,10 +133,12 @@ namespace netmeld::datastore::objects {
     //       - nextHopIpAddr is set
     //       - isNullRoute is true
     //       - nextVrfId and nextTableId is set
+    //       - outIfaceName is set
     return (  !dstIpNet.hasUnsetPrefix()
            && (  !nextHopIpAddr.hasUnsetPrefix()
               || isNullRoute
               || !(nextVrfId.empty() || nextTableId.empty())
+              || !outIfaceName.empty()
               )
            )
       ;
@@ -221,7 +223,7 @@ namespace netmeld::datastore::objects {
         << ", isActive: " << std::boolalpha << isActive
         << ", dstIpNet: " << dstIpNet.toDebugString()
         << ", nextVrfId: " << nextVrfId
-        << ", netxtTableId: " << nextTableId
+        << ", nextTableId: " << nextTableId
         << ", nextHopIpAddr: " << nextHopIpAddr.toDebugString()
         << ", outIfaceName: " << outIfaceName
         << ", protocol: " << protocol

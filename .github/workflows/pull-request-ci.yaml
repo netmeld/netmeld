@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [ master ]
     types: [ synchronize, ready_for_review ]
+  workflow_dispatch:
 
 jobs:
   BuildTest:
