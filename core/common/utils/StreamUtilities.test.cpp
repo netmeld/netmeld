@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(testOstreamVector)
 
   std::vector<std::string> testStr { "1","2","2","4","99" };
   oss.str("");
-  oss << testNum;
+  oss << testStr;
   BOOST_TEST("[1, 2, 2, 4, 99]" == oss.str());
 }
 
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(testOstreamSet)
 
   std::set<std::string> testStr { "1","2","2","4","99" };
   oss.str("");
-  oss << testNum;
+  oss << testStr;
   BOOST_TEST("[1, 2, 4, 99]" == oss.str());
 }
 
