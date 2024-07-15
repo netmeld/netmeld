@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -163,7 +163,7 @@ namespace netmeld::core::utils {
     return newOptions;
   }
 
-  std::string
+  const std::string&
   ProgramOptions::getCommandLine() const
   {
     return commandLine;
@@ -199,7 +199,7 @@ namespace netmeld::core::utils {
     }
   }
 
-  std::vector<std::string>
+  const std::vector<std::string>&
   ProgramOptions::getUnrecognized() const
   {
     return unrecognizedArgs;
