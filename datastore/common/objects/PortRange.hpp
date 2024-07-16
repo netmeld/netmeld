@@ -49,7 +49,7 @@ namespace netmeld::datastore::objects {
       using pointer           = const uint16_t*;
       using reference         = const uint16_t&;
 
-      Iterator(uint16_t value) : value(value) {}
+      explicit Iterator(uint16_t value) : value(value) {}
 
       reference operator*() const { return value; }
       pointer operator->() { return &value; }
@@ -108,7 +108,7 @@ namespace netmeld::datastore::objects {
     protected:
     public:
       std::string toString() const;
-      std::string toDebugString() const;
+      std::string toDebugString() const override;
       std::string toHumanString() const;
 
       std::strong_ordering operator<=>(const PortRange&) const;
