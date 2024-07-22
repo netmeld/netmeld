@@ -119,5 +119,7 @@ class Parser :
     void addIfaceConnectName(const std::string&);
     void addIfaceIp(nmdo::IpAddress&);
     void setIfaceStatus(const std::string&);
+  public:
+    void clearHotfixes();
 };
 #endif // PARSER_HPP

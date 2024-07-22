@@ -82,7 +82,7 @@ Parser::Parser() : Parser::base_type(start)
         > qi::eol); 
 
     hotfix =
-        ("[" >> +qi::ascii::digit >> "]:" >> qi::char_("KB0-9")[pnx::bind(&Parser::addHotfix, this, qi::_1)]);
+        ("[" >> +qi::ascii::digit >> "]:" >> qi::as_string[qi::ascii::string("KB") >> +qi::ascii::digit][pnx::bind(&Parser::addHotfix, this, qi::_1)]);
 
     hotfixes =
         ("Hotfix(s): " 
@@ -217,6 +217,11 @@ void Parser::setIfaceStatus(const std::string &_status)
 {
     auto &iface{data.network_cards[curIfaceName]};
     iface.setDown();
+}
+
+void Parser::clearHotfixes()
+{
+    data.hotfixes.clear();
 }
 
 Result

@@ -141,6 +141,7 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
     for (const auto& test : testsOk) {
       BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
                 "Parse rule 'hotfixes': " << test);
+      tp.clearHotfixes();
     }
   }
   { // Singular Hotfix
