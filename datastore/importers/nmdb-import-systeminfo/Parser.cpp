@@ -82,8 +82,7 @@ Parser::Parser() : Parser::base_type(start)
         > qi::eol); 
 
     hotfix =
-        ("[" >> +qi::ascii::digit >> "]:" 
-        > token[pnx::bind(&Parser::addHotfix, this, qi::_1)]);
+        ("[" >> +qi::ascii::digit >> "]:" >> qi::char_("KB0-9")[pnx::bind(&Parser::addHotfix, this, qi::_1)]);
 
     hotfixes =
         ("Hotfix(s): " 
