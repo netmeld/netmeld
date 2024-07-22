@@ -98,9 +98,6 @@ class Parser :
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
-      nocdp,
-      versionPIXASA,
-      deviceAAA,
       domainData,
       globalServices,
       routerId,
@@ -109,21 +106,10 @@ class Parser :
       channelGroup,
       encapsulation,
       switchport,
-        switchPortModeNoNegotiate,
         switchportPortSecurity,
-          switchportPortSecurityMACAddress,
-          switchportPortSecuritySticky,
           vlanRange,
           vlanId,
-        spanningTreeInitial,
-          spanningTreeInitialMode,
-          spanningTreeInitialMstConfiguration,
-          spanningTreeInitialPortfast,
         spanningTree,
-          spanningTreeBPUGuard,
-          spanningTreeBPDUFilter,
-          spanningTreePortType,
-          spanningTreePortfast,
       accessPolicyRelated;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
@@ -159,7 +145,7 @@ class Parser :
     qi::rule<nmdp::IstreamIter, nmdo::IpAddress()>
       ipMask;
 
-  private:
+private:
     nmdp::ParserDomainName  domainName;
     nmdp::ParserIpAddress   ipAddr;
     nmdp::ParserMacAddress  macAddr;

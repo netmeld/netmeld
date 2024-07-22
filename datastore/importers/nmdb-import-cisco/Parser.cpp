@@ -41,26 +41,41 @@ Parser::Parser() : Parser::base_type(start)
   using nmdsic::indent;
 
   start =
-    *qi::eol >>
-    -(
-        config
-        [(
-          pnx::bind([&](){d.devInfo.setVendor("cisco");}),
-          qi::_val = pnx::bind(&Parser::getData, this)
-        )] % +qi::eol
-     )
+    config
+      [(pnx::bind([&](){d.devInfo.setVendor("cisco");}),
+        qi::_val = pnx::bind(&Parser::getData, this))]
     ;
 
   // Unknown where belongs
   // ip vrrp-extended (vrrrpv3 for nexus?)
 
   config =
-    *(  
-      nocdp
-      | versionPIXASA
-      | spanningTreeInitial
-      | deviceAAA
+    *(  (qi::lit("no cdp") >> (qi::lit("run") | qi::lit("enable")) > qi::eol)
+           [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
+
+      | ( (qi::string("PIX") | qi::string("ASA"))
+        >> qi::lit("Version") > *token > qi::eol
+        ) [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
+
+      | (qi::lit("spanning-tree mode") >> token >> qi::eol)
+
+      | (qi::lit("spanning-tree mst configuration") >> qi::eol
+        >> *(indent >> (qi::omit[tokens]) >> qi::eol)
+        )
+
+      | (qi::lit("spanning-tree portfast")
+        >> ( qi::lit("bpduguard")
+               [(pnx::bind(&Parser::globalBpduGuardEnabled, this) = true)]
+           | qi::lit("bpdufilter")
+               [(pnx::bind(&Parser::globalBpduFilterEnabled, this) = true)]
+           ) > *token > qi::eol
+        )
+
+      | (qi::lit("aaa ") >> tokens >> qi::eol)
+            [(pnx::bind(&Parser::deviceAaaAdd, this, qi::_1))]
+
       | globalServices
+
       | domainData
       | vrfInstance
       | (qi::lit("interface breakout") > +token > qi::eol)
@@ -80,45 +95,27 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  nocdp = 
-    (
-      qi::lit("no cdp") > (qi::lit("run") | qi::lit("enable")) > qi::eol)
-        [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
-    ;
-
-  versionPIXASA = 
-    ( 
-      (qi::string("PIX") | qi::string("ASA"))
-      >> qi::lit("Version") > *token > qi::eol
-    ) [(pnx::bind(&Parser::globalCdpEnabled, this) = false)]
-    ;
-
-  deviceAAA = 
-    (qi::lit("aaa ") > tokens > qi::eol)
-      [(pnx::bind(&Parser::deviceAaaAdd, this, qi::_1))]
-    ;
-
   domainData =
     ( ((qi::lit("switchname") | qi::lit("hostname")) >
        domainName >> qi::omit[*(qi::char_ - qi::eol)] > qi::eol
       )[(pnx::bind([&](const std::string& val)
                    {d.devInfo.setDeviceId(val);}, qi::_1))]
     | (qi::lit("ip") >> -qi::lit("dns") >>
-       (qi::lit("domain-name") | qi::lit("domain name")) >
-       -(qi::lit("vrf") > token) >
+       (qi::lit("domain-name") | qi::lit("domain name")) >>
+       -(qi::lit("vrf") >> token) >>
        domainName
-         [(pnx::bind(&Parser::deviceAddDnsSearchDomain, this, qi::_1))] >
+         [(pnx::bind(&Parser::deviceAddDnsSearchDomain, this, qi::_1))] >>
        qi::eol)
-    | (qi::lit("domain-name") >
+    | (qi::lit("domain-name") >>
        domainName
-         [(pnx::bind(&Parser::deviceAddDnsSearchDomain, this, qi::_1))] >
+         [(pnx::bind(&Parser::deviceAddDnsSearchDomain, this, qi::_1))] >>
        qi::eol)
     )
     ;
 
   routerId =
     (-(qi::lit("ipv6") | qi::lit("ip")) >>
-     qi::lit("router-id") > ipAddr >
+     qi::lit("router-id") >> ipAddr >>
      qi::eol
     )
     ;
@@ -169,7 +166,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   vlanNumberRange =
-    ( (qi::ushort_ >> qi::lit("-") > qi::ushort_)
+    ( (qi::ushort_ >> qi::lit("-") >> qi::ushort_)
         [(qi::_val = pnx::construct<std::tuple<uint16_t, uint16_t>>(qi::_1, qi::_2))]
     | (qi::ushort_)
         [(qi::_val = pnx::construct<std::tuple<uint16_t, uint16_t>>(qi::_1, qi::_1))]
@@ -182,12 +179,12 @@ Parser::Parser() : Parser::base_type(start)
 
   vlan =
     ( (qi::lit("vlan") >> vlanNumberRangeList >> qi::eol)
-         [(qi::_a = qi::_1)] >
-      *( indent >
-         ( (qi::lit("name") > tokens)
+         [(qi::_a = qi::_1)] >>
+      *( indent >>
+         ( (qi::lit("name") >> tokens)
               [(pnx::bind(&nmdo::Vlan::setDescription, &qi::_b, qi::_1))]
          | (qi::omit[+token]) // Ignore all other settings
-         ) > qi::eol
+         ) >> qi::eol
        )
     ) [(qi::_val = pnx::bind(&Parser::expandVlanNumberRangeList, this, qi::_a, qi::_b))]
     ;
@@ -415,89 +412,44 @@ Parser::Parser() : Parser::base_type(start)
                   pnx::bind(&Parser::tgtIface, this), qi::_1))]
     ;
 
-  spanningTreeInitial =
-    qi::lit("spanning-tree") >>
-      (
-        spanningTreeInitialMode
-        | spanningTreeInitialMstConfiguration
-        | spanningTreeInitialPortfast
-      )
-    ;
-  
-  spanningTreeInitialMode = 
-    (qi::lit("mode") > token > qi::eol)
-    ;
-
-  spanningTreeInitialMstConfiguration =
-    (qi::lit("mst configuration") > qi::eol
-      > *(indent > (qi::omit[tokens]) > qi::eol)
-    )
-    ;
-
-  spanningTreeInitialPortfast =
-    (qi::lit("portfast")
-    >> ( qi::lit("bpduguard")
-            [(pnx::bind(&Parser::globalBpduGuardEnabled, this) = true)]
-        | qi::lit("bpdufilter")
-            [(pnx::bind(&Parser::globalBpduFilterEnabled, this) = true)]
-        ) > *token > qi::eol
-    )
-    ;
-
   spanningTree =
     qi::lit("spanning-tree") >
       // NOTE All have "default" values which require knowing edge-port state
-    (  spanningTreeBPUGuard
-     | spanningTreeBPDUFilter
-     | spanningTreePortType
-     | spanningTreePortfast
+    (  (qi::lit("bpduguard")
+         [(pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
+           pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard))] >
+        -( qi::lit("enable")
+             [(pnx::bind([&](){tgtIface->setBpduGuard(true);}))]
+         | qi::lit("disable")
+             [(pnx::bind([&](){tgtIface->setBpduGuard(false);}))]
+         | qi::lit("rate-limit")
+             [(pnx::bind(&Parser::unsup, this, "spanning-tree bpduguard rate-limit"))]
+         )
+       )
+     | (qi::lit("bpdufilter")
+         [(pnx::bind([&](){tgtIface->setBpduFilter(!isNo);}),
+           pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduFilter))] >
+        -( qi::lit("enable")
+             [(pnx::bind([&](){tgtIface->setBpduFilter(true);}))]
+         | qi::lit("disable")
+             [(pnx::bind([&](){tgtIface->setBpduFilter(false);}))]
+         )
+       )
+     | ((qi::lit("port type") | qi::lit("portfast")) >>
+        (  qi::lit("edge")    // == portfast on
+             [(pnx::bind([&](){tgtIface->setPortfast(true);}))]
+         | qi::lit("network") // == portfast off
+             [(pnx::bind([&](){tgtIface->setPortfast(false);}))]
+         | qi::lit("normal")  // == default
+         | qi::lit("auto")
+        )
+       )
+     | (qi::lit("portfast"))
+         [(pnx::bind([&](){tgtIface->setPortfast(!isNo);}))]
      | tokens
          [(pnx::bind(&Parser::unsup, this, "spanning-tree " + qi::_1))]
     )
     ;
-
-  spanningTreeBPUGuard = 
-    (qi::lit("bpduguard")
-      [(pnx::bind([&](){tgtIface->setBpduGuard(!isNo);}),
-        pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduGuard))] >
-    -( qi::lit("enable")
-          [(pnx::bind([&](){tgtIface->setBpduGuard(true);}))]
-      | qi::lit("disable")
-          [(pnx::bind([&](){tgtIface->setBpduGuard(false);}))]
-      | qi::lit("rate-limit")
-          [(pnx::bind(&Parser::unsup, this, "spanning-tree bpduguard rate-limit"))]
-      )
-    )
-    ;
-
-    spanningTreeBPDUFilter = 
-      (qi::lit("bpdufilter")
-        [(pnx::bind([&](){tgtIface->setBpduFilter(!isNo);}),
-          pnx::bind(&Parser::ifaceSetUpdate, this, &ifaceSpecificBpduFilter))] >
-      -( qi::lit("enable")
-            [(pnx::bind([&](){tgtIface->setBpduFilter(true);}))]
-        | qi::lit("disable")
-            [(pnx::bind([&](){tgtIface->setBpduFilter(false);}))]
-        )
-      )
-      ;
-
-    spanningTreePortType =
-      ((qi::lit("port type") | qi::lit("portfast")) >>
-        (  qi::lit("edge")    // == portfast on
-              [(pnx::bind([&](){tgtIface->setPortfast(true);}))]
-          | qi::lit("network") // == portfast off
-              [(pnx::bind([&](){tgtIface->setPortfast(false);}))]
-          | qi::lit("normal")  // == default
-          | qi::lit("auto")
-        )
-      )
-      ;
-
-    spanningTreePortfast =
-      (qi::lit("portfast"))
-        [(pnx::bind([&](){tgtIface->setPortfast(!isNo);}))]
-      ;
 
   accessPolicyRelated =
     ( (qi::lit("policy-map") >> policyMap)
@@ -536,13 +488,8 @@ Parser::Parser() : Parser::base_type(start)
   BOOST_SPIRIT_DEBUG_NODES(
       //(start)
       (config)
-      (nocdp)
-      (versionPIXASA)
-      (spanningTreeInitial)
-      (deviceAAA)
       (domainData)
       (globalServices)
-      (vrfInstance)
       (route)
       (vlanDef)
       (interface)
