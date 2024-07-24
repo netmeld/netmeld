@@ -33,6 +33,8 @@ target_link_libraries(${TGT_TOOL}
     netmeld-datastore
   )
 
+nm_install_bin(${TGT_TOOL})
+
 foreach(ITEM
     Parser
   )
@@ -46,6 +48,3 @@ foreach(ITEM
       netmeld-datastore
     )
 endforeach()
-
-
-nm_install_bin(${TGT_TOOL})
