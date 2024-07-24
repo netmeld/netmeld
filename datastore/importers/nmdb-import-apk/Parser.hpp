@@ -57,10 +57,10 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+  protected:
     // Supporting data structures
     Data data;
 
-  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
