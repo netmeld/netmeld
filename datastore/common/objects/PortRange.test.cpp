@@ -32,163 +32,196 @@
 
 namespace nmdo = netmeld::datastore::objects;
 
+class TestPortRange : public nmdo::PortRange
+{
+  public:
+    using nmdo::PortRange::PortRange;
+};
+
 
 BOOST_AUTO_TEST_CASE(testConstructorsAndToStrings)
 {
   // Constructors with numeric arguments:
 
   {
-    nmdo::PortRange portRange(0);  // Min port number
+    TestPortRange tpr {0};  // Min port number
 
-    BOOST_CHECK_EQUAL(0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(0, std::get<1>(portRange));
+    BOOST_TEST(0 == tpr.first);
+    BOOST_TEST(0 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[0,0]", portRange.toString());
+    BOOST_TEST("[0,0]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange(65535);  // Max port number
+    TestPortRange tpr {65535};  // Max port number
 
-    BOOST_CHECK_EQUAL(65535, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_TEST(65535 == tpr.first);
+    BOOST_TEST(65535 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[65535,65535]", portRange.toString());
+    BOOST_TEST("[65535,65535]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange(22);
+    TestPortRange tpr {22};
 
-    BOOST_CHECK_EQUAL(22, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(22, std::get<1>(portRange));
+    BOOST_TEST(22 == tpr.first);
+    BOOST_TEST(22 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[22,22]", portRange.toString());
+    BOOST_TEST("[22,22]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("ssh");
+    TestPortRange tpr {"ssh"};
 
-    BOOST_CHECK_EQUAL(22, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(22, std::get<1>(portRange));
+    BOOST_TEST(22 == tpr.first);
+    BOOST_TEST(22 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[22,22]", portRange.toString());
+    BOOST_TEST("[22,22]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange(0, 65535);  // Full port range
+    TestPortRange tpr {0, 65535};  // Full port range
 
-    BOOST_CHECK_EQUAL(    0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_TEST(    0 == tpr.first);
+    BOOST_TEST(65535 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[0,65535]", portRange.toString());
+    BOOST_TEST("[0,65535]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange(8000, 9999);  // Small port range
+    TestPortRange tpr {8000, 9999};  // Small port range
 
-    BOOST_CHECK_EQUAL(8000, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(9999, std::get<1>(portRange));
+    BOOST_TEST(8000 == tpr.first);
+    BOOST_TEST(9999 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[8000,9999]", portRange.toString());
+    BOOST_TEST("[8000,9999]" == tpr.toString());
   }
 
   // Constructors with string arguments (including variations in whitespace):
 
   {
-    nmdo::PortRange portRange("[0,65535]");
+    TestPortRange tpr {"[0,65535]"};
 
-    BOOST_CHECK_EQUAL(    0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_TEST(    0 == tpr.first);
+    BOOST_TEST(65535 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[0,65535]", portRange.toString());
+    BOOST_TEST("[0,65535]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("[0, 65535)");
+    TestPortRange tpr {"[0, 65535)"};
 
-    BOOST_CHECK_EQUAL(    0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65534, std::get<1>(portRange));
+    BOOST_TEST(    0 == tpr.first);
+    BOOST_TEST(65534 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[0,65534]", portRange.toString());
+    BOOST_TEST("[0,65534]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("( 0,65535 ]");
+    TestPortRange tpr {"( 0,65535 ]"};
 
-    BOOST_CHECK_EQUAL(    1, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_TEST(    1 == tpr.first);
+    BOOST_TEST(65535 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[1,65535]", portRange.toString());
+    BOOST_TEST("[1,65535]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("( 0, 65535 )");
+    TestPortRange tpr {"( 0, 65535 )"};
 
-    BOOST_CHECK_EQUAL(    1, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65534, std::get<1>(portRange));
+    BOOST_TEST(    1 == tpr.first);
+    BOOST_TEST(65534 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[1,65534]", portRange.toString());
+    BOOST_TEST("[1,65534]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("1024-65535");
+    TestPortRange tpr {"1024-65535"};
 
-    BOOST_CHECK_EQUAL( 1024, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_TEST( 1024 == tpr.first);
+    BOOST_TEST(65535 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[1024,65535]", portRange.toString());
+    BOOST_TEST("[1024,65535]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("1024 -- 65535");
+    TestPortRange tpr {"1024 -- 65535"};
 
-    BOOST_CHECK_EQUAL( 1024, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_TEST( 1024 == tpr.first);
+    BOOST_TEST(65535 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[1024,65535]", portRange.toString());
+    BOOST_TEST("[1024,65535]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("443");
+    TestPortRange tpr {"443"};
 
-    BOOST_CHECK_EQUAL(443, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+    BOOST_TEST(443 == tpr.first);
+    BOOST_TEST(443 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[443,443]", portRange.toString());
+    BOOST_TEST("[443,443]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("https");
+    TestPortRange tpr {"https"};
 
-    BOOST_CHECK_EQUAL(443, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+    BOOST_TEST(443 == tpr.first);
+    BOOST_TEST(443 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[443,443]", portRange.toString());
+    BOOST_TEST("[443,443]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("http-https");
+    TestPortRange tpr {"http-https"};
 
-    BOOST_CHECK_EQUAL(80, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(443, std::get<1>(portRange));
+    BOOST_TEST( 80 == tpr.first);
+    BOOST_TEST(443 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[80,443]", portRange.toString());
+    BOOST_TEST("[80,443]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange(">32767");
+    TestPortRange tpr {">32767"};
 
-    BOOST_CHECK_EQUAL(32768, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(65535, std::get<1>(portRange));
+    BOOST_TEST(32768 == tpr.first);
+    BOOST_TEST(65535 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[32768,65535]", portRange.toString());
+    BOOST_TEST("[32768,65535]" == tpr.toString());
   }
 
   {
-    nmdo::PortRange portRange("<32767");
+    TestPortRange tpr {"<32767"};
 
-    BOOST_CHECK_EQUAL(0, std::get<0>(portRange));
-    BOOST_CHECK_EQUAL(32766, std::get<1>(portRange));
+    BOOST_TEST(    0 == tpr.first);
+    BOOST_TEST(32766 == tpr.last);
 
-    BOOST_CHECK_EQUAL("[0,32766]", portRange.toString());
+    BOOST_TEST("[0,32766]" == tpr.toString());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(testAssignment)
+{
+  {
+    TestPortRange tpr1 {123,456}
+                , tpr2
+                ;
+
+    BOOST_TEST(tpr1 != tpr2);
+    tpr2 = tpr1;
+    BOOST_TEST(tpr1 == tpr2);
+    BOOST_TEST(123 == tpr2.first);
+    BOOST_TEST(456 == tpr2.last);
+  }
+
+  {
+    TestPortRange tpr1 {"ssh-https"}
+                , tpr2
+                ;
+
+    BOOST_TEST(tpr1 != tpr2);
+    tpr2 = tpr1;
+    BOOST_TEST(tpr1 == tpr2);
+    BOOST_TEST( 22 == tpr2.first);
+    BOOST_TEST(443 == tpr2.last);
   }
 }

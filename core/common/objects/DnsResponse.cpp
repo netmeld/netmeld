@@ -77,19 +77,19 @@ namespace netmeld::core::objects {
     responseData = _data;
   }
 
-  std::string
+  const std::string&
   DnsResponse::getFqdn() const
   {
     return responseFqdn;
   }
 
-  std::string
+  const std::string&
   DnsResponse::getClass() const
   {
     return responseClass;
   }
 
-  std::string
+  const std::string&
   DnsResponse::getType() const
   {
     return responseType;

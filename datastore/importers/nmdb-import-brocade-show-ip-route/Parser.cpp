@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -33,105 +33,86 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    *( ipv4Route
-     | ipv6Route
-     | garbage
-     | qi::eol
-     )
-    ;
-
-  ipv4Route =
-    -rowNumber >>
-    dstIpv4Net
-      [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
-    ( qi::lit("DIRECT")
-    | rtrIpv4Addr
-        [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
-    ) >>
-    ifaceName
-      [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))] >>
-    distance
-      [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, qi::_1))] >>
-    qi::lit('/') >>
-    metric
-      [(pnx::bind(&nmdo::Route::setMetric, &qi::_val, qi::_1))] >>
-    typeCode
-      [(pnx::bind(&nmdo::Route::setProtocol, &qi::_val, qi::_1))] >>
-    uptime >>
-    -srcVrf >>
-    +qi::eol
-    ;
-
-  ipv6Route =
-    typeCode
-      [(pnx::bind(&nmdo::Route::setProtocol, &qi::_val, qi::_1))] >>
-    dstIpv6Net
-      [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_val, qi::_1))] >>
-    -qi::eol >>
-    ( qi::lit("::")
-    | rtrIpv6Addr
-        [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_val, qi::_1))]
-    ) >>
-    -qi::eol >>
-    ifaceName
-      [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_val, qi::_1))] >>
-    distance
-      [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_val, qi::_1))] >>
-    qi::lit('/') >>
-    metric
-      [(pnx::bind(&nmdo::Route::setMetric, &qi::_val, qi::_1))] >>
-    uptime >>
-    +qi::eol
-    ;
-
-  dstIpv4Net =
-    ipv4Addr
-    ;
-
-  dstIpv6Net =
-    ipv6Addr
-    ;
-
-  rtrIpv4Addr =
-    ipv4Addr
-    ;
-
-  rtrIpv6Addr =
-    ipv6Addr
-    ;
-
-  ifaceName =
-    ( (token >> qi::ascii::blank >> token)
-    | (token)
+    *(ipv4Route[(pnx::push_back(qi::_val, qi::_1))]
+    | ipv6Route[(pnx::push_back(qi::_val, qi::_1))]
+    | ignoredLine[(qi::_pass = true)]
     )
     ;
 
-  distance =
-    qi::uint_;
+  ipv4Route =
+    -rowNumber
+    >> dstIpv4Net(qi::_val)
+    > ( qi::lit("DIRECT")
+      | rtrIpv4Addr(qi::_val)
+      )
+    > ifaceName(qi::_val)
+    > distanceMetric(qi::_val)
+    > typeCode(qi::_val)
+    > uptime
+    > -srcVrf
+    > -qi::eol
+    ;
 
-  metric =
-    qi::uint_;
+  ipv6Route =
+    typeCode(qi::_val)
+    >> dstIpv6Net(qi::_val)
+    > -qi::eol
+    > ( qi::lit("::")
+      | rtrIpv6Addr(qi::_val)
+      )
+    > -qi::eol
+    > ifaceName(qi::_val)
+    > distanceMetric(qi::_val)
+    > uptime
+    > -qi::eol
+    ;
 
+  dstIpv4Net =
+    ipv4Addr [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_r1, qi::_1))]
+    ;
+
+  dstIpv6Net =
+    ipv6Addr [(pnx::bind(&nmdo::Route::setDstIpNet, &qi::_r1, qi::_1))]
+    ;
+
+  rtrIpv4Addr =
+    ipv4Addr [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_r1, qi::_1))]
+    ;
+
+  rtrIpv6Addr =
+    ipv6Addr [(pnx::bind(&nmdo::Route::setNextHopIpAddr, &qi::_r1, qi::_1))]
+    ;
+
+  ifaceName =
+    ( qi::hold[qi::as_string[token >> qi::ascii::blank >> token]]
+    | qi::hold[token]
+    ) [(pnx::bind(&nmdo::Route::setOutIfaceName, &qi::_r1, qi::_1))]
+    ;
+
+  distanceMetric =
+    (  qi::uint_
+    >> qi::lit('/')
+    >> qi::uint_
+    ) [(pnx::bind(&nmdo::Route::setAdminDistance, &qi::_r1, qi::_1)
+      , pnx::bind(&nmdo::Route::setMetric, &qi::_r1, qi::_2)
+      )]
+    ;
+
+  tcSym.add
+    ("B", "bgp")
+    ("C", "direct")
+    ("D", "direct")
+    ("I", "is-is")
+    ("L", "local")
+    ("O", "ospf")
+    ("R", "rip")
+    ("S", "static")
+    ;
   typeCode =
-    ( (qi::lit("B") >> *qi::ascii::graph)
-        [(qi::_val = "bgp")]
-    | (qi::lit("C") >> *qi::ascii::graph)  // connected (IPv6)
-        [(qi::_val = "direct")]
-    | (qi::lit("D") >> *qi::ascii::graph)  // connected (IPv4)
-        [(qi::_val = "direct")]
-    | (qi::lit("I") >> *qi::ascii::graph)
-        [(qi::_val = "is-is")]
-    | (qi::lit("L") >> *qi::ascii::graph)
-        [(qi::_val = "local")]
-    | (qi::lit("O") >> *qi::ascii::graph)
-        [(qi::_val = "ospf")]
-    | (qi::lit("R") >> *qi::ascii::graph)
-        [(qi::_val = "rip")]
-    | (qi::lit("S") >> *qi::ascii::graph)
-        [(qi::_val = "static")]
-    | (+qi::ascii::graph)
-        [(qi::_val = "")]
-    );
+    ( qi::as_string[tcSym >> qi::omit[*qi::ascii::graph]]
+    | qi::as_string[+qi::ascii::graph]
+    ) [(pnx::bind(&nmdo::Route::setProtocol, &qi::_r1, qi::_1))]
+    ;
 
   uptime =
     token
@@ -141,8 +122,10 @@ Parser::Parser() : Parser::base_type(start)
     token
     ;
 
-  garbage =
-    +(qi::char_ - qi::eol) >> -qi::eol
+  ignoredLine =
+    ( (+(qi::char_ - qi::eol) >> -qi::eol)
+    | (+qi::eol)
+    )
     ;
 
   rowNumber =
@@ -163,12 +146,10 @@ Parser::Parser() : Parser::base_type(start)
       (rtrIpv4Addr)
       (rtrIpv6Addr)
       (ifaceName)
-      (distance)
-      (metric)
       (typeCode)
       (uptime)
       (srcVrf)
       //(token)
-      //(garbage)
+      //(ignoredLine)
       );
 }

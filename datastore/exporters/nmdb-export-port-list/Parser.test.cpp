@@ -28,43 +28,63 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/core/utils/ContainerUtilities.hpp>
-#include <vector>
-#include <set>
+#include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 
-namespace nmcu = netmeld::core::utils;
+#include "Parser.hpp"
 
-BOOST_AUTO_TEST_CASE(testToString)
+using qi::ascii::blank;
+
+class TestParser : public Parser
 {
-  {
-    std::set<std::string> test {"a", "b", "c"};
+  public:
+    using Parser::comment;
+    using Parser::protocol;
+    using Parser::portRange;
+    using Parser::line;
+    using Parser::start;
+};
 
-    BOOST_TEST("a b c" == nmcu::toString(test));
-    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
-    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
-  }
-  {
-    std::vector<std::string> test {"a", "b", "c"};
-
-    BOOST_TEST("a b c" == nmcu::toString(test));
-    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
-    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testUniquePushBack)
+BOOST_AUTO_TEST_CASE(testRuleLine)
 {
-  std::vector<std::string> control {"a", "bb", "c"};
-  std::vector<std::string> test;
-  std::vector<std::string> sink;
+  TestParser tp;
+  const auto& parserRule {tp.line};
+  // tests portRange as well
+  // tests protocol as well
+  // tests comment as well
 
-  for (const auto& item : {"a", "a", "bb", "c", "bb"}) {
-    sink.push_back(item);
-    nmcu::addIfUnique(&test, item);
-  }
-  for (const std::string& item : sink) {
-    nmcu::addIfUnique(&test, item);
+  std::vector<std::tuple<std::string, std::string, std::string>> testsOk {
+      {"T: 123\n"                 , "T"  , "[123,123]"  }
+    , {"U: 123-456\n"             , "U"  , "[123,456]"  }
+    , {"Y: 123 # with comment\n"  , "Y"  , "[123,123]"  }
+    , {"# comment only line\n"    , ""   , "[0,0]"      }
+    , {"TUY: 0-65535\n"           , "TUY", "[0,65535]"  }
+    };
+
+  for (const auto& [test, protocols, portRange] : testsOk) {
+    Data out;
+    BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+              , "Parser rule 'line': " << test
+              );
+    BOOST_TEST(protocols == out.protocols);
+    BOOST_TEST(portRange == out.portRange.toString());
   }
 
-  BOOST_TEST(control == test);
+  std::vector<std::string> testsBad {
+      "T: 123-456"
+    , "t: 123-456\n"
+    , ": 123-456\n"
+    , "T: -456\n"
+    , "T: 123-\n"
+    , "A: 123-456\n"
+    , "T: 1a3-456\n"
+    , "T: 123-4a6\n"
+    , "T: 456-123\n"
+    };
+
+  for (const auto& test : testsBad) {
+    Data out;
+    BOOST_TEST( !nmdp::testAttr(test.c_str(), parserRule, out, blank)
+              , "Parser rule 'line': " << test
+              );
+  }
 }

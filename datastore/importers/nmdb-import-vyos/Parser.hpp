@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -36,6 +36,7 @@
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/parsers/ParserMacAddress.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
@@ -75,7 +76,7 @@ class Parser :
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables are always private
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -93,6 +94,7 @@ class Parser :
     qi::rule<nmdp::IstreamIter>
       comment;
 
+    nmdp::ParserMacAddress macAddr;
     nmdp::ParserIpAddress  ipAddr;
     nmdp::ParserDomainName fqdn;
 
@@ -127,7 +129,7 @@ class Parser :
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private:
+  protected:
     void ifaceInit(const std::string&);
 
     void serviceAddDns(const nmdo::IpAddress&);
@@ -135,6 +137,7 @@ class Parser :
     void netBookAddAddr(const nmdo::IpAddress&);
 
     void ruleInit(size_t);
+    void ruleAddDefault();
     void ruleAddDstIface(const std::string&);
     void ruleAddSrcIface(const std::string&);
     void ruleAddService();

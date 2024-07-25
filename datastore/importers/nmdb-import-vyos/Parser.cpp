@@ -109,6 +109,10 @@ Parser::Parser() : Parser::base_type(start)
           [(pnx::bind(&nmdo::InterfaceNetwork::setDescription,
                       pnx::bind(&Parser::tgtIface, this),
                       qi::_1))]
+      | (qi::lit("hw-id") > macAddr)
+          [(pnx::bind(&nmdo::InterfaceNetwork::setMacAddress,
+                      pnx::bind(&Parser::tgtIface, this),
+                      qi::_1))]
       | ifaceFirewall
       | ignoredBlock
     ) > stopBlock
@@ -146,7 +150,7 @@ Parser::Parser() : Parser::base_type(start)
     qi::lit("address-group") > token
       [(pnx::bind(&Parser::tgtBook, this) = qi::_1)] >
     startBlock >
-    *(  (qi::lit("address") > ipAddr)
+    *(  (qi::lit("address") >> ipAddr >> qi::eol)
           [(pnx::bind(&Parser::netBookAddAddr, this, qi::_1))]
       | ignoredBlock
     ) > stopBlock
@@ -162,6 +166,7 @@ Parser::Parser() : Parser::base_type(start)
       | (qi::lit("enable-default-log"))
       | ignoredBlock
     ) > stopBlock
+      [(pnx::bind(&Parser::ruleAddDefault, this))]
     ;
 
   rule =
@@ -242,8 +247,10 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   token =
-     (qi::lit('"') > *(qi::lit("\\\"") | (qi::char_ - qi::char_('"'))) >
-      qi::lit('"'))
+     ( qi::lit('"')
+     > *(qi::lit("\\\"") | (qi::char_ - qi::char_('"')))
+     > qi::lit('"')
+     )
     | +(qi::ascii::graph - qi::char_("{}#"))
     ;
 
@@ -285,6 +292,8 @@ Parser::serviceAddDns(const nmdo::IpAddress& _ipAddr)
 void
 Parser::netBookAddAddr(const nmdo::IpAddress& _ipAddr)
 {
+  d.networkBooks[tgtZone][tgtBook].setId(tgtZone);
+  d.networkBooks[tgtZone][tgtBook].setName(tgtBook);
   d.networkBooks[tgtZone][tgtBook].addData(_ipAddr.toString());
 }
 
@@ -298,6 +307,21 @@ Parser::ruleInit(size_t _ruleId)
   tgtRule->setRuleId(_ruleId);
   tgtRule->setDstId(DEFAULT_ZONE);
   tgtRule->setSrcId(DEFAULT_ZONE);
+}
+
+void
+Parser::ruleAddDefault()
+{
+  ruleInit(1000000); // rule # values range from 1-999999
+  ruleAddService();
+
+  // default-action is required to be set
+  tgtRule->addAction(defaultAction);
+  defaultAction = "";
+
+  // reset per ruleSet values
+  tgtZone = DEFAULT_ZONE;
+  curRuleId = 0;
 }
 
 void
@@ -320,7 +344,7 @@ void
 Parser::ruleAddService()
 {
   if (proto.empty() && srcPort.empty() && dstPort.empty()) {
-    tgtRule->addService("any");
+    tgtRule->addService(nmcu::getSrvcString("all","",""));
   } else {
     tgtRule->addService(nmcu::getSrvcString(proto, srcPort, dstPort));
   }
@@ -364,13 +388,6 @@ Parser::getData()
       }
       if (0 == rbRule.getDstIfaces().size()) {
         rbRule.addDstIface("any");
-      }
-      if (0 == rbRule.getServices().size()) {
-        rbRule.addService(nmcu::getSrvcString("all","",""));
-      }
-      if (0 == rbRule.getActions().size() && !defaultAction.empty()) {
-        rbRule.addAction(defaultAction);
-        defaultAction = "";
       }
     }
   }

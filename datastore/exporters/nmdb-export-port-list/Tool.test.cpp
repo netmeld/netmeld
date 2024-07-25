@@ -28,43 +28,52 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include <netmeld/core/utils/ContainerUtilities.hpp>
-#include <vector>
-#include <set>
+#define UNIT_TESTING
+#include "nmdb-export-port-list.cpp"
 
-namespace nmcu = netmeld::core::utils;
-
-BOOST_AUTO_TEST_CASE(testToString)
+class TestTool : public Tool
 {
-  {
-    std::set<std::string> test {"a", "b", "c"};
+  public:
+    using Tool::portsStringFromBitset;
+    using Tool::addNmapPorts;
 
-    BOOST_TEST("a b c" == nmcu::toString(test));
-    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
-    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
-  }
-  {
-    std::vector<std::string> test {"a", "b", "c"};
+    using Tool::runTool;
+    using Tool::opts;
+};
 
-    BOOST_TEST("a b c" == nmcu::toString(test));
-    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
-    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testUniquePushBack)
+BOOST_AUTO_TEST_CASE(testPortsStringFromBitset)
 {
-  std::vector<std::string> control {"a", "bb", "c"};
-  std::vector<std::string> test;
-  std::vector<std::string> sink;
+  TestTool    tt;
+  std::string out;
+  std::bitset<65536> bitset;
 
-  for (const auto& item : {"a", "a", "bb", "c", "bb"}) {
-    sink.push_back(item);
-    nmcu::addIfUnique(&test, item);
-  }
-  for (const std::string& item : sink) {
-    nmcu::addIfUnique(&test, item);
-  }
+  // all zeroes
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("" == out);
 
-  BOOST_TEST(control == test);
+  // all ones
+  bitset.flip();
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("0-65535," == out);
+
+  // reset to all zeroes
+  bitset.flip();
+  
+  // single
+  bitset.set(22);
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("22," == out);
+
+  // gap
+  bitset.set(80);
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("22,80," == out);
+
+  // singles, gaps, and ranges
+  for (size_t i {0}; i < 10; ++i) {
+    bitset.set(10000+i);
+  }
+  bitset.set(20000);
+  out = tt.portsStringFromBitset(bitset);
+  BOOST_TEST("22,80,10000-10009,20000," == out);
 }
