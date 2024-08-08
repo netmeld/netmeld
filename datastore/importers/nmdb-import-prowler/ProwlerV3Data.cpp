@@ -257,8 +257,8 @@ namespace netmeld::datastore::objects::prowler {
   std::strong_ordering
   ProwlerV3Data::operator<=>(const ProwlerV3Data& rhs) const
   {
-    return std::tie( assessmentStartTime
-                   , findingUniqueId
+    return std::tie( // assessmentStartTime,
+                     findingUniqueId
                    , provider
                    , profile
                    , accountId
@@ -287,8 +287,8 @@ namespace netmeld::datastore::objects::prowler {
                    , notes
                    , compliance
                    )
-       <=> std::tie( rhs.assessmentStartTime
-                   , rhs.findingUniqueId
+       <=> std::tie( // rhs.assessmentStartTime,
+                     rhs.findingUniqueId
                    , rhs.provider
                    , rhs.profile
                    , rhs.accountId
