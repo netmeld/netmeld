@@ -47,18 +47,14 @@ Parser::Parser() : Parser::base_type(start)
 
   noDetailConfig =
     noDetailTableInfo
-    > *qi::eol
-    > noDetailHeader
-    > *noDetailEntry
+    >> noDetailHeader
+    > *noDetailEntry [(pnx::bind(&Parser::finalizeData, this))]
     > *qi::eol
     ;
 
   noDetailTableInfo = 
-    qi::lit("Last table change time") > ':' > (token >> qi::lit("ago") >> qi::eol) [(pnx::bind(&Parser::print, this, "Change time", qi::_1))]
-    > qi::lit("Number of table inserts") > ':'  > (qi::uint_ >> qi::eol) [(pnx::bind(&Parser::printUint, this, "Table inserts", qi::_1))]
-    > qi::lit("Number of table deletes") > ':' > (qi::uint_ >> qi::eol) [(pnx::bind(&Parser::printUint, this, "Table deletes", qi::_1))]
-    > qi::lit("Number of table drops") > ':' > (qi::uint_ >> qi::eol) [(pnx::bind(&Parser::printUint, this, "Table drops", qi::_1))]
-    > qi::lit("Number of table age-outs") > ':' > (qi::uint_ >> qi::eol) [(pnx::bind(&Parser::printUint, this, "Age-outs", qi::_1))]
+    qi::lit("Last table change time")
+    > *(!qi::lit("Port") >> ignoredLine)
     ;
 
   noDetailHeader =
@@ -72,66 +68,53 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   noDetailEntry =
-    token [(pnx::bind(&Parser::print, this, "Port", qi::_1))]
-    > token [(pnx::bind(&Parser::print, this, "Device Id", qi::_1))]
-    > port [(pnx::bind(&Parser::print, this, "Port Id", qi::_1))]
-    > token [(pnx::bind(&Parser::print, this, "TTL", qi::_1))]
+    token
+    > token [(pnx::ref(nd.curHostname) = qi::_1)]
+    > port  [(pnx::ref(nd.curIfaceName) = qi::_1)]
+    > token
     > qi::eol
     ;
-
-  // noDetailPort =
-  //   token
-  //   ;
-
-  // noDetailDeviceId =
-  //   token
-  //   ;
-
-  port =
-    token
-    > -( qi::ascii::blank
-      >> (+qi::ascii::digit >> +(qi::char_('/') >> +qi::ascii::digit))
-      )
-    ;
-
-  // noDetailTTL =
-  //   qi::uint_
-  //   ;
 
   // ----- detail -----
 
   detailConfig =
     (detailHeader
-    >> (detailBody | *qi::eol)
+    >> (detailEntry | *qi::eol)
     ) [(pnx::bind(&Parser::finalizeData, this))]
     ;
 
   detailHeader =
     qi::lit("Interface")
-    >> port [(pnx::bind(&Parser::print, this, "Port scanned: ", qi::_1))]
-    >> ignoredLine
+    >> port
+    >> qi::lit("detected")
+    > ignoredLine
     > qi::eol
     ;
 
-  detailBody =
-    detailAge
-    > detailChange
-    > detailCommon
-    > (*( detailSystemName
-       | detailCapabilities
-       | detailSystemDescription
-       | (ignoredLine - qi::eol)
-       )) [pnx::bind(&Parser::finalizeData, this)]
+  detailEntry =
+    detailNeighborLine
+    > detailDiscovered
+    > +(detailChassisId
+      | detailPortId
+      | detailPortDescription
+      | detailSystemName
+      | detailSystemDescription
+      | detailCapabilities
+      | (!( detailHeader
+          | detailNeighborLine
+          ) >> ignoredLine - qi::eol
+        )
+      )
     ;
 
-  detailAge =
+  detailNeighborLine =
     qi::lit("Neighbor")
     > port
     > qi::lit("age")
     > ignoredLine
     ;
 
-  detailChange =
+  detailDiscovered =
     qi::lit("Discovered")
     > qi::uint_
     > qi::lit("days,")
@@ -139,14 +122,18 @@ Parser::Parser() : Parser::base_type(start)
     > ignoredLine
     ;
 
-  detailCommon =
+  detailChassisId =
     qi::lit("- Chassis ID type:") > restOfLine
     > qi::lit("Chassis ID     :") > restOfLine [(pnx::ref(nd.curMacAddr) = qi::_1)]
-    > qi::lit("- Port ID type:") > restOfLine
+    ;
+
+  detailPortId =
+    qi::lit("- Port ID type:") > restOfLine
     > qi::lit("Port ID     :") > restOfLine [(pnx::ref(nd.curIfaceName) = qi::_1)]
-    > qi::lit("- Time To Live:") > qi::uint_
-    > qi::lit("seconds") > qi::eol
-    > qi::lit("- Port Description:") > restOfLine [(pnx::ref(nd.curPortDescription) = qi::_1)]
+    ;
+
+  detailPortDescription =
+    qi::lit("- Port Description:") > restOfLine [(pnx::ref(nd.curPortDescription) = qi::_1)]
     ;
 
   detailSystemName =
@@ -155,17 +142,26 @@ Parser::Parser() : Parser::base_type(start)
     > qi::eol
     ;
 
-  detailCapabilities =
-    (qi::lit("- System Capabilities :") | qi::lit("Enabled Capabilities:"))
-    > restOfLine [(pnx::ref(nd.curDeviceType) = qi::_1)]
-    ;
-
   detailSystemDescription =
     qi::lit("- System Description:")
     > restOfLine [(pnx::ref(nd.curSysDescription) = qi::_1)]
     ;
 
+  detailCapabilities =
+    (qi::lit("- System Capabilities :")
+    > restOfLine [(pnx::ref(nd.curDeviceType) = qi::_1)]
+    > -(qi::lit("Enabled Capabilities:"))
+    >> restOfLine) [(pnx::ref(nd.curDeviceType) = qi::_1)]
+    ;
+
   // ----- common usage -----
+  port =
+    token
+    > -( qi::ascii::blank
+      >> (+qi::ascii::digit >> +(qi::char_('/') >> +qi::ascii::digit))
+      )
+    ;
+
   restOfLine =
     *(qi::char_ - qi::eol) 
     >> qi::eol
@@ -196,19 +192,18 @@ Parser::Parser() : Parser::base_type(start)
         (noDetailTableInfo)
         (noDetailHeader)
         (noDetailEntry)
-          (noDetailPort)
-          (noDetailDeviceId)
-          (port)
-          (noDetailTTL)
       (detailConfig)
         (detailHeader)
-        (detailBody)
-          (detailCommon)
-          (detailAge)
-          (detailChange)
+        (detailEntry)
+          (detailNeighborLine)
+          (detailDiscovered)
+          (detailChassisId)
+          (detailPortId)
+          (detailPortDescription)
           (detailSystemName)
-          (detailCapabilities)
           (detailSystemDescription)
+          (detailCapabilities)
+      (port)
       //(restOfLine)
       //(inQuotes)
       //(ignoredLine)
@@ -226,24 +221,7 @@ Parser::getDevice(const std::string& hostname)
   return hostname.substr(0, hostname.find("."));
 }
 
-void
-Parser::print(const std::string& label, const std::string& str)
-{
-    infoString += "DATA: " + label + " : " + str + '\n';
-}
-
-void
-Parser::printUint(const std::string& label, const uint val)
-{
-    infoString += "DATA: " + label + " : " + std::to_string(val) + '\n';
-}
-
-void
-Parser::printInfo()
-{
-  std::cerr << infoString;
-}
-
+// currently disabled
 // void
 // Parser::updateIpAddrs()
 // {
@@ -260,12 +238,15 @@ Parser::updateInterfaces()
   iface.setPartial(true);
   iface.setState(true);
   iface.setDiscoveryProtocol(true);
-  iface.setDescription(nd.curPortDescription);
+  if (!nd.curPortDescription.empty()) {
+    iface.setDescription(nd.curPortDescription);
+  }
 
-  nmdo::MacAddress macAddr {nd.curMacAddr};
-  iface.setMacAddress(macAddr);
+  if (!nd.curMacAddr.empty()) {
+    nmdo::MacAddress macAddr {nd.curMacAddr};
+    iface.setMacAddress(macAddr);
+  }
 
-  std::cerr << iface.toDebugString();
   d.interfaces.emplace_back(iface, getDevice(nd.curHostname));
 }
 
@@ -275,10 +256,13 @@ Parser::updateDeviceInformation()
   nmdo::DeviceInformation devInfo;
 
   devInfo.setDeviceId(getDevice(nd.curHostname));
-  devInfo.setDeviceType(nd.curDeviceType);
-  devInfo.setDescription(nd.curSysDescription);
+  if (!nd.curDeviceType.empty()) {
+    devInfo.setDeviceType(nd.curDeviceType);
+  }
+  if (!nd.curSysDescription.empty()) {
+    devInfo.setDescription(nd.curSysDescription);
+  }
 
-  std::cerr << devInfo.toDebugString();
   d.devInfos.push_back(devInfo);
 }
 

@@ -149,5 +149,8 @@ Interface Ethernet3/1 detected 1 LLDP neighbors:
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'testDetailWhole': " << test);
     BOOST_TEST(1 == out.size());
+    size_t conCount {2};
+    BOOST_TEST(conCount == out[0].devInfos.size());
+    BOOST_TEST(conCount == out[0].interfaces.size());
   }
 }

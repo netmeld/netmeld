@@ -41,7 +41,7 @@ namespace nmdp = netmeld::datastore::parsers;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdo::IpAddress>         ipAddrs;
+  // std::vector<nmdo::IpAddress>         ipAddrs;
   std::vector<nmdo::DeviceInformation> devInfos;
 
   std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
@@ -52,13 +52,13 @@ struct Data {
 typedef std::vector<Data>  Result;
 
 struct NeighborData {
-  std::string curHostname   {""}; // DeviceInformation.deviceId
-  std::string curIfaceName     {""}; // InterfaceNetwork.name
-  std::string curDeviceType {""}; // DeviceInformation.deviceType
-  std::string curSysDescription{""}; // DeviceInformation.description
-  std::string curPortDescription  {""}; // InterfaceNetworkDescription
-  std::string curMacAddr       {""}; // InterfaceNetwork.macAddr
-  std::vector<nmdo::IpAddress>  ipAddrs;
+  std::string curHostname         {""};
+  std::string curIfaceName        {""};
+  std::string curDeviceType       {""};
+  std::string curSysDescription   {""};
+  std::string curPortDescription  {""};
+  std::string curMacAddr          {""};
+  // impliment later std::vector<nmdo::IpAddress>  ipAddrs;
   // vlans for later implimentation
 
 
@@ -85,40 +85,33 @@ class Parser :
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
-    // from what I understand, these save data in their definition
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-        detailConfig
-      , detailCommon
+        detailCapabilities
+      , detailChassisId
+      , detailConfig
+      , detailDiscovered
+      , detailEntry
       , detailHeader
-      , detailBody
-      , detailAge
-      , detailChange
-      , detailChassisInfo
-      , detailPortInfo
-      , detailSystemName
-      , detailCapabilities
+      , detailNeighborLine
+      , detailPortId
       , detailSystemDescription
+      , detailSystemName
       , noDetailConfig
       , noDetailTableInfo
       , noDetailHeader
       , noDetailEntry
       , ignoredLine
       ;
-    // from what I understand, these process data that is returned THEN saved
+
     qi::rule<nmdp::IstreamIter, std::string()>
-        detailTTL
-      , detailPortDescription
-      , noDetailPort
-      , noDetailDeviceId
+        detailPortDescription
       , port
-      , noDetailTTL
       , restOfLine
       , inQuotes
       , token
       , csvToken
       ;
 
-    // from what I understand, these process the data that is never saved
     qi::rule<nmdp::IstreamIter>
         noDetailCapability
       , noDetailHoldtime
@@ -136,11 +129,8 @@ class Parser :
   // ===========================================================================
   private:
     std::string getDevice(const std::string&);
-    void print(const std::string&, const std::string&);
-    void printUint(const std::string&, const uint);
-    void printInfo();
 
-    void updateIpAddrs();
+    // void updateIpAddrs(); not a feature yet
     void updateInterfaces();
     void updateDeviceInformation();
     void finalizeData();
