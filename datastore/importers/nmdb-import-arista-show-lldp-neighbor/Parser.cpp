@@ -109,8 +109,9 @@ Parser::Parser() : Parser::base_type(start)
 
   detailNeighborLine =
     qi::lit("Neighbor")
-    > port
-    > qi::lit("age")
+    > +(qi::char_ - '/')
+    > '/' > inQuotes
+    > qi::lit(", age")
     > ignoredLine
     ;
 
@@ -129,11 +130,14 @@ Parser::Parser() : Parser::base_type(start)
 
   detailPortId =
     qi::lit("- Port ID type:") > restOfLine
-    > qi::lit("Port ID     :") > restOfLine [(pnx::ref(nd.curIfaceName) = qi::_1)]
+    > qi::lit("Port ID     :") > inQuotes [(pnx::ref(nd.curIfaceName) = qi::_1)]
+    > qi::eol
     ;
 
   detailPortDescription =
-    qi::lit("- Port Description:") > restOfLine [(pnx::ref(nd.curPortDescription) = qi::_1)]
+    qi::lit("- Port Description:")
+    > inQuotes [(pnx::ref(nd.curPortDescription) = qi::_1)]
+    > qi::eol
     ;
 
   detailSystemName =
@@ -205,7 +209,7 @@ Parser::Parser() : Parser::base_type(start)
           (detailCapabilities)
       (port)
       //(restOfLine)
-      //(inQuotes)
+      (inQuotes)
       //(ignoredLine)
       //(token)
       //(csvToken)

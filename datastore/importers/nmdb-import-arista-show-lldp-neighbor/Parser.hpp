@@ -93,6 +93,7 @@ class Parser :
       , detailEntry
       , detailHeader
       , detailNeighborLine
+      , detailPortDescription
       , detailPortId
       , detailSystemDescription
       , detailSystemName
@@ -104,8 +105,7 @@ class Parser :
       ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-        detailPortDescription
-      , port
+        port
       , restOfLine
       , inQuotes
       , token
@@ -135,7 +135,6 @@ class Parser :
     void updateDeviceInformation();
     void finalizeData();
 
-    std::string infoString;
     // Object return
     Result getData();
 };
