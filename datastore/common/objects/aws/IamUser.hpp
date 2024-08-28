@@ -29,6 +29,7 @@
 
 #include <nlohmann/json.hpp>
 #include <netmeld/datastore/objects/aws/IamBase.hpp>
+#include <netmeld/datastore/objects/aws/IamUserGroup.hpp>
 
 namespace netmeld::datastore::objects::aws {
 
@@ -39,6 +40,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
     public: // Variables should rarely appear at this scope
+      std::vector<IamUserGroup> groups;
 
     // =========================================================================
     // Constructors

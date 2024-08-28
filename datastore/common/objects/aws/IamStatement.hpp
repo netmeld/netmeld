@@ -24,8 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_IAM_POLICY_VERSION_STATEMENT_HPP
-#define AWS_IAM_POLICY_VERSION_STATEMENT_HPP
+#ifndef AWS_IAM_STATEMENT_HPP
+#define AWS_IAM_STATEMENT_HPP
 
 #include <nlohmann/json.hpp>
 #include <netmeld/datastore/objects/aws/IamBase.hpp>
@@ -36,19 +36,19 @@ using json = nlohmann::json;
 
 namespace netmeld::datastore::objects::aws {
 
-  class IamPolicyVersionStatement : public nmdo::AbstractDatastoreObject {
+  class IamStatement : public nmdo::AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-        std::string policyId;
-        std::string versionId;
-        std::string docVersion;
-        std::string stmtEffect;
-        std::string stmtAction;
-        std::string stmtResource;
-        json stmtCondition;
+        std::string attachmentId;
+        std::string documentVersion;
+        std::string sid;
+        std::string effect;
+        std::vector<std::string> actions;
+        std::vector<std::string> resources;
+        json condition;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -57,8 +57,8 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      IamPolicyVersionStatement();
-      IamPolicyVersionStatement(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const json&);
+      IamStatement();
+      IamStatement(const std::string&, const std::string&, const std::string&, const std::string&, const std::vector<std::string>&, const std::vector<std::string>&, const json&);
 
     // =========================================================================
     // Methods
@@ -66,31 +66,31 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setPolicyId(const std::string&);
-      void setVersionId(const std::string&);
-      void setDocVersion(const std::string&);
-      void setStmtEffect(const std::string&);
-      void setStmtAction(const std::string&);
-      void setStmtResource(const std::string&);
-      void setStmtCondition(const json&);
+      void setAttachmentId(const std::string&);
+      void setDocumentVersion(const std::string&);
+      void setSid(const std::string&);
+      void setEffect(const std::string&);
+      void addAction(const std::string&);
+      void addResource(const std::string&);
+      void setCondition(const json&);
 
-      std::string getPolicyId() const;
-      std::string getVersionId() const;
-      std::string getDocVersion() const;
-      std::string getStmtEffect() const;
-      std::string getStmtAction() const;
-      std::string getStmtResource() const;
-      json getStmtCondition() const;
+      std::string getAttachmentId() const;
+      std::string getDocumentVersion() const;
+      std::string getSid() const;
+      std::string getEffect() const;
+      std::vector<std::string> getActions() const;
+      std::vector<std::string> getResources() const;
+      json getCondition() const;
 
       bool isValid() const override;
 
       std::string toDebugString() const override;
 
-      auto operator<=>(const IamPolicyVersionStatement&) const;
-      bool operator==(const IamPolicyVersionStatement&) const;
+      auto operator<=>(const IamStatement&) const;
+      bool operator==(const IamStatement&) const;
 
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
   };
 }
-#endif // AWS_IAM_POLICY_VERSION_STATEMENT_HPP
+#endif // AWS_IAM_STATEMENT_HPP

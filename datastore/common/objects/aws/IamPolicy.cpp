@@ -39,17 +39,77 @@ namespace netmeld::datastore::objects::aws {
                 const int _attachmentCnt,
                 const std::string& _defaultVersionId,
                 const bool _isAttachable,
-                const int _permBoundaryUsageCnt) :
+                const int _permissionsBoundaryUsageCount) :
     IamBase(_id, _arn, _name, _createDate, _path, _tags),
     updateDate(_updateDate),
     attachmentCnt(_attachmentCnt),
     defaultVersionId(_defaultVersionId),
     isAttachable(_isAttachable),
-    permBoundaryUsageCnt(_permBoundaryUsageCnt)
+    permissionsBoundaryUsageCount(_permissionsBoundaryUsageCount)
   {}
 
   IamPolicy::IamPolicy()
   {}
+
+  void
+  IamPolicy::setUpdateDate(const std::string& _updateDate)
+  {
+    updateDate = _updateDate;
+  }
+
+  void
+  IamPolicy::setAttachmentCount(const int _attachmentCnt)
+  {
+    attachmentCnt = _attachmentCnt;
+  }
+
+  void
+  IamPolicy::setDefaultVersionId(const std::string& _defaultVersionId)
+  {
+    defaultVersionId = _defaultVersionId;
+  }
+
+  void
+  IamPolicy::setIsAttachable(const bool _isAttachable)
+  {
+    isAttachable = _isAttachable;
+  }
+
+  void
+  IamPolicy::setPermissionsBoundaryUsageCount(const int _permissionsBoundaryUsageCount)
+  {
+    permissionsBoundaryUsageCount = _permissionsBoundaryUsageCount;
+  }
+
+  std::string
+  IamPolicy::getUpdateDate() const
+  {
+    return updateDate;
+  }
+
+  int
+  IamPolicy::getAttachmentCount() const
+  {
+    return attachmentCnt;
+  }
+
+  std::string
+  IamPolicy::getDefaultVersionId() const
+  {
+    return defaultVersionId;
+  }
+
+  bool
+  IamPolicy::getIsAttachable() const
+  {
+    return isAttachable;
+  }
+
+  int
+  IamPolicy::getPermissionsBoundaryUsageCount() const
+  {
+    return permissionsBoundaryUsageCount;
+  }
 
   void
   IamPolicy::save(pqxx::transaction_base& t,

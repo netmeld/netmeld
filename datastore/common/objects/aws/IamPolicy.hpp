@@ -29,6 +29,7 @@
 
 #include <nlohmann/json.hpp>
 #include <netmeld/datastore/objects/aws/IamBase.hpp>
+#include <netmeld/datastore/objects/aws/IamPolicyVersion.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 
@@ -46,7 +47,7 @@ namespace netmeld::datastore::objects::aws {
         int attachmentCnt;
         std::string defaultVersionId;
         bool isAttachable;
-        int permBoundaryUsageCnt;
+        int permissionsBoundaryUsageCount;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -64,6 +65,18 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
+      void setUpdateDate(const std::string&);
+      void setAttachmentCount(const int);
+      void setDefaultVersionId(const std::string&);
+      void setIsAttachable(const bool);
+      void setPermissionsBoundaryUsageCount(const int);
+
+      std::string getUpdateDate() const;
+      int getAttachmentCount() const;
+      std::string getDefaultVersionId() const;
+      bool getIsAttachable() const;
+      int getPermissionsBoundaryUsageCount() const;
+
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
   };

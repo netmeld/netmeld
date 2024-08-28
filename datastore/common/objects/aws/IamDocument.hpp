@@ -24,11 +24,12 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef AWS_IAM_ROLE_POLICY_DOCUMENT_HPP
-#define AWS_IAM_ROLE_POLICY_DOCUMENT_HPP
+#ifndef AWS_IAM_DOCUMENT_HPP
+#define AWS_IAM_DOCUMENT_HPP
 
 #include <nlohmann/json.hpp>
 #include <netmeld/datastore/objects/aws/IamBase.hpp>
+#include <netmeld/datastore/objects/aws/IamStatement.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 
@@ -36,20 +37,15 @@ using json = nlohmann::json;
 
 namespace netmeld::datastore::objects::aws {
 
-  class IamRolePolicyDocument : public nmdo::AbstractDatastoreObject {
+  class IamDocument : public nmdo::AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-        std::string roleId;
+        std::string attachmentId;
+        std::string secondaryId;
         std::string docVersion;
-        std::string policyName;
-        std::string stmtEffect;
-        std::string stmtAction;
-        json stmtPrincipal;
-        json stmtCondition;
-        std::string stmtSid;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -58,8 +54,8 @@ namespace netmeld::datastore::objects::aws {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      IamRolePolicyDocument();
-      IamRolePolicyDocument(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const json&, const json&, const std::string&);
+      IamDocument();
+      IamDocument(const std::string&, const std::string&, const std::string&);
 
     // =========================================================================
     // Methods
@@ -67,33 +63,23 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      void setRoleId(const std::string&);
+      void setAttachmentId(const std::string&);
+      void setSecondaryId(const std::string&);
       void setDocVersion(const std::string&);
-      void setPolicyName(const std::string&);
-      void setStmtEffect(const std::string&);
-      void setStmtAction(const std::string&);
-      void setStmtPrincipal(const json&);
-      void setStmtCondition(const json&);
-      void setStmtSid(const std::string&);
 
-      std::string getRoleId() const;
+      std::string getAttachmentId() const;
+      std::string getSecondaryId() const;
       std::string getDocVersion() const;
-      std::string getPolicyName() const;
-      std::string getStmtEffect() const;
-      std::string getStmtAction() const;
-      json getStmtPrincipal() const;
-      json getStmtCondition() const;
-      std::string getStmtSid() const;
 
       bool isValid() const override;
 
       std::string toDebugString() const override;
 
-      auto operator<=>(const IamRolePolicyDocument&) const;
-      bool operator==(const IamRolePolicyDocument&) const;
+      auto operator<=>(const IamDocument&) const;
+      bool operator==(const IamDocument&) const;
 
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
   };
 }
-#endif // AWS_IAM_ROLE_POLICY_DOCUMENT_HPP
+#endif // AWS_IAM_DOCUMENT_HPP

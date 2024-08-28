@@ -24,91 +24,87 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/datastore/objects/aws/IamPolicyDocument.hpp>
+#include <netmeld/datastore/objects/aws/IamDocument.hpp>
 
 
 namespace netmeld::datastore::objects::aws {
 
-  IamPolicyDocument::IamPolicyDocument(const std::string& _attachmentId,
-                const std::string& _createDate,
-                const std::string& _versionId) :
+  IamDocument::IamDocument(const std::string& _attachmentId,
+                const std::string& _secondaryId,
+                const std::string& _docVersion) :
     attachmentId(_attachmentId),
-    createDate(_createDate),
-    versionId(_versionId)
+    secondaryId(_secondaryId),
+    docVersion(_docVersion)
   {}
 
-  IamPolicyDocument::IamPolicyDocument()
+  IamDocument::IamDocument()
   {}
 
   void
-  IamPolicyDocument::setAttachmentId(const std::string& _attachmentId) {
-    attachmentId = _attachmentId;
+  IamDocument::setAttachmentId(const std::string& _attachmentId) {
+      attachmentId = _attachmentId;
   }
 
   void
-  IamPolicyDocument::setCreateDate(const std::string& _createDate) {
-    createDate = _createDate;
+  IamDocument::setSecondaryId(const std::string& _secondaryId) {
+      secondaryId = _secondaryId;
   }
 
   void
-  IamPolicyDocument::setVersionId(const std::string& _versionId) {
-    versionId = _versionId;
+  IamDocument::setDocVersion(const std::string& _docVersion) {
+    docVersion = _docVersion;
   }
 
   std::string
-  IamPolicyDocument::getAttachmentId() const {
-    return attachmentId;
+  IamDocument::getAttachmentId() const {
+      return attachmentId;
   }
 
   std::string
-  IamPolicyDocument::getCreateDate() const {
-    return createDate;
+  IamDocument::getSecondaryId() const {
+      return secondaryId;
   }
 
   std::string
-  IamPolicyDocument::getVersionId() const {
-    return versionId;
+  IamDocument::getDocVersion() const {
+    return docVersion;
   }
 
   bool
-  IamPolicyDocument::isValid() const {
+  IamDocument::isValid() const {
       return false;
   }
 
   std::string
-  IamPolicyDocument::toDebugString() const {
+  IamDocument::toDebugString() const {
     std::ostringstream oss;
 
     oss << "[";
     oss << "attachmentId: " << attachmentId << ", "
-        << "createDate: " << createDate << ", "
-        << "versionId: " << versionId;
+        << "docVersion: " << docVersion << ", ";
     oss << "]";
 
     return oss.str();
   }
 
-
   auto
-  IamPolicyDocument::operator<=>(const IamPolicyDocument& rhs) const {
+  IamDocument::operator<=>(const IamDocument& rhs) const
+  {
     return std::tie(attachmentId
-                      , createDate
-                      , versionId
-                      )
-           <=> std::tie(rhs.attachmentId
-                          , rhs.createDate
-                          , rhs.versionId
-                          )
+                        , docVersion
+                        )
+              <=> std::tie(rhs.attachmentId
+                              , rhs.docVersion
+                              )
     ;
-}
-
+  }
 
   void
-  IamPolicyDocument::save(pqxx::transaction_base& t,
+  IamDocument::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string& _deviceId)
   {
     if (!isValid()) {
-      LOG_DEBUG << "IamPolicyDocument object is not saving: " << toDebugString()
+      LOG_DEBUG << "IamDocument object is not saving: " << toDebugString()
                 << std::endl;
       return;
     }

@@ -29,6 +29,7 @@
 
 #include <nlohmann/json.hpp>
 #include <netmeld/datastore/objects/aws/IamBase.hpp>
+#include <netmeld/datastore/objects/aws/IamPolicyDocument.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 
@@ -43,12 +44,8 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
         std::string attachmentId;
-        std::string policyName;
-        std::string stmtEffect;
-        std::string stmtAction;
-        std::string stmtResource;
-        json stmtCondition;
-        std::string stmtSid;
+        std::string createDate;
+        std::string versionId;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -58,7 +55,7 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamPolicyDocument();
-      IamPolicyDocument(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const json&, const std::string&);
+      IamPolicyDocument(const std::string&, const std::string&, const std::string&);
 
     // =========================================================================
     // Methods
@@ -67,20 +64,12 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setAttachmentId(const std::string&);
-      void setPolicyName(const std::string&);
-      void setStmtEffect(const std::string&);
-      void setStmtAction(const std::string&);
-      void setStmtResource(const std::string&);
-      void setStmtCondition(const json&);
-      void setStmtSid(const std::string&);
+      void setCreateDate(const std::string&);
+      void setVersionId(const std::string&);
 
       std::string getAttachmentId() const;
-      std::string getPolicyName() const;
-      std::string getStmtEffect() const;
-      std::string getStmtAction() const;
-      std::string getStmtResource() const;
-      json getStmtCondition() const;
-      std::string getStmtSid() const;
+      std::string getCreateDate() const;
+      std::string getVersionId() const;
 
       bool isValid() const override;
 
