@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(testUserDetails)
       json({})
     );
     tp.processUserDetails(tv1);
-    BOOST_TEST(user == tp.user);
+    BOOST_TEST(user == tp.d.users.at(0));
   }
 }
 BOOST_AUTO_TEST_CASE(testRoleDetails)
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
       json({})
     );
     tp.processRoleDetails(tv1);
-    BOOST_TEST(role == tp.role);
+    BOOST_TEST(role == tp.d.roles.at(0));
   }
 }
 BOOST_AUTO_TEST_CASE(testGroupDetails)
@@ -200,7 +200,67 @@ BOOST_AUTO_TEST_CASE(testGroupDetails)
       json({})
     );
     tp.processGroupDetails(tv1);
-    BOOST_TEST(group == tp.group);
+    BOOST_TEST(group == tp.d.groups.at(0));
+  }
+}
+BOOST_AUTO_TEST_CASE(testPolicies)
+{
+  {
+    TestParser tp;
+
+    json tv1 = json::parse(R"({
+    "PolicyName": "create-update-delete-set-managed-policies",
+    "CreateDate": "2015-02-06T19:58:34Z",
+    "AttachmentCount": 1,
+    "IsAttachable": true,
+    "PolicyId": "ANPA1234567890EXAMPLE",
+    "DefaultVersionId": "v1",
+    "PolicyVersionList": [
+        {
+            "CreateDate": "2015-02-06T19:58:34Z",
+            "VersionId": "v1",
+            "Document": {
+                "Version": "2012-10-17",
+                "Statement": {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:CreatePolicy",
+                        "iam:CreatePolicyVersion",
+                        "iam:DeletePolicy",
+                        "iam:DeletePolicyVersion",
+                        "iam:GetPolicy",
+                        "iam:GetPolicyVersion",
+                        "iam:ListPolicies",
+                        "iam:ListPolicyVersions",
+                        "iam:SetDefaultPolicyVersion"
+                    ],
+                    "Resource": "*"
+                }
+            },
+            "IsDefaultVersion": true
+        }
+    ],
+    "Path": "/",
+    "Arn": "arn:aws:iam::123456789012:policy/create-update-delete-set-managed-policies",
+    "UpdateDate": "2015-02-06T19:58:34Z",
+    "PermissionsBoundaryUsageCount": 2
+})");
+
+    nmdoa::IamPolicy policy(
+      "ANPA1234567890EXAMPLE", // id
+      "arn:aws:iam::123456789012:policy/create-update-delete-set-managed-policies", // arn
+      "create-update-delete-set-managed-policies", // name
+      "2015-02-06T19:58:34Z", // createDate
+      "/", // path
+      json({}), // tags
+      "2015-02-06T19:58:34Z", // updateDate
+      1, // attachmentCount
+      "v1", // defaultVersionId
+      true, // isAttachable
+      2 // permissionsBoundaryUsageCount
+    );
+    tp.processPolicy(tv1);
+    BOOST_TEST(policy == tp.d.policies.at(0));
   }
 }
 BOOST_AUTO_TEST_CASE(testWhole)

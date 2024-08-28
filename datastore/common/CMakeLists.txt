@@ -60,15 +60,15 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/aws/CidrBlock.cpp
     ./objects/aws/IamAttachedManagedPolicy.cpp
     ./objects/aws/IamBase.cpp
+    ./objects/aws/IamDocument.cpp
     ./objects/aws/IamGroup.cpp
     ./objects/aws/IamPolicy.cpp
     ./objects/aws/IamPolicyDocument.cpp
     ./objects/aws/IamPolicyVersion.cpp
-    ./objects/aws/IamPolicyVersionStatement.cpp
     ./objects/aws/IamRole.cpp
     ./objects/aws/IamRoleInstanceProfile.cpp
     ./objects/aws/IamRolePermissionBoundary.cpp
-    ./objects/aws/IamRolePolicyDocument.cpp
+    ./objects/aws/IamStatement.cpp
     ./objects/aws/IamUser.cpp
     ./objects/aws/IamUserGroup.cpp
     ./objects/aws/Instance.cpp

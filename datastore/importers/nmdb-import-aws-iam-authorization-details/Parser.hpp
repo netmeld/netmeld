@@ -30,9 +30,18 @@
 #include <nlohmann/json.hpp>
 
 #include <netmeld/datastore/objects/ToolObservations.hpp>
-#include <netmeld/datastore/objects/aws/IamUser.hpp>
-#include <netmeld/datastore/objects/aws/IamGroup.hpp>
-#include <netmeld/datastore/objects/aws/IamRole.hpp>
+#include <netmeld/datastore/objects/aws/IamAttachedManagedPolicy.hpp>   // processManagedPolicy
+#include <netmeld/datastore/objects/aws/IamDocument.hpp>                       // processDocument
+#include <netmeld/datastore/objects/aws/IamGroup.hpp>                             // processGroupDetails
+#include <netmeld/datastore/objects/aws/IamPolicyDocument.hpp>               // processPolicyList
+#include <netmeld/datastore/objects/aws/IamPolicy.hpp>                             // processPolicy
+#include <netmeld/datastore/objects/aws/IamPolicyVersion.hpp>                  // processPolicyVersionList
+#include <netmeld/datastore/objects/aws/IamRole.hpp>                               // processRoleDetails
+#include <netmeld/datastore/objects/aws/IamRoleInstanceProfile.hpp>          // processProfileList
+#include <netmeld/datastore/objects/aws/IamRolePermissionBoundary.hpp>  // processPermissionsBoundary
+#include <netmeld/datastore/objects/aws/IamStatement.hpp>                       // processStatement
+#include <netmeld/datastore/objects/aws/IamUserGroup.hpp>                      // processUserDetails
+#include <netmeld/datastore/objects/aws/IamUser.hpp>                               // processUserDetails
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdoa = netmeld::datastore::objects::aws;
@@ -47,6 +56,7 @@ struct Data {
   std::vector<nmdoa::IamUser> users;
   std::vector<nmdoa::IamGroup> groups;
   std::vector<nmdoa::IamRole> roles;
+  std::vector<nmdoa::IamPolicy> policies;
 
   auto operator<=>(const Data&) const = default;
   bool operator==(const Data&) const = default;
@@ -63,11 +73,8 @@ class Parser
   // Variables
   // ===========================================================================
   private: // Variables are always private
-    Data d;
   public:
-    nmdoa::IamUser user;
-    nmdoa::IamGroup group;
-    nmdoa::IamRole role;
+    Data d;
 
   // ===========================================================================
   // Constructors
@@ -86,10 +93,10 @@ class Parser
     void processPolicy(const json&);
 
     void processManagedPolicy(const json&);
-    void processPolicyList(const json&);
-    void processDocument(const json&);
-    void processStatement(const json&);
-    void processPolicyVersionList(const json&);
+    void processPolicyList(const json&, const std::string&);
+    void processDocument(const json&, const std::string&, const std::string&);
+    void processStatement(const json&, const std::string&, const std::string&);
+    void processPolicyVersionList(const json&, const std::string&);
     void processProfileList(const json&);
     void processPermissionsBoundary(const json&);
     void processRoleLastUsed(const json&);
