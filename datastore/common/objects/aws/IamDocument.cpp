@@ -99,6 +99,12 @@ namespace netmeld::datastore::objects::aws {
     ;
   }
 
+  bool
+  IamDocument::operator==(const IamDocument& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
+
   void
   IamDocument::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string& _deviceId)

@@ -57,6 +57,11 @@ struct Data {
   std::vector<nmdoa::IamGroup> groups;
   std::vector<nmdoa::IamRole> roles;
   std::vector<nmdoa::IamPolicy> policies;
+  std::vector<nmdoa::IamDocument> documents;
+  std::vector<nmdoa::IamStatement> statements;
+  std::vector<nmdoa::IamPolicyDocument> policyDocuments;
+  std::vector<nmdoa::IamAttachedManagedPolicy> amps;
+  std::vector<nmdoa::IamUserGroup> userGroups;
 
   auto operator<=>(const Data&) const = default;
   bool operator==(const Data&) const = default;

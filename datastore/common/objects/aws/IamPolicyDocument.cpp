@@ -102,6 +102,12 @@ namespace netmeld::datastore::objects::aws {
     ;
 }
 
+  bool
+  IamPolicyDocument::operator==(const IamPolicyDocument& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
+
 
   void
   IamPolicyDocument::save(pqxx::transaction_base& t,

@@ -40,7 +40,6 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
     public: // Variables should rarely appear at this scope
-      std::vector<IamUserGroup> groups;
 
     // =========================================================================
     // Constructors

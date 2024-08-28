@@ -135,7 +135,7 @@ Parser::processUserDetails(const json& _userDetail) {
     for (const auto& group : _userDetail.at("GroupList")) { // List
         // Just a list of strings. Save them all?
         nmdoa::IamUserGroup userGroup(user.getId(), group);
-        user.groups.push_back(userGroup);
+        d.userGroups.push_back(userGroup);
     }
   }
   if(_userDetail.contains("Tags")) {
@@ -182,6 +182,7 @@ Parser::processManagedPolicy(const json& _managedPolicy) {
   // attachmentId?
   amp.setPolicyArn(_managedPolicy.value("PolicyArn", ""));
   amp.setPolicyName(_managedPolicy.value("PolicyName", ""));
+  d.amps.push_back(amp);
 }
 
 // GroupDetail, RoleDetail, UserDetail
@@ -192,6 +193,8 @@ Parser::processPolicyList(const json& _policyList, const std::string& _attachmen
   policyDocument.setAttachmentId(_attachmentId);
   policyDocument.setCreateDate(_policyList.value("CreateDate", ""));
   policyDocument.setVersionId(_policyList.value("VersionId", ""));
+  d.policyDocuments.push_back(policyDocument);
+
   processDocument(_policyList.at("PolicyDocument"), _attachmentId, policyDocument.getVersionId());
 }
 
@@ -205,6 +208,7 @@ Parser::processDocument(const json& _document, const std::string& _attachmentId,
   document.setAttachmentId(_attachmentId);
   document.setSecondaryId(_secondaryId);
   document.setDocVersion(_document.value("Version", ""));
+  d.documents.push_back(document);
 
   auto& statements = _document.at("Statement");
   if(statements.type() == json::value_t::array) {
@@ -225,6 +229,7 @@ Parser::processStatement(const json& _statement, const std::string&_attachmentId
   statement.setEffect(_statement.value("Effect", ""));
   statement.setSid(_statement.value("Sid", ""));
   statement.setCondition(_statement.value("Condition", json({})));
+  d.statements.push_back(statement);
 
   auto& action = _statement.at("Action");
   if(action.type() == json::value_t::array) {

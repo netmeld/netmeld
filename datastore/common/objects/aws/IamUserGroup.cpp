@@ -86,6 +86,12 @@ namespace netmeld::datastore::objects::aws {
     ;
 }
 
+  bool
+  IamUserGroup::operator==(const IamUserGroup& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
+
   void
   IamUserGroup::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string& _deviceId)

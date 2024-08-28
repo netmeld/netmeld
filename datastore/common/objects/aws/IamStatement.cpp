@@ -158,6 +158,12 @@ namespace netmeld::datastore::objects::aws {
     ;
   }
 
+  bool
+  IamStatement::operator==(const IamStatement& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
+
   void
   IamStatement::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string& _deviceId)
