@@ -71,7 +71,7 @@ Parser::Parser() : Parser::base_type(start)
     token
     > token [(pnx::ref(nd.curHostname) = qi::_1)]
     > port  [(pnx::ref(nd.curIfaceName) = qi::_1)]
-    > token
+    > qi::uint_
     > qi::eol
     ;
 
@@ -110,7 +110,8 @@ Parser::Parser() : Parser::base_type(start)
   detailNeighborLine =
     qi::lit("Neighbor")
     > +(qi::char_ - '/')
-    > '/' > inQuotes
+    > '/'
+    > ( inQuotes | port)
     > qi::lit(", age")
     > ignoredLine
     ;
@@ -148,7 +149,8 @@ Parser::Parser() : Parser::base_type(start)
 
   detailSystemDescription =
     qi::lit("- System Description:")
-    > restOfLine [(pnx::ref(nd.curSysDescription) = qi::_1)]
+    > inQuotes [(pnx::ref(nd.curSysDescription) = qi::_1)]
+    > qi::eol
     ;
 
   detailCapabilities =
@@ -160,9 +162,9 @@ Parser::Parser() : Parser::base_type(start)
 
   // ----- common usage -----
   port =
-    token
-    > -( qi::ascii::blank
-      >> (+qi::ascii::digit >> +(qi::char_('/') >> +qi::ascii::digit))
+    +(!qi::lit(',') >> qi::ascii::graph)
+    > -( !qi::lit("  ") >> qi::char_(' ')
+      >> (+qi::ascii::digit >> *(qi::char_('/') >> +qi::ascii::digit))
       )
     ;
 
@@ -173,7 +175,7 @@ Parser::Parser() : Parser::base_type(start)
 
   inQuotes =
     '"'
-    > +(qi::char_ - '"')
+    > *(qi::char_ - '"')
     > '"'
     ;
 

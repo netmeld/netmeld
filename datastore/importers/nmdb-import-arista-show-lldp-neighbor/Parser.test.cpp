@@ -42,6 +42,8 @@ class TestParser : public Parser {
 
     using Parser::start;
 
+    using Parser::port;
+
     using Parser::noDetailTableInfo;
     using Parser::noDetailHeader;
     using Parser::noDetailEntry;
@@ -56,6 +58,29 @@ class TestParser : public Parser {
     using Parser::detailSystemDescription;
     using Parser::detailCapabilities;
 };
+
+BOOST_AUTO_TEST_CASE(testUtil)
+{
+  TestParser tp;
+  {
+    tp.nd = NeighborData();
+    const auto& parserRule {tp.port};
+
+    std::vector<std::string> testsOk {
+        "Ethernet1"
+      , "Ethernet 2/1"
+      , "Ethernet3/1"
+      , "Ethernet 4"
+      , "net12-2"
+      };
+    for (const auto& test : testsOk) {
+      BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
+                , "Parse rule 'port': " << test
+                );
+      BOOST_TEST(NeighborData() == tp.nd);
+    }
+  }
+}
 
 BOOST_AUTO_TEST_CASE(testNoDetailParts)
 {
@@ -130,7 +155,7 @@ BOOST_AUTO_TEST_CASE(testNoDetailParts)
         , "HOST7.domain", "Ethernet 7/1"
         }
       , {"Et8\tHOST8.domain\tEthernet 8/1\t120\n"
-        , "HOST8.domain", "Ethernet8/1"
+        , "HOST8.domain", "Ethernet 8/1"
         }
       , {"Et9  1234.5678.90ab  Ethernet9  120\n"
         , "1234.5678.90ab", "Ethernet9"
@@ -138,8 +163,8 @@ BOOST_AUTO_TEST_CASE(testNoDetailParts)
       , {"Et10\t1234.5678.90ab\tEthernet10\t120\n"
         , "1234.5678.90ab", "Ethernet10"
         }
-      , {"Et11  HOST1.domain  net11-2  120\n"
-        , "HOST11.domain", "Ethernet11"
+      , {"Et11  HOST11.domain  net11-2  120\n"
+        , "HOST11.domain", "net11-2"
         }
       , {"Et12\tHOST12.domain\tnet12-2\t120\n"
         , "HOST12.domain", "net12-2"
