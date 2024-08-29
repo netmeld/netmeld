@@ -163,9 +163,10 @@ Parser::Parser() : Parser::base_type(start)
   // ----- common usage -----
   port =
     +(!qi::lit(',') >> qi::ascii::graph)
-    > -( !qi::lit("  ") >> qi::char_(' ')
-      >> (+qi::ascii::digit >> *(qi::char_('/') >> +qi::ascii::digit))
-      )
+    > -qi::hold[
+        (qi::char_(' ')
+        >> (+qi::ascii::digit >> *(qi::char_('/') >> +qi::ascii::digit))
+        )]
     ;
 
   restOfLine =
