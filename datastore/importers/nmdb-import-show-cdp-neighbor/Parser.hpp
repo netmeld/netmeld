@@ -30,6 +30,7 @@
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/PhysicalConnection.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
@@ -41,8 +42,9 @@ namespace nmdp = netmeld::datastore::parsers;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdo::IpAddress>         ipAddrs;
-  std::vector<nmdo::DeviceInformation> devInfos;
+  std::vector<nmdo::IpAddress>          ipAddrs;
+  std::vector<nmdo::DeviceInformation>  devInfos;
+  std::vector<nmdo::PhysicalConnection> physCons;
 
   std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
 
@@ -52,6 +54,7 @@ struct Data {
 typedef std::vector<Data>  Result;
 
 struct NeighborData {
+  std::string srcIfaceName  {""};
   std::string curHostname   {""};
   std::string curIfaceName  {""};
   std::string curVendor     {""};
@@ -86,7 +89,6 @@ class Parser :
       , detailDeviceId
       , detailEntry
       , detailHeader
-      , detailInterface
       , detailIpAddress
       , detailPlatform
       , ignoredLine
@@ -100,15 +102,16 @@ class Parser :
     qi::rule<nmdp::IstreamIter, std::string()>
         noDetailDeviceId
       , noDetailPlatform
+      , noDetailLocalIface
       , noDetailPortId
       , token
       , csvToken
       ;
 
     qi::rule<nmdp::IstreamIter>
-        noDetailCapability
+        detailInterface
+      , noDetailCapability
       , noDetailHoldtime
-      , noDetailLocalIface
       ;
 
     nmdp::ParserIpAddress   ipAddr;
@@ -125,10 +128,11 @@ class Parser :
   private:
     std::string getDevice(const std::string&);
 
-    void updateIpAddrs();
-    void updateInterfaces();
-    void updateDeviceInformation();
     void finalizeData();
+    void updateDeviceInformation();
+    void updateInterfaces();
+    void updateIpAddrs();
+    void updatePhysicalConnection();
 
     // Object return
     Result getData();

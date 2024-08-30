@@ -94,67 +94,68 @@ BOOST_AUTO_TEST_CASE(testNoDetailParts)
   {
     const auto& parserRule {tp.noDetailEntry};
 
-    std::vector<std::tuple<std::string, std::string, std::string, std::string>>
+    std::vector<std::tuple<std::string, std::string, std::string, std::string, std::string>>
       testsOk {
         {"host1.domain\tnic1\t123\tA\tplatform\tnic1\n"
-        , "host1.domain", "platform", "nic1"
+        , "host1.domain", "nic1", "platform", "nic1"
         }
       , {"host2.domain\n\tnic1\t123\tA\tplat form\tnic2\t\n"
-        , "host2.domain", "plat form", "nic2"
+        , "host2.domain", "nic1", "plat form", "nic2"
         }
       , {"host3.domain  nic1  123  A  platform  nic3  \n"
-        , "host3.domain", "platform", "nic3"
+        , "host3.domain", "nic1", "platform", "nic3"
         }
       , {"host4.domain\n  nic1  123  A  plat form  nic4\n"
-        , "host4.domain", "plat form", "nic4"
+        , "host4.domain", "nic1", "plat form", "nic4"
         }
       , {"HOST5.DOMAIN  NIC1  123  A  MODEL1   NIC5\n"
-        , "HOST5.DOMAIN", "MODEL1", "NIC5"
+        , "HOST5.DOMAIN", "NIC1", "MODEL1", "NIC5"
         }
       , {"host6.domain nic1 123 A B C platform nic 6 \n"
-        , "host6.domain", "platform", "nic 6"
+        , "host6.domain", "nic1", "platform", "nic 6"
         }
       , {"host7 nic1 123 A platform nic7"
-        , "host7", "platform", "nic7"
+        , "host7", "nic1", "platform", "nic7"
         }
       , {"host8.domain(sn)\tnic 0/1\t123\tA B C\tplatform\tnic 0/1\n"
-        , "host8.domain(sn)", "platform", "nic 0/1"
+        , "host8.domain(sn)", "nic 0/1", "platform", "nic 0/1"
         }
       , {"host9.domain(sn)\n\tnic 0/1\t123\tA B C\tplat form\tnic 0/2\n"
-        , "host9.domain(sn)", "plat form", "nic 0/2"
+        , "host9.domain(sn)", "nic 0/1", "plat form", "nic 0/2"
         }
       , {"host10.domain(sn)  nic 0/1  123  A B C  platform  nic 0/3\n"
-        , "host10.domain(sn)", "platform", "nic 0/3"
+        , "host10.domain(sn)", "nic 0/1", "platform", "nic 0/3"
         }
       , {"host11.domain(sn)\n  nic 0/1  123  A B C  plat form  nic 0/4\n"
-        , "host11.domain(sn)", "plat form", "nic 0/4"
+        , "host11.domain(sn)", "nic 0/1", "plat form", "nic 0/4"
         }
       , {"HOST12.DOMAIN(SN)  NIC 0/1  123  A B C  MODEL1   NIC 0/5\n"
-        , "HOST12.DOMAIN(SN)", "MODEL1", "NIC 0/5"
+        , "HOST12.DOMAIN(SN)", "NIC 0/1", "MODEL1", "NIC 0/5"
         }
       , {"host13.domain(sn) nic 0/1 123 A B C platform nic 0/6\n"
-        , "host13.domain(sn)", "platform", "nic 0/6"
+        , "host13.domain(sn)", "nic 0/1", "platform", "nic 0/6"
         }
       , {"host14(sn) nic 0/1 123 A B C platform nic 0/7"
-        , "host14(sn)", "platform", "nic 0/7"
+        , "host14(sn)", "nic 0/1", "platform", "nic 0/7"
         }
       , {"host15.domain123\n nic123  123  A B C platform-123  nic 123/45/6\n"
-        , "host15.domain123", "platform-123", "nic 123/45/6"
+        , "host15.domain123", "nic123", "platform-123", "nic 123/45/6"
         }
       , {"host16.domain123\n nic 12/3  123  A B C platform-123  nic 6/45/123\n"
-        , "host16.domain123", "platform-123", "nic 6/45/123"
+        , "host16.domain123", "nic 12/3", "platform-123", "nic 6/45/123"
         }
       , {"h17\n                 Gig 0/0/0         144               R    ABCD 1234 nic0"
-        , "h17", "ABCD 1234", "nic0"
+        , "h17", "Gig 0/0/0", "ABCD 1234", "nic0"
         }
       };
-    for (const auto& [test, name, model, iface ] : testsOk) {
+    for (const auto& [test, name, liface, model, riface ] : testsOk) {
       tp.nd = NeighborData();
       BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
                 , "Parse rule 'noDetailEntry': " << test
                 );
       BOOST_TEST(name == tp.nd.curHostname);
-      BOOST_TEST(iface == tp.nd.curIfaceName);
+      BOOST_TEST(liface == tp.nd.srcIfaceName);
+      BOOST_TEST(riface == tp.nd.curIfaceName);
       BOOST_TEST(model == tp.nd.curModel);
       BOOST_TEST(tp.nd.curVendor.empty());
       BOOST_TEST(tp.nd.ipAddrs.empty());
@@ -271,17 +272,23 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
   {
     tp.nd = NeighborData();
     const auto& parserRule {tp.detailInterface};
-    std::vector<std::tuple<std::string, std::string>> testsOk {
-        {"Interface: gi1, Port ID (outgoing port): gi10\n", "gi10"}
-      , {"Interface: GigEth0/0, Port ID (outgoing port): GigEth10/10\n"
-        , "GigEth10/10"
+    std::vector<std::tuple<std::string, std::string, std::string>> testsOk {
+        { "Interface: gi1, Port ID (outgoing port): gi10\n"
+        , "gi1", "gi10"
+        }
+      , { "Interface: GigEth0/0, Port ID (outgoing port): GigEth10/10\n"
+        , "GigEth0/0", "GigEth10/10"
+        }
+      , { "Interface: gi 12/3/45, Port ID (outgoing port): port 1/1\n"
+        , "gi 12/3/45", "port 1/1"
         }
       };
-    for (const auto& [test, iface] : testsOk) {
+    for (const auto& [test, liface, riface] : testsOk) {
       BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
-                , "Parse rule 'detailPlatform': " << test
+                , "Parse rule 'detailInterface': " << test
                 );
-      BOOST_TEST(iface == tp.nd.curIfaceName);
+      BOOST_TEST(liface == tp.nd.srcIfaceName);
+      BOOST_TEST(riface == tp.nd.curIfaceName);
 
       BOOST_TEST(tp.nd.curHostname.empty());
       BOOST_TEST(tp.nd.curVendor.empty());
