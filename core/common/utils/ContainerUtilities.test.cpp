@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(testToString)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testUniquePushBack)
+BOOST_AUTO_TEST_CASE(testAddIfUnique)
 {
   std::vector<std::string> control {"a", "bb", "c"};
   std::vector<std::string> test;
