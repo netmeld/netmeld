@@ -703,11 +703,11 @@ CREATE TABLE raw_device_phys_connections (
                 , self_device_id, self_interface_name
                 , peer_device_id, peer_interface_name
                 )
---  , FOREIGN KEY (tool_run_id, self_device_id, self_interface_name)
---        REFERENCES raw_device_interfaces
---                   (tool_run_id, device_id, interface_name)
---        ON DELETE CASCADE
---        ON UPDATE CASCADE
+  , FOREIGN KEY (tool_run_id, self_device_id, self_interface_name)
+        REFERENCES raw_device_interfaces
+                   (tool_run_id, device_id, interface_name)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
   , FOREIGN KEY (tool_run_id, peer_device_id)
         REFERENCES raw_devices(tool_run_id, device_id)
         ON DELETE CASCADE

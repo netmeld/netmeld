@@ -25,6 +25,7 @@
 // =============================================================================
 
 #include <netmeld/datastore/objects/PhysicalConnection.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 namespace nmcu = netmeld::core::utils;
@@ -86,16 +87,20 @@ namespace netmeld::datastore::objects {
       return;
     }
 
-    // Make sure both devices are in DB
-    t.exec_prepared( "insert_raw_device"
-                   , toolRunId
-                   , srcDeviceId
-                   );
-    t.exec_prepared( "insert_raw_device"
-                   , toolRunId
-                   , dstDeviceId
-                   );
+    // Ensure both devices are in DB
+    for (const auto& devId : {srcDeviceId, dstDeviceId}) {
+      t.exec_prepared( "insert_raw_device"
+                     , toolRunId
+                     , devId
+                     );
+    }
 
+    // Ensure src network interface information in DB
+    InterfaceNetwork srcIn {srcIfaceName};
+    srcIn.setPartial(true); // full details unknown
+    srcIn.save(t, toolRunId, deviceId);
+
+    // Add port-to-port connectivity
     t.exec_prepared( "insert_raw_device_phys_connection"
                    , toolRunId
                    , srcDeviceId

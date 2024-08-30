@@ -48,20 +48,20 @@ BOOST_AUTO_TEST_CASE(testSetters)
 {
   TestPhysicalConnection tpc;
 
-  const std::string val1 {"Some 1 Value"};
-  const std::string val2 {"some 1 value"};
+  const std::string input     {"Some 1 Value"};
+  const std::string expected  {"some 1 value"};
 
   BOOST_TEST(!tpc.isValid());
-  tpc.setSrcDeviceId(val1);
-  BOOST_TEST(val2 == tpc.srcDeviceId);
+  tpc.setSrcDeviceId(input);
+  BOOST_TEST(expected == tpc.srcDeviceId);
   BOOST_TEST(!tpc.isValid());
-  tpc.setDstDeviceId(val1);
-  BOOST_TEST(val2 == tpc.dstDeviceId);
+  tpc.setDstDeviceId(input);
+  BOOST_TEST(expected == tpc.dstDeviceId);
   BOOST_TEST(!tpc.isValid());
-  tpc.setSrcIfaceName(val1);
-  BOOST_TEST(val2 == tpc.srcIfaceName);
+  tpc.setSrcIfaceName(input);
+  BOOST_TEST(expected == tpc.srcIfaceName);
   BOOST_TEST(!tpc.isValid());
-  tpc.setDstIfaceName(val1);
-  BOOST_TEST(val2 == tpc.dstIfaceName);
+  tpc.setDstIfaceName(input);
+  BOOST_TEST(expected == tpc.dstIfaceName);
   BOOST_TEST(tpc.isValid());
 }
