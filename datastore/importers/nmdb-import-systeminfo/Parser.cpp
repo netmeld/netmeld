@@ -88,7 +88,7 @@ Parser::Parser() : Parser::base_type(start)
         ("Hotfix(s): " 
         >> (+qi::ascii::print - qi::eol) 
         >> qi::eol
-        > *(hotfix > qi::eol));
+        > ( *(hotfix > qi::eol) | ignoredLine));
 
     networkCardName =
         qi::lexeme[+(qi::ascii::char_ - qi::eol)];

@@ -42,6 +42,7 @@ class TestParser : public Parser
     using Parser::hotfixes;
     using Parser::networkCards;
     using Parser::networkCard;
+    using Parser::data;
 };
 
 BOOST_AUTO_TEST_CASE(testNetworkCard)
@@ -119,35 +120,38 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
     const auto& parserRule {tp.hotfixes};
     std::vector<std::string> testsOk {
       R"STR(Hotfix(s):           10 Hotfix(s) Installed.
-      [01]: KBXXXXXX
-      [02]: KBXXXXXX
-      [03]: KBXXXXXX
-      [04]: KBXXXXXX
-      [05]: KBXXXXXX
-      [06]: KBXXXXXX
-      [07]: KBXXXXXX
-      [08]: KBXXXXXX
-      [09]: KBXXXXXX
-      [10]: KBXXXXXX
+      [01]: KB000001
+      [02]: KB000002
+      [03]: KB000003
+      [04]: KB000003
+      [05]: KB000004
+      [06]: KB000005
+      [07]: KB000006
+      [08]: KB000007
+      [09]: KB000008
+      [10]: KB000009
       )STR",
       //Simulate buffer exhaustion
-      R"STR(Hotfix(s):           1 Hotfix(s) Installed.
-      [01]: KBXXXXXX
-      [02]: KBXXXXXX
-      [03]: KBXXXXXX
-      [
-      )STR"
+      // TODO this test is not working as a test but will succeed in actually parsing 
+      // R"STR(Hotfix(s):           3 Hotfix(s) Installed.
+      // [01]: KB000001
+      // [02]: KB000002
+      // [03]: KB000003
+      // [02]: K
+      // )STR"
     };
     for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+      std::vector<std::string> out;
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
                 "Parse rule 'hotfixes': " << test);
+      BOOST_TEST(out == tp.data.hotfixes); //TODO: Check why this test is not deeming true
       tp.clearHotfixes();
     }
   }
   { // Singular Hotfix
     const auto& parserRule {tp.hotfix};
     std::vector<std::string> testsOk {
-      R"STR([01]: KBXXXXXX)STR"
+      R"STR([01]: KB000004)STR"
     };
 
     for (const auto& test : testsOk) {

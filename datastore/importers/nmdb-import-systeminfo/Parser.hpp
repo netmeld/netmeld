@@ -66,11 +66,13 @@ class Parser :
   // ===========================================================================
   private:
     // Supporting data structures
-    Data data;
     std::string curHostname;
     std::string curIfaceName;
     nmdp::ParserIpAddress   ipAddr;
     std::string curDomain;
+    
+  protected:
+    Data data;
 
   protected:
     // Rules
