@@ -30,6 +30,7 @@
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
@@ -44,6 +45,10 @@ struct Data {
   // std::vector<nmdo::IpAddress>         ipAddrs;
   std::vector<nmdo::DeviceInformation> devInfos;
 
+  // Might have to save vlans as individual vlan objects
+  // and within ifaces, ask Marshall. See ifaces object and grep for vlan
+  // examples
+  std::map<std::string, nmdo::Vlan>            vlans;
   std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
 
   auto operator<=>(const Data&) const = default;
@@ -58,6 +63,7 @@ struct NeighborData {
   std::string curSysDescription   {""};
   std::string curPortDescription  {""};
   std::string curMacAddr          {""};
+  std::vector<std::pair<unsigned short, std::string>> curVlans;
   // impliment later std::vector<nmdo::IpAddress>  ipAddrs;
   // vlans for later implimentation
 
@@ -112,10 +118,8 @@ class Parser :
       , csvToken
       ;
 
-    qi::rule<nmdp::IstreamIter>
-        noDetailCapability
-      , noDetailHoldtime
-      , noDetailLocalIface
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type, qi::locals<unsigned short, std::string>>
+        detailVlan
       ;
 
   // ===========================================================================
@@ -131,6 +135,7 @@ class Parser :
     std::string getDevice(const std::string&);
 
     // void updateIpAddrs(); not a feature yet
+    void addVlan(unsigned short, std::string&);
     void updateInterfaces();
     void updateDeviceInformation();
     void finalizeData();

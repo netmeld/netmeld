@@ -100,6 +100,7 @@ Parser::Parser() : Parser::base_type(start)
       | detailSystemName
       | detailSystemDescription
       | detailCapabilities
+      | detailVlan
       | (!( detailHeader
           | detailNeighborLine
           ) >> ignoredLine - qi::eol
@@ -159,6 +160,16 @@ Parser::Parser() : Parser::base_type(start)
     > -(qi::lit("Enabled Capabilities:"))
     >> restOfLine) [(pnx::ref(nd.curDeviceType) = qi::_1)]
     ;
+
+  detailVlan =
+    qi::lit("VLAN ID: ")
+    > qi::ushort_ [qi::_a = qi::_1]
+    > qi::lit(", VLAN Name: ")
+    > inQuotes [qi::_b = qi::_1]
+    > qi::eol
+    [pnx::bind(&Parser::addVlan, this, qi::_a, qi::_b)]
+    ;
+
 
   // ----- common usage -----
   port =
@@ -239,6 +250,14 @@ Parser::getDevice(const std::string& hostname)
 // }
 
 void
+Parser::addVlan(unsigned short vlanId, std::string& vlanName)
+{
+  auto& vlan {d.vlans[vlanName]};
+
+  nd.curVlans.emplace_back(vlanId, vlanName);
+}
+
+void
 Parser::updateInterfaces()
 {
   nmdo::InterfaceNetwork iface {nd.curIfaceName};
@@ -252,6 +271,12 @@ Parser::updateInterfaces()
   if (!nd.curMacAddr.empty()) {
     nmdo::MacAddress macAddr {nd.curMacAddr};
     iface.setMacAddress(macAddr);
+  }
+
+  if (!nd.curVlans.empty()) {
+    for (auto& [vlanId, vlanName] : nd.curVlans) {
+      iface.addVlan(vlanId);
+    }
   }
 
   d.interfaces.emplace_back(iface, getDevice(nd.curHostname));
