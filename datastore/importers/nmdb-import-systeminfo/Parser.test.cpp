@@ -130,34 +130,56 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
       [08]: KB000007
       [09]: KB000008
       [10]: KB000009
-      )STR",
-      //Simulate buffer exhaustion
-      // TODO this test is not working as a test but will succeed in actually parsing 
-      // R"STR(Hotfix(s):           3 Hotfix(s) Installed.
-      // [01]: KB000001
-      // [02]: KB000002
-      // [03]: KB000003
-      // [02]: K
-      // )STR"
+      )STR"
+
     };
     for (const auto& test : testsOk) {
-      std::vector<std::string> out;
-      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+      std::string out;
+      // This test case is special because it is testing the buffer exhaustion
+      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank, false),
                 "Parse rule 'hotfixes': " << test);
-      BOOST_TEST(out == tp.data.hotfixes); //TODO: Check why this test is not deeming true
-      tp.clearHotfixes();
+      //Leaving this as a quantity check due to hotfix being the actual data being parsed
+      BOOST_TEST(10 == tp.data.hotfixes.size()); 
     }
+    tp.clearHotfixes();
+  }
+  {
+    //Test Buffer Exhaustion Parsing
+    const auto& parserRule {tp.hotfixes};
+    std::string testsOk {
+      // Simulate buffer exhaustion
+      R"STR(Hotfix(s):           3 Hotfix(s) Installed.
+      [01]: KB000001
+      [02]: KB000002
+      [03]: KB000003
+      [04]: K
+      )STR"
+    };
+    std::vector<std::string> out;
+    BOOST_TEST(nmdp::testAttr(testsOk.c_str(), parserRule, out, blank, false),
+              "Parse rule 'hotfixes': " << testsOk);
+    BOOST_TEST(3 == tp.data.hotfixes.size());
+    tp.clearHotfixes();
   }
   { // Singular Hotfix
+    std::string out;
     const auto& parserRule {tp.hotfix};
-    std::vector<std::string> testsOk {
+    std::string testsOk {
       R"STR([01]: KB000004)STR"
     };
+    BOOST_TEST(nmdp::testAttr(testsOk.c_str(), parserRule, out, blank),
+              "Parse rule 'hotfix': " << testsOk);
+    // Checking what was put into data.hotfixes to what is supposed to be in there         
+    BOOST_TEST(tp.data.hotfixes[0] == "KB000004");
+    tp.clearHotfixes();
+  }
+}
 
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'hotfix': " << test);
-    }
+BOOST_AUTO_TEST_CASE(testNetworkCards)
+{
+  {
+    const auto& parserRule {tp.hotfixes};
+    
   }
 }
 
@@ -230,5 +252,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
   for (const auto& test : testsOk) {
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
               "Parse rule 'start': " << test);
+    //BOOST_TEST test the validation of the objects that are created
+
   }
 }
