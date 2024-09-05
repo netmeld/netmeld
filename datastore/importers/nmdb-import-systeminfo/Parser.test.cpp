@@ -110,6 +110,26 @@ BOOST_AUTO_TEST_CASE(testNetworkCard)
       BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
                 "Parse rule 'networkCard fails': " << test);
     }
+    tp.clearNetworkCards();
+  }
+  { // Test Data
+    const auto& parserRule {tp.networkCard};
+    std::string out;
+    std::string test {
+      R"STR([01]: Realtek PCIe GbE Family Controller
+      Connection Name: Ethernet
+      DHCP Enabled:    Yes
+      IP address(es)
+      [01]: 192.168.0.2
+      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+      )STR",
+    };
+    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
+              "Parse rule 'networkCard': " << test);
+    std::string curInterfaceName = "Realtek PCIe GbE Family Controller";
+    std::cout << "Interface Name: " << tp.data.network_cards[curInterfaceName] << std::endl;
+    BOOST_TEST(tp.data.network_cards[curInterfaceName].isValid());
+
   }
 }
 
@@ -172,14 +192,6 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
     // Checking what was put into data.hotfixes to what is supposed to be in there         
     BOOST_TEST(tp.data.hotfixes[0] == "KB000004");
     tp.clearHotfixes();
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testNetworkCards)
-{
-  {
-    const auto& parserRule {tp.hotfixes};
-    
   }
 }
 

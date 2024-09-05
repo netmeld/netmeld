@@ -123,5 +123,6 @@ class Parser :
     void setIfaceStatus(const std::string&);
   public:
     void clearHotfixes();
+    void clearNetworkCards();
 };
 #endif // PARSER_HPP
