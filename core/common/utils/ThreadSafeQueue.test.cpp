@@ -52,49 +52,11 @@ BOOST_AUTO_TEST_CASE(testSingleThread)
   BOOST_TEST(tsq.isEmpty());
 }
 
-BOOST_AUTO_TEST_CASE(testConcurrentSimple)
+BOOST_AUTO_TEST_CASE(testConcurrent)
 {
   nmcu::ThreadSafeQueue<size_t> tsq;
   std::atomic<size_t> pCnt(0), cCnt(0);
-  size_t bCnt {300000};
-
-  auto producer = [&]() {
-    for (size_t i = 0; i < bCnt; ++i) {
-      tsq.push(i);
-      ++pCnt;
-    }
-  };
-
-  auto consumer = [&]() {
-    for (size_t i = 0; i < bCnt; ++i) {
-      while (tsq.isEmpty()) {
-        std::this_thread::yield();
-      }
-      tsq.pop();
-      ++cCnt;
-    }
-  };
-
-  std::thread prod1(producer);
-  std::thread prod2(producer);
-  std::thread cons1(consumer);
-  std::thread cons2(consumer);
-
-  prod1.join();
-  prod2.join();
-  cons1.join();
-  cons2.join();
-
-  BOOST_TEST(tsq.isEmpty());
-  size_t expCnt {2*bCnt}; // 2 producers
-  BOOST_TEST(expCnt == pCnt.load());
-  BOOST_TEST(expCnt == cCnt.load());
-}
-
-BOOST_AUTO_TEST_CASE(testConcurrentMixed)
-{
-  nmcu::ThreadSafeQueue<size_t> tsq;
-  std::atomic<size_t> pCnt(0), cCnt(0);
+  std::atomic<bool> done(false);
   size_t bCnt {400000};
 
   auto producer = [&]() {
@@ -105,12 +67,15 @@ BOOST_AUTO_TEST_CASE(testConcurrentMixed)
   };
 
   auto consumer = [&]() {
-    for (size_t i = 0; i < bCnt; ++i) {
-      while (tsq.isEmpty()) {
+    while (true) {
+      if (done.load() && tsq.isEmpty()) {
+        break;
+      } else if (tsq.isEmpty()) {
         std::this_thread::yield();
+      } else {
+        tsq.pop();
+        ++cCnt;
       }
-      tsq.pop();
-      ++cCnt;
     }
   };
 
@@ -120,8 +85,9 @@ BOOST_AUTO_TEST_CASE(testConcurrentMixed)
   std::thread cons2(consumer);
 
   prod1.join();
-  cons1.join();
   prod2.join();
+  done.store(true);
+  cons1.join();
   cons2.join();
 
   BOOST_TEST(tsq.isEmpty());
