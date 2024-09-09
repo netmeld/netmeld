@@ -678,7 +678,6 @@ LEFT OUTER JOIN tool_runs AS tr
    ON (rto.tool_run_id = tr.id)
 ;
 
-
 -- ----------------------------------------------------------------------
 
 CREATE VIEW prowler_checks AS
