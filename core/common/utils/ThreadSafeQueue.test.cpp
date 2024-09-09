@@ -34,8 +34,9 @@
 #include <atomic>
 
 namespace nmcu = netmeld::core::utils;
+namespace but = boost::unit_test;
 
-BOOST_AUTO_TEST_CASE(testSingleThread)
+BOOST_AUTO_TEST_CASE(testSingleThread, * but::timeout(5))
 {
   nmcu::ThreadSafeQueue<size_t> tsq;
   tsq.push(1);
@@ -52,7 +53,7 @@ BOOST_AUTO_TEST_CASE(testSingleThread)
   BOOST_TEST(tsq.isEmpty());
 }
 
-BOOST_AUTO_TEST_CASE(testConcurrent)
+BOOST_AUTO_TEST_CASE(testConcurrentSingleConsumer, * but::timeout(5))
 {
   nmcu::ThreadSafeQueue<size_t> tsq;
   std::atomic<size_t> pCnt(0), cCnt(0);
@@ -68,6 +69,54 @@ BOOST_AUTO_TEST_CASE(testConcurrent)
 
   auto consumer = [&]() {
     while (true) {
+      if (done.load() && tsq.isEmpty()) {
+        break;
+      } else if (tsq.isEmpty()) {
+        std::this_thread::yield();
+      } else {
+        tsq.pop();
+        ++cCnt;
+      }
+    }
+  };
+
+  std::thread prod1(producer);
+  std::thread cons1(consumer);
+  std::thread prod2(producer);
+
+  prod1.join();
+  prod2.join();
+  done.store(true);
+  cons1.join();
+
+  BOOST_TEST(tsq.isEmpty());
+  size_t expCnt {2*bCnt}; // 2 producers
+  BOOST_TEST(expCnt == pCnt.load());
+  BOOST_TEST(expCnt == cCnt.load());
+}
+
+BOOST_AUTO_TEST_CASE(testConcurrentMultiConsumer, * but::timeout(5))
+{
+  nmcu::ThreadSafeQueue<size_t> tsq;
+  std::atomic<size_t> pCnt {0};
+  std::atomic<size_t> cCnt {0};
+  std::atomic<bool> done(false);
+  size_t bCnt {400000};
+
+  std::mutex mtx;
+
+  auto producer = [&]() {
+    for (size_t i = 0; i < bCnt; ++i) {
+      tsq.push(i);
+      ++pCnt;
+    }
+  };
+
+  // NOTE: multi-consumers may consume more unless some coordination occurs
+  //       between empty checks and pops
+  auto consumer = [&]() {
+    while (true) {
+      std::unique_lock lock {mtx};
       if (done.load() && tsq.isEmpty()) {
         break;
       } else if (tsq.isEmpty()) {
