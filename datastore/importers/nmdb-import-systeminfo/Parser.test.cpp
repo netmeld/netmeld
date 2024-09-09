@@ -127,9 +127,8 @@ BOOST_AUTO_TEST_CASE(testNetworkCard)
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'networkCard': " << test);
     std::string curInterfaceName = "Realtek PCIe GbE Family Controller";
-    std::cout << "Interface Name: " << tp.data.network_cards[curInterfaceName] << std::endl;
-    BOOST_TEST(tp.data.network_cards[curInterfaceName].isValid());
-
+    std::cout << "Interface Name: " << tp.data.network_cards << std::endl;
+    BOOST_TEST(tp.data.network_cards["realtek pcie gbe family controller"].isValid());
   }
 }
 
@@ -208,15 +207,15 @@ BOOST_AUTO_TEST_CASE(testWhole)
           OS Configuration:    Standalone Workstation
           OS Build Type:       Multiprocessor Free
           Registered Owner:    Your Name
-          Registered Organization: 
-          Product ID:          XXXXX-XXXXX-XXXXX-XXXXX
+          Registered Organization: Your Organization
+          Product ID:          00329-00000-00003-AA093
           Original Install Date: 01/01/2022, 12:00:00 AM
           System Boot Time:    11/22/2023, 9:00:00 AM
           System Manufacturer: Your Computer Manufacturer
           System Model:        Your Computer Model
           System Type:         x64-based PC
           Processor(s):        1 Processor(s) Installed.
-                                [01]: Intel64 Family 6 Model 142 Stepping 9 GenuineIntel ~2.30 GHz
+                                [01]: Intel64 Family 6 Model 142 Stepping 9 GenuineIntel ~2312 GHz
           BIOS Version:        Your BIOS Version
           Windows Directory:   C:\Windows
           System Directory:    C:\Windows\system32
@@ -233,16 +232,16 @@ BOOST_AUTO_TEST_CASE(testWhole)
           Domain:              WORKGROUP
           Logon Server:        \\YourLogonServer
           Hotfix(s):           10 Hotfix(s) Installed.
-                                [01]: KBXXXXXX
-                                [02]: KBXXXXXX
-                                [03]: KBXXXXXX
-                                [04]: KBXXXXXX
-                                [05]: KBXXXXXX
-                                [06]: KBXXXXXX
-                                [07]: KBXXXXXX
-                                [08]: KBXXXXXX
-                                [09]: KBXXXXXX
-                                [10]: KBXXXXXX
+                                [01]: KB000001
+                                [02]: KB000002
+                                [03]: KB000003
+                                [04]: KB000003
+                                [05]: KB000004
+                                [06]: KB000005
+                                [07]: KB000006
+                                [08]: KB000007
+                                [09]: KB000008
+                                [10]: KB000009
           Network Card(s):     2 NIC(s) Installed.
                                 [01]: Realtek PCIe GbE Family Controller
                                   Connection Name: Ethernet
@@ -264,7 +263,13 @@ BOOST_AUTO_TEST_CASE(testWhole)
   for (const auto& test : testsOk) {
     BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
               "Parse rule 'start': " << test);
-    //BOOST_TEST test the validation of the objects that are created
-
+    std::cout << tp.data.devInfo << std::endl;
+    BOOST_TEST(tp.data.devInfo.isValid());
+    std::cout << tp.data.os << std::endl;
+    BOOST_TEST(tp.data.os.isValid());
+    std::cout << tp.data.hotfixes << std::endl;
+    BOOST_TEST(10 == tp.data.hotfixes.size());
+    std::cout << tp.data.network_cards << std::endl;
+    BOOST_TEST(2 == tp.data.network_cards.size());
   }
 }
