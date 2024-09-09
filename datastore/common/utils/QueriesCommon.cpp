@@ -960,6 +960,7 @@ namespace netmeld::datastore::utils {
     // ----------------------------------------------------------------------
     // TABLE: raw_hotfixes
     // ----------------------------------------------------------------------
+    
     db.prepare
       ("insert_raw_hotfixes",
        "INSERT INTO raw_hotfixes"
