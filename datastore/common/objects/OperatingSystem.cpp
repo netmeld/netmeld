@@ -100,6 +100,7 @@ namespace netmeld::datastore::objects {
                 << std::endl;
       return;
     }
+
     ipAddr.save(t, toolRunId, deviceId);
 
     t.exec_prepared("insert_raw_operating_system",
@@ -109,8 +110,7 @@ namespace netmeld::datastore::objects {
         productName,
         productVersion,
         cpe,
-        accuracy
-        );
+        accuracy);
   }
 
   std::string
@@ -118,14 +118,14 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "["; 
-    oss << "ipAddr: " << ipAddr.toDebugString() << ", "
+    oss << "["; // opening bracket
+    oss << "ipAddr: " << ipAddr .toDebugString() << ", "
         << "vendorName: " << vendorName  << ", "
         << "productName: " << productName  << ", "
         << "productVersion: " << productVersion  << ", "
         << "cpe: " << cpe  << ", "
         << "accuracy: " << accuracy ;
-    oss << "]";
+    oss << "]"; // closing bracket
 
     return oss.str();
   }
