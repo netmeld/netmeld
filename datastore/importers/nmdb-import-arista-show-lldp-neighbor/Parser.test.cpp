@@ -190,17 +190,25 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
     tp.nd = NeighborData();
     const auto& parserRule {tp.detailHeader};
 
-    std::vector<std::string> testsOk {
-        "Interface Ethernet 4/1 detected 1 LLDP neighbors:\n\n"
-      , "Interface Ethernet4/1 detected 1 LLDP neighbors:\n\n"
-      , "Interface Ethernet 4 detected 1 LLDP neighbors:\n\n"
-      , "Interface Ethernet4 detected 1 LLDP neighbors:\n\n"
+    std::vector<std::tuple<std::string, std::string>> testsOk {
+        {"Interface Ethernet 4/1 detected 1 LLDP neighbors:\n\n"
+        , "Ethernet 4/1"
+        }
+      , {"Interface Ethernet4/1 detected 1 LLDP neighbors:\n\n"
+        , "Ethernet4/1"
+        }
+      , {"Interface Ethernet 4 detected 1 LLDP neighbors:\n\n"
+        , "Ethernet 4"
+        }
+      , {"Interface Ethernet4 detected 1 LLDP neighbors:\n\n"
+        , "Ethernet4"
+        }
       };
-    for (const auto& test : testsOk) {
+    for (const auto& [test, srcIfaceName] : testsOk) {
       BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
                 , "Parse rule 'detailHeader': " << test
                 );
-      BOOST_TEST(NeighborData() == tp.nd);
+      BOOST_TEST(srcIfaceName == tp.nd.srcIfaceName);
     }
   }
 

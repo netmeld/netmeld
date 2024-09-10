@@ -28,11 +28,10 @@
 #define PARSER_HPP
 
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
-#include <netmeld/datastore/objects/Vlan.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/objects/PhysicalConnection.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
@@ -43,6 +42,7 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 struct Data {
   std::vector<nmdo::DeviceInformation> devInfos;
+  std::vector<nmdo::PhysicalConnection> physConnections;
 
   std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
 
@@ -58,6 +58,7 @@ struct NeighborData {
   std::string curSysDescription   {""};
   std::string curPortDescription  {""};
   std::string curMacAddr          {""};
+  std::string srcIfaceName        {""};
   std::vector<uint16_t> curVlans;
 
   auto operator<=>(const NeighborData&) const = default;
@@ -128,6 +129,7 @@ class Parser :
 
     void addVlan(uint16_t);
     void updateInterfaces();
+    void updatePhysicalConnection();
     void updateDeviceInformation();
     void finalizeData();
 

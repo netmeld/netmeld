@@ -85,7 +85,7 @@ Parser::Parser() : Parser::base_type(start)
 
   detailHeader =
     qi::lit("Interface")
-    >> port
+    >> port [(pnx::ref(nd.srcIfaceName) = qi::_1)]
     >> qi::lit("detected")
     > ignoredLine
     > qi::eol
@@ -280,6 +280,17 @@ Parser::updateInterfaces()
 }
 
 void
+Parser::updatePhysicalConnection()
+{
+  nmdo::PhysicalConnection physCon;
+  physCon.setSrcIfaceName(nd.srcIfaceName);
+  physCon.setDstDeviceId(getDevice(nd.curHostname));
+  physCon.setDstIfaceName(nd.curIfaceName);
+
+  d.physConnections.emplace_back(physCon);
+}
+
+void
 Parser::updateDeviceInformation()
 {
   nmdo::DeviceInformation devInfo;
@@ -307,8 +318,8 @@ Parser::finalizeData()
     }
     nd.curHostname = nmcu::toLower(temp);
 
-    // updateIpAddrs();
     updateInterfaces();
+    updatePhysicalConnection();
     updateDeviceInformation();
   }
 
