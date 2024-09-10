@@ -225,16 +225,6 @@ void Parser::setIfaceStatus(const std::string &_status)
     iface.setDown();
 }
 
-void Parser::clearHotfixes()
-{
-    data.hotfixes.clear();
-}
-
-void Parser::clearNetworkCards()
-{
-    data.network_cards.clear();
-}
-
 Result
 Parser::getData()
 {

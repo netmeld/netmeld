@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(testNetworkCard)
       BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
                 "Parse rule 'networkCard fails': " << test);
     }
-    tp.clearNetworkCards();
+    tp.data.network_cards.clear();
   }
   { // Test Data
     const auto& parserRule {tp.networkCard};
@@ -126,9 +126,15 @@ BOOST_AUTO_TEST_CASE(testNetworkCard)
     };
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'networkCard': " << test);
-    std::string curInterfaceName = "Realtek PCIe GbE Family Controller";
-    std::cout << "Interface Name: " << tp.data.network_cards << std::endl;
+    const auto debugString { tp.data.network_cards["realtek pcie gbe family controller"].toDebugString()};
     BOOST_TEST(tp.data.network_cards["realtek pcie gbe family controller"].isValid());
+    for (const auto& ipAddr : tp.data.network_cards["realtek pcie gbe family controller"].getIpAddresses()) {
+      BOOST_TEST(ipAddr.isValid());
+    }
+    nmdp::testInString(debugString, "name: realtek pcie gbe family controller");
+    nmdp::testInString(debugString, "mediaType: ethernet");
+    nmdp::testInString(debugString, "ipAddress: 192.168.0.2/32");
+    nmdp::testInString(debugString, "ipAddress: 2001:db8:85a3::8a2e:370:7334/128");
   }
 }
 
@@ -160,7 +166,7 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
       //Leaving this as a quantity check due to hotfix being the actual data being parsed
       BOOST_TEST(10 == tp.data.hotfixes.size()); 
     }
-    tp.clearHotfixes();
+    tp.data.hotfixes.clear();
   }
   {
     //Test Buffer Exhaustion Parsing
@@ -178,7 +184,7 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
     BOOST_TEST(nmdp::testAttr(testsOk.c_str(), parserRule, out, blank, false),
               "Parse rule 'hotfixes': " << testsOk);
     BOOST_TEST(3 == tp.data.hotfixes.size());
-    tp.clearHotfixes();
+    tp.data.hotfixes.clear();
   }
   { // Singular Hotfix
     std::string out;
@@ -190,7 +196,7 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
               "Parse rule 'hotfix': " << testsOk);
     // Checking what was put into data.hotfixes to what is supposed to be in there         
     BOOST_TEST(tp.data.hotfixes[0] == "KB000004");
-    tp.clearHotfixes();
+    tp.data.hotfixes.clear();
   }
 }
 

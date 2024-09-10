@@ -124,7 +124,5 @@ class Parser :
     void addIfaceIp(nmdo::IpAddress&);
     void setIfaceStatus(const std::string&);
   public:
-    void clearHotfixes();
-    void clearNetworkCards();
 };
 #endif // PARSER_HPP
