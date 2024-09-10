@@ -42,13 +42,8 @@ namespace nmdp = netmeld::datastore::parsers;
 // Data containers
 // =============================================================================
 struct Data {
-  // std::vector<nmdo::IpAddress>         ipAddrs;
   std::vector<nmdo::DeviceInformation> devInfos;
 
-  // Might have to save vlans as individual vlan objects
-  // and within ifaces, ask Marshall. See ifaces object and grep for vlan
-  // examples
-  std::map<std::string, nmdo::Vlan>            vlans;
   std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
 
   auto operator<=>(const Data&) const = default;
@@ -63,10 +58,7 @@ struct NeighborData {
   std::string curSysDescription   {""};
   std::string curPortDescription  {""};
   std::string curMacAddr          {""};
-  std::vector<std::pair<unsigned short, std::string>> curVlans;
-  // impliment later std::vector<nmdo::IpAddress>  ipAddrs;
-  // vlans for later implimentation
-
+  std::vector<uint16_t> curVlans;
 
   auto operator<=>(const NeighborData&) const = default;
   bool operator==(const NeighborData&) const = default;
@@ -134,8 +126,7 @@ class Parser :
   private:
     std::string getDevice(const std::string&);
 
-    // void updateIpAddrs(); not a feature yet
-    void addVlan(unsigned short, std::string&);
+    void addVlan(uint16_t);
     void updateInterfaces();
     void updateDeviceInformation();
     void finalizeData();

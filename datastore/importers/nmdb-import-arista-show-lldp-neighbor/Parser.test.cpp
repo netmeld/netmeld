@@ -368,21 +368,20 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
   {
     const auto& parserRule {tp.detailVlan};
 
-    std::vector<std::tuple<std::string, unsigned short, std::string>> testsOk {
+    std::vector<std::tuple<std::string, unsigned short>> testsOk {
         {"VLAN ID: 1234, VLAN Name: \"vlan-1234\"\n"
-        , 1234, "vlan-1234"
+        , 1234
         }
       , {"VLAN ID: 5678, VLAN Name: \"vlan-5678\"\n"
-        , 5678, "vlan-5678"
+        , 5678
         }
       };
-    for (const auto& [test, vlanId, vlanName] : testsOk) {
+    for (const auto& [test, vlanId] : testsOk) {
       tp.nd = NeighborData();
       BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
                 , "Parse rule 'detailVlan': " << test
                 );
-      BOOST_TEST(vlanId == tp.nd.curVlans[0].first);
-      BOOST_TEST(vlanName == tp.nd.curVlans[0].second);
+      BOOST_TEST(vlanId == tp.nd.curVlans[0]);
     }
   }
 }

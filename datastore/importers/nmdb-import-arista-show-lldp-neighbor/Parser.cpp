@@ -163,11 +163,10 @@ Parser::Parser() : Parser::base_type(start)
 
   detailVlan =
     qi::lit("VLAN ID: ")
-    > qi::ushort_ [qi::_a = qi::_1]
+    > qi::ushort_ [(pnx::bind(&Parser::addVlan, this, qi::_1))]
     > qi::lit(", VLAN Name: ")
-    > inQuotes [qi::_b = qi::_1]
+    > inQuotes
     > qi::eol
-    [pnx::bind(&Parser::addVlan, this, qi::_a, qi::_b)]
     ;
 
 
@@ -250,11 +249,9 @@ Parser::getDevice(const std::string& hostname)
 // }
 
 void
-Parser::addVlan(unsigned short vlanId, std::string& vlanName)
+Parser::addVlan(uint16_t vlanId)
 {
-  auto& vlan {d.vlans[vlanName]};
-
-  nd.curVlans.emplace_back(vlanId, vlanName);
+  nd.curVlans.emplace_back(vlanId);
 }
 
 void
@@ -274,7 +271,7 @@ Parser::updateInterfaces()
   }
 
   if (!nd.curVlans.empty()) {
-    for (auto& [vlanId, vlanName] : nd.curVlans) {
+    for (auto& vlanId : nd.curVlans) {
       iface.addVlan(vlanId);
     }
   }
