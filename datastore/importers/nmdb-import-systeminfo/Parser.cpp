@@ -43,7 +43,9 @@ Parser::Parser() : Parser::base_type(start)
 
     osName =
         ("OS Name: " 
-        > token[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)][pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)] 
+        > token[( pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)
+               ,  pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)
+               )]
         > qi::eol);
 
     osVersion =
@@ -82,7 +84,11 @@ Parser::Parser() : Parser::base_type(start)
         > qi::eol); 
 
     hotfix =
-        ("[" >> +qi::ascii::digit >> "]:" >> qi::as_string[qi::ascii::string("KB") >> +qi::ascii::digit][pnx::bind(&Parser::addHotfix, this, qi::_1)]);
+        ("[" 
+        >> +qi::ascii::digit 
+        >> "]:" 
+        >> qi::as_string[qi::ascii::string("KB") 
+        >> +qi::ascii::digit][pnx::bind(&Parser::addHotfix, this, qi::_1)]);
 
     hotfixes =
         ("Hotfix(s): " 
