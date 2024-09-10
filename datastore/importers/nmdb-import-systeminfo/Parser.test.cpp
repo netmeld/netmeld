@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
 
     };
 
-    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, blank, false),
+    BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank, false),
                 "Parse rule 'hotfixes': " << test);
     //Leaving this as a quantity check due to hotfix being the actual 
     //data being parsed
