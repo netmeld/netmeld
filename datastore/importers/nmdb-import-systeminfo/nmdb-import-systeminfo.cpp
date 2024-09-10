@@ -72,13 +72,17 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         LOG_DEBUG << results.devInfo.toDebugString() << "\n";
 
         LOG_DEBUG << "Iterating over OperatingSystems\n";
-        results.os.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.os.toDebugString() << "\n";
+        if (results.os.isValid()) {
+            results.os.save(t, toolRunId, deviceId);
+            LOG_DEBUG << results.os.toDebugString() << "\n";
 
-        LOG_DEBUG << "Iterating over Hotfixes\n";
-        t.exec_prepared("insert_raw_hotfixes", toolRunId, results.hotfixes);
-        for (auto& hotfix : results.hotfixes) {
-          LOG_DEBUG << hotfix << "\n";
+            LOG_DEBUG << "Iterating over Hotfixes\n";
+            t.exec_prepared("insert_raw_hotfixes", toolRunId, results.hotfixes);
+            for (auto& hotfix : results.hotfixes) {
+                LOG_DEBUG << hotfix << "\n";
+            }
+        } else {
+            LOG_DEBUG << "OperatingSystem information is invalid, skipping Hotfixes insertion\n";
         }
 
         LOG_DEBUG << "Iterating over Interfaces\n";
