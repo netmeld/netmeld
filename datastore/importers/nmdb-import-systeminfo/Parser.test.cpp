@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
   TestParser tp;
   {
     const auto& parserRule {tp.hotfixes};
-    std::vector<std::string> testsOk {
+    std::string test {
       R"STR(Hotfix(s):           10 Hotfix(s) Installed.
       [01]: KB000001
       [02]: KB000002
@@ -158,20 +158,19 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
       )STR"
 
     };
-    for (const auto& test : testsOk) {
-      std::string out;
-      // This test case is special because it is testing the buffer exhaustion
-      BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank, false),
+
+    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, blank, false),
                 "Parse rule 'hotfixes': " << test);
-      //Leaving this as a quantity check due to hotfix being the actual data being parsed
-      BOOST_TEST(10 == tp.data.hotfixes.size()); 
-    }
+    //Leaving this as a quantity check due to hotfix being the actual 
+    //data being parsed
+    BOOST_TEST(10 == tp.data.hotfixes.size()); 
+
     tp.data.hotfixes.clear();
   }
   {
     //Test Buffer Exhaustion Parsing
     const auto& parserRule {tp.hotfixes};
-    std::string testsOk {
+    std::string test {
       // Simulate buffer exhaustion
       R"STR(Hotfix(s):           3 Hotfix(s) Installed.
       [01]: KB000001
@@ -181,8 +180,8 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
       )STR"
     };
     std::vector<std::string> out;
-    BOOST_TEST(nmdp::testAttr(testsOk.c_str(), parserRule, out, blank, false),
-              "Parse rule 'hotfixes': " << testsOk);
+    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank, false),
+              "Parse rule 'hotfixes': " << test);
     BOOST_TEST(3 == tp.data.hotfixes.size());
     tp.data.hotfixes.clear();
   }
@@ -204,7 +203,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
 {
   TestParser tp;
   const auto& parserRule {tp};
-  std::vector<std::string> testsOk {
+  std::string test {
     R"STR(
           Host Name:           YourComputerName
           OS Name:             Microsoft Windows 10 Pro
@@ -266,16 +265,16 @@ BOOST_AUTO_TEST_CASE(testWhole)
           )STR"
    };
 
-  for (const auto& test : testsOk) {
-    BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-              "Parse rule 'start': " << test);
-    std::cout << tp.data.devInfo << std::endl;
-    BOOST_TEST(tp.data.devInfo.isValid());
-    std::cout << tp.data.os << std::endl;
-    BOOST_TEST(tp.data.os.isValid());
-    std::cout << tp.data.hotfixes << std::endl;
-    BOOST_TEST(10 == tp.data.hotfixes.size());
-    std::cout << tp.data.network_cards << std::endl;
-    BOOST_TEST(2 == tp.data.network_cards.size());
-  }
+  
+  BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
+            "Parse rule 'start': " << test);
+  std::cout << tp.data.devInfo << std::endl;
+  BOOST_TEST(tp.data.devInfo.isValid());
+  std::cout << tp.data.os << std::endl;
+  BOOST_TEST(tp.data.os.isValid());
+  std::cout << tp.data.hotfixes << std::endl;
+  BOOST_TEST(10 == tp.data.hotfixes.size());
+  std::cout << tp.data.network_cards << std::endl;
+  BOOST_TEST(2 == tp.data.network_cards.size());
+  
 }
