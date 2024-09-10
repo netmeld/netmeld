@@ -268,13 +268,9 @@ BOOST_AUTO_TEST_CASE(testWhole)
   
   BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
             "Parse rule 'start': " << test);
-  std::cout << tp.data.devInfo << std::endl;
   BOOST_TEST(tp.data.devInfo.isValid());
-  std::cout << tp.data.os << std::endl;
   BOOST_TEST(tp.data.os.isValid());
-  std::cout << tp.data.hotfixes << std::endl;
   BOOST_TEST(10 == tp.data.hotfixes.size());
-  std::cout << tp.data.network_cards << std::endl;
   BOOST_TEST(2 == tp.data.network_cards.size());
   
 }
