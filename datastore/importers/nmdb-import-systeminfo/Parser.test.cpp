@@ -272,5 +272,5 @@ BOOST_AUTO_TEST_CASE(testWhole)
   BOOST_TEST(tp.data.os.isValid());
   BOOST_TEST(10 == tp.data.hotfixes.size());
   BOOST_TEST(2 == tp.data.network_cards.size());
-  
+  nmdp::testInString(tp.data.os.toDebugString(), "cpe: cpe:/o:microsoft:windows_10");
 }

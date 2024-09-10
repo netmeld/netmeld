@@ -123,6 +123,7 @@ class Parser :
     void addIfaceConnectName(const std::string&);
     void addIfaceIp(nmdo::IpAddress&);
     void setIfaceStatus(const std::string&);
+    void setCPE();
   public:
 };
 #endif // PARSER_HPP

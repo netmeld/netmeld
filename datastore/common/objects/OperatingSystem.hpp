@@ -69,6 +69,10 @@ namespace netmeld::datastore::objects {
       void setCpe(const std::string&);
       void setAccuracy(const double);
 
+      std::string getVendorName() const;
+      std::string getProductName() const;
+      std::string getProductVersion() const;
+
       bool isValid() const override;
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;

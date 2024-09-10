@@ -43,6 +43,10 @@ namespace netmeld::core::utils {
                             const std::string&, const std::string&);
 
   std::string expandCiscoIfaceName(const std::string&);
+  std::string compileCPE(const std::string&, const std::string&,
+                         const std::string&, const std::string&);
+
+  std::string replaceSpacesWithUnderscores(const std::string&);
 
   // ==========================================================================
   // toString()

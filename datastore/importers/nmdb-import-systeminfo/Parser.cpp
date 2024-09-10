@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 #include "Parser.hpp"
-
+#include <netmeld/core/utils/StringUtilities.hpp>
 // =============================================================================
 // Parser logic
 // =============================================================================
@@ -43,9 +43,7 @@ Parser::Parser() : Parser::base_type(start)
 
     osName =
         ("OS Name: " 
-        > tokens[( pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)
-               ,  pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)
-               )]
+        > tokens[pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)]
         > qi::eol);
 
     osVersion =
@@ -144,7 +142,7 @@ Parser::Parser() : Parser::base_type(start)
         > osVersion 
         > osManufacturer 
         > osConfiguration 
-        > *(qi::char_ - qi::lit("System Manufacturer:")) //Skip to system manufacturer
+        > *(qi::char_ - qi::lit("System Manufacturer:")) [pnx::bind(&Parser::setCPE, this)] //Skip to system manufacturer
         > systemManufacturer 
         > systemModel 
         > systemType 
@@ -223,6 +221,15 @@ void Parser::setIfaceStatus(const std::string &_status)
 {
     auto &iface{data.network_cards[curIfaceName]};
     iface.setDown();
+}
+
+void Parser::setCPE()
+{
+    std::string cpe = nmcu::compileCPE("o",
+                                       "microsoft",
+                                       nmcu::replaceSpacesWithUnderscores(nmcu::toLower(data.os.getProductName())),
+                                       data.os.getProductVersion());
+    data.os.setCpe(cpe);
 }
 
 Result

@@ -77,6 +77,24 @@ namespace netmeld::datastore::objects {
     accuracy = _accuracy;
   }
 
+  std::string
+  OperatingSystem::getVendorName() const
+  {
+    return vendorName;
+  }
+
+  std::string
+  OperatingSystem::getProductName() const
+  {
+    return productName;
+  }
+
+  std::string
+  OperatingSystem::getProductVersion() const
+  {
+    return productVersion;
+  }
+
   bool
   OperatingSystem::isValid() const
   {

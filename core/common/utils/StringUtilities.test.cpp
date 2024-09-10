@@ -104,3 +104,9 @@ BOOST_AUTO_TEST_CASE(testGetSrvcString)
   BOOST_TEST("a:b:c" == nmcu::getSrvcString("a", "b", "c"));
   BOOST_TEST("1:2:3" == nmcu::getSrvcString("1", "2", "3"));
 }
+
+BOOST_AUTO_TEST_CASE(testCPEString)
+{
+  BOOST_TEST("cpe:/a:b:c:d" == nmcu::compileCPE("a", "b", "c", "d"));
+  BOOST_TEST("cpe:/1:2:3:4" == nmcu::compileCPE("1", "2", "3", "4"));
+}
