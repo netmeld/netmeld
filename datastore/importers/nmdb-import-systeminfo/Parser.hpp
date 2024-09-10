@@ -85,8 +85,10 @@ class Parser :
       networkCardConnectionName,
       dhcpServer,
       networkCardStatus,
-      domain,
-      token;
+      domain;
+
+    qi::rule<nmdp::IstreamIter, std::string()>
+      tokens;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       ignoredLine,

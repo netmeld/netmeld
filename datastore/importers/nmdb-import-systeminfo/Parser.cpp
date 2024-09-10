@@ -33,54 +33,54 @@ Parser::Parser() : Parser::base_type(start)
     start =
         (*qi::eol > systemInfo > -qi::eol)[(qi::_val = pnx::bind(&Parser::getData, this))];
 
-    token =
-        +qi::ascii::graph;
+    tokens =
+        +qi::ascii::print;
 
     hostName =
         ("Host Name: " 
-        > token[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] 
+        > tokens[pnx::bind(&nmdo::DeviceInformation::setDeviceId, &data.devInfo, qi::_1)] 
         > qi::eol);
 
     osName =
         ("OS Name: " 
-        > token[( pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)
+        > tokens[( pnx::bind(&nmdo::OperatingSystem::setProductName, &data.os, qi::_1)
                ,  pnx::bind(&nmdo::OperatingSystem::setCpe, &data.os, qi::_1)
                )]
         > qi::eol);
 
     osVersion =
         ("OS Version: " 
-        > token[pnx::bind(&nmdo::OperatingSystem::setProductVersion, &data.os, qi::_1)] 
+        > tokens[pnx::bind(&nmdo::OperatingSystem::setProductVersion, &data.os, qi::_1)] 
         > qi::eol);
 
     osManufacturer =
         ("OS Manufacturer: " 
-        > token[pnx::bind(&nmdo::OperatingSystem::setVendorName, &data.os, qi::_1)] 
+        > tokens[pnx::bind(&nmdo::OperatingSystem::setVendorName, &data.os, qi::_1)] 
         > qi::eol);
 
     osConfiguration =
         ("OS Configuration: " 
-        > token[pnx::bind(&nmdo::DeviceInformation::setDescription, &data.devInfo, qi::_1)] 
+        > tokens[pnx::bind(&nmdo::DeviceInformation::setDescription, &data.devInfo, qi::_1)] 
         > qi::eol);
 
     systemManufacturer =
         ("System Manufacturer: " 
-        > token[pnx::bind(&nmdo::DeviceInformation::setVendor, &data.devInfo, qi::_1)] 
+        > tokens[pnx::bind(&nmdo::DeviceInformation::setVendor, &data.devInfo, qi::_1)] 
         > qi::eol);
 
     systemModel =
         ("System Model: " 
-        > token[pnx::bind(&nmdo::DeviceInformation::setModel, &data.devInfo, qi::_1)] 
+        > tokens[pnx::bind(&nmdo::DeviceInformation::setModel, &data.devInfo, qi::_1)] 
         > qi::eol);
 
     systemType =
         ("System Type: "
-        > token[pnx::bind(&nmdo::DeviceInformation::setDeviceType, &data.devInfo, qi::_1)] 
+        > tokens[pnx::bind(&nmdo::DeviceInformation::setDeviceType, &data.devInfo, qi::_1)] 
         > qi::eol);
 
     domain =
         ("Domain: " 
-        > token 
+        > tokens 
         > qi::eol); 
 
     hotfix =
