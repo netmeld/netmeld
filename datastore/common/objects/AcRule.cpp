@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,7 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 #include <netmeld/datastore/objects/AcRule.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 
@@ -63,13 +63,13 @@ namespace netmeld::datastore::objects {
   void
   AcRule::addSrc(const std::string& _value)
   {
-    smartVectorAdd(_value, &srcs);
+    nmcu::addIfUnique(&srcs, _value);
   }
 
   void
   AcRule::addSrcIface(const std::string& _value)
   {
-    smartVectorAdd(_value, &srcIfaces);
+    nmcu::addIfUnique(&srcIfaces, _value);
   }
 
   void
@@ -81,34 +81,25 @@ namespace netmeld::datastore::objects {
   void
   AcRule::addDst(const std::string& _value)
   {
-    smartVectorAdd(_value, &dsts);
+    nmcu::addIfUnique(&dsts, _value);
   }
 
   void
   AcRule::addDstIface(const std::string& _value)
   {
-    smartVectorAdd(_value, &dstIfaces);
+    nmcu::addIfUnique(&dstIfaces, _value);
   }
 
   void
   AcRule::addAction(const std::string& _value)
   {
-    smartVectorAdd(_value, &actions);
+    nmcu::addIfUnique(&actions, _value);
   }
 
   void
   AcRule::addService(const std::string& _value)
   {
-    smartVectorAdd(_value, &services);
-  }
-
-  void
-  AcRule::smartVectorAdd(const std::string& _value,
-                         std::vector<std::string>* const vec)
-  {
-    if (std::find(vec->begin(), vec->end(), _value) == vec->end()) {
-      vec->push_back(_value);
-    }
+    nmcu::addIfUnique(&services, _value);
   }
 
   void

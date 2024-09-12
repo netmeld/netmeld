@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -25,14 +25,10 @@
 // =============================================================================
 
 #include <netmeld/datastore/objects/AclRule.hpp>
-#include <netmeld/datastore/objects/AclIpNetSet.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/parsers/ParserDomainName.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 namespace nmcu = netmeld::core::utils;
-namespace nmdp = netmeld::datastore::parsers;
 
 
 namespace netmeld::datastore::objects {
@@ -78,14 +74,18 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclRule::setSrcIpNetSetId(const std::string& _srcIpNetSetId, const std::string& _srcIpNetSetNamespace)
+  AclRule::setSrcIpNetSetId( const std::string& _srcIpNetSetId
+                           , const std::string& _srcIpNetSetNamespace
+                           )
   {
     srcIpNetSetNamespace = _srcIpNetSetNamespace;
     srcIpNetSetId = _srcIpNetSetId;
   }
 
   void
-  AclRule::setDstIpNetSetId(const std::string& _dstIpNetSetId, const std::string& _dstIpNetSetNamespace)
+  AclRule::setDstIpNetSetId( const std::string& _dstIpNetSetId
+                           , const std::string& _dstIpNetSetNamespace
+                           )
   {
     dstIpNetSetNamespace = _dstIpNetSetNamespace;
     dstIpNetSetId = _dstIpNetSetId;
@@ -100,7 +100,8 @@ namespace netmeld::datastore::objects {
   void
   AclRule::save(pqxx::transaction_base&, const nmco::Uuid&, const std::string&)
   {
-
+    LOG_WARN << "AclRule::save called, nothing done"
+             << std::endl;
   }
 
   std::string
@@ -109,14 +110,15 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << "action: " << action << ", "
-        << "incomingZoneId: " << incomingZoneId << ", "
-        << "outgoingZoneId: " << outgoingZoneId << ", "
-        << "srcIpNetSetNamespace: " << srcIpNetSetNamespace << ", "
-        << "srcIpNetSetId: " << srcIpNetSetId << ", "
-        << "dstIpNetSetNamespace: " << dstIpNetSetNamespace << ", "
-        << "dstIpNetSetId: " << dstIpNetSetId << ", "
-        << "description: " << description
+        << "priority: " << priority
+        << ", action: " << action
+        << ", incomingZoneId: " << incomingZoneId
+        << ", outgoingZoneId: " << outgoingZoneId
+        << ", srcIpNetSetNamespace: " << srcIpNetSetNamespace
+        << ", srcIpNetSetId: " << srcIpNetSetId
+        << ", dstIpNetSetNamespace: " << dstIpNetSetNamespace
+        << ", dstIpNetSetId: " << dstIpNetSetId
+        << ", description: " << description
         << "]";
 
     return oss.str();

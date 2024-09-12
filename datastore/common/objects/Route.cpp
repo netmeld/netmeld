@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -72,9 +72,9 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Route::setIfaceName(const std::string& _ifaceName)
+  Route::setOutIfaceName(const std::string& _outIfaceName)
   {
-    ifaceName = nmcu::toLower(_ifaceName);
+    outIfaceName = nmcu::toLower(_outIfaceName);
   }
 
   void
@@ -133,10 +133,12 @@ namespace netmeld::datastore::objects {
     //       - nextHopIpAddr is set
     //       - isNullRoute is true
     //       - nextVrfId and nextTableId is set
+    //       - outIfaceName is set
     return (  !dstIpNet.hasUnsetPrefix()
            && (  !nextHopIpAddr.hasUnsetPrefix()
               || isNullRoute
               || !(nextVrfId.empty() || nextTableId.empty())
+              || !outIfaceName.empty()
               )
            )
       ;
@@ -154,36 +156,6 @@ namespace netmeld::datastore::objects {
     return dstIpNet.isV6();
   }
 
-  //void
-  //Route::ensureSameFamily()
-  //{
-  //  bool defaultRoute { // case: default route
-  //         !nextHopIpAddr.hasUnsetPrefix()
-  //      && dstIpNet.hasUnsetPrefix()
-  //    };
-  //  bool ifaceRoute { // case: route via interface
-  //         !ifaceName.empty()
-  //      && nextHopIpAddr.hasUnsetPrefix()
-  //      && !dstIpNet.hasUnsetPrefix()
-  //    };
-
-  //  if (defaultRoute) {
-  //    if (nextHopIpAddr.isV4()) {
-  //      dstIpNet = IpNetwork::getIpv4Default();
-  //    } else {
-  //      dstIpNet = IpNetwork::getIpv6Default();
-  //    }
-  //    dstIpNet.setReason(defaultRouteReason);
-  //  } else if (ifaceRoute) {
-  //    if (dstIpNet.isV4()) {
-  //      nextHopIpAddr = IpAddress::getIpv4Default();
-  //    } else {
-  //      nextHopIpAddr = IpAddress::getIpv6Default();
-  //    }
-  //    nextHopIpAddr.setReason(defaultRouteReason);
-  //  }
-  //}
-
   void
   Route::save(pqxx::transaction_base& t,
               const nmco::Uuid& toolRunId, const std::string& deviceId)
@@ -194,28 +166,33 @@ namespace netmeld::datastore::objects {
       return;
     }
 
-    //// Ensure dstIpNet and nextHopIpAddr are same IP family when needed
-    //ensureSameFamily();
-
     dstIpNet.save(t, toolRunId, deviceId);
     nextHopIpAddr.save(t, toolRunId, deviceId);
 
-    t.exec_prepared("insert_raw_device_ip_route"
-      , toolRunId
-      , deviceId // insert converts to lower
-      , vrfId
-      , tableId
-      , isActive
-      , dstIpNet.toString()
-      , nextVrfId // insert converts '' to null
-      , nextTableId // insert converts '' to null
-      , getNextHopIpAddrString() // insert converts '' to null
-      , ifaceName // insert converts '' to null
-      , protocol // insert converts to lower and '' to null
-      , adminDistance
-      , metric
-      , description // insert converts '' to null
-      );
+    if (!vrfId.empty()) {
+      t.exec_prepared( "insert_raw_device_vrf"
+                     , toolRunId
+                     , deviceId
+                     , vrfId
+                     );
+    }
+
+    t.exec_prepared( "insert_raw_device_ip_route"
+                   , toolRunId
+                   , deviceId // insert converts to lower
+                   , vrfId // insert converts '' to null
+                   , tableId // insert converts '' to null
+                   , isActive
+                   , dstIpNet.toString()
+                   , nextVrfId // insert converts '' to null
+                   , nextTableId // insert converts '' to null
+                   , getNextHopIpAddrString() // insert converts '' to null
+                   , outIfaceName // insert converts '' to null
+                   , protocol // insert converts to lower and '' to null
+                   , adminDistance
+                   , metric
+                   , description // insert converts '' to null
+                   );
   }
 
   void
@@ -227,12 +204,12 @@ namespace netmeld::datastore::objects {
       return;
     }
 
-    t.exec_prepared("insert_tool_run_ip_route"
-      , toolRunId
-      , ifaceName
-      , dstIpNet.toString()
-      , getNextHopIpAddrString()
-      );
+    t.exec_prepared( "insert_tool_run_ip_route"
+                   , toolRunId
+                   , outIfaceName
+                   , dstIpNet.toString()
+                   , getNextHopIpAddrString()
+                   );
   }
 
   std::string
@@ -246,9 +223,9 @@ namespace netmeld::datastore::objects {
         << ", isActive: " << std::boolalpha << isActive
         << ", dstIpNet: " << dstIpNet.toDebugString()
         << ", nextVrfId: " << nextVrfId
-        << ", netxtTableId: " << nextTableId
+        << ", nextTableId: " << nextTableId
         << ", nextHopIpAddr: " << nextHopIpAddr.toDebugString()
-        << ", ifaceName: " << ifaceName
+        << ", outIfaceName: " << outIfaceName
         << ", protocol: " << protocol
         << ", adminDistance: " << adminDistance
         << ", metric: " << metric
@@ -269,7 +246,7 @@ namespace netmeld::datastore::objects {
                    , nextVrfId
                    , nextTableId
                    , nextHopIpAddr
-                   , ifaceName
+                   , outIfaceName
                    , protocol
                    , description
                    , adminDistance
@@ -283,7 +260,7 @@ namespace netmeld::datastore::objects {
                    , rhs.nextVrfId
                    , rhs.nextTableId
                    , rhs.nextHopIpAddr
-                   , rhs.ifaceName
+                   , rhs.outIfaceName
                    , rhs.protocol
                    , rhs.description
                    , rhs.adminDistance

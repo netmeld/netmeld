@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,6 +27,7 @@
 
 #include "Parser.hpp"
 
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 #include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
@@ -245,8 +246,9 @@ Parser::parseConfig(const pugi::xml_node& configNode)
   for (const auto& routingOptionsMatch :
        configNode.select_nodes("routing-options[not(@inactive='inactive')]")) {
     const pugi::xml_node routingOptionsNode{routingOptionsMatch.node()};
-    for (const auto& route : parseConfigRoutingOptions(routingOptionsNode)) {
-      logicalSystem.vrfs[""].addRoute(route);
+    for (auto& route : parseConfigRoutingOptions(routingOptionsNode)) {
+      route.setVrfId(DEFAULT_VRF_ID);
+      logicalSystem.vrfs[DEFAULT_VRF_ID].addRoute(route);
     }
   }
 
@@ -499,6 +501,9 @@ Parser::parseConfigRoutingInstances(const pugi::xml_node& routingInstancesNode,
 {
   std::map<std::string, nmdo::Vrf> vrfs;
 
+  // add default
+  vrfs[DEFAULT_VRF_ID].setId(DEFAULT_VRF_ID);
+
   for (const auto& routingInstanceMatch :
        routingInstancesNode.select_nodes("instance[not(@inactive='inactive')]")) {
     const pugi::xml_node routingInstanceNode{routingInstanceMatch.node()};
@@ -560,7 +565,7 @@ Parser::parseConfigRoutingOptions(const pugi::xml_node& routingOptionsNode)
     const auto discardMatch{routeNode.select_node("discard[not(@inactive='inactive')]")};
     if (discardMatch) {
       const std::string outgoingIfaceName{discardMatch.node().name()};
-      route.setIfaceName(outgoingIfaceName);
+      route.setOutIfaceName(outgoingIfaceName);
       route.setNullRoute(true);
     }
 
@@ -818,7 +823,7 @@ Parser::parseConfigApplicationOrTerm(const pugi::xml_node& applicationNode)
 std::vector<nmdo::AclRuleService>
 Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
 {
-  std::vector<nmdo::AclRuleService> aclRules;
+  std::vector<nmdo::AclRuleService> rules;
   size_t ruleId{0};
 
   ruleId = 0;
@@ -826,11 +831,11 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
        policiesNode.select_nodes(
          "policy[not(@inactive='inactive')]/policy[not(@inactive='inactive')]")) {
     const pugi::xml_node policyNode{policyMatch.node()};
-    auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
+    auto rulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
-        aclRulesToAdd.begin(),
-        aclRulesToAdd.end(),
-        std::back_inserter(aclRules)
+        rulesToAdd.begin(),
+        rulesToAdd.end(),
+        std::back_inserter(rules)
         );
     ++ruleId;
   }
@@ -839,23 +844,23 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
   for (const auto& policyMatch :
        policiesNode.select_nodes("global/policy[not(@inactive='inactive')]")) {
     const pugi::xml_node policyNode{policyMatch.node()};
-    auto aclRulesToAdd = parseConfigPolicy(policyNode, ruleId);
+    auto rulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
-        aclRulesToAdd.begin(),
-        aclRulesToAdd.end(),
-        std::back_inserter(aclRules)
+        rulesToAdd.begin(),
+        rulesToAdd.end(),
+        std::back_inserter(rules)
         );
     ++ruleId;
   }
 
-  return aclRules;
+  return rules;
 }
 
 
 std::vector<nmdo::AclRuleService>
 Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
 {
-  std::vector<nmdo::AclRuleService> aclRules;
+  std::vector<nmdo::AclRuleService> rules;
 
   const std::string description{
     policyNode.select_node("name").node().text().as_string()
@@ -967,14 +972,14 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
             aclRule.setDstIpNetSetId(dstIpNetSetId, dstIpNetSetNamespace);
             aclRule.setServiceId(serviceId);
             aclRule.setDescription(description);
-            aclRules.emplace_back(aclRule);
+            rules.emplace_back(aclRule);
           }
         }
       }
     }
   }
 
-  return aclRules;
+  return rules;
 }
 
 
@@ -1147,8 +1152,12 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       const std::string nhType{
         nhTypeMatch.node().text().as_string()
       };
-      if ("Discard" == nhType) {
-        route.setIfaceName("discard");
+      if ("Discard" == nhType) { // drop
+        route.setOutIfaceName("discard");
+        route.setNullRoute(true);
+      }
+      if ("Reject" == nhType) { // drop and send icmp
+        route.setOutIfaceName("reject");
         route.setNullRoute(true);
       }
     }
@@ -1188,7 +1197,7 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       const std::string ifaceName{
         nextHopViaMatch.node().text().as_string()
       };
-      route.setIfaceName(ifaceName);
+      route.setOutIfaceName(ifaceName);
     }
 
     routes.emplace_back(route);

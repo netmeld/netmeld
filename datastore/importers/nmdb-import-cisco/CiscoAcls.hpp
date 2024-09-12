@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -29,7 +29,6 @@
 
 #include <netmeld/datastore/objects/AcRule.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "RulesCommon.hpp"
 
@@ -37,7 +36,6 @@ namespace netmeld::datastore::importers::cisco {
 
   namespace nmdo = netmeld::datastore::objects;
   namespace nmdp = netmeld::datastore::parsers;
-  namespace nmcu = netmeld::core::utils;
 
 
   // ===========================================================================
@@ -62,54 +60,61 @@ namespace netmeld::datastore::importers::cisco {
         start;
 
       qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-        ciscoAcl,
-        ipv46,
-        iosRule,
-          iosRemark,   iosRemarkRuleLine,
-          iosStandard, iosStandardRuleLine,
-          iosExtended, iosExtendedRuleLine,
-          iosIpv6,
-        nxosRule,
-          nxosRemark,   nxosRemarkRuleLine,
-          nxosStandard, nxosStandardRuleLine,
-          nxosExtended, nxosExtendedRuleLine,
-        asaRule,
-          asaRemark,   asaRemarkRuleLine,
-          asaStandard, asaStandardRuleLine,
-          asaExtended, asaExtendedRuleLine,
-        dynamicArgument,
-        sourceAddrIos, destinationAddrIos,
-        sourcePort, destinationPort,
-        icmpArgument,
-          icmpTypeCode, icmpMessage,
-        establishedArgument,
-        logArgument,
-        userArgument,
-        securityGroupArgument,
-        remarkArgument,
-        ipAccessListExtended, ipAccessList;
+          ciscoAcl
+        , ipv46
+        , iosRule
+          , iosIgnored
+          , iosRemark,   iosRemarkRuleLine
+          , iosStandard, iosStandardRuleLine
+          , iosExtended, iosExtendedRuleLine
+          , iosIpv6
+        , nxosRule
+          , nxosRemark,   nxosRemarkRuleLine
+          , nxosStandard, nxosStandardRuleLine
+          , nxosExtended, nxosExtendedRuleLine
+        , asaRule
+          , asaRemark,   asaRemarkRuleLine
+          , asaStandard, asaStandardRuleLine
+          , asaExtended, asaExtendedRuleLine
+        , dynamicArgument
+        , sourceAddrIos, destinationAddrIos
+        , sourcePort, destinationPort
+        , icmpArgument
+          , icmpTypeCode, icmpMessage
+        , establishedArgument
+        , logArgument
+        , userArgument
+        , securityGroupArgument
+        , remarkArgument
+        , ipAccessListExtended, ipAccessList
+        ;
 
       qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-        bookName,
-        action,
-        protocolArgument,
-        addressArgument,
-          addressArgumentIos,
-          mask,
-        portArgument;
+          bookName
+        , action
+        , protocolArgument
+        , addressArgument
+          , addressArgumentIos
+          , mask
+        , portArgument
+          , multiPort
+        ;
+
+      qi::rule<nmdp::IstreamIter, std::string()>
+          addrIpOnly, addrIpMask, addrIpPrefix
+          , ipNoPrefix
+        , anyTerm
+        , logArgumentString
+        , ignoredRuleLine
+        ;
+
+      qi::rule<nmdp::IstreamIter>
+          untrackedArguments
+        , inactiveArgument
+        ;
 
       nmdp::ParserIpAddress   ipAddr;
 
-      qi::rule<nmdp::IstreamIter, std::string()>
-        addrIpOnly, addrIpMask, addrIpPrefix,
-          ipNoPrefix,
-        anyTerm,
-        logArgumentString,
-        ignoredRuleLine;
-
-      qi::rule<nmdp::IstreamIter>
-        untrackedArguments,
-        inactiveArgument;
 
     protected:
       // Supporting data structures
@@ -124,9 +129,9 @@ namespace netmeld::datastore::importers::cisco {
       std::string  curRuleSrcPort  {""};
       std::string  curRuleDstPort  {""};
 
-      std::string  curRuleOptions     {""};
       std::string  curRuleDescription {""};
 
+      std::set<std::string> curRuleOptions;
       std::set<std::string> ignoredRuleData;
 
     private:
@@ -150,7 +155,7 @@ namespace netmeld::datastore::importers::cisco {
       // Policy Related
       void initRuleBook(const std::string&);
 
-      void setCurRuleAction(const std::string&);
+      void addCurRuleAction(const std::string&);
       void addCurRuleOption(const std::string&);
 
       void setCurRuleSrc(const std::string&);
@@ -160,6 +165,8 @@ namespace netmeld::datastore::importers::cisco {
 
       void curRuleFinalize();
       void updateRuleService();
+
+      std::string getMultiPortString(const std::vector<std::string>&);
 
       // Object return
       Result getData();

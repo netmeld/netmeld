@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -28,7 +28,7 @@
 
 #include <format>
 
-#include <netmeld/core/utils/StringUtilities.hpp>
+#include <netmeld/core/utils/ContainerUtilities.hpp>
 
 namespace nmcu = netmeld::core::utils;
 
@@ -257,8 +257,8 @@ namespace netmeld::datastore::objects::prowler {
   std::strong_ordering
   ProwlerV3Data::operator<=>(const ProwlerV3Data& rhs) const
   {
-    return std::tie( assessmentStartTime
-                   , findingUniqueId
+    return std::tie( // assessmentStartTime,
+                     findingUniqueId
                    , provider
                    , profile
                    , accountId
@@ -287,8 +287,8 @@ namespace netmeld::datastore::objects::prowler {
                    , notes
                    , compliance
                    )
-       <=> std::tie( rhs.assessmentStartTime
-                   , rhs.findingUniqueId
+       <=> std::tie( // rhs.assessmentStartTime,
+                     rhs.findingUniqueId
                    , rhs.provider
                    , rhs.profile
                    , rhs.accountId

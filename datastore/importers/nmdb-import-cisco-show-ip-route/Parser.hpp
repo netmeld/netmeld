@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -61,12 +61,23 @@ class Parser:
   // ===========================================================================
   private:
   protected:
-    std::string currVrf;
-    std::string currProtocol;
+    const std::string DEFAULT_VRF_ID  {""};//{"default"};
 
-    nmdo::IpNetwork currDstIpNet;
+    std::string       curVrf         {DEFAULT_VRF_ID};
+    std::string       curProtocol;
+    std::string       curIfaceName;
 
-    nmdo::ToolObservations currObservations;
+    unsigned int curAdminDistance {0};
+    unsigned int curMetric {0};
+
+    nmdo::IpNetwork curDstIpNet;
+
+    nmdo::ToolObservations curObservations;
+
+    bool isIpv6   {false};
+    bool isIos    {false};
+    bool isIosOld {false};
+    bool isNxos   {false};
 
     std::map<std::string, std::string> typeCodeLookups {
           {"%", ""} // next-hop override
@@ -134,6 +145,8 @@ class Parser:
       , ipv6Route
       , ipv4RouteIos
       , ipv6RouteIos
+      , ipv4RouteIosOld
+      , ipv6RouteIosOld
       , ipv4RouteNxos
       , ipv6RouteNxos
       ;
@@ -156,9 +169,10 @@ class Parser:
         ipv6Addr
       ;
 
-    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         vrfHeader
       , vrfHeaderIos
+      , vrfHeaderIosOld
       , vrfHeaderNxos
       ;
 
@@ -174,17 +188,20 @@ class Parser:
 
     qi::rule<nmdp::IstreamIter>
         vrfName
+      , altRoutePath
+      , ipv6Routing
       ;
 
     qi::rule<nmdp::IstreamIter, void(nmdo::Route&), qi::ascii::blank_type>
         distanceMetric
       , ipv4TypeCodeDstIpNet
-      , ipv6TypeCodeDstIpNet
+      , ipv6DstLineIos
       , ifaceName
       , rtrIpv4Addr
       , rtrIpv6Addr
       , dstIpv4Net
       , dstIpv6Net
+      , egressVrf
       ;
 
     qi::rule<nmdp::IstreamIter, void(nmdo::Route&)>
@@ -203,18 +220,12 @@ class Parser:
   // Methods
   // ===========================================================================
   private:
-    void setCurrDstIpNet(const nmdo::IpNetwork&);
-    void setCurrProtocol(const std::string&);
     void determineNullRoute(nmdo::Route&, const std::string&);
     void addRouteToData(Data&, nmdo::Route&);
     void addUnsupported(const std::string&);
     void finalizeVrfData(Data&);
     void updateProtocol(nmdo::Route&, const std::string&);
     void updateDstIpNet(nmdo::Route&, nmdo::IpNetwork&);
-
-    nmdo::IpNetwork getCurrDstIpNet();
-    std::string getCurrProtocol();
-    std::string getTypeCodeValue(const std::string&);
+    void updateDistanceMetric(nmdo::Route&, unsigned int, unsigned int);
 };
-
 #endif // PARSER_HPP

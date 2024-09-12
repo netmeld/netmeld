@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -78,24 +78,6 @@ BOOST_AUTO_TEST_CASE(testTrim)
 
   for (const auto& [key, value] : tests) {
     BOOST_TEST(value == nmcu::trim(key));
-  }
-}
-
-BOOST_AUTO_TEST_CASE(testToString)
-{
-  {
-    std::set<std::string> test {"a", "b", "c"};
-
-    BOOST_TEST("a b c" == nmcu::toString(test));
-    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
-    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
-  }
-  {
-    std::vector<std::string> test {"a", "b", "c"};
-
-    BOOST_TEST("a b c" == nmcu::toString(test));
-    BOOST_TEST("a,b,c" == nmcu::toString(test, ','));
-    BOOST_TEST("a, b, c" == nmcu::toString(test, ", "));
   }
 }
 

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -39,6 +39,8 @@ class TestVrf : public nmdo::Vrf {
     explicit TestVrf(const std::string& _vrfId) : Vrf(_vrfId) {};
 
   public:
+    std::string getId()
+    { return vrfId; }
     std::vector<std::string> getIfaces()
     { return ifaces; }
 };

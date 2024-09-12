@@ -205,14 +205,14 @@ Parser::addRoute(const nmdo::IpAddress& _ipAddr)
   for (const auto& ipa : d.ifaces[curIfaceName].getIpAddresses()) {
     if (ipa.isV4() && _ipAddr.isV4()) {
       nmdo::Route route;
-      route.setIfaceName(curIfaceName);
+      route.setOutIfaceName(curIfaceName);
       route.setNextHopIpAddr(_ipAddr);
       route.setDstIpNet(ipa);
       d.routes.push_back(route);
     }
     if (ipa.isV6() && _ipAddr.isV6()) {
       nmdo::Route route;
-      route.setIfaceName(curIfaceName);
+      route.setOutIfaceName(curIfaceName);
       route.setNextHopIpAddr(_ipAddr);
       route.setDstIpNet(ipa);
       d.routes.push_back(route);

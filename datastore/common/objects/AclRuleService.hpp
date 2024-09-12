@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,6 +38,7 @@ namespace netmeld::datastore::objects {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
       std::string serviceId;
+
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -56,12 +57,13 @@ namespace netmeld::datastore::objects {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setServiceId(const std::string&);
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
+      void save( pqxx::transaction_base&
+               , const nmco::Uuid&, const std::string&) override;
+
+      std::string toDebugString() const override;
 
       std::strong_ordering operator<=>(const AclRuleService&) const;
       bool operator==(const AclRuleService&) const;
   };
 }
-
 #endif // ACL_RULE_SERVICE_HPP

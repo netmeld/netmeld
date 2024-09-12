@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -25,10 +25,6 @@
 // =============================================================================
 
 #include <netmeld/datastore/objects/AclRuleService.hpp>
-#include <netmeld/core/utils/StringUtilities.hpp>
-
-namespace nmcu = netmeld::core::utils;
-
 
 namespace netmeld::datastore::objects {
 
@@ -48,24 +44,39 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclRuleService::save(pqxx::transaction_base& t,
-      const nmco::Uuid& toolRunId, const std::string& deviceId)
+  AclRuleService::save( pqxx::transaction_base& t
+                      , const nmco::Uuid& toolRunId
+                      , const std::string& deviceId
+                      )
   {
-    AclRule::save(t, toolRunId, deviceId);
-    t.exec_prepared("insert_raw_device_acl_rule_service",
-        toolRunId,
-        deviceId,
-        priority,
-        action,
-        incomingZoneId,
-        outgoingZoneId,
-        srcIpNetSetNamespace,
-        srcIpNetSetId,
-        dstIpNetSetNamespace,
-        dstIpNetSetId,
-        serviceId,
-        description
-        );
+    //AclRule::save(t, toolRunId, deviceId);
+    t.exec_prepared( "insert_raw_device_acl_rule_service"
+                   , toolRunId
+                   , deviceId
+                   , priority
+                   , action
+                   , incomingZoneId
+                   , outgoingZoneId
+                   , srcIpNetSetNamespace
+                   , srcIpNetSetId
+                   , dstIpNetSetNamespace
+                   , dstIpNetSetId
+                   , serviceId
+                   , description
+                   );
+  }
+
+  std::string
+  AclRuleService::toDebugString() const
+  {
+    std::ostringstream oss;
+
+    oss << "["
+        << "aclRule: " << AclRule::toDebugString()
+        << ", serviceId: " << serviceId
+        << "]";
+
+    return oss.str();
   }
 
   std::strong_ordering
