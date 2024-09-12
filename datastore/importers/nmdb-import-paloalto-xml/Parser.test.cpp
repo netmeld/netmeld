@@ -60,11 +60,191 @@ struct TestParser : public Parser
   getFirstNode(const char* xmlData)
   {
     pugi::xml_parse_result result = doc.load_string(xmlData);
-    BOOST_REQUIRE(result);
+    BOOST_REQUIRE_MESSAGE( result
+                         , std::format("Failed to load XML: {}", xmlData)
+                         );
 
     return doc.document_element();
   }
 };
+
+BOOST_AUTO_TEST_CASE(testParseConfigService)
+{
+  TestParser tp;
+  // Sample XML data
+  const std::string xml {R"(
+      <service>
+        <entry name="service1">
+          <protocol> <tcp> <port>80</port> </tcp> </protocol>
+        </entry>
+        <entry name="service2">
+          <protocol> <udp> <port>53</port> </udp> </protocol>
+        </entry>
+        <entry name="service3">
+          <protocol> <icmp/> </protocol>
+        </entry>
+        <entry name="service4">
+          <protocol> <sctp> <port>123-456</port> </sctp> </protocol>
+        </entry>
+      </service>
+    )"};
+//        <entry name="service5">
+//          <protocol> <tcp>
+//            <source-port>123-456</source-port>
+//            <port>456-789</port>
+//          </tcp> </protocol>
+//        </entry>
+
+  auto test = tp.getFirstNode(xml.c_str());
+  auto out {tp.parseConfigService(test)};
+
+  BOOST_TEST_REQUIRE(5 == out.size());
+
+  // default "any" service always added first
+  auto dbgStr = out[0].toDebugString();
+  nmdp::testInString(dbgStr, "id: any,");
+  nmdp::testInString(dbgStr, "protocol: any,");
+  nmdp::testInString(dbgStr, "srcPortRanges: [[min: 0, max: 65535]]");
+  nmdp::testInString(dbgStr, "dstPortRanges: [[min: 0, max: 65535]]");
+  nmdp::testInString(dbgStr, "includedIds: []]");
+
+  dbgStr = out[1].toDebugString();
+  nmdp::testInString(dbgStr, "id: service1,");
+  nmdp::testInString(dbgStr, "protocol: tcp,");
+  nmdp::testInString(dbgStr, "srcPortRanges: [[min: 0, max: 65535]]");
+  nmdp::testInString(dbgStr, "dstPortRanges: [[min: 80, max: 80]]");
+  nmdp::testInString(dbgStr, "includedIds: []]");
+
+  dbgStr = out[2].toDebugString();
+  nmdp::testInString(dbgStr, "id: service2,");
+  nmdp::testInString(dbgStr, "protocol: udp,");
+  nmdp::testInString(dbgStr, "srcPortRanges: [[min: 0, max: 65535]]");
+  nmdp::testInString(dbgStr, "dstPortRanges: [[min: 53, max: 53]]");
+  nmdp::testInString(dbgStr, "includedIds: []]");
+
+  dbgStr = out[3].toDebugString();
+  nmdp::testInString(dbgStr, "id: service3,");
+  nmdp::testInString(dbgStr, "protocol: icmp,");
+  nmdp::testInString(dbgStr, "srcPortRanges: []");
+  nmdp::testInString(dbgStr, "dstPortRanges: []");
+  nmdp::testInString(dbgStr, "includedIds: []]");
+
+  dbgStr = out[4].toDebugString();
+  nmdp::testInString(dbgStr, "id: service4,");
+  nmdp::testInString(dbgStr, "protocol: sctp,");
+  nmdp::testInString(dbgStr, "srcPortRanges: [[min: 0, max: 65535]]");
+  nmdp::testInString(dbgStr, "dstPortRanges: [[min: 123, max: 456]]");
+  nmdp::testInString(dbgStr, "includedIds: []]");
+
+// TODO: Parser not configured to support different source-port
+//  dbgStr = out[5].toDebugString();
+//  nmdp::testInString(dbgStr, "id: service5,");
+//  nmdp::testInString(dbgStr, "protocol: tcp,");
+//  nmdp::testInString(dbgStr, "srcPortRanges: [[min: 123, max: 456]]");
+//  nmdp::testInString(dbgStr, "dstPortRanges: [[min: 456, max: 789]]");
+//  nmdp::testInString(dbgStr, "includedIds: []]");
+}
+
+BOOST_AUTO_TEST_CASE(testParseConfigServiceGroup)
+{
+  TestParser tp;
+  // Sample XML data
+  const std::string xml {R"(
+      <service-group>
+        <entry name="service1">
+          <members>
+            <member>member1</member>
+            <member>member2</member>
+          </members>
+        </entry>
+        <entry name="service2">
+          <members>
+            <member>member3</member>
+          </members>
+        </entry>
+        <entry> </entry>
+      </service-group>
+    )"};
+
+  auto test = tp.getFirstNode(xml.c_str());
+  auto out {tp.parseConfigServiceGroup(test)};
+
+  BOOST_TEST_REQUIRE(3 == out.size());
+
+  BOOST_TEST(out[0].isValid());
+  BOOST_TEST(out[1].isValid());
+  BOOST_TEST(!out[2].isValid());
+
+  auto dbgStr {out[0].toDebugString()};
+  nmdp::testInString(dbgStr, "id: service1,");
+  nmdp::testInString(dbgStr, "includedIds: [member1, member2]]");
+
+  dbgStr = out[1].toDebugString();
+  nmdp::testInString(dbgStr, "id: service2,");
+  nmdp::testInString(dbgStr, "includedIds: [member3]]");
+
+  dbgStr = out[2].toDebugString();
+  nmdp::testInString(dbgStr, "id: ,");
+  nmdp::testInString(dbgStr, "includedIds: []]");
+}
+
+BOOST_AUTO_TEST_CASE(testParseConfigRulebase)
+{
+  TestParser tp;
+  
+  // add known zones (prior parse step that impacts results)
+  tp.ls.aclZones["any"].setId("any");
+
+  const std::string xml {R"(
+      <rulebase>
+        <security>
+          <rules>
+            <entry> <action>drop</action> </entry>
+            <entry> <action>drop</action> </entry>
+          </rules>
+        </security>
+        <default-security-rules>
+          <rules>
+            <entry> <action>drop</action> </entry>
+            <entry> <action>drop</action> </entry>
+          </rules>
+        </default-security-rules>
+        <pbf>
+          <rules>
+            <entry> <action>drop</action> </entry>
+            <entry> <action>drop</action> </entry>
+          </rules>
+        </pbf>
+        <nat>
+          <rules>
+            <entry> <action>drop</action> </entry>
+            <entry> <action>drop</action> </entry>
+          </rules>
+        </nat>
+      </rulebase>
+    )"};
+
+  auto test = tp.getFirstNode(xml.c_str());
+  auto out {tp.parseConfigRulebase(test, tp.ls)};
+
+  BOOST_TEST_REQUIRE(4 == out.size());
+
+  nmdp::testInString(out[0].toDebugString(), "priority: 1000000,");
+  nmdp::testInString(out[1].toDebugString(), "priority: 1000001,");
+  nmdp::testInString(out[2].toDebugString(), "priority: 2000000,");
+  nmdp::testInString(out[3].toDebugString(), "priority: 2000001,");
+
+  for (size_t i {0}; i < out.size(); ++i) {
+    const auto dbgStr {out[i].toDebugString()};
+    nmdp::testInString(dbgStr, "action: block,");
+    nmdp::testInString(dbgStr, "incomingZoneId: any,");
+    nmdp::testInString(dbgStr, "outgoingZoneId: any,");
+    nmdp::testInString(dbgStr, "srcIpNetSetId: any,");
+    nmdp::testInString(dbgStr, "dstIpNetSetId: any,");
+    nmdp::testInString(dbgStr, "description: ],");
+    nmdp::testInString(dbgStr, "serviceId: any]");
+  }
+}
 
 BOOST_AUTO_TEST_CASE(testParseConfigRules)
 {
