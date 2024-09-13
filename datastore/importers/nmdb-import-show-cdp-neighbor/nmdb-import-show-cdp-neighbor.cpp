@@ -85,6 +85,12 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
           result.save(t, toolRunId, did);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
+
+        LOG_DEBUG << "Iterating over PhysicalConnections\n";
+        for (auto& result : results.physCons) {
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
+        }
       }
     }
 

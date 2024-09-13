@@ -71,7 +71,7 @@ Parser::Parser() : Parser::base_type(start)
 
   noDetailEntry =
     noDetailDeviceId [(pnx::ref(nd.curHostname) = qi::_1)]
-    > noDetailLocalIface
+    > noDetailLocalIface [(pnx::ref(nd.srcIfaceName) = qi::_1)]
     > noDetailHoldtime
     > noDetailCapability
     > noDetailPlatform [(pnx::ref(nd.curModel) = qi::_1)]
@@ -90,9 +90,11 @@ Parser::Parser() : Parser::base_type(start)
 
   noDetailLocalIface =
     token
-    > -( qi::ascii::blank
-      >> (+qi::ascii::digit >> +(qi::char_('/') >> +qi::ascii::digit))
-      )
+    > -qi::hold[  qi::ascii::blank
+               >> (  +qi::ascii::digit
+                  >> +(qi::char_('/') >> +qi::ascii::digit)
+                  )
+               ]
     ;
 
   noDetailHoldtime =
@@ -171,9 +173,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   detailInterface =
-    qi::lit("Interface: ") > token
+    qi::lit("Interface: ")
+    > qi::as_string[+(qi::ascii::print - qi::char_(','))]
+        [(pnx::ref(nd.srcIfaceName) = qi::_1)]
+    > qi::lit(",") > +qi::ascii::blank
     > qi::lit("Port ID (outgoing port): ")
-    > token [(pnx::ref(nd.curIfaceName) = qi::_1)]
+    > noDetailPortId [(pnx::ref(nd.curIfaceName) = qi::_1)]
     > qi::eol
     ;
 
@@ -251,6 +256,17 @@ Parser::updateInterfaces()
 }
 
 void
+Parser::updatePhysicalConnection()
+{
+  nmdo::PhysicalConnection physCon;
+  physCon.setSrcIfaceName(nd.srcIfaceName);
+  physCon.setDstDeviceId(getDevice(nd.curHostname));
+  physCon.setDstIfaceName(nd.curIfaceName);
+
+  d.physCons.emplace_back(physCon);
+}
+
+void
 Parser::updateDeviceInformation()
 {
   nmdo::DeviceInformation devInfo;
@@ -287,6 +303,7 @@ Parser::finalizeData()
 
     updateIpAddrs();
     updateInterfaces();
+    updatePhysicalConnection();
     updateDeviceInformation();
   }
 
