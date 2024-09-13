@@ -51,6 +51,7 @@ class TestParser : public Parser {
     using Parser::switchport;
     using Parser::switchportPortSecurity;
     using Parser::switchportVlan;
+    using Parser::spanningTree;
     using Parser::interface;
     using Parser::routerId;
     using Parser::route;
@@ -71,14 +72,25 @@ BOOST_AUTO_TEST_CASE(testParts)
     const std::vector<std::string> nocdpTestDataOk
       {
         "no cdp run\n",
-        
         "no cdp enable\n"
+      }
+      ;
+
+    const std::vector<std::string> nocdpTestDataBad
+      {
+        "no cdp\n",
+        "no cdp invalid\n"
       }
       ;
 
     for (const auto& test : nocdpTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'nocdp':" << test);
+    }
+
+    for (const auto& test : nocdpTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!nocdp':" << test);
     }
   }
 
@@ -90,16 +102,25 @@ BOOST_AUTO_TEST_CASE(testParts)
     const std::vector<std::string> versionPIXASATestDataOk
       {
         "PIX Version\n",
-      
         "ASA Version 1\n",
-      
         "ASA Version 1 a\n"
+      }
+      ;
+
+    const std::vector<std::string> versionPIXASATestDataBad
+      {
+        "PIX ASA 1\n"
       }
       ;
 
     for (const auto& test : versionPIXASATestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'versionPIXASA':" << test);
+    }
+
+    for (const auto& test : versionPIXASATestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!versionPIXASA':" << test);
     }
   }
 
@@ -108,10 +129,15 @@ BOOST_AUTO_TEST_CASE(testParts)
 
     const std::vector<std::string> deviceAAATestDataOk
       {
-        
         "aaa tkn1\n",
-
         "aaa tkn1 tkn2\n"
+        
+      }
+      ;
+
+    const std::vector<std::string> deviceAAATestDataBad
+      {
+        "aaa\n",
         
       }
       ;
@@ -120,6 +146,11 @@ BOOST_AUTO_TEST_CASE(testParts)
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'deviceAAA':" << test);
     }
+
+    for (const auto& test : deviceAAATestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!deviceAAA':" << test);
+    }
   }
 
   {
@@ -127,39 +158,37 @@ BOOST_AUTO_TEST_CASE(testParts)
     const std::vector<std::string> globalServicesTestDataOk =
       {
         "sntp server 1.2.3.4\n",
-
         "ntp server 1.2.3.4 tkn1\n",
-        
-        "sntp server vrp tkn1 1.2.3.4 tkn1 tkn2\n",
-        
-        "ntp server vrp tkn1 1.2.3.4 tkn1 tkn2\n",
-        
+        "sntp server vrf tkn1 1.2.3.4 tkn1 tkn2\n",
+        "ntp server vrf tkn1 tkn2 tkn3 tkn4\n",
         "snmp-server host 1.2.3.4\n",
-        
         "snmp-server host 1.2.3.4 tkn1\n",
-        
-        "snmp-server host 1.2.3.4 tkn1 tkn2\n",
-        
+        "snmp-server host tkn1 tkn2 tkn3\n",
         "radius-server host 1.2.3.4\n",
-        
         "radius-server host 1.2.3.4 tkn1\n",
-        
         "radius-server host 1.2.3.4 tkn1 tkn2\n",
-        
         "ip name-server 1.2.3.4\n",
-        
-        "ip name-server vrf tkn2 1.2.3.4 4.3.2.1\n",
-        
+        "ip name-server vrf tkn1 1.2.3.4 4.3.2.1\n",
+        "ip name-server vrf tkn1 1.2.3.4 4.3.2.1 use-vrf tkn2\n",
         "logging server 1.2.3.4\n",
-        
-        "logging server 1.2.3.4 tkn1\n",
-        
-        "logging server 1.2.3.4 tkn1 tkn2\n"
+        "logging host 1.2.3.4 tkn1\n",
+        "logging server tkn1 1.2.3.4 tkn1 tkn2\n"
+      }
+      ;
+    const std::vector<std::string> globalServicesTestDataBad =
+      {
+        "sntp server\n",
+        "snmp server host\n"
+        "radius-server host tkn1\n"
       }
       ;
     for (const auto& test : globalServicesTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'globalServices':" << test);
+    }
+    for (const auto& test : globalServicesTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!globalServices':" << test);
     }
   }
 
@@ -169,54 +198,73 @@ BOOST_AUTO_TEST_CASE(testParts)
     const std::vector<std::string> spanningTreeInitialTestDataOk =
       {
         "spanning-tree mode mode1\n",
-          
+        "spanning-tree mst configuration\n",
         "spanning-tree mst configuration\n"
         "    tkn1\n",
-          
         "spanning-tree mst configuration\n"
-        "    tkn1 tkn2\n",
-          
+        "    tkn1 tkn2\n"
+        "    tkn3\n",
         "spanning-tree portfast bpduguard\n",
-          
         "spanning-tree portfast bpduguard tkn1\n",
-          
         "spanning-tree portfast bpduguard tkn1 tkn2\n",
-          
         "spanning-tree portfast bpdufilter\n",
-          
         "spanning-tree portfast bpdufilter tkn1\n",
-          
-        "spanning-tree portfast bpdufilter tkn1 tkn2\n"
       }
       ;
-      for (const auto& test : spanningTreeInitialTestDataOk) {
-        BOOST_TEST(nmdp::test(test, parserRule, blank),
-                  "Parse rule 'spanningTreeInitial':" << test);
+
+    const std::vector<std::string> spanningTreeInitialTestDataBad =
+      {
+        "spanning-tree mode\n",
+        "spanning-tree mst configuration\n"
+        "    \n"
       }
+      ;
+    
+    for (const auto& test : spanningTreeInitialTestDataOk) {
+      BOOST_TEST(nmdp::test(test, parserRule, blank),
+                "Parse rule 'spanningTreeInitial':" << test);
+    }
+    
+    for (const auto& test : spanningTreeInitialTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                "Parse rule '!spanningTreeInitial':" << test);
+    }
   }
 
   {
     const auto& parserRule {tp.domainData};
 
-    const std::vector<std::string> testData =
+    const std::vector<std::string> domainDataTestDataOk =
       {
         "switchname sname1.dm\n",
-        
         "hostname sname1.dm ignored\n",
-        
         "ip domain-name sname1.dm\n",
-        
-        "ip dns domain-name sname1.dm\n",
-        
+        "ip dns domain name sname1.dm\n",
         "ip dns domain name vrf vrf1 sname1.dm\n",
-        
         "domain-name sname1.dm\n"
       }
       ;
 
-    for (const auto& test : testData) {
+    const std::vector<std::string> domainDataTestDataBad =
+      {
+        "switchname\n",
+        "hostname",
+        "ip domain-name\n",
+        "ip dns sname1.dm\n",
+        "ip dns vrf vrf1 sname1.dm\n",
+        "ip dns domain name vrf sname1.dm\n",
+        "domain-name\n"
+      }
+      ;
+
+    for (const auto& test : domainDataTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'domainData':" << test);
+    }
+
+    for (const auto& test : domainDataTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!domainData':" << test);
     }
   }
 
@@ -224,11 +272,13 @@ BOOST_AUTO_TEST_CASE(testParts)
     
     const auto& parserRule {tp.vrfInstance};
 
-    const std::vector<std::string> testData =
+    const std::vector<std::string> vrfInstanceTestDataOk =
       {
-        "vrf definition tkn1\n"
-        "    description this is a description\n",
-
+        "vrf instance tkn1\n"
+        "    description description\n",
+        "vrf instance tkn1\n"
+        "    ignorable this is something that will be ignored\n"
+        "    description a description\n",
         "vrf definition tkn1\n"
         "    ignorable this is something that will be ignored\n"
         "    description this is a description\n"
@@ -236,9 +286,28 @@ BOOST_AUTO_TEST_CASE(testParts)
       }
       ;
 
-    for (const auto& test : testData) {
+    const std::vector<std::string> vrfInstanceTestDataBad =
+      {
+        "vrf instance\n"
+        "    description description\n",
+        "vrf instance tkn1\n"
+        "    ignorable this is something that will be ignored\n"
+        "    description\n",
+        "vrf definition\n"
+        "    ignorable this is something that will be ignored\n"
+        "    description this is a description\n"
+        "    anotherignorable this is something that will be ignored\n"
+      }
+      ;
+
+    for (const auto& test : vrfInstanceTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'vrfInstance':" << test);
+    }
+
+    for (const auto& test : vrfInstanceTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!vrfInstance':" << test);
     }
   }
 
@@ -247,26 +316,35 @@ BOOST_AUTO_TEST_CASE(testParts)
     const std::vector<std::string> channelGroupTestDataOk = 
       {
         "channel-group 1 mode tkn1",
-
         "channel-group 1 mode tkn1 type tkn2"
+      }
+      ;
+    
+    const std::vector<std::string> channelGroupTestDataBad = 
+      {
+        "channel-group mode tkn1",
+        "channel-group 1 mode tkn1 type",
+        "channel-group 1 type tkn2"
       }
       ;
 
     const std::vector<std::string> encapsulationTestDataOk =
       {
         "encapsulation dot1q 0",
-
         "encapsulation dot1Q 1"
+      }
+      ;
+
+    const std::vector<std::string> encapsulationTestDataBad =
+      {
+        "encapsulation dot1q",
+        "encapsulation dot1Q a"
       }
       ;
 
     const std::vector<std::string> switchportPortSecurityTestDataOk =
       {
         "port-security max 10 ",
-
-        "port-security max 10 vlan 1",
-
-        "port-security maximum 10",
 
         "port-security maximum 10 vlan 1",
 
@@ -307,12 +385,43 @@ BOOST_AUTO_TEST_CASE(testParts)
       }
       ;
 
+    const std::vector<std::string> switchportPortSecurityTestDataBad =
+      {
+        "port-security max ",
+
+        "port-security maximum tkn1 vlan 1",
+
+        "port-security mac-address max 10 vlan",
+
+        "port-security violation",
+
+        "port-security shutdown-time tkn1",
+
+        "port-security limit rate"
+
+      }
+      ;
+
     const std::vector<std::string> switchportVlanTestDataOk =
     
       {
         "access native vlan add tkn1 1",
 
-        "access native vlan 1-100"
+        "access allowed vlan 1-100",
+
+        "access vlan 1-100"
+      }
+      ;
+
+    const std::vector<std::string> switchportVlanTestDataBad =
+    
+      {
+
+        "access native vlan",
+
+        "access allowed vlan",
+
+        "access vlan"
       }
       ;
 
@@ -323,6 +432,33 @@ BOOST_AUTO_TEST_CASE(testParts)
         "switchport nonegotiate"
       }
       ;
+
+    const std::vector<std::string> switchportTestDataBad=
+      {
+        "switchport mode"
+      }
+      ;
+    
+    const std::vector<std::string> spanningTreeTestDataOk =
+      {
+        
+        "spanning-tree bpduguard",
+        "spanning-tree bpduguard enable",
+        "spanning-tree bpduguard disable",
+        "spanning-tree bpduguard rate-limit",
+        "spanning-tree bpdufilter enable",
+        "spanning-tree bpdufilter disable",
+        "spanning-tree port type edge",
+        "spanning-tree port type network",
+        "spanning-tree port type normal",
+        "spanning-tree port type auto",
+        "spanning-tree portfast",
+        "spanning-tree portfast network",
+        "spanning-tree portfast normal",
+        "spanning-tree portfast auto",
+        "spanning-tree portfast edge"
+      }
+    ;
 
     const std::vector<std::string> interfaceTestDataOk =
       {
@@ -343,7 +479,21 @@ BOOST_AUTO_TEST_CASE(testParts)
         "  ip address 1.2.0.0/16\n"
         "  ip address 1.2.3.4\n"
         "  vrrp ip 4.3.2.1\n"
-        "  ip helper-address 1.2.3.4\n",
+        "  ip helper-address 1.2.3.4\n"
+        "  spanning-tree bpduguard enable\n"
+        "  spanning-tree bpduguard disable\n"
+        "  spanning-tree bpduguard rate-limit\n"
+        "  spanning-tree bpdufilter enable\n"
+        "  spanning-tree bpdufilter disable\n"
+        "  spanning-tree port type edge\n"
+        "  spanning-tree port type network\n"
+        "  spanning-tree port type normal\n"
+        "  spanning-tree port type auto\n"
+        "  spanning-tree portfast\n"
+        "  spanning-tree portfast network\n"
+        "  spanning-tree portfast normal\n"
+        "  spanning-tree portfast auto\n"
+        "  spanning-tree portfast edge\n",
 
         "interface iface4\n"
         "  description 123/ABC 01234-56\n"
@@ -363,10 +513,32 @@ BOOST_AUTO_TEST_CASE(testParts)
       }
       ;
 
+    const std::vector<std::string> interfaceTestDataBad =
+      {
+        "interface\n"
+        "  description 123/ABC 01234-56\n",
+
+        "interface iface2 tkn1 tkn2\n"
+        "  description 123/ABC 01234-56\n"
+        "  no ip address\n"
+        "  shutdown\n"
+        "  cdp enable\n"
+        "  vrf member tkn1\n"
+        "  standby 10 ip 1.2.3.4\n"
+        "  standby 10 ip 4.3.2.1 secondary\n"
+
+      }
+      ;
+
     const auto& parserRule {tp.interface};
     for (const auto& test : interfaceTestDataOk) {
       BOOST_TEST(nmdp::test(test, tp.interface, blank),
                  "Parse rule 'interface':" << test);
+    }
+
+    for (const auto& test : interfaceTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, tp.interface, blank),
+                 "Parse rule '!interface':" << test);
     }
 
     for (const auto& test : channelGroupTestDataOk) {
@@ -374,9 +546,19 @@ BOOST_AUTO_TEST_CASE(testParts)
                  "Parse rule 'channelGroup':" << test);
     }
 
+    for (const auto& test : channelGroupTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, tp.channelGroup, blank),
+                 "Parse rule '!channelGroup':" << test);
+    }
+
     for (const auto& test : encapsulationTestDataOk) {
       BOOST_TEST(nmdp::test(test, tp.encapsulation, blank),
                  "Parse rule 'encapsulation':" << test);
+    }
+
+    for (const auto& test : encapsulationTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, tp.encapsulation, blank),
+                 "Parse rule '!encapsulation':" << test);
     }
 
     for (const auto& test : switchportTestDataOk) {
@@ -384,14 +566,35 @@ BOOST_AUTO_TEST_CASE(testParts)
                  "Parse rule 'switchport':" << test);
     }
 
+    for (const auto& test : switchportTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, tp.switchport, blank),
+                 "Parse rule '!switchport':" << test);
+    }
+
     for (const auto& test : switchportPortSecurityTestDataOk) {
       BOOST_TEST(nmdp::test(test, tp.switchportPortSecurity, blank),
                  "Parse rule 'switchportPortSecurity':" << test);
     }
 
+    for (const auto& test : switchportPortSecurityTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, tp.switchportPortSecurity, blank),
+                 "Parse rule '!switchportPortSecurity':" << test);
+    }
+
     for (const auto& test : switchportVlanTestDataOk) {
       BOOST_TEST(nmdp::test(test, tp.switchportVlan, blank),
                  "Parse rule 'switchportVlan':" << test);
+    }
+
+
+    for (const auto& test : switchportVlanTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, tp.switchportVlan, blank),
+                 "Parse rule '!switchportVlan':" << test);
+    }
+
+    for (const auto& test : spanningTreeTestDataOk) {
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
     }
   }
 
@@ -413,9 +616,25 @@ BOOST_AUTO_TEST_CASE(testParts)
       }
       ;
 
+    const std::vector<std::string> routerIdTestDataBad
+      {
+
+        "ip router-id tkn1 1.2.3.4\n",
+
+        "ipv6 router-id 1111:1111:1111:1111:1111:1111:1111:1111"
+
+        
+      }
+      ;
+
     for (const auto& test : routerIdTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'routerId':" << test);
+    }
+
+    for (const auto& test : routerIdTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!routerId':" << test);
     }
   }
 
@@ -442,10 +661,24 @@ BOOST_AUTO_TEST_CASE(testParts)
         
       }
       ;
+    const std::vector<std::string> routeTestDataBad
+      {
+
+        "ip route vrf tkn1 1.1.0.0 \n",
+
+        "ip route 1.1.0.0 255.255.0.0 vrf track bfd 20\n"
+        
+      }
+      ;
 
     for (const auto& test : routeTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'route':" << test);
+    }
+
+    for (const auto& test : routeTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!route':" << test);
     }
   }
 
@@ -469,9 +702,30 @@ BOOST_AUTO_TEST_CASE(testParts)
       }
       ;
 
+    const std::vector<std::string> vlanTestDataBad
+      {
+
+        "vlan\n",
+
+        "vlan 1,2-b,4\n"
+        "  name tkn1\n"
+        "  ignored tkn2 tkn3 tkn4\n",
+
+        "vlan 1,2,a\n"
+        "  name tkn1\n"
+        "  ignored tkn2 tkn3 tkn4\n"
+
+      }
+      ;
+
     for (const auto& test : vlanTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'vlan':" << test);
+    }
+
+    for (const auto& test : vlanTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, parserRule, blank),
+                 "Parse rule '!vlan':" << test);
     }
   }
 
@@ -487,9 +741,23 @@ BOOST_AUTO_TEST_CASE(testParts)
       }
       ;
 
+    const std::vector<std::string> policyMapTestDataBad =
+      {
+        "\n"
+        "  class cls1\n"
+      }
+      ;
+
     const std::vector<std::string> classMapTestDataOk =
       {
         "om CM\n"
+        "  match access-group name agn1\n"
+      }
+      ;
+
+    const std::vector<std::string> classMapTestDataBad =
+      {
+        "om\n"
         "  match access-group name agn1\n"
       }
       ;
@@ -500,21 +768,45 @@ BOOST_AUTO_TEST_CASE(testParts)
       }
       ;
 
+    const std::vector<std::string> accessPolicyRelatedTestDataBad =
+      {
+        "access-group tkn1 interface tkn2",
+        "access-group tkn1 tkn2 interface",
+        "access-group tkn1 tkn2 tkn3 interface tkn4",
+      }
+      ;
 
-    for (const auto& test : accessPolicyRelatedTestDataOk) {
-      BOOST_TEST(nmdp::test(test, accessPolicyRelated, blank),
-                 "Parse rule 'accessPolicyRelated':" << test);
-    }
 
     for (const auto& test : policyMapTestDataOk) {
       BOOST_TEST(nmdp::test(test, policyMap, blank),
                  "Parse rule 'policyMap':" << test);
     }
 
+    for (const auto& test : policyMapTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, policyMap, blank),
+                 "Parse rule '!policyMap':" << test);
+    }
+
     for (const auto& test : classMapTestDataOk) {
       BOOST_TEST(nmdp::test(test, classMap, blank),
                  "Parse rule 'classMap':" << test);
     }
+
+    for (const auto& test : classMapTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, classMap, blank),
+                 "Parse rule '!classMap':" << test);
+    }
+
+    for (const auto& test : accessPolicyRelatedTestDataOk) {
+      BOOST_TEST(nmdp::test(test, accessPolicyRelated, blank),
+                 "Parse rule 'accessPolicyRelated':" << test);
+    }
+
+    for (const auto& test : accessPolicyRelatedTestDataBad) {
+      BOOST_TEST(!nmdp::test(test, accessPolicyRelated, blank),
+                 "Parse rule '!accessPolicyRelated':" << test);
+    }
+
   }
 
 }
