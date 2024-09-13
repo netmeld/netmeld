@@ -105,6 +105,10 @@ class Parser :
       globalServices,
       routerId,
       route,
+      routeIpMask,
+      routeIpAddr,
+      routeKeywordHandle,
+      routeKeywordSkip,
       vlanDef,
       channelGroup,
       encapsulation,
@@ -130,6 +134,11 @@ class Parser :
              qi::locals<uint8_t>>
       interface
       ;
+    
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+        interfaceNo
+      ;
+
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         vrfInstance
