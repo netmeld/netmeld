@@ -67,9 +67,7 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, nmdo::Vrf(), qi::ascii::blank_type>
-        // vrfTable1
         vrfLine1
-      // , vrfTable2
       , vrfLine2
       ;
 
@@ -77,15 +75,16 @@ class Parser :
         ignoredLine
       , vrfTable1
       , vrfHeader1
-      // , vrfLine1
       , vrfTable2
       , vrfHeader2
-      // , vrfLine2
       ;
+
+    qi::rule<nmdp::IstreamIter, std::vector<std::string>(), qi::ascii::blank_type>
+      csValues;
 
     qi::rule<nmdp::IstreamIter, std::string()>
         token
-      , csValues
+      // , csValues
       , interfaces
       , routeDistinguisher
       ;

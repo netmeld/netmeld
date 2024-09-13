@@ -95,14 +95,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   // ----- common usage -----
+  csValues =
+    qi::lexeme[+(qi::ascii::alnum) % qi::char_(',')]
+    ;
 
   token =
     +qi::ascii::graph
-    ;
-
-  csValues =
-    +((qi::ascii::graph - qi::char_(','))
-    > -qi::char_(','))
     ;
 
   ignoredLine =
@@ -120,9 +118,9 @@ Parser::Parser() : Parser::base_type(start)
         (vrfTable2)
           (vrfHeader2)
             (vrfLine2)
+      //(csValues)
       //(ignoredLine)
       //(token)
-      //(csValues)
       );
 }
 
@@ -136,7 +134,6 @@ Parser::addVrf(const nmdo::Vrf& vrf)
   d.vrfs.emplace_back(vrf);
   std::cerr << vrf.toDebugString();
 }
-
 
 Result
 Parser::getData()
