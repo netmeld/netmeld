@@ -133,51 +133,52 @@ BOOST_AUTO_TEST_CASE(testNoDetailParts)
   {
     const auto& parserRule {tp.noDetailEntry};
 
-    std::vector<std::tuple<std::string, std::string, std::string>> testsOk {
+    std::vector<std::tuple<std::string, std::string, std::string, std::string>> testsOk {
         {"Et1  HOST1.domain  Ethernet1  120\n"
-        , "HOST1.domain", "Ethernet1"
+        , "Et1", "HOST1.domain", "Ethernet1"
         }
       , {"Et2\tHOST2.domain\tEthernet2\t120\n"
-        , "HOST2.domain", "Ethernet2"
+        , "Et2", "HOST2.domain", "Ethernet2"
         }
       , {"Et3  host3.domain  Ethernet3  120\n"
-        , "host3.domain", "Ethernet3"
+        , "Et3", "host3.domain", "Ethernet3"
         }
       , {"Et4\thost4.domain\tEthernet4\t120\n"
-        , "host4.domain", "Ethernet4"
+        , "Et4", "host4.domain", "Ethernet4"
         }
       , {"Et5/1  HOST5.domain  Ethernet5  120\n"
-        , "HOST5.domain", "Ethernet5"
+        , "Et5/1", "HOST5.domain", "Ethernet5"
         }
       , {"Et6/1\tHOST6.domain\tEthernet6\t120\n"
-        , "HOST6.domain", "Ethernet6"
+        , "Et6/1", "HOST6.domain", "Ethernet6"
         }
       , {"Et7  HOST7.domain  Ethernet 7/1  120\n"
-        , "HOST7.domain", "Ethernet 7/1"
+        , "Et7", "HOST7.domain", "Ethernet 7/1"
         }
       , {"Et8\tHOST8.domain\tEthernet 8/1\t120\n"
-        , "HOST8.domain", "Ethernet 8/1"
+        , "Et8", "HOST8.domain", "Ethernet 8/1"
         }
       , {"Et9  1234.5678.90ab  Ethernet9  120\n"
-        , "1234.5678.90ab", "Ethernet9"
+        , "Et9", "1234.5678.90ab", "Ethernet9"
         }
       , {"Et10\t1234.5678.90ab\tEthernet10\t120\n"
-        , "1234.5678.90ab", "Ethernet10"
+        , "Et10", "1234.5678.90ab", "Ethernet10"
         }
       , {"Et11  HOST11.domain  net11-2  120\n"
-        , "HOST11.domain", "net11-2"
+        , "Et11", "HOST11.domain", "net11-2"
         }
       , {"Et12\tHOST12.domain\tnet12-2\t120\n"
-        , "HOST12.domain", "net12-2"
+        , "Et12", "HOST12.domain", "net12-2"
         }
       };
-    for (const auto& [test, hostName, ifaceName] : testsOk) {
+    for (const auto& [test, srcIfaceName, hostName, ifaceName] : testsOk) {
       tp.nd = NeighborData();
       BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
                 , "Parse rule 'noDetailEntry': " << test
                 );
+      BOOST_TEST(srcIfaceName == tp.nd.srcIfaceName);
       BOOST_TEST(hostName == tp.nd.curHostname);
-      BOOST_TEST(ifaceName == tp.nd.curIfaceName, '|' + ifaceName + "| |" + tp.nd.curIfaceName + '|');
+      BOOST_TEST(ifaceName == tp.nd.curIfaceName);
     }
   }
 }
