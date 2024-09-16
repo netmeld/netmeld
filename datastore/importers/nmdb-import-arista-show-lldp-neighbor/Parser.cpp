@@ -68,7 +68,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   noDetailEntry =
-    token
+    token   [(pnx::ref(nd.srcIfaceName) = qi::_1)]
     > token [(pnx::ref(nd.curHostname) = qi::_1)]
     > port  [(pnx::ref(nd.curIfaceName) = qi::_1)]
     > qi::uint_
