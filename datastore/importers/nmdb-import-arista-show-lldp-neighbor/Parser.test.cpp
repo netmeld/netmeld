@@ -279,6 +279,12 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
       , {"- Port ID type: Interface name (5)\nPort ID     : \"Ethernet6/25\"\n"
         , "Ethernet6/25"
         }
+      , {"- Port ID type: Interface name(1)\nPort ID     : \"Ethernet 1\"\n"
+        , "Ethernet 1"
+        }
+      , {"- Port ID type: Interface name (5)\nPort ID     : \"Ethernet 6/25\"\n"
+        , "Ethernet 6/25"
+        }
       };
     for (const auto& [test, portId] : testsOk) {
       tp.nd = NeighborData();
