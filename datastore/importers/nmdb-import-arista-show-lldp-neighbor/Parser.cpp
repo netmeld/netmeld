@@ -238,16 +238,6 @@ Parser::getDevice(const std::string& hostname)
   return hostname.substr(0, hostname.find("."));
 }
 
-// currently disabled
-// void
-// Parser::updateIpAddrs()
-// {
-//   for (auto ip : nd.ipAddrs) {
-//     ip.addAlias(nd.curHostname, "lldp import");
-//     d.ipAddrs.push_back(ip);
-//   }
-// }
-
 void
 Parser::addVlan(uint16_t vlanId)
 {
