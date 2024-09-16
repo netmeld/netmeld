@@ -194,10 +194,6 @@ Parser::Parser() : Parser::base_type(start)
     +qi::ascii::graph
     ;
 
-  csvToken =
-    +(qi::ascii::graph - qi::char_(','))
-    ;
-
   ignoredLine =
       (+token > qi::eol)
     | (qi::eol)
@@ -225,7 +221,6 @@ Parser::Parser() : Parser::base_type(start)
       (inQuotes)
       //(ignoredLine)
       //(token)
-      //(csvToken)
     );
 }
 
