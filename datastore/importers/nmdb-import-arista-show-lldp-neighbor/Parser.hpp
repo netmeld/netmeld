@@ -96,6 +96,7 @@ class Parser :
       , detailPortId
       , detailSystemDescription
       , detailSystemName
+      , detailVlan
       , noDetailConfig
       , noDetailTableInfo
       , noDetailHeader
@@ -109,10 +110,6 @@ class Parser :
       , inQuotes
       , token
       , csvToken
-      ;
-
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type, qi::locals<unsigned short, std::string>>
-        detailVlan
       ;
 
   // ===========================================================================
