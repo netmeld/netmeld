@@ -302,10 +302,6 @@ Parser::finalizeData()
   if (!nd.curHostname.empty())  {
     // normalize hostname
     auto temp {nd.curHostname};
-    auto pos = temp.find('(');
-    if (std::string::npos != pos) {
-      temp = temp.substr(0, pos);
-    }
     nd.curHostname = nmcu::toLower(temp);
 
     updateInterfaces();
