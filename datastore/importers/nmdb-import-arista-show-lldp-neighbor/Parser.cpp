@@ -119,9 +119,6 @@ Parser::Parser() : Parser::base_type(start)
 
   detailDiscovered =
     qi::lit("Discovered")
-    > qi::uint_
-    > qi::lit("days,")
-    > token
     > ignoredLine
     ;
 
