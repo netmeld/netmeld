@@ -381,6 +381,7 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
   }
 
   {
+    tp.nd = NeighborData();
     const auto& parserRule {tp.detailVlan};
 
     std::vector<std::tuple<std::string, unsigned short>> testsOk {
@@ -392,12 +393,12 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
         }
       };
     for (const auto& [test, vlanId] : testsOk) {
-      tp.nd = NeighborData();
       BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
                 , "Parse rule 'detailVlan': " << test
                 );
-      BOOST_TEST(vlanId == tp.nd.curVlans[0]);
+      BOOST_TEST(vlanId == tp.nd.curVlans.back());
     }
+    BOOST_TEST(testsOk.size() == tp.nd.curVlans.size());
   }
 }
 
