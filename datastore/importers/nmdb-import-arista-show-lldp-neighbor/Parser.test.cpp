@@ -64,7 +64,6 @@ BOOST_AUTO_TEST_CASE(testUtil)
 {
   TestParser tp;
   {
-    tp.nd = NeighborData();
     const auto& parserRule {tp.port};
 
     std::vector<std::string> testsOk {
@@ -75,10 +74,11 @@ BOOST_AUTO_TEST_CASE(testUtil)
       , "net12-2"
       };
     for (const auto& test : testsOk) {
-      BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
+      std::string out;
+      BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
                 , "Parse rule 'port': " << test
                 );
-      BOOST_TEST(NeighborData() == tp.nd);
+      BOOST_TEST(test == out);
     }
   }
 }
