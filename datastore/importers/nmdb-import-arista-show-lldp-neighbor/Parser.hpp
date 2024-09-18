@@ -94,9 +94,11 @@ class Parser :
       , detailNeighborLine
       , detailPortDescription
       , detailPortId
+      , detailPortVlanLine
       , detailSystemDescription
       , detailSystemName
       , detailVlan
+      , detailVlanLine
       , noDetailConfig
       , noDetailTableInfo
       , noDetailHeader

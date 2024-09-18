@@ -159,6 +159,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   detailVlan =
+    ( detailVlanLine
+    | detailPortVlanLine
+    )
+    ;
+
+  detailVlanLine =
     qi::lit("VLAN ID: ")
     > qi::ushort_ [(pnx::bind(&Parser::addVlan, this, qi::_1))]
     > qi::lit(", VLAN Name: ")
@@ -166,6 +172,11 @@ Parser::Parser() : Parser::base_type(start)
     > qi::eol
     ;
 
+  detailPortVlanLine =
+    qi::lit("- IEEE802.1 Port VLAN ID:")
+    > qi::ushort_ [(pnx::bind(&Parser::addVlan, this, qi::_1))]
+    > ignoredLine
+    ;
 
   // ----- common usage -----
   port =

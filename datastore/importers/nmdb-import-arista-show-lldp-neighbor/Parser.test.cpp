@@ -391,6 +391,12 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
       , {"VLAN ID: 5678, VLAN Name: \"vlan-5678\"\n"
         , 5678
         }
+      , {"- IEEE802.1 Port VLAN ID: 1234\n"
+        , 1234
+        }
+      , {"- IEEE802.1 Port VLAN ID: 5678\n"
+        , 5678
+        }
       };
     for (const auto& [test, vlanId] : testsOk) {
       BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
