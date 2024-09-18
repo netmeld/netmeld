@@ -435,6 +435,9 @@ Ma1             host5.domain                           net1-2              120
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'testWholeNonDetail': " << test);
     BOOST_TEST_REQUIRE(1 == out.size());
+    size_t neighborCount {6};
+    BOOST_TEST(neighborCount == out[0].devInfos.size());
+    BOOST_TEST(neighborCount == out[0].interfaces.size());
   }
 }
 
@@ -516,8 +519,8 @@ Interface Ethernet3/1 detected 1 LLDP neighbors:
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'testDetailWhole': " << test);
     BOOST_TEST(1 == out.size());
-    size_t conCount {2};
-    BOOST_TEST(conCount == out[0].devInfos.size());
-    BOOST_TEST(conCount == out[0].interfaces.size());
+    size_t neighborCount {2};
+    BOOST_TEST(neighborCount == out[0].devInfos.size());
+    BOOST_TEST(neighborCount == out[0].interfaces.size());
   }
 }
