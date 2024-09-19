@@ -81,55 +81,54 @@ struct Data
 
 class Parser
 {
+  protected:
+    Data data;
+
   public:
-    Data
-    getData();
-
-    void
-    parseConfig(const pugi::xml_node&);
-
-    void
-    parseConfigRouteInfo(const pugi::xml_node&);
+    Data getData();
 
   protected:
-    void
-    parseConfigDeviceconfig(const pugi::xml_node&, LogicalSystem&);
+    void parseConfigDeviceconfig(const pugi::xml_node&, LogicalSystem&);
 
-    void
-    parseConfigVsys(const pugi::xml_node&);
+    void parseConfigVsys(const pugi::xml_node&);
 
     std::map<std::string, nmdo::InterfaceNetwork>
-    parseConfigInterface(const pugi::xml_node&);
+      parseConfigInterface(const pugi::xml_node&);
 
     nmdo::InterfaceNetwork
-    parseConfigInterfaceEntry(const pugi::xml_node&);
+      parseConfigInterfaceEntry(const pugi::xml_node&);
 
     std::map<std::string, nmdo::Vrf>
-    parseConfigVirtualRouter(const pugi::xml_node&);
+      parseConfigVirtualRouter(const pugi::xml_node&);
 
     std::map<std::string, nmdo::AclZone>
-    parseConfigZone(const pugi::xml_node&);
+      parseConfigZone(const pugi::xml_node&);
 
     std::map<std::string, nmdo::AclIpNetSet>
-    parseConfigAddress(const pugi::xml_node&);
+      parseConfigAddress(const pugi::xml_node&);
 
     std::map<std::string, nmdo::AclIpNetSet>
-    parseConfigAddressGroup(const pugi::xml_node&);
+      parseConfigAddressGroup(const pugi::xml_node&);
 
     std::vector<nmdo::AclService>
-    parseConfigService(const pugi::xml_node&);
+      parseConfigService(const pugi::xml_node&);
 
     std::vector<nmdo::AclService>
-    parseConfigServiceGroup(const pugi::xml_node&);
+      parseConfigServiceGroup(const pugi::xml_node&);
 
     std::vector<nmdo::AclRuleService>
-    parseConfigRulebase(const pugi::xml_node&, const LogicalSystem&);
+      parseConfigRulebase(const pugi::xml_node&, const LogicalSystem&);
 
     std::vector<nmdo::AclRuleService>
-    parseConfigRules(const pugi::xml_node&, const size_t, const LogicalSystem&);
+      parseConfigRules( const pugi::xml_node&
+                      , const size_t
+                      , const LogicalSystem&
+                      );
 
-  private:
-    Data data;
+  public:
+    void parseConfig(const pugi::xml_node&);
+    void parseConfigRouteInfo(const pugi::xml_node&);
+
 };
 
 #endif  /* PARSER_HPP */
