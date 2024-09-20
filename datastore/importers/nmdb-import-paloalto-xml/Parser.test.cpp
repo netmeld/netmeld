@@ -136,8 +136,8 @@ BOOST_AUTO_TEST_CASE(testParseConfigRules)
       </rules>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigRules(test, 0, tp.ls)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigRules(test, 0, tp.ls)};
 
   BOOST_TEST_REQUIRE(23 == out.size());
   for (const auto& rule : out) {
@@ -314,10 +314,13 @@ BOOST_AUTO_TEST_CASE(testParseConfigRulebase)
       </rulebase>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigRulebase(test, tp.ls)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigRulebase(test, tp.ls)};
 
   BOOST_TEST_REQUIRE(4 == out.size());
+  for (const auto& rule : out) {
+    BOOST_TEST(rule.isValid());
+  }
 
   nmdp::testInString(out[0].toDebugString(), "priority: 1000000,");
   nmdp::testInString(out[1].toDebugString(), "priority: 1000001,");
@@ -325,7 +328,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigRulebase)
   nmdp::testInString(out[3].toDebugString(), "priority: 2000001,");
 
   for (size_t i {0}; i < out.size(); ++i) {
-    const auto dbgStr {out[i].toDebugString()};
+    const auto& dbgStr {out[i].toDebugString()};
     nmdp::testInString(dbgStr, "action: block,");
     nmdp::testInString(dbgStr, "incomingZoneId: any,");
     nmdp::testInString(dbgStr, "outgoingZoneId: any,");
@@ -357,11 +360,10 @@ BOOST_AUTO_TEST_CASE(testParseConfigServiceGroup)
       </service-group>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigServiceGroup(test)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigServiceGroup(test)};
 
   BOOST_TEST_REQUIRE(3 == out.size());
-
   BOOST_TEST(out[0].isValid());
   BOOST_TEST(out[1].isValid());
   BOOST_TEST(!out[2].isValid());
@@ -406,10 +408,13 @@ BOOST_AUTO_TEST_CASE(testParseConfigService)
 //          </tcp> </protocol>
 //        </entry>
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigService(test)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigService(test)};
 
   BOOST_TEST_REQUIRE(5 == out.size());
+  for (const auto& service : out) {
+    BOOST_TEST(service.isValid());
+  }
 
   // default "any" service always added first
   auto dbgStr = out[0].toDebugString();
@@ -477,22 +482,25 @@ BOOST_AUTO_TEST_CASE(testParseConfigAddressGroup)
       </address-group>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigAddressGroup(test)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigAddressGroup(test)};
 
   BOOST_TEST_REQUIRE(3 == out.size());
+  for (const auto& [_, ipNetSet] : out) {
+    BOOST_TEST(ipNetSet.isValid());
+  }
 
-  auto dbgStr = out["group1"].toDebugString();
+  auto dbgStr = out.at("group1").toDebugString();
   nmdp::testInString(dbgStr, "id: group1,");
   nmdp::testInString(dbgStr, "includedIds: [[, 1.2.1.0/24]]");
 
-  dbgStr = out["group2"].toDebugString();
+  dbgStr = out.at("group2").toDebugString();
   nmdp::testInString(dbgStr, "id: group2,");
   nmdp::testInString( dbgStr
                     , "includedIds: [[, 1.2.1.0/24], [, 2.3.4.5/32]]]"
                     );
 
-  dbgStr = out["group3"].toDebugString();
+  dbgStr = out.at("group3").toDebugString();
   nmdp::testInString(dbgStr, "id: group3,");
   nmdp::testInString(dbgStr, "includedIds: []]");
 }
@@ -518,23 +526,26 @@ BOOST_AUTO_TEST_CASE(testParseConfigAddress)
       </address>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigAddress(test)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigAddress(test)};
 
   BOOST_TEST_REQUIRE(3 == out.size());
+  for (const auto& [_, ipNetSet] : out) {
+    BOOST_TEST(ipNetSet.isValid());
+  }
 
-  auto dbgStr = out["address1"].toDebugString();
+  auto dbgStr = out.at("address1").toDebugString();
   nmdp::testInString(dbgStr, "id: address1,");
   nmdp::testInString(dbgStr, "ipNetwork: 1.2.1.0/24,");
   nmdp::testInString(dbgStr, "hostnames: []");
 
-  dbgStr = out["address2"].toDebugString();
+  dbgStr = out.at("address2").toDebugString();
   nmdp::testInString(dbgStr, "id: address2,");
   nmdp::testInString(dbgStr, "ipNetwork: 1.2.3.4/32,");
   nmdp::testInString(dbgStr, "ipNetwork: 2.2.3.4/32,");
   nmdp::testInString(dbgStr, "hostnames: [some.fqdn.1, some.fqdn.2]");
 
-  dbgStr = out["address3"].toDebugString();
+  dbgStr = out.at("address3").toDebugString();
   nmdp::testInString(dbgStr, "id: address3,");
   nmdp::testInString(dbgStr, "ipNets: []");
   nmdp::testInString(dbgStr, "hostnames: [some.other.fqdn]");
@@ -576,22 +587,25 @@ BOOST_AUTO_TEST_CASE(testParseConfigZone)
       </zone>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigZone(test)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigZone(test)};
 
   BOOST_TEST_REQUIRE(3 == out.size());
+  for (const auto& [_, zone] : out) {
+    BOOST_TEST(zone.isValid());
+  }
 
-  auto dbgStr = out["zone1"].toDebugString();
+  auto dbgStr = out.at("zone1").toDebugString();
   nmdp::testInString(dbgStr, "id: zone1,");
   nmdp::testInString(dbgStr, "ifaces: [eth0, eth 1/1]");
   nmdp::testInString(dbgStr, "includedIds: []");
 
-  dbgStr = out["zone2"].toDebugString();
+  dbgStr = out.at("zone2").toDebugString();
   nmdp::testInString(dbgStr, "id: zone2,");
   nmdp::testInString(dbgStr, "ifaces: [eth2]");
   nmdp::testInString(dbgStr, "includedIds: []");
 
-  dbgStr = out["zone3"].toDebugString();
+  dbgStr = out.at("zone3").toDebugString();
   nmdp::testInString(dbgStr, "id: zone3,");
   nmdp::testInString(dbgStr, "ifaces: [eth3, eth4, eth5]");
   nmdp::testInString(dbgStr, "includedIds: []");
@@ -657,12 +671,15 @@ BOOST_AUTO_TEST_CASE(testParseConfigVirtualRouter)
       </virtual-router>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigVirtualRouter(test)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigVirtualRouter(test)};
 
   BOOST_TEST_REQUIRE(2 == out.size());
+  for (const auto& [_, vrf] : out) {
+    BOOST_TEST(vrf.isValid());
+  }
 
-  auto dbgStr = out["vrf1"].toDebugString();
+  auto dbgStr = out.at("vrf1").toDebugString();
   nmdp::testInString(dbgStr, "vrfId: vrf1, ifaces: [eth0, eth1]");
   nmdo::Route r1;
   r1.setVrfId("vrf1");
@@ -674,7 +691,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigVirtualRouter)
   r1.setMetric(10);
   nmdp::testInString(dbgStr, r1.toDebugString());
 
-  dbgStr = out["vrf2"].toDebugString();
+  dbgStr = out.at("vrf2").toDebugString();
   nmdp::testInString(dbgStr, "vrfId: vrf2, ifaces: [eth2]");
   r1.setVrfId("vrf2");
   nmdp::testInString(dbgStr, r1.toDebugString());
@@ -713,7 +730,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigInterfaceEntry)
       </interface>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
+  const auto& test = tp.getFirstNode(xml.c_str());
 
   auto ifaceNode = test.select_node("entry[@name='eth0']").node();
   auto iface = tp.parseConfigInterfaceEntry(ifaceNode);
@@ -763,32 +780,32 @@ BOOST_AUTO_TEST_CASE(testParseConfigInterface)
       </interfaces>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
-  auto out {tp.parseConfigInterface(test)};
+  const auto& test = tp.getFirstNode(xml.c_str());
+  const auto& out {tp.parseConfigInterface(test)};
 
   BOOST_TEST_REQUIRE(5 == out.size());
-  for (const auto& [name, iface] : out) {
+  for (const auto& [_, iface] : out) {
     BOOST_TEST(iface.isValid());
   }
 
-  auto dbgStr = out["loopback"].toDebugString();
+  auto dbgStr = out.at("loopback").toDebugString();
   nmdp::testInString(dbgStr, "name: loopback,");
   nmdp::testInString(dbgStr, "mediaType: loopback,");
 
-  dbgStr = out["eth0"].toDebugString();
+  dbgStr = out.at("eth0").toDebugString();
   nmdp::testInString(dbgStr, "name: eth0,");
   nmdp::testInString(dbgStr, "mediaType: ethernet,");
 
-  dbgStr = out["eth1"].toDebugString();
+  dbgStr = out.at("eth1").toDebugString();
   nmdp::testInString(dbgStr, "name: eth1,");
   nmdp::testInString(dbgStr, "mediaType: ethernet,");
 
-  dbgStr = out["eth1.1"].toDebugString();
+  dbgStr = out.at("eth1.1").toDebugString();
   nmdp::testInString(dbgStr, "name: eth1.1,");
   nmdp::testInString(dbgStr, "mediaType: ethernet,");
   nmdp::testInString(dbgStr, "mode: l3,");
 
-  dbgStr = out["tun0"].toDebugString();
+  dbgStr = out.at("tun0").toDebugString();
   nmdp::testInString(dbgStr, "name: tun0,");
   nmdp::testInString(dbgStr, "mediaType: tunnel,");
 }
@@ -822,10 +839,13 @@ BOOST_AUTO_TEST_CASE(testParseConfigDeviceconfig)
       </deviceconfig>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
+  const auto& test = tp.getFirstNode(xml.c_str());
   tp.parseConfigDeviceconfig(test, logicalSystem);
 
   BOOST_TEST_REQUIRE(4 == logicalSystem.services.size());
+  for (const auto& service : logicalSystem.services) {
+    BOOST_TEST(service.isValid());
+  }
 
   auto dbgStr = logicalSystem.services[0].toDebugString();
   nmdp::testInString(dbgStr, "serviceName: dns,");
@@ -836,6 +856,9 @@ BOOST_AUTO_TEST_CASE(testParseConfigDeviceconfig)
   nmdp::testInString(dbgStr, "dstAddress: [ipAddress: 5.6.7.8/32,");
 
   BOOST_TEST_REQUIRE(2 == logicalSystem.dnsResolvers.size());
+  for (const auto& resolver : logicalSystem.dnsResolvers) {
+    BOOST_TEST(resolver.isValid());
+  }
   dbgStr = logicalSystem.dnsResolvers[0].toDebugString();
   nmdp::testInString(dbgStr, "dstIpAddr: [ipAddress: 1.2.3.4/32,");
   dbgStr = logicalSystem.dnsResolvers[1].toDebugString();
@@ -900,15 +923,27 @@ BOOST_AUTO_TEST_CASE(testParseConfigVsys)
       </config>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
+  const auto& test = tp.getFirstNode(xml.c_str());
   tp.parseConfigVsys(test);
 
   const auto& out {tp.data.logicalSystems};
   BOOST_TEST_REQUIRE(4 == out.size());
 
   for (const auto& [name, ls] : out) {
-    LOG_ERROR << name << std::endl;
     BOOST_TEST(ls.name == name);
+
+    // validity tests for non-zero existence
+    for (const auto& [_, iface] : ls.ifaces) {
+      BOOST_TEST(iface.isValid());
+    }
+    for (const auto& service : ls.aclServices) {
+      BOOST_TEST(service.isValid());
+    }
+    for (const auto& [_, ipNetSet] : ls.aclIpNetSets) {
+      BOOST_TEST(ipNetSet.isValid());
+    }
+
+    // expected existence
     if ("" == name) {
       BOOST_TEST(1 == ls.ifaces.size());
       BOOST_TEST(0 == ls.aclServices.size());
@@ -928,6 +963,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigVsys)
       BOOST_TEST(0 == ls.aclIpNetSets.size());
     } else {
       BOOST_TEST(1 == ls.aclIpNetSets.size());
+      BOOST_TEST(ls.aclIpNetSets.at("any").isValid());
       auto dbgStr {ls.aclIpNetSets.at("any").toDebugString()};
       nmdp::testInString(dbgStr, "id: any,");
       nmdp::testInString(dbgStr, "ipNets: [[ipNetwork: 0.0.0.0/0,");
@@ -1022,10 +1058,10 @@ BOOST_AUTO_TEST_CASE(testParseConfig)
       </config>
     )"};
 
-  auto test = tp.getFirstNode(xml.c_str());
+  const auto& test = tp.getFirstNode(xml.c_str());
   tp.parseConfig(test);
 
-  auto& out1 = tp.data.logicalSystems[""];
+  auto& out1 = tp.data.logicalSystems.at("");
 
   BOOST_TEST_REQUIRE(2 == out1.services.size());
   auto dbgStr = out1.services[0].toDebugString();
@@ -1042,33 +1078,33 @@ BOOST_AUTO_TEST_CASE(testParseConfig)
 
   BOOST_TEST_REQUIRE(2 == out1.ifaces.size());
   for (const auto& [name, iface] : out1.ifaces) {
-    const auto test {std::format("name: {},", name)};
+    const auto& test {std::format("name: {},", name)};
     nmdp::testInString(iface.toDebugString(), test);
   }
 
   BOOST_TEST_REQUIRE(2 == out1.vrfs.size());
   for (const auto& [name, vrf] : out1.vrfs) {
-    const auto test {std::format("vrfId: {}, ifaces:", name)};
+    const auto& test {std::format("vrfId: {}, ifaces:", name)};
     nmdp::testInString(vrf.toDebugString(), test);
   }
 
-  auto& out2 = tp.data.logicalSystems["vsys1"];
+  auto& out2 = tp.data.logicalSystems.at("vsys1");
   BOOST_TEST(out2.name == "vsys1");
 
   bool t1 {out2.ifaces.end() != out2.ifaces.find("eth0")};
   BOOST_TEST(t1);
   BOOST_TEST_REQUIRE(1 == out2.ifaces.size());
-  dbgStr = out2.ifaces["eth0"].toDebugString();
+  dbgStr = out2.ifaces.at("eth0").toDebugString();
   nmdp::testInString(dbgStr, "name: eth0,");
   nmdp::testInString(dbgStr, "ipAddress: 192.168.1.1/32,");
 
   BOOST_TEST_REQUIRE(1 == out2.aclZones.size());
-  dbgStr = out2.aclZones["zone1"].toDebugString();
+  dbgStr = out2.aclZones.at("zone1").toDebugString();
   nmdp::testInString(dbgStr, "id: zone1,");
 
   BOOST_TEST_REQUIRE(3 == out2.aclIpNetSets.size());
   for (const auto& [name, set] : out2.aclIpNetSets) {
-    const auto test {std::format("id: {},", name)};
+    const auto& test {std::format("id: {},", name)};
     nmdp::testInString(set.toDebugString(), test);
   }
 
