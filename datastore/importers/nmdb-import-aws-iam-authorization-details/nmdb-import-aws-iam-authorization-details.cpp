@@ -119,15 +119,116 @@ class Tool : public nmdt::AbstractImportJsonTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       LOG_DEBUG << this->tResults << std::endl;
-      /*for (auto& result : this->tResults) {
-        // muck
+      for (auto& result : this->tResults) {
+          for (auto& user : result.users) {
+            // muck
 
-        // save
-        result.save(t, toolRunId, deviceId);
-        LOG_DEBUG << result.toDebugString() << std::endl;
+            // save
+            LOG_DEBUG << user.toDebugString() << std::endl;
+            user.save(t, toolRunId, deviceId);
 
-        // link
-      }*/
+            // link
+          }
+          for (auto& group : result.groups) {
+            // muck
+
+            // save
+            LOG_DEBUG << group.toDebugString() << std::endl;
+            group.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& role : result.roles) {
+            // muck
+
+            // save
+            LOG_DEBUG << role.toDebugString() << std::endl;
+            role.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& policy : result.policies) {
+            // muck
+
+            // save
+            LOG_DEBUG << policy.toDebugString() << std::endl;
+            policy.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& document : result.documents) {
+            // muck
+
+            // save
+            LOG_DEBUG << document.toDebugString() << std::endl;
+            document.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& statement : result.statements) {
+            // muck
+
+            // save
+            LOG_DEBUG << statement.toDebugString() << std::endl;
+            statement.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& policyDocument : result.policyDocuments) {
+            // muck
+
+            // save
+            LOG_DEBUG << policyDocument.toDebugString() << std::endl;
+            policyDocument.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& policyVersion : result.policyVersions) {
+            // muck
+
+            // save
+            LOG_DEBUG << policyVersion.toDebugString() << std::endl;
+            policyVersion.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& roleProfile : result.roleProfiles) {
+            // muck
+
+            // save
+            LOG_DEBUG << roleProfile.toDebugString() << std::endl;
+            roleProfile.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& roleBoundary : result.roleBoundaries) {
+            // muck
+
+            // save
+            LOG_DEBUG << roleBoundary.toDebugString() << std::endl;
+            roleBoundary.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& amp : result.amps) {
+            // muck
+
+            // save
+            LOG_DEBUG << amp.toDebugString() << std::endl;
+            amp.save(t, toolRunId, deviceId);
+
+            // link
+          }
+          for (auto& userGroup : result.userGroups) {
+            // muck
+
+            // save
+            LOG_DEBUG << userGroup.toDebugString() << std::endl;
+            userGroup.save(t, toolRunId, deviceId);
+
+            // link
+          }
+      }
     }
 
   protected: // Methods part of subclass API
