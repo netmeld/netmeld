@@ -80,9 +80,6 @@ namespace netmeld::core::objects {
       std::strong_ordering operator<=>(const Uuid&) const;
       bool operator==(const Uuid&) const;
 
-      Uuid& operator=(const Uuid&)      = default;
-      Uuid& operator=(Uuid&&) noexcept  = default;
-
       friend std::ostream& operator<<(std::ostream&, const Uuid&);
   };
 }
