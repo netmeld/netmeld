@@ -37,7 +37,6 @@ class TestService : public nmdo::Service {
   public:
     using Service::Service;
 
-    using Service::ANY_PORT;
     using Service::dstFqdn;
     using Service::dstAddress;
     using Service::srcAddress;
@@ -61,7 +60,6 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     nmdo::IpAddress ipAddr;
     TestService service;
 
-    BOOST_TEST("0-65535" == service.ANY_PORT);
     BOOST_TEST(ipAddr == service.dstAddress);
     BOOST_TEST(ipAddr == service.srcAddress);
     BOOST_TEST(!service.isLocal);
@@ -80,7 +78,6 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     nmdo::IpAddress dIpAddr;
     TestService service {"Service", ipAddr};
 
-    BOOST_TEST("0-65535" == service.ANY_PORT);
     BOOST_TEST(ipAddr == service.dstAddress);
     BOOST_TEST(dIpAddr == service.srcAddress);
     BOOST_TEST(!service.isLocal);
