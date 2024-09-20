@@ -48,7 +48,6 @@ namespace netmeld::datastore::objects::aws {
         std::string arn;
         std::string createDate; // Timestamp?
         std::string path;
-        std::string childRoleId;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -58,7 +57,7 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamRoleInstanceProfile();
-      IamRoleInstanceProfile(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&);
+      IamRoleInstanceProfile(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&);
 
     // =========================================================================
     // Methods
@@ -72,7 +71,6 @@ namespace netmeld::datastore::objects::aws {
       void setArn(const std::string&);
       void setCreateDate(const std::string&);
       void setPath(const std::string&);
-      void setChildRoleId(const std::string&);
 
       std::string getParentRoleId() const;
       std::string getProfileId() const;
@@ -80,7 +78,6 @@ namespace netmeld::datastore::objects::aws {
       std::string getArn() const;
       std::string getCreateDate() const;
       std::string getPath() const;
-      std::string getChildRoleId() const;
 
       bool isValid() const override;
 

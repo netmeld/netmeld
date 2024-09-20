@@ -30,11 +30,9 @@
 namespace netmeld::datastore::objects::aws {
 
   IamPolicyDocument::IamPolicyDocument(const std::string& _attachmentId,
-                const std::string& _createDate,
-                const std::string& _versionId) :
+                const std::string& _policyName) :
     attachmentId(_attachmentId),
-    createDate(_createDate),
-    versionId(_versionId)
+    policyName(_policyName)
   {}
 
   IamPolicyDocument::IamPolicyDocument()
@@ -46,13 +44,8 @@ namespace netmeld::datastore::objects::aws {
   }
 
   void
-  IamPolicyDocument::setCreateDate(const std::string& _createDate) {
-    createDate = _createDate;
-  }
-
-  void
-  IamPolicyDocument::setVersionId(const std::string& _versionId) {
-    versionId = _versionId;
+  IamPolicyDocument::setPolicyName(const std::string& _policyName) {
+    policyName = _policyName;
   }
 
   std::string
@@ -61,14 +54,10 @@ namespace netmeld::datastore::objects::aws {
   }
 
   std::string
-  IamPolicyDocument::getCreateDate() const {
-    return createDate;
+  IamPolicyDocument::getPolicyName() const {
+    return policyName;
   }
 
-  std::string
-  IamPolicyDocument::getVersionId() const {
-    return versionId;
-  }
 
   bool
   IamPolicyDocument::isValid() const {
@@ -81,8 +70,7 @@ namespace netmeld::datastore::objects::aws {
 
     oss << "[";
     oss << "attachmentId: " << attachmentId << ", "
-        << "createDate: " << createDate << ", "
-        << "versionId: " << versionId;
+        << "policyName: " << policyName;
     oss << "]";
 
     return oss.str();
@@ -92,12 +80,10 @@ namespace netmeld::datastore::objects::aws {
   auto
   IamPolicyDocument::operator<=>(const IamPolicyDocument& rhs) const {
     return std::tie(attachmentId
-                      , createDate
-                      , versionId
+                      , policyName
                       )
            <=> std::tie(rhs.attachmentId
-                          , rhs.createDate
-                          , rhs.versionId
+                          , rhs.policyName
                           )
     ;
 }

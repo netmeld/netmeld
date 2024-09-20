@@ -44,8 +44,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
         std::string attachmentId;
-        std::string createDate;
-        std::string versionId;
+        std::string policyName;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -55,7 +54,7 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamPolicyDocument();
-      IamPolicyDocument(const std::string&, const std::string&, const std::string&);
+      IamPolicyDocument(const std::string&, const std::string&);
 
     // =========================================================================
     // Methods
@@ -64,12 +63,10 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setAttachmentId(const std::string&);
-      void setCreateDate(const std::string&);
-      void setVersionId(const std::string&);
+      void setPolicyName(const std::string&);
 
       std::string getAttachmentId() const;
-      std::string getCreateDate() const;
-      std::string getVersionId() const;
+      std::string getPolicyName() const;
 
       bool isValid() const override;
 

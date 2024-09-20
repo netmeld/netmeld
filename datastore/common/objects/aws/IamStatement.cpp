@@ -140,9 +140,12 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  auto IamStatement::operator<=>(const IamStatement& rhs) const {
+  auto
+  IamStatement::operator<=>(const IamStatement& rhs) const
+  {
     return std::tie(attachmentId
                       , documentVersion
+                      , sid
                       , effect
                       , actions
                       , resources
@@ -150,6 +153,7 @@ namespace netmeld::datastore::objects::aws {
                       )
            <=> std::tie(rhs.attachmentId
                           , rhs.documentVersion
+                          , rhs.sid
                           , rhs.effect
                           , rhs.actions
                           , rhs.resources

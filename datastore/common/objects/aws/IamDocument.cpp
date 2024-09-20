@@ -91,9 +91,11 @@ namespace netmeld::datastore::objects::aws {
   IamDocument::operator<=>(const IamDocument& rhs) const
   {
     return std::tie(attachmentId
+                        , secondaryId
                         , docVersion
                         )
               <=> std::tie(rhs.attachmentId
+                              , rhs.secondaryId
                               , rhs.docVersion
                               )
     ;

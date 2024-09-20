@@ -100,6 +100,10 @@ namespace netmeld::datastore::objects::aws {
     ;
   }
 
+  bool
+  IamRolePermissionBoundary::operator==(const IamRolePermissionBoundary& rhs) const {
+      return 0 == operator<=>(rhs);
+  }
 
   void
   IamRolePermissionBoundary::save(pqxx::transaction_base& t,

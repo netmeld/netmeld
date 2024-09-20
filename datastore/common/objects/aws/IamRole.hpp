@@ -66,6 +66,9 @@ namespace netmeld::datastore::objects::aws {
                 const nmco::Uuid&, const std::string&) override;
 
       std::string toDebugString() const override;
+
+      auto operator<=>(const IamRole&) const;
+      bool operator==(const IamRole&) const;
   };
 }
 #endif // AWS_IAM_ROLE_HPP

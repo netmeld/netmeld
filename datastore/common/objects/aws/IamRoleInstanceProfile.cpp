@@ -34,14 +34,13 @@ namespace netmeld::datastore::objects::aws {
                 const std::string& _profileName,
                 const std::string& _arn,
                 const std::string& _createDate,
-                const std::string& _path,
-                const std::string& _childRoleId) :
+                const std::string& _path) :
+    parentRoleId(_parentRoleId),
     profileId(_profileId),
     profileName(_profileName),
     arn(_arn),
     createDate(_createDate),
-    path(_path),
-    childRoleId(_childRoleId)
+    path(_path)
   {}
 
   IamRoleInstanceProfile::IamRoleInstanceProfile()
@@ -77,11 +76,6 @@ namespace netmeld::datastore::objects::aws {
     path = _path;
   }
 
-  void
-  IamRoleInstanceProfile::setChildRoleId(const std::string& _childRoleId) {
-    childRoleId = _childRoleId;
-  }
-
   std::string
   IamRoleInstanceProfile::getParentRoleId() const {
     return parentRoleId;
@@ -112,11 +106,6 @@ namespace netmeld::datastore::objects::aws {
     return path;
   }
 
-  std::string
-  IamRoleInstanceProfile::getChildRoleId() const {
-    return childRoleId;
-}
-
   bool
   IamRoleInstanceProfile::isValid() const {
       return false;
@@ -132,8 +121,7 @@ namespace netmeld::datastore::objects::aws {
         << "profileName: " << profileName << ", "
         << "arn: " << arn << ", "
         << "createDate: " << createDate << ", "
-        << "path: " << path << ", "
-        << "childRoleId: " << childRoleId;
+        << "path: " << path << ", ";
     oss << "]";
 
     return oss.str();
@@ -147,7 +135,6 @@ namespace netmeld::datastore::objects::aws {
                       , arn
                       , createDate
                       , path
-                      , childRoleId
                       )
            <=> std::tie(rhs.parentRoleId
                           , rhs.profileId
@@ -155,11 +142,14 @@ namespace netmeld::datastore::objects::aws {
                           , rhs.arn
                           , rhs.createDate
                           , rhs.path
-                          , rhs.childRoleId
                           )
     ;
   }
 
+  bool
+  IamRoleInstanceProfile::operator==(const IamRoleInstanceProfile& rhs) const {
+      return 0 == operator<=>(rhs);
+  }
 
   void
   IamRoleInstanceProfile::save(pqxx::transaction_base& t,

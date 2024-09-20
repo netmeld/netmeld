@@ -83,4 +83,32 @@ namespace netmeld::datastore::objects::aws {
 
     return oss.str();
   }
+
+  auto
+  IamRole::operator<=>(const IamRole& rhs) const
+  {
+    return std::tie( id
+                   , arn
+                   , name
+                   , createDate
+                   , path
+                   , tags
+                   , lastUsed
+                   )
+       <=> std::tie( rhs.id
+                   , rhs.arn
+                   , rhs.name
+                   , rhs.createDate
+                   , rhs.path
+                   , rhs.tags
+                   , rhs.lastUsed
+                   )
+      ;
+  }
+
+  bool
+  IamRole::operator==(const IamRole& rhs) const
+  {
+    return 0 == operator<=>(rhs);
+  }
 }

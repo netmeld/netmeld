@@ -101,7 +101,8 @@ namespace netmeld::datastore::objects::aws {
     return oss.str();
   }
 
-  auto IamPolicyVersion::operator<=>(const IamPolicyVersion& rhs) const {
+  auto
+  IamPolicyVersion::operator<=>(const IamPolicyVersion& rhs) const {
     return std::tie(policyId
                       , versionId
                       , isDefaultVersion
@@ -113,6 +114,11 @@ namespace netmeld::datastore::objects::aws {
                           , rhs.createDate
                           )
     ;
+  }
+
+  bool
+  IamPolicyVersion::operator==(const IamPolicyVersion& rhs) const {
+      return 0 == operator<=>(rhs);
   }
 
   void

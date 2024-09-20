@@ -60,6 +60,9 @@ struct Data {
   std::vector<nmdoa::IamDocument> documents;
   std::vector<nmdoa::IamStatement> statements;
   std::vector<nmdoa::IamPolicyDocument> policyDocuments;
+  std::vector<nmdoa::IamPolicyVersion> policyVersions;
+  std::vector<nmdoa::IamRoleInstanceProfile> roleProfiles;
+  std::vector<nmdoa::IamRolePermissionBoundary> roleBoundaries;
   std::vector<nmdoa::IamAttachedManagedPolicy> amps;
   std::vector<nmdoa::IamUserGroup> userGroups;
 
@@ -97,13 +100,13 @@ class Parser
     void processUserDetails(const json&);
     void processPolicy(const json&);
 
-    void processManagedPolicy(const json&);
+    void processManagedPolicy(const json&, const std::string&);
     void processPolicyList(const json&, const std::string&);
     void processDocument(const json&, const std::string&, const std::string&);
     void processStatement(const json&, const std::string&, const std::string&);
     void processPolicyVersionList(const json&, const std::string&);
-    void processProfileList(const json&);
-    void processPermissionsBoundary(const json&);
+    void processProfileList(const json&, const std::string&);
+    void processPermissionsBoundary(const json&, const std::string&);
     void processRoleLastUsed(const json&);
     void processTags(const json&);
     void processGroupList(const json&);
