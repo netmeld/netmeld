@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -28,17 +28,12 @@
 #include "Parser.hpp"
 
 #include <netmeld/core/utils/StringUtilities.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/datastore/utils/ServiceFactory.hpp>
 
 #include <regex>
 
 
 namespace nmcu = netmeld::core::utils;
 namespace nmdo = netmeld::datastore::objects;
-namespace nmdp = netmeld::datastore::parsers;
-namespace nmdu = netmeld::datastore::utils;
 
 
 Result
@@ -52,22 +47,19 @@ Parser::getData()
 void
 Parser::fromJson(const nlohmann::json &doc)
 {
-  const std::string docKind{doc.at("kind").get<std::string>()};
+  const std::string docKind {doc.at("kind").get<std::string>()};
 
   if ("tm:ltm:virtual-address:virtual-addresscollectionstate" == docKind) {
     parseLtmVirtualAddress(doc);
-  }
-  else if (("tm:net:arp:arpcollectionstate" == docKind) ||
-           ("tm:net:ndp:ndpcollectionstate" == docKind)) {
+  } else if (  ("tm:net:arp:arpcollectionstate" == docKind)
+            || ("tm:net:ndp:ndpcollectionstate" == docKind)
+            ) {
     parseNetArpNdp(doc);
-  }
-  else if ("tm:net:self:selfcollectionstate" == docKind) {
+  } else if ("tm:net:self:selfcollectionstate" == docKind) {
     parseNetSelf(doc);
-  }
-  else if ("tm:net:route:routecollectionstate" == docKind) {
+  } else if ("tm:net:route:routecollectionstate" == docKind) {
     parseNetRoute(doc);
-  }
-  else {
+  } else {
     parseUnsupported(doc);
   }
 }
@@ -79,7 +71,8 @@ Parser::parseIpAddrVrfStr(const std::string& ipAddrVrfStr) const
   std::string ipAddrStr;
   std::string vrfId;
 
-  const std::regex re("([^%]+)(%\\d+)?(.*)");
+  //const std::regex re("([^%]+)(%\\d+)?(.*)");
+  const std::regex re("([^%]+)(%[^/]+)?(.*)");
   std::smatch m;
   if (std::regex_match(ipAddrVrfStr, m, re)) {
     if (1 < m.size()) {
@@ -109,8 +102,8 @@ Parser::parseIpAddrVrfStr(const std::string& ipAddrVrfStr) const
     ipAddrStr = "0.0.0.0";
   }
 
-  return std::tuple<nmdo::IpAddress, std::string>{
-    nmdo::IpAddress{ipAddrStr}, vrfId
+  return std::tuple<nmdo::IpAddress, std::string> {
+    nmdo::IpAddress {ipAddrStr}, vrfId
   };
 }
 
@@ -119,26 +112,27 @@ void
 Parser::parseLtmVirtualAddress(const nlohmann::ordered_json& doc)
 {
   for (const auto& itemJson : doc.at("items")) {
-    const std::string logicalSystemName{
-      nmcu::toLower(itemJson.at("partition").get<std::string>())
-    };
-    auto& logicalSystem{data.logicalSystems[logicalSystemName]};
-    logicalSystem.name = logicalSystemName;
+    const std::string logicalSystemName {
+        nmcu::toLower(itemJson.at("partition").get<std::string>())
+      };
+    auto& logicalSystem {data.logicalSystems[logicalSystemName]};
 
-    const std::string ifaceName{
-      itemJson.at("name").get<std::string>()
-    };
+    const std::string ifaceName {
+        itemJson.at("name").get<std::string>()
+      };
     logicalSystem.ifaces[ifaceName].setName(ifaceName);
 
-    const std::string description{
-      itemJson.at("fullPath").get<std::string>()
-    };
+    const std::string description {
+        itemJson.at("fullPath").get<std::string>()
+      };
     logicalSystem.ifaces[ifaceName].setDescription(description);
 
-    const auto [ipMask, maskVrfId] =
-      parseIpAddrVrfStr(itemJson.at("mask").get<std::string>());
-    auto [ipAddr, vrfId] =
-      parseIpAddrVrfStr(itemJson.at("address").get<std::string>());
+    const auto [ipMask, maskVrfId] {
+        parseIpAddrVrfStr(itemJson.at("mask").get<std::string>())
+      };
+    auto [ipAddr, vrfId] {
+        parseIpAddrVrfStr(itemJson.at("address").get<std::string>())
+      };
     ipAddr.setNetmask(ipMask);
 
     logicalSystem.ifaces[ifaceName].addIpAddress(ipAddr);
@@ -152,27 +146,27 @@ void
 Parser::parseNetArpNdp(const nlohmann::ordered_json& doc)
 {
   for (const auto& itemJson : doc.at("items")) {
-    const std::string logicalSystemName{
-      nmcu::toLower(itemJson.at("partition").get<std::string>())
-    };
-    auto& logicalSystem{data.logicalSystems[logicalSystemName]};
-    logicalSystem.name = logicalSystemName;
+    const std::string logicalSystemName {
+        nmcu::toLower(itemJson.at("partition").get<std::string>())
+      };
+    auto& logicalSystem {data.logicalSystems[logicalSystemName]};
 
-    const std::string ifaceName{
-      itemJson.at("name").get<std::string>()
-    };
+    const std::string ifaceName {
+        itemJson.at("name").get<std::string>()
+      };
     logicalSystem.ifaces[ifaceName].setName(ifaceName);
 
-    const std::string description{
-      itemJson.at("fullPath").get<std::string>()
-    };
+    const std::string description {
+        itemJson.at("fullPath").get<std::string>()
+      };
     logicalSystem.ifaces[ifaceName].setDescription(description);
 
-    const auto [peerIpAddr, vrfId] =
-      parseIpAddrVrfStr(itemJson.at("ipAddress").get<std::string>());
-    nmdo::MacAddress peerMacAddr{
-      itemJson.at("macAddress").get<std::string>()
-    };
+    const auto [peerIpAddr, vrfId] {
+        parseIpAddrVrfStr(itemJson.at("ipAddress").get<std::string>())
+      };
+    nmdo::MacAddress peerMacAddr {
+        itemJson.at("macAddress").get<std::string>()
+      };
     peerMacAddr.setResponding(true);
     peerMacAddr.addIpAddress(peerIpAddr);
 
@@ -187,24 +181,24 @@ void
 Parser::parseNetSelf(const nlohmann::ordered_json& doc)
 {
   for (const auto& itemJson : doc.at("items")) {
-    const std::string logicalSystemName{
-      nmcu::toLower(itemJson.at("partition").get<std::string>())
-    };
-    auto& logicalSystem{data.logicalSystems[logicalSystemName]};
-    logicalSystem.name = logicalSystemName;
+    const std::string logicalSystemName {
+        nmcu::toLower(itemJson.at("partition").get<std::string>())
+      };
+    auto& logicalSystem {data.logicalSystems[logicalSystemName]};
 
-    const std::string ifaceName{
-      itemJson.at("name").get<std::string>()
-    };
+    const std::string ifaceName {
+        itemJson.at("name").get<std::string>()
+      };
     logicalSystem.ifaces[ifaceName].setName(ifaceName);
 
-    const std::string description{
-      itemJson.at("fullPath").get<std::string>()
-    };
+    const std::string description {
+        itemJson.at("fullPath").get<std::string>()
+      };
     logicalSystem.ifaces[ifaceName].setDescription(description);
 
-    const auto [ipAddr, vrfId] =
-      parseIpAddrVrfStr(itemJson.at("address").get<std::string>());
+    const auto [ipAddr, vrfId] {
+        parseIpAddrVrfStr(itemJson.at("address").get<std::string>())
+      };
 
     logicalSystem.ifaces[ifaceName].addIpAddress(ipAddr);
     logicalSystem.vrfs[vrfId].setId(vrfId);
@@ -217,30 +211,31 @@ void
 Parser::parseNetRoute(const nlohmann::ordered_json& doc)
 {
   for (const auto& itemJson : doc.at("items")) {
-    const std::string logicalSystemName{
-      nmcu::toLower(itemJson.at("partition").get<std::string>())
-    };
-    auto& logicalSystem{data.logicalSystems[logicalSystemName]};
-    logicalSystem.name = logicalSystemName;
+    const std::string logicalSystemName {
+        nmcu::toLower(itemJson.at("partition").get<std::string>())
+      };
+    auto& logicalSystem {data.logicalSystems[logicalSystemName]};
 
     nmdo::Route route;
 
-    const std::string tableId{
-      itemJson.at("name").get<std::string>()
-    };
+    const std::string tableId {
+        itemJson.at("name").get<std::string>()
+      };
     route.setTableId(tableId);
 
-    const std::string description{
-      itemJson.at("fullPath").get<std::string>()
-    };
+    const std::string description {
+        itemJson.at("fullPath").get<std::string>()
+      };
     route.setDescription(description);
 
-    const auto [dstIpNet, unusedVrfId] =
-      parseIpAddrVrfStr(itemJson.at("network").get<std::string>());
+    const auto [dstIpNet, unusedVrfId] {
+        parseIpAddrVrfStr(itemJson.at("network").get<std::string>())
+      };
     route.setDstIpNet(dstIpNet);
 
-    const auto [nextHopIpAddr, vrfId] =
-      parseIpAddrVrfStr(itemJson.at("gw").get<std::string>());
+    const auto [nextHopIpAddr, vrfId] {
+        parseIpAddrVrfStr(itemJson.at("gw").get<std::string>())
+      };
     route.setNextHopIpAddr(nextHopIpAddr);
     route.setVrfId(vrfId);
 
@@ -253,6 +248,6 @@ Parser::parseNetRoute(const nlohmann::ordered_json& doc)
 void
 Parser::parseUnsupported(const nlohmann::ordered_json& doc)
 {
-  const std::string docKind{doc.at("kind").get<std::string>()};
+  const std::string docKind {doc.at("kind").get<std::string>()};
   data.observations.addUnsupportedFeature(docKind);
 }

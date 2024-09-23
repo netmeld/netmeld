@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -30,10 +30,6 @@
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdt = netmeld::datastore::tools;
-namespace nmdu = netmeld::datastore::utils;
-
-
-typedef std::vector<Data> Results;
 
 
 template<typename P, typename R>
@@ -41,7 +37,10 @@ class Tool : public nmdt::AbstractImportJsonTool<P,R>
 {
   public:
     Tool() : nmdt::AbstractImportJsonTool<P,R>
-      ("F5 REST API JSON output (.json files)", PROGRAM_NAME, PROGRAM_VERSION)
+      ("F5 REST API JSON output (.json files)"
+      , PROGRAM_NAME
+      , PROGRAM_VERSION
+      )
     {
       this->devInfo.setVendor("F5");
     }
@@ -79,63 +78,16 @@ class Tool : public nmdt::AbstractImportJsonTool<P,R>
             LOG_DEBUG << vrf.toDebugString() << std::endl;
             vrf.save(t, toolRunId, deviceId);
           }
-
-          LOG_DEBUG << "Iterating over Services:" << std::endl;
-          for (auto& service : logicalSystem.services) {
-            LOG_DEBUG << service.toDebugString() << std::endl;
-            service.save(t, toolRunId, deviceId);
-          }
-
-          LOG_DEBUG << "Iterating over DNS resolvers:" << std::endl;
-          for (auto& dnsResolver : logicalSystem.dnsResolvers) {
-            LOG_DEBUG << dnsResolver.toDebugString() << std::endl;
-            dnsResolver.save(t, toolRunId, deviceId);
-          }
-
-          LOG_DEBUG << "Iterating over DNS search domains:" << std::endl;
-          for (auto& dnsSearchDomain : logicalSystem.dnsSearchDomains) {
-            LOG_DEBUG << dnsSearchDomain << std::endl;
-            t.exec_prepared("insert_raw_device_dns_search_domain",
-                toolRunId,
-                deviceId,
-                dnsSearchDomain
-                );
-          }
-
-          LOG_DEBUG << "Iterating over ACL zones:" << std::endl;
-          for (auto& [_, aclZone] : logicalSystem.aclZones) {
-            LOG_DEBUG << aclZone.toDebugString() << std::endl;
-            aclZone.save(t, toolRunId, deviceId);
-          }
-
-          LOG_DEBUG << "Iterating over ACL ipNets:" << std::endl;
-          for (auto& [_, aclIpNetSet] : logicalSystem.aclIpNetSets) {
-            LOG_DEBUG << aclIpNetSet.toDebugString() << std::endl;
-            aclIpNetSet.save(t, toolRunId, deviceId);
-          }
-
-          LOG_DEBUG << "Iterating over ACL services:" << std::endl;
-          for (auto& aclService : logicalSystem.aclServices) {
-            LOG_DEBUG << aclService.toDebugString() << std::endl;
-            aclService.save(t, toolRunId, deviceId);
-          }
-
-          LOG_DEBUG << "Iterating over ACL rules:" << std::endl;
-          for (auto& aclRule : logicalSystem.aclRules) {
-            LOG_DEBUG << aclRule.toDebugString() << std::endl;
-            aclRule.save(t, toolRunId, deviceId);
-          }
         }
       }
     }
-
 };
 
 
 int
 main(int argc, char** argv)
 {
-  Tool<Parser, Results> tool;
+  Tool<Parser, Result> tool;
   return tool.start(argc, argv);
 }
 
