@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,28 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-/* Notes:
-   - This unit is part of the complilation process to help ensure consistency
-     between templates and the actual data
-   - Various data is included and most is commented solely for educational
-     purposes
-     - In non-template, remove data as makes sense
-
-   Guidelines:
-   - Base classes contain some implementation (even if NOOP) for every method
-     - Method overriding is intentional to alter behaviour, not scope hiding
-     - Final has not been used to facilitate new concepts
-       - This may change as code base matures
-   - Import tools are never "base" classes
-   - Data order
-     - 1st tier: Variables, Constructors, Methods
-     - 2nd tier: private, protected, public
-   - Section headers should generally be left to help code organization
-   - Parser logic should be separate
-*/
-
 #include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
+#include <netmeld/datastore/parsers/ParserHelper.hpp>
 
 #include "Parser.hpp"
 
@@ -63,20 +43,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables should generally be private
-  protected: // Variables intended for internal/subclass API
-    // Inhertied from AbstractTool at this scope
-      // std::string            helpBlurb;
-      // std::string            programName;
-      // std::string            version;
-      // ProgramOptions         opts;
-    // Inhertied from AbstractImportSpiritTool at this scope
-      // TResults                 tResults;
-      // nmco::Uuid               toolRunId;
-      // nmco::Time               executionStart;
-      // nmco::Time               executionStop;
-      // nmco::DeviceInformation  devInfo;
-  public: // Variables should rarely appear at this scope
+  private:
+  protected:
+  public:
 
 
   // ===========================================================================
@@ -87,9 +56,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractImportSpiritTool<P,R>
       (
-       "some-command --flag",  // command line tool imports data from
-       PROGRAM_NAME,           // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION         // program version (set in CMakeLists.txt)
+       "show vrf [detail]",
+       PROGRAM_NAME,
+       PROGRAM_VERSION
       )
     {}
 
@@ -97,41 +66,24 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private: // Methods part of internal API
-    // Overriden from AbstractImportSpiritTool
+  private:
     void
     specificInserts(pqxx::transaction_base& t) override
     {
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& result : this->tResults) {
-        // muck
-
-        // save
-        // result.save(t, toolRunId, deviceId);
-        // LOG_DEBUG << result.toDebugString() << std::endl;
-
-        // link
+      for (auto& results : this->tResults) {
+        LOG_DEBUG << "Iterating over Vrfs\n";
+        for (auto& result : results.vrfs) {
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
+        }
       }
     }
 
-  protected: // Methods part of subclass API
-    // Inherited from AbstractTool at this scope
-      // std::string const getDbName() const;
-      // virtual void printVersion() const;
-    // Inherited from AbstractImportSpiritTool at this scope
-      // fs::path    const getDataPath() const;
-      // std::string const getDeviceId() const;
-      // nmco::Uuid   const getToolRunId() const;
-      // virtual void parseData();
-      // virtual void printHelp() const;
-      // virtual int  runTool();
-      // virtual void setToolRunId();
-      // virtual void toolRunMetadataInserts(pqxx::transaction_base&) const;
-  public: // Methods part of public API
-    // Inherited from AbstractTool, don't override as primary tool entry point
-      // int start(int, char**) noexcept;
+  protected:
+  public:
 };
 
 
@@ -139,7 +91,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 // Program entry point
 // =============================================================================
 int main(int argc, char** argv) {
-  Tool<nmdp::DummyParser, Result> tool; // if parser not needed
-  //Tool<Parser, Result> tool; // if parser needed
+  Tool<Parser, Result> tool;
   return tool.start(argc, argv);
 }

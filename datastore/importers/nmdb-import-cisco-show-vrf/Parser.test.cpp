@@ -38,6 +38,8 @@ using qi::ascii::blank;
 
 class TestParser : public Parser {
   public:
+    using Parser::d;
+
     using Parser::start;
 };
 
@@ -59,8 +61,8 @@ BOOST_AUTO_TEST_CASE(testWholeVrfTable1)
               "Parse rule 'testWholeVrfTable1': " << test);
     BOOST_TEST_REQUIRE(1 == out.size());
     // Modify to test number of Vrfs
-    // size_t conCount {2};
-    // BOOST_TEST(conCount == out[0].devInfos.size());
+    size_t conCount {2};
+    BOOST_TEST(conCount == out[0].vrfs.size());
   }
 }
 
@@ -82,5 +84,8 @@ vrf2                                    4 Up      --
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'testWholeVrfTable2': " << test);
     BOOST_TEST_REQUIRE(1 == out.size());
+    // Modify to test number of Vrfs
+    size_t conCount {4};
+    BOOST_TEST(conCount == out[0].vrfs.size());
   }
 }
