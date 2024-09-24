@@ -1,17 +1,17 @@
 DESCRIPTION
 ===========
 
-Description of what the tool parses.
+This program is designed to parse and import the output of the
+Cisco device command `show vrf``. The command outputs various details
+about Virtual Routing and Forwarding (VRF) instances on Cisco devices.
 
-Various information about the tool.  Include any special considerations when
-using the tool.  Potentially explain option requirements more in depth.
+It is important to note that the show vrf command can yield multiple
+formats based on the specific Cisco device and the version of IOS running on it.
 
 EXAMPLES
 ========
-```
-import-tool --device-id server tool-data.txt
-command |
-import-tool --pipe --device-id server tool-data.txt
-```
 
-See Also: `related-tool (8)`
+Process the target data for the device `switch` from a local file.
+```
+nmdb-import-cisco-show-vrf --device-id switch vrfs.txt
+```
