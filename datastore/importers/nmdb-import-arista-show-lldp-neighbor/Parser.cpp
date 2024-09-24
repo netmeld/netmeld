@@ -78,14 +78,14 @@ Parser::Parser() : Parser::base_type(start)
   // ----- detail -----
 
   detailConfig =
-    (detailHeader
+    (detailHeader [(pnx::ref(nd.srcIfaceName) = qi::_1)]
     >> (detailEntry | *qi::eol)
     ) [(pnx::bind(&Parser::finalizeData, this))]
     ;
 
   detailHeader =
     qi::lit("Interface")
-    >> port [(pnx::ref(nd.srcIfaceName) = qi::_1)]
+    >> port
     >> qi::lit("detected")
     > ignoredLine
     > qi::eol

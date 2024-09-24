@@ -90,7 +90,6 @@ class Parser :
       , detailConfig
       , detailDiscovered
       , detailEntry
-      , detailHeader
       , detailNeighborLine
       , detailPortDescription
       , detailPortId
@@ -107,7 +106,8 @@ class Parser :
       ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-        port
+        detailHeader
+      , port
       , restOfLine
       , inQuotes
       , token
