@@ -48,6 +48,7 @@ namespace netmeld::datastore::objects::aws {
         std::string effect;
         std::vector<std::string> actions;
         std::vector<std::string> resources;
+        json principal;
         json condition;
     public: // Variables should rarely appear at this scope
 
@@ -58,7 +59,7 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamStatement();
-      IamStatement(const std::string&, const std::string&, const std::string&, const std::string&, const std::vector<std::string>&, const std::vector<std::string>&, const json&);
+      IamStatement(const std::string&, const std::string&, const std::string&, const std::string&, const std::vector<std::string>&, const std::vector<std::string>&, const json&, const json&);
 
     // =========================================================================
     // Methods
@@ -72,6 +73,7 @@ namespace netmeld::datastore::objects::aws {
       void setEffect(const std::string&);
       void addAction(const std::string&);
       void addResource(const std::string&);
+      void setPrincipal(const json&);
       void setCondition(const json&);
 
       std::string getAttachmentId() const;
@@ -80,6 +82,7 @@ namespace netmeld::datastore::objects::aws {
       std::string getEffect() const;
       std::vector<std::string> getActions() const;
       std::vector<std::string> getResources() const;
+      json getPrincipal() const;
       json getCondition() const;
 
       bool isValid() const override;

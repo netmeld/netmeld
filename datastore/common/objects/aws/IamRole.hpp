@@ -41,6 +41,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
         std::string lastUsed;
+        uint16_t permissionsBoundaryUsageCount;
     public: // Variables should rarely appear at this scope
 
     // =========================================================================
@@ -50,7 +51,7 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamRole();
-      IamRole(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const json&);
+      IamRole(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, uint16_t, const json&);
 
     // =========================================================================
     // Methods
@@ -59,8 +60,10 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
       void setLastUsed(const std::string&);
+      void setPermissionsBoundaryUsageCount(const uint16_t);
 
       std::string getLastUsed() const;
+      uint16_t getPermissionsBoundaryUsageCount() const;
 
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;

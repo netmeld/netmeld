@@ -35,8 +35,10 @@ namespace netmeld::datastore::objects::aws {
                 const std::string& _createDate,
                 const std::string& _lastUsed,
                 const std::string& _path,
+                const uint16_t _permissionsBoundaryUsageCount,
                 const json& _tags) :
     IamBase(_id, _arn, _name, _createDate, _path, _tags),
+    permissionsBoundaryUsageCount(_permissionsBoundaryUsageCount),
     lastUsed(_lastUsed)
   {}
 
@@ -49,10 +51,22 @@ namespace netmeld::datastore::objects::aws {
       lastUsed = _lastUsed;
   }
 
+  void
+  IamRole::setPermissionsBoundaryUsageCount(const uint16_t _permissionsBoundaryUsageCount)
+  {
+      permissionsBoundaryUsageCount = _permissionsBoundaryUsageCount;
+  }
+
   std::string
   IamRole::getLastUsed() const
   {
       return lastUsed;
+  }
+
+  uint16_t
+  IamRole::getPermissionsBoundaryUsageCount() const
+  {
+      return permissionsBoundaryUsageCount;
   }
 
   void
@@ -78,6 +92,7 @@ namespace netmeld::datastore::objects::aws {
         << "createDate: " << createDate << ","
         << "lastUsed: " << lastUsed << ","
         << "path: " << path << ","
+        << "permissionsBoundaryUsageCount: " << permissionsBoundaryUsageCount << ","
         << "tags: " << tags.dump();
     oss << "]";
 
@@ -93,6 +108,7 @@ namespace netmeld::datastore::objects::aws {
                    , createDate
                    , path
                    , tags
+                   , permissionsBoundaryUsageCount
                    , lastUsed
                    )
        <=> std::tie( rhs.id
@@ -101,6 +117,7 @@ namespace netmeld::datastore::objects::aws {
                    , rhs.createDate
                    , rhs.path
                    , rhs.tags
+                   , rhs.permissionsBoundaryUsageCount
                    , rhs.lastUsed
                    )
       ;

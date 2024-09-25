@@ -51,19 +51,20 @@ Parser::fromJson(const json& _data) // Object
 
 void
 Parser::processRoleDetails(const json& _roleDetail) { // Object
-  // Unused
-  //std::cout << "\tPermissionsBoundaryUsageCount: " << _roleDetail.value("PermissionsBoundaryUsageCount", "") << '\n'; // number
   nmdoa::IamRole role;
   role.setId(_roleDetail.value("RoleId", ""));
   role.setArn(_roleDetail.value("Arn", ""));
   role.setName(_roleDetail.value("RoleName", ""));
   role.setCreateDate(_roleDetail.value("CreateDate", ""));
+  role.setPermissionsBoundaryUsageCount(_roleDetail.value("PermissionsBoundaryUsageCount", 0)); // Default: -1 or 0?
 
   const json rlu = _roleDetail.value("RoleLastUsed", json({}));
   role.setLastUsed(rlu.value("LastUsedDate", ""));
 
   role.setPath(_roleDetail.value("Path", ""));
-  role.setTags(_roleDetail.value("Tags", json({})));
+  json defaultTags = json::array();
+  defaultTags.push_back(json::object());
+  role.setTags(_roleDetail.value("Tags", defaultTags));
 
   // AssumeRolePolicyDocument does not have a version associated with it
   processDocument(_roleDetail.at("AssumeRolePolicyDocument"), role.getId(), std::string()); // Object
@@ -97,7 +98,9 @@ Parser::processGroupDetails(const json& _groupDetail) {
   group.setName(_groupDetail.value("GroupName", ""));
   group.setCreateDate(_groupDetail.value("CreateDate", ""));
   group.setPath(_groupDetail.value("Path", ""));
-  group.setTags(_groupDetail.value("Tags", json({})));
+  json defaultTags = json::array();
+  defaultTags.push_back(json::object());
+  group.setTags(_groupDetail.value("Tags", defaultTags));
 
   if(_groupDetail.contains("AttachedManagedPolicies")) {
     for (const auto& policy : _groupDetail.at("AttachedManagedPolicies")) { // List
@@ -121,7 +124,9 @@ Parser::processUserDetails(const json& _userDetail) {
   user.setName(_userDetail.value("UserName", ""));
   user.setCreateDate(_userDetail.value("CreateDate", ""));
   user.setPath(_userDetail.value("Path", ""));
-  user.setTags(_userDetail.value("Tags", json ({})));
+  json defaultTags = json::array();
+  defaultTags.push_back(json::object());
+  user.setTags(_userDetail.value("Tags", defaultTags));
 
   if(_userDetail.contains("AttachedManagedPolicy")) {
     for (const auto& managedPolicy : _userDetail.at("AttachedManagedPolicy")) { // List
@@ -152,7 +157,9 @@ Parser::processPolicy(const json& _policy) {
   policy.setName(_policy.value("PolicyName", ""));
   policy.setCreateDate(_policy.value("CreateDate", ""));
   policy.setPath(_policy.value("Path", ""));
-  policy.setTags(_policy.value("Tags", json({})));
+  json defaultTags = json::array();
+  defaultTags.push_back(json::object());
+  policy.setTags(_policy.value("Tags", defaultTags));
   policy.setUpdateDate(_policy.value("UpdateDate", ""));
   policy.setAttachmentCount(_policy.value("AttachmentCount", 0));
   policy.setDefaultVersionId(_policy.value("DefaultVersionId", ""));
@@ -220,6 +227,7 @@ Parser::processStatement(const json& _statement, const std::string&_attachmentId
   statement.setEffect(_statement.value("Effect", ""));
   statement.setSid(_statement.value("Sid", ""));
   statement.setCondition(_statement.value("Condition", json({})));
+  statement.setPrincipal(_statement.value("Principal", json({})));
 
   auto& action = _statement.at("Action");
   if(action.is_array()) {

@@ -35,6 +35,7 @@ namespace netmeld::datastore::objects::aws {
                 const std::string& _effects,
                 const std::vector<std::string>& _actions,
                 const std::vector<std::string>& _resources,
+                const json& _principal,
                 const json& _condition) :
     attachmentId(_attachmentId),
     documentVersion(_documentVersion),
@@ -42,6 +43,7 @@ namespace netmeld::datastore::objects::aws {
     effect(_effects),
     actions(_actions),
     resources(_resources),
+    principal(_principal),
     condition(_condition)
   {}
 
@@ -76,6 +78,11 @@ namespace netmeld::datastore::objects::aws {
   void
   IamStatement::addResource(const std::string& _resource) {
     resources.push_back(_resource);
+  }
+
+  void
+  IamStatement::setPrincipal(const json& _principal) {
+      principal = _principal;
   }
 
   void
@@ -114,6 +121,11 @@ namespace netmeld::datastore::objects::aws {
   }
 
   json
+  IamStatement::getPrincipal() const {
+    return principal;
+  }
+
+  json
   IamStatement::getCondition() const {
     return condition;
   }
@@ -133,7 +145,8 @@ namespace netmeld::datastore::objects::aws {
         << "sid: " << sid << ","
         << "effect: " << effect << ", "
         << "actions: " << actions << ", "
-        << "resources" << resources << ","
+        << "resources: " << resources << ","
+        << "principal: " << principal.dump() << ","
         << "condition: " << condition.dump();
     oss << "]";
 
@@ -149,6 +162,7 @@ namespace netmeld::datastore::objects::aws {
                       , effect
                       , actions
                       , resources
+                      , principal
                       , condition
                       )
            <=> std::tie(rhs.attachmentId
@@ -157,6 +171,7 @@ namespace netmeld::datastore::objects::aws {
                           , rhs.effect
                           , rhs.actions
                           , rhs.resources
+                          , rhs.principal
                           , rhs.condition
                           )
     ;

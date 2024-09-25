@@ -71,6 +71,8 @@ BOOST_AUTO_TEST_CASE(testStatementDetails)
   "Action": "sts:AssumeRole"
 })");
 
+    json principal;
+    principal["Service"] = "ec2.amazonaws.com";
     nmdoa::IamStatement statement(
       "Id1234", // attachmentId
       "2012-10-17", // documentVersion
@@ -78,6 +80,7 @@ BOOST_AUTO_TEST_CASE(testStatementDetails)
       "Allow", // effects
       {"sts:AssumeRole"}, // actions
       std::vector<std::string>(), // resources
+      principal, // principal
       json({}) // condition
     );
     tp.processStatement(tv1, std::string("Id1234"), std::string("2012-10-17"));
@@ -121,6 +124,7 @@ BOOST_AUTO_TEST_CASE(testStatementDetails)
         "iam:SetDefaultPolicyVersion"
       }, // actions
       {"*"}, // resources
+      json({}), // principal
       json({}) // condition
     );
     tp.processStatement(tv2, std::string("Id1234"), std::string());
@@ -335,13 +339,15 @@ BOOST_AUTO_TEST_CASE(testUserDetails)
     "Arn": "arn:aws:iam::123456789012:user/Alice"
 })");
 
+    json tags = json::array();
+    tags.push_back(json::object());
     nmdoa::IamUser user(
       "AIDA1234567890EXAMPLE",
       "arn:aws:iam::123456789012:user/Alice",
       "Alice",
       "2013-10-14T18:32:24Z",
       "/",
-      json({})
+      tags
     );
     nmdoa::IamUserGroup userGroup(
       "AIDA1234567890EXAMPLE", // userId
@@ -428,6 +434,8 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
     "Arn": "arn:aws:iam::123456789012:role/EC2role"
 })");
 
+    json tags = json::array();
+    tags.push_back(json::object());
     nmdoa::IamRole role(
       "AROA1234567890EXAMPLE",
       "arn:aws:iam::123456789012:role/EC2role",
@@ -435,7 +443,8 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
       "2014-07-30T17:09:20Z",
       "2019-11-13T17:30:00Z",
       "/",
-      json({})
+      0,
+      tags
     );
     nmdoa::IamRole minorRole(
       "AROA1234567890EXAMPLE",
@@ -444,7 +453,8 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
       "2014-07-30T17:09:20Z",
       "",
       "/",
-      json({})
+      0,
+      tags
     );
     tp.processRoleDetails(tv1);
 
@@ -474,13 +484,15 @@ BOOST_AUTO_TEST_CASE(testGroupDetails)
     "GroupPolicyList": []
 })");
 
+    json tags = json::array();
+    tags.push_back(json::object());
     nmdoa::IamGroup group(
       "AIDA1234567890EXAMPLE",
       "arn:aws:iam::123456789012:group/Admins",
       "Admins",
       "2013-10-14T18:32:24Z",
       "/",
-      json({})
+      tags
     );
     tp.processGroupDetails(tv1);
     BOOST_TEST(group == tp.d.groups.at(0));
@@ -529,13 +541,15 @@ BOOST_AUTO_TEST_CASE(testPolicies)
     "PermissionsBoundaryUsageCount": 2
 })");
 
+    json tags = json::array();
+    tags.push_back(json::object());
     nmdoa::IamPolicy policy(
       "ANPA1234567890EXAMPLE", // id
       "arn:aws:iam::123456789012:policy/create-update-delete-set-managed-policies", // arn
       "create-update-delete-set-managed-policies", // name
       "2015-02-06T19:58:34Z", // createDate
       "/", // path
-      json({}), // tags
+      tags, // tags
       "2015-02-06T19:58:34Z", // updateDate
       1, // attachmentCount
       "v1", // defaultVersionId
