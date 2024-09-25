@@ -79,12 +79,9 @@ class Parser :
       , vrfHeader2
       ;
 
-    qi::rule<nmdp::IstreamIter, std::vector<std::string>(), qi::ascii::blank_type>
-      csValues;
-
     qi::rule<nmdp::IstreamIter, std::string()>
         token
-      // , csValues
+      , csValues
       , interfaces
       , routeDistinguisher
       ;
