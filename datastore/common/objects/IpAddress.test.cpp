@@ -43,20 +43,11 @@ class TestIpAddress : public nmdo::IpAddress {
         IpAddress(_ip, _desc) {};
 
   public:
-    IpAddr getAddress() const
-    { return address; }
-
-    uint8_t getPrefix() const
-    { return prefix; }
-
-    bool getIsResponding() const
-    { return isResponding; }
-
-    std::string getReason() const
-    { return reason; }
-
-    double getExtraWeight() const
-    { return extraWeight; }
+    using IpAddress::address;
+    using IpAddress::prefix;
+    using IpAddress::isResponding;
+    using IpAddress::reason;
+    using IpAddress::extraWeight;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -64,22 +55,22 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestIpAddress ipAddr;
 
-    BOOST_TEST(IpAddr() == ipAddr.getAddress());
-    BOOST_TEST(UINT8_MAX == ipAddr.getPrefix());
-    BOOST_TEST(false == ipAddr.getIsResponding());
-    BOOST_TEST(ipAddr.getReason().empty());
-    BOOST_TEST(0.0 == ipAddr.getExtraWeight());
+    BOOST_TEST(bai::address() == ipAddr.address);
+    BOOST_TEST(UINT8_MAX == ipAddr.prefix);
+    BOOST_TEST(false == ipAddr.isResponding);
+    BOOST_TEST(ipAddr.reason.empty());
+    BOOST_TEST(0.0 == ipAddr.extraWeight);
     BOOST_TEST(ipAddr.getAliases().empty());
   }
 
   {
     TestIpAddress ipAddr {"10.0.0.1/24", "Some Description"};
 
-    BOOST_TEST(IpAddr::from_string("10.0.0.1") == ipAddr.getAddress());
-    BOOST_TEST(24 == ipAddr.getPrefix());
-    BOOST_TEST(false == ipAddr.getIsResponding());
-    BOOST_TEST("Some Description" == ipAddr.getReason());
-    BOOST_TEST(0.0 == ipAddr.getExtraWeight());
+    BOOST_TEST(bai::make_address("10.0.0.1") == ipAddr.address);
+    BOOST_TEST(24 == ipAddr.prefix);
+    BOOST_TEST(false == ipAddr.isResponding);
+    BOOST_TEST("Some Description" == ipAddr.reason);
+    BOOST_TEST(0.0 == ipAddr.extraWeight);
     BOOST_TEST(ipAddr.getAliases().empty());
   }
 }
@@ -89,11 +80,11 @@ BOOST_AUTO_TEST_CASE(testSetters)
   {
     TestIpAddress ipAddr;
 
-    BOOST_TEST(!ipAddr.getIsResponding());
+    BOOST_TEST(!ipAddr.isResponding);
     ipAddr.setResponding(true);
-    BOOST_TEST(ipAddr.getIsResponding());
+    BOOST_TEST(ipAddr.isResponding);
     ipAddr.setResponding(false);
-    BOOST_TEST(!ipAddr.getIsResponding());
+    BOOST_TEST(!ipAddr.isResponding);
   }
 
   {
@@ -101,12 +92,35 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     ipAddr.addAlias("Alias1", "Reason1");
     BOOST_TEST(ipAddr.getAliases().count("alias1"));
-    BOOST_TEST("reason1" == ipAddr.getReason());
+    BOOST_TEST("reason1" == ipAddr.reason);
 
     ipAddr.addAlias("Alias2", "Reason2");
     BOOST_TEST(ipAddr.getAliases().count("alias1"));
     BOOST_TEST(ipAddr.getAliases().count("alias2"));
-    BOOST_TEST("reason2" == ipAddr.getReason());
+    BOOST_TEST("reason2" == ipAddr.reason);
+  }
+  {
+    nmdo::IpAddress ipAddr;
+
+    std::string test {"1.2.3.4"};
+    ipAddr.setAddress(test);
+
+    auto expected {test + "/32"};
+    BOOST_TEST(expected == ipAddr.toString());
+  }
+  {
+    std::vector<std::tuple<std::string, std::string>> tests {
+        {"1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8/128"}
+      , {"1:2:3:4:5:ffff:1.2.3.4", "1:2:3:4:5:ffff:102:304/128"}
+      , {"1:2:3::ffff:1.2.3.4", "1:2:3::ffff:102:304/128"}
+      , {"1::ffff:1.2.3.4", "1::ffff:102:304/128"}
+      , {"::ffff:1.2.3.4", "::ffff:1.2.3.4/128"}
+      };
+
+    for (const auto& [test, expected] : tests) {
+      nmdo::IpAddress ipAddr {test};
+      BOOST_TEST(expected == ipAddr.toString());
+    }
   }
 }
 
@@ -154,6 +168,22 @@ BOOST_AUTO_TEST_CASE(testValidity)
 
     BOOST_TEST(!ipAddr.isValid());
     ipAddr.setAddress("1234::0123");
+    BOOST_TEST(ipAddr.isValid());
+    ipAddr.setPrefix(0);
+    BOOST_TEST(ipAddr.isValid());
+    ipAddr.setPrefix(127);
+    BOOST_TEST(ipAddr.isValid());
+    ipAddr.setPrefix(128);
+    BOOST_TEST(ipAddr.isValid());
+    ipAddr.setPrefix(129);
+    BOOST_TEST(!ipAddr.isValid());
+  }
+
+  {
+    TestIpAddress ipAddr;
+
+    BOOST_TEST(!ipAddr.isValid());
+    ipAddr.setAddress("1:2:3:4:5:6:1.2.3.4");
     BOOST_TEST(ipAddr.isValid());
     ipAddr.setPrefix(0);
     BOOST_TEST(ipAddr.isValid());

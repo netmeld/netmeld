@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -49,6 +49,7 @@ add_library(${TGT_LIBRARY} SHARED
     ./objects/Package.cpp
     ./objects/Port.cpp
     ./objects/PortRange.cpp
+    ./objects/PhysicalConnection.cpp
     ./objects/Route.cpp
     ./objects/Service.cpp
     ./objects/ToolObservations.cpp
