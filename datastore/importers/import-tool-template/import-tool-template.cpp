@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -63,7 +63,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables should generally be private
+  private: // Variables should rarely appear at this scope
   protected: // Variables intended for internal/subclass API
     // Inhertied from AbstractTool at this scope
       // std::string            helpBlurb;
@@ -86,10 +86,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   protected: // Constructors intended for internal/subclass API
   public: // Constructors should generally be public
     Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      (
-       "some-command --flag",  // command line tool imports data from
-       PROGRAM_NAME,           // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION         // program version (set in CMakeLists.txt)
+      ( "some-command --flag"   // command line tool imports data from
+      , PROGRAM_NAME            // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION         // program version (set in CMakeLists.txt)
       )
     {}
 
@@ -102,11 +101,13 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
     void
     addToolOptions() override
     {
-      this->opts.addRequiredOption("tool-option", std::make_tuple(
-            "tool-option",
-            po::value<std::string>()->required(),
-            "Some tool option")
-          );
+      this->opts.addRequiredOption(
+          "tool-option"
+        , std::make_tuple( "tool-option"
+                         , po::value<std::string>()->required()
+                         , "Some tool option"
+                         )
+        );
 
       this->opts.removeOptionalOption("pipe");
       this->opts.removeAdvancedOption("tool-run-metadata");
@@ -123,8 +124,8 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         // muck
 
         // save
-        result.save(t, toolRunId, deviceId);
         LOG_DEBUG << result.toDebugString() << std::endl;
+        result.save(t, toolRunId, deviceId);
 
         // link
       }
