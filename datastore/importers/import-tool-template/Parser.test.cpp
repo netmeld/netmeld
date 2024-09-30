@@ -24,6 +24,33 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+/* Notes:
+   - This unit is part of the complilation process to help ensure consistency
+     between templates and the actual data.
+   - Various data is included and most is commented solely for educational
+     purposes.
+     - In non-template, remove data as makes sense.
+
+   Guidelines:
+   - Unit tests must be created for any rule that changes state of the
+     data within the parser.
+     - For example, if the parser function adds to, removes from, or
+       otherwise manipulates a variable's contents; then that is a state
+       change.
+   - Unit tests must test the ability to parse input correctly.  Test what
+     it must correctly parse and, if known, what it must not parse.
+     - Do parse examples must be as exhaustive as possible.
+     - Not parse examples can be representative and not exhaustive.
+     - For example, if the parse should exactly match three alphanumeric
+       characters only; then test to ensure it does that but also test to
+       ensure it doesn't match if they are separated by a non-alphanumeric
+       character (e.g., space, tab, newline).
+   - Unit tests must test if expected state change(s) occur correctly.
+     - For example, if the logic returns a parsed, matched string, then
+       test the returned is as expected.
+     - For example, if the logic alters the contents of an object, then
+       test the content change of the object.
+*/
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>

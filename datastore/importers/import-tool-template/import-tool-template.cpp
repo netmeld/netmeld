@@ -42,6 +42,8 @@
      - 2nd tier: private, protected, public
    - Section headers should generally be left to help code organization
    - Parser logic should be separate
+   - Most functions or data should be scoped to protected to facilitate
+     unit testing.
 */
 
 #include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
@@ -153,7 +155,8 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 // =============================================================================
 // Program entry point
 // =============================================================================
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   Tool<nmdp::DummyParser, Result> tool; // if parser not needed
   //Tool<Parser, Result> tool; // if parser needed
   return tool.start(argc, argv);
