@@ -130,5 +130,17 @@ BOOST_AUTO_TEST_CASE(testOstreamTup)
 
 BOOST_AUTO_TEST_CASE(testOstreamAny)
 {
-  // TODO
+  using nmcu::operator<<;
+
+  const std::vector<std::tuple<std::any, std::string>> tests {
+    {std::string("abc"), "abc"}
+  , {std::tuple<std::string, std::string>("abc", "123"), "[abc -- 123]"}
+  };
+
+  std::ostringstream oss;
+  for (const auto& [test, expected]: tests) {
+    oss.str("");
+    oss << test;
+    BOOST_TEST(expected == oss.str());
+  }
 }
