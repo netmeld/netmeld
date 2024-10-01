@@ -106,12 +106,15 @@ class Parser :
       ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-        detailHeader
-      , port
+        port
       , restOfLine
       , inQuotes
       , token
       , csvToken
+      ;
+
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+      detailHeader
       ;
 
   // ===========================================================================

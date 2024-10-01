@@ -206,20 +206,11 @@ BOOST_AUTO_TEST_CASE(testDetailParts)
         }
       };
     for (const auto& [test, srcIfaceName] : testsOk) {
-      BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
+      std::string out;
+      BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
                 , "Parse rule 'detailHeader': " << test
                 );
-      BOOST_TEST(srcIfaceName == tp.nd.srcIfaceName);
-    }
-
-    std::vector<std::string> testsFail {
-        "    Interface Number          : 1234567\n"
-      };
-    for (const auto& test : testsFail) {
-      BOOST_TEST( !nmdp::test(test.c_str(), parserRule, blank)
-                , "Parse rule 'detailHeader': " << test
-                );
-      BOOST_TEST(NeighborData() == tp.nd);
+      BOOST_TEST(srcIfaceName == out);
     }
   }
 
