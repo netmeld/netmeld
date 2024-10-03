@@ -47,7 +47,8 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamGroup();
-      IamGroup(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const json&);
+      IamGroup(const std::string&, const std::string&, const std::string&,
+                    const std::string&, const std::string&, const json&);
 
     // =========================================================================
     // Methods

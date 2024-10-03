@@ -40,6 +40,7 @@ namespace netmeld::datastore::objects::aws {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
+        std::string profileId;
         std::string lastUsed;
         uint16_t permissionsBoundaryUsageCount;
     public: // Variables should rarely appear at this scope
@@ -51,7 +52,9 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamRole();
-      IamRole(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, uint16_t, const json&);
+      IamRole(const std::string&, const std::string&, const std::string&,
+                  const std::string&, const std::string&, const std::string&,
+                  const std::string&, uint16_t, const json&);
 
     // =========================================================================
     // Methods
@@ -59,9 +62,11 @@ namespace netmeld::datastore::objects::aws {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
+      void setProfileId(const std::string&);
       void setLastUsed(const std::string&);
       void setPermissionsBoundaryUsageCount(const uint16_t);
 
+      std::string getProfileId() const;
       std::string getLastUsed() const;
       uint16_t getPermissionsBoundaryUsageCount() const;
 

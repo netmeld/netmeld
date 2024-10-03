@@ -50,13 +50,20 @@ Parser::fromJson(const json& _data) // Object
 }
 
 void
-Parser::processRoleDetails(const json& _roleDetail) { // Object
+Parser::processRoleDetails(const json& _roleDetail,
+                                        const std::string& _profileId) { // Object
+  LOG_DEBUG << "processRoleDetails:\n";
+
   nmdoa::IamRole role;
+  role.setProfileId(_profileId);
   role.setId(_roleDetail.value("RoleId", ""));
   role.setArn(_roleDetail.value("Arn", ""));
   role.setName(_roleDetail.value("RoleName", ""));
   role.setCreateDate(_roleDetail.value("CreateDate", ""));
-  role.setPermissionsBoundaryUsageCount(_roleDetail.value("PermissionsBoundaryUsageCount", 0)); // Default: -1 or 0?
+
+  // Default: -1 or 0?
+  role.setPermissionsBoundaryUsageCount(
+    _roleDetail.value("PermissionsBoundaryUsageCount", 0));
 
   const json rlu = _roleDetail.value("RoleLastUsed", json({}));
   role.setLastUsed(rlu.value("LastUsedDate", ""));
@@ -67,10 +74,18 @@ Parser::processRoleDetails(const json& _roleDetail) { // Object
   role.setTags(_roleDetail.value("Tags", defaultTags));
 
   // AssumeRolePolicyDocument does not have a version associated with it
-  processDocument(_roleDetail.at("AssumeRolePolicyDocument"), role.getId(), std::string()); // Object
+  processDocument(
+    _roleDetail.at("AssumeRolePolicyDocument"), // Object
+    role.getId(), std::string());
+
   if(_roleDetail.contains("AttachedManagedPolicies")) {
-    for (const auto& policy : _roleDetail.at("AttachedManagedPolicies")) { // List
-        processManagedPolicy(policy, role.getId());
+    const json amp = _roleDetail.at("AttachedManagedPolicies");
+    if(amp.is_array()) {
+      for (const auto& policy : amp) { // List
+          processManagedPolicy(policy, role.getId());
+      }
+    } else {
+      processManagedPolicy(amp, role.getId());
     }
   }
   if(_roleDetail.contains("InstanceProfileList")) {
@@ -79,7 +94,8 @@ Parser::processRoleDetails(const json& _roleDetail) { // Object
     }
   }
   if(_roleDetail.contains("PermissionsBoundary")) {
-    processPermissionsBoundary(_roleDetail["PermissionsBoundary"], role.getId()); // Object
+    // Object
+    processPermissionsBoundary(_roleDetail["PermissionsBoundary"], role.getId());
   }
   if(_roleDetail.contains("RolePolicyList")) {
     for (const auto& rolePolicy : _roleDetail.at("RolePolicyList")) { // List
@@ -92,6 +108,8 @@ Parser::processRoleDetails(const json& _roleDetail) { // Object
 
 void
 Parser::processGroupDetails(const json& _groupDetail) {
+  LOG_DEBUG << "processGroupDetails:\n";
+
   nmdoa::IamGroup group;
   group.setId(_groupDetail.value("GroupId", ""));
   group.setArn(_groupDetail.value("Arn", ""));
@@ -103,8 +121,13 @@ Parser::processGroupDetails(const json& _groupDetail) {
   group.setTags(_groupDetail.value("Tags", defaultTags));
 
   if(_groupDetail.contains("AttachedManagedPolicies")) {
-    for (const auto& policy : _groupDetail.at("AttachedManagedPolicies")) { // List
-        processManagedPolicy(policy, group.getId());
+    const json amp = _groupDetail.at("AttachedManagedPolicies");
+    if(amp.is_array()) {
+      for (const auto& policy : amp) { // List
+          processManagedPolicy(policy, group.getId());
+      }
+    } else {
+      processManagedPolicy(amp, group.getId());
     }
   }
   if(_groupDetail.contains("GroupPolicyList")) {
@@ -118,6 +141,8 @@ Parser::processGroupDetails(const json& _groupDetail) {
 
 void
 Parser::processUserDetails(const json& _userDetail) {
+  LOG_DEBUG << "processUserDetails:\n";
+
   nmdoa::IamUser user;
   user.setId(_userDetail.value("UserId", ""));
   user.setArn(_userDetail.value("Arn", ""));
@@ -129,8 +154,13 @@ Parser::processUserDetails(const json& _userDetail) {
   user.setTags(_userDetail.value("Tags", defaultTags));
 
   if(_userDetail.contains("AttachedManagedPolicy")) {
-    for (const auto& managedPolicy : _userDetail.at("AttachedManagedPolicy")) { // List
-        processManagedPolicy(managedPolicy, user.getId());
+    const json amp = _userDetail.at("AttachedManagedPolicy");
+    if(amp.is_array()) {
+      for (const auto& managedPolicy : amp) { // List
+          processManagedPolicy(managedPolicy, user.getId());
+      }
+    } else {
+      processManagedPolicy(amp, user.getId());
     }
   }
   if(_userDetail.contains("GroupList")) {
@@ -151,6 +181,8 @@ Parser::processUserDetails(const json& _userDetail) {
 
 void
 Parser::processPolicy(const json& _policy) {
+  LOG_DEBUG << "processPolicy:\n";
+
   nmdoa::IamPolicy policy;
   policy.setId(_policy.value("PolicyId", ""));
   policy.setArn(_policy.value("Arn", ""));
@@ -164,7 +196,8 @@ Parser::processPolicy(const json& _policy) {
   policy.setAttachmentCount(_policy.value("AttachmentCount", 0));
   policy.setDefaultVersionId(_policy.value("DefaultVersionId", ""));
   policy.setIsAttachable(_policy.value("IsAttachable", false));
-  policy.setPermissionsBoundaryUsageCount(_policy.value("PermissionsBoundaryUsageCount", 0));
+  policy.setPermissionsBoundaryUsageCount(
+    _policy.value("PermissionsBoundaryUsageCount", 0));
 
   if(_policy.contains("PolicyVersionList")) {
     for (const auto& policyVersion : _policy.at("PolicyVersionList")) { // List
@@ -177,7 +210,10 @@ Parser::processPolicy(const json& _policy) {
 
 // GroupDetail, RoleDetail, UserDetail
 void
-Parser::processManagedPolicy(const json& _managedPolicy, const std::string& _attachmentId) {
+Parser::processManagedPolicy(const json& _managedPolicy,
+                                             const std::string& _attachmentId) {
+  LOG_DEBUG << "processManagedPolicy:\n";
+
   nmdoa::IamAttachedManagedPolicy amp;
   amp.setAttachmentId(_attachmentId);
   amp.setPolicyArn(_managedPolicy.value("PolicyArn", ""));
@@ -188,39 +224,54 @@ Parser::processManagedPolicy(const json& _managedPolicy, const std::string& _att
 // GroupDetail, RoleDetail, UserDetail
 void
 Parser::processPolicyList(const json& _policyList, const std::string& _attachmentId) {
+  LOG_DEBUG << "processPolicyList:\n";
+
   nmdoa::IamPolicyDocument policyDocument;
   policyDocument.setAttachmentId(_attachmentId);
   policyDocument.setPolicyName(_policyList.value("PolicyName", ""));
   d.policyDocuments.push_back(policyDocument);
-// Since we're passing the name to this Document, we may not need the IamPolicyDocument at all
-// TODO revist this
-  processDocument(_policyList.at("PolicyDocument"), _attachmentId, policyDocument.getPolicyName());
+// Since we're passing the name to this Document,
+//   we may not need the IamPolicyDocument at all
+//   TODO revist this
+  processDocument(_policyList.at("PolicyDocument"),
+                             _attachmentId, policyDocument.getPolicyName());
 }
 
 // processPolicyList : "PolicyDocument"
 // processPolicyVersionList : "Document"
 // processRoleDetails : "AssumeRolePolicyDocument"
 void
-Parser::processDocument(const json& _document, const std::string& _attachmentId, const std::string& _secondaryId) {
+Parser::processDocument(const json& _document,
+                                      const std::string& _attachmentId,
+                                      const std::string& _secondaryId) {
+  LOG_DEBUG << "processDocument:\n";
+
   nmdoa::IamDocument document;
   document.setAttachmentId(_attachmentId);
   document.setSecondaryId(_secondaryId);
   document.setDocVersion(_document.value("Version", ""));
 
   auto& statements = _document.at("Statement");
-  if(statements.type() == json::value_t::array) {
-    for (const auto& statement : statements) { // List
-        processStatement(statement, document.getAttachmentId(), document.getDocVersion());
+  if(statements.is_array()) {
+    for (const auto& statement : statements) {
+        processStatement(statement,
+                                   document.getAttachmentId(),
+                                   document.getDocVersion());
     }
-  } else if(statements.type() == json::value_t::object) {
-    processStatement(statements, document.getAttachmentId(), document.getDocVersion()); // Object
+  } else if(statements.is_object()) {
+    processStatement(statements, document.getAttachmentId(),
+                               document.getDocVersion());
   }
 
   d.documents.push_back(document);
 }
 
 void
-Parser::processStatement(const json& _statement, const std::string&_attachmentId, const std::string& _documentVersion) {
+Parser::processStatement(const json& _statement,
+                                      const std::string&_attachmentId,
+                                      const std::string& _documentVersion) {
+  LOG_DEBUG << "processStatement:\n";
+
   nmdoa::IamStatement statement;
   statement.setAttachmentId(_attachmentId);
   statement.setDocumentVersion(_documentVersion);
@@ -240,7 +291,7 @@ Parser::processStatement(const json& _statement, const std::string&_attachmentId
 
   if(_statement.contains("Resource")) {
     auto& resource = _statement.at("Resource");
-    if(resource.type() == json::value_t::array) {
+    if(resource.is_array()) {
         for(const auto& r : resource) {
             statement.addResource(r);
         }
@@ -254,7 +305,10 @@ Parser::processStatement(const json& _statement, const std::string&_attachmentId
 
 // Policies
 void
-Parser::processPolicyVersionList(const json& _policyVersion, const std::string& _policyId) {
+Parser::processPolicyVersionList(const json& _policyVersion,
+                                                const std::string& _policyId) {
+  LOG_DEBUG << "processPolicyVersionList:\n";
+
   nmdoa::IamPolicyVersion version;
   version.setPolicyId(_policyId);
   version.setCreateDate(_policyVersion.value("CreateDate", ""));
@@ -267,7 +321,10 @@ Parser::processPolicyVersionList(const json& _policyVersion, const std::string& 
 
 // RoleDetail
 void
-Parser::processProfileList(const json& _profileList, const std::string& _parentRoleId) {
+Parser::processProfileList(const json& _profileList,
+                                      const std::string& _parentRoleId) {
+  LOG_DEBUG << "processProfileList:\n";
+
   nmdoa::IamRoleInstanceProfile profile;
   profile.setParentRoleId(_parentRoleId);
   profile.setArn(_profileList.value("Arn", ""));
@@ -277,20 +334,23 @@ Parser::processProfileList(const json& _profileList, const std::string& _parentR
   profile.setPath(_profileList.value("Path", ""));
   d.roleProfiles.push_back(profile);
 
-  // TODO have to actually link the roles to the process profile list
   for (const auto& role : _profileList.at("Roles")) { // List
-      processRoleDetails(role); // Maybe? TODO
-      // Do we just pull from d.roles here and link the ids?
+      processRoleDetails(role, profile.getProfileId());
   }
 }
 
 // RoleDetail
 void
-Parser::processPermissionsBoundary(const json& _permissionsBoundary, const std::string& _roleId) {
+Parser::processPermissionsBoundary(const json& _permissionsBoundary,
+                                                       const std::string& _roleId) {
+  LOG_DEBUG << "processPermissionsBoundary:\n";
+
   nmdoa::IamRolePermissionBoundary boundary;
   boundary.setRoleId(_roleId);
-  boundary.setBoundaryArn(_permissionsBoundary.value("PermissionsBoundaryArn", ""));
-  boundary.setBoundaryType(_permissionsBoundary.value("PermissionsBoundaryType", ""));
+  boundary.setBoundaryArn(
+                  _permissionsBoundary.value("PermissionsBoundaryArn", ""));
+  boundary.setBoundaryType(
+                  _permissionsBoundary.value("PermissionsBoundaryType", ""));
   d.roleBoundaries.push_back(boundary);
 }
 

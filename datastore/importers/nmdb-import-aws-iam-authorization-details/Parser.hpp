@@ -95,7 +95,7 @@ class Parser
   // ===========================================================================
   private:
   protected:
-    void processRoleDetails(const json&);
+    void processRoleDetails(const json&, const std::string& = "");
     void processGroupDetails(const json&);
     void processUserDetails(const json&);
     void processPolicy(const json&);

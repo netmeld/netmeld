@@ -58,7 +58,7 @@ class TestParser : public Parser {
 
 BOOST_AUTO_TEST_CASE(testStatementDetails)
 {
-  { // TODO test multiple actions no actions, etc.
+  {
     TestParser tp;
 
     // RoleDetailList Statement
@@ -123,6 +123,31 @@ BOOST_AUTO_TEST_CASE(testStatementDetails)
         "iam:ListPolicyVersions",
         "iam:SetDefaultPolicyVersion"
       }, // actions
+      {"*"}, // resources
+      json({}), // principal
+      json({}) // condition
+    );
+    tp.processStatement(tv2, std::string("Id1234"), std::string());
+
+    BOOST_TEST(tp.d.statements.size() == 1);
+    BOOST_TEST(statement == tp.d.statements.at(0));
+  }
+  {
+    TestParser tp;
+
+    json tv2 = json::parse(R"({
+  "Sid": "Sid-0",
+  "Effect": "Deny",
+  "Action": {},
+  "Resource": "*"
+})");
+
+    nmdoa::IamStatement statement(
+      "Id1234", // attachmentId
+      "", // documentVersion
+      "Sid-0", // sid
+      "Deny", // effects
+      {}, // actions
       {"*"}, // resources
       json({}), // principal
       json({}) // condition
@@ -203,7 +228,6 @@ BOOST_AUTO_TEST_CASE(testPolicyDocumentDetails)
     BOOST_TEST(pd == tp.d.policyDocuments.at(0));
 
     BOOST_TEST(tp.d.documents.size() == 1);
-    // TODO Do we assume the document was parsed correctly?
   }
 }
 BOOST_AUTO_TEST_CASE(testPolicyVersionDetails)
@@ -242,7 +266,6 @@ BOOST_AUTO_TEST_CASE(testPolicyVersionDetails)
     );
     tp.processPolicyVersionList(tv1, "policy-id-0");
 
-    // TODO test Document as well
     BOOST_TEST(tp.d.policyVersions.size() == 1);
     BOOST_TEST(pv == tp.d.policyVersions.at(0));
 
@@ -298,7 +321,6 @@ BOOST_AUTO_TEST_CASE(testRoleInstanceProfileDetails)
     BOOST_TEST(rip == tp.d.roleProfiles.at(0));
 
     BOOST_TEST(tp.d.documents.size() == 1);
-    // TODO do we assume the document parsed correctly?
   }
 }
 BOOST_AUTO_TEST_CASE(testRolePermissionBoundaryDetails)
@@ -438,6 +460,7 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
     tags.push_back(json::object());
     nmdoa::IamRole role(
       "AROA1234567890EXAMPLE",
+      "",
       "arn:aws:iam::123456789012:role/EC2role",
       "EC2role",
       "2014-07-30T17:09:20Z",
@@ -448,6 +471,7 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
     );
     nmdoa::IamRole minorRole(
       "AROA1234567890EXAMPLE",
+      "",
       "arn:aws:iam::123456789012:role/EC2role",
       "EC2role",
       "2014-07-30T17:09:20Z",
@@ -458,7 +482,9 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
     );
     tp.processRoleDetails(tv1);
 
-    // There are two roles. The main one we are parsing is the last one added. The other one is InstanceProfileList[0].Roles[0]
+    // There are two roles.
+    // The main one we are parsing is the last one added.
+    // The other one is InstanceProfileList[0].Roles[0]
     BOOST_TEST(tp.d.roles.size() == 2);
     BOOST_TEST(minorRole == tp.d.roles.at(0));
     BOOST_TEST(role == tp.d.roles.at(1));
@@ -494,8 +520,57 @@ BOOST_AUTO_TEST_CASE(testGroupDetails)
       "/",
       tags
     );
+    nmdoa::IamAttachedManagedPolicy amp(
+      "AIDA1234567890EXAMPLE",
+      "arn:aws:iam::aws:policy/AdministratorAccess",
+      "AdministratorAccess"
+    );
     tp.processGroupDetails(tv1);
+
+    BOOST_TEST(tp.d.groups.size() == 1);
     BOOST_TEST(group == tp.d.groups.at(0));
+
+    BOOST_TEST(tp.d.amps.size() == 1);
+    BOOST_TEST(amp == tp.d.amps.at(0));
+  }
+  {
+    // AttachedManagedPolicies as a single object rather than a list
+    TestParser tp;
+
+    json tv1 = json::parse(R"({
+    "GroupId": "AIDA1234567890EXAMPLE",
+    "AttachedManagedPolicies": {
+        "PolicyName": "AdministratorAccess",
+        "PolicyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+    },
+    "GroupName": "Admins",
+    "Path": "/",
+    "Arn": "arn:aws:iam::123456789012:group/Admins",
+    "CreateDate": "2013-10-14T18:32:24Z",
+    "GroupPolicyList": []
+})");
+
+    json tags = json::array();
+    tags.push_back(json::object());
+    nmdoa::IamGroup group(
+      "AIDA1234567890EXAMPLE",
+      "arn:aws:iam::123456789012:group/Admins",
+      "Admins",
+      "2013-10-14T18:32:24Z",
+      "/",
+      tags
+    );
+    nmdoa::IamAttachedManagedPolicy amp(
+      "AIDA1234567890EXAMPLE",
+      "arn:aws:iam::aws:policy/AdministratorAccess",
+      "AdministratorAccess"
+    );
+    tp.processGroupDetails(tv1);
+    BOOST_TEST(tp.d.groups.size() == 1);
+    BOOST_TEST(group == tp.d.groups.at(0));
+
+    BOOST_TEST(tp.d.amps.size() == 1);
+    BOOST_TEST(amp == tp.d.amps.at(0));
   }
 }
 BOOST_AUTO_TEST_CASE(testPolicies)
@@ -557,6 +632,8 @@ BOOST_AUTO_TEST_CASE(testPolicies)
       2 // permissionsBoundaryUsageCount
     );
     tp.processPolicy(tv1);
+
+    BOOST_TEST(tp.d.policies.size() == 1);
     BOOST_TEST(policy == tp.d.policies.at(0));
   }
 }

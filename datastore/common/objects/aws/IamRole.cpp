@@ -30,6 +30,7 @@
 namespace netmeld::datastore::objects::aws {
 
   IamRole::IamRole(const std::string& _id,
+                const std::string& _profileId,
                 const std::string& _arn,
                 const std::string& _name,
                 const std::string& _createDate,
@@ -38,12 +39,19 @@ namespace netmeld::datastore::objects::aws {
                 const uint16_t _permissionsBoundaryUsageCount,
                 const json& _tags) :
     IamBase(_id, _arn, _name, _createDate, _path, _tags),
+    profileId(_profileId),
     permissionsBoundaryUsageCount(_permissionsBoundaryUsageCount),
     lastUsed(_lastUsed)
   {}
 
   IamRole::IamRole()
   {}
+
+  void
+  IamRole::setProfileId(const std::string& _profileId)
+  {
+      profileId = _profileId;
+  }
 
   void
   IamRole::setLastUsed(const std::string& _lastUsed)
@@ -55,6 +63,12 @@ namespace netmeld::datastore::objects::aws {
   IamRole::setPermissionsBoundaryUsageCount(const uint16_t _permissionsBoundaryUsageCount)
   {
       permissionsBoundaryUsageCount = _permissionsBoundaryUsageCount;
+  }
+
+  std::string
+  IamRole::getProfileId() const
+  {
+      return profileId;
   }
 
   std::string
@@ -92,6 +106,7 @@ namespace netmeld::datastore::objects::aws {
         << "createDate: " << createDate << ","
         << "lastUsed: " << lastUsed << ","
         << "path: " << path << ","
+        << "profileId: " << profileId << ","
         << "permissionsBoundaryUsageCount: " << permissionsBoundaryUsageCount << ","
         << "tags: " << tags.dump();
     oss << "]";
@@ -108,6 +123,7 @@ namespace netmeld::datastore::objects::aws {
                    , createDate
                    , path
                    , tags
+                   , profileId
                    , permissionsBoundaryUsageCount
                    , lastUsed
                    )
@@ -117,6 +133,7 @@ namespace netmeld::datastore::objects::aws {
                    , rhs.createDate
                    , rhs.path
                    , rhs.tags
+                   , rhs.profileId
                    , rhs.permissionsBoundaryUsageCount
                    , rhs.lastUsed
                    )

@@ -57,7 +57,8 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamBase();
-      IamBase(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const json&);
+      IamBase(const std::string&, const std::string&, const std::string&,
+                   const std::string&, const std::string&, const json&);
 
     // =========================================================================
     // Methods

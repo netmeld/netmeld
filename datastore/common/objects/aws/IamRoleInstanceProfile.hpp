@@ -57,7 +57,9 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamRoleInstanceProfile();
-      IamRoleInstanceProfile(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&);
+      IamRoleInstanceProfile(const std::string&, const std::string&,
+                                       const std::string&, const std::string&,
+                                       const std::string&, const std::string&);
 
     // =========================================================================
     // Methods

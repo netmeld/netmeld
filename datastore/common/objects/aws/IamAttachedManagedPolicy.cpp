@@ -29,7 +29,8 @@
 
 namespace netmeld::datastore::objects::aws {
 
-  IamAttachedManagedPolicy::IamAttachedManagedPolicy(const std::string& _attachmentId,
+  IamAttachedManagedPolicy::IamAttachedManagedPolicy(
+                const std::string& _attachmentId,
                 const std::string& _policyArn,
                 const std::string& _policyName) :
     attachmentId(_attachmentId),

@@ -59,7 +59,9 @@ namespace netmeld::datastore::objects::aws {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       IamStatement();
-      IamStatement(const std::string&, const std::string&, const std::string&, const std::string&, const std::vector<std::string>&, const std::vector<std::string>&, const json&, const json&);
+      IamStatement(const std::string&, const std::string&, const std::string&,
+                          const std::string&, const std::vector<std::string>&,
+                          const std::vector<std::string>&, const json&, const json&);
 
     // =========================================================================
     // Methods
