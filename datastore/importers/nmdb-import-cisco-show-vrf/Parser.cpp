@@ -132,7 +132,6 @@ void
 Parser::addVrf(const nmdo::Vrf& vrf)
 {
   d.vrfs.emplace_back(vrf);
-  std::cerr << vrf.toDebugString();
 }
 
 Result
