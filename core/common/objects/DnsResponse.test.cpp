@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,11 +38,11 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     nmco::DnsResponse dnsResponse;
 
-    BOOST_CHECK(dnsResponse.getFqdn().empty());
-    BOOST_CHECK(dnsResponse.getClass().empty());
-    BOOST_CHECK(dnsResponse.getType().empty());
-    BOOST_CHECK_EQUAL(dnsResponse.getTtl(), 0);
-    BOOST_CHECK(dnsResponse.getData().empty());
+    BOOST_TEST(dnsResponse.getFqdn().empty());
+    BOOST_TEST(dnsResponse.getClass().empty());
+    BOOST_TEST(dnsResponse.getType().empty());
+    BOOST_TEST(dnsResponse.getTtl() == 0);
+    BOOST_TEST(dnsResponse.getData().empty());
   }
 }
 
@@ -56,11 +56,11 @@ BOOST_AUTO_TEST_CASE(testSetters)
     dnsResponse.setTtl(3600);
     dnsResponse.setData("CDN.Example.Com");
 
-    BOOST_CHECK_EQUAL(dnsResponse.getFqdn(), "www.example.com");
-    BOOST_CHECK_EQUAL(dnsResponse.getClass(), "IN");
-    BOOST_CHECK_EQUAL(dnsResponse.getType(), "CNAME");
-    BOOST_CHECK_EQUAL(dnsResponse.getTtl(), 3600);
-    BOOST_CHECK_EQUAL(dnsResponse.getData(), "cdn.example.com");
+    BOOST_TEST(dnsResponse.getFqdn() == "www.example.com");
+    BOOST_TEST(dnsResponse.getClass() == "IN");
+    BOOST_TEST(dnsResponse.getType() == "CNAME");
+    BOOST_TEST(dnsResponse.getTtl() == 3600);
+    BOOST_TEST(dnsResponse.getData() == "cdn.example.com");
   }
 }
 

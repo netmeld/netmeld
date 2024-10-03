@@ -52,21 +52,19 @@ BOOST_AUTO_TEST_CASE(testToString)
   }
 }
 
-BOOST_AUTO_TEST_CASE(testUniquePushBack)
+BOOST_AUTO_TEST_CASE(testAddIfUnique)
 {
   std::vector<std::string> control {"a", "bb", "c"};
-  {
-    std::vector<std::string> test;
-    std::vector<std::string> sink;
+  std::vector<std::string> test;
+  std::vector<std::string> sink;
 
-    for (const auto& item : {"a", "a", "bb", "c", "bb"}) {
-      sink.push_back(item);
-      nmcu::addIfUnique(&test, item);
-    }
-    for (const std::string& item : sink) {
-      nmcu::addIfUnique(&test, item);
-    }
-
-    BOOST_TEST(control == test);
+  for (const auto& item : {"a", "a", "bb", "c", "bb"}) {
+    sink.push_back(item);
+    nmcu::addIfUnique(&test, item);
   }
+  for (const std::string& item : sink) {
+    nmcu::addIfUnique(&test, item);
+  }
+
+  BOOST_TEST(control == test);
 }

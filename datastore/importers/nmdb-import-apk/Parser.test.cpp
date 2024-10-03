@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -39,6 +39,8 @@ using qi::ascii::blank;
 class TestParser : public Parser
 {
   public:
+    using Parser::data;
+
     using Parser::start;
     using Parser::packageLine;
     using Parser::packageName;
@@ -47,56 +49,71 @@ class TestParser : public Parser
 BOOST_AUTO_TEST_CASE(testPackageLine)
 {
   TestParser tp;
+  const auto& parserRule {tp.packageLine};
 
-  {
-    const auto& parserRule {tp.packageLine};
+  std::string test, dbgStr;
+  nmdo::Package out;
 
-    // OK
-    std::vector<std::string> testsOk {
-      "PackageName-1version Architecture throwaway data again\nDescription\n",
-      "mesa-gl-22.2.5-r1 x86_64 {mesa} (MIT SGI-B-2.0 BSL-1.0) [installed]\nMesa libGL runtime libraries\n",
-    };
+  test = "PackageName-1version Architecture throwaway data again\nDescription\n";
+  BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+            , "Parse rule 'packageLine': " << test
+            );
+  BOOST_TEST(out.isValid());
+  dbgStr = out.toDebugString();
+  nmdp::testInString(dbgStr, "state: ,");
+  nmdp::testInString(dbgStr, "name: PackageName,");
+  nmdp::testInString(dbgStr, "version: 1version,");
+  nmdp::testInString(dbgStr, "architecture: Architecture");
+  nmdp::testInString(dbgStr, "description: Description");
 
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                 "Parse rule 'packageLine': " << test);
-    }
-  }
+
+  test = "mesa-gl-22.2.5-r1 x86_64 {mesa} (MIT SGI-B-2.0 BSL-1.0) [installed]\nMesa libGL runtime libraries\n";
+  BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+            , "Parse rule 'packageLine': " << test
+            );
+  BOOST_TEST(out.isValid());
+  dbgStr = out.toDebugString();
+  nmdp::testInString(dbgStr, "state: ,");
+  nmdp::testInString(dbgStr, "name: mesa-gl,");
+  nmdp::testInString(dbgStr, "version: 22.2.5-r1,");
+  nmdp::testInString(dbgStr, "architecture: x86_64");
+  nmdp::testInString(dbgStr, "description: Mesa libGL runtime libraries");
 }
 
 BOOST_AUTO_TEST_CASE(testPackageName)
 {
   TestParser tp;
+  const auto& parserRule {tp.packageName};
 
-  {
-    const auto& parserRule {tp.packageName};
+  // OK
+  std::vector<std::string> testsOk {
+    "name",
+    "package-name",
+    "package name"
+  };
 
-    // OK
-    std::vector<std::string> testsOk {
-      "name",
-      "package-name",
-      "package name"
-    };
+  for (const auto& test : testsOk) {
+    std::string out;
+    BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out)
+              , "Parse rule 'packageName': " << test
+              );
+    BOOST_TEST(test == out);
+  }
 
-    // BAD The actual seperating of the version and package happens at packageLine
-    std::vector<std::string> testsFail {
-      "",
-      "-1",
-      "name-of-package-12",
-      "packagename-1.0.0+build.123",
-      "packagename-1.0-rc.1",
-      "packagename-1.0.0"
-    };
+  // BAD The actual seperating of the version and package happens at packageLine
+  std::vector<std::string> testsFail {
+    "",
+    "-1",
+    "name-of-package-12",
+    "packagename-1.0.0+build.123",
+    "packagename-1.0-rc.1",
+    "packagename-1.0.0"
+  };
 
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule),
-                 "Parse rule 'packageName': " << test);
-    }
-
-    for (const auto& test : testsFail) {
-      BOOST_TEST(!nmdp::test(test.c_str(), parserRule),
-                "Parse rule 'packageName': " << test);
-    }
+  for (const auto& test : testsFail) {
+    BOOST_TEST( !nmdp::test(test.c_str(), parserRule)
+              , "Parse rule 'packageName': " << test
+              );
   }
 }
 
@@ -125,8 +142,12 @@ BOOST_AUTO_TEST_CASE(testWhole)
     )STR"
   };
 
+  Result out;
   for (const auto& test : testsOk) {
-    BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-              "Parse rule 'start': " << test);
+    BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+              , "Parse rule 'start': " << test
+              );
   }
+  BOOST_TEST_REQUIRE(1 == out.size());
+  BOOST_TEST_REQUIRE(4 == out[0].packages.size());
 }

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -84,7 +84,7 @@ AcBook<TData>::removeData(const TData& _key)
 {
   if (!data.erase(_key)) {
     LOG_DEBUG << "AcBook::removeData: No such key to remove: "
-             << _key << std::endl;
+              << _key << std::endl;
   }
 }
 
@@ -114,15 +114,12 @@ AcBook<TData>::toDebugString() const
 {
   std::ostringstream oss;
 
-  oss << "[ " // opening bracket
-      << "id: " << id << ", "
-      << "name: " << name << ", "
+  oss << "[" // opening bracket
+      << "id: " << id
+      << ", name: " << name
+      << ", data: " << data
+      << "]"
       ;
-
-  oss << "data: " << data
-      ;
-
-  oss << " ]"; // closing bracket
 
   return oss.str();
 }

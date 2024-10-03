@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -64,33 +64,39 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+  protected:
     Data d;
 
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start;
-
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
-             qi::locals<std::string>>
-      table, chain, rule;
-
-    qi::rule<nmdp::IstreamIter, std::string()>
-      optionValue;
-
-    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-      sportModule, dportModule, icmpModule;
+        start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      counts,
-      commentLine;
+        table
+      , chain
+      , rule
+      ;
+
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+        sportModule
+      , dportModule
+      , icmpModule
+      ;
+
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+        counts
+      , commentLine
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      optionSwitch,
-      token;
+        optionSwitch
+      , optionValue
+      , token
+      ;
 
     const std::string GLOBAL {"global"};
     std::string tableName;
     std::string bookName;
-    std::map<std::string, size_t>   ruleIds;
+    std::map<std::string, size_t> ruleIds;
     size_t curRuleId;
 
   // ===========================================================================
@@ -106,8 +112,9 @@ class Parser :
     void setTableName(const std::string&);
     void setBookName(const std::string&);
     void updateCurRuleId(const std::string&);
-    void updateRulePort(const std::string&, const std::string&,
-                        const std::string&);
+    void updateRulePort( const std::string&, const std::string&
+                       , const std::string&
+                       );
     void updateRule(const bool, const std::string&, const std::string&);
     void finalizeRule();
     void updateChainPolicy(const std::string&, const std::string&);

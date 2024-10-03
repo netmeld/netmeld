@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -41,12 +41,6 @@ namespace netmeld::datastore::objects {
   // ===========================================================================
   // Methods
   // ===========================================================================
-  bool
-  AclIpNetSet::isValid() const
-  {
-    return !id.empty();
-  }
-
   void
   AclIpNetSet::setId(const std::string& _id, const std::string& _ns)
   {
@@ -67,14 +61,26 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  AclIpNetSet::addIncludedId(const std::string& _includedId, const std::string& _includedNs)
+  AclIpNetSet::addIncludedId( const std::string& _includedId
+                            , const std::string& _includedNs
+                            )
   {
     includedIds.emplace_back(_includedNs, _includedId);
   }
 
+  bool
+  AclIpNetSet::isValid() const
+  {
+    return !id.empty();
+    //return !(ns.empty() || id.empty());
+  }
+
+
   void
-  AclIpNetSet::save(pqxx::transaction_base& t,
-      const nmco::Uuid& toolRunId, const std::string& deviceId)
+  AclIpNetSet::save( pqxx::transaction_base& t
+                   , const nmco::Uuid& toolRunId
+                   , const std::string& deviceId
+                   )
   {
     if (!isValid()) {
       LOG_DEBUG << "AclIpNetSet object is not saving: " << toDebugString()
@@ -82,47 +88,47 @@ namespace netmeld::datastore::objects {
       return; // Always short circuit if invalid object
     }
 
-    t.exec_prepared("insert_raw_device_acl_ip_net_base",
-        toolRunId,
-        deviceId,
-        ns,
-        id
-        );
+    t.exec_prepared( "insert_raw_device_acl_ip_net_base"
+                   , toolRunId
+                   , deviceId
+                   , ns
+                   , id
+                   );
 
     for (const auto& ipNet : ipNets) {
-      t.exec_prepared("insert_raw_device_acl_ip_net_ip_net",
-          toolRunId,
-          deviceId,
-          ns,
-          id,
-          ipNet.toString()
-          );
+      t.exec_prepared( "insert_raw_device_acl_ip_net_ip_net"
+                     , toolRunId
+                     , deviceId
+                     , ns
+                     , id
+                     , ipNet.toString()
+                     );
     }
 
     for (const auto& hostname : hostnames) {
-      t.exec_prepared("insert_raw_device_dns_reference",
-          toolRunId,
-          deviceId,
-          hostname
-          );
-      t.exec_prepared("insert_raw_device_acl_ip_net_hostname",
-          toolRunId,
-          deviceId,
-          ns,
-          id,
-          hostname
-          );
+      t.exec_prepared( "insert_raw_device_dns_reference"
+                     , toolRunId
+                     , deviceId
+                     , hostname
+                     );
+      t.exec_prepared( "insert_raw_device_acl_ip_net_hostname"
+                     , toolRunId
+                     , deviceId
+                     , ns
+                     , id
+                     , hostname
+                     );
     }
 
     for (const auto& includedId : includedIds) {
-      t.exec_prepared("insert_raw_device_acl_ip_net_include",
-          toolRunId,
-          deviceId,
-          ns,
-          id,
-          std::get<0>(includedId),  // ns
-          std::get<1>(includedId)   // id
-          );
+      t.exec_prepared( "insert_raw_device_acl_ip_net_include"
+                     , toolRunId
+                     , deviceId
+                     , ns
+                     , id
+                     , std::get<0>(includedId)  // ns
+                     , std::get<1>(includedId)   // id
+                     );
     }
   }
 
@@ -132,11 +138,11 @@ namespace netmeld::datastore::objects {
     std::ostringstream oss;
 
     oss << "["
-        << "ns: " << ns << ", "
-        << "id: " << id << ", "
-        << "ipNets: " << ipNets << ", "
-        << "hostnames: " << hostnames << ", "
-        << "includedIds: " << includedIds
+        << "ns: " << ns
+        << ", id: " << id
+        << ", ipNets: " << ipNets
+        << ", hostnames: " << hostnames
+        << ", includedIds: " << includedIds
         << "]";
 
     return oss.str();

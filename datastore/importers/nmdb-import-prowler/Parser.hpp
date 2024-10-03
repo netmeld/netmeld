@@ -56,7 +56,8 @@ class Parser
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables are always private
+  private:
+  protected:
     Result r;
 
   // ===========================================================================
@@ -70,8 +71,8 @@ class Parser
   // ===========================================================================
   private:
   public:
-    void fromJsonV2(std::ifstream&);
-    void fromJsonV3(std::ifstream&);
+    void fromJsonV2(std::istream&);
+    void fromJsonV3(std::istream&);
     Result getData();
 };
 #endif // PARSER_HPP

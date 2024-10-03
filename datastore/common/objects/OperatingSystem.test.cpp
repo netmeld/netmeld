@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -37,28 +37,14 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestOperatingSystem : public nmdo::OperatingSystem {
   public:
-    TestOperatingSystem() : OperatingSystem() {};
-    explicit TestOperatingSystem(nmdo::IpAddress& _ip) : OperatingSystem(_ip)
-    {};
+    using OperatingSystem::OperatingSystem;
 
-  public:
-    nmdo::IpAddress getIpAddress() const
-    { return ipAddr; }
-
-    std::string getVendorName() const
-    { return vendorName; }
-
-    std::string getProductName() const
-    { return productName; }
-
-    std::string getProductVersion() const
-    { return productVersion; }
-
-    std::string getCpe() const
-    { return cpe; }
-
-    double getAccuracy() const
-    { return accuracy; }
+    using OperatingSystem::ipAddr;
+    using OperatingSystem::vendorName;
+    using OperatingSystem::productName;
+    using OperatingSystem::productVersion;
+    using OperatingSystem::cpe;
+    using OperatingSystem::accuracy;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -67,24 +53,24 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestOperatingSystem operatingSystem;
     nmdo::IpAddress ipAddr;
 
-    BOOST_CHECK_EQUAL(ipAddr, operatingSystem.getIpAddress());
-    BOOST_CHECK(operatingSystem.getVendorName().empty());
-    BOOST_CHECK(operatingSystem.getProductName().empty());
-    BOOST_CHECK(operatingSystem.getProductVersion().empty());
-    BOOST_CHECK(operatingSystem.getCpe().empty());
-    BOOST_CHECK_EQUAL(0.0, operatingSystem.getAccuracy());
+    BOOST_TEST(ipAddr == operatingSystem.ipAddr);
+    BOOST_TEST(operatingSystem.vendorName.empty());
+    BOOST_TEST(operatingSystem.productName.empty());
+    BOOST_TEST(operatingSystem.productVersion.empty());
+    BOOST_TEST(operatingSystem.cpe.empty());
+    BOOST_TEST(0.0 == operatingSystem.accuracy);
   }
 
   {
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
     TestOperatingSystem operatingSystem {ipAddr};
 
-    BOOST_CHECK_EQUAL(ipAddr, operatingSystem.getIpAddress());
-    BOOST_CHECK(operatingSystem.getVendorName().empty());
-    BOOST_CHECK(operatingSystem.getProductName().empty());
-    BOOST_CHECK(operatingSystem.getProductVersion().empty());
-    BOOST_CHECK(operatingSystem.getCpe().empty());
-    BOOST_CHECK_EQUAL(0.0, operatingSystem.getAccuracy());
+    BOOST_TEST(ipAddr == operatingSystem.ipAddr);
+    BOOST_TEST(operatingSystem.vendorName.empty());
+    BOOST_TEST(operatingSystem.productName.empty());
+    BOOST_TEST(operatingSystem.productVersion.empty());
+    BOOST_TEST(operatingSystem.cpe.empty());
+    BOOST_TEST(0.0 == operatingSystem.accuracy);
   }
 }
 
@@ -94,33 +80,33 @@ BOOST_AUTO_TEST_CASE(testSetters)
     TestOperatingSystem operatingSystem;
 
     operatingSystem.setVendorName("Vendor Name");
-    BOOST_CHECK_EQUAL("vendor name", operatingSystem.getVendorName());
+    BOOST_TEST("vendor name" == operatingSystem.vendorName);
   }
   {
     TestOperatingSystem operatingSystem;
 
     operatingSystem.setProductName("Product Name");
-    BOOST_CHECK_EQUAL("product name", operatingSystem.getProductName());
+    BOOST_TEST("product name" == operatingSystem.productName);
   }
   {
     TestOperatingSystem operatingSystem;
 
     operatingSystem.setProductVersion("Product Version");
-    BOOST_CHECK_EQUAL("product version", operatingSystem.getProductVersion());
+    BOOST_TEST("product version" == operatingSystem.productVersion);
   }
   {
     TestOperatingSystem operatingSystem;
 
     operatingSystem.setCpe("Cpe");
-    BOOST_CHECK_EQUAL("cpe", operatingSystem.getCpe());
+    BOOST_TEST("cpe" == operatingSystem.cpe);
   }
   {
     TestOperatingSystem operatingSystem;
 
     operatingSystem.setAccuracy(DBL_MIN);
-    BOOST_CHECK_EQUAL(DBL_MIN, operatingSystem.getAccuracy());
+    BOOST_TEST(DBL_MIN == operatingSystem.accuracy);
     operatingSystem.setAccuracy(DBL_MAX);
-    BOOST_CHECK_EQUAL(DBL_MAX, operatingSystem.getAccuracy());
+    BOOST_TEST(DBL_MAX == operatingSystem.accuracy);
   }
 }
 
@@ -128,38 +114,38 @@ BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
     TestOperatingSystem operatingSystem;
-    BOOST_CHECK(!operatingSystem.isValid());
+    BOOST_TEST(!operatingSystem.isValid());
   }
 
   {
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
     TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_CHECK(!operatingSystem.isValid());
+    BOOST_TEST(!operatingSystem.isValid());
     operatingSystem.setVendorName("vendor name");
-    BOOST_CHECK(operatingSystem.isValid());
+    BOOST_TEST(operatingSystem.isValid());
   }
 
   {
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
     TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_CHECK(!operatingSystem.isValid());
+    BOOST_TEST(!operatingSystem.isValid());
     operatingSystem.setProductName("product name");
-    BOOST_CHECK(operatingSystem.isValid());
+    BOOST_TEST(operatingSystem.isValid());
   }
 
   {
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
     TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_CHECK(!operatingSystem.isValid());
+    BOOST_TEST(!operatingSystem.isValid());
     operatingSystem.setProductVersion("product version");
-    BOOST_CHECK(operatingSystem.isValid());
+    BOOST_TEST(operatingSystem.isValid());
   }
 
   {
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
     TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_CHECK(!operatingSystem.isValid());
+    BOOST_TEST(!operatingSystem.isValid());
     operatingSystem.setCpe("cpe");
-    BOOST_CHECK(operatingSystem.isValid());
+    BOOST_TEST(operatingSystem.isValid());
   }
 }

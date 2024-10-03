@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -72,10 +72,11 @@ class Parser :
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables are always private
+  private: // Variables should rarely appear at this scope
+  protected: // Variables intended for internal/subclass API
     //Data d;
 
-    // Rules
+    // Grammar Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
@@ -91,6 +92,8 @@ class Parser :
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private:
+  private: // Methods part of internal API
+  protected: // Methods part of subclass API
+  public: // Methods part of public API
 };
 #endif // PARSER_HPP

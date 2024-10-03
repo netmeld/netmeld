@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,22 +35,15 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestInterface : public nmdo::Interface {
   public:
-    TestInterface() : Interface() {};
-    explicit TestInterface(const std::string& _name) :
-        Interface(_name) {};
+    using Interface::Interface;
 
-  public:
-    std::string getMediaType() const
-    { return mediaType; }
-
-    bool getIsUp() const
-    { return isUp; }
-
-    std::string getFlags() const
-    { return flags; }
-
-    uint32_t getMtu() const
-    { return mtu; }
+    using Interface::mediaType;
+    using Interface::isUp;
+    using Interface::flags;
+    using Interface::mtu;
+    // has accessor
+    //using Interface::name;
+    //using Interface::macAddr;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -59,23 +52,23 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestInterface interface;
 
-    BOOST_CHECK(interface.getName().empty());
-    BOOST_CHECK_EQUAL("ethernet", interface.getMediaType());
-    BOOST_CHECK(!interface.getIsUp());
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddress());
-    BOOST_CHECK(interface.getFlags().empty());
-    BOOST_CHECK_EQUAL(0, interface.getMtu());
+    BOOST_TEST(interface.getName().empty());
+    BOOST_TEST("ethernet" == interface.mediaType);
+    BOOST_TEST(!interface.isUp);
+    BOOST_TEST(macAddr == interface.getMacAddress());
+    BOOST_TEST(interface.flags.empty());
+    BOOST_TEST(0 == interface.mtu);
   }
 
   {
     TestInterface interface {"Name"};
 
-    BOOST_CHECK_EQUAL("name", interface.getName());
-    BOOST_CHECK_EQUAL("ethernet", interface.getMediaType());
-    BOOST_CHECK(!interface.getIsUp());
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddress());
-    BOOST_CHECK(interface.getFlags().empty());
-    BOOST_CHECK_EQUAL(0, interface.getMtu());
+    BOOST_TEST("name" == interface.getName());
+    BOOST_TEST("ethernet" == interface.mediaType);
+    BOOST_TEST(!interface.isUp);
+    BOOST_TEST(macAddr == interface.getMacAddress());
+    BOOST_TEST(interface.flags.empty());
+    BOOST_TEST(0 == interface.mtu);
   }
 }
 
@@ -87,22 +80,22 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     interface.addIpAddress(ipAddr);
     auto ipAddrs = interface.getIpAddresses();
-    BOOST_CHECK_EQUAL(1, ipAddrs.size());
-    BOOST_CHECK_EQUAL(ipAddr, *ipAddrs.cbegin());
+    BOOST_TEST(1 == ipAddrs.size());
+    BOOST_TEST(ipAddr == *ipAddrs.cbegin());
   }
 
   {
     TestInterface interface;
 
     interface.setName("Name");
-    BOOST_CHECK_EQUAL("name", interface.getName());
+    BOOST_TEST("name" == interface.getName());
   }
 
   {
     TestInterface interface;
 
     interface.setMediaType("MediaType");
-    BOOST_CHECK_EQUAL("mediatype", interface.getMediaType());
+    BOOST_TEST("mediatype" == interface.mediaType);
   }
 
   {
@@ -110,48 +103,48 @@ BOOST_AUTO_TEST_CASE(testSetters)
     nmdo::MacAddress macAddr {"00:11:22:33:44:55"};
 
     interface.setMacAddress(macAddr);
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddress());
+    BOOST_TEST(macAddr == interface.getMacAddress());
   }
 
   {
     TestInterface interface;
 
-    BOOST_CHECK(!interface.getIsUp());
+    BOOST_TEST(!interface.isUp);
     interface.setUp();
-    BOOST_CHECK(interface.getIsUp());
+    BOOST_TEST(interface.isUp);
   }
 
   {
     TestInterface interface;
 
-    BOOST_CHECK(!interface.getIsUp());
+    BOOST_TEST(!interface.isUp);
     interface.setDown();
-    BOOST_CHECK(!interface.getIsUp());
+    BOOST_TEST(!interface.isUp);
   }
 
   {
     TestInterface interface;
 
     interface.setFlags("some flags up here");
-    BOOST_CHECK_EQUAL("some flags up here", interface.getFlags());
-    BOOST_CHECK(!interface.getIsUp());
+    BOOST_TEST("some flags up here" == interface.flags);
+    BOOST_TEST(!interface.isUp);
 
     interface.setDown();
     interface.setFlags("flag,UP");
-    BOOST_CHECK(interface.getIsUp());
+    BOOST_TEST(interface.isUp);
 
     interface.setDown();
     interface.setFlags("flag<UP");
-    BOOST_CHECK(interface.getIsUp());
+    BOOST_TEST(interface.isUp);
   }
 
   {
     TestInterface interface;
 
     interface.setMtu(0);
-    BOOST_CHECK_EQUAL(0, interface.getMtu());
+    BOOST_TEST(0 == interface.mtu);
     interface.setMtu(UINT32_MAX);
-    BOOST_CHECK_EQUAL(UINT32_MAX, interface.getMtu());
+    BOOST_TEST(UINT32_MAX == interface.mtu);
   }
 }
 
@@ -160,10 +153,10 @@ BOOST_AUTO_TEST_CASE(testValidity)
   {
     TestInterface interface;
 
-    BOOST_CHECK(!interface.isValid());
+    BOOST_TEST(!interface.isValid());
     interface.setName("name");
-    BOOST_CHECK(interface.isValid());
+    BOOST_TEST(interface.isValid());
     interface.setMediaType("loopback");
-    BOOST_CHECK(!interface.isValid());
+    BOOST_TEST(!interface.isValid());
   }
 }

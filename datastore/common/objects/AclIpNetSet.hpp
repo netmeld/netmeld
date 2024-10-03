@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -64,14 +64,18 @@ namespace netmeld::datastore::objects {
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
     public: // Methods part of public API
-      bool isValid() const override;
       void setId(const std::string&, const std::string& = "");
       void addIpNet(const IpNetwork&);
       void addHostname(const std::string&);
       void addIncludedId(const std::string&, const std::string& = "");
 
-      void save(pqxx::transaction_base&,
-                const nmco::Uuid&, const std::string&) override;
+      bool isValid() const override;
+
+      void save( pqxx::transaction_base&
+               , const nmco::Uuid&
+               , const std::string&
+               ) override;
+
       std::string toDebugString() const override;
 
       std::partial_ordering operator<=>(const AclIpNetSet&) const;

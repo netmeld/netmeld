@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,15 +35,14 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestPort : public nmdo::Port {
   public:
-    TestPort() : Port() {};
-    explicit TestPort(nmdo::IpAddress& _ip) : Port(_ip) {};
+    using Port::Port;
 
-  public:
-    std::string getState() const
-    { return state; }
-
-    std::string getReason() const
-    { return reason; }
+    using Port::state;
+    using Port::reason;
+    // has accessor
+    //using Port::port; 
+    //using Port::protocol; 
+    //using Port::ipAddr; 
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -52,22 +51,22 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestPort port;
     std::string ipStr {nmdo::IpAddress().toString()};
 
-    BOOST_CHECK_EQUAL(INT_MAX, port.getPort());
-    BOOST_CHECK_EQUAL(ipStr, port.getIpAddress().toString());
-    BOOST_CHECK_EQUAL("", port.getProtocol());
-    BOOST_CHECK_EQUAL("", port.getState());
-    BOOST_CHECK_EQUAL("", port.getReason());
+    BOOST_TEST(INT_MAX == port.getPort());
+    BOOST_TEST(ipStr == port.getIpAddress().toString());
+    BOOST_TEST("" == port.getProtocol());
+    BOOST_TEST("" == port.state);
+    BOOST_TEST("" == port.reason);
   }
 
   {
     nmdo::IpAddress ipAddr {"10.0.0.1/24"};
     TestPort port {ipAddr};
 
-    BOOST_CHECK_EQUAL(INT_MAX, port.getPort());
-    BOOST_CHECK_EQUAL(ipAddr.toString(), port.getIpAddress().toString());
-    BOOST_CHECK_EQUAL("", port.getProtocol());
-    BOOST_CHECK_EQUAL("", port.getState());
-    BOOST_CHECK_EQUAL("", port.getReason());
+    BOOST_TEST(INT_MAX == port.getPort());
+    BOOST_TEST(ipAddr.toString() == port.getIpAddress().toString());
+    BOOST_TEST("" == port.getProtocol());
+    BOOST_TEST("" == port.state);
+    BOOST_TEST("" == port.reason);
   }
 }
 
@@ -79,11 +78,11 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     p = 0;
     port.setPort(p);
-    BOOST_CHECK_EQUAL(p, port.getPort());
+    BOOST_TEST(p == port.getPort());
 
     p = -1;
     port.setPort(p);
-    BOOST_CHECK_EQUAL(p, port.getPort());
+    BOOST_TEST(p == port.getPort());
   }
 
   {
@@ -92,7 +91,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     p = "Proto";
     port.setProtocol(p);
-    BOOST_CHECK_EQUAL("proto", port.getProtocol());
+    BOOST_TEST("proto" == port.getProtocol());
   }
 
   {
@@ -101,7 +100,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     r = "Some Reason";
     port.setReason(r);
-    BOOST_CHECK_EQUAL("some reason", port.getReason());
+    BOOST_TEST("some reason" == port.reason);
   }
 
   {
@@ -110,7 +109,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     s = "Open|Filtered";
     port.setState(s);
-    BOOST_CHECK_EQUAL("open|filtered", port.getState());
+    BOOST_TEST("open|filtered" == port.state);
   }
 }
 
@@ -118,13 +117,13 @@ BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
     TestPort port;
-    BOOST_CHECK(!port.isValid());
+    BOOST_TEST(!port.isValid());
   }
 
   {
     nmdo::IpAddress ipAddr {"10.0.0.1/24"};
     TestPort port {ipAddr};
-    BOOST_CHECK(!port.isValid());
+    BOOST_TEST(!port.isValid());
   }
 
   {
@@ -133,20 +132,20 @@ BOOST_AUTO_TEST_CASE(testValidity)
     port.setProtocol("proto");
 
     port.setPort(0);
-    BOOST_CHECK(port.isValid());
+    BOOST_TEST(port.isValid());
 
     port.setPort(65535);
-    BOOST_CHECK(port.isValid());
+    BOOST_TEST(port.isValid());
 
     port.setPort(-1);
-    BOOST_CHECK(port.isValid());
+    BOOST_TEST(port.isValid());
 
 
     port.setPort(-2);
-    BOOST_CHECK(!port.isValid());
+    BOOST_TEST(!port.isValid());
 
     port.setPort(65536);
-    BOOST_CHECK(!port.isValid());
+    BOOST_TEST(!port.isValid());
   }
 
   {
@@ -155,10 +154,10 @@ BOOST_AUTO_TEST_CASE(testValidity)
     port.setPort(0);
 
     port.setProtocol("proto");
-    BOOST_CHECK(port.isValid());
+    BOOST_TEST(port.isValid());
 
     port.setProtocol("");
-    BOOST_CHECK(!port.isValid());
+    BOOST_TEST(!port.isValid());
   }
 
   {
@@ -166,6 +165,6 @@ BOOST_AUTO_TEST_CASE(testValidity)
     port.setPort(0);
     port.setProtocol("proto");
 
-    BOOST_CHECK(!port.isValid());
+    BOOST_TEST(!port.isValid());
   }
 }

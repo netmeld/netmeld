@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
     std::string mac {"00:11:22:33:44:55"};
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>(mac);
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
@@ -50,14 +50,14 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>
       ("00:11:22:33:44:55");
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
     std::string mac {"00:11:22:33:44:55:66:77"};
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>(mac);
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
@@ -65,14 +65,14 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>
       ("00:11:22:33:44:55:66:77");
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
     std::string mac {"00:00:00:00:00:00"};
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>(mac);
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
@@ -80,14 +80,14 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>
       ("00:00:00:00:00:00");
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
     std::string mac {"FF:FF:FF:FF:FF:FF"};
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>(mac);
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
     nmdo::MacAddress ma {mac};
     auto pma = nmdp::fromString<nmdp::ParserMacAddress, nmdo::MacAddress>
       ("ff:FF:ff:FF:ff:FF");
-    BOOST_CHECK_EQUAL(ma, pma);
+    BOOST_TEST(ma == pma);
   }
 
   {
@@ -113,8 +113,8 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
       nmdp::IstreamIter i {dataStream}, e;
       bool const success = qi::parse(i, e, nmdp::ParserMacAddress(), result);
 
-      BOOST_CHECK(success);
-      BOOST_CHECK(i == e);
+      BOOST_TEST(success);
+      BOOST_TEST((i == e));
     }
   }
 }
@@ -133,8 +133,8 @@ BOOST_AUTO_TEST_CASE(testMalformed)
       nmdp::IstreamIter i {dataStream}, e;
       bool const success = qi::parse(i, e, nmdp::ParserMacAddress(), result);
 
-      BOOST_CHECK(!success);
-      BOOST_CHECK(i == e);
+      BOOST_TEST(!success);
+      BOOST_TEST((i == e));
     }
   }
 
@@ -156,8 +156,8 @@ BOOST_AUTO_TEST_CASE(testMalformed)
       nmdp::IstreamIter i {dataStream}, e;
       bool const success = qi::parse(i, e, nmdp::ParserMacAddress(), result);
 
-      BOOST_CHECK(!success);
-      BOOST_CHECK(i != e);
+      BOOST_TEST(!success);
+      BOOST_TEST((i != e));
     }
   }
 
@@ -178,8 +178,8 @@ BOOST_AUTO_TEST_CASE(testMalformed)
       nmdp::IstreamIter i {dataStream}, e;
       bool const success = qi::parse(i, e, nmdp::ParserMacAddress(), result);
 
-      BOOST_CHECK(success);
-      BOOST_CHECK(i != e);
+      BOOST_TEST(success);
+      BOOST_TEST((i != e));
     }
   }
 }
