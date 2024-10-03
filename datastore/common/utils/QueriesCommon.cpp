@@ -807,6 +807,27 @@ namespace netmeld::datastore::utils {
       );
 
     // ----------------------------------------------------------------------
+    // TABLE: raw_device_phys_connections
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_device_phys_connection", R"(
+          INSERT INTO raw_device_phys_connections
+            ( tool_run_id
+            , self_device_id, self_interface_name
+            , peer_device_id, peer_interface_name
+            )
+          VALUES
+            ( $1
+            , $2, $3
+            , $4, $5
+            )
+          ON CONFLICT
+          DO NOTHING
+        )"
+      );
+
+    // ----------------------------------------------------------------------
     // TABLE: raw_device_link_connections
     // ----------------------------------------------------------------------
 
