@@ -27,7 +27,6 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/objects/Vrf.hpp>
 
@@ -90,7 +89,7 @@ class Parser :
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  public: // Constructor is only default and must be public
+  public:
     Parser();
 
   // ===========================================================================
