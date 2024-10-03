@@ -72,9 +72,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         LOG_DEBUG << results.devInfo.toDebugString() << "\n";
 
         LOG_DEBUG << "Iterating over OperatingSystems\n";
+        LOG_DEBUG << results.os.toDebugString() << "\n";
         if (results.os.isValid()) {
             results.os.save(t, toolRunId, deviceId);
-            LOG_DEBUG << results.os.toDebugString() << "\n";
 
             LOG_DEBUG << "Iterating over Hotfixes\n";
             t.exec_prepared("insert_raw_hotfixes", toolRunId, results.hotfixes);
