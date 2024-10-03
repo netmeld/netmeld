@@ -45,36 +45,5 @@ namespace netmeld::core::utils {
 
   std::string replaceSpacesWithUnderscores(const std::string&);
 
-  // ==========================================================================
-  // toString()
-  template<typename Iterator>
-  std::string
-  toString(Iterator begin, Iterator end, const std::string& sep)
-  {
-    std::ostringstream oss;
-    if (begin != end) {
-      oss << *begin;
-      ++begin;
-      for (; begin != end; ++begin) {
-        oss << sep << *begin;
-      }
-    }
-
-    return oss.str();
-  }
-  template<typename SequenceContainer>
-  std::string
-  toString(const SequenceContainer& con, const char sep=' ')
-  {
-    const std::string sSep {sep};
-    return toString(con.begin(), con.end(), sSep);
-  }
-  template<typename SequenceContainer>
-  std::string
-  toString(const SequenceContainer& con, const std::string& sep)
-  {
-    return toString(con.begin(), con.end(), sep);
-  }
-  // ==========================================================================
 }
 #endif  /* STRING_UTILITIES_HPP */
