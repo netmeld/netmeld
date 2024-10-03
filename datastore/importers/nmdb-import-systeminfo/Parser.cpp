@@ -200,9 +200,18 @@ void Parser::addInterface(const std::string &_name)
 void Parser::addIfaceConnectName(const std::string &_connectionname)
 {
     auto &iface{data.network_cards[curIfaceName]};
-    if (_connectionname.find("Wi-Fi") != std::string::npos || _connectionname.find("Bluetooth") != std::string::npos)
+    if (_connectionname.find("Wi-Fi") != std::string::npos)
     {
-        iface.setMediaType(_connectionname);
+        iface.setMediaType("wifi");
+    }
+    else if (_connectionname.find("Bluetooth") != std::string::npos)
+    {
+        iface.setMediaType("bluetooth");
+    } else if (_connectionname.find("Ethernet") != std::string::npos)
+    {
+        iface.setMediaType("ethernet");
+    } else {
+        iface.setMediaType("unknown");
     }
     iface.setUp();
     iface.setDescription(_connectionname);
