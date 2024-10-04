@@ -39,6 +39,7 @@ foreach(ITEM
     nmdb-import-aws-ec2-describe-transit-gateway-attachments
     nmdb-import-aws-ec2-describe-vpc-peering-connections
     nmdb-import-aws-ec2-describe-vpcs
+    nmdb-import-aws-iam-authorization-details
     nmdb-import-brocade
     nmdb-import-brocade-show-ip-route
     nmdb-import-cisco
