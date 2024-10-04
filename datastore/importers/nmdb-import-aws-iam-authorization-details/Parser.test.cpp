@@ -471,7 +471,7 @@ BOOST_AUTO_TEST_CASE(testRoleDetails)
     );
     nmdoa::IamRole minorRole(
       "AROA1234567890EXAMPLE",
-      "",
+      "AIPA1234567890EXAMPLE",
       "arn:aws:iam::123456789012:role/EC2role",
       "EC2role",
       "2014-07-30T17:09:20Z",

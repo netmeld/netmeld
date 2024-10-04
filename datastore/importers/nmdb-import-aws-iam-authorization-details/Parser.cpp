@@ -73,6 +73,8 @@ Parser::processRoleDetails(const json& _roleDetail,
   defaultTags.push_back(json::object());
   role.setTags(_roleDetail.value("Tags", defaultTags));
 
+  LOG_DEBUG << "\tRole: " << role.toDebugString() << "\n";
+
   // AssumeRolePolicyDocument does not have a version associated with it
   processDocument(
     _roleDetail.at("AssumeRolePolicyDocument"), // Object
@@ -81,10 +83,12 @@ Parser::processRoleDetails(const json& _roleDetail,
   if(_roleDetail.contains("AttachedManagedPolicies")) {
     const json amp = _roleDetail.at("AttachedManagedPolicies");
     if(amp.is_array()) {
+      LOG_DEBUG << "\t\tAttachedManagedPolicy is an array\n";
       for (const auto& policy : amp) { // List
           processManagedPolicy(policy, role.getId());
       }
     } else {
+      LOG_DEBUG << "\t\tAttachedManagedPolicy is not an array (probably an object)\n";
       processManagedPolicy(amp, role.getId());
     }
   }
@@ -120,13 +124,17 @@ Parser::processGroupDetails(const json& _groupDetail) {
   defaultTags.push_back(json::object());
   group.setTags(_groupDetail.value("Tags", defaultTags));
 
+  LOG_DEBUG << "\tGroup: " << group.toDebugString() << "\n";
+
   if(_groupDetail.contains("AttachedManagedPolicies")) {
     const json amp = _groupDetail.at("AttachedManagedPolicies");
     if(amp.is_array()) {
+      LOG_DEBUG << "\t\tAttachedManagedPolicy is an array\n";
       for (const auto& policy : amp) { // List
           processManagedPolicy(policy, group.getId());
       }
     } else {
+      LOG_DEBUG << "\t\tAttachedManagedPolicy is not an array (probably an object)\n";
       processManagedPolicy(amp, group.getId());
     }
   }
@@ -153,13 +161,17 @@ Parser::processUserDetails(const json& _userDetail) {
   defaultTags.push_back(json::object());
   user.setTags(_userDetail.value("Tags", defaultTags));
 
+  LOG_DEBUG << "\tUser: " << user.toDebugString() << "\n";
+
   if(_userDetail.contains("AttachedManagedPolicy")) {
     const json amp = _userDetail.at("AttachedManagedPolicy");
     if(amp.is_array()) {
+      LOG_DEBUG << "\t\tAttachedManagedPolicy is an array\n";
       for (const auto& managedPolicy : amp) { // List
           processManagedPolicy(managedPolicy, user.getId());
       }
     } else {
+      LOG_DEBUG << "\t\tAttachedManagedPolicy is not an array (probably an object)\n";
       processManagedPolicy(amp, user.getId());
     }
   }
@@ -199,6 +211,8 @@ Parser::processPolicy(const json& _policy) {
   policy.setPermissionsBoundaryUsageCount(
     _policy.value("PermissionsBoundaryUsageCount", 0));
 
+  LOG_DEBUG << "\tPolicy: " << policy.toDebugString() << "\n";
+
   if(_policy.contains("PolicyVersionList")) {
     for (const auto& policyVersion : _policy.at("PolicyVersionList")) { // List
       processPolicyVersionList(policyVersion, policy.getId());
@@ -219,6 +233,8 @@ Parser::processManagedPolicy(const json& _managedPolicy,
   amp.setPolicyArn(_managedPolicy.value("PolicyArn", ""));
   amp.setPolicyName(_managedPolicy.value("PolicyName", ""));
   d.amps.push_back(amp);
+
+  LOG_DEBUG << "\tAttachedManagedPolicy: " << amp.toDebugString() << "\n";
 }
 
 // GroupDetail, RoleDetail, UserDetail
@@ -230,6 +246,9 @@ Parser::processPolicyList(const json& _policyList, const std::string& _attachmen
   policyDocument.setAttachmentId(_attachmentId);
   policyDocument.setPolicyName(_policyList.value("PolicyName", ""));
   d.policyDocuments.push_back(policyDocument);
+
+  LOG_DEBUG << "\tPolicyDocument: " << policyDocument.toDebugString() << "\n";
+
 // Since we're passing the name to this Document,
 //   we may not need the IamPolicyDocument at all
 //   TODO revist this
@@ -251,14 +270,18 @@ Parser::processDocument(const json& _document,
   document.setSecondaryId(_secondaryId);
   document.setDocVersion(_document.value("Version", ""));
 
+  LOG_DEBUG << "\tDocument: " << document.toDebugString() << "\n";
+
   auto& statements = _document.at("Statement");
   if(statements.is_array()) {
+    LOG_DEBUG << "\t\tStatement is an array\n";
     for (const auto& statement : statements) {
         processStatement(statement,
                                    document.getAttachmentId(),
                                    document.getDocVersion());
     }
   } else if(statements.is_object()) {
+    LOG_DEBUG << "\t\tStatement is an object\n";
     processStatement(statements, document.getAttachmentId(),
                                document.getDocVersion());
   }
@@ -280,22 +303,31 @@ Parser::processStatement(const json& _statement,
   statement.setCondition(_statement.value("Condition", json({})));
   statement.setPrincipal(_statement.value("Principal", json({})));
 
+  LOG_DEBUG << "\tStatement: " << statement.toDebugString() << "\n";
+
   auto& action = _statement.at("Action");
   if(action.is_array()) {
+      LOG_DEBUG << "\t\Action is an array\n";
       for(const auto& a : action) {
           statement.addAction(a);
       }
+  } else if(action.is_object()) {
+    LOG_DEBUG << "\t\tRan into an unexpected object: " << action;
+    // Sometimes the default empty value may be "Action": {}
   } else {
+      LOG_DEBUG << "\t\tAction is not an array or object. Probably a string\n";
       statement.addAction(action);
   }
 
   if(_statement.contains("Resource")) {
     auto& resource = _statement.at("Resource");
     if(resource.is_array()) {
+      LOG_DEBUG << "\t\tResource is an array\n";
         for(const auto& r : resource) {
             statement.addResource(r);
         }
     } else {
+      LOG_DEBUG << "\t\tResource is not an array\n";
       statement.addResource(resource);
     }
   }
@@ -316,6 +348,8 @@ Parser::processPolicyVersionList(const json& _policyVersion,
   version.setVersionId(_policyVersion.value("VersionId", ""));
   d.policyVersions.push_back(version);
 
+  LOG_DEBUG << "\tPolicyVersion: " << version.toDebugString() << "\n";
+
   processDocument(_policyVersion.at("Document"), _policyId, version.getVersionId());
 }
 
@@ -333,6 +367,8 @@ Parser::processProfileList(const json& _profileList,
   profile.setProfileName(_profileList.value("InstanceProfileName", ""));
   profile.setPath(_profileList.value("Path", ""));
   d.roleProfiles.push_back(profile);
+
+  LOG_DEBUG << "\tRoleInstanceProfile: " << profile.toDebugString() << "\n";
 
   for (const auto& role : _profileList.at("Roles")) { // List
       processRoleDetails(role, profile.getProfileId());
@@ -352,6 +388,8 @@ Parser::processPermissionsBoundary(const json& _permissionsBoundary,
   boundary.setBoundaryType(
                   _permissionsBoundary.value("PermissionsBoundaryType", ""));
   d.roleBoundaries.push_back(boundary);
+
+  LOG_DEBUG << "\tRolePermissionBoundary: " << boundary.toDebugString() << "\n";
 }
 
 // =============================================================================
