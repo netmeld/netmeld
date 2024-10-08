@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(testhotfixes)
       )STR"
     };
     std::vector<std::string> out;
-    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank, false),
+    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'hotfixes': " << test);
     BOOST_TEST(3 == tp.data.hotfixes.size());
     tp.data.hotfixes.clear();

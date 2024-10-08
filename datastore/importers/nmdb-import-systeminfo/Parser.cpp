@@ -92,7 +92,7 @@ Parser::Parser() : Parser::base_type(start)
         ("Hotfix(s): " 
         >> (+qi::ascii::print - qi::eol) 
         >> qi::eol
-        > (+(hotfix > qi::eol) | ignoredLine));
+        > +((hotfix > qi::eol) |  (&qi::lit("[") > +qi::graph > qi::eol)));
 
     networkCardName =
         qi::lexeme[+(qi::ascii::char_ - qi::eol)];
@@ -153,8 +153,6 @@ Parser::Parser() : Parser::base_type(start)
         > -networkCards 
         > qi::omit[*(qi::char_ - qi::eoi)]; //omit the rest of sysinfo (aka hyper-v)
     ;
-    ignoredLine =
-        (qi::ascii::print > -qi::eol) | +qi::eol;
 
     // Allows for error handling and debugging of qi.
     BOOST_SPIRIT_DEBUG_NODES(

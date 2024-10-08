@@ -91,7 +91,6 @@ class Parser :
       tokens;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      ignoredLine,
       hostName,
       osName,
       osVersion,
