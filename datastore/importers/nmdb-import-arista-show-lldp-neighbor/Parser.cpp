@@ -24,6 +24,7 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <regex>
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 #include "Parser.hpp"
@@ -238,6 +239,12 @@ Parser::Parser() : Parser::base_type(start)
 std::string
 Parser::getDevice(const std::string& hostname)
 {
+  std::regex macRegex(R"(^([0-9A-Fa-f]{4}[.]){2}([0-9A-Fa-f]{4})$)");
+
+  if (std::regex_match(hostname, macRegex)) {
+    return hostname;
+  }
+
   return hostname.substr(0, hostname.find("."));
 }
 

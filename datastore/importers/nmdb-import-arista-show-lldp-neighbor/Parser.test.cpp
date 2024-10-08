@@ -432,6 +432,15 @@ Et5/1           1234.5678.90ab                         Ethernet 1/1        120
 Ma1             host5.domain                           net1-2              120
       )STR"
       };
+    std::string expectedDeviceNames[6] = {
+        "host1"
+      , "host2"
+      , "host3"
+      , "host4"
+      , "1234.5678.90ab"
+      , "host5"
+    };
+
     Result out;
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'testWholeNonDetail': " << test);
@@ -439,6 +448,10 @@ Ma1             host5.domain                           net1-2              120
     size_t neighborCount {6};
     BOOST_TEST(neighborCount == out[0].devInfos.size());
     BOOST_TEST(neighborCount == out[0].interfaces.size());
+
+    for(int i = 0; i < neighborCount; ++i) {
+      BOOST_TEST(expectedDeviceNames[i] == out[0].devInfos[i].getDeviceId());
+    }
   }
 }
 
