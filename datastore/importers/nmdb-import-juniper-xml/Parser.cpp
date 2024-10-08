@@ -988,6 +988,9 @@ Parser::parseRouteInfo(const pugi::xml_node& routeInfoNode)
 {
   std::string logicalSystemName;
   const pugi::xml_node outputNode{routeInfoNode.previous_sibling("output")};
+  
+  std::ostringstream oss;
+
   if (outputNode) {
     logicalSystemName =
       parseRouteLogicalSystemName(outputNode.text().as_string());
@@ -1011,15 +1014,18 @@ std::string
 Parser::parseRouteLogicalSystemName(const std::string& s)
 {
   std::string logicalSystemName{"unknown"};
+ 
 
   std::regex r{"^logical-system:\\s+(\\S+)\\s*$"};
   std::smatch m;
   if (std::regex_match(s, m, r)) {
     logicalSystemName = m[1];
   }
+
   if ("default" == logicalSystemName) {
     logicalSystemName.clear();
   }
+ 
 
   return nmcu::toLower(logicalSystemName);
 }
@@ -1229,6 +1235,7 @@ Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
         ifaceName.resize(length);
       }
       ifaces[ifaceName].setName(ifaceName);
+      ifaces[ifaceName].setPartial(true);
 
       const auto peerMacAddrMatch{
         arpTableEntryNode.select_node("mac-address")
@@ -1282,6 +1289,7 @@ Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
         ifaceName.resize(length);
       }
       ifaces[ifaceName].setName(ifaceName);
+      ifaces[ifaceName].setPartial(true);
 
       const auto peerMacAddrMatch{
         ipv6NdEntryNode.select_node("ipv6-nd-neighbor-l2-address")
@@ -1334,6 +1342,7 @@ Parser::parseLldpNeighborInfo(const pugi::xml_node& lldpNeighborInfoNode)
       if (!ifaceName.empty() && ("-" != ifaceName)) {
         localIfaceName = ifaceName;
         ifaces[localIfaceName].setName(localIfaceName);
+        ifaces[localIfaceName].setPartial(true);
       }
     }
 
@@ -1348,6 +1357,7 @@ Parser::parseLldpNeighborInfo(const pugi::xml_node& lldpNeighborInfoNode)
       if (!ifaceName.empty() && ("-" != ifaceName)) {
         localParentIfaceName = ifaceName;
         ifaces[localParentIfaceName].setName(localParentIfaceName);
+        ifaces[localParentIfaceName].setPartial(true);
       }
     }
 
@@ -1499,18 +1509,20 @@ Parser::extractVrfIdTableId(const std::string& _vrfIdTableId)
   std::string vrfId;
   std::string tableId;
 
-  // TODO: Need a more robust solution.
-  // Should factor out of the Boost.Spirit parser to a micro-parser
-  // that is used both there and here.
-  const std::regex r{
-    "^(([\\w_-]+)\\.)?((inet6|inet)(\\.\\d+)?)$"
-  };
-  std::smatch m;
-  if (std::regex_match(_vrfIdTableId, m, r)) {
-    vrfId = m[2];
-    tableId = m[3];
+  size_t pos1 {_vrfIdTableId.find('.')};
+  if (pos1 == std::string::npos)
+  {
+    return std::make_tuple("", "");
   }
+
+  size_t pos2 {_vrfIdTableId.find('.', pos1 + 1)};
+  if (pos2 == std::string::npos)
+  {
+    return std::make_tuple("", _vrfIdTableId);
+  }
+
+  vrfId   = _vrfIdTableId.substr(0, pos1);
+  tableId = _vrfIdTableId.substr(pos1 + 1);
 
   return std::make_tuple(vrfId, tableId);
 }
-

@@ -90,6 +90,16 @@ typedef std::vector<Data> Results;
 
 class Parser
 {
+  // Variables
+  private:
+  protected:
+    Data data;
+
+    const std::string DEFAULT_VRF_ID {""};//{"master"};
+
+  public:
+
+  // Functions
   public:
     Results getData();
 
@@ -146,12 +156,6 @@ class Parser
     std::tuple<std::string, std::string>
     extractVrfIdTableId(const std::string&);
 
-  public:
-
   private:
-    Data data;
-
-    const std::string DEFAULT_VRF_ID {""};//{"master"};
 };
-
 #endif  /* PARSER_HPP */
