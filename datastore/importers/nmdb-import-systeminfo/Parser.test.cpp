@@ -269,10 +269,10 @@ BOOST_AUTO_TEST_CASE(testWhole)
   BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
             "Parse rule 'start': " << test);
   // TODO check the data against strings
-  nmdp::testInString(tp.data.devInfo.toDebugString(), "[id: s1057646, color: , type: x64-based pc, vendor: hp, model: HP ELITEBOOK 840 G6, rev: , sn: , desc: member workstation]");
+  nmdp::testInString(tp.data.devInfo.toDebugString(), "[id: yourcomputername, color: , type: x64-based pc, vendor: your computer manufacturer, model: YOUR COMPUTER MODEL, rev: , sn: , desc: standalone workstation]");
   BOOST_TEST(tp.data.devInfo.isValid());
 
-  nmdp::testInString(tp.data.os.toDebugString(), "[ipAddr: [ipAddress: 2601:8c0:d00:f5b0::1e4e/128, isResponding: false, reason: from systeminfo, extraWeight: 0, aliases: [s1057646.srn.sandia.gov]], vendorName: microsoft corporation, productName: microsoft windows 10 enterprise, productVersion: 10.0.19045 n/a build 19045, cpe: cpe:/o:microsoft:microsoft_windows_10_enterprise:10.0.19045 n/a build 19045, accuracy: 0]");
+  nmdp::testInString(tp.data.os.toDebugString(), "[ipAddr: [ipAddress: 2001:db8:85a3::8a2e:370:7334/128, isResponding: false, reason: from systeminfo, extraWeight: 0, aliases: [yourcomputername.workgroup]], vendorName: microsoft corporation, productName: microsoft windows 10 pro, productVersion: 10.0.19042 n/a build 19042, cpe: cpe:/o:microsoft:microsoft_windows_10_pro:10.0.19042 n/a build 19042, accuracy: 0]");
   BOOST_TEST(tp.data.os.isValid());
 
 
