@@ -269,8 +269,13 @@ BOOST_AUTO_TEST_CASE(testWhole)
   BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
             "Parse rule 'start': " << test);
   // TODO check the data against strings
+  nmdp::testInString(tp.data.devInfo.toDebugString(), "[id: s1057646, color: , type: x64-based pc, vendor: hp, model: HP ELITEBOOK 840 G6, rev: , sn: , desc: member workstation]");
   BOOST_TEST(tp.data.devInfo.isValid());
+
+  nmdp::testInString(tp.data.os.toDebugString(), "[ipAddr: [ipAddress: 2601:8c0:d00:f5b0::1e4e/128, isResponding: false, reason: from systeminfo, extraWeight: 0, aliases: [s1057646.srn.sandia.gov]], vendorName: microsoft corporation, productName: microsoft windows 10 enterprise, productVersion: 10.0.19045 n/a build 19045, cpe: cpe:/o:microsoft:microsoft_windows_10_enterprise:10.0.19045 n/a build 19045, accuracy: 0]");
   BOOST_TEST(tp.data.os.isValid());
+
+
   BOOST_TEST(10 == tp.data.hotfixes.size());
   BOOST_TEST(2 == tp.data.network_cards.size());
   nmdp::testInString(tp.data.os.toDebugString(), "cpe:/o:microsoft:microsoft_windows_10_pro");
