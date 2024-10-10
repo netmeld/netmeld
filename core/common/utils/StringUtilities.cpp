@@ -25,6 +25,7 @@
 // =============================================================================
 
 #include <algorithm>
+#include <format>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 

@@ -268,6 +268,7 @@ BOOST_AUTO_TEST_CASE(testWhole)
   
   BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
             "Parse rule 'start': " << test);
+  // TODO check the data against strings
   BOOST_TEST(tp.data.devInfo.isValid());
   BOOST_TEST(tp.data.os.isValid());
   BOOST_TEST(10 == tp.data.hotfixes.size());
