@@ -143,9 +143,7 @@ namespace netmeld::core::utils {
     // CPE format follows NMAP standard: 
     // cpe:/{part}:{vendor}:{product}:{version}
 
-    std::string cpe {"cpe:/"};
-    cpe += _part + ":" + _vendor + ":" + _product + ":" + _version;
-    return cpe;
+    return std::format("cpe:/{}:{}:{}:{}", _part, _vendor, _product, _version);
   }
 
   std::string replaceSpacesWithUnderscores(const std::string& input) {
