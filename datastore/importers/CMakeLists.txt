@@ -29,6 +29,7 @@ set(MODULE_VERSION "2.0")
 foreach(ITEM
     #import-tool-template
     nmdb-import-arista-show-inventory
+    nmdb-import-arista-show-lldp-neighbor
     nmdb-import-apk
     nmdb-import-aws-ec2-describe-instances
     nmdb-import-aws-ec2-describe-network-acls
