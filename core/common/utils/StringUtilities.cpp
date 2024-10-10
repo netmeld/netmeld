@@ -25,6 +25,7 @@
 // =============================================================================
 
 #include <algorithm>
+#include <format>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
@@ -135,4 +136,24 @@ namespace netmeld::core::utils {
 
     return ifaceName;
   }
+
+  std::string
+  compileCPE(const std::string& _part, const std::string& _vendor,
+             const std::string& _product, const std::string& _version)
+  {
+    // CPE format follows NMAP standard: 
+    // cpe:/{part}:{vendor}:{product}:{version}
+
+    return std::format("cpe:/{}:{}:{}:{}", _part, _vendor, _product, _version);
+  }
+
+  std::string replaceSpacesWithUnderscores(const std::string& input) {
+    std::string result = input; // Create a copy of the input string
+    for (char& c : result) { // Iterate through each character in the string
+        if (c == ' ') { 
+            c = '_'; 
+        }
+    }
+    return result; 
+}
 }

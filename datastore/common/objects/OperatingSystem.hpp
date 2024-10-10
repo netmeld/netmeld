@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -45,7 +45,6 @@ namespace netmeld::datastore::objects {
       std::string   productVersion;
       std::string   cpe;
       double        accuracy {0.0}; // FLOAT in DB, is 15 digits of percision
-
     public:
 
     // =========================================================================
@@ -63,14 +62,18 @@ namespace netmeld::datastore::objects {
     private:
     protected:
     public:
+      void setIpAddr(const IpAddress&);
       void setVendorName(const std::string&);
       void setProductName(const std::string&);
       void setProductVersion(const std::string&);
       void setCpe(const std::string&);
       void setAccuracy(const double);
 
-      bool isValid() const override;
+      std::string getVendorName() const;
+      std::string getProductName() const;
+      std::string getProductVersion() const;
 
+      bool isValid() const override;
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
 

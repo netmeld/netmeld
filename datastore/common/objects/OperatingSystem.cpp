@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,6 +42,12 @@ namespace netmeld::datastore::objects {
   {}
 
   void
+  OperatingSystem::setIpAddr(const IpAddress& _ipAddr)
+  {
+    ipAddr = _ipAddr;
+  }
+
+  void
   OperatingSystem::setVendorName(const std::string& _name)
   {
     vendorName = nmcu::toLower(_name);
@@ -69,6 +75,24 @@ namespace netmeld::datastore::objects {
   OperatingSystem::setAccuracy(const double _accuracy)
   {
     accuracy = _accuracy;
+  }
+
+  std::string
+  OperatingSystem::getVendorName() const
+  {
+    return vendorName;
+  }
+
+  std::string
+  OperatingSystem::getProductName() const
+  {
+    return productName;
+  }
+
+  std::string
+  OperatingSystem::getProductVersion() const
+  {
+    return productVersion;
   }
 
   bool
