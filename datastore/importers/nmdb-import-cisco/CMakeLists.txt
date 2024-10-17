@@ -56,3 +56,25 @@ foreach(ITEM
       netmeld-datastore
     )
 endforeach()
+
+foreach(ITEM
+    Parser
+  )
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      CiscoAcls.cpp
+      CiscoAcls.hpp
+      CiscoNetworkBook.cpp
+      CiscoNetworkBook.hpp
+      CiscoServiceBook.cpp
+      CiscoServiceBook.hpp
+      RulesCommon.cpp
+      RulesCommon.hpp
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+    )
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
+endforeach()
