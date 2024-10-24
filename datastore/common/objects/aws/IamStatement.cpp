@@ -33,6 +33,7 @@ namespace netmeld::datastore::objects::aws {
                 const std::string& _documentVersion,
                 const std::string& _sid,
                 const std::string& _effects,
+                const bool& _isAction,
                 const std::vector<std::string>& _actions,
                 const std::vector<std::string>& _resources,
                 const json& _principal,
@@ -41,6 +42,7 @@ namespace netmeld::datastore::objects::aws {
     documentVersion(_documentVersion),
     sid(_sid),
     effect(_effects),
+    isAction(_isAction),
     actions(_actions),
     resources(_resources),
     principal(_principal),
@@ -68,6 +70,11 @@ namespace netmeld::datastore::objects::aws {
   void
   IamStatement::setEffect(const std::string& _effect) {
     effect = _effect;
+  }
+
+  void
+  IamStatement::setIsAction(const bool& _isAction) {
+    isAction = _isAction;
   }
 
   void
@@ -108,6 +115,11 @@ namespace netmeld::datastore::objects::aws {
   std::string
   IamStatement::getEffect() const {
     return effect;
+  }
+
+  bool
+  IamStatement::getIsAction() const {
+    return isAction;
   }
 
   std::vector<std::string>
@@ -151,6 +163,7 @@ namespace netmeld::datastore::objects::aws {
         << "documentVersion: " << documentVersion << ","
         << "sid: " << sid << ","
         << "effect: " << effect << ", "
+        << "isAction: " << isAction << ","
         << "actions: " << actions << ", "
         << "resources: " << resources << ","
         << "principal: " << principal.dump() << ","
@@ -167,6 +180,7 @@ namespace netmeld::datastore::objects::aws {
                       , documentVersion
                       , sid
                       , effect
+                      , isAction
                       , actions
                       , resources
                       , principal
@@ -176,6 +190,7 @@ namespace netmeld::datastore::objects::aws {
                           , rhs.documentVersion
                           , rhs.sid
                           , rhs.effect
+                          , rhs.isAction
                           , rhs.actions
                           , rhs.resources
                           , rhs.principal
@@ -199,5 +214,17 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_statement"
+        , toolRunId
+        , attachmentId
+        , documentVersion
+        , sid
+        , effect
+        , actions
+        , resources
+        , principal.dump()
+        , condition.dump()
+    );
   }
 }

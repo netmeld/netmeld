@@ -46,6 +46,7 @@ namespace netmeld::datastore::objects::aws {
         std::string documentVersion;
         std::string sid;
         std::string effect;
+        bool isAction;
         std::vector<std::string> actions;
         std::vector<std::string> resources;
         json principal;
@@ -60,7 +61,7 @@ namespace netmeld::datastore::objects::aws {
     public: // Constructors part of public API
       IamStatement();
       IamStatement(const std::string&, const std::string&, const std::string&,
-                          const std::string&, const std::vector<std::string>&,
+                          const std::string&, const bool&, const std::vector<std::string>&,
                           const std::vector<std::string>&, const json&, const json&);
 
     // =========================================================================
@@ -73,6 +74,7 @@ namespace netmeld::datastore::objects::aws {
       void setDocumentVersion(const std::string&);
       void setSid(const std::string&);
       void setEffect(const std::string&);
+      void setIsAction(const bool&);
       void addAction(const std::string&);
       void addResource(const std::string&);
       void setPrincipal(const json&);
@@ -82,6 +84,7 @@ namespace netmeld::datastore::objects::aws {
       std::string getDocumentVersion() const;
       std::string getSid() const;
       std::string getEffect() const;
+      bool getIsAction() const;
       std::vector<std::string> getActions() const;
       std::vector<std::string> getResources() const;
       json getPrincipal() const;

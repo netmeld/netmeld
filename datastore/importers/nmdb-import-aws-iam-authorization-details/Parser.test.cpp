@@ -78,6 +78,7 @@ BOOST_AUTO_TEST_CASE(testStatementDetails)
       "2012-10-17", // documentVersion
       "Sid-0", // sid
       "Allow", // effects
+      true, // allow
       {"sts:AssumeRole"}, // actions
       std::vector<std::string>(), // resources
       principal, // principal
@@ -112,6 +113,52 @@ BOOST_AUTO_TEST_CASE(testStatementDetails)
       "", // documentVersion
       "", // sid
       "Allow", // effects
+      true, // allow
+      {
+        "iam:CreatePolicy",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicy",
+        "iam:DeletePolicyVersion",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicies",
+        "iam:ListPolicyVersions",
+        "iam:SetDefaultPolicyVersion"
+      }, // actions
+      {"*"}, // resources
+      json({}), // principal
+      json({}) // condition
+    );
+    tp.processStatement(tv2, std::string("Id1234"), std::string());
+
+    BOOST_TEST(tp.d.statements.size() == 1);
+    BOOST_TEST(statement == tp.d.statements.at(0));
+  }
+  {
+    TestParser tp;
+
+    json tv2 = json::parse(R"({
+  "Effect": "Allow",
+  "NotAction": [
+      "iam:CreatePolicy",
+      "iam:CreatePolicyVersion",
+      "iam:DeletePolicy",
+      "iam:DeletePolicyVersion",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:ListPolicies",
+      "iam:ListPolicyVersions",
+      "iam:SetDefaultPolicyVersion"
+  ],
+  "Resource": "*"
+})");
+
+    nmdoa::IamStatement statement(
+      "Id1234", // attachmentId
+      "", // documentVersion
+      "", // sid
+      "Allow", // effects
+      false, // allow
       {
         "iam:CreatePolicy",
         "iam:CreatePolicyVersion",
@@ -147,6 +194,7 @@ BOOST_AUTO_TEST_CASE(testStatementDetails)
       "", // documentVersion
       "Sid-0", // sid
       "Deny", // effects
+      true, // allow
       {}, // actions
       {"*"}, // resources
       json({}), // principal

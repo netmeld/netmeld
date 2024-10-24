@@ -305,7 +305,8 @@ Parser::processStatement(const json& _statement,
 
   LOG_DEBUG << "\tStatement: " << statement.toDebugString() << "\n";
 
-  auto& action = _statement.at("Action");
+  statement.setIsAction(_statement.contains("Action"));
+  auto& action = statement.getIsAction() ? _statement.at("Action") : _statement.at("NotAction");
   if(action.is_array()) {
       LOG_DEBUG << "\t\Action is an array\n";
       for(const auto& a : action) {
