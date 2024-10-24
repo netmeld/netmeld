@@ -132,7 +132,14 @@ namespace netmeld::datastore::objects::aws {
 
   bool
   IamStatement::isValid() const {
-      return false;
+    return !(
+      attachmentId.empty() ||
+      documentVersion.empty() ||
+      sid.empty() ||
+      effect.empty() ||
+      actions.empty() ||
+      resources.empty()
+    );
   }
 
   std::string

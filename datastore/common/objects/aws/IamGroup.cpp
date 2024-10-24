@@ -43,12 +43,27 @@ namespace netmeld::datastore::objects::aws {
 
   void
   IamGroup::save(pqxx::transaction_base& t,
-            const nmco::Uuid& toolRunId, const std::string& _deviceId)
+            const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
       LOG_DEBUG << "IamGroup object is not saving: " << toDebugString()
                 << std::endl;
       return;
     }
+
+    if(tags.is_null()) {
+      tags = json::array();
+      tags.push_back(json::object());
+    }
+
+    t.exec_prepared("insert_raw_aws_iam_group"
+        , toolRunId
+        , id
+        , arn
+        , name
+        , createDate
+        , path
+        , tags.dump()
+    );
   }
 }

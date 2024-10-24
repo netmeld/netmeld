@@ -340,6 +340,8 @@ void
 Parser::processPolicyVersionList(const json& _policyVersion,
                                                 const std::string& _policyId) {
   LOG_DEBUG << "processPolicyVersionList:\n";
+  LOG_DEBUG << "\tpolicyVersion = " << _policyVersion.dump() << "\n";
+  LOG_DEBUG << "\tpolicyId = " << _policyId << "\n";
 
   nmdoa::IamPolicyVersion version;
   version.setPolicyId(_policyId);
@@ -358,6 +360,8 @@ void
 Parser::processProfileList(const json& _profileList,
                                       const std::string& _parentRoleId) {
   LOG_DEBUG << "processProfileList:\n";
+  LOG_DEBUG << "\tprofileList = " << _profileList.dump() << "\n";
+  LOG_DEBUG << "\tparentRoleId = " << _parentRoleId << "\n";
 
   nmdoa::IamRoleInstanceProfile profile;
   profile.setParentRoleId(_parentRoleId);
@@ -380,6 +384,8 @@ void
 Parser::processPermissionsBoundary(const json& _permissionsBoundary,
                                                        const std::string& _roleId) {
   LOG_DEBUG << "processPermissionsBoundary:\n";
+  LOG_DEBUG << "\tpermissionsBoundary = " << _permissionsBoundary.dump() << "\n";
+  LOG_DEBUG << "\troleId = " << _roleId << "\n";
 
   nmdoa::IamRolePermissionBoundary boundary;
   boundary.setRoleId(_roleId);

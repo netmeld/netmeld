@@ -70,6 +70,7 @@ namespace netmeld::datastore::objects::aws {
       std::string getLastUsed() const;
       uint16_t getPermissionsBoundaryUsageCount() const;
 
+      bool isValid() const;
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
 

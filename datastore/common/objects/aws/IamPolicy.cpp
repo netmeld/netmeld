@@ -36,13 +36,13 @@ namespace netmeld::datastore::objects::aws {
                 const std::string& _path,
                 const json& _tags,
                 const std::string& _updateDate,
-                const int _attachmentCnt,
+                const int _attachmentCount,
                 const std::string& _defaultVersionId,
                 const bool _isAttachable,
                 const int _permissionsBoundaryUsageCount) :
     IamBase(_id, _arn, _name, _createDate, _path, _tags),
     updateDate(_updateDate),
-    attachmentCnt(_attachmentCnt),
+    attachmentCount(_attachmentCount),
     defaultVersionId(_defaultVersionId),
     isAttachable(_isAttachable),
     permissionsBoundaryUsageCount(_permissionsBoundaryUsageCount)
@@ -58,9 +58,9 @@ namespace netmeld::datastore::objects::aws {
   }
 
   void
-  IamPolicy::setAttachmentCount(const int _attachmentCnt)
+  IamPolicy::setAttachmentCount(const int _attachmentCount)
   {
-    attachmentCnt = _attachmentCnt;
+    attachmentCount = _attachmentCount;
   }
 
   void
@@ -90,7 +90,7 @@ namespace netmeld::datastore::objects::aws {
   int
   IamPolicy::getAttachmentCount() const
   {
-    return attachmentCnt;
+    return attachmentCount;
   }
 
   std::string
@@ -111,6 +111,51 @@ namespace netmeld::datastore::objects::aws {
     return permissionsBoundaryUsageCount;
   }
 
+  bool
+  IamPolicy::isValid() const {
+    return !(
+      id.empty() ||
+      arn.empty() ||
+      name.empty() ||
+      createDate.empty() ||
+      updateDate.empty() ||
+      attachmentCount < 0 ||
+      defaultVersionId.empty() ||
+      permissionsBoundaryUsageCount < 0 ||
+      path.empty()
+    );
+  }
+
+  auto
+  IamPolicy::operator<=>(const IamPolicy& rhs) const
+  {
+    return std::tie( id
+                   , arn
+                   , name
+                   , createDate
+                   , updateDate
+                   , attachmentCount
+                   , defaultVersionId
+                   , isAttachable
+                   , permissionsBoundaryUsageCount
+                   , path
+                   , tags
+                   )
+       <=> std::tie( rhs.id
+                   , rhs.arn
+                   , rhs.name
+                   , rhs.createDate
+                   , rhs.updateDate
+                   , rhs.attachmentCount
+                   , rhs.defaultVersionId
+                   , rhs.isAttachable
+                   , rhs.permissionsBoundaryUsageCount
+                   , rhs.path
+                   , rhs.tags
+                   )
+      ;
+  }
+
   void
   IamPolicy::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string& _deviceId)
@@ -120,5 +165,20 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_policy"
+        , toolRunId
+        , id
+        , arn
+        , name
+        , createDate
+        , path
+        , tags.dump()
+        , updateDate
+        , attachmentCount
+        , defaultVersionId
+        , isAttachable
+        , permissionsBoundaryUsageCount
+    );
   }
 }

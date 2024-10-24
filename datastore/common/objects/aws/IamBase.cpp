@@ -121,7 +121,13 @@ namespace netmeld::datastore::objects::aws {
   bool
   IamBase::isValid() const
   {
-    return false;
+    return !(
+      id.empty() ||
+      arn.empty() ||
+      name.empty() ||
+      createDate.empty() ||
+      path.empty()
+    );
   }
 
   std::string

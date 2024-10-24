@@ -42,12 +42,12 @@ namespace netmeld::datastore::objects::aws {
 
   void
   IamDocument::setAttachmentId(const std::string& _attachmentId) {
-      attachmentId = _attachmentId;
+    attachmentId = _attachmentId;
   }
 
   void
   IamDocument::setSecondaryId(const std::string& _secondaryId) {
-      secondaryId = _secondaryId;
+    secondaryId = _secondaryId;
   }
 
   void
@@ -57,12 +57,12 @@ namespace netmeld::datastore::objects::aws {
 
   std::string
   IamDocument::getAttachmentId() const {
-      return attachmentId;
+    return attachmentId;
   }
 
   std::string
   IamDocument::getSecondaryId() const {
-      return secondaryId;
+    return secondaryId;
   }
 
   std::string
@@ -72,7 +72,11 @@ namespace netmeld::datastore::objects::aws {
 
   bool
   IamDocument::isValid() const {
-      return false;
+    return !(
+      attachmentId.empty() ||
+      secondaryId.empty() ||
+      docVersion.empty()
+    );
   }
 
   std::string
@@ -81,6 +85,7 @@ namespace netmeld::datastore::objects::aws {
 
     oss << "[";
     oss << "attachmentId: " << attachmentId << ", "
+        << "secondaryId: " << secondaryId << ","
         << "docVersion: " << docVersion << ", ";
     oss << "]";
 
@@ -109,12 +114,19 @@ namespace netmeld::datastore::objects::aws {
 
   void
   IamDocument::save(pqxx::transaction_base& t,
-            const nmco::Uuid& toolRunId, const std::string& _deviceId)
+            const nmco::Uuid& toolRunId, const std::string&)
   {
     if (!isValid()) {
       LOG_DEBUG << "IamDocument object is not saving: " << toDebugString()
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_document"
+        , toolRunId
+        , attachmentId
+        , secondaryId
+        , docVersion
+    );
   }
 }

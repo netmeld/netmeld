@@ -83,6 +83,19 @@ namespace netmeld::datastore::objects::aws {
       return permissionsBoundaryUsageCount;
   }
 
+  bool
+  IamRole::isValid() const {
+    return !(
+      id.empty() ||
+      arn.empty() ||
+      name.empty() ||
+      createDate.empty() ||
+      lastUsed.empty() ||
+      path.empty() ||
+      permissionsBoundaryUsageCount < 0
+    );
+  }
+
   void
   IamRole::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string& _deviceId)
@@ -92,6 +105,18 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_role"
+        , toolRunId
+        , id
+        , arn
+        , name
+        , createDate
+        , lastUsed
+        , path
+        , permissionsBoundaryUsageCount
+        , tags.dump()
+    );
   }
 
   std::string

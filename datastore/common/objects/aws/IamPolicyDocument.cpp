@@ -61,7 +61,10 @@ namespace netmeld::datastore::objects::aws {
 
   bool
   IamPolicyDocument::isValid() const {
-      return false;
+    return !(
+      attachmentId.empty() ||
+      policyName.empty()
+    );
   }
 
   std::string
@@ -104,5 +107,11 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_policy_document"
+        , toolRunId
+        , attachmentId
+        , policyName
+    );
   }
 }

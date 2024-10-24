@@ -84,7 +84,11 @@ namespace netmeld::datastore::objects::aws {
 
   bool
   IamPolicyVersion::isValid() const {
-      return false;
+    return !(
+      policyId.empty() ||
+      versionId.empty() ||
+      createDate.empty()
+    );
   }
 
   std::string
@@ -130,5 +134,13 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_policy_version"
+        , toolRunId
+        , policyId
+        , versionId
+        , isDefaultVersion
+        , createDate
+    );
   }
 }

@@ -72,7 +72,10 @@ namespace netmeld::datastore::objects::aws {
 
   bool
   IamUserGroup::isValid() const {
-      return false;
+    return !(
+      userId.empty() ||
+      groupName.empty()
+    );
   }
 
   auto
@@ -101,5 +104,11 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_user_group"
+        , toolRunId
+        , userId
+        , groupName
+    );
   }
 }

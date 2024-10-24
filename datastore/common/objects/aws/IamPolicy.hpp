@@ -44,7 +44,7 @@ namespace netmeld::datastore::objects::aws {
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
         std::string updateDate;
-        int attachmentCnt;
+        int attachmentCount;
         std::string defaultVersionId;
         bool isAttachable;
         int permissionsBoundaryUsageCount;
@@ -80,6 +80,9 @@ namespace netmeld::datastore::objects::aws {
       bool getIsAttachable() const;
       int getPermissionsBoundaryUsageCount() const;
 
+      auto operator<=>(const IamPolicy&) const;
+
+      bool isValid() const;
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
   };

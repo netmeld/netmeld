@@ -58,6 +58,7 @@ namespace netmeld::datastore::objects::aws {
     protected: // Methods part of subclass API
     public: // Methods part of public API
 
+      bool isValid() const;
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
   };

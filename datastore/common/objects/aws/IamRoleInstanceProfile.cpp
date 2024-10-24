@@ -108,7 +108,14 @@ namespace netmeld::datastore::objects::aws {
 
   bool
   IamRoleInstanceProfile::isValid() const {
-      return false;
+    return !(
+      parentRoleId.empty() ||
+      profileId.empty() ||
+      profileName.empty() ||
+      arn.empty() ||
+      createDate.empty() ||
+      path.empty()
+    );
   }
 
   std::string
@@ -160,5 +167,15 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_role_instance_profile"
+        , toolRunId
+        , parentRoleId
+        , profileId
+        , profileName
+        , arn
+        , createDate
+        , path
+    );
   }
 }

@@ -72,7 +72,11 @@ namespace netmeld::datastore::objects::aws {
 
   bool
   IamRolePermissionBoundary::isValid() const {
-      return false;
+    return !(
+      roleId.empty() ||
+      boundaryArn.empty() ||
+      boundaryType.empty()
+    );
   }
 
   std::string
@@ -114,5 +118,12 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_role_permission_boundary"
+        , toolRunId
+        , roleId
+        , boundaryArn
+        , boundaryType
+    );
   }
 }

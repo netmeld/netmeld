@@ -41,6 +41,17 @@ namespace netmeld::datastore::objects::aws {
   IamUser::IamUser()
   {}
 
+  bool
+  IamUser::isValid() const {
+    return !(
+      id.empty() ||
+      arn.empty() ||
+      name.empty() ||
+      createDate.empty() ||
+      path.empty()
+    );
+  }
+
   void
   IamUser::save(pqxx::transaction_base& t,
             const nmco::Uuid& toolRunId, const std::string& _deviceId)
@@ -50,5 +61,15 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_user"
+        , toolRunId
+        , id
+        , arn
+        , name
+        , createDate
+        , path
+        , tags.dump()
+    );
   }
 }

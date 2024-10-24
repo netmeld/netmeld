@@ -80,7 +80,11 @@ namespace netmeld::datastore::objects::aws {
   bool
   IamAttachedManagedPolicy::isValid() const
   {
-    return false;
+    return !(
+        attachmentId.empty() ||
+        policyArn.empty() ||
+        policyName.empty()
+    );
   }
 
   std::string
@@ -126,5 +130,12 @@ namespace netmeld::datastore::objects::aws {
                 << std::endl;
       return;
     }
+
+    t.exec_prepared("insert_raw_aws_iam_attached_managed_policy"
+        , toolRunId
+        , attachmentId
+        , policyArn
+        , policyName
+    );
   }
 }
