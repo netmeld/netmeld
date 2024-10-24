@@ -568,6 +568,111 @@ namespace netmeld::datastore::utils {
           ON CONFLICT DO NOTHING
         )");
 
+
+    // ----------------------------------------------------------------------
+    // TABLES: AWS IAM elements
+    // ----------------------------------------------------------------------
+
+    db.prepare
+      ("insert_raw_aws_iam_document", R"(
+          INSERT INTO raw_aws_iam_document
+            (tool_run_id, attachment_id, secondary_id, doc_version)
+          VALUES
+            ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING
+        )");
+
+    db.prepare
+          ("insert_raw_aws_iam_group", R"(
+              INSERT INTO raw_aws_iam_group
+                (tool_run_id, id, arn, name, create_date, path, tags)
+              VALUES
+                ($1, $2, $3, $4, $5, $6, $7)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_policy", R"(
+              INSERT INTO raw_aws_iam_policy
+                (tool_run_id, id, arn, name, create_date, path, tags, update_date, attachment_count, default_version_id, is_attachable, permissions_boundary_usage_count)
+              VALUES
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_policy_document", R"(
+              INSERT INTO raw_aws_iam_policy_document
+                (tool_run_id, attachment_id, policy_name)
+              VALUES
+                ($1, $2, $3)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_policy_version", R"(
+              INSERT INTO raw_aws_iam_policy_version
+                (tool_run_id, policy_id, version_id, is_default_version, create_date)
+              VALUES
+                ($1, $2, $3, $4, $5)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_role_instance_profile", R"(
+              INSERT INTO raw_aws_iam_role_instance_profile
+                (tool_run_id, parent_role_id, profile_id, profile_name, arn, create_date, path)
+              VALUES
+                ($1, $2, $3, $4, $5, $6, $7)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_role_permission_boundary", R"(
+              INSERT INTO raw_aws_iam_role_permission_boundary
+                (tool_run_id, role_id, boundary_arn, boundary_type)
+              VALUES
+                ($1, $2, $3, $4)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_user", R"(
+              INSERT INTO raw_aws_iam_user
+                (tool_run_id, id, arn, name, create_date, path, tags)
+              VALUES
+                ($1, $2, $3, $4, $5, $6, $7)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_user_group", R"(
+              INSERT INTO raw_aws_iam_user_group
+                (tool_run_id, user_id, group_name)
+              VALUES
+                ($1, $2, $3)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_attached_managed_policy", R"(
+              INSERT INTO raw_aws_iam_attached_managed_policy
+                (tool_run_id, attachment_id, policy_arn, policy_name)
+              VALUES
+                ($1, $2, $3, $4)
+              ON CONFLICT DO NOTHING
+            )");
+
+    db.prepare
+          ("insert_raw_aws_iam_role", R"(
+              INSERT INTO raw_aws_iam_role
+                (tool_run_id, id, arn, name, create_date, path, tags, profile_id, last_used, permissions_boundary_usage_count)
+              VALUES
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+              ON CONFLICT DO NOTHING
+            )");
+
+
     // ----------------------------------------------------------------------
   }
 
