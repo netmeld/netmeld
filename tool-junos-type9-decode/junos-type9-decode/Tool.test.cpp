@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(testGetNext)
   auto result {tt.getNext("abc123", 3)};
   BOOST_TEST("abc" == std::get<0>(result));
   BOOST_TEST("123" == std::get<1>(result));
-  
+
   result = tt.getNext("abc123", 1);
   BOOST_TEST("a" == std::get<0>(result));
   BOOST_TEST("bc123" == std::get<1>(result));
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(testGapDecode)
 {
   TestTool tt;
   std::vector<uint8_t> gaps, moduli;
-  
+
   gaps    = {};
   moduli  = {};
   BOOST_TEST(0x0 == tt.gapDecode(gaps, moduli));
@@ -73,11 +73,11 @@ BOOST_AUTO_TEST_CASE(testGapDecode)
   gaps    = {1,2};
   moduli  = {1,2};
   BOOST_TEST(0x5 == tt.gapDecode(gaps, moduli));
-  
+
   gaps    = {1,2,3,4,5};
   moduli  = {5,4,3,2,1};
   BOOST_TEST(0x23 == tt.gapDecode(gaps, moduli));
-  
+
   gaps    = {1};
   moduli  = {127};
   BOOST_TEST(0x7f == tt.gapDecode(gaps, moduli));

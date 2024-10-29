@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(testRuleSystem)
   BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
             , "Parser rule 'system': " << test
             );
- 
+
   BOOST_TEST(1 == tp.d.services.size());
   const auto tStr1 {tp.d.services[0].toDebugString()};
   nmdp::testInString(tStr1, "serviceName: DNS");

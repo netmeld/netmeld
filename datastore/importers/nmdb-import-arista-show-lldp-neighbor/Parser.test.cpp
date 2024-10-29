@@ -421,7 +421,7 @@ Number of table inserts  : 11
 Number of table deletes  : 5
 Number of table drops    : 0
 Number of table age-outs : 0
- 
+
 Port            Neighbor Device ID                     Neighbor Port ID    TTL
 ------------ -------------------------------------- ---------------------- ---
 Et1             HOST1.domain                           Ethernet1           120
@@ -462,9 +462,9 @@ BOOST_AUTO_TEST_CASE(testWholeDetail)
     const auto& parserRule {tp.start};
     std::string test {
       R"STR(Interface Ethernet1 detected 0 LLDP neighbors:
- 
+
 Interface Ethernet2 detected 1 LLDP neighbors:
- 
+
   Neighbor 1234.5678.90ab/"Ethernet1", age 7 seconds
   Discovered 38 days, 18:07:18 ago; Last changed 38 days, 18:07:16 ago
   - Chassis ID type: MAC address (4)
@@ -487,9 +487,9 @@ Interface Ethernet2 detected 1 LLDP neighbors:
     Link Aggregation Status: Capable, Enabled (0x03)
     Port ID                : 12345678
   - IEEE802.3 Maximum Frame Size: 12345 bytes
- 
+
 Interface Ethernet3/1 detected 1 LLDP neighbors:
- 
+
   Neighbor 4321.5678.90ab/"123", age 27 seconds
   Discovered 45 days, 17:19:54 ago; Last changed 45 days, 17:19:54 ago
   - Chassis ID type: MAC address (4)

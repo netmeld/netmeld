@@ -56,7 +56,7 @@ class Parser:
   private:
     nmdp::ParserDomainName  resourceFqdn;
     nmdp::ParserIpAddress   ipAddr;
-    
+
   protected:
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
         start

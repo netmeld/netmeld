@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(testRuleRule)
     BOOST_TEST(2 == tgt1.at(id).size());
     BOOST_TEST(tgt1.at(id).contains("abc"));
     BOOST_TEST(tgt1.at(id).contains("fragment"));
-    
+
     const auto& tgt2 {tp.d.networkBooks};
     BOOST_TEST_REQUIRE(tgt2.contains(id));
     BOOST_TEST(2 == tgt2.at(id).size());

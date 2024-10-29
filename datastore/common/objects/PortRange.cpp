@@ -190,7 +190,7 @@ namespace netmeld::datastore::objects {
   PortRange::toDebugString() const
   {
     std::ostringstream oss;
-    
+
     oss << "["
         << "min: " << min
         << ", max: " << max

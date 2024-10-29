@@ -63,7 +63,7 @@ namespace netmeld::core::utils {
 
     return exitStatus;
   }
- 
+
   // Unnamed namespace to hide helper logic
   namespace {
     struct FileDeleter {

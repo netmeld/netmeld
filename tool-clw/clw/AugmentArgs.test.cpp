@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(testAugmentArgsNmap)
   std::vector<std::string> test;
   size_t origSize {0};
   auto it {test.crbegin()};
- 
+
   // defaults
   test      = {"nmap"};
   origSize  = test.size();

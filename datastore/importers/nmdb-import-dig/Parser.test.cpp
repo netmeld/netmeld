@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(testRuleResponseSection)
                  || "ADDITIONAL" == out.first
                  )
                 );
-      
+
       nmco::DnsResponse expected;
       expected.setFqdn("some.domain");
       expected.setTtl(1);

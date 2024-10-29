@@ -131,7 +131,7 @@ Parser::Parser() : Parser::base_type(start)
                     devInfo.setSerialNumber(systemInformationEntry.at(0)["Serial Number"]);
                 }, qi::_val
             )
-        )] 
+        )]
     ;
 
     systemInformation =
@@ -160,8 +160,8 @@ Parser::Parser() : Parser::base_type(start)
         (
             qi::lit("System has") >>
             qi::int_
-            
-            >> 
+
+            >>
             qi::lit("power supply slot") >> -qi::lit('s') >> qi::eol
         ) >>
         systemPowerSupply
@@ -194,8 +194,8 @@ Parser::Parser() : Parser::base_type(start)
             (
                 qi::lit("System has") >>
                 qi::int_
-                
-                >> 
+
+                >>
                 qi::lit("fan module") >> -qi::lit('s') >> qi::eol
             ) >>
             systemFanModule
@@ -229,8 +229,8 @@ Parser::Parser() : Parser::base_type(start)
             (
                 qi::lit("System has") >>
                 qi::int_
-                
-                >> 
+
+                >>
                 qi::lit("port") >> -qi::lit('s') >> qi::eol
             ) >>
             systemPort
@@ -264,13 +264,13 @@ Parser::Parser() : Parser::base_type(start)
             (
                 qi::lit("System has") >>
                 qi::int_
-                
-                >> 
+
+                >>
                 -qi::lit("switched") >> qi::lit("transceiver slot") >>
                 -qi::lit('s') >> qi::eol
             ) >>
             systemTransceiver
-        ) 
+        )
     ;
 
     systemTransceiver =
@@ -301,8 +301,8 @@ Parser::Parser() : Parser::base_type(start)
             (
                 qi::lit("System has") >>
                 qi::int_
-                
-                >> 
+
+                >>
                 qi::lit("storage device") >> -qi::lit('s') >> qi::eol
             )>>
             systemStorage
@@ -332,7 +332,7 @@ Parser::Parser() : Parser::base_type(start)
         )]
     ;
 
-    grabLine = 
+    grabLine =
         *qi::print
     ;
 

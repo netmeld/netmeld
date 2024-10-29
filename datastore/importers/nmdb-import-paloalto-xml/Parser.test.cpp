@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigRules)
 BOOST_AUTO_TEST_CASE(testParseConfigRulebase)
 {
   TestParser tp;
-  
+
   // add known zones (prior parse step that impacts results)
   tp.ls.aclZones["any"].setId("any");
 
@@ -464,7 +464,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigService)
 BOOST_AUTO_TEST_CASE(testParseConfigAddressGroup)
 {
   TestParser tp;
-  
+
   const std::string xml {R"(
       <address-group>
         <entry name="group1">
@@ -557,7 +557,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigAddress)
 BOOST_AUTO_TEST_CASE(testParseConfigZone)
 {
   TestParser tp;
-  
+
   const std::string xml {R"(
       <zone>
         <entry name="zone1">
@@ -614,7 +614,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigZone)
 BOOST_AUTO_TEST_CASE(testParseConfigVirtualRouter)
 {
   TestParser tp;
-  
+
   const std::string xml {R"(
       <virtual-router>
         <entry name="vrf1">
@@ -709,7 +709,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigVirtualRouter)
 BOOST_AUTO_TEST_CASE(testParseConfigInterfaceEntry)
 {
   TestParser tp;
-  
+
   const std::string xml {R"(
       <interface>
         <entry name="eth0">
@@ -1115,7 +1115,7 @@ BOOST_AUTO_TEST_CASE(testParseConfig)
   nmdp::testInString(dbgStr, "id: service1,");
   dbgStr = out2.aclServices[2].toDebugString();
   nmdp::testInString(dbgStr, "id: groupService1,");
-  
+
   BOOST_TEST_REQUIRE(1 == out2.aclRules.size());
   dbgStr = out2.aclRules[0].toDebugString();
   nmdp::testInString(dbgStr, "action: block,");

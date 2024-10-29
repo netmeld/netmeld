@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(testParseIpAddrVrfStr)
     , {"any", "0.0.0.0", ""}
     , {"any6", "::", ""}
     };
-  
+
   for (const auto& [test, eIp, eVrf] : tests) {
     const auto [oIp, oVrf] {tp.parseIpAddrVrfStr(test)};
 
@@ -100,14 +100,14 @@ BOOST_AUTO_TEST_CASE(testParseNetRoute)
           , "gw": "1.2.3.1"
           }
         ]
-      } 
+      }
     )");
 
   tp.parseNetRoute(test);
 
   BOOST_TEST_REQUIRE(tp.data.logicalSystems.contains("abc"));
   const auto& out {tp.data.logicalSystems.at("abc")};
-  
+
   BOOST_TEST_REQUIRE(out.vrfs.contains(""));
   BOOST_TEST(!out.vrfs.at("").isValid());
   auto dbgStr {out.vrfs.at("").toDebugString()};
@@ -143,14 +143,14 @@ BOOST_AUTO_TEST_CASE(testParseNetSelf)
           , "address": "1.2.3.4/24"
           }
         ]
-      } 
+      }
     )");
 
   tp.parseNetSelf(test);
 
   BOOST_TEST_REQUIRE(tp.data.logicalSystems.contains("abc"));
   const auto& out {tp.data.logicalSystems.at("abc")};
-  
+
   BOOST_TEST_REQUIRE(out.ifaces.contains("iface-1"));
   BOOST_TEST(out.ifaces.at("iface-1").isValid());
   auto dbgStr {out.ifaces.at("iface-1").toDebugString()};
@@ -185,14 +185,14 @@ BOOST_AUTO_TEST_CASE(testParseNetArpNdp)
           , "macAddress": "00:11:22:33:44:55"
           }
         ]
-      } 
+      }
     )");
 
   tp.parseNetArpNdp(test);
 
   BOOST_TEST_REQUIRE(tp.data.logicalSystems.contains("abc"));
   const auto& out {tp.data.logicalSystems.at("abc")};
-  
+
   BOOST_TEST_REQUIRE(out.ifaces.contains("iface-1"));
   BOOST_TEST(out.ifaces.at("iface-1").isValid());
   auto dbgStr {out.ifaces.at("iface-1").toDebugString()};
@@ -222,14 +222,14 @@ BOOST_AUTO_TEST_CASE(testParseLtmVirtualAddress)
           , "address": "1.2.3.4"
           }
         ]
-      } 
+      }
     )");
 
   tp.parseLtmVirtualAddress(test);
 
   BOOST_TEST_REQUIRE(tp.data.logicalSystems.contains("abc"));
   const auto& out {tp.data.logicalSystems.at("abc")};
-  
+
   BOOST_TEST_REQUIRE(out.ifaces.contains("iface-1"));
   BOOST_TEST(out.ifaces.at("iface-1").isValid());
   auto dbgStr {out.ifaces.at("iface-1").toDebugString()};

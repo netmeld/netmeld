@@ -1407,7 +1407,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigRoutingOptions)
       nmdp::testInString(dbgStr, "protocol: static,");
       nmdp::testInString(dbgStr, "adminDistance: 5,");
 
-      
+
       if (0 == i) {
         nmdp::testInString(dbgStr, "dstIpNet: [ipNetwork: 1.2.3.123/32,");
       } else if (1 == i) {
@@ -1549,7 +1549,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigInterfaces)
           </interface>
           <interface> <name>pi1</name> </interface>
           <interface> <name>pi2</name> </interface>
-          
+
           <!-- logical interfaces -->
           <interface>
             <name>pi3</name>
@@ -1702,7 +1702,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigInterfaces)
 
           <!-- physical interfaces -->
           <interface inactive="inactive"> <name>dpi1</name> </interface>
-          
+
           <!-- logical interfaces -->
           <interface>
             <name>pi1</name>

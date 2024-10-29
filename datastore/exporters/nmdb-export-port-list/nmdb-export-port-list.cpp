@@ -44,7 +44,7 @@ class Tool : public nmdt::AbstractExportTool
     std::bitset<65536> udpPorts;
     std::bitset<65536> sctpPorts;
 
-  
+
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -56,7 +56,7 @@ class Tool : public nmdt::AbstractExportTool
       , PROGRAM_VERSION   // program version (set in CMakeLists.txt)
       )
     {}
-  
+
   // ===========================================================================
   // Methods
   // ===========================================================================

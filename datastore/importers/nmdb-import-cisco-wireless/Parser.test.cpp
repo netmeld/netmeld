@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(testPhyIface)
     , "interface address abc123 1.2.3.4 255.255.255.0 1.2.3.1"
     , "interface address dynamic-interface abc123 1.2.3.4 255.255.255.0 1.2.3.1"
     };
-  
+
   for (const auto& test : testsOk) {
     BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
               , "Parse rule 'phyIface': " << test

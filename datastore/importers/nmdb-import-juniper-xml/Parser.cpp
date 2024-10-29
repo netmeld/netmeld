@@ -1045,7 +1045,7 @@ Parser::parseRouteInfo(const pugi::xml_node& routeInfoNode)
 {
   std::string logicalSystemName;
   const pugi::xml_node outputNode {routeInfoNode.previous_sibling("output")};
-  
+
   std::ostringstream oss;
 
   if (outputNode) {
@@ -1071,7 +1071,7 @@ std::string
 Parser::parseRouteLogicalSystemName(const std::string& s)
 {
   std::string logicalSystemName {"unknown"};
- 
+
 
   std::regex r {"^logical-system:\\s+(\\S+)\\s*$"};
   std::smatch m;
@@ -1082,7 +1082,7 @@ Parser::parseRouteLogicalSystemName(const std::string& s)
   if ("default" == logicalSystemName) {
     logicalSystemName.clear();
   }
- 
+
 
   return nmcu::toLower(logicalSystemName);
 }

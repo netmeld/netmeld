@@ -40,9 +40,9 @@ class TestPort : public nmdo::Port {
     using Port::state;
     using Port::reason;
     // has accessor
-    //using Port::port; 
-    //using Port::protocol; 
-    //using Port::ipAddr; 
+    //using Port::port;
+    //using Port::protocol;
+    //using Port::ipAddr;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)

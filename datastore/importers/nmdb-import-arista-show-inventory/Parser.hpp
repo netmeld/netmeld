@@ -94,7 +94,7 @@ class Parser:
   private:
     std::string VENDOR = "Arista";
 
-    KeyValVec 
+    KeyValVec
       systemInformationEntry,
       powerSupplyEntries,
       fanModuleEntries,
@@ -104,7 +104,7 @@ class Parser:
     ;
 
 
-    
+
 
   public:
 

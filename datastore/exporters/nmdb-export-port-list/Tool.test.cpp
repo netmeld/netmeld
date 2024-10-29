@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(testPortsStringFromBitset)
 
   // reset to all zeroes
   bitset.flip();
-  
+
   // single
   bitset.set(22);
   out = tt.portsStringFromBitset(bitset);

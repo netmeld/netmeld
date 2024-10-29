@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(testRouteRule)
 {
   TestParser tp;
   const auto& parserRule {tp.start};
-  
+
   // set route ip/prefix interface ifaceName [gateway ip]
   // set routing-options static route ip/prefix next-hop (ip|nic)
   const std::string test {R"(
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(testInterfaceRules)
   BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
             , "Rule 'interface': " << test
             );
-  
+
   BOOST_TEST(0 == tp.d.routes.size());
   BOOST_TEST(0 == tp.d.networkBooks.size());
   BOOST_TEST(0 == tp.d.serviceBooks.size());

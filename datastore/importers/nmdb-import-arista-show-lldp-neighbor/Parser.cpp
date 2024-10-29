@@ -53,14 +53,14 @@ Parser::Parser() : Parser::base_type(start)
     > *qi::eol
     ;
 
-  noDetailTableInfo = 
+  noDetailTableInfo =
     qi::lit("Last table change time")
     > *(!qi::lit("Port") >> ignoredLine)
     ;
 
   noDetailHeader =
     qi::lit("Port")
-    > qi::lit("Neighbor Device ID")  
+    > qi::lit("Neighbor Device ID")
     > qi::lit("Neighbor Port ID")
     > qi::lit("TTL")
     > qi::eol
@@ -189,7 +189,7 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   restOfLine =
-    *(qi::char_ - qi::eol) 
+    *(qi::char_ - qi::eol)
     >> qi::eol
     ;
 
