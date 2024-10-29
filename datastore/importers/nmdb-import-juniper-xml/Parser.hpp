@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -58,7 +58,6 @@ typedef std::tuple<std::string, std::string> InterfaceHierarchy;
 
 struct LogicalSystem
 {
-  std::string name;
   std::map<std::string, nmdo::InterfaceNetwork> ifaces;
   std::vector<InterfaceHierarchy> ifaceHierarchies;
   std::map<std::string, nmdo::Vrf> vrfs;
