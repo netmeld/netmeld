@@ -168,7 +168,7 @@ class Parser :
     qi::rule<nmdp::IstreamIter, nmdo::IpAddress()>
       ipMask;
 
-private:
+protected:
     nmdp::ParserDomainName  domainName;
     nmdp::ParserIpAddress   ipAddr;
     nmdp::ParserMacAddress  macAddr;
@@ -225,7 +225,7 @@ private:
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private: // Methods which should be hidden from API users
+  protected: // Methods which should be hidden from API users
     // Device related
     void deviceAaaAdd(const std::string&);
     void deviceAddDnsSearchDomain(const std::string&);

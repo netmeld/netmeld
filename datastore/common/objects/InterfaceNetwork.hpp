@@ -113,6 +113,21 @@ namespace netmeld::datastore::objects {
       bool getState() const;
       const std::set<IpAddress>& getIpAddresses() const;
       const std::set<Vlan>& getVlans() const;
+      const std::set<MacAddress>& getPortSecurityStickyMacs() const;
+      const std::set<MacAddress>& getReachableMacs() const;
+      bool getDiscoveryProtocol() const;
+      std::string getDescription(const std::string&) const;
+      const MacAddress& getMacAddress() const;
+      std::string getMediaType() const;
+      std::string getSwitchportMode() const;
+      bool getPortSecurity() const;
+      unsigned short getPortSecurityMaxMacAddrs() const;
+      std::string getPortSecurityViolationAction() const;
+      bool getPortSecurityStickyMac() const;
+      bool getBpduGuard() const;
+      bool getBpduFilter() const;
+      bool getPortfast() const;
+      bool getPartial() const;
 
       // Always overriden from AbstractDatastoreObject
       bool isValid() const override;

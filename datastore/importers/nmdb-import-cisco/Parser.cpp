@@ -55,7 +55,7 @@ Parser::Parser() : Parser::base_type(start)
 
       | versionPIXASA
 
-      | spanningTreeInitial
+      | spanningTree
 
       | deviceAAA
       | globalServices
@@ -331,34 +331,34 @@ Parser::Parser() : Parser::base_type(start)
 
   globalServices =
     // NOTE None handle when an alias is used instead of an IP
-    (  ((qi::lit("sntp") | qi::lit("ntp")) > qi::lit("server")
-        > -(qi::lit("vrf") > token)
-        > (  ipAddr [(pnx::bind(&Parser::serviceAddNtp, this, qi::_1))]
+    (  ((qi::lit("sntp") | qi::lit("ntp")) >> qi::lit("server")
+        >> -(qi::lit("vrf") >> token)
+        >> (  ipAddr [(pnx::bind(&Parser::serviceAddNtp, this, qi::_1))]
            | token
-          ) > -tokens > qi::eol)
+          ) >> -tokens >> qi::eol)
       | (qi::lit("snmp-server host")
-         > ( ipAddr [(pnx::bind(&Parser::serviceAddSnmp, this, qi::_1))]
+         >> ( ipAddr [(pnx::bind(&Parser::serviceAddSnmp, this, qi::_1))]
             | token
-           ) > -tokens > qi::eol)
+           ) >> -tokens >> qi::eol)
       | (qi::lit("radius-server host")
-         > ipAddr [(pnx::bind(&Parser::serviceAddRadius, this, qi::_1))]
-         > -tokens > qi::eol)
-      | (qi::lit("ip name-server") > -(qi::lit("vrf") > token)
-         > +ipAddr [(pnx::bind(&Parser::serviceAddDns, this, qi::_1))]
-         > -(qi::lit("use-vrf") > token)
-         > qi::eol)
-      | (qi::lit("logging ") > (qi::lit("server ") | qi::lit("host "))
-         > ( ipAddr
+         >> ipAddr [(pnx::bind(&Parser::serviceAddRadius, this, qi::_1))]
+         >> -tokens >> qi::eol)
+      | (qi::lit("ip name-server") >> -(qi::lit("vrf") >> token)
+         >> +ipAddr [(pnx::bind(&Parser::serviceAddDns, this, qi::_1))]
+         >> -(qi::lit("use-vrf") >> token)
+         >> qi::eol)
+      | (qi::lit("logging ") >> (qi::lit("server ") | qi::lit("host "))
+         >> ( ipAddr
            | (qi::omit[token] >> ipAddr)
            )[(pnx::bind(&Parser::serviceAddSyslog, this, qi::_1))]
-         > -tokens > qi::eol)
+         >> -tokens >> qi::eol)
     )
     ;
 
   channelGroup =
     (qi::lit("channel-group") > qi::ushort_)
-      [(pnx::bind(&Parser::portChannelAddIface, this, qi::_1))] >
-    (qi::lit("mode") > token) >>
+      [(pnx::bind(&Parser::portChannelAddIface, this, qi::_1))] >>
+    (qi::lit("mode") > token) >> 
     -(qi::lit("type") >> token)
     ;
 
@@ -382,28 +382,28 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   switchportPortSecurity =
-    qi::lit("port-security ") >
+    qi::lit("port-security ") >>
     (
-       ((-qi::lit("mac-address") >> (qi::lit("maximum") | qi::lit("max")) > qi::ushort_)
+       ((-qi::lit("mac-address") >> (qi::lit("maximum") | qi::lit("max")) >> qi::ushort_)
           [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                       pnx::bind(&Parser::tgtIface, this), qi::_1))]
-         > -(qi::lit("vlan") > (qi::ushort_ | token))
+         >> -(qi::lit("vlan") > (qi::ushort_ | token))
           [(pnx::bind(&Parser::unsup, this,
                       "switchport port-security maximum COUNT vlan ID"))]
        )
      | (qi::lit("mac-address ")
-        > -qi::lit("sticky")
+        >> -qi::lit("sticky")
             [(pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);}))]
-        > -macAddr
+        >> -macAddr
             [(pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
                         pnx::bind(&Parser::tgtIface, this), qi::_1))]
        )
      | (qi::lit("sticky")  // Brocade style
-         [(pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);}))] >
-        -(qi::lit("mac-address") >
+         [(pnx::bind([&](){tgtIface->setPortSecurityStickyMac(!isNo);}))] >>
+        -(qi::lit("mac-address") >>
           macAddr
             [(pnx::bind(&nmdo::InterfaceNetwork::addPortSecurityStickyMac,
-                        pnx::bind(&Parser::tgtIface, this), qi::_1))] >
+                        pnx::bind(&Parser::tgtIface, this), qi::_1))] >>
           -(qi::lit("vlan") > qi::ushort_)
             [(pnx::bind(&Parser::unsup, this,
                         "switchport port-security sticky mac-address MAC vlan ID"))]
@@ -412,7 +412,7 @@ Parser::Parser() : Parser::base_type(start)
      | (qi::lit("violation") > token)
           [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityViolationAction,
                       pnx::bind(&Parser::tgtIface, this), qi::_1))]
-     | (qi::lit("shutdown-time") > qi::int_)
+     | (qi::lit("shutdown-time") >> qi::int_)
      | (&qi::eol)
           [(pnx::bind([&](){tgtIface->setPortSecurity(!isNo);}))]
      | (qi::lit("limit rate") > +token)
@@ -421,12 +421,12 @@ Parser::Parser() : Parser::base_type(start)
 
   switchportVlan =
     (qi::string("access ") | qi::string("trunk ") | qi::string("voice "))
-    > (  qi::string("native ")
+    >> (  qi::string("native ")
         | qi::string("allowed ")
         | qi::as_string[qi::attr(" ")]
        )
-    > qi::lit("vlan") > -qi::lit("add")
-    > (  ((vlanRange | vlanId) % qi::lit(','))
+    >> qi::lit("vlan") >> -qi::lit("add")
+    >> (  ((vlanRange | vlanId) % qi::lit(','))
        | (tokens)
             [(pnx::bind(&Parser::unsup, this,
                         "switchport " + qi::_a + qi::_b + "vlan " + qi::_1))]
@@ -443,15 +443,6 @@ Parser::Parser() : Parser::base_type(start)
     qi::ushort_
       [(pnx::bind(&nmdo::InterfaceNetwork::addVlan,
                   pnx::bind(&Parser::tgtIface, this), qi::_1))]
-    ;
-
-  spanningTreeInitial =
-    qi::lit("spanning-tree") >
-      (
-        spanningTreeInitialMode
-        | spanningTreeInitialMstConfiguration
-        | spanningTreeInitialPortfast
-      )
     ;
   
   spanningTreeInitialMode = 
@@ -470,7 +461,7 @@ Parser::Parser() : Parser::base_type(start)
             [(pnx::bind(&Parser::globalBpduGuardEnabled, this) = true)]
         | qi::lit("bpdufilter")
             [(pnx::bind(&Parser::globalBpduFilterEnabled, this) = true)]
-        ) > *token > qi::eol
+        ) >> *token >> qi::eol
     )
     ;
 
@@ -480,7 +471,10 @@ Parser::Parser() : Parser::base_type(start)
     (  spanningTreeBPUGuard
      | spanningTreeBPDUFilter
      | spanningTreePortType
+     | spanningTreeInitialPortfast
      | spanningTreePortfast
+     | spanningTreeInitialMode
+     | spanningTreeInitialMstConfiguration
      | tokens
          [(pnx::bind(&Parser::unsup, this, "spanning-tree " + qi::_1))]
     )

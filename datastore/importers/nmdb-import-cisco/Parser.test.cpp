@@ -28,11 +28,15 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
+#include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/datastore/parsers/ParserTestHelper.hpp>
+#include <netmeld/datastore/utils/ServiceFactory.hpp>
 
 #include "Parser.hpp"
 
+namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
+namespace nmdu = netmeld::datastore::utils;
 
 using qi::ascii::blank;
 
@@ -60,6 +64,11 @@ class TestParser : public Parser {
     using Parser::policyMap;
     using Parser::classMap;
 
+    using Parser::globalCdpEnabled;
+    using Parser::d;
+    using Parser::tgtIface;
+    using Parser::isNo;
+
 };
 
 BOOST_AUTO_TEST_CASE(testParts)
@@ -84,8 +93,11 @@ BOOST_AUTO_TEST_CASE(testParts)
       ;
 
     for (const auto& test : nocdpTestDataOk) {
+      tp.globalCdpEnabled = true;
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'nocdp':" << test);
+      BOOST_TEST(!tp.globalCdpEnabled,
+                 "State '!globalCdpEnabled':" << !tp.globalCdpEnabled);
     }
 
     for (const auto& test : nocdpTestDataBad) {
@@ -114,8 +126,11 @@ BOOST_AUTO_TEST_CASE(testParts)
       ;
 
     for (const auto& test : versionPIXASATestDataOk) {
+      tp.globalCdpEnabled = true;
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'versionPIXASA':" << test);
+      BOOST_TEST(!tp.globalCdpEnabled,
+                 "State '!globalCdpEnabled':" << !tp.globalCdpEnabled);
     }
 
     for (const auto& test : versionPIXASATestDataBad) {
@@ -147,6 +162,14 @@ BOOST_AUTO_TEST_CASE(testParts)
                  "Parse rule 'deviceAAA':" << test);
     }
 
+    BOOST_TEST(tp.d.aaas[0] == "aaa tkn1",
+                "State 'aaas' == 'aaa tkn1'? : '" << tp.d.aaas[0] << "'");
+
+    BOOST_TEST(tp.d.aaas[1] == "aaa tkn1 tkn2",
+                "State 'aaas' == 'aaa tkn1 tkn2'? : '" << tp.d.aaas[1] << "'");
+
+
+
     for (const auto& test : deviceAAATestDataBad) {
       BOOST_TEST(!nmdp::test(test, parserRule, blank),
                  "Parse rule '!deviceAAA':" << test);
@@ -154,6 +177,31 @@ BOOST_AUTO_TEST_CASE(testParts)
   }
 
   {
+
+    std::vector<std::tuple<nmdo::Service, nmdo::IpAddress>> globalServicesTestState = {
+      {nmdu::ServiceFactory::makeNtp(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeNtp(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeNtp(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeSnmp(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeSnmp(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeRadius(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeRadius(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeRadius(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeDns(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeDns(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeDns(), nmdo::IpAddress("4.3.2.1")},
+      {nmdu::ServiceFactory::makeDns(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeDns(), nmdo::IpAddress("4.3.2.1")},
+      {nmdu::ServiceFactory::makeSyslog(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeSyslog(), nmdo::IpAddress("1.2.3.4")},
+      {nmdu::ServiceFactory::makeSyslog(), nmdo::IpAddress("1.2.3.4")}
+    };
+
+    for (auto& state : globalServicesTestState) {
+      std::get<nmdo::Service>(state).setDstAddress(std::get<nmdo::IpAddress>(state));
+      std::get<nmdo::Service>(state).setServiceReason(tp.d.devInfo.getDeviceId() + "'s config");
+    }
+
     const auto& parserRule {tp.globalServices};
     const std::vector<std::string> globalServicesTestDataOk =
       {
@@ -175,6 +223,7 @@ BOOST_AUTO_TEST_CASE(testParts)
         "logging server tkn1 1.2.3.4 tkn1 tkn2\n"
       }
       ;
+
     const std::vector<std::string> globalServicesTestDataBad =
       {
         "sntp server\n",
@@ -182,52 +231,24 @@ BOOST_AUTO_TEST_CASE(testParts)
         "radius-server host tkn1\n"
       }
       ;
+
     for (const auto& test : globalServicesTestDataOk) {
       BOOST_TEST(nmdp::test(test, parserRule, blank),
                  "Parse rule 'globalServices':" << test);
     }
+
+      BOOST_TEST(globalServicesTestState.size() == tp.d.services.size(),
+                 "State 'globalServices.size' == '" << tp.d.services.size() << "'? : " << tp.d.services.size());
+
+    for (size_t i = 0; i < globalServicesTestState.size() && i < tp.d.services.size(); i++) {
+
+      BOOST_TEST(std::get<nmdo::Service>(globalServicesTestState[i]) == tp.d.services[i],
+                 "State 'globalServices[*]' == '" << tp.d.services[i] << "'? : " << std::get<nmdo::Service>(globalServicesTestState[i]));
+    }
+
     for (const auto& test : globalServicesTestDataBad) {
       BOOST_TEST(!nmdp::test(test, parserRule, blank),
                  "Parse rule '!globalServices':" << test);
-    }
-  }
-
-  {
-    const auto& parserRule {tp.spanningTreeInitial};
-
-    const std::vector<std::string> spanningTreeInitialTestDataOk =
-      {
-        "spanning-tree mode mode1\n",
-        "spanning-tree mst configuration\n",
-        "spanning-tree mst configuration\n"
-        "    tkn1\n",
-        "spanning-tree mst configuration\n"
-        "    tkn1 tkn2\n"
-        "    tkn3\n",
-        "spanning-tree portfast bpduguard\n",
-        "spanning-tree portfast bpduguard tkn1\n",
-        "spanning-tree portfast bpduguard tkn1 tkn2\n",
-        "spanning-tree portfast bpdufilter\n",
-        "spanning-tree portfast bpdufilter tkn1\n",
-      }
-      ;
-
-    const std::vector<std::string> spanningTreeInitialTestDataBad =
-      {
-        "spanning-tree mode\n",
-        "spanning-tree mst configuration\n"
-        "    \n"
-      }
-      ;
-    
-    for (const auto& test : spanningTreeInitialTestDataOk) {
-      BOOST_TEST(nmdp::test(test, parserRule, blank),
-                "Parse rule 'spanningTreeInitial':" << test);
-    }
-    
-    for (const auto& test : spanningTreeInitialTestDataBad) {
-      BOOST_TEST(!nmdp::test(test, parserRule, blank),
-                "Parse rule '!spanningTreeInitial':" << test);
     }
   }
 
@@ -239,9 +260,9 @@ BOOST_AUTO_TEST_CASE(testParts)
         "switchname sname1.dm\n",
         "hostname sname1.dm ignored\n",
         "ip domain-name sname1.dm\n",
-        "ip dns domain name sname1.dm\n",
-        "ip dns domain name vrf vrf1 sname1.dm\n",
-        "domain-name sname1.dm\n"
+        "ip dns domain name sname2.dm\n",
+        "ip dns domain name vrf vrf1 sname3.dm\n",
+        "domain-name sname4.dm\n"
       }
       ;
 
@@ -262,6 +283,25 @@ BOOST_AUTO_TEST_CASE(testParts)
                  "Parse rule 'domainData':" << test);
     }
 
+    BOOST_TEST(tp.d.devInfo.getDeviceId() == "sname1.dm",
+                "State 'devInfo.deviceId' == 'sname1.dm'? : " << tp.d.devInfo.getDeviceId());
+
+    bool testRes = tp.d.dnsSearchDomains.size() > 0 && tp.d.dnsSearchDomains[0] == "sname1.dm";
+    BOOST_TEST(testRes,
+                "State 'dnsSearchDomains[0]' == 'sname1.dm'? : " << (tp.d.dnsSearchDomains.size() > 0 ? tp.d.dnsSearchDomains[0] : std::string{}));
+
+    testRes = tp.d.dnsSearchDomains.size() > 1 && tp.d.dnsSearchDomains[1] == "sname2.dm";
+    BOOST_TEST(testRes,
+                "State 'dnsSearchDomains[1]' == 'sname1.dm'? : " << (tp.d.dnsSearchDomains.size() > 1 ? tp.d.dnsSearchDomains[1] : std::string{}));
+
+    testRes = tp.d.dnsSearchDomains.size() > 2 && tp.d.dnsSearchDomains[2] == "sname3.dm";
+    BOOST_TEST(testRes,
+                "State 'dnsSearchDomains[2]' == 'sname1.dm'? : " << (tp.d.dnsSearchDomains.size() > 2 ? tp.d.dnsSearchDomains[2] : std::string{}));
+
+    testRes = tp.d.dnsSearchDomains.size() > 3 && tp.d.dnsSearchDomains[3] == "sname4.dm";
+    BOOST_TEST(testRes,
+                "State 'dnsSearchDomains[3]' == 'sname4.dm'? : " << (tp.d.dnsSearchDomains.size() > 3 ? tp.d.dnsSearchDomains[3] : std::string{}));
+    
     for (const auto& test : domainDataTestDataBad) {
       BOOST_TEST(!nmdp::test(test, parserRule, blank),
                  "Parse rule '!domainData':" << test);
@@ -276,10 +316,10 @@ BOOST_AUTO_TEST_CASE(testParts)
       {
         "vrf instance tkn1\n"
         "    description description\n",
-        "vrf instance tkn1\n"
+        "vrf instance tkn2\n"
         "    ignorable this is something that will be ignored\n"
         "    description a description\n",
-        "vrf definition tkn1\n"
+        "vrf definition tkn3\n"
         "    ignorable this is something that will be ignored\n"
         "    description this is a description\n"
         "    anotherignorable this is something that will be ignored\n"
@@ -305,6 +345,15 @@ BOOST_AUTO_TEST_CASE(testParts)
                  "Parse rule 'vrfInstance':" << test);
     }
 
+    BOOST_TEST(tp.d.vrfs.count("tkn1") != 0,
+                "State 'vrfs[tkn1]'? : " << (tp.d.vrfs.count("tkn1") != 0));
+
+    BOOST_TEST(tp.d.vrfs.count("tkn2") != 0,
+                "State 'vrfs[tkn2]'? : " << (tp.d.vrfs.count("tkn2") != 0));
+
+    BOOST_TEST(tp.d.vrfs.count("tkn3") != 0,
+                "State 'vrfs[tkn3]'? : " << (tp.d.vrfs.count("tkn3") != 0));
+
     for (const auto& test : vrfInstanceTestDataBad) {
       BOOST_TEST(!nmdp::test(test, parserRule, blank),
                  "Parse rule '!vrfInstance':" << test);
@@ -316,7 +365,7 @@ BOOST_AUTO_TEST_CASE(testParts)
     const std::vector<std::string> channelGroupTestDataOk = 
       {
         "channel-group 1 mode tkn1",
-        "channel-group 1 mode tkn1 type tkn2"
+        "channel-group 2 mode tkn1 type tkn2"
       }
       ;
     
@@ -442,28 +491,44 @@ BOOST_AUTO_TEST_CASE(testParts)
     const std::vector<std::string> spanningTreeTestDataOk =
       {
         
-        "spanning-tree bpduguard",
-        "spanning-tree bpduguard enable",
-        "spanning-tree bpduguard disable",
         "spanning-tree bpduguard rate-limit",
-        "spanning-tree bpdufilter enable",
-        "spanning-tree bpdufilter disable",
-        "spanning-tree port type edge",
-        "spanning-tree port type network",
         "spanning-tree port type normal",
         "spanning-tree port type auto",
         "spanning-tree portfast",
-        "spanning-tree portfast network",
-        "spanning-tree portfast normal",
         "spanning-tree portfast auto",
-        "spanning-tree portfast edge"
+        "spanning-tree portfast edge",
+        "spanning-tree mode mode1\n",
+        "spanning-tree mst configuration\n",
+        "spanning-tree mst configuration\n"
+        "    tkn1\n",
+        "spanning-tree mst configuration\n"
+        "    tkn1 tkn2\n"
+        "    tkn3\n",
+        "spanning-tree portfast bpduguard\n",
+        "spanning-tree portfast bpduguard tkn1\n",
+        "spanning-tree portfast bpduguard tkn1 tkn2\n",
+        "spanning-tree portfast bpdufilter\n",
+        "spanning-tree portfast bpdufilter tkn1\n",
       }
     ;
 
     const std::vector<std::string> interfaceTestDataOk =
       {
+
         "interface iface\n"
-        "  description 123/ABC 01234-56\n",
+        "  description 123/ABC 01234-56\n"
+        "  ipv6-address sname1.dm 1111:1111:1111:1111:1111:1111:1111:1111\n"
+        "  ipv6-address sname2.dm\n"
+        "  ipv6-address 1111:1111:1111:1111:1111:1111:1111:1111\n"
+        "  ip helper-address vrf tkn1 1.2.3.4\n"
+        "  ip helper-address vrf tkn1 1.2.3.4 tkn1\n"
+        "  ip helper-address global 1.2.3.4 tkn1 tkn2\n"
+        "  ip dhcp relay address 1.2.3.4\n"
+        "  ip access-group tkn1 tkn2\n"
+        "  service-policy tkn1 tkn2\n"
+        "  nameif tkn1\n"
+        "  vrf forwarding tkn1\n"
+        "  vmware vm mac A0:A1:A2:A3:A4:A5\n",
 
         "interface iface2\n"
         "  description 123/ABC 01234-56\n"
@@ -497,18 +562,6 @@ BOOST_AUTO_TEST_CASE(testParts)
 
         "interface iface4\n"
         "  description 123/ABC 01234-56\n"
-        "  ipv6-address sname1.dm 1111:1111:1111:1111:1111:1111:1111:1111\n"
-        "  ipv6-address sname2.dm\n"
-        "  ipv6-address 1111:1111:1111:1111:1111:1111:1111:1111\n"
-        "  ip helper-address vrf tkn1 1.2.3.4\n"
-        "  ip helper-address vrf tkn1 1.2.3.4 tkn1\n"
-        "  ip helper-address global 1.2.3.4 tkn1 tkn2\n"
-        "  ip dhcp relay address 1.2.3.4\n"
-        "  ip access-group tkn1 tkn2\n"
-        "  service-policy tkn1 tkn2\n"
-        "  nameif tkn1\n"
-        "  vrf forwarding tkn1\n"
-        "  vmware vm mac A0:A1:A2:A3:A4:A5\n"
 
       }
       ;
@@ -531,20 +584,27 @@ BOOST_AUTO_TEST_CASE(testParts)
       ;
 
     const auto& parserRule {tp.interface};
-    for (const auto& test : interfaceTestDataOk) {
-      BOOST_TEST(nmdp::test(test, tp.interface, blank),
-                 "Parse rule 'interface':" << test);
-    }
 
     for (const auto& test : interfaceTestDataBad) {
       BOOST_TEST(!nmdp::test(test, tp.interface, blank),
                  "Parse rule '!interface':" << test);
     }
 
+    for (const auto& test : interfaceTestDataOk) {
+      BOOST_TEST(nmdp::test(test, tp.interface, blank),
+                 "Parse rule 'interface':" << test);
+    }
+
     for (const auto& test : channelGroupTestDataOk) {
       BOOST_TEST(nmdp::test(test, tp.channelGroup, blank),
                  "Parse rule 'channelGroup':" << test);
     }
+
+    BOOST_TEST(tp.d.portChannels[1].count("iface4") != 0,
+                "State 'portChannels[1]['iface4']'");
+
+    BOOST_TEST(tp.d.portChannels[2].count("iface4") != 0,
+                "State 'portChannels[2]['iface4']'");
 
     for (const auto& test : channelGroupTestDataBad) {
       BOOST_TEST(!nmdp::test(test, tp.channelGroup, blank),
@@ -561,9 +621,44 @@ BOOST_AUTO_TEST_CASE(testParts)
                  "Parse rule '!encapsulation':" << test);
     }
 
-    for (const auto& test : switchportTestDataOk) {
+    {
+      const auto& test = switchportTestDataOk[0];
       BOOST_TEST(nmdp::test(test, tp.switchport, blank),
                  "Parse rule 'switchport':" << test);
+      BOOST_TEST(tp.tgtIface->getSwitchportMode() == "l2 tkn1",
+                  "State 'switchport mode': " << tp.tgtIface->getSwitchportMode());
+    }
+
+    {
+      const auto& test = switchportTestDataOk[1];
+      BOOST_TEST(nmdp::test(test, tp.switchport, blank),
+                 "Parse rule 'switchport':" << test);
+      BOOST_TEST(tp.tgtIface->getSwitchportMode() == "l2 nonegotiate",
+                  "State 'switchport mode': " << tp.tgtIface->getSwitchportMode());
+    }
+
+    {
+      const auto& test = "port-security maximum 10 vlan 1";
+      BOOST_TEST(nmdp::test(test, tp.switchportPortSecurity, blank),
+                 "Parse rule 'switchportPortSecurity':" << test);
+      BOOST_TEST(tp.tgtIface->getPortSecurityMaxMacAddrs() == 10,
+                  "State 'switchport port-security maxMacAddrs': " << tp.tgtIface->getPortSecurityMaxMacAddrs());
+    }
+
+    {
+      const auto& test = "port-security mac-address A0:A1:A2:A3:A4:A5";
+      BOOST_TEST(nmdp::test(test, tp.switchportPortSecurity, blank),
+                 "Parse rule 'switchportPortSecurity':" << test);
+      BOOST_TEST(*(tp.tgtIface->getPortSecurityStickyMacs().cbegin()) == nmdo::MacAddress("a0:a1:a2:a3:a4:a5"),
+                  "State 'switchport port-security stickyMacs[0]': " << *(tp.tgtIface->getPortSecurityStickyMacs().cbegin()));
+    }
+
+    {
+      const auto& test = "port-security violation tkn1";
+      BOOST_TEST(nmdp::test(test, tp.switchportPortSecurity, blank),
+                 "Parse rule 'switchportPortSecurity':" << test);
+      BOOST_TEST(tp.tgtIface->getPortSecurityViolationAction() == "tkn1",
+                  "State 'switchport port-security violation': " << tp.tgtIface->getPortSecurityViolationAction());
     }
 
     for (const auto& test : switchportTestDataBad) {
@@ -591,6 +686,100 @@ BOOST_AUTO_TEST_CASE(testParts)
       BOOST_TEST(!nmdp::test(test, tp.switchportVlan, blank),
                  "Parse rule '!switchportVlan':" << test);
     }
+
+    {
+      const auto& test = "spanning-tree bpduguard";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(tp.tgtIface->getBpduGuard(),
+                  "State 'spanning-tree bpduguard': " << tp.tgtIface->getBpduGuard());
+      tp.isNo = true;
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(!tp.tgtIface->getBpduGuard(),
+                  "State 'spanning-tree bpduguard (no)': " << !tp.tgtIface->getBpduGuard());
+      tp.isNo = false;
+    }
+
+    {
+      const auto& test = "spanning-tree bpduguard enable";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(tp.tgtIface->getBpduGuard(),
+                  "State 'spanning-tree bpduguard enable': " << tp.tgtIface->getBpduGuard());
+    }
+
+    {
+      const auto& test = "spanning-tree bpduguard disable";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(!tp.tgtIface->getBpduGuard(),
+                  "State 'spanning-tree bpduguard disable': " << !tp.tgtIface->getBpduGuard());
+    }
+
+    {
+      const auto& test = "spanning-tree bpdufilter";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(tp.tgtIface->getBpduFilter(),
+                  "State 'spanning-tree bpdufilter': " << tp.tgtIface->getBpduFilter());
+      tp.isNo = true;
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(!tp.tgtIface->getBpduFilter(),
+                  "State 'spanning-tree bpdufilter (no)': " << !tp.tgtIface->getBpduFilter());
+      tp.isNo = false;
+    }
+
+    {
+      const auto& test = "spanning-tree bpdufilter enable";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(tp.tgtIface->getBpduFilter(),
+                  "State 'spanning-tree bpdufilter': " << tp.tgtIface->getBpduFilter());
+    }
+
+    {
+      const auto& test = "spanning-tree bpdufilter disable";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(!tp.tgtIface->getBpduFilter(),
+                  "State 'spanning-tree bpdufilter': " << tp.tgtIface->getBpduFilter());
+    }
+
+    {
+      const auto& test = "spanning-tree port type edge";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(tp.tgtIface->getPortfast(),
+                  "State 'spanning-tree portfast': " << tp.tgtIface->getPortfast());
+    }
+
+    {
+      const auto& test = "spanning-tree port type network";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(!tp.tgtIface->getPortfast(),
+                  "State 'spanning-tree portfast': " << tp.tgtIface->getPortfast());
+    }
+
+
+    {
+      const auto& test = "spanning-tree portfast edge";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(tp.tgtIface->getPortfast(),
+                  "State 'spanning-tree portfast': " << tp.tgtIface->getPortfast());
+    }
+
+    {
+      const auto& test = "spanning-tree portfast network";
+      BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
+                 "Parse rule 'spanningTree':" << test);
+      BOOST_TEST(!tp.tgtIface->getPortfast(),
+                  "State 'spanning-tree portfast': " << tp.tgtIface->getPortfast());
+    }
+
 
     for (const auto& test : spanningTreeTestDataOk) {
       BOOST_TEST(nmdp::test(test, tp.spanningTree, blank),
