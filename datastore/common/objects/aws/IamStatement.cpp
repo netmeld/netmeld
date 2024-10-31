@@ -221,6 +221,7 @@ namespace netmeld::datastore::objects::aws {
         , documentVersion
         , sid
         , effect
+        , isAction
         , actions
         , resources
         , principal.dump()

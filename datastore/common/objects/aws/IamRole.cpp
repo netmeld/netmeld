@@ -112,10 +112,11 @@ namespace netmeld::datastore::objects::aws {
         , arn
         , name
         , createDate
-        , lastUsed
         , path
-        , permissionsBoundaryUsageCount
         , tags.dump()
+        , profileId
+        , lastUsed
+        , permissionsBoundaryUsageCount
     );
   }
 

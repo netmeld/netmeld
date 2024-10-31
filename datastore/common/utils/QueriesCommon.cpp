@@ -583,6 +583,16 @@ namespace netmeld::datastore::utils {
         )");
 
     db.prepare
+      ("insert_raw_aws_iam_statement", R"(
+          INSERT INTO raw_aws_iam_statement
+            (tool_run_id, attachment_id, document_version, sid, effect, is_action, actions, resources, principal, condition)
+          VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          ON CONFLICT DO NOTHING
+        )");
+
+
+    db.prepare
           ("insert_raw_aws_iam_group", R"(
               INSERT INTO raw_aws_iam_group
                 (tool_run_id, id, arn, name, create_date, path, tags)
