@@ -76,8 +76,8 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       for (auto& results : this->tResults) {
         LOG_DEBUG << "Iterating over Vrfs\n";
         for (auto& result : results.vrfs) {
-          result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
+          result.save(t, toolRunId, deviceId);
         }
       }
     }
