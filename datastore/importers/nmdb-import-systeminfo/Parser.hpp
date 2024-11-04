@@ -116,13 +116,13 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    Result getData();
     void addHotfix(const std::string&);
     void addInterface(const std::string&);
     void addIfaceConnectName(const std::string&);
     void addIfaceIp(nmdo::IpAddress&);
     void setIfaceStatus(const std::string&);
     void setCPE();
-  public:
+  protected:
+    Result getData();
 };
 #endif // PARSER_HPP

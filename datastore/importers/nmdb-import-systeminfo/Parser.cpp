@@ -243,6 +243,9 @@ Result
 Parser::getData()
 {
     Result r;
-    r.push_back(data);
+    if (Data() != data)
+    {
+        r.push_back(data);
+    }
     return r;
 }
