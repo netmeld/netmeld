@@ -32,9 +32,9 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    +((vrfTable1
+    ((vrfTable1
      | vrfTable2
-     ) [(qi::_val = pnx::bind(&Parser::getData, this))]
+     )
     | ignoredLine
     )
     ;
@@ -42,7 +42,7 @@ Parser::Parser() : Parser::base_type(start)
   // Format 1
   vrfTable1 =
     vrfHeader1
-    > *(vrfLine1) [(pnx::bind(&Parser::addVrf, this, qi::_1))]
+    > *(vrfLine1)
     ;
 
   vrfHeader1 =
@@ -64,7 +64,7 @@ Parser::Parser() : Parser::base_type(start)
   // Format 2
   vrfTable2 =
     vrfHeader2
-    > *(vrfLine2) [(pnx::bind(&Parser::addVrf, this, qi::_1))]
+    > *(vrfLine2)
     ;
 
   vrfHeader2 =
@@ -128,19 +128,3 @@ Parser::Parser() : Parser::base_type(start)
 // =============================================================================
 // Parser helper methods
 // =============================================================================
-void
-Parser::addVrf(const nmdo::Vrf& vrf)
-{
-  d.vrfs.emplace_back(vrf);
-}
-
-Result
-Parser::getData()
-{
-  Result r;
-
-  if (d != Data()) {
-    r.push_back(d);
-  }
-  return r;
-}

@@ -36,16 +36,7 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 // Data containers
 // =============================================================================
-
-struct Data
-{
-  std::vector<nmdo::Vrf> vrfs;
-
-  auto operator<=>(const Data&) const = default;
-  bool operator==(const Data&) const = default;
-};
-
-typedef std::vector<Data>    Result;
+typedef std::vector<nmdo::Vrf>    Result;
 
 
 // =============================================================================
@@ -58,12 +49,13 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
-  protected:
-    Data d;
 
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start;
+        start
+      , vrfTable1
+      , vrfTable2;
 
     qi::rule<nmdp::IstreamIter, nmdo::Vrf(), qi::ascii::blank_type>
         vrfLine1
@@ -72,9 +64,7 @@ class Parser :
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         ignoredLine
-      , vrfTable1
       , vrfHeader1
-      , vrfTable2
       , vrfHeader2
       ;
 
@@ -96,8 +86,5 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
-    void addVrf(const nmdo::Vrf&);
-
-    Result getData();
 };
 #endif // PARSER_HPP

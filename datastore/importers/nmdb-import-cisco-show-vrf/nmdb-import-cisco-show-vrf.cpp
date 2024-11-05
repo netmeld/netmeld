@@ -73,12 +73,10 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
 
-      for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over Vrfs\n";
-        for (auto& result : results.vrfs) {
-          LOG_DEBUG << result.toDebugString() << std::endl;
-          result.save(t, toolRunId, deviceId);
-        }
+      LOG_DEBUG << "Iterating over Vrfs\n";
+      for (auto& result : this->tResults) {
+        LOG_DEBUG << result.toDebugString() << std::endl;
+        result.save(t, toolRunId, deviceId);
       }
     }
 
