@@ -39,7 +39,72 @@ using qi::ascii::blank;
 class TestParser : public Parser {
   public:
     using Parser::start;
+
+    using Parser::vrfLine1;
+    using Parser::vrfLine2;
 };
+
+BOOST_AUTO_TEST_CASE(testParts)
+{
+  TestParser tp;
+
+  { // vrfLine1
+    const auto& parserRule {tp.vrfLine1};
+
+    std::vector<std::tuple<std::string, std::string, std::vector<std::string>>>
+      testsOk {
+        {"Internet                         <not set>             ipv4        Gi0/0/2\nGi0/0/3\n"
+        , "Internet"
+        , { "gi0/0/2"
+          , "gi0/0/3"
+          }
+        }
+      , {"mgmt-intf                        12345:123             ipv4,ipv6   Gi0\n"
+        , "mgmt-intf"
+        , {"gi0"}
+        }
+      };
+    for (const auto& [test, id, ifaces] : testsOk) {
+      nmdo::Vrf out;
+      BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+                , "Parse rule 'vrfLine1': " << test
+                );
+      nmdo::Vrf expected {id};
+      for (const auto& iface : ifaces) {
+        expected.addIface(iface);
+      }
+      BOOST_TEST(expected == out);
+    }
+  }
+
+  { // vrfLine2
+    const auto& parserRule {tp.vrfLine2};
+
+    std::vector<std::tuple<std::string, std::string>>
+      testsOk {
+        { "Vrf1                                    3 Up      --\n"
+        , "Vrf1"
+        }
+      , { "default                                 1 Up      --\n"
+        , "default"
+        }
+      , { "mgmt                                    2 Up      --\n"
+        , "mgmt"
+        }
+      , { "vrf2                                    4 Up      --\n"
+        , "vrf2"
+        }
+      };
+    for (const auto& [test, id] : testsOk) {
+      nmdo::Vrf out;
+      BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+                , "Parse rule 'vrfLine2': " << test
+                );
+      nmdo::Vrf expected {id};
+      BOOST_TEST(expected == out);
+    }
+  }
+}
 
 BOOST_AUTO_TEST_CASE(testWholeVrfTable1)
 {
