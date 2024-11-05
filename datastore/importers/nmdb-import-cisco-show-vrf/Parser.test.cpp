@@ -64,6 +64,7 @@ BOOST_AUTO_TEST_CASE(testParts)
         , {"gi0"}
         }
       };
+
     for (const auto& [test, id, ifaces] : testsOk) {
       nmdo::Vrf out;
       BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
@@ -95,6 +96,7 @@ BOOST_AUTO_TEST_CASE(testParts)
         , "vrf2"
         }
       };
+
     for (const auto& [test, id] : testsOk) {
       nmdo::Vrf out;
       BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
