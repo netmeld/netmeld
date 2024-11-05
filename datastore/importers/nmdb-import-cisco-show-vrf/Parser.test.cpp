@@ -119,12 +119,16 @@ BOOST_AUTO_TEST_CASE(testWholeVrfTable1)
   mgmt-intf                        12345:123             ipv4,ipv6   Gi0
       )STR"
       };
+
     Result out;
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'testWholeVrfTable1': " << test);
-    // Modify to test number of Vrfs
     size_t conCount {2};
     BOOST_TEST(conCount == out.size());
+
+    for (const auto& vrf : out) {
+      BOOST_TEST(vrf.isValid());
+    }
   }
 }
 
@@ -142,11 +146,15 @@ mgmt                                    2 Up      --
 vrf2                                    4 Up      --
       )STR"
       };
+
     Result out;
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
               "Parse rule 'testWholeVrfTable2': " << test);
-    // Modify to test number of Vrfs
     size_t conCount {4};
     BOOST_TEST(conCount == out.size());
+
+    for (const auto& vrf : out) {
+      BOOST_TEST(vrf.isValid());
+    }
   }
 }
