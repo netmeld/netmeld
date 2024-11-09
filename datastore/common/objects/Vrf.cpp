@@ -56,7 +56,7 @@ namespace netmeld::datastore::objects {
   void
   Vrf::addIface(const std::string& iface)
   {
-    InterfaceNetwork ifaceNetwork {nmcu::toLower(iface)};
+    InterfaceNetwork ifaceNetwork {iface};
     ifaceNetwork.setPartial(true);
     ifaces.emplace_back(ifaceNetwork);
   }
