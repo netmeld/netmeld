@@ -28,6 +28,7 @@
 #define VRF_HPP
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
+#include <netmeld/datastore/objects/InterfaceNetwork.hpp>
 #include <netmeld/datastore/objects/Route.hpp>
 
 
@@ -40,7 +41,7 @@ namespace netmeld::datastore::objects {
     private:
     protected:
       std::string vrfId;
-      std::vector<std::string> ifaces;
+      std::vector<InterfaceNetwork> ifaces;
       RoutingTable routes;
 
     public:

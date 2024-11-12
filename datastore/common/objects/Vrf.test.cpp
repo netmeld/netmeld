@@ -41,7 +41,7 @@ class TestVrf : public nmdo::Vrf {
   public:
     std::string getId()
     { return vrfId; }
-    std::vector<std::string> getIfaces()
+    std::vector<nmdo::InterfaceNetwork> getIfaces()
     { return ifaces; }
 };
 
@@ -70,10 +70,10 @@ BOOST_AUTO_TEST_CASE(testSetters)
   // Setters
   vrf.setId(id);
   vrf.addIface("eth0");
-  vrf.addIface("eth1");
+  vrf.addIface("gi0");
 
   BOOST_CHECK_EQUAL(id, vrf.getId());
   BOOST_CHECK_EQUAL(2, vrf.getIfaces().size());
-  BOOST_CHECK_EQUAL("eth0", vrf.getIfaces().at(0));
-  BOOST_CHECK_EQUAL("eth1", vrf.getIfaces().at(1));
+  BOOST_CHECK_EQUAL("eth0", vrf.getIfaces().at(0).getName());
+  BOOST_CHECK_EQUAL("gi0", vrf.getIfaces().at(1).getName());
 }
