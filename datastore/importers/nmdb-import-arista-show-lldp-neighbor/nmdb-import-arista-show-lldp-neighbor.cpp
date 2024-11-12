@@ -51,7 +51,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   protected:
   public:
     Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      ( "show cdp neighbor [detail]"
+      ( "show lldp neighbor [detail]"
       , PROGRAM_NAME
       , PROGRAM_VERSION
       )
@@ -68,12 +68,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& results : this->tResults) {
-        LOG_DEBUG << "Iterating over IpAddresses\n";
-        for (auto& result : results.ipAddrs) {
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << std::endl;
-        }
-
         LOG_DEBUG << "Iterating over DeviceHardware\n";
         for (auto& result : results.devInfos) {
           result.save(t, toolRunId);
@@ -87,7 +81,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over PhysicalConnections\n";
-        for (auto& result : results.physCons) {
+        for (auto& result : results.physConnections) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }

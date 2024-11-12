@@ -28,11 +28,10 @@
 #define PARSER_HPP
 
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
-#include <netmeld/datastore/objects/PhysicalConnection.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
+#include <netmeld/datastore/objects/PhysicalConnection.hpp>
+#include <netmeld/datastore/objects/Vlan.hpp>
 
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
@@ -42,9 +41,8 @@ namespace nmdp = netmeld::datastore::parsers;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdo::IpAddress>          ipAddrs;
-  std::vector<nmdo::DeviceInformation>  devInfos;
-  std::vector<nmdo::PhysicalConnection> physCons;
+  std::vector<nmdo::DeviceInformation> devInfos;
+  std::vector<nmdo::PhysicalConnection> physConnections;
 
   std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
 
@@ -54,12 +52,14 @@ struct Data {
 typedef std::vector<Data>  Result;
 
 struct NeighborData {
-  std::string srcIfaceName  {""};
-  std::string curHostname   {""};
-  std::string curIfaceName  {""};
-  std::string curVendor     {""};
-  std::string curModel      {""};
-  std::vector<nmdo::IpAddress>  ipAddrs;
+  std::string curHostname         {""};
+  std::string curIfaceName        {""};
+  std::string curDeviceType       {""};
+  std::string curSysDescription   {""};
+  std::string curPortDescription  {""};
+  std::string curMacAddr          {""};
+  std::string srcIfaceName        {""};
+  std::vector<uint16_t> curVlans;
 
   auto operator<=>(const NeighborData&) const = default;
   bool operator==(const NeighborData&) const = default;
@@ -85,36 +85,37 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-        detailConfig
-      , detailDeviceId
+        detailCapabilities
+      , detailChassisId
+      , detailConfig
+      , detailDiscovered
       , detailEntry
-      , detailHeader
-      , detailIpAddress
-      , detailPlatform
-      , ignoredLine
-      , noDetailCapabilityCodes
+      , detailNeighborLine
+      , detailPortDescription
+      , detailPortId
+      , detailPortVlanLine
+      , detailSystemDescription
+      , detailSystemName
+      , detailVlan
+      , detailVlanLine
       , noDetailConfig
-      , noDetailEntry
-      , noDetailEntryCount
+      , noDetailTableInfo
       , noDetailHeader
+      , noDetailEntry
+      , ignoredLine
       ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-        noDetailDeviceId
-      , noDetailPlatform
-      , noDetailLocalIface
-      , noDetailPortId
+        port
+      , restOfLine
+      , inQuotes
       , token
       , csvToken
       ;
 
-    qi::rule<nmdp::IstreamIter>
-        detailInterface
-      , noDetailCapability
-      , noDetailHoldtime
+    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+      detailHeader
       ;
-
-    nmdp::ParserIpAddress   ipAddr;
 
   // ===========================================================================
   // Constructors
@@ -128,11 +129,11 @@ class Parser :
   private:
     std::string getDevice(const std::string&);
 
-    void finalizeData();
-    void updateDeviceInformation();
+    void addVlan(uint16_t);
     void updateInterfaces();
-    void updateIpAddrs();
     void updatePhysicalConnection();
+    void updateDeviceInformation();
+    void finalizeData();
 
     // Object return
     Result getData();
