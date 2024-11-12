@@ -55,13 +55,13 @@ BOOST_AUTO_TEST_CASE(testParts)
       testsOk {
         {"Internet                         <not set>             ipv4        Gi0/0/2\nGi0/0/3\n"
         , "Internet"
-        , { "gi0/0/2"
-          , "gi0/0/3"
+        , { "gigabitethernet0/0/2"
+          , "GigabitEthernet0/0/3"
           }
         }
       , {"mgmt-intf                        12345:123             ipv4,ipv6   Gi0\n"
         , "mgmt-intf"
-        , {"gi0"}
+        , {"gigabitethernet0"}
         }
       };
 

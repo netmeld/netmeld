@@ -30,8 +30,11 @@
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
 #include <netmeld/datastore/objects/Vrf.hpp>
 
+#include <netmeld/core/utils/StringUtilities.hpp>
+
 namespace nmdo = netmeld::datastore::objects;
 namespace nmdp = netmeld::datastore::parsers;
+namespace nmcu = netmeld::core::utils;
 
 // =============================================================================
 // Data containers

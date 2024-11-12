@@ -58,7 +58,15 @@ Parser::Parser() : Parser::base_type(start)
     > (qi::lit("<not set>") | routeDistinguisher)
     > csValues
     > +( interfaces
-      >> qi::eol) [(pnx::bind(&nmdo::Vrf::addIface, &qi::_val, qi::_1))]
+      >> qi::eol) [(
+        pnx::bind(
+          &nmdo::Vrf::addIface,
+          &qi::_val,
+          pnx::bind(
+            &nmcu::expandCiscoIfaceName,
+            qi::_1
+          )
+        ))]
     ;
 
   // Format 2
