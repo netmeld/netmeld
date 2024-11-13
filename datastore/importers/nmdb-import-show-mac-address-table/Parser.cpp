@@ -65,7 +65,7 @@ Parser::Parser() : Parser::base_type(start)
   typeValue =
     +qi::ascii::char_("a-zA-Z") >> +qi::ascii::blank
     > -( // age >> secure >> ntfy
-         (+qi::ascii::char_("-0-9") > +qi::ascii::blank
+         (+qi::ascii::char_("-0-9~") > +qi::ascii::blank
           > qi::ascii::char_("TFC~") > +qi::ascii::blank
           > qi::ascii::char_("TFC~")
          )
