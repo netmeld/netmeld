@@ -49,10 +49,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   protected:
   public:
     Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      (
-       "systeminfo",           // command line tool imports data from
-       PROGRAM_NAME,           // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION         // program version (set in CMakeLists.txt)
+      ( "Window's systeminfo"   // command line tool imports data from
+      , PROGRAM_NAME            // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION         // program version (set in CMakeLists.txt)
       )
     {}
 
@@ -65,38 +64,37 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
     {
       const auto& toolRunId {this->getToolRunId()};
       const auto& deviceId  {this->getDeviceId()};
+
       for (auto& results : this->tResults) {
-
         LOG_DEBUG << "Iterating over DeviceInformation\n";
+        LOG_DEBUG << results.devInfo.toDebugString() << '\n';
         results.devInfo.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.devInfo.toDebugString() << "\n";
 
-        LOG_DEBUG << "Iterating over OperatingSystems\n";
-        LOG_DEBUG << results.os.toDebugString() << "\n";
+        LOG_DEBUG << "Iterating over OperatingSystem\n";
+        LOG_DEBUG << results.os.toDebugString() << '\n';
+        results.os.save(t, toolRunId, deviceId);
+
+        LOG_DEBUG << "Iterating over Hotfixes\n";
         if (results.os.isValid()) {
-            results.os.save(t, toolRunId, deviceId);
-
-            LOG_DEBUG << "Iterating over Hotfixes\n";
-            t.exec_prepared("insert_raw_hotfixes", toolRunId, results.hotfixes);
-            for (auto& hotfix : results.hotfixes) {
-                LOG_DEBUG << hotfix << "\n";
-            }
+          std::sort(results.hotfixes.begin(), results.hotfixes.end());
+          LOG_DEBUG << results.hotfixes << '\n';
+          t.exec_prepared("insert_raw_hotfixes", toolRunId, results.hotfixes);
         } else {
-            LOG_DEBUG << "OperatingSystem information is invalid, skipping Hotfixes insertion\n";
+          LOG_DEBUG << "Skipped as OperatingSystem not valid\n";
         }
 
         LOG_DEBUG << "Iterating over Interfaces\n";
-        for (auto& [_, result] : results.network_cards)
-        {
+        for (auto& [_, result] : results.networkCards) {
+          LOG_DEBUG << result.toDebugString() << '\n';
           result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result.toDebugString() << "\n";
         }
 
         LOG_DEBUG << "Iterating over Observations\n";
+        LOG_DEBUG << results.observations.toDebugString() << '\n';
         results.observations.save(t, toolRunId, deviceId);
-        LOG_DEBUG << results.observations.toDebugString() << "\n";
       }
     }
+
   protected:
   public:
 };

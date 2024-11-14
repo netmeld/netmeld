@@ -4,7 +4,9 @@ DESCRIPTION
 Parse and import the output from the `systeminfo` command
 on modern Windows systems.
 
-The output from `systeminfo` is in Unicode 16 little endian format with CRLF line endings. Follow these steps to convert it:
+The output from `systeminfo` may be in Unicode 16 little endian format with
+CRLF line endings. As such, the following these steps may be needed to
+convert it:
 
 1. Convert the encoding from UTF-16 to US-ASCII: 
     `iconv -f UTF-16 -t US-ASCII ~/systeminfo.txt -o ~/systeminfoascii.txt`

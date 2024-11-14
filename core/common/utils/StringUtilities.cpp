@@ -26,12 +26,14 @@
 
 #include <algorithm>
 #include <format>
+#include <vector>
+#include <tuple>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 
-namespace netmeld::core::utils {
-
+namespace netmeld::core::utils
+{
   std::string
   toLower(const std::string& orig)
   {
@@ -87,73 +89,36 @@ namespace netmeld::core::utils {
     // Various Cisco output uses two-letter interface prefixes.
     // These short interface names need to be expanded in order to match
     // the interface names obtained from the running configuration.
-    std::string ifaceName{toLower(_ifaceName)};
+    static const std::vector<std::tuple<std::string, std::string>> lookups {
+      // reverse sort (sort!) to ensure shorter spellings don't match first
+        {"vl", "vlan"}
+      , {"twe", "twentyfivegigabitethernet"}
+      , {"tw", "twogigabitethernet"}
+      , {"tu", "tunnel"}
+      , {"te", "tengigabitethernet"}
+      , {"se", "serial"}
+      , {"po", "port-channel"}
+      , {"lo", "loopback"}
+      , {"gi", "gigabitethernet"}
+      , {"fo", "fortygigabitethernet"}
+      , {"fi", "fivegigabitethernet"}
+      , {"fa", "fastethernet"}
+      , {"et", "ethernet"}
+      };
 
+    std::string ifaceName {toLower(_ifaceName)};
     trim(ifaceName);
 
-    // Ethernet variations (ordered by speed)
-    if (ifaceName.starts_with("et") &&
-        !ifaceName.starts_with("ethernet")) {
-      ifaceName.replace(0, 2, "ethernet");
-    }
-    else if (ifaceName.starts_with("fa") &&
-             !ifaceName.starts_with("fastethernet")) {
-      ifaceName.replace(0, 2, "fastethernet");
-    }
-    else if (ifaceName.starts_with("gi") &&
-             !ifaceName.starts_with("gigabitethernet")) {
-      ifaceName.replace(0, 2, "gigabitethernet");
-    }
-    else if (ifaceName.starts_with("te") &&
-             !ifaceName.starts_with("tengigabitethernet")) {
-      ifaceName.replace(0, 2, "tengigabitethernet");
-    }
-    else if (ifaceName.starts_with("fo") &&
-             !ifaceName.starts_with("fortygigabitethernet")) {
-      ifaceName.replace(0, 2, "fortygigabitethernet");
-    }
-    // Other interface types (ordered alphabetically)
-    else if (ifaceName.starts_with("lo") &&
-             !ifaceName.starts_with("loopback")) {
-      ifaceName.replace(0, 2, "loopback");
-    }
-    else if (ifaceName.starts_with("po") &&
-             !ifaceName.starts_with("port-channel")) {
-      ifaceName.replace(0, 2, "port-channel");
-    }
-    else if (ifaceName.starts_with("se") &&
-             !ifaceName.starts_with("serial")) {
-      ifaceName.replace(0, 2, "serial");
-    }
-    else if (ifaceName.starts_with("tu") &&
-             !ifaceName.starts_with("tunnel")) {
-      ifaceName.replace(0, 2, "tunnel");
-    }
-    else if (ifaceName.starts_with("vl") &&
-             !ifaceName.starts_with("vlan")) {
-      ifaceName.replace(0, 2, "vlan");
+    for (const auto& [abbrev, full] : lookups) {
+      if (   ifaceName.starts_with(abbrev)
+         && !ifaceName.starts_with(full)
+         )
+      {
+        ifaceName.replace(0, abbrev.size(), full);
+        break;
+      }
     }
 
     return ifaceName;
   }
-
-  std::string
-  compileCPE(const std::string& _part, const std::string& _vendor,
-             const std::string& _product, const std::string& _version)
-  {
-    // CPE format follows NMAP standard: 
-    // cpe:/{part}:{vendor}:{product}:{version}
-
-    return std::format("cpe:/{}:{}:{}:{}", _part, _vendor, _product, _version);
-  }
-
-  std::string replaceSpacesWithUnderscores(const std::string& input) {
-    std::string result = input; // Create a copy of the input string
-    for (char& c : result) { // Iterate through each character in the string
-        if (c == ' ') { 
-            c = '_'; 
-        }
-    }
-    return result; 
-}
 }

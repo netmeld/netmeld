@@ -27,6 +27,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
+
 #include <netmeld/datastore/parsers/ParserTestHelper.hpp>
 #include "Parser.hpp"
 
@@ -37,437 +38,271 @@ using qi::ascii::blank;
 class TestParser : public Parser
 {
   public:
-    using Parser::getData;
-    using Parser::start;
-    using Parser::systemInfo;
-    using Parser::hostName;
-    using Parser::osName;
-    using Parser::osVersion;
-    using Parser::osManufacturer;
-    using Parser::osConfiguration;
-    using Parser::systemManufacturer;
-    using Parser::systemModel;
-    using Parser::systemType;
+    using Parser::data;
+
     using Parser::hotfix;
     using Parser::hotfixes;
-    using Parser::networkCards;
     using Parser::networkCard;
-    using Parser::networkCardConnectionName;
-    using Parser::networkCardStatus;
-    using Parser::data;
+
+    // testWhole exercises/tests the following functionality
+    //using Parser::systemInfo;
+    //using Parser::networkCards;
+    //using Parser::hostName;
+    //using Parser::osName;
+    //using Parser::osVersion;
+    //using Parser::osManufacturer;
+    //using Parser::osConfiguration;
+    //using Parser::systemManufacturer;
+    //using Parser::systemModel;
+    //using Parser::systemType;
 };
 
 BOOST_AUTO_TEST_CASE(testNetworkCard)
 {
   TestParser tp;
-  {
-    const auto& parserRule {tp.networkCard};
-    std::vector<std::string> testsOk {
-      R"STR([01]: Realtek PCIe GbE Family Controller
-      Connection Name: Ethernet
-      DHCP Enabled:    Yes
+  const auto& parserRule {tp.networkCard};
+
+  std::vector<std::string> testsOk {
+      R"STR([01]: Interface Type 1
+      Connection Name:  Ethernet
+      DHCP Enabled:     Yes
+      DHCP Server:      1.2.3.4
       IP address(es)
-      [01]: 192.168.0.2
-      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-      )STR",
-      R"STR([05]: Intel(R) Wi-Fi 6 AX200 160MHz
-      Connection Name: Wi-Fi
-      DHCP Enabled:    Yes
-      DHCP Server:     192.168.1.1
-      IP address(es)
-      [01]: 192.168.1.51
-      [02]: fe80::564:ab07:4c1a:6834
-      [03]: 2601:8c0:d00:f5b0::1cfe
+      [01]: 1.2.3.4
+      [02]: 1::2
+      Status:           Media disconnected
+      )STR"
+    , R"STR([01]: Interface Type 2
+      Connection Name:  1 Wi-Fi Conn
+      )STR"
+    , R"STR([01]: Interface Type 3
+      Connection Name:  Something Else
+      DHCP Enabled:     No
+      Status:           Media disconnected
+      )STR"
+    , R"STR([01]: Interface Type 4
+      Connection Name:  Bluetooth
       )STR"
     };
 
-    std::vector<std::string> testsFail {
-      R"STR(Connection Name: Ethernet
-      DHCP Enabled:    Yes
-      IP address(es)
-      [01]: 192.168.0.2
-      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-      )STR", //Mising first string
-      R"STR([01]: Realtek PCIe GbE Family Controller
-      Connection Name:
-      DHCP Enabled:    Yes
-      IP address(es)
-      [01]: 192.168.0.2
-      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-      )STR", //Missing connection name
-      R"STR([01]: Realtek PCIe GbE Family Controller
-      Connection Name: Ethernet
-      DHCP Enabled:
-      IP address(es)
-      [01]: 192.168.0.2
-      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-      )STR", //Missing dhcp enabled data
-      R"STR([01]: Realtek PCIe GbE Family Controller
-      Connection Name: Ethernet
-      DHCP Enabled:    Yes
-      [01]: 192.168.0.2
-      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-      )STR", //Missing ipaddresses label
-      R"STR([01]: Realtek PCIe GbE Family Controller
-      Connection Name: Ethernet
-      DHCP Enabled:    Yes
-      IP address(es)
-      )STR" //Missing Ipaddress data
-    };
-    for (const auto& test : testsOk) {
-      BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'networkCard': " << test);
+  size_t i {0};
+  for (const auto& test : testsOk) {
+    BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
+              , "Parse rule 'networkCard': " << test
+              );
+
+    const auto& ifaceMap {tp.data.networkCards};
+    BOOST_TEST_REQUIRE(++i == ifaceMap.size());
+
+    const auto& ifName {std::format("Interface Type {}", i)};
+    BOOST_TEST_REQUIRE(ifaceMap.contains(ifName));
+
+    const auto& dbgStr {ifaceMap.at(ifName).toDebugString()};
+    nmdp::testInString(dbgStr, std::format("description: {},", ifName));
+
+    // InterfaceNetwork object standardizes on lowercase name
+    if (1 == i) {
+      nmdp::testInString(dbgStr, "name: ethernet");
+    } else if (2 == i) {
+      nmdp::testInString(dbgStr, "name: 1 wi-fi conn");
+    } else if (3 == i) {
+      nmdp::testInString(dbgStr, "name: something else");
+    } else if (4 == i) {
+      nmdp::testInString(dbgStr, "name: bluetooth");
+    } else {
+      BOOST_TEST(false, std::format("Unhandled name for {}\n", i));
     }
-    for (const auto& test: testsFail) {
-      BOOST_TEST(!nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'networkCard fails': " << test);
+
+    if (2 == i) {
+      nmdp::testInString(dbgStr, "mediaType: wi-fi,");
+    } else if (4 == i) {
+      nmdp::testInString(dbgStr, "mediaType: bluetooth,");
+    } else {
+      nmdp::testInString(dbgStr, "mediaType: ethernet,");
     }
-    tp.data.network_cards.clear();
-  }
-  { // Test Data
-    const auto& parserRule {tp.networkCard};
-    std::string out;
-    std::string test {
-      R"STR([01]: Realtek PCIe GbE Family Controller
-      Connection Name: Ethernet
-      DHCP Enabled:    Yes
-      IP address(es)
-      [01]: 192.168.0.2
-      [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-            Status:          Media disconnected
-      )STR",
-    };
-    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-              "Parse rule 'networkCard': " << test);
-    const auto debugString { tp.data.network_cards["realtek pcie gbe family controller"].toDebugString()};
-    BOOST_TEST(tp.data.network_cards["realtek pcie gbe family controller"].isValid());
-    for (const auto& ipAddr : tp.data.network_cards["realtek pcie gbe family controller"].getIpAddresses()) {
-      BOOST_TEST(ipAddr.isValid());
+
+    if (1 == i) {
+      nmdp::testInString(dbgStr, "ipAddress: 1.2.3.4/32,");
+      nmdp::testInString(dbgStr, "ipAddress: 1::2/128,");
+    } else {
+      nmdp::testInString(dbgStr, "ipAddrs: [],");
     }
-    nmdp::testInString(debugString, "name: realtek pcie gbe family controller");
-    nmdp::testInString(debugString, "mediaType: ethernet");
-    nmdp::testInString(debugString, "ipAddress: 192.168.0.2/32");
-    nmdp::testInString(debugString, "ipAddress: 2001:db8:85a3::8a2e:370:7334/128");
-    nmdp::testInString(debugString, "isUp: false");
+
+    if (1 == i || 3 == i) {
+      nmdp::testInString(dbgStr, "isUp: false,");
+    } else {
+      nmdp::testInString(dbgStr, "isUp: true,");
+    }
   }
 }
 
 BOOST_AUTO_TEST_CASE(testhotfixes)
 {
   TestParser tp;
-  {
-    const auto& parserRule {tp.hotfixes};
-    std::string test {
-      R"STR(Hotfix(s):           10 Hotfix(s) Installed.
-      [01]: KB000001
-      [02]: KB000002
-      [03]: KB000003
-      [04]: KB000003
-      [05]: KB000004
-      [06]: KB000005
-      [07]: KB000006
-      [08]: KB000007
-      [09]: KB000008
-      [10]: KB000009
-      )STR"
 
-    };
-
-    BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-                "Parse rule 'hotfixes': " << test);
-    //Leaving this as a quantity check due to hotfix being the actual 
-    //data being parsed
-    BOOST_TEST(10 == tp.data.hotfixes.size()); 
-
+  { // typical flow
     tp.data.hotfixes.clear();
-  }
-  {
-    //Test Buffer Exhaustion Parsing
+
     const auto& parserRule {tp.hotfixes};
     std::string test {
-      // Simulate buffer exhaustion
-      R"STR(Hotfix(s):           3 Hotfix(s) Installed.
-      [01]: KB000001
-      [02]: KB000002
-      [03]: KB000003
-      [04]: K
-      )STR"
-    };
+        R"STR(Hotfix(s):           10 Hotfix(s) Installed.
+        [01]: KB000001
+        [02]: KB000002
+        [03]: KB000003
+        [04]: KB000003
+        [05]: KB000004
+        [06]: KB000005
+        [07]: KB000006
+        [08]: KB000007
+        [09]: KB000008
+        [10]: KB000009
+        )STR"
+      };
+
+    BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
+              , "Parse rule 'hotfixes': " << test
+              );
+    // just quantity, content is later
+    BOOST_TEST(10 == tp.data.hotfixes.size());
+  }
+
+  { // Test Buffer Exhaustion Parsing
+    tp.data.hotfixes.clear();
+
+    const auto& parserRule {tp.hotfixes};
+    std::string test {
+        R"STR(Hotfix(s):           3 Hotfix(s) Installed.
+        [01]: KB000001
+        [02]: KB000002
+        [03]: KB000003
+        [04]: K
+        )STR"
+      };
+
     std::vector<std::string> out;
-    BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-              "Parse rule 'hotfixes': " << test);
+    BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+              , "Parse rule 'hotfixes': " << test
+              );
     BOOST_TEST(3 == tp.data.hotfixes.size());
-    tp.data.hotfixes.clear();
   }
+
   { // Singular Hotfix
-    std::string out;
-    const auto& parserRule {tp.hotfix};
-    std::string testsOk {
-      R"STR([01]: KB000004)STR"
-    };
-    BOOST_TEST(nmdp::testAttr(testsOk.c_str(), parserRule, out, blank),
-              "Parse rule 'hotfix': " << testsOk);
-    // Checking what was put into data.hotfixes to what is supposed to be in there         
-    BOOST_TEST(tp.data.hotfixes[0] == "KB000004");
     tp.data.hotfixes.clear();
+
+    const auto& parserRule {tp.hotfix};
+    std::string test { R"STR([01]: KB000004)STR" };
+
+    std::string out;
+    BOOST_TEST( nmdp::testAttr(test.c_str(), parserRule, out, blank)
+              , "Parse rule 'hotfix': " << test
+              );
+    // content check
+    BOOST_TEST("KB000004" == tp.data.hotfixes[0]);
   }
 }
 
 BOOST_AUTO_TEST_CASE(testWhole)
 {
+  //nmcu::LoggerSingleton::getInstance().setLevel(nmcu::Severity::ALL);
   TestParser tp;
-  const auto& parserRule {tp};
-  std::string test {
-    R"STR(
-          Host Name:           YourComputerName
-          OS Name:             Microsoft Windows 10 Pro
-          OS Version:          10.0.19042 N/A Build 19042
-          OS Manufacturer:     Microsoft Corporation
-          OS Configuration:    Standalone Workstation
-          OS Build Type:       Multiprocessor Free
-          Registered Owner:    Your Name
-          Registered Organization: Your Organization
-          Product ID:          00329-00000-00003-AA093
-          Original Install Date: 01/01/2022, 12:00:00 AM
-          System Boot Time:    11/22/2023, 9:00:00 AM
-          System Manufacturer: Your Computer Manufacturer
-          System Model:        Your Computer Model
-          System Type:         x64-based PC
-          Processor(s):        1 Processor(s) Installed.
-                                [01]: Intel64 Family 6 Model 142 Stepping 9 GenuineIntel ~2312 GHz
-          BIOS Version:        Your BIOS Version
-          Windows Directory:   C:\Windows
-          System Directory:    C:\Windows\system32
-          Boot Device:         \Device\HarddiskVolume1
-          System Locale:       en-us;English (United States)
-          Input Locale:        en-us;English (United States)
-          Time Zone:           (UTC-08:00) Pacific Time (US & Canada)
-          Total Physical Memory: 16,384 MB
-          Available Physical Memory: 8,192 MB
-          Virtual Memory: Max Size: 32,768 MB
-          Virtual Memory: Available: 20,480 MB
-          Virtual Memory: In Use: 12,288 MB
-          Page File Location(s): C:\pagefile.sys
-          Domain:              WORKGROUP
-          Logon Server:        \\YourLogonServer
-          Hotfix(s):           10 Hotfix(s) Installed.
-                                [01]: KB000001
-                                [02]: KB000001
-                                [03]: KB000001
-                                [04]: KB000001
-                                [05]: KB000001
-                                [06]: KB000001
-                                [07]: KB000001
-                                [08]: KB000001
-                                [09]: KB000001
-                                [10]: KB000001
-          Network Card(s):     2 NIC(s) Installed.
-                                [01]: Realtek PCIe GbE Family Controller
-                                  Connection Name: Ethernet
-                                  DHCP Enabled:    Yes
-                                  IP address(es)
-                                  [01]: 192.168.0.2
-                                  [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-                                [02]: Intel Wireless-AC 9560 160MHz
-                                  Connection Name: Wi-Fi
-                                  DHCP Enabled:    Yes
-                                  IP address(es)
-                                  [01]: 192.168.0.3
-                                  [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-          Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.
 
-          )STR"
-   };
-  
-  BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-            "Parse rule 'start': " << test);
-  // TODO check the data against strings
-  
+  const auto& parserRule {tp};
+
+  std::string test {R"(
+         Host Name:                 YourComputerName
+         OS Name:                   Microsoft Windows 10 Pro
+         OS Version:                12.3.4.12345 N/A Build 12345
+         OS Manufacturer:           Microsoft Corporation
+         OS Configuration:          Standalone Workstation
+         OS Build Type:             Multiprocessor Free
+         Registered Owner:          Your Name
+         Registered Organization:   Your Organization
+         Product ID:                12345-12345-12345-12345
+         Original Install Date:     01/01/2022, 12:00:00 AM
+         System Boot Time:          11/22/2023, 9:00:00 AM
+         System Manufacturer:       Your Computer Manufacturer
+         System Model:              Your Computer Model
+         System Type:               x64-based PC
+         Processor(s):              1 Processor(s) Installed.
+                                    [01]: Intel64 Family 6 ... ~2312 GHz
+         BIOS Version:              BIOS Version
+         Windows Directory:         C:\Windows
+         System Directory:          C:\Windows\system32
+         Boot Device:               \Device\HarddiskVolume1
+         System Locale:             en-us;English (United States)
+         Input Locale:              en-us;English (United States)
+         Time Zone:                 (UTC-08:00) Pacific Time (US & Canada)
+         Total Physical Memory:     16,384 MB
+         Available Physical Memory: 8,192 MB
+         Virtual Memory: Max Size:  32,768 MB
+         Virtual Memory: Available: 20,480 MB
+         Virtual Memory: In Use:    12,288 MB
+         Page File Location(s):     C:\pagefile.sys
+         Domain:                    WORKGROUP
+         Logon Server:              \\YourLogonServer
+         Hotfix(s):                 10 Hotfix(s) Installed.
+                                    [01]: KB000001
+                                    [02]: KB000002
+                                    [03]: KB000003
+                                    [04]: KB000004
+                                    [05]: KB000005
+                                    [06]: KB000006
+                                    [07]: KB000007
+                                    [08]: KB000008
+                                    [09]: KB000009
+                                    [10]: KB000010
+         Network Card(s):           2 NIC(s) Installed.
+                                    [01]: Realtek PCIe GbE Family Controller
+                                          Connection Name: Ethernet
+                                          DHCP Enabled:    Yes
+                                          IP address(es)
+                                          [01]: 1.2.3.4
+                                          [02]: 1::2
+                                    [02]: Intel Wireless-AC 9560 160MHz
+                                          Connection Name: Wi-Fi
+                                          DHCP Enabled:    Yes
+                                          IP address(es)
+                                          [01]: 1.2.3.4
+                                          [02]: 1::2
+         Hyper-V Requirements:      A hypervisor has been detected. ...
+      )"
+    };
+
+  BOOST_TEST( nmdp::test(test.c_str(), parserRule, blank)
+            , "Parse rule 'start': " << test
+            );
+
   BOOST_TEST(tp.data.devInfo.isValid());
   BOOST_TEST(tp.data.os.isValid());
   BOOST_TEST(10 == tp.data.hotfixes.size());
-  for (const auto& hotfix : tp.data.hotfixes) {
-      nmdp::testInString(hotfix, "KB000001");
-  }
-  BOOST_TEST(2 == tp.data.network_cards.size());
-  nmdp::testInString(tp.data.os.toDebugString(), "cpe:/o:microsoft:microsoft_windows_10_pro");
-}
+  BOOST_TEST(2 == tp.data.networkCards.size());
 
-BOOST_AUTO_TEST_CASE(testHostName) {
-  TestParser tp;
-  const auto& parserRule {tp.hostName};
-  std::string test {
-    R"STR(Host Name:           YourComputerName
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'hostName': " << test);
-  nmdp::testInString(tp.data.devInfo.getDeviceId(), "yourcomputername");
-}
+  const auto& devInfo {tp.data.devInfo};
+  const auto& devOs   {tp.data.os};
 
-BOOST_AUTO_TEST_CASE(testOsName) {
-  TestParser tp;
-  const auto& parserRule {tp.osName};
-  std::string test {
-    R"STR(OS Name:             Microsoft Windows 10 Pro
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'osName': " << test);
-  nmdp::testInString(tp.data.os.getProductName(), "microsoft windows 10 pro");
-}
+  auto dbgStr {devInfo.toDebugString()};
+  // hostName
+  nmdp::testInString(dbgStr, "id: yourcomputername,");
+  // systemManufacturer
+  nmdp::testInString(dbgStr, "vendor: your computer manufacturer,");
+  // systemModel
+  nmdp::testInString(dbgStr, "model: YOUR COMPUTER MODEL,");
+  // systemType
+  nmdp::testInString(dbgStr, "type: x64-based pc,");
+  // osConfiguration
+  nmdp::testInString(dbgStr, "desc: standalone workstation]");
 
-BOOST_AUTO_TEST_CASE(testOsVersion) {
-  TestParser tp;
-  const auto& parserRule {tp.osVersion};
-  std::string test {
-    R"STR(OS Version:          10.0.19042 N/A Build 19042
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'osVersion': " << test);
-  nmdp::testInString(tp.data.os.getProductVersion(), "10.0.19042 n/a build 19042");
-}
-
-BOOST_AUTO_TEST_CASE(testOsManufacturer) {
-  TestParser tp;
-  const auto& parserRule {tp.osManufacturer};
-  std::string test {
-    R"STR(OS Manufacturer:     Microsoft Corporation
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'osManufacturer': " << test);
-  nmdp::testInString(tp.data.os.getVendorName(), "microsoft corporation");
-}
-
-BOOST_AUTO_TEST_CASE(testOsConfiguration) {
-  TestParser tp;
-  const auto& parserRule {tp.osConfiguration};
-  std::string test {
-    R"STR(OS Configuration:    Standalone Workstation
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'osConfiguration': " << test);
-  nmdp::testInString(tp.data.devInfo.toDebugString(), "desc: standalone workstation");
-}
-
-BOOST_AUTO_TEST_CASE(testSystemManufacturer) {
-  TestParser tp;
-  const auto& parserRule {tp.systemManufacturer};
-  std::string test {
-    R"STR(System Manufacturer: Your Computer Manufacturer
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'systemManufacturer': " << test);
-  nmdp::testInString(tp.data.devInfo.toDebugString(), "vendor: your computer manufacturer");
-}
-
-BOOST_AUTO_TEST_CASE(testSystemModel) {
-  TestParser tp;
-  const auto& parserRule {tp.systemModel};
-  std::string test {
-    R"STR(System Model:        Your Computer Model
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'systemModel': " << test);
-  nmdp::testInString(tp.data.devInfo.toDebugString(), "model: YOUR COMPUTER MODEL");
-}
-
-BOOST_AUTO_TEST_CASE(testSystemType) {
-  TestParser tp;
-  const auto& parserRule {tp.systemType};
-  std::string test {
-    R"STR(System Type:         x64-based PC
-    )STR"
-  };
-  std::string out;
-  BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-            "Parse rule 'systemType': " << test);
-  nmdp::testInString(tp.data.devInfo.toDebugString(), "type: x64-based pc");
-}
-
-BOOST_AUTO_TEST_CASE(testStart) {
-  TestParser tp;
-  const auto& parserRule {tp.start};
-  std::string test {
-    R"STR(
-
-
-
-
-
-          Host Name:           YourComputerName
-          OS Name:             Microsoft Windows 10 Pro
-          OS Version:          10.0.19042 N/A Build 19042
-          OS Manufacturer:     Microsoft Corporation
-          OS Configuration:    Standalone Workstation
-          OS Build Type:       Multiprocessor Free
-          Registered Owner:    Your Name
-          Registered Organization: Your Organization
-          Product ID:          00329-00000-00003-AA093
-          Original Install Date: 01/01/2022, 12:00:00 AM
-          System Boot Time:    11/22/2023, 9:00:00 AM
-          System Manufacturer: Your Computer Manufacturer
-          System Model:        Your Computer Model
-          System Type:         x64-based PC
-          Processor(s):        1 Processor(s) Installed.
-                                [01]: Intel64 Family 6 Model 142 Stepping 9 GenuineIntel ~2312 GHz
-          BIOS Version:        Your BIOS Version
-          Windows Directory:   C:\Windows
-          System Directory:    C:\Windows\system32
-          Boot Device:         \Device\HarddiskVolume1
-          System Locale:       en-us;English (United States)
-          Input Locale:        en-us;English (United States)
-          Time Zone:           (UTC-08:00) Pacific Time (US & Canada)
-          Total Physical Memory: 16,384 MB
-          Available Physical Memory: 8,192 MB
-          Virtual Memory: Max Size: 32,768 MB
-          Virtual Memory: Available: 20,480 MB
-          Virtual Memory: In Use: 12,288 MB
-          Page File Location(s): C:\pagefile.sys
-          Domain:              WORKGROUP
-          Logon Server:        \\YourLogonServer
-          Hotfix(s):           10 Hotfix(s) Installed.
-                                [01]: KB000001
-                                [02]: KB000001
-                                [03]: KB000001
-                                [04]: KB000001
-                                [05]: KB000001
-                                [06]: KB000001
-                                [07]: KB000001
-                                [08]: KB000001
-                                [09]: KB000001
-                                [10]: KB000001
-          Network Card(s):     2 NIC(s) Installed.
-                                [01]: Realtek PCIe GbE Family Controller
-                                  Connection Name: Ethernet
-                                  DHCP Enabled:    Yes
-                                  IP address(es)
-                                  [01]: 192.168.0.2
-                                  [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-                                [02]: Intel Wireless-AC 9560 160MHz
-                                  Connection Name: Wi-Fi
-                                  DHCP Enabled:    Yes
-                                  IP address(es)
-                                  [01]: 192.168.0.3
-                                  [02]: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-          Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.
-
-          )STR"
-    };
-
-  BOOST_TEST(nmdp::test(test.c_str(), parserRule, blank),
-            "Parse rule 'start': " << test);
-  BOOST_TEST(tp.getData()[0] == tp.data);
+  dbgStr = devOs.toDebugString();
+  // osName
+  nmdp::testInString(dbgStr, "productName: windows 10 pro,");
+  // osVersion
+  nmdp::testInString(dbgStr, "productVersion: 12.3.4.12345 n/a build 12345,");
+  // osManufacturer
+  nmdp::testInString(dbgStr, "vendorName: microsoft,"); 
+  // setCpe
+  nmdp::testInString( dbgStr
+                    , "cpe: cpe:/o:microsoft:windows_10_pro"
+                      ":12.3.4.12345_n/a_build_12345,"
+                    );
+  nmdp::testInString(dbgStr, "accuracy: 1]");
 }

@@ -27,13 +27,11 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/datastore/objects/ToolObservations.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <netmeld/datastore/objects/Interface.hpp>
-#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
-#include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
+#include <netmeld/datastore/objects/Interface.hpp>
 #include <netmeld/datastore/objects/OperatingSystem.hpp>
+#include <netmeld/datastore/objects/ToolObservations.hpp>
+#include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
 namespace nmdp = netmeld::datastore::parsers;
 namespace nmdo = netmeld::datastore::objects;
@@ -49,7 +47,7 @@ struct Data
   nmdo::DeviceInformation                 devInfo;
   nmdo::OperatingSystem                   os;
   std::vector<std::string>                hotfixes;
-  std::map<std::string, nmdo::Interface>  network_cards;
+  std::map<std::string, nmdo::Interface>  networkCards;
   nmdo::ToolObservations                  observations;
 };
 typedef std::vector<Data> Result;
@@ -68,9 +66,8 @@ class Parser :
     // Supporting data structures
     std::string curHostname;
     std::string curIfaceName;
-    nmdp::ParserIpAddress   ipAddr;
     std::string curDomain;
-    
+
   protected:
     Data data;
 
@@ -80,31 +77,33 @@ class Parser :
       start;
 
     qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
-      hotfixes,
-      networkCardName,
-      networkCardConnectionName,
-      dhcpServer,
-      networkCardStatus,
-      domain;
+        hotfixes
+      , networkCardConnectionName
+      , domain
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      tokens;
+      restOfLine;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      hostName,
-      osName,
-      osVersion,
-      osManufacturer,
-      osConfiguration,
-      systemManufacturer,
-      systemModel,
-      systemType,
-      hotfix,
-      hyperV,
-      dhcpEnabledStatus,
-      networkCard,
-      networkCards,
-      systemInfo;
+        hostName
+      , osName
+      , osVersion
+      , osManufacturer
+      , osConfiguration
+      , systemManufacturer
+      , systemModel
+      , systemType
+      , hotfix
+      , hyperV
+      , dhcpEnabledStatus
+      , networkCard
+      , networkCards
+      , systemInfo
+      , bracketedNumber
+      ;
+
+    nmdp::ParserIpAddress ipAddr;
 
   // ===========================================================================
   // Constructors
@@ -121,7 +120,7 @@ class Parser :
     void addIfaceConnectName(const std::string&);
     void addIfaceIp(nmdo::IpAddress&);
     void setIfaceStatus(const std::string&);
-    void setCPE();
+
   protected:
     Result getData();
 };

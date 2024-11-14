@@ -32,8 +32,8 @@
 namespace nmcu = netmeld::core::utils;
 
 
-namespace netmeld::datastore::objects {
-
+namespace netmeld::datastore::objects
+{
   OperatingSystem::OperatingSystem()
   {}
 
@@ -68,7 +68,23 @@ namespace netmeld::datastore::objects {
   void
   OperatingSystem::setCpe(const std::string& _cpe)
   {
-    cpe = nmcu::toLower(_cpe);
+    if (_cpe.empty()) {
+      // Following NMAP limited CPE format
+      //   cpe:/{part}:{vendor}:{product}:{version}
+      cpe = std::format( "cpe:/o:{}:{}:{}"
+                       , nmcu::toLower(vendorName)
+                       , nmcu::toLower(productName)
+                       , nmcu::toLower(productVersion)
+                       );
+      if ("cpe:/o:::" == cpe) { // nothing set
+        cpe.clear();
+      }
+    } else {
+      cpe = nmcu::toLower(_cpe);
+    }
+
+    // swap spaces to underscores
+    std::replace(cpe.begin(), cpe.end(), ' ', '_');
   }
 
   void
@@ -77,41 +93,23 @@ namespace netmeld::datastore::objects {
     accuracy = _accuracy;
   }
 
-  std::string
-  OperatingSystem::getVendorName() const
-  {
-    return vendorName;
-  }
-
-  std::string
-  OperatingSystem::getProductName() const
-  {
-    return productName;
-  }
-
-  std::string
-  OperatingSystem::getProductVersion() const
-  {
-    return productVersion;
-  }
-
   bool
   OperatingSystem::isValid() const
   {
     return ipAddr.isValid()
-        && !(
-                 vendorName.empty()
-              && productName.empty()
-              && productVersion.empty()
-              && cpe.empty()
-            )
+        && !( vendorName.empty()
+           && productName.empty()
+           && productVersion.empty()
+           && cpe.empty()
+           )
         ;
   }
 
   void
-  OperatingSystem::save(pqxx::transaction_base& t,
-                        const nmco::Uuid& toolRunId,
-                        const std::string& deviceId)
+  OperatingSystem::save( pqxx::transaction_base& t
+                       , const nmco::Uuid& toolRunId
+                       , const std::string& deviceId
+                       )
   {
     if (!isValid()) {
       LOG_DEBUG << "OperatingSystem object is not saving: " << toDebugString()
@@ -121,14 +119,15 @@ namespace netmeld::datastore::objects {
 
     ipAddr.save(t, toolRunId, deviceId);
 
-    t.exec_prepared("insert_raw_operating_system",
-        toolRunId,
-        ipAddr.toString(),
-        vendorName,
-        productName,
-        productVersion,
-        cpe,
-        accuracy);
+    t.exec_prepared( "insert_raw_operating_system"
+                   , toolRunId
+                   , ipAddr.toString()
+                   , vendorName
+                   , productName
+                   , productVersion
+                   , toCpeString()
+                   , accuracy
+                   );
   }
 
   std::string
@@ -136,16 +135,27 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
 
-    oss << "["; // opening bracket
-    oss << "ipAddr: " << ipAddr .toDebugString() << ", "
-        << "vendorName: " << vendorName  << ", "
-        << "productName: " << productName  << ", "
-        << "productVersion: " << productVersion  << ", "
-        << "cpe: " << cpe  << ", "
-        << "accuracy: " << accuracy ;
-    oss << "]"; // closing bracket
+    oss << "["
+        << "ipAddr: " << ipAddr.toDebugString()
+        << ", vendorName: " << vendorName
+        << ", productName: " << productName
+        << ", productVersion: " << productVersion
+        << ", cpe: " << cpe
+        << ", accuracy: " << accuracy
+        << "]"
+        ;
 
     return oss.str();
+  }
+
+  std::string
+  OperatingSystem::toCpeString()
+  {
+    if (cpe.empty()) {
+      setCpe();
+    }
+
+    return cpe;
   }
 
   std::partial_ordering

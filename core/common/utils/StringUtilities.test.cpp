@@ -87,8 +87,32 @@ BOOST_AUTO_TEST_CASE(testGetSrvcString)
   BOOST_TEST("1:2:3" == nmcu::getSrvcString("1", "2", "3"));
 }
 
-BOOST_AUTO_TEST_CASE(testCPEString)
+BOOST_AUTO_TEST_CASE(testExpandCiscoIfaceName)
 {
-  BOOST_TEST("cpe:/a:b:c:d" == nmcu::compileCPE("a", "b", "c", "d"));
-  BOOST_TEST("cpe:/1:2:3:4" == nmcu::compileCPE("1", "2", "3", "4"));
+  const std::vector<std::tuple<std::string, std::string>> tests {
+    // replace
+      {"et0", "ethernet0"}
+    , {"fa 1", "fastethernet 1"}
+    , {"fi2/3", "fivegigabitethernet2/3"}
+    , {"fo 4", "fortygigabitethernet 4"}
+    , {"Gi5", "gigabitethernet5"}
+    , {"lO6", "loopback6"}
+    , {"PO7", "port-channel7"}
+    , {"se8", "serial8"}
+    , {"te9", "tengigabitethernet9"}
+    , {"tu10", "tunnel10"}
+    , {"tw11", "twogigabitethernet11"}
+    , {"twe12", "twentyfivegigabitethernet12"}
+    , {"vl13", "vlan13"}
+    // no-replace
+    , {"ethernet14", "ethernet14"}
+    , {"other", "other"}
+    // non-sensical, but the logic does it
+    , {"tuple", "tunnelple"}
+    };
+
+  for (const auto& [test, expected] : tests) {
+    
+    BOOST_TEST(expected == nmcu::expandCiscoIfaceName(test));
+  }
 }

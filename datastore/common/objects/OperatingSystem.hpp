@@ -31,9 +31,10 @@
 #include <netmeld/datastore/objects/IpAddress.hpp>
 
 
-namespace netmeld::datastore::objects {
-
-  class OperatingSystem : public AbstractDatastoreObject {
+namespace netmeld::datastore::objects
+{
+  class OperatingSystem : public AbstractDatastoreObject
+  {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -45,6 +46,7 @@ namespace netmeld::datastore::objects {
       std::string   productVersion;
       std::string   cpe;
       double        accuracy {0.0}; // FLOAT in DB, is 15 digits of percision
+
     public:
 
     // =========================================================================
@@ -66,18 +68,16 @@ namespace netmeld::datastore::objects {
       void setVendorName(const std::string&);
       void setProductName(const std::string&);
       void setProductVersion(const std::string&);
-      void setCpe(const std::string&);
+      void setCpe(const std::string& = "");
       void setAccuracy(const double);
 
-      std::string getVendorName() const;
-      std::string getProductName() const;
-      std::string getProductVersion() const;
-
       bool isValid() const override;
+
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
 
       std::string toDebugString() const override;
+      std::string toCpeString();
 
       std::partial_ordering operator<=>(const OperatingSystem&) const;
       bool operator==(const OperatingSystem&) const;
