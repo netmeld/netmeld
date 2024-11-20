@@ -71,7 +71,7 @@ Parser::Parser() : Parser::base_type(start)
          )
          // learn >> -age
        | ((qi::lit("Yes") | qi::lit("No")) >
-          -(+qi::ascii::blank >> +qi::ascii::char_("-0-9"))
+          -(+qi::ascii::blank >> +qi::ascii::char_("-0-9~"))
          )
          // protocol | pv
        | (+qi::ascii::char_("a-z,") >> !qi::ascii::digit)
