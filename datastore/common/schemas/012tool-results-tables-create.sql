@@ -843,6 +843,22 @@ ON raw_operating_systems(accuracy);
 
 -- ----------------------------------------------------------------------
 
+CREATE TABLE raw_hotfixes (
+      tool_run_id                 UUID            NOT NULL
+    , hotfixes                    TEXT ARRAY      NOT NULL
+    , PRIMARY KEY (tool_run_id, hotfixes)
+    , FOREIGN KEY (tool_run_id)
+          REFERENCES tool_runs(id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE
+);
+
+-- Partial indexes
+CREATE INDEX raw_hotfixes_idx_tool_run_id
+ON raw_hotfixes(tool_run_id);
+
+-- ----------------------------------------------------------------------
+
 CREATE TABLE raw_tool_observations (
     tool_run_id                 UUID            NOT NULL
   , category                    TEXT            NOT NULL
