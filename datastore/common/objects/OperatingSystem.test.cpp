@@ -35,7 +35,8 @@
 namespace nmdo = netmeld::datastore::objects;
 
 
-class TestOperatingSystem : public nmdo::OperatingSystem {
+class TestOperatingSystem : public nmdo::OperatingSystem
+{
   public:
     using OperatingSystem::OperatingSystem;
 
@@ -45,107 +46,116 @@ class TestOperatingSystem : public nmdo::OperatingSystem {
     using OperatingSystem::productVersion;
     using OperatingSystem::cpe;
     using OperatingSystem::accuracy;
+
+    // explicit, so have to formally define
+    TestOperatingSystem(const nmdo::IpAddress& ipa) : OperatingSystem(ipa) {};
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
-    TestOperatingSystem operatingSystem;
-    nmdo::IpAddress ipAddr;
+    BOOST_TEST_REQUIRE(TestOperatingSystem() == nmdo::OperatingSystem());
 
-    BOOST_TEST(ipAddr == operatingSystem.ipAddr);
-    BOOST_TEST(operatingSystem.vendorName.empty());
-    BOOST_TEST(operatingSystem.productName.empty());
-    BOOST_TEST(operatingSystem.productVersion.empty());
-    BOOST_TEST(operatingSystem.cpe.empty());
-    BOOST_TEST(0.0 == operatingSystem.accuracy);
+    TestOperatingSystem tos;
+
+    BOOST_TEST(nmdo::IpAddress() == tos.ipAddr);
+    BOOST_TEST(tos.vendorName.empty());
+    BOOST_TEST(tos.productName.empty());
+    BOOST_TEST(tos.productVersion.empty());
+    BOOST_TEST(tos.cpe.empty());
+    BOOST_TEST(0.0 == tos.accuracy);
   }
 
   {
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
-    TestOperatingSystem operatingSystem {ipAddr};
 
-    BOOST_TEST(ipAddr == operatingSystem.ipAddr);
-    BOOST_TEST(operatingSystem.vendorName.empty());
-    BOOST_TEST(operatingSystem.productName.empty());
-    BOOST_TEST(operatingSystem.productVersion.empty());
-    BOOST_TEST(operatingSystem.cpe.empty());
-    BOOST_TEST(0.0 == operatingSystem.accuracy);
+    BOOST_TEST_REQUIRE(  TestOperatingSystem(ipAddr)
+                      == nmdo::OperatingSystem(ipAddr)
+                      );
+
+    TestOperatingSystem tos {ipAddr};
+
+    BOOST_TEST(ipAddr == tos.ipAddr);
+    BOOST_TEST(tos.vendorName.empty());
+    BOOST_TEST(tos.productName.empty());
+    BOOST_TEST(tos.productVersion.empty());
+    BOOST_TEST(tos.cpe.empty());
+    BOOST_TEST(0.0 == tos.accuracy);
+
+    nmdo::OperatingSystem os;
+    os.setIpAddr(ipAddr);
+    BOOST_TEST(tos == os);
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
-  {
-    TestOperatingSystem operatingSystem;
+  nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
-    operatingSystem.setVendorName("Vendor Name");
-    BOOST_TEST("vendor name" == operatingSystem.vendorName);
-  }
-  {
-    TestOperatingSystem operatingSystem;
+  TestOperatingSystem tos;
 
-    operatingSystem.setProductName("Product Name");
-    BOOST_TEST("product name" == operatingSystem.productName);
-  }
-  {
-    TestOperatingSystem operatingSystem;
-
-    operatingSystem.setProductVersion("Product Version");
-    BOOST_TEST("product version" == operatingSystem.productVersion);
-  }
-  {
-    TestOperatingSystem operatingSystem;
-
-    operatingSystem.setCpe("Cpe");
-    BOOST_TEST("cpe" == operatingSystem.cpe);
-  }
-  {
-    TestOperatingSystem operatingSystem;
-
-    operatingSystem.setAccuracy(DBL_MIN);
-    BOOST_TEST(DBL_MIN == operatingSystem.accuracy);
-    operatingSystem.setAccuracy(DBL_MAX);
-    BOOST_TEST(DBL_MAX == operatingSystem.accuracy);
-  }
+  tos.setIpAddr(ipAddr);
+  BOOST_TEST(ipAddr == tos.ipAddr);
+  tos.setVendorName("Vendor Name");
+  BOOST_TEST("vendor name" == tos.vendorName);
+  tos.setProductName("Product Name");
+  BOOST_TEST("product name" == tos.productName);
+  tos.setProductVersion("Product Version");
+  BOOST_TEST("product version" == tos.productVersion);
+  tos.setCpe();
+  BOOST_TEST("cpe:/o:vendor_name:product_name:product_version" == tos.cpe);
+  tos.setCpe("AbC 123");
+  BOOST_TEST("abc_123" == tos.cpe);
+  tos.setAccuracy(DBL_MIN);
+  BOOST_TEST(DBL_MIN == tos.accuracy);
+  tos.setAccuracy(DBL_MAX);
+  BOOST_TEST(DBL_MAX == tos.accuracy);
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
 {
-  {
-    TestOperatingSystem operatingSystem;
-    BOOST_TEST(!operatingSystem.isValid());
-  }
+  TestOperatingSystem tos {nmdo::IpAddress("1.2.3.4/24")};
+  BOOST_TEST(!tos.isValid());
 
-  {
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
-    TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_TEST(!operatingSystem.isValid());
-    operatingSystem.setVendorName("vendor name");
-    BOOST_TEST(operatingSystem.isValid());
-  }
+  tos.setVendorName("vendor name");
+  BOOST_TEST(tos.isValid());
+  tos.setVendorName("");
+  BOOST_TEST(!tos.isValid());
 
-  {
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
-    TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_TEST(!operatingSystem.isValid());
-    operatingSystem.setProductName("product name");
-    BOOST_TEST(operatingSystem.isValid());
-  }
+  tos.setProductName("product name");
+  BOOST_TEST(tos.isValid());
+  tos.setProductName("");
+  BOOST_TEST(!tos.isValid());
 
-  {
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
-    TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_TEST(!operatingSystem.isValid());
-    operatingSystem.setProductVersion("product version");
-    BOOST_TEST(operatingSystem.isValid());
-  }
+  tos.setProductVersion("product version");
+  BOOST_TEST(tos.isValid());
+  tos.setProductVersion("");
+  BOOST_TEST(!tos.isValid());
 
-  {
-    nmdo::IpAddress ipAddr {"1.2.3.4/24"};
-    TestOperatingSystem operatingSystem {ipAddr};
-    BOOST_TEST(!operatingSystem.isValid());
-    operatingSystem.setCpe("cpe");
-    BOOST_TEST(operatingSystem.isValid());
-  }
+  tos.setCpe("cpe");
+  BOOST_TEST(tos.isValid());
+  tos.setCpe("");
+  BOOST_TEST(!tos.isValid());
+}
+
+BOOST_AUTO_TEST_CASE(testToCpeString)
+{
+  TestOperatingSystem tos;
+  BOOST_TEST(tos.cpe.empty());
+
+  // not set, default to internal fields
+  tos.setVendorName("Vendor");
+  tos.setProductName("Product AbC Xy-Z");
+  tos.setProductVersion("V 1.23.5");
+  const auto& cpeStr {"cpe:/o:vendor:product_abc_xy-z:v_1.23.5"};
+  BOOST_TEST(cpeStr == tos.toCpeString());
+
+  // once set, no arbitrary change
+  tos.setVendorName("alt1");
+  tos.setProductName("alt2");
+  tos.setProductVersion("alt3");
+  BOOST_TEST(cpeStr == tos.toCpeString());
+  // explicit set call to trigger update
+  tos.setCpe();
+  BOOST_TEST("cpe:/o:alt1:alt2:alt3" == tos.toCpeString());
 }
