@@ -49,11 +49,11 @@ WriterContext::addContextSetup() const
       );
 
 	oss << "\\doifundefined{DefaultFontName}{\n"
-      << "  \\define\\DefaultFontName{modern}\n"
-      << "  \\define\\DefaultFontSize{10pt}\n"
+      << "  \\defineexpandable\\DefaultFontName{modern}\n"
+      << "  \\defineexpandable\\DefaultFontSize{10pt}\n"
       << "}\n"
       << "\\doifundefined{PortionMark}{\n"
-      << "  \\define[2]\\PortionMark{(#1 - #2)}\n"
+      << "  \\defineexpandable[2]\\PortionMark{(#1 - #2)}\n"
       << "}\n"
       << "\\usetypescript[\\DefaultFontName]\n"
       << "\\setupbodyfont[\\DefaultFontName, \\DefaultFontSize]\n"
