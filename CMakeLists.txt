@@ -28,7 +28,7 @@
 # CMake Settings
 # ----------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.30)
 set(TOOL_SUITE "netmeld")
 set(MODULE_NAME "netmeld")
 project(${TOOL_SUITE})
@@ -41,7 +41,6 @@ include(cmake/BuildHelpers.cmake)
 # ----------------------------------------------------------------------
 # Libraries that many things need to link against for various reasons
 # ----------------------------------------------------------------------
-
 set(BOOST_PKG_NAME_VERSION "1.83.0")
 find_package(Boost REQUIRED
   date_time
