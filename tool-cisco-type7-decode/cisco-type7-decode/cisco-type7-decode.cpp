@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -118,11 +118,11 @@ class Tool : public nmct::AbstractTool
       if (ec == std::errc()) {
         return val;
       } else {
-        throw std::runtime_error(std::format(
-                "Conversion of {} failed for base {}"
-              , byte
-              , radix
-            )
+        throw std::runtime_error(
+                std::format( "Conversion of {} failed for base {}"
+                           , byte
+                           , radix
+                           )
           );
       }
     }
@@ -159,8 +159,13 @@ class Tool : public nmct::AbstractTool
 
       std::regex badChars("[^0-9a-fA-F]");
       encoded = std::regex_replace(data, badChars, "");
+      LOG_DEBUG << std::format( "Same: {}, Orig: {}, Cleaned: {}\n"
+                              , data == encoded
+                              , data
+                              , encoded
+                              );
 
-      std::vector<uint8_t> byteVec {getBytes(data)};
+      std::vector<uint8_t> byteVec {getBytes(encoded)};
 
       std::vector<uint8_t>::const_iterator i {byteVec.cbegin()}
                                          , e {byteVec.cend()}
@@ -170,14 +175,15 @@ class Tool : public nmct::AbstractTool
 
       std::ostringstream oss;
       for (; i != e; ++i, ++index) {
-        LOG_DEBUG << "i-dist: " << std::distance(byteVec.cbegin(), i)
-                  << ", index: " << std::dec << index
-                  << ", *i: " << std::dec << *i
-                  << ", pow: " << ciscoType7Key[index % ciscoType7Key.size()]
-                  << std::endl;
-        oss << static_cast<char>(
-                 *i ^ ciscoType7Key[index % ciscoType7Key.size()]
-               );
+        auto iVal {*i};
+        auto pow  {ciscoType7Key[index % ciscoType7Key.size()]};
+        LOG_DEBUG << std::format( "i-dist: {}, index: {}, *i: {}, pow: {}\n"
+                                , std::distance(byteVec.cbegin(), i)
+                                , index
+                                , static_cast<int>(iVal)
+                                , static_cast<int>(pow)
+                                );
+        oss << static_cast<char>(iVal ^ pow);
       }
       decoded = oss.str();
     }
@@ -186,7 +192,7 @@ class Tool : public nmct::AbstractTool
     storeInDb() const
     {
       if (!nmcu::isCmdAvailable("psql")) {
-        LOG_WARN << "Could not store, 'psql' was not found\n";
+        LOG_WARN << "Can not store, 'psql' was not found\n";
         return;
       }
 
