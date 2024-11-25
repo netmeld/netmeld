@@ -29,6 +29,7 @@
 
 #include <netmeld/core/tools/AbstractTool.hpp>
 #include <netmeld/core/utils/CmdExec.hpp>
+#include <netmeld/core/utils/StringUtilities.hpp>
 
 namespace nmct = netmeld::core::tools;
 namespace nmcu = netmeld::core::utils;
@@ -293,7 +294,7 @@ class Tool : public nmct::AbstractTool
       if (opts.exists("gen-lookup")) {
         genLookup();
       } else {
-        encoded = opts.getValue("password");
+        encoded = nmcu::trim(opts.getValue("password"));
         if (encoded.starts_with("$9$")) {
           encoded = encoded.substr(3);
         }
