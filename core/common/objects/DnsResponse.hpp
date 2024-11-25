@@ -71,9 +71,9 @@ namespace netmeld::core::objects {
       void setTtl(const uint32_t);
       void setData(const std::string&);
 
-      std::string getFqdn() const;
-      std::string getClass() const;
-      std::string getType() const;
+      const std::string& getFqdn() const;
+      const std::string& getClass() const;
+      const std::string& getType() const;
       uint32_t    getTtl() const;
       std::string getData() const;
 

@@ -51,10 +51,28 @@ namespace netmeld::core::utils {
     LOG_DEBUG << _cmd << '\n';
 
     auto exitStatus {std::system(_cmd.c_str())};
+    LOG_DEBUG << "Cmd raw return value: " << exitStatus << '\n';
+    if (WIFEXITED(exitStatus)) {
+      exitStatus = WEXITSTATUS(exitStatus);
+      if (255 == exitStatus) { exitStatus = -1; };
+    } else {
+      LOG_WARN << "Cmd possibly exited abnormally\n";
+    }
     if (-1 == exitStatus) { LOG_ERROR << "Failure: " << _cmd << '\n'; }
     if (0 != exitStatus)  { LOG_WARN << "Non-Zero: " << _cmd << '\n'; }
 
     return exitStatus;
+  }
+
+  // Unnamed namespace to hide helper logic
+  namespace {
+    struct FileDeleter {
+      void operator()(FILE* file) const {
+        if (file) {
+          pclose(file);
+        }
+      }
+    };
   }
 
   std::string
@@ -62,8 +80,7 @@ namespace netmeld::core::utils {
   {
     LOG_DEBUG << _cmd << '\n';
 
-    std::unique_ptr<FILE, decltype(&pclose)>
-        pipe(popen(_cmd.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, FileDeleter> pipe(popen(_cmd.c_str(), "r"));
     if (!pipe) {
       LOG_ERROR << "Failure: " << _cmd << '\n';
       return "";

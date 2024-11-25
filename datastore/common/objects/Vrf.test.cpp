@@ -35,14 +35,11 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestVrf : public nmdo::Vrf {
   public:
-    TestVrf() : Vrf() {};
-    explicit TestVrf(const std::string& _vrfId) : Vrf(_vrfId) {};
+    using Vrf::Vrf;
 
-  public:
-    std::string getId()
-    { return vrfId; }
-    std::vector<std::string> getIfaces()
-    { return ifaces; }
+    using Vrf::vrfId;
+    using Vrf::ifaces;
+    using Vrf::routes;
 };
 
 
@@ -50,15 +47,15 @@ BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
     TestVrf vrf;
-    BOOST_CHECK_EQUAL("", vrf.getId());
-    BOOST_CHECK_EQUAL(0, vrf.getIfaces().size());
+    BOOST_TEST("" == vrf.vrfId);
+    BOOST_TEST(0 == vrf.ifaces.size());
   }
 
   {
     std::string id {"Some Vrf"};
     TestVrf vrf {id};
-    BOOST_CHECK_EQUAL(id, vrf.getId());
-    BOOST_CHECK_EQUAL(0, vrf.getIfaces().size());
+    BOOST_TEST(id == vrf.vrfId);
+    BOOST_TEST(0 == vrf.ifaces.size());
   }
 }
 
@@ -72,8 +69,8 @@ BOOST_AUTO_TEST_CASE(testSetters)
   vrf.addIface("eth0");
   vrf.addIface("eth1");
 
-  BOOST_CHECK_EQUAL(id, vrf.getId());
-  BOOST_CHECK_EQUAL(2, vrf.getIfaces().size());
-  BOOST_CHECK_EQUAL("eth0", vrf.getIfaces().at(0));
-  BOOST_CHECK_EQUAL("eth1", vrf.getIfaces().at(1));
+  BOOST_TEST(id == vrf.vrfId);
+  BOOST_TEST(2 == vrf.ifaces.size());
+  BOOST_TEST("eth0" == vrf.ifaces.at(0));
+  BOOST_TEST("eth1" == vrf.ifaces.at(1));
 }

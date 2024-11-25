@@ -29,6 +29,11 @@
 // =============================================================================
 // Parser logic
 // =============================================================================
+/* NOTE: This parser currently requires two things for validity:
+ *   1) The content is in a JSON object array, e.g., `[{},{},{}]`; and
+ *   2) The content to be "saved" is a key value pair.
+ * So long as those two conditions are met it will succeed.
+*/
 template<typename Iter>
 Parser<Iter>::Parser() : Parser::base_type(start)
 {
@@ -66,17 +71,17 @@ Parser<Iter>::Parser() : Parser::base_type(start)
     (dnsNs, &value)
     (dnsSoaMname, &value)
     (dnsSoaRname, &value)
-    (bootpOptionSubnetMask, &value)
-    (bootpOptionDomainNameServer, &value)
-    (bootpOptionDhcpServerId, &value)
-    (bootpOptionRouter, &value)
-    (bootpOptionDomainName, &value)
-    (bootpOptionTftpServerAddress, &value)
-    (bootpOptionSipServerAddress, &value)
-    (bootpOptionHostname, &value) // client name
-    (bootpIpYour, &value) // client ip
-    (bootpIpRelay, &value) // tricky
-    (bootpHwMacAddr, &value) // client mac
+    (dhcpOptionSubnetMask, &value)
+    (dhcpOptionDomainNameServer, &value)
+    (dhcpOptionDhcpServerId, &value)
+    (dhcpOptionRouter, &value)
+    (dhcpOptionDomainName, &value)
+    (dhcpOptionTftpServerAddress, &value)
+    (dhcpOptionSipServerAddress, &value)
+    (dhcpOptionHostname, &value) // client name
+    (dhcpIpYour, &value) // client ip
+    (dhcpIpRelay, &value) // tricky
+    (dhcpHwMacAddr, &value) // client mac
     (dhcp6IaprefixPrefAddr, &value) // "subnet" for c&s
     (dhcpv6DuidlltLinkLayerAddr, &value) // client&server
     // ===== NTP =====
@@ -155,6 +160,7 @@ template<typename Iter>
 void
 Parser<Iter>::setNewPacket()
 {
+  ++processedPacketCount;
   if (processPacket(pd)) {
     ++parsedPacketCount;
   }
@@ -175,7 +181,7 @@ Parser<Iter>::setPacketData(const std::string& _key, const std::string& _val)
       auto& vec = std::any_cast<VecTupStrStrType&>(pd[_key]);
       vec.push_back(std::make_tuple(tempDnsRespName, _val));
     }
-  } else if (  bootpHwMacAddr == _key
+  } else if (  dhcpHwMacAddr == _key
             || cdpNrgyzIpAddress == _key
             )
   {
@@ -188,8 +194,8 @@ Parser<Iter>::setPacketData(const std::string& _key, const std::string& _val)
     }
     pd[_key] = _val;
   } else if (_key.starts_with("\"vlan.")
-             || bootpOptionDomainNameServer == _key
-             || bootpOptionTftpServerAddress == _key
+             || dhcpOptionDomainNameServer == _key
+             || dhcpOptionTftpServerAddress == _key
             )
   {
     if (!pd.count(_key)) {
@@ -321,10 +327,10 @@ Parser<Iter>::processPacket(PacketData& _pd)
     status = true;
   }
 
-  // ===== bootp (DHCP) =====
-  if (_pd.count(bootpOptionSubnetMask)) {
-    const auto& subnetMask {s1(bootpOptionSubnetMask)};
-    const auto& ipYour {s1(bootpIpYour)};
+  // ===== DHCP =====
+  if (_pd.count(dhcpOptionSubnetMask)) {
+    const auto& subnetMask {s1(dhcpOptionSubnetMask)};
+    const auto& ipYour {s1(dhcpIpYour)};
 
     if ("0.0.0.0" != ipYour) {
       auto& ipAddr {d.ipAddrs[ipYour]};
@@ -332,14 +338,14 @@ Parser<Iter>::processPacket(PacketData& _pd)
       ipAddr.setNetmask(nmdo::IpNetwork(subnetMask));
       ipAddr.setReason(TSHARK_REASON);
       ipAddr.setResponding(true);
-      if (_pd.count(bootpOptionHostname)) {
-        ipAddr.addAlias(s1(bootpOptionHostname), TSHARK_REASON);
+      if (_pd.count(dhcpOptionHostname)) {
+        ipAddr.addAlias(s1(dhcpOptionHostname), TSHARK_REASON);
       }
       status = true;
     }
   }
-  if (_pd.count(bootpOptionDomainNameServer)) {
-    for (const auto& v : v1(bootpOptionDomainNameServer)) {
+  if (_pd.count(dhcpOptionDomainNameServer)) {
+    for (const auto& v : v1(dhcpOptionDomainNameServer)) {
       nmdo::Service serv;
       serv.addDstPort("53");
       serv.setDstAddress(nmdo::IpAddress(v, TSHARK_REASON));
@@ -350,8 +356,8 @@ Parser<Iter>::processPacket(PacketData& _pd)
     }
     status = true;
   }
-  if (_pd.count(bootpOptionTftpServerAddress)) {
-    for (const auto& v : v1(bootpOptionTftpServerAddress)) {
+  if (_pd.count(dhcpOptionTftpServerAddress)) {
+    for (const auto& v : v1(dhcpOptionTftpServerAddress)) {
       nmdo::Service serv;
       serv.addDstPort("69");
       serv.setDstAddress(nmdo::IpAddress(v, TSHARK_REASON));
@@ -362,12 +368,12 @@ Parser<Iter>::processPacket(PacketData& _pd)
     }
     status = true;
   }
-  if (_pd.count(bootpHwMacAddr)) {
-    const auto& macAddrStr {s1(bootpHwMacAddr)};
+  if (_pd.count(dhcpHwMacAddr)) {
+    const auto& macAddrStr {s1(dhcpHwMacAddr)};
     auto& macAddr {d.macAddrs[macAddrStr]};
     macAddr.setMac(macAddrStr);
-    if (_pd.count(bootpOptionDhcpServerId)) {
-      const auto& ipAddrStr {s1(bootpOptionDhcpServerId)};
+    if (_pd.count(dhcpOptionDhcpServerId)) {
+      const auto& ipAddrStr {s1(dhcpOptionDhcpServerId)};
       nmdo::IpAddress ipAddr {ipAddrStr, TSHARK_REASON};
       ipAddr.setResponding(true);
       macAddr.addIpAddress(ipAddr);
@@ -436,6 +442,7 @@ Parser<Iter>::processPacket(PacketData& _pd)
     for (const auto& vId : std::any_cast<VecStrType>(_pd[vlanId])) {
       auto val {static_cast<uint16_t>(std::stoi(vId))};
       d.vlans[vId] = nmdo::Vlan(val, TSHARK_REASON);
+      status = true;
     }
   }
 

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,15 +35,12 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestVlan : public nmdo::Vlan {
   public:
-    TestVlan() : Vlan() {};
-    TestVlan(uint16_t _id, const std::string& _desc) : Vlan(_id, _desc) {};
+    using Vlan::Vlan;
 
-  public:
-    std::string getDescription()
-    { return description; }
-
-    nmdo::IpNetwork getIpNet()
-    { return ipNet; }
+    using Vlan::description;
+    using Vlan::ipNet;
+    // has accessor
+    //using Vlan::vlanId;
 };
 
 
@@ -51,15 +48,15 @@ BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
     TestVlan vlan;
-    BOOST_CHECK_EQUAL(UINT16_MAX, vlan.getVlanId());
+    BOOST_TEST(UINT16_MAX == vlan.getVlanId());
   }
 
   {
     uint16_t id {10U};
     std::string desc {"Some Description"};
     TestVlan vlan {id, desc};
-    BOOST_CHECK_EQUAL(id, vlan.getVlanId());
-    BOOST_CHECK_EQUAL("Some Description", vlan.getDescription());
+    BOOST_TEST(id == vlan.getVlanId());
+    BOOST_TEST("Some Description" == vlan.description);
   }
 }
 
@@ -75,9 +72,9 @@ BOOST_AUTO_TEST_CASE(testSetters)
   vlan.setId(id);
   vlan.setIpNet(ipNet);
 
-  BOOST_CHECK_EQUAL(id, vlan.getVlanId());
-  BOOST_CHECK_EQUAL("Desc", vlan.getDescription());
-  BOOST_CHECK_EQUAL(ipNet, vlan.getIpNet());
+  BOOST_TEST(id == vlan.getVlanId());
+  BOOST_TEST("Desc" == vlan.description);
+  BOOST_TEST(ipNet == vlan.ipNet);
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
@@ -85,11 +82,11 @@ BOOST_AUTO_TEST_CASE(testValidity)
   TestVlan vlan;
 
   vlan.setId(0U); // min
-  BOOST_CHECK(vlan.isValid());
+  BOOST_TEST(vlan.isValid());
 
   vlan.setId(4095U); // max
-  BOOST_CHECK(vlan.isValid());
+  BOOST_TEST(vlan.isValid());
 
   vlan.setId(4096U);
-  BOOST_CHECK(!vlan.isValid());
+  BOOST_TEST(!vlan.isValid());
 }

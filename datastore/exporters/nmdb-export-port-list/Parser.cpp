@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,32 +31,51 @@
 // =============================================================================
 Parser::Parser() : Parser::base_type(start)
 {
-  start
-    = *(line)
+  start =
+    *(line)
     ;
 
-  line
-    = (portRange >> -(comment) >> qi::eol)
+  line =
+    ( (portRange >> -(comment) >> qi::eol)
     | (comment >> qi::eol)
     | (qi::eol)
+    )
     ;
 
-  portRange
-    = (protocol >> qi::lit(':') >>
-       qi::uint_ >> -(qi::lit('-') >> qi::uint_))
+  const auto makeData =
+      pnx::bind([](const std::string& a, const size_t b, const size_t c) {
+                  Data d;
+                  d.protocols = a;
+                  if (0 == c) { d.portRange = nmdo::PortRange(b);     }
+                  else        { d.portRange = nmdo::PortRange(b, c);  }
+                  return d;
+               }
+               , qi::_1, qi::_2, qi::_3
+               )
+    ;
+  portRange =
+    ( (protocol >> qi::lit(':') >> qi::uint_ >> qi::lit('-') >> qi::uint_)
+        [(qi::_val = makeData
+        , qi::_pass = qi::_2 < qi::_3
+        )]
+    | (protocol >> qi::lit(':') >> qi::uint_ >> qi::attr(0))
+        [qi::_val = makeData]
+    )
     ;
 
-  protocol
-    = +(qi::char_("TUY"))
+  protocol =
+    +(qi::char_("TUY"))
     ;
 
-  comment
-    = (qi::lit('#') >> *(qi::ascii::graph | qi::ascii::blank))
+  comment =
+    (qi::lit('#') >> *(qi::ascii::graph | qi::ascii::blank))
     ;
 
   BOOST_SPIRIT_DEBUG_NODES(
       (start)
-      (line) (portRange) (protocol)
+      (line)
+      (portRange)
+      (protocol)
       (comment)
-      );
+    );
 }

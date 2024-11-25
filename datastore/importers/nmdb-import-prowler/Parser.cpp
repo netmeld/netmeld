@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,7 +38,7 @@ Parser::Parser()
 {}
 
 void
-Parser::fromJsonV2(std::ifstream& _file)
+Parser::fromJsonV2(std::istream& _file)
 {
   // V2 output is a JSON lines file
   Data d;
@@ -58,7 +58,7 @@ Parser::fromJsonV2(std::ifstream& _file)
 }
 
 void
-Parser::fromJsonV3(std::ifstream& _file)
+Parser::fromJsonV3(std::istream& _file)
 {
   // V3 output is a JSON array
   Data d;

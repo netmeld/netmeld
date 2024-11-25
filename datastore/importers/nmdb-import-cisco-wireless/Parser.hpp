@@ -45,7 +45,6 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 struct Data
 {
-  std::string                          domainName;
   nmdo::DeviceInformation              devInfo;
   std::vector<nmdo::InterfaceNetwork>  ifaces;
   std::vector<nmdo::Route>             routes;
@@ -67,10 +66,12 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+    const std::string DEFAULT_VRF_ID {""};//{"default"};
+
+  protected:
     Data d;
     bool isCdpEnabled {true};
 
-    const std::string DEFAULT_VRF_ID {""};//{"default"};
 
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>

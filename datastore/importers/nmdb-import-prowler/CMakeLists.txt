@@ -53,3 +53,20 @@ foreach(ITEM
       netmeld-datastore
     )
 endforeach()
+foreach(ITEM
+    Parser
+  )
+  nm_add_test(${ITEM})
+  target_sources(${TGT_TEST}
+    PRIVATE
+      ProwlerV2Data.cpp
+      ProwlerV2Data.hpp
+      ProwlerV3Data.cpp
+      ProwlerV3Data.hpp
+      ${ITEM}.hpp
+      ${ITEM}.cpp
+      )
+  target_link_libraries(${TGT_TEST}
+      netmeld-datastore
+    )
+endforeach()

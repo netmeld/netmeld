@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -49,6 +49,7 @@ class Parser:
   // Variables
   // ===========================================================================
   private:
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -57,30 +58,30 @@ class Parser:
       ipv4Route,
       ipv6Route;
 
-    qi::rule<nmdp::IstreamIter, nmdo::IpAddress(), qi::ascii::blank_type>
-      dstIpv4Net,
-      dstIpv6Net,
-      rtrIpv4Addr,
-      rtrIpv6Addr;
-
     qi::rule<nmdp::IstreamIter>
       rowNumber,
       uptime,
       srcVrf,
-      garbage;
+      ignoredLine;
+
+    qi::rule<nmdp::IstreamIter, void(nmdo::Route&)>
+        distanceMetric
+      , ifaceName
+      , dstIpv4Net
+      , dstIpv6Net
+      , rtrIpv4Addr
+      , rtrIpv6Addr
+      , typeCode
+      ;
+
+    qi::symbols<const char, const std::string> tcSym;
+
+    qi::rule<nmdp::IstreamIter, std::string()>
+      token;
 
     nmdp::ParserIpAddress
       ipv4Addr,
       ipv6Addr;
-
-    qi::rule<nmdp::IstreamIter, size_t()>
-      distance,
-      metric;
-
-    qi::rule<nmdp::IstreamIter, std::string()>
-      ifaceName,
-      typeCode,
-      token;
 
   // ===========================================================================
   // Constructors

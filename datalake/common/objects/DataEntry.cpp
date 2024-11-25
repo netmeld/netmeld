@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -51,27 +51,27 @@ namespace netmeld::datalake::objects {
   DataEntry::isPipedData() const
   { return pipedData; }
 
-  std::string
+  const std::string&
   DataEntry::getCommitter() const
   { return committer; }
 
-  std::string
+  const std::string&
   DataEntry::getDataPath() const
   { return dataPath; }
 
-  std::string
+  const std::string&
   DataEntry::getDeviceId() const
   { return deviceId; }
 
-  std::string
+  const std::string&
   DataEntry::getIngestTool() const
   { return ingestTool; }
 
-  std::string
+  const std::string&
   DataEntry::getNewName() const
   { return newName; }
 
-  std::string
+  const std::string&
   DataEntry::getToolArgs() const
   { return toolArgs; }
 

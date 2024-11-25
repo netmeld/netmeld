@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -88,7 +88,8 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
         }
 
         LOG_DEBUG << "Iterating over routes\n";
-        for (auto& [_, result] : results.routes) {
+        //for (auto& [_, result] : results.routes) {
+        for (auto& result : results.routes) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << '\n';
         }

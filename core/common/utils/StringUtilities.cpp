@@ -28,6 +28,7 @@
 #include <format>
 #include <vector>
 #include <tuple>
+#include <ranges>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
@@ -55,25 +56,15 @@ namespace netmeld::core::utils
   std::string
   trim(const std::string& orig)
   {
-    std::string text {orig};
-    if (text.front() == ' ') {
-      text.erase(text.begin(),
-                 std::find_if(text.begin(),
-                              text.end(),
-                              [](int ch) { return !std::isspace(ch); }
-                             )
-                );
-    }
-    if (text.back() == ' ') {
-      text.erase(std::find_if(text.rbegin(),
-                              text.rend(),
-                              [](int ch) { return !std::isspace(ch); }
-                             ).base(),
-                 text.end()
-                );
-    }
+    auto isWhitespace = [](unsigned char c) { return std::isspace(c); };
 
-    return text;
+    auto text { orig
+              | std::views::drop_while(isWhitespace)
+              | std::views::reverse
+              | std::views::drop_while(isWhitespace)
+              | std::views::reverse
+              };
+    return std::string(text.begin(), text.end());
   }
 
   std::string

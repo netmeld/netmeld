@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -41,7 +41,7 @@ DataContainerSingleton::getInstance()
 {
   std::mutex tmp;
   {
-    std::lock_guard<std::mutex> lock(tmp);
+    std::lock_guard<std::mutex> lock {tmp};
     static DataContainerSingleton instance;
     return instance;
   }

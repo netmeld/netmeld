@@ -46,6 +46,11 @@ void sigIntHandler(int) { std::signal(SIGINT, SIG_DFL); }
 // =============================================================================
 // Import tool definition
 // =============================================================================
+/* NOTE: Though the data to be parsed is JSON, we want to be able to parse
+ * it in a streaming or near-real time fashion.  JSON parsing libraries
+ * seem to need it to be valid JSON first (which requires fully parsing the
+ * content).  So, we have to parse it with Boost Spirit.
+ */
 template<typename P, typename R>
 class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {

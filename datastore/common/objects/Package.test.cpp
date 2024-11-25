@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -33,9 +33,7 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestPackage : public nmdo::Package {
   public:
-    TestPackage() : Package() {};
-
-  public:
+    using Package::Package;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -43,12 +41,12 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestPackage package;
 
-    BOOST_CHECK(package.getState().empty());
-    BOOST_CHECK(package.getName().empty());
-    BOOST_CHECK(package.getVersion().empty());
-    BOOST_CHECK(package.getArchitecture().empty());
-    BOOST_CHECK(package.getDescription().empty());
-    BOOST_CHECK(!package.isValid());
+    BOOST_TEST(package.getState().empty());
+    BOOST_TEST(package.getName().empty());
+    BOOST_TEST(package.getVersion().empty());
+    BOOST_TEST(package.getArchitecture().empty());
+    BOOST_TEST(package.getDescription().empty());
+    BOOST_TEST(!package.isValid());
   }
 }
 
@@ -59,55 +57,55 @@ BOOST_AUTO_TEST_CASE(testSetters)
       TestPackage package;
 
       package.setState("abc");
-      BOOST_CHECK_EQUAL("abc", package.getState());
+      BOOST_TEST("abc" == package.getState());
     }
     {
       TestPackage package;
 
       package.setState("ABC");
-      BOOST_CHECK_EQUAL("ABC", package.getState());
+      BOOST_TEST("ABC" == package.getState());
     }
     {
       TestPackage package;
 
       package.setName("packageName");
-      BOOST_CHECK_EQUAL("packageName", package.getName());
+      BOOST_TEST("packageName" == package.getName());
     }
     {
       TestPackage package;
 
       package.setVersion("1.1.0");
-      BOOST_CHECK_EQUAL("1.1.0", package.getVersion());
+      BOOST_TEST("1.1.0" == package.getVersion());
     }
     {
       TestPackage package;
 
       package.setVersion("1");
-      BOOST_CHECK_EQUAL("1", package.getVersion());
+      BOOST_TEST("1" == package.getVersion());
     }
     {
       TestPackage package;
 
       package.setArchitecture("all");
-      BOOST_CHECK_EQUAL("all", package.getArchitecture());
+      BOOST_TEST("all" == package.getArchitecture());
     }
     {
       TestPackage package;
 
       package.setArchitecture("amd64");
-      BOOST_CHECK_EQUAL("amd64", package.getArchitecture());
+      BOOST_TEST("amd64" == package.getArchitecture());
     }
     {
       TestPackage package;
 
       package.setDescription("some package.");
-      BOOST_CHECK_EQUAL("some package.", package.getDescription());
+      BOOST_TEST("some package." == package.getDescription());
     }
     {
       TestPackage package;
 
       package.setDescription("somepackage.");
-      BOOST_CHECK_EQUAL("somepackage.", package.getDescription());
+      BOOST_TEST("somepackage." == package.getDescription());
     }
 }
 }
@@ -116,16 +114,16 @@ BOOST_AUTO_TEST_CASE(testValidity)
   {
     TestPackage package;
 
-    BOOST_CHECK(!package.isValid());
+    BOOST_TEST(!package.isValid());
     package.setState("abc");
-    BOOST_CHECK(!package.isValid());
+    BOOST_TEST(!package.isValid());
     package.setName("name");
-    BOOST_CHECK(!package.isValid());
+    BOOST_TEST(!package.isValid());
     package.setVersion("1.1");
-    BOOST_CHECK(!package.isValid());
+    BOOST_TEST(!package.isValid());
     package.setArchitecture("amd64");
-    BOOST_CHECK(!package.isValid());
+    BOOST_TEST(!package.isValid());
     package.setDescription("some description");
-    BOOST_CHECK(package.isValid());
+    BOOST_TEST(package.isValid());
   }
 }

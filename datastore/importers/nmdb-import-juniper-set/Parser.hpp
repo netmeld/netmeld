@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -50,7 +50,8 @@ typedef std::map<size_t, nmdo::AcRule> RuleBook;
 // =============================================================================
 struct Data
 {
-  std::map<std::string, nmdo::Route>  routes;
+  //std::map<std::string, nmdo::Route>  routes;
+  std::vector<nmdo::Route> routes;
 
   std::map<std::string, nmdo::InterfaceNetwork>  ifaces;
 
@@ -76,6 +77,7 @@ class Parser:
   // Variables
   // ===========================================================================
   private:
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
@@ -83,9 +85,11 @@ class Parser:
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
       interface, service, zone, address, group, policy,
-      interfaces, routes;
+      interfaces;
 
-    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type, qi::locals<std::string>>
+    qi::rule< nmdp::IstreamIter, qi::ascii::blank_type
+            , qi::locals<nmdo::Route>
+            >
       route;
 
     qi::rule<nmdp::IstreamIter, std::vector<std::string>()>
@@ -131,10 +135,7 @@ class Parser:
   // Methods
   // ===========================================================================
   private:
-    // Route related
-    void setIfaceRoute(const std::string&, const nmdo::IpAddress&);
-    void setIfaceGateway(const std::string&, const nmdo::IpAddress&);
-
+  protected:
     // Interface related
     void initIface(const std::string&, const std::string&);
     void disableIface();
