@@ -91,31 +91,54 @@ class Parser :
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private:
+  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
       config,
+      nocdp,
+      versionPIXASA,
+      deviceAAA,
       domainData,
       globalServices,
       routerId,
       route,
+      routeIpMask,
+      routeIpAddr,
+      routeKeywordHandle,
+      routeKeywordSkip,
       vlanDef,
       channelGroup,
       encapsulation,
       switchport,
+        switchPortModeNoNegotiate,
         switchportPortSecurity,
+          switchportPortSecurityMACAddress,
+          switchportPortSecuritySticky,
           vlanRange,
           vlanId,
+        spanningTreeInitial,
+          spanningTreeInitialMode,
+          spanningTreeInitialMstConfiguration,
+          spanningTreeInitialPortfast,
         spanningTree,
+          spanningTreeBPUGuard,
+          spanningTreeBPDUFilter,
+          spanningTreePortType,
+          spanningTreePortfast,
       accessPolicyRelated;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type,
              qi::locals<uint8_t>>
       interface
       ;
+    
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
+        interfaceNo
+      ;
+
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         vrfInstance
@@ -145,6 +168,7 @@ class Parser :
     qi::rule<nmdp::IstreamIter, nmdo::IpAddress()>
       ipMask;
 
+protected:
     nmdp::ParserDomainName  domainName;
     nmdp::ParserIpAddress   ipAddr;
     nmdp::ParserMacAddress  macAddr;
@@ -201,7 +225,7 @@ class Parser :
   // ===========================================================================
   // Methods
   // ===========================================================================
-  private: // Methods which should be hidden from API users
+  protected: // Methods which should be hidden from API users
     // Device related
     void deviceAaaAdd(const std::string&);
     void deviceAddDnsSearchDomain(const std::string&);

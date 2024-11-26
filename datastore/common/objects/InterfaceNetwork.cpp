@@ -203,6 +203,81 @@ namespace netmeld::datastore::objects {
         ;
   }
 
+  const std::set<MacAddress>& 
+  InterfaceNetwork::getPortSecurityStickyMacs() const {
+    return learnedMacAddrs;
+  }
+
+  const std::set<MacAddress>& 
+  InterfaceNetwork::getReachableMacs() const {
+    return reachableMacAddrs;
+  }
+
+  bool
+  InterfaceNetwork::getDiscoveryProtocol() const {
+    return isDiscoveryProtocolEnabled;
+  }
+
+  std::string 
+  InterfaceNetwork::getDescription(const std::string&) const {
+    return description;
+  }
+
+  const MacAddress& 
+  InterfaceNetwork::getMacAddress() const {
+    return macAddr;
+  }
+
+  std::string
+  InterfaceNetwork::getMediaType() const {
+    return mediaType;
+  }
+
+  std::string 
+  InterfaceNetwork::getSwitchportMode() const {
+    return mode;
+  }
+
+  bool 
+  InterfaceNetwork::getPortSecurity() const {
+    return isPortSecurityEnabled;
+  }
+
+  unsigned short 
+  InterfaceNetwork::getPortSecurityMaxMacAddrs() const {
+    return portSecurityMaxMacAddrs;
+  }
+
+  std::string 
+  InterfaceNetwork::getPortSecurityViolationAction() const {
+    return portSecurityViolationAction;
+  }
+
+  bool 
+  InterfaceNetwork::getPortSecurityStickyMac() const {
+    return isPortSecurityStickyMac;
+  }
+
+  bool 
+  InterfaceNetwork::getBpduGuard() const {
+    return isBpduGuardEnabled;
+  }
+
+  bool 
+  InterfaceNetwork::getBpduFilter() const {
+    return isBpduFilterEnabled;
+  }
+
+  bool 
+  InterfaceNetwork::getPortfast() const {
+    return isPortfastEnabled;
+  }
+
+  bool 
+  InterfaceNetwork::getPartial() const {
+    return isPartial;
+  }
+
   void
   InterfaceNetwork::save( pqxx::transaction_base& t
                         , const nmco::Uuid& toolRunId
