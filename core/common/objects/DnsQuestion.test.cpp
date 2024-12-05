@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,9 +38,9 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     nmco::DnsQuestion dnsQuestion;
 
-    BOOST_CHECK(dnsQuestion.getFqdn().empty());
-    BOOST_CHECK(dnsQuestion.getClass().empty());
-    BOOST_CHECK(dnsQuestion.getType().empty());
+    BOOST_TEST(dnsQuestion.getFqdn().empty());
+    BOOST_TEST(dnsQuestion.getClass().empty());
+    BOOST_TEST(dnsQuestion.getType().empty());
   }
 }
 
@@ -52,9 +52,9 @@ BOOST_AUTO_TEST_CASE(testSetters)
     dnsQuestion.setClass("in");
     dnsQuestion.setType("aaaa");
 
-    BOOST_CHECK_EQUAL(dnsQuestion.getFqdn(), "www.example.com");
-    BOOST_CHECK_EQUAL(dnsQuestion.getClass(), "IN");
-    BOOST_CHECK_EQUAL(dnsQuestion.getType(), "AAAA");
+    BOOST_TEST(dnsQuestion.getFqdn() == "www.example.com");
+    BOOST_TEST(dnsQuestion.getClass() == "IN");
+    BOOST_TEST(dnsQuestion.getType() == "AAAA");
   }
 }
 

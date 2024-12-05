@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -25,6 +25,10 @@
 // =============================================================================
 
 #include "Parser.hpp"
+
+#include <netmeld/datastore/utils/ServiceFactory.hpp>
+
+namespace nmdu = netmeld::datastore::utils;
 
 
 // =============================================================================
@@ -65,8 +69,6 @@ Parser::Parser() : Parser::base_type(start)
        | (qi::lit("boot.device:") >> token)
             [(qi::_a = qi::_1,
               pnx::bind(&nmdo::InterfaceNetwork::setName, &qi::_val, qi::_1))]
-       | (qi::lit("boot.gateway.ipa:") >> ipAddr)
-            [(pnx::bind(&Parser::addIfaceRoute, this, qi::_1, qi::_a))]
        | (qi::omit[+token])
       ) >> qi::eol
      )
@@ -113,10 +115,8 @@ Parser::setDevId(const std::string& id)
 void
 Parser::addNtpService(const nmdo::IpAddress& ip)
 {
-  nmdo::Service service {"ntp", ip};
-  service.setProtocol("udp");
-  service.addDstPort("123"); // same port used by client and server
-  service.addSrcPort("123");
+  auto service = nmdu::ServiceFactory::makeNtp();
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
@@ -138,17 +138,6 @@ void
 Parser::addIface(nmdo::InterfaceNetwork& iface)
 {
   d.ifaces.push_back(iface);
-}
-
-void
-Parser::addIfaceRoute(const nmdo::IpAddress& rtrIp,
-                      const std::string& ifaceName)
-{
-  nmdo::Route route;
-  route.setNextHopIpAddr(rtrIp);
-  route.setOutIfaceName(ifaceName);
-
-  d.routes.push_back(route);
 }
 
 // Object return

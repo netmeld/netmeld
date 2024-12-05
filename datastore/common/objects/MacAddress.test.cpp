@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,16 +35,12 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestMacAddress : public nmdo::MacAddress {
   public:
-    TestMacAddress() : MacAddress() {};
-    explicit TestMacAddress(const std::string& _mac) : MacAddress(_mac) {};
-    explicit TestMacAddress(std::vector<uint8_t>& _mac) : MacAddress(_mac) {};
+    using MacAddress::MacAddress;
 
-  public:
-    std::vector<uint8_t> getMacAddr() const
-    { return macAddr; }
-
-    bool getIsResponding() const
-    { return isResponding; }
+    using MacAddress::macAddr;
+    using MacAddress::isResponding;
+    // has accessor
+    //using MacAddress::ipAddrs;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -52,18 +48,18 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestMacAddress macAddr;
 
-    BOOST_CHECK_EQUAL("Invalid MAC", macAddr.toString());
-    BOOST_CHECK(macAddr.getIpAddresses().empty());
-    BOOST_CHECK_EQUAL(false, macAddr.getIsResponding());
+    BOOST_TEST("Invalid MAC" == macAddr.toString());
+    BOOST_TEST(macAddr.getIpAddresses().empty());
+    BOOST_TEST(false == macAddr.isResponding);
   }
 
   {
     std::string mac {"01:02:33:0a:0b:cc"};
     TestMacAddress macAddr {mac};
 
-    BOOST_CHECK_EQUAL(mac, macAddr.toString());
-    BOOST_CHECK(macAddr.getIpAddresses().empty());
-    BOOST_CHECK_EQUAL(false, macAddr.getIsResponding());
+    BOOST_TEST(mac == macAddr.toString());
+    BOOST_TEST(macAddr.getIpAddresses().empty());
+    BOOST_TEST(false == macAddr.isResponding);
   }
 
   {
@@ -71,10 +67,10 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     TestMacAddress macAddr {mac};
 
     for (size_t i {0}; i<mac.size(); i++) {
-      BOOST_CHECK_EQUAL(mac[i], macAddr.getMacAddr()[i]);
+      BOOST_TEST(mac[i] == macAddr.macAddr[i]);
     }
-    BOOST_CHECK(macAddr.getIpAddresses().empty());
-    BOOST_CHECK_EQUAL(false, macAddr.getIsResponding());
+    BOOST_TEST(macAddr.getIpAddresses().empty());
+    BOOST_TEST(false == macAddr.isResponding);
   }
 }
 
@@ -86,7 +82,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     macAddr.setMac(mac);
     for (size_t i {0}; i<mac.size(); i++) {
-      BOOST_CHECK_EQUAL(mac[i], macAddr.getMacAddr()[i]);
+      BOOST_TEST(mac[i] == macAddr.macAddr[i]);
     }
   }
 
@@ -95,17 +91,17 @@ BOOST_AUTO_TEST_CASE(testSetters)
     std::string mac("01:02:03:0a:0b:0c");
 
     macAddr.setMac(mac);
-    BOOST_CHECK_EQUAL(mac, macAddr.toString());
+    BOOST_TEST(mac == macAddr.toString());
   }
 
   {
     TestMacAddress macAddr;
 
     macAddr.setResponding(true);
-    BOOST_CHECK_EQUAL(true, macAddr.getIsResponding());
+    BOOST_TEST(true == macAddr.isResponding);
 
     macAddr.setResponding(false);
-    BOOST_CHECK_EQUAL(false, macAddr.getIsResponding());
+    BOOST_TEST(false == macAddr.isResponding);
   }
 
   {
@@ -114,7 +110,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     macAddr.addIpAddress(ipAddr);
     for (const auto& ia : macAddr.getIpAddresses()) {
-      BOOST_CHECK_EQUAL(ipAddr, ia);
+      BOOST_TEST(ipAddr == ia);
     }
   }
 
@@ -122,15 +118,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
     std::vector<uint8_t> mac;
     TestMacAddress macAddr;
 
-    BOOST_CHECK_EQUAL("Invalid MAC", macAddr.toString());
+    BOOST_TEST("Invalid MAC" == macAddr.toString());
 
     mac = {1,2,3,10,11,12};
     macAddr.setMac(mac);
-    BOOST_CHECK_EQUAL("01:02:03:0a:0b:0c", macAddr.toString());
+    BOOST_TEST("01:02:03:0a:0b:0c" == macAddr.toString());
 
     mac = {1,2,3,4,10,11,12,13};
     macAddr.setMac(mac);
-    BOOST_CHECK_EQUAL("01:02:03:04:0a:0b:0c:0d", macAddr.toString());
+    BOOST_TEST("01:02:03:04:0a:0b:0c:0d" == macAddr.toString());
   }
 }
 
@@ -138,7 +134,7 @@ BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
     TestMacAddress macAddr;
-    BOOST_CHECK(!macAddr.isValid());
+    BOOST_TEST(!macAddr.isValid());
   }
 
   {
@@ -147,26 +143,26 @@ BOOST_AUTO_TEST_CASE(testValidity)
 
     mac = {1,2,3,10,11,12};
     macAddr.setMac(mac);
-    BOOST_CHECK(macAddr.isValid());
+    BOOST_TEST(macAddr.isValid());
 
     mac = {1,2,3,10,11};
     macAddr.setMac(mac);
-    BOOST_CHECK(!macAddr.isValid());
+    BOOST_TEST(!macAddr.isValid());
 
     mac = {1,2,3,4,10,11,12};
     macAddr.setMac(mac);
-    BOOST_CHECK(!macAddr.isValid());
+    BOOST_TEST(!macAddr.isValid());
 
     mac = {1,2,3,4,10,11,12,13};
     macAddr.setMac(mac);
-    BOOST_CHECK(!macAddr.isValid());
+    BOOST_TEST(!macAddr.isValid());
 
     mac = {0,0,0,0,0,0};
     macAddr.setMac(mac);
-    BOOST_CHECK(macAddr.isValid());
+    BOOST_TEST(macAddr.isValid());
 
     mac = {UINT8_MAX,UINT8_MAX,UINT8_MAX,UINT8_MAX,UINT8_MAX,UINT8_MAX};
     macAddr.setMac(mac);
-    BOOST_CHECK(macAddr.isValid());
+    BOOST_TEST(macAddr.isValid());
   }
 }

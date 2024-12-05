@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,11 +31,95 @@
 namespace nmdt = netmeld::datastore::tools;
 namespace nmcu = netmeld::core::utils;
 
-
+// =============================================================================
+// Export tool definition
+// =============================================================================
 class Tool : public nmdt::AbstractExportTool
 {
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private:
+    std::bitset<65536> tcpPorts;
+    std::bitset<65536> udpPorts;
+    std::bitset<65536> sctpPorts;
+
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  public:
+    Tool() : nmdt::AbstractExportTool
+      ( // help blurb, prefixed with: "Generate "
+        "list of ports suitable for use with Nmap."
+      , PROGRAM_NAME      // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION   // program version (set in CMakeLists.txt)
+      )
+    {}
+
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private:
+    // Overriden from AbstractExportTool
+    void addToolOptions() override
+    {
+      opts.addOptionalOption("tcp", std::make_tuple(
+            "tcp,t"
+          , NULL_SEMANTIC
+          , "Enable output of TCP ports from resource file or DB."
+          )
+        );
+      opts.addOptionalOption("tcp-all", std::make_tuple(
+            "tcp-all,T"
+          , NULL_SEMANTIC
+          , "Enable output of TCP ports 0-65535."
+          )
+        );
+      opts.addOptionalOption("udp", std::make_tuple(
+            "udp,u"
+          , NULL_SEMANTIC
+          , "Enable output of UDP ports from resource file or DB."
+          )
+        );
+      opts.addOptionalOption("udp-all", std::make_tuple(
+            "udp-all,U"
+          , NULL_SEMANTIC
+          , "Enable output of UDP ports 0-65535."
+          )
+        );
+      opts.addOptionalOption("sctp", std::make_tuple(
+            "sctp,y"
+          , NULL_SEMANTIC
+          , "Enable output of SCTP ports from resource file or DB."
+          )
+        );
+      opts.addOptionalOption("stcp-all", std::make_tuple(
+            "sctp-all,Y"
+          , NULL_SEMANTIC
+          , "Enable output of SCTP ports 0-65535."
+          )
+        );
+      opts.addOptionalOption("from-db", std::make_tuple(
+            "from-db,D"
+          , NULL_SEMANTIC
+          , "Use ports from database instead of from resource file."
+          )
+        );
+
+      auto& nmfm {nmcu::FileManager::getInstance()};
+      opts.addOptionalOption("config-path", std::make_tuple(
+            "config-path,c"
+          , po::value<std::string>()
+              ->default_value(nmfm.getConfPath()/"port-list.conf")
+          , "Use specified port configuration file instead of the default."
+          )
+        );
+    }
+
   protected:
-    std::string portsStringFromBitset(std::bitset<65536> const& ports)
+    std::string
+    portsStringFromBitset(const std::bitset<65536>& ports)
     {
       std::ostringstream portsString;
 
@@ -70,136 +154,78 @@ class Tool : public nmdt::AbstractExportTool
       return portsString.str();
     }
 
-  public:
-    Tool() : nmdt::AbstractExportTool
-      (
-        "list of ports suitable for use with Nmap.",
-        PROGRAM_NAME,
-        PROGRAM_VERSION
-      )
-    {}
-
-  private:
-    void addToolOptions() override
+    void
+    addPortsFromDb()
     {
-      opts.addOptionalOption("tcp", std::make_tuple(
-          "tcp,t",
-          NULL_SEMANTIC,
-          "Enable output of TCP ports from resource file or DB.")
-        );
-      opts.addOptionalOption("tcp-all", std::make_tuple(
-          "tcp-all,T",
-          NULL_SEMANTIC,
-          "Enable output of TCP ports 0-65535.")
-        );
-      opts.addOptionalOption("udp", std::make_tuple(
-          "udp,u",
-          NULL_SEMANTIC,
-          "Enable output of UDP ports from resource file or DB.")
-        );
-      opts.addOptionalOption("udp-all", std::make_tuple(
-          "udp-all,U",
-          NULL_SEMANTIC,
-          "Enable output of UDP ports 0-65535.")
-        );
-      opts.addOptionalOption("sctp", std::make_tuple(
-          "sctp,y",
-          NULL_SEMANTIC,
-          "Enable output of SCTP ports from resource file or DB.")
-        );
-      opts.addOptionalOption("stcp-all", std::make_tuple(
-          "sctp-all,Y",
-          NULL_SEMANTIC,
-          "Enable output of SCTP ports 0-65535.")
-        );
-      opts.addOptionalOption("from-db", std::make_tuple(
-          "from-db,D",
-          NULL_SEMANTIC,
-          "Use ports from database instead of from resource file.")
-        );
+      pqxx::connection db       {getDbConnectString()};
+      pqxx::read_transaction t  {db};
 
-      auto& nmfm {nmcu::FileManager::getInstance()};
-      opts.addOptionalOption("config-path", std::make_tuple(
-          "config-path,c",
-          po::value<std::string>()
-            ->default_value(nmfm.getConfPath()/"port-list.conf"),
-          "Use specified port configuration file instead of the default.")
-        );
+      pqxx::result portRows =
+        t.exec("SELECT DISTINCT protocol, port"
+               " FROM ports"
+               " WHERE ((port_state = 'open') OR"
+               "        (port_state = 'closed')) AND"
+               "       (0 <= port)");
+      for (const auto& portRow : portRows) {
+        std::string protocol;
+        portRow.at("protocol").to(protocol);
 
+        uint16_t port;
+        portRow.at("port").to(port);
+
+        if ("tcp" == protocol) {
+          tcpPorts.set(port);
+        }
+        else if ("udp" == protocol) {
+          udpPorts.set(port);
+        }
+        else if ("sctp" == protocol) {
+          sctpPorts.set(port);
+        }
+      }
     }
 
-    int
-    runTool() override
+    void
+    addPortsFromFile()
     {
-      std::bitset<65536> tcpPorts;
-      std::bitset<65536> udpPorts;
-      std::bitset<65536> sctpPorts;
+      // Open and parse the port list file.
+      const sfs::path portListPath {sfs::path(opts.getValue("config-path"))};
 
-      if (opts.exists("from-db")) {
-        pqxx::connection db       {getDbConnectString()};
-        pqxx::read_transaction t  {db};
+      Result result {
+        nmdp::fromFilePath<Parser, Result>(portListPath.string())
+      };
 
-        pqxx::result portRows =
-          t.exec("SELECT DISTINCT protocol, port"
-                 " FROM ports"
-                 " WHERE ((port_state = 'open') OR"
-                 "        (port_state = 'closed')) AND"
-                 "       (0 <= port)");
-        for (const auto& portRow : portRows) {
-          std::string protocol;
-          portRow.at("protocol").to(protocol);
+      for (const auto& data : result) {
+        const auto& protocols {data.protocols};
+        const auto& portRange {data.portRange};
 
-          uint16_t port;
-          portRow.at("port").to(port);
+        const auto protocolsContain = [&](const char c) {
+            return std::string::npos != protocols.find(c);
+          };
 
-          if ("tcp" == protocol) {
-            tcpPorts.set(port);
+        if (opts.exists("tcp") && protocolsContain('T')) {
+          for (const auto& p : portRange) {
+            tcpPorts.set(p);
           }
-          else if ("udp" == protocol) {
-            udpPorts.set(port);
+        }
+
+        if (opts.exists("udp") && protocolsContain('U')) {
+          for (const auto& p : portRange) {
+            udpPorts.set(p);
           }
-          else if ("sctp" == protocol) {
-            sctpPorts.set(port);
+        }
+
+        if (opts.exists("sctp") && protocolsContain('Y')) {
+          for (const auto& p : portRange) {
+            sctpPorts.set(p);
           }
         }
       }
-      else {
-        // Open and parse the port list file.
-        sfs::path const portListPath {sfs::path(opts.getValue("config-path"))};
+    }
 
-        Results portRanges {
-          nmdp::fromFilePath<Parser, Results>(portListPath.string())
-        };
-
-        for (const auto& x : portRanges) {
-          std::string const& protocol {std::get<0>(x)};
-
-          size_t const portFirst {std::get<1>(x)};
-          size_t const portLast  {std::get<2>(x) ? std::get<2>(x) : portFirst};
-
-          if (opts.exists("tcp") && (std::string::npos != protocol.find('T'))) {
-            for (size_t p {portFirst}; p <= portLast; ++p) {
-              tcpPorts.set(p);
-            }
-          }
-
-          if (opts.exists("udp") && (std::string::npos != protocol.find('U'))) {
-            for (size_t p {portFirst}; p <= portLast; ++p) {
-              udpPorts.set(p);
-            }
-          }
-
-          if (opts.exists("sctp") && (std::string::npos != protocol.find('Y'))) {
-            for (size_t p {portFirst}; p <= portLast; ++p) {
-              sctpPorts.set(p);
-            }
-          }
-        }
-      }
-
-      // If this program is being used, ports are being specified to nmap.
-      // Nmap is unhappy if there are no ports, so ensure at least one.
-      // Focus on services that are very common inside enterprise networks.
+    void
+    addNmapPorts()
+    {
       tcpPorts.set(80);    // HTTP
       tcpPorts.set(443);   // HTTPS
       tcpPorts.set(22);    // SSH
@@ -220,6 +246,23 @@ class Tool : public nmdt::AbstractExportTool
       sctpPorts.set(443);  // HTTPS
       sctpPorts.set(2905); // M3UA
       sctpPorts.set(3868); // Diameter
+    }
+
+    // Overriden from AbstractExportTool
+    int
+    runTool() override
+    {
+      if (opts.exists("from-db")) {
+        addPortsFromDb();
+      }
+      else {
+        addPortsFromFile();
+      }
+
+      // If this program is being used, ports are being specified to nmap.
+      // Nmap is unhappy if there are no ports, so ensure at least one.
+      // Focus on services that are very common inside enterprise networks.
+      addNmapPorts();
 
       if (opts.exists("tcp-all")) {
         tcpPorts.set();
@@ -254,7 +297,12 @@ class Tool : public nmdt::AbstractExportTool
 };
 
 
+// =============================================================================
+// Program entry point
+// =============================================================================
+#ifndef UNIT_TESTING
 int main(int argc, char** argv) {
   Tool tool;
   return tool.start(argc, argv);
 }
+#endif

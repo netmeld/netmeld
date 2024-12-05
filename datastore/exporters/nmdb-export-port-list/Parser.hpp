@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,40 +27,52 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include <netmeld/datastore/objects/PortRange.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp>
-#include <boost/fusion/include/adapted.hpp>
 
+namespace nmdo  = netmeld::datastore::objects;
 namespace nmdp  = netmeld::datastore::parsers;
 
-typedef std::tuple<std::string, size_t, size_t>  PortRange;
-typedef std::vector<PortRange>                   Results;
+// =============================================================================
+// Data containers
+// =============================================================================
+//typedef std::tuple<std::string, size_t, size_t>  Data;
+struct Data {
+  std::string     protocols;
+  nmdo::PortRange portRange;
 
+  auto operator<=>(const Data&) const = default;
+  bool operator==(const Data&) const = default;
+};
+typedef std::vector<Data> Result;
 
 // =============================================================================
 // Parser definition
 // =============================================================================
 class Parser :
-  public qi::grammar<nmdp::IstreamIter, Results(), qi::ascii::blank_type>
+  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private:
+  protected:
     // Rules
-    qi::rule<nmdp::IstreamIter, Results(), qi::ascii::blank_type>
-      start;
+    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
+        start
+      ;
 
-    qi::rule<nmdp::IstreamIter, PortRange(), qi::ascii::blank_type>
-      line;
-
-    qi::rule<nmdp::IstreamIter, PortRange(), qi::ascii::blank_type>
-      portRange;
+    qi::rule<nmdp::IstreamIter, Data(), qi::ascii::blank_type>
+        line
+      , portRange
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      protocol;
+        protocol
+      ;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      comment;
+        comment
+      ;
 
   // ===========================================================================
   // Constructors

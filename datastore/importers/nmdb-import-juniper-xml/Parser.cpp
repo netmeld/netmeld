@@ -64,7 +64,7 @@ Parser::getData()
 void
 Parser::handleXML(const pugi::xml_document& doc)
 {
-  const pugi::xml_node rpcReplyNode{doc.select_node("/rpc-reply").node()};
+  const pugi::xml_node rpcReplyNode {doc.select_node("/rpc-reply").node()};
   if (!rpcReplyNode) {
     LOG_ERROR << "Could not find XML element: /rpc-reply"
               << std::endl;
@@ -72,7 +72,7 @@ Parser::handleXML(const pugi::xml_document& doc)
   }
 
   for (const pugi::xml_node dataNode : rpcReplyNode.children()) {
-    const std::string dataNodeName{dataNode.name()};
+    const std::string dataNodeName {dataNode.name()};
     if ("arp-table-information" == dataNodeName) {
       parseArpTableInfo(dataNode);
     }
@@ -116,18 +116,16 @@ Parser::handleXML(const pugi::xml_document& doc)
 void
 Parser::parseConfig(const pugi::xml_node& configNode)
 {
-  for (const auto& groupsMatch :
-       configNode.select_nodes("groups")) {
-    const pugi::xml_node groupsNode{groupsMatch.node()};
-    const std::string groupName{
-      groupsNode.select_node("name").node().text().as_string()
-    };
+  for (const auto& groupsMatch : configNode.select_nodes("groups")) {
+    const pugi::xml_node groupsNode {groupsMatch.node()};
+    const std::string groupName {
+        groupsNode.select_node("name").node().text().as_string()
+      };
 
     if ("junos-defaults" == groupName) {
       // Parse the junos-defaults configuration.
       parseConfig(groupsNode);
-    }
-    else {
+    } else {
       // Notify when groups are present.
       // Recommend to user to collect data in a way that applies the groups.
       data.observations.addNotable(
@@ -140,7 +138,7 @@ Parser::parseConfig(const pugi::xml_node& configNode)
 
   // Initialize logical system.
   std::string logicalSystemName;
-  const auto nameMatch{configNode.select_node("name")};
+  const auto nameMatch {configNode.select_node("name")};
   if (nameMatch) {
     logicalSystemName = nmcu::toLower(nameMatch.node().text().as_string());
   }
@@ -148,19 +146,21 @@ Parser::parseConfig(const pugi::xml_node& configNode)
     logicalSystemName = "";
   }
 
-  auto& logicalSystem{data.logicalSystems[logicalSystemName]};
-  logicalSystem.name = logicalSystemName;
+  auto& logicalSystem {data.logicalSystems[logicalSystemName]};
 
   // Parse system settings. Only copy is at global system scope:
-  for (const auto& nameServerMatch :
-       configNode.select_nodes(
-         "/rpc-reply/configuration/system/name-server[not(@inactive='inactive')]")) {
-    const pugi::xml_node nameServerNode{nameServerMatch.node()};
-    nmdo::IpAddress dnsResolverIpAddr{
-      nameServerNode.select_node("name").node().text().as_string()
-    };
+  for ( const auto& nameServerMatch
+      : configNode.select_nodes("/rpc-reply/configuration/system"
+                                  "/name-server[not(@inactive='inactive')]"
+                               )
+      )
+  {
+    const pugi::xml_node nameServerNode {nameServerMatch.node()};
+    nmdo::IpAddress dnsResolverIpAddr {
+        nameServerNode.select_node("name").node().text().as_string()
+      };
     // Service version
-    auto dnsService{nmdu::ServiceFactory::makeDns()};
+    auto dnsService {nmdu::ServiceFactory::makeDns()};
     dnsService.setDstAddress(dnsResolverIpAddr);
     logicalSystem.services.emplace_back(dnsService);
     // DnsResolver version
@@ -169,46 +169,57 @@ Parser::parseConfig(const pugi::xml_node& configNode)
     logicalSystem.dnsResolvers.emplace_back(dnsResolver);
   }
 
-  for (const auto& domainSearchMatch :
-       configNode.select_nodes(
-         "/rpc-reply/configuration/system/domain-search[not(@inactive='inactive')]")) {
-    const pugi::xml_node domainSearchNode{domainSearchMatch.node()};
-    const std::string dnsSearchDomain{domainSearchNode.text().as_string()};
+  for ( const auto& domainSearchMatch
+      : configNode.select_nodes("/rpc-reply/configuration/system"
+                                  "/domain-search[not(@inactive='inactive')]"
+                               )
+      )
+  {
+    const pugi::xml_node domainSearchNode {domainSearchMatch.node()};
+    const std::string dnsSearchDomain {domainSearchNode.text().as_string()};
     logicalSystem.dnsSearchDomains.emplace_back(dnsSearchDomain);
   }
 
-  for (const auto& tacplusServerMatch :
-       configNode.select_nodes(
-         "/rpc-reply/configuration/system/tacplus-server[not(@inactive='inactive')]")) {
-    const pugi::xml_node tacplusServerNode{tacplusServerMatch.node()};
-    nmdo::IpAddress tacplusServerIpAddr{
+  for ( const auto& tacplusServerMatch
+      : configNode.select_nodes("/rpc-reply/configuration/system"
+                                  "/tacplus-server[not(@inactive='inactive')]"
+                               )
+      )
+  {
+    const pugi::xml_node tacplusServerNode {tacplusServerMatch.node()};
+    nmdo::IpAddress tacplusServerIpAddr {
       tacplusServerNode.select_node("name").node().text().as_string()
     };
-    auto tacplusService{nmdu::ServiceFactory::makeTacacsPlus()};
+    auto tacplusService {nmdu::ServiceFactory::makeTacacsPlus()};
     tacplusService.setDstAddress(tacplusServerIpAddr);
     logicalSystem.services.emplace_back(tacplusService);
   }
 
-  for (const auto& ntpMatch :
-       configNode.select_nodes(
-         "/rpc-reply/configuration/system/ntp[not(@inactive='inactive')]")) {
-    const pugi::xml_node ntpNode{ntpMatch.node()};
-    const auto ntpSrcAddrMatch{
-      ntpNode.select_node("source-address[not(@inactive='inactive')]")
-    };
-    for (const auto& ntpServerMatch :
-         ntpNode.select_nodes("server[not(@inactive='inactive')]")) {
-      const pugi::xml_node ntpServerNode{ntpServerMatch.node()};
-      nmdo::IpAddress ntpServerIpAddr{
-        ntpServerNode.select_node("name").node().text().as_string()
+  for ( const auto& ntpMatch
+      : configNode.select_nodes("/rpc-reply/configuration/system"
+                                  "/ntp[not(@inactive='inactive')]"
+                               )
+      )
+  {
+    const pugi::xml_node ntpNode {ntpMatch.node()};
+    const auto ntpSrcAddrMatch {
+        ntpNode.select_node("source-address[not(@inactive='inactive')]")
       };
-      auto ntpService{nmdu::ServiceFactory::makeNtp()};
+    for ( const auto& ntpServerMatch
+        : ntpNode.select_nodes("server[not(@inactive='inactive')]")
+        )
+    {
+      const pugi::xml_node ntpServerNode {ntpServerMatch.node()};
+      nmdo::IpAddress ntpServerIpAddr {
+          ntpServerNode.select_node("name").node().text().as_string()
+        };
+      auto ntpService {nmdu::ServiceFactory::makeNtp()};
       ntpService.setDstAddress(ntpServerIpAddr);
       if (ntpSrcAddrMatch) {
-        const pugi::xml_node ntpSrcAddrNode{ntpSrcAddrMatch.node()};
-        nmdo::IpAddress ntpSrcIpAddr{
-          ntpSrcAddrNode.select_node("name").node().text().as_string()
-        };
+        const pugi::xml_node ntpSrcAddrNode {ntpSrcAddrMatch.node()};
+        nmdo::IpAddress ntpSrcIpAddr {
+            ntpSrcAddrNode.select_node("name").node().text().as_string()
+          };
         ntpService.setSrcAddress(ntpSrcIpAddr);
       }
       logicalSystem.services.emplace_back(ntpService);
@@ -218,34 +229,40 @@ Parser::parseConfig(const pugi::xml_node& configNode)
 
   // Parse networking settings:
   logicalSystem.ifaces["_self_"].setName("_self_");
-  for (const auto& interfacesMatch :
-       configNode.select_nodes("interfaces[not(@inactive='inactive')]")) {
-    const pugi::xml_node interfacesNode{interfacesMatch.node()};
-    auto parsedIfacesTuple{parseConfigInterfaces(interfacesNode)};
-    auto parsedIfaces{std::get<0>(parsedIfacesTuple)};
+  for ( const auto& interfacesMatch
+      : configNode.select_nodes("interfaces[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node interfacesNode {interfacesMatch.node()};
+    auto parsedIfacesTuple {parseConfigInterfaces(interfacesNode)};
+    auto parsedIfaces {std::get<0>(parsedIfacesTuple)};
     logicalSystem.ifaces.merge(parsedIfaces);
     for (const auto& [conflictName, conflict] : parsedIfaces) {
-      std::cerr << "ifaces merge conflict: " << conflictName << std::endl;
+      LOG_WARN << "ifaces merge conflict: " << conflictName << std::endl;
     }
-    auto parsedIfaceHierarchies{std::get<1>(parsedIfacesTuple)};
+    auto parsedIfaceHierarchies {std::get<1>(parsedIfacesTuple)};
     for (const auto& ifaceHierarchy : parsedIfaceHierarchies) {
       logicalSystem.ifaceHierarchies.emplace_back(ifaceHierarchy);
     }
   }
 
-  for (const auto& routingInstancesMatch :
-       configNode.select_nodes("routing-instances[not(@inactive='inactive')]")) {
-    const pugi::xml_node routingInstancesNode{routingInstancesMatch.node()};
-    auto parsedVrfs{parseConfigRoutingInstances(routingInstancesNode, logicalSystem.ifaces)};
+  for ( const auto& routingInstancesMatch
+      : configNode.select_nodes("routing-instances[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node routingInstancesNode {routingInstancesMatch.node()};
+    auto parsedVrfs {parseConfigRoutingInstances(routingInstancesNode, logicalSystem.ifaces)};
     logicalSystem.vrfs.merge(parsedVrfs);
     for (const auto& [vrfId, vrfConflict] : parsedVrfs) {
       logicalSystem.vrfs[vrfId].merge(vrfConflict);
     }
   }
 
-  for (const auto& routingOptionsMatch :
-       configNode.select_nodes("routing-options[not(@inactive='inactive')]")) {
-    const pugi::xml_node routingOptionsNode{routingOptionsMatch.node()};
+  for ( const auto& routingOptionsMatch
+      : configNode.select_nodes("routing-options[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node routingOptionsNode {routingOptionsMatch.node()};
     for (auto& route : parseConfigRoutingOptions(routingOptionsNode)) {
       route.setVrfId(DEFAULT_VRF_ID);
       logicalSystem.vrfs[DEFAULT_VRF_ID].addRoute(route);
@@ -253,13 +270,15 @@ Parser::parseConfig(const pugi::xml_node& configNode)
   }
 
   // Parse firewall settings:
-  for (const auto& zonesMatch :
-       configNode.select_nodes("security/zones[not(@inactive='inactive')]")) {
-    const pugi::xml_node zonesNode{zonesMatch.node()};
-    auto parsedAclZones{parseConfigZones(zonesNode)};
+  for ( const auto& zonesMatch
+      : configNode.select_nodes("security/zones[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node zonesNode {zonesMatch.node()};
+    auto parsedAclZones {parseConfigZones(zonesNode)};
     logicalSystem.aclZones.merge(parsedAclZones);
     for (const auto& [conflictName, conflict] : parsedAclZones) {
-      std::cerr << "aclZones merge conflict: " << conflictName << std::endl;
+      LOG_WARN << "aclZones merge conflict: " << conflictName << std::endl;
     }
   }
   logicalSystem.aclZones["junos-host"].setId("junos-host");
@@ -271,19 +290,26 @@ Parser::parseConfig(const pugi::xml_node& configNode)
     }
   }
 
-  for (const auto& addressBookMatch :
-       configNode.select_nodes
-       ("(security/address-book[not(@inactive='inactive')])|"
-        "(security/zones[not(@inactive='inactive')]/security-zone[not(@inactive='inactive')]/address-book[not(@inactive='inactive')])")) {
-    const pugi::xml_node addressBookNode{addressBookMatch.node()};
-    auto parsedAclIpNetSets{parseConfigAddressBook(addressBookNode)};
+  for ( const auto& addressBookMatch
+      : configNode.select_nodes("(security/address-book[not(@inactive='inactive')])"
+                                "|(security/zones[not(@inactive='inactive')]"
+                                  "/security-zone[not(@inactive='inactive')]"
+                                  "/address-book[not(@inactive='inactive')])"
+                               )
+      )
+  {
+    const pugi::xml_node addressBookNode {addressBookMatch.node()};
+    auto parsedAclIpNetSets {parseConfigAddressBook(addressBookNode)};
     logicalSystem.aclIpNetSets.merge(parsedAclIpNetSets);
     for (const auto& [conflictName, conflict] : parsedAclIpNetSets) {
-      std::cerr << "aclIpNetSets merge conflict: " << conflictName << std::endl;
+      LOG_WARN << "aclIpNetSets merge conflict: " << conflictName << std::endl;
     }
   }
   logicalSystem.aclIpNetSets["global"];
-  for (auto& [aclIpNetSetsNamespace, aclIpNetSetsValue] : logicalSystem.aclIpNetSets) {
+  for ( auto& [aclIpNetSetsNamespace, aclIpNetSetsValue]
+      : logicalSystem.aclIpNetSets
+      )
+  {
     aclIpNetSetsValue["any-ipv4"].setId("any-ipv4", aclIpNetSetsNamespace);
     aclIpNetSetsValue["any-ipv4"].addIpNet(nmdo::IpNetwork("0.0.0.0/0"));
     aclIpNetSetsValue["any-ipv6"].setId("any-ipv6", aclIpNetSetsNamespace);
@@ -293,27 +319,35 @@ Parser::parseConfig(const pugi::xml_node& configNode)
     aclIpNetSetsValue["any"].addIncludedId("any-ipv6");
   }
 
-  for (const auto& applicationsMatch :
-       configNode.select_nodes("applications[not(@inactive='inactive')]")) {
-    const pugi::xml_node applicationsNode{applicationsMatch.node()};
-    for (const auto& aclService :
-         parseConfigApplications(applicationsNode)) {
+  for ( const auto& applicationsMatch
+      : configNode.select_nodes("applications[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node applicationsNode {applicationsMatch.node()};
+    for ( const auto& aclService
+        : parseConfigApplications(applicationsNode)
+        )
+    {
       logicalSystem.aclServices.emplace_back(aclService);
     }
   }
 
-  for (const auto& policiesMatch :
-       configNode.select_nodes("security/policies[not(@inactive='inactive')]")) {
-    const pugi::xml_node policiesNode{policiesMatch.node()};
+  for ( const auto& policiesMatch
+      : configNode.select_nodes("security/policies[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node policiesNode {policiesMatch.node()};
     for (const auto& aclRule : parseConfigPolicies(policiesNode)) {
       logicalSystem.aclRules.emplace_back(aclRule);
     }
   }
 
   // Parse logical-systems:
-  for (const auto& logicalSystemMatch :
-       configNode.select_nodes("logical-systems[not(@inactive='inactive')]")) {
-    const pugi::xml_node logicalSystemNode{logicalSystemMatch.node()};
+  for ( const auto& logicalSystemMatch
+      : configNode.select_nodes("logical-systems[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node logicalSystemNode {logicalSystemMatch.node()};
     parseConfig(logicalSystemNode);
   }
 }
@@ -326,35 +360,49 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
   std::map<std::string, nmdo::InterfaceNetwork> ifaces;
   std::vector<InterfaceHierarchy> ifaceHierarchies;
 
-  const std::regex mediaTypeRegex{"^([a-zA-Z]+)\\S*$"};
+  const std::regex mediaTypeRegex {"^([a-zA-Z]+)\\S*$"};
   std::smatch mediaTypeMatch;
 
-  for (const auto& interfaceRangeMatch :
-       interfacesNode.select_nodes("interface-range[not(@inactive='inactive')]")) {
-    const pugi::xml_node ifaceRangeNode{interfaceRangeMatch.node()};
-    const std::string ifaceRangeName{
-      ifaceRangeNode.select_node("name").node().text().as_string()
-    };
-    for (const auto& memberMatch :
-         ifaceRangeNode.select_nodes("member[not(@inactive='inactive')]")) {
-      const pugi::xml_node memberNode{memberMatch.node()};
-      const std::string ifaceName{
-        memberNode.select_node("name").node().text().as_string()
+  for ( const auto& interfaceRangeMatch
+      : interfacesNode.select_nodes("interface-range[not(@inactive='inactive')]")
+      )
+  {
+    const pugi::xml_node ifaceRangeNode {interfaceRangeMatch.node()};
+    const std::string ifaceRangeName {
+        ifaceRangeNode.select_node("name").node().text().as_string()
       };
+    for ( const auto& memberMatch
+        : ifaceRangeNode.select_nodes("member[not(@inactive='inactive')]")
+        )
+    {
+      const pugi::xml_node memberNode {memberMatch.node()};
+      const std::string ifaceName {
+          memberNode.select_node("name").node().text().as_string()
+        };
       ifaces[ifaceName].setName(ifaceName);
       ifaces[ifaceName].setDescription(ifaceRangeName);
       if (std::regex_match(ifaceName, mediaTypeMatch, mediaTypeRegex)) {
         ifaces[ifaceName].setMediaType(mediaTypeMatch[1]);
       }
 
-      for (const auto optionsMatch : memberNode.select_nodes(
-             "(../gigether-options[not(@inactive='inactive')])|"
-             "(../ether-options[not(@inactive='inactive')])")) {
-        const pugi::xml_node optionsNode{optionsMatch.node()};
-        for (const auto virtualIfaceMatch : optionsNode.select_nodes(
-               "(redundant-parent[not(@inactive='inactive')]/parent[not(@inactive='inactive')])|"
-               "(ieee-802.3ad[not(@inactive='inactive')]/bundle[not(@inactive='inactive')])")) {
-          const std::string virtualIfaceName{
+      for ( const auto optionsMatch
+          : memberNode.select_nodes(
+             "(../gigether-options[not(@inactive='inactive')])"
+             "|(../ether-options[not(@inactive='inactive')])"
+            )
+          )
+      {
+        const pugi::xml_node optionsNode {optionsMatch.node()};
+        for ( const auto virtualIfaceMatch
+            : optionsNode.select_nodes(
+               "(redundant-parent[not(@inactive='inactive')]"
+                   "/parent[not(@inactive='inactive')])"
+               "|(ieee-802.3ad[not(@inactive='inactive')]"
+                   "/bundle[not(@inactive='inactive')])"
+              )
+            )
+        {
+          const std::string virtualIfaceName {
             virtualIfaceMatch.node().text().as_string()
           };
           ifaces[virtualIfaceName].setName(virtualIfaceName);
@@ -366,8 +414,8 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
 
   for (const auto& interfaceMatch :
        interfacesNode.select_nodes("interface[not(@inactive='inactive')]")) {
-    const pugi::xml_node ifaceNode{interfaceMatch.node()};
-    const std::string ifaceName{
+    const pugi::xml_node ifaceNode {interfaceMatch.node()};
+    const std::string ifaceName {
       ifaceNode.select_node("name").node().text().as_string()
     };
 
@@ -378,11 +426,11 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
         ifaces[ifaceName].setMediaType(mediaTypeMatch[1]);
       }
 
-      const auto descriptionMatch{ifaceNode.select_node("description")};
+      const auto descriptionMatch {ifaceNode.select_node("description")};
       if (descriptionMatch) {
         ifaces[ifaceName].setDescription(descriptionMatch.node().text().as_string());
       }
-      const auto disableMatch{ifaceNode.select_node("disable")};
+      const auto disableMatch {ifaceNode.select_node("disable")};
       if (disableMatch) {
         ifaces[ifaceName].setState(false);
       }
@@ -390,11 +438,11 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
       for (const auto optionsMatch : ifaceNode.select_nodes(
              "(gigether-options[not(@inactive='inactive')])|"
              "(ether-options[not(@inactive='inactive')])")) {
-        const pugi::xml_node optionsNode{optionsMatch.node()};
+        const pugi::xml_node optionsNode {optionsMatch.node()};
         for (const auto virtualIfaceMatch : optionsNode.select_nodes(
                "(redundant-parent[not(@inactive='inactive')]/parent[not(@inactive='inactive')])|"
                "(ieee-802.3ad[not(@inactive='inactive')]/bundle[not(@inactive='inactive')])")) {
-          const std::string virtualIfaceName{
+          const std::string virtualIfaceName {
             virtualIfaceMatch.node().text().as_string()
           };
           ifaces[virtualIfaceName].setName(virtualIfaceName);
@@ -404,10 +452,10 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
 
       for (const auto optionsMatch : ifaceNode.select_nodes(
              "fabric-options[not(@inactive='inactive')]")) {
-        const pugi::xml_node optionsNode{optionsMatch.node()};
+        const pugi::xml_node optionsNode {optionsMatch.node()};
         for (const auto underlyingIfaceMatch : optionsNode.select_nodes(
              "member-interfaces[not(@inactive='inactive')]/name")) {
-          const std::string underlyingIfaceName{
+          const std::string underlyingIfaceName {
             underlyingIfaceMatch.node().text().as_string()
           };
           ifaces[underlyingIfaceName].setName(underlyingIfaceName);
@@ -419,11 +467,11 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
     // Logical interface units
     for (const auto& unitMatch :
          ifaceNode.select_nodes("unit[not(@inactive='inactive')]")) {
-      const pugi::xml_node unitNode{unitMatch.node()};
-      const std::string unitName{
+      const pugi::xml_node unitNode {unitMatch.node()};
+      const std::string unitName {
         unitNode.select_node("name").node().text().as_string()
       };
-      const std::string ifaceUnitId{ifaceName + "." + unitName};
+      const std::string ifaceUnitId {ifaceName + "." + unitName};
 
       ifaceHierarchies.emplace_back(ifaceName, ifaceUnitId);
 
@@ -432,17 +480,17 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
         ifaces[ifaceUnitId].setMediaType(mediaTypeMatch[1]);
       }
 
-      const auto descriptionMatch{unitNode.select_node("description")};
+      const auto descriptionMatch {unitNode.select_node("description")};
       if (descriptionMatch) {
         ifaces[ifaceUnitId].setDescription(descriptionMatch.node().text().as_string());
       }
-      const auto disableMatch{unitNode.select_node("(disable)|(../disable)")};
+      const auto disableMatch {unitNode.select_node("(disable)|(../disable)")};
       if (disableMatch) {
         ifaces[ifaceUnitId].setState(false);
       }
-      const auto vlanMatch{unitNode.select_node("vlan-id[not(@inactive='inactive')]")};
+      const auto vlanMatch {unitNode.select_node("vlan-id[not(@inactive='inactive')]")};
       if (vlanMatch) {
-        const uint16_t vlanId{
+        const uint16_t vlanId {
           static_cast<uint16_t>(vlanMatch.node().text().as_uint())
         };
         ifaces[ifaceUnitId].addVlan(vlanId);
@@ -452,33 +500,33 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
            unitNode.select_nodes(
              "(family[not(@inactive='inactive')]/inet[not(@inactive='inactive')]/address[not(@inactive='inactive')])|"
              "(family[not(@inactive='inactive')]/inet6[not(@inactive='inactive')]/address[not(@inactive='inactive')])")) {
-        const pugi::xml_node addressNode{addressMatch.node()};
-        nmdo::IpAddress ipAddr{
+        const pugi::xml_node addressNode {addressMatch.node()};
+        nmdo::IpAddress ipAddr {
           addressNode.select_node("name").node().text().as_string()
         };
         ifaces[ifaceUnitId].addIpAddress(ipAddr);
 
         for (const auto& arpMatch :
              addressNode.select_nodes("arp[not(@inactive='inactive')]")) {
-          const pugi::xml_node arpNode{arpMatch.node()};
-          const auto peerMacAddrMatch{
+          const pugi::xml_node arpNode {arpMatch.node()};
+          const auto peerMacAddrMatch {
             arpNode.select_node("mac[not(@inactive='inactive')]")
           };
           if (peerMacAddrMatch &&
               nmdp::matchString<nmdp::ParserMacAddress, nmdo::MacAddress>
               (peerMacAddrMatch.node().text().as_string())) {
-            nmdo::MacAddress peerMacAddr{
+            nmdo::MacAddress peerMacAddr {
               peerMacAddrMatch.node().text().as_string()
             };
             peerMacAddr.setResponding(true);
 
-            const auto peerIpAddrMatch{
+            const auto peerIpAddrMatch {
               arpNode.select_node("name[not(@inactive='inactive')]")
             };
             if (peerIpAddrMatch &&
                 nmdp::matchString<nmdp::ParserIpAddress, nmdo::IpAddress>
                 (peerIpAddrMatch.node().text().as_string())) {
-              nmdo::IpAddress peerIpAddr{
+              nmdo::IpAddress peerIpAddr {
                 peerIpAddrMatch.node().text().as_string()
               };
               peerMacAddr.addIpAddress(peerIpAddr);
@@ -491,7 +539,7 @@ Parser::parseConfigInterfaces(const pugi::xml_node& interfacesNode)
     }
   }
 
-  return std::tuple{ifaces, ifaceHierarchies};
+  return std::tuple {ifaces, ifaceHierarchies};
 }
 
 
@@ -502,20 +550,22 @@ Parser::parseConfigRoutingInstances(const pugi::xml_node& routingInstancesNode,
   std::map<std::string, nmdo::Vrf> vrfs;
 
   // add default
-  vrfs[DEFAULT_VRF_ID].setId(DEFAULT_VRF_ID);
+  if (!DEFAULT_VRF_ID.empty()) {
+    vrfs[DEFAULT_VRF_ID].setId(DEFAULT_VRF_ID);
+  }
 
   for (const auto& routingInstanceMatch :
        routingInstancesNode.select_nodes("instance[not(@inactive='inactive')]")) {
-    const pugi::xml_node routingInstanceNode{routingInstanceMatch.node()};
-    const std::string vrfId{
+    const pugi::xml_node routingInstanceNode {routingInstanceMatch.node()};
+    const std::string vrfId {
       routingInstanceNode.select_node("name").node().text().as_string()
     };
     vrfs[vrfId].setId(vrfId);
 
     for (const auto& interfaceMatch :
          routingInstanceNode.select_nodes("interface[not(@inactive='inactive')]")) {
-      const pugi::xml_node interfaceNode{interfaceMatch.node()};
-      const std::string ifaceName{
+      const pugi::xml_node interfaceNode {interfaceMatch.node()};
+      const std::string ifaceName {
         interfaceNode.select_node("name").node().text().as_string()
       };
       if (ifaces.end() != ifaces.find(ifaceName)) {
@@ -523,15 +573,17 @@ Parser::parseConfigRoutingInstances(const pugi::xml_node& routingInstancesNode,
       }
       else {
         data.observations.addNotable(
-            (boost::format("routing-instance %1% contains undefined interface %2%")
-             % vrfId
-             % ifaceName).str());
+            std::format( "routing-instance {} contains undefined interface {}"
+                       , vrfId
+                       , ifaceName
+                       )
+          );
       }
     }
 
     for (const auto& routingOptionsMatch :
          routingInstanceNode.select_nodes("routing-options[not(@inactive='inactive')]")) {
-      const pugi::xml_node routingOptionsNode{routingOptionsMatch.node()};
+      const pugi::xml_node routingOptionsNode {routingOptionsMatch.node()};
       for (auto& route : parseConfigRoutingOptions(routingOptionsNode)) {
         route.setVrfId(vrfId);
         vrfs[vrfId].addRoute(route);
@@ -548,36 +600,40 @@ Parser::parseConfigRoutingOptions(const pugi::xml_node& routingOptionsNode)
 {
   nmdo::RoutingTable routes;
 
-  for (const auto& routeMatch :
-       routingOptionsNode.select_nodes(
-         "static[not(@inactive='inactive')]/route[not(@inactive='inactive')]")) {
-    const pugi::xml_node routeNode{routeMatch.node()};
+  for ( const auto& routeMatch
+      : routingOptionsNode.select_nodes(
+          "(static[not(@inactive='inactive')]/route[not(@inactive='inactive')])"
+          "|(static[not(@inactive='inactive')]/rib[not(@inactive='inactive')]/route[not(@inactive='inactive')])"
+        )
+      )
+  {
+    const pugi::xml_node routeNode {routeMatch.node()};
     nmdo::Route route;
     route.setProtocol("static");
     route.setAdminDistance(5);  // Default for static routes
 
-    const auto nameMatch{routeNode.select_node("name")};
+    const auto nameMatch {routeNode.select_node("name")};
     if (nameMatch) {
-      const nmdo::IpAddress dstIpNet{nameMatch.node().text().as_string()};
+      const nmdo::IpAddress dstIpNet {nameMatch.node().text().as_string()};
       route.setDstIpNet(dstIpNet);
     }
 
-    const auto discardMatch{routeNode.select_node("discard[not(@inactive='inactive')]")};
+    const auto discardMatch {routeNode.select_node("discard[not(@inactive='inactive')]")};
     if (discardMatch) {
-      const std::string outgoingIfaceName{discardMatch.node().name()};
+      const std::string outgoingIfaceName {discardMatch.node().name()};
       route.setOutIfaceName(outgoingIfaceName);
       route.setNullRoute(true);
     }
 
-    const auto nextHopMatch{routeNode.select_node("next-hop[not(@inactive='inactive')]")};
+    const auto nextHopMatch {routeNode.select_node("next-hop[not(@inactive='inactive')]")};
     if (nextHopMatch) {
-      const nmdo::IpAddress nextHopIpAddr{nextHopMatch.node().text().as_string()};
+      const nmdo::IpAddress nextHopIpAddr {nextHopMatch.node().text().as_string()};
       route.setNextHopIpAddr(nextHopIpAddr);
     }
 
-    const auto nextTableMatch{routeNode.select_node("next-table[not(@inactive='inactive')]")};
+    const auto nextTableMatch {routeNode.select_node("next-table[not(@inactive='inactive')]")};
     if (nextTableMatch) {
-      const std::string nextRouteTableName{
+      const std::string nextRouteTableName {
         nextTableMatch.node().text().as_string()
       };
       const auto [nextVrfId, nextTableId]{
@@ -587,10 +643,11 @@ Parser::parseConfigRoutingOptions(const pugi::xml_node& routingOptionsNode)
       route.setNextTableId(nextTableId);
     }
 
-    if (route.isV4()) {
+    if ("rib" == routeNode.parent().name()) {
+      route.setTableId(routeNode.parent().select_node("name").node().text().as_string());
+    } else if (route.isV4()) {
       route.setTableId("inet.0");
-    }
-    else if (route.isV6()) {
+    } else if (route.isV6()) {
       route.setTableId("inet6.0");
     }
 
@@ -608,16 +665,16 @@ Parser::parseConfigZones(const pugi::xml_node& zonesNode)
 
   for (const auto& zoneMatch :
        zonesNode.select_nodes("security-zone[not(@inactive='inactive')]")) {
-    const pugi::xml_node zoneNode{zoneMatch.node()};
-    const std::string zoneName{
+    const pugi::xml_node zoneNode {zoneMatch.node()};
+    const std::string zoneName {
       zoneNode.select_node("name").node().text().as_string()
     };
     aclZones[zoneName].setId(zoneName);
 
     for (const auto& interfacesMatch :
          zoneNode.select_nodes("interfaces[not(@inactive='inactive')]")) {
-      const pugi::xml_node interfacesNode{interfacesMatch.node()};
-      const std::string ifaceName{
+      const pugi::xml_node interfacesNode {interfacesMatch.node()};
+      const std::string ifaceName {
         interfacesNode.select_node("name").node().text().as_string()
       };
       aclZones[zoneName].addIface(ifaceName);
@@ -634,11 +691,11 @@ Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
   std::map<std::string, std::map<std::string, nmdo::AclIpNetSet>> aclIpNetSets;
 
   std::string addressBookNamespace;
-  const auto& securityZoneMatch{
+  const auto& securityZoneMatch {
     addressBookNode.select_node("parent::security-zone[not(@inactive='inactive')]")
   };
   if (securityZoneMatch) {
-    const pugi::xml_node securityZoneNode{securityZoneMatch.node()};
+    const pugi::xml_node securityZoneNode {securityZoneMatch.node()};
     addressBookNamespace = securityZoneNode.select_node("name").node().text().as_string();
   }
   else {
@@ -648,22 +705,22 @@ Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
 
   for (const auto& addressMatch :
        addressBookNode.select_nodes("address[not(@inactive='inactive')]")) {
-    const pugi::xml_node addressNode{addressMatch.node()};
-    const std::string ipNetName{
+    const pugi::xml_node addressNode {addressMatch.node()};
+    const std::string ipNetName {
       addressNode.select_node("name").node().text().as_string()
     };
     aclIpNetSets[addressBookNamespace][ipNetName].setId(ipNetName, addressBookNamespace);
 
     for (const auto& ipPrefixMatch :
          addressNode.select_nodes("ip-prefix[not(@inactive='inactive')]")) {
-      const nmdo::IpNetwork ipNet{ipPrefixMatch.node().text().as_string()};
+      const nmdo::IpNetwork ipNet {ipPrefixMatch.node().text().as_string()};
       aclIpNetSets[addressBookNamespace][ipNetName].addIpNet(ipNet);
     }
 
     for (const auto& dnsNameMatch :
          addressNode.select_nodes("dns-name[not(@inactive='inactive')]")) {
-      const pugi::xml_node dnsNameNode{dnsNameMatch.node()};
-      const std::string dnsName{
+      const pugi::xml_node dnsNameNode {dnsNameMatch.node()};
+      const std::string dnsName {
         dnsNameNode.select_node("name").node().text().as_string()
       };
       data.observations.addNotable("FQDNs are used that must be resolved");
@@ -673,16 +730,16 @@ Parser::parseConfigAddressBook(const pugi::xml_node& addressBookNode)
 
   for (const auto& addressSetMatch :
        addressBookNode.select_nodes("address-set[not(@inactive='inactive')]")) {
-    const pugi::xml_node addressSetNode{addressSetMatch.node()};
-    const std::string ipNetSetName{
+    const pugi::xml_node addressSetNode {addressSetMatch.node()};
+    const std::string ipNetSetName {
       addressSetNode.select_node("name").node().text().as_string()
     };
     aclIpNetSets[addressBookNamespace][ipNetSetName].setId(ipNetSetName, addressBookNamespace);
 
     for (const auto& addressMatch :
          addressSetNode.select_nodes("address[not(@inactive='inactive')]")) {
-      const pugi::xml_node addressNode{addressMatch.node()};
-      const std::string ipNetName{
+      const pugi::xml_node addressNode {addressMatch.node()};
+      const std::string ipNetName {
         addressNode.select_node("name").node().text().as_string()
       };
       aclIpNetSets[addressBookNamespace][ipNetSetName].addIncludedId(ipNetName);
@@ -700,7 +757,7 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
 
   for (const auto& applicationMatch :
        applicationsNode.select_nodes("application[not(@inactive='inactive')]")) {
-    const pugi::xml_node applicationNode{applicationMatch.node()};
+    const pugi::xml_node applicationNode {applicationMatch.node()};
 
     auto aclServicesToAdd =
         parseConfigApplicationOrTerm(applicationNode);
@@ -713,10 +770,10 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
 
   for (const auto& applicationSetMatch :
        applicationsNode.select_nodes("application-set[not(@inactive='inactive')]")) {
-    const pugi::xml_node applicationSetNode{applicationSetMatch.node()};
+    const pugi::xml_node applicationSetNode {applicationSetMatch.node()};
     nmdo::AclService aclService;
 
-    const std::string applicationSetName{
+    const std::string applicationSetName {
       applicationSetNode.select_node("name").node().text().as_string()
     };
     aclService.setId(applicationSetName);
@@ -726,8 +783,8 @@ Parser::parseConfigApplications(const pugi::xml_node& applicationsNode)
         "application-set[not(@inactive='inactive')]"
       };
     for (const auto& applicationMatch : applicationSetNode.select_nodes(query)) {
-      const pugi::xml_node applicationNode{applicationMatch.node()};
-      const std::string applicationName{
+      const pugi::xml_node applicationNode {applicationMatch.node()};
+      const std::string applicationName {
         applicationNode.select_node("name").node().text().as_string()
       };
       aclService.addIncludedId(applicationName);
@@ -745,25 +802,25 @@ Parser::parseConfigApplicationOrTerm(const pugi::xml_node& applicationNode)
 {
   std::vector<nmdo::AclService> aclServices;
 
-  const std::string applicationName{
+  const std::string applicationName {
     applicationNode.select_node("name").node().text().as_string()
   };
 
-  const auto protocolMatch{
+  const auto protocolMatch {
     applicationNode.select_node("protocol[not(@inactive='inactive')]")
   };
   if (protocolMatch) {
     nmdo::AclService aclService;
     aclService.setId(applicationName);
 
-    std::string protocol{
+    std::string protocol {
       protocolMatch.node().text().as_string()
     };
     if (!protocol.empty() && std::isdigit(protocol.at(0))) {
       try {
         // If the protocol is a numeric string, look up the corresponding protocol name.
-        const int protoNumber{boost::lexical_cast<int>(protocol)};
-        const protoent* protoEntity{getprotobynumber(protoNumber)};
+        const int protoNumber {boost::lexical_cast<int>(protocol)};
+        const protoent* protoEntity {getprotobynumber(protoNumber)};
         if (protoEntity) {
           protocol = protoEntity->p_name;
         }
@@ -774,33 +831,33 @@ Parser::parseConfigApplicationOrTerm(const pugi::xml_node& applicationNode)
     }
     aclService.setProtocol(protocol);
 
-    const auto srcPortMatch{
+    const auto srcPortMatch {
       applicationNode.select_node("source-port[not(@inactive='inactive')]")
     };
     if (srcPortMatch) {
-      const nmdo::PortRange srcPortRange{
+      const nmdo::PortRange srcPortRange {
         srcPortMatch.node().text().as_string()
       };
       aclService.addSrcPortRange(srcPortRange);
     }
     else if (("tcp" == protocol) || ("udp" == protocol) ||
         ("sctp" == protocol)) {  // Implicit default source-port range
-      const nmdo::PortRange srcPortRange{0, 65535};
+      const nmdo::PortRange srcPortRange {0, 65535};
       aclService.addSrcPortRange(srcPortRange);
     }
 
-    const auto dstPortMatch{
+    const auto dstPortMatch {
       applicationNode.select_node("destination-port[not(@inactive='inactive')]")
     };
     if (dstPortMatch) {
-      const nmdo::PortRange dstPortRange{
+      const nmdo::PortRange dstPortRange {
         dstPortMatch.node().text().as_string()
       };
       aclService.addDstPortRange(dstPortRange);
     }
     else if (("tcp" == protocol) || ("udp" == protocol) ||
         ("sctp" == protocol)) {  // Implicit default destination-port range
-      const nmdo::PortRange dstPortRange{0, 65535};
+      const nmdo::PortRange dstPortRange {0, 65535};
       aclService.addDstPortRange(dstPortRange);
     }
 
@@ -809,7 +866,7 @@ Parser::parseConfigApplicationOrTerm(const pugi::xml_node& applicationNode)
 
   for (const auto& termMatch :
        applicationNode.select_nodes("term[not(@inactive='inactive')]")) {
-    const pugi::xml_node termNode{termMatch.node()};
+    const pugi::xml_node termNode {termMatch.node()};
     for (auto& aclService : parseConfigApplicationOrTerm(termNode)) {
       aclService.setId(applicationName);
       aclServices.emplace_back(aclService);
@@ -824,13 +881,13 @@ std::vector<nmdo::AclRuleService>
 Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
 {
   std::vector<nmdo::AclRuleService> rules;
-  size_t ruleId{0};
+  size_t ruleId {0};
 
   ruleId = 0;
   for (const auto& policyMatch :
        policiesNode.select_nodes(
          "policy[not(@inactive='inactive')]/policy[not(@inactive='inactive')]")) {
-    const pugi::xml_node policyNode{policyMatch.node()};
+    const pugi::xml_node policyNode {policyMatch.node()};
     auto rulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
         rulesToAdd.begin(),
@@ -843,7 +900,7 @@ Parser::parseConfigPolicies(const pugi::xml_node& policiesNode)
   ruleId = 0;
   for (const auto& policyMatch :
        policiesNode.select_nodes("global/policy[not(@inactive='inactive')]")) {
-    const pugi::xml_node policyNode{policyMatch.node()};
+    const pugi::xml_node policyNode {policyMatch.node()};
     auto rulesToAdd = parseConfigPolicy(policyNode, ruleId);
     std::copy(
         rulesToAdd.begin(),
@@ -862,7 +919,7 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
 {
   std::vector<nmdo::AclRuleService> rules;
 
-  const std::string description{
+  const std::string description {
     policyNode.select_node("name").node().text().as_string()
   };
 
@@ -934,8 +991,8 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
   for (const auto& incomingZoneId : incomingZoneIds) {
     for (const auto& outgoingZoneId : outgoingZoneIds) {
       // Initially default to global address-book.
-      std::string srcIpNetSetNamespace{"global"};
-      std::string dstIpNetSetNamespace{"global"};
+      std::string srcIpNetSetNamespace {"global"};
+      std::string dstIpNetSetNamespace {"global"};
       if (policyNode.select_node("../../../zones/security-zone/address-book")) {
         // Use per-zone address-books instead of global address-book.
         // However, leave "any" zones on the global address-book.
@@ -947,7 +1004,7 @@ Parser::parseConfigPolicy(const pugi::xml_node& policyNode, const size_t ruleId)
         }
       }
 
-      size_t ruleIdBase{0};
+      size_t ruleIdBase {0};
       if (false) {
         ruleIdBase = 5000000;  // Default Policies
       }
@@ -987,18 +1044,21 @@ void
 Parser::parseRouteInfo(const pugi::xml_node& routeInfoNode)
 {
   std::string logicalSystemName;
-  const pugi::xml_node outputNode{routeInfoNode.previous_sibling("output")};
+  const pugi::xml_node outputNode {routeInfoNode.previous_sibling("output")};
+
+  std::ostringstream oss;
+
   if (outputNode) {
     logicalSystemName =
       parseRouteLogicalSystemName(outputNode.text().as_string());
   }
 
-  auto& logicalSystem{data.logicalSystems[logicalSystemName]};
+  auto& logicalSystem {data.logicalSystems[logicalSystemName]};
 
   for (const auto& routeTableMatch :
        routeInfoNode.select_nodes("route-table[not(@inactive='inactive')]")) {
-    const pugi::xml_node routeTableNode{routeTableMatch.node()};
-    auto parsedVrfs{parseRouteTable(routeTableNode)};
+    const pugi::xml_node routeTableNode {routeTableMatch.node()};
+    auto parsedVrfs {parseRouteTable(routeTableNode)};
     logicalSystem.vrfs.merge(parsedVrfs);
     for (const auto& [vrfId, vrfConflict] : parsedVrfs) {
       logicalSystem.vrfs[vrfId].merge(vrfConflict);
@@ -1010,16 +1070,19 @@ Parser::parseRouteInfo(const pugi::xml_node& routeInfoNode)
 std::string
 Parser::parseRouteLogicalSystemName(const std::string& s)
 {
-  std::string logicalSystemName{"unknown"};
+  std::string logicalSystemName {"unknown"};
 
-  std::regex r{"^logical-system:\\s+(\\S+)\\s*$"};
+
+  std::regex r {"^logical-system:\\s+(\\S+)\\s*$"};
   std::smatch m;
   if (std::regex_match(s, m, r)) {
     logicalSystemName = m[1];
   }
+
   if ("default" == logicalSystemName) {
     logicalSystemName.clear();
   }
+
 
   return nmcu::toLower(logicalSystemName);
 }
@@ -1028,14 +1091,14 @@ Parser::parseRouteLogicalSystemName(const std::string& s)
 std::map<std::string, nmdo::Vrf>
 Parser::parseRouteTable(const pugi::xml_node& routeTableNode)
 {
-  const std::string routeTableName{
+  const std::string routeTableName {
     routeTableNode.select_node("table-name").node().text().as_string()
   };
   const auto [vrfId, tableId]{
     extractVrfIdTableId(routeTableName)
   };
   std::map<std::string, nmdo::Vrf> vrfs;
-  bool ignoredRouteTable{false};
+  bool ignoredRouteTable {false};
 
   // Only "inet" and "inet6" route tables are useful here.
   // Other route table types contain non-IP destinations such as
@@ -1051,7 +1114,7 @@ Parser::parseRouteTable(const pugi::xml_node& routeTableNode)
   vrfs[vrfId].setId(vrfId);
 
   for (const auto& routeMatch : routeTableNode.select_nodes("rt[not(@inactive='inactive')]")) {
-    const pugi::xml_node routeNode{routeMatch.node()};
+    const pugi::xml_node routeNode {routeMatch.node()};
     for (auto& route : parseRoute(routeNode)) {
       route.setVrfId(vrfId);
       route.setTableId(tableId);
@@ -1067,12 +1130,12 @@ nmdo::RoutingTable
 Parser::parseRoute(const pugi::xml_node& routeNode)
 {
   nmdo::RoutingTable routes;
-  bool ignoreRoute{false};
+  bool ignoreRoute {false};
 
-  const std::string dstIpString{
+  const std::string dstIpString {
     routeNode.select_node("rt-destination").node().text().as_string()
   };
-  const std::string prefixString{
+  const std::string prefixString {
     routeNode.select_node("rt-prefix-length").node().text().as_string()
   };
 
@@ -1089,13 +1152,13 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
     return routes;  // Return empty set of routes.
   }
 
-  const nmdo::IpAddress dstIpNet{
+  const nmdo::IpAddress dstIpNet {
     dstIpString + "/" + prefixString
   };
 
   for (const auto& routeEntryMatch :
        routeNode.select_nodes("rt-entry[not(@inactive='inactive')]")) {
-    const pugi::xml_node routeEntryNode{routeEntryMatch.node()};
+    const pugi::xml_node routeEntryNode {routeEntryMatch.node()};
 
     nmdo::Route route;
     route.setDstIpNet(dstIpNet);
@@ -1108,48 +1171,48 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       route.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
     }
 
-    const std::string activeTag{
+    const std::string activeTag {
       routeEntryNode.select_node("active-tag").node().text().as_string()
     };
     if ("*" != activeTag) {
       route.setActive(false);
     }
 
-    const auto protocolMatch{
+    const auto protocolMatch {
       routeEntryNode.select_node("protocol-name[not(@inactive='inactive')]")
     };
     if (protocolMatch) {
-      const std::string protocol{
+      const std::string protocol {
         protocolMatch.node().text().as_string()
       };
       route.setProtocol(protocol);
     }
 
-    const auto preferenceMatch{
+    const auto preferenceMatch {
       routeEntryNode.select_node("preference[not(@inactive='inactive')]")
     };
     if (preferenceMatch) {
-      const size_t adminDistance{
+      const size_t adminDistance {
         preferenceMatch.node().text().as_uint()
       };
       route.setAdminDistance(adminDistance);
     }
 
-    const auto metricMatch{
+    const auto metricMatch {
       routeEntryNode.select_node("metric[not(@inactive='inactive')]")
     };
     if (metricMatch) {
-      const size_t metric{
+      const size_t metric {
         metricMatch.node().text().as_uint()
       };
       route.setMetric(metric);
     }
 
-    const auto nhTypeMatch{
+    const auto nhTypeMatch {
       routeEntryNode.select_node("nh-type[not(@inactive='inactive')]")
     };
     if (nhTypeMatch) {
-      const std::string nhType{
+      const std::string nhType {
         nhTypeMatch.node().text().as_string()
       };
       if ("Discard" == nhType) { // drop
@@ -1162,12 +1225,12 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       }
     }
 
-    const auto nextHopTableMatch{
+    const auto nextHopTableMatch {
       routeEntryNode.select_node(
           "nh[not(@inactive='inactive')]/nh-table[not(@inactive='inactive')]")
     };
     if (nextHopTableMatch) {
-      const std::string nextRouteTableName{
+      const std::string nextRouteTableName {
         nextHopTableMatch.node().text().as_string()
       };
       const auto [nextVrfId, nextTableId]{
@@ -1177,24 +1240,24 @@ Parser::parseRoute(const pugi::xml_node& routeNode)
       route.setNextTableId(nextTableId);
     }
 
-    const auto nextHopRtrMatch{
+    const auto nextHopRtrMatch {
       routeEntryNode.select_node(
           "nh[not(@inactive='inactive')]/to[not(@inactive='inactive')]")
     };
     if (nextHopRtrMatch) {
-      const nmdo::IpAddress nextHopIpAddr{
+      const nmdo::IpAddress nextHopIpAddr {
         nextHopRtrMatch.node().text().as_string()
       };
       route.setNextHopIpAddr(nextHopIpAddr);
     }
 
-    const auto nextHopViaMatch{
+    const auto nextHopViaMatch {
       routeEntryNode.select_node
         ("(nh[not(@inactive='inactive')]/via[not(@inactive='inactive')])|"
          "(nh[not(@inactive='inactive')]/nh-local-interface[not(@inactive='inactive')])")
     };
     if (nextHopViaMatch) {
-      const std::string ifaceName{
+      const std::string ifaceName {
         nextHopViaMatch.node().text().as_string()
       };
       route.setOutIfaceName(ifaceName);
@@ -1211,17 +1274,17 @@ void
 Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
 {
   const std::string logicalSystemId;
-  auto& ifaces{data.logicalSystems[logicalSystemId].ifaces};
+  auto& ifaces {data.logicalSystems[logicalSystemId].ifaces};
 
   for (const auto& arpTableEntryMatch :
        arpTableInfoNode.select_nodes("arp-table-entry")) {
-    const pugi::xml_node arpTableEntryNode{arpTableEntryMatch.node()};
+    const pugi::xml_node arpTableEntryNode {arpTableEntryMatch.node()};
 
-    const auto ifaceNameMatch{
+    const auto ifaceNameMatch {
       arpTableEntryNode.select_node("interface-name")
     };
     if (ifaceNameMatch) {
-      std::string ifaceName{
+      std::string ifaceName {
         ifaceNameMatch.node().text().as_string()
       };
       auto length {ifaceName.find(" [")};
@@ -1229,25 +1292,26 @@ Parser::parseArpTableInfo(const pugi::xml_node& arpTableInfoNode)
         ifaceName.resize(length);
       }
       ifaces[ifaceName].setName(ifaceName);
+      ifaces[ifaceName].setPartial(true);
 
-      const auto peerMacAddrMatch{
+      const auto peerMacAddrMatch {
         arpTableEntryNode.select_node("mac-address")
       };
       if (peerMacAddrMatch &&
           nmdp::matchString<nmdp::ParserMacAddress, nmdo::MacAddress>
           (peerMacAddrMatch.node().text().as_string())) {
-        nmdo::MacAddress peerMacAddr{
+        nmdo::MacAddress peerMacAddr {
           peerMacAddrMatch.node().text().as_string()
         };
         peerMacAddr.setResponding(true);
 
-        const auto peerIpAddrMatch{
+        const auto peerIpAddrMatch {
           arpTableEntryNode.select_node("ip-address")
         };
         if (peerIpAddrMatch &&
             nmdp::matchString<nmdp::ParserIpAddress, nmdo::IpAddress>
             (peerIpAddrMatch.node().text().as_string())) {
-          nmdo::IpAddress peerIpAddr{
+          nmdo::IpAddress peerIpAddr {
             peerIpAddrMatch.node().text().as_string()
           };
           peerMacAddr.addIpAddress(peerIpAddr);
@@ -1264,17 +1328,17 @@ void
 Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
 {
   const std::string logicalSystemId;
-  auto& ifaces{data.logicalSystems[logicalSystemId].ifaces};
+  auto& ifaces {data.logicalSystems[logicalSystemId].ifaces};
 
   for (const auto& ipv6NdEntryMatch :
        ipv6NeighborInfoNode.select_nodes("ipv6-nd-entry")) {
-    const pugi::xml_node ipv6NdEntryNode{ipv6NdEntryMatch.node()};
+    const pugi::xml_node ipv6NdEntryNode {ipv6NdEntryMatch.node()};
 
-    const auto ifaceNameMatch{
+    const auto ifaceNameMatch {
       ipv6NdEntryNode.select_node("ipv6-nd-interface-name")
     };
     if (ifaceNameMatch) {
-      std::string ifaceName{
+      std::string ifaceName {
         ifaceNameMatch.node().text().as_string()
       };
       auto length {ifaceName.find(" [")};
@@ -1282,25 +1346,26 @@ Parser::parseIpv6NeighborInfo(const pugi::xml_node& ipv6NeighborInfoNode)
         ifaceName.resize(length);
       }
       ifaces[ifaceName].setName(ifaceName);
+      ifaces[ifaceName].setPartial(true);
 
-      const auto peerMacAddrMatch{
+      const auto peerMacAddrMatch {
         ipv6NdEntryNode.select_node("ipv6-nd-neighbor-l2-address")
       };
       if (peerMacAddrMatch &&
           nmdp::matchString<nmdp::ParserMacAddress, nmdo::MacAddress>
           (peerMacAddrMatch.node().text().as_string())) {
-        nmdo::MacAddress peerMacAddr{
+        nmdo::MacAddress peerMacAddr {
           peerMacAddrMatch.node().text().as_string()
         };
         peerMacAddr.setResponding(true);
 
-        const auto peerIpAddrMatch{
+        const auto peerIpAddrMatch {
           ipv6NdEntryNode.select_node("ipv6-nd-neighbor-address")
         };
         if (peerIpAddrMatch &&
             nmdp::matchString<nmdp::ParserIpAddress, nmdo::IpAddress>
             (peerIpAddrMatch.node().text().as_string())) {
-          nmdo::IpAddress peerIpAddr{
+          nmdo::IpAddress peerIpAddr {
             peerIpAddrMatch.node().text().as_string()
           };
           peerMacAddr.addIpAddress(peerIpAddr);
@@ -1317,54 +1382,56 @@ void
 Parser::parseLldpNeighborInfo(const pugi::xml_node& lldpNeighborInfoNode)
 {
   const std::string logicalSystemId;
-  auto& ifaces{data.logicalSystems[logicalSystemId].ifaces};
+  auto& ifaces {data.logicalSystems[logicalSystemId].ifaces};
 
   for (const auto& infoMatch :
        lldpNeighborInfoNode.select_nodes("lldp-neighbor-information[not(@inactive='inactive')]")) {
-    const pugi::xml_node infoNode{infoMatch.node()};
+    const pugi::xml_node infoNode {infoMatch.node()};
 
-    const auto localPortIdMatch{
+    const auto localPortIdMatch {
       infoNode.select_node("lldp-local-port-id")
     };
     std::string localIfaceName;
     if (localPortIdMatch) {
-      const std::string ifaceName{
+      const std::string ifaceName {
         localPortIdMatch.node().text().as_string()
       };
       if (!ifaceName.empty() && ("-" != ifaceName)) {
         localIfaceName = ifaceName;
         ifaces[localIfaceName].setName(localIfaceName);
+        ifaces[localIfaceName].setPartial(true);
       }
     }
 
-    const auto localParentIfaceMatch{
+    const auto localParentIfaceMatch {
       infoNode.select_node("lldp-local-parent-interface-name")
     };
     std::string localParentIfaceName;
     if (localParentIfaceMatch) {
-      const std::string ifaceName{
+      const std::string ifaceName {
         localParentIfaceMatch.node().text().as_string()
       };
       if (!ifaceName.empty() && ("-" != ifaceName)) {
         localParentIfaceName = ifaceName;
         ifaces[localParentIfaceName].setName(localParentIfaceName);
+        ifaces[localParentIfaceName].setPartial(true);
       }
     }
 
-    const auto remoteChassisIdSubtypeMatch{
+    const auto remoteChassisIdSubtypeMatch {
       infoNode.select_node("lldp-remote-chassis-id-subtype")
     };
     if (remoteChassisIdSubtypeMatch) {
-      const std::string remoteChassisIdSubtype{
+      const std::string remoteChassisIdSubtype {
         remoteChassisIdSubtypeMatch.node().text().as_string()
       };
-      const std::string remoteChassisId{
+      const std::string remoteChassisId {
         infoNode.select_node("lldp-remote-chassis-id").node().text().as_string()
       };
       if (("Mac address" == remoteChassisIdSubtype) &&
           nmdp::matchString<nmdp::ParserMacAddress, nmdo::MacAddress>
           (remoteChassisId)) {
-        nmdo::MacAddress macAddr{remoteChassisId};
+        nmdo::MacAddress macAddr {remoteChassisId};
         if (!localIfaceName.empty()) {
           ifaces[localIfaceName].addReachableMac(macAddr);
         }
@@ -1374,20 +1441,20 @@ Parser::parseLldpNeighborInfo(const pugi::xml_node& lldpNeighborInfoNode)
       }
     }
 
-    const auto remotePortIdSubtypeMatch{
+    const auto remotePortIdSubtypeMatch {
       infoNode.select_node("lldp-remote-port-id-subtype")
     };
     if (remotePortIdSubtypeMatch) {
-      const std::string remotePortIdSubtype{
+      const std::string remotePortIdSubtype {
         remotePortIdSubtypeMatch.node().text().as_string()
       };
-      const std::string remotePortId{
+      const std::string remotePortId {
         infoNode.select_node("lldp-remote-port-id").node().text().as_string()
       };
       if (("Mac address" == remotePortIdSubtype) &&
           nmdp::matchString<nmdp::ParserMacAddress, nmdo::MacAddress>
           (remotePortId)) {
-        nmdo::MacAddress macAddr{remotePortId};
+        nmdo::MacAddress macAddr {remotePortId};
         if (!localIfaceName.empty()) {
           ifaces[localIfaceName].addReachableMac(macAddr);
         }
@@ -1404,7 +1471,7 @@ void
 Parser::parseEthernetSwitching(const pugi::xml_node& l2ngNode)
 {
   const std::string logicalSystemId;
-  auto& ifaces{data.logicalSystems[logicalSystemId].ifaces};
+  auto& ifaces {data.logicalSystems[logicalSystemId].ifaces};
 
   for (const auto& l2ngEntryMatch :
        l2ngNode.select_nodes(
@@ -1412,39 +1479,39 @@ Parser::parseEthernetSwitching(const pugi::xml_node& l2ngNode)
          "l2ng-l2rtb-evpn-nd-entry|"
          "l2ng-l2ald-mac-entry-vlan|"
          "l2ng-l2ald-mac-ip-entry")) {
-    const pugi::xml_node l2ngEntryNode{l2ngEntryMatch.node()};
+    const pugi::xml_node l2ngEntryNode {l2ngEntryMatch.node()};
 
-    const auto ifaceMatch{
+    const auto ifaceMatch {
       l2ngEntryNode.select_node("l2ng-l2-mac-logical-interface")
     };
-    const std::string ifaceName{
+    const std::string ifaceName {
       ifaceMatch.node().text().as_string()
     };
     if (!ifaceName.empty()) {
       ifaces[ifaceName].setName(ifaceName);
 
-      const auto vlanMatch{
+      const auto vlanMatch {
         l2ngEntryNode.select_node("l2ng-l2-vlan-id")
       };
       if (vlanMatch &&
           (std::string("none") != vlanMatch.node().text().as_string())) {
-        const uint16_t vlanId{
+        const uint16_t vlanId {
           static_cast<uint16_t>(vlanMatch.node().text().as_uint())
         };
         ifaces[ifaceName].addVlan(vlanId);
       }
 
-      const auto macAddrMatch{
+      const auto macAddrMatch {
         l2ngEntryNode.select_node("l2ng-l2-mac-address")
       };
       if (macAddrMatch &&
           nmdp::matchString<nmdp::ParserMacAddress, nmdo::MacAddress>
           (macAddrMatch.node().text().as_string())) {
-        nmdo::MacAddress macAddr{
+        nmdo::MacAddress macAddr {
           macAddrMatch.node().text().as_string()
         };
 
-        const auto ipAddrMatch{
+        const auto ipAddrMatch {
           l2ngEntryNode.select_node(
               "l2ng-l2-ip-address|"
               "l2ng-l2-evpn-arp-inet-address|"
@@ -1453,7 +1520,7 @@ Parser::parseEthernetSwitching(const pugi::xml_node& l2ngNode)
         if (ipAddrMatch &&
             nmdp::matchString<nmdp::ParserIpAddress, nmdo::IpAddress>
             (ipAddrMatch.node().text().as_string())) {
-          nmdo::IpAddress ipAddr{
+          nmdo::IpAddress ipAddr {
             ipAddrMatch.node().text().as_string()
           };
           macAddr.addIpAddress(ipAddr);
@@ -1469,7 +1536,7 @@ Parser::parseEthernetSwitching(const pugi::xml_node& l2ngNode)
 void
 Parser::parseError(const pugi::xml_node& errorNode)
 {
-  const std::string message{
+  const std::string message {
     errorNode.select_node("message").node().text().as_string()
   };
   data.observations.addNotable(message);
@@ -1479,7 +1546,7 @@ Parser::parseError(const pugi::xml_node& errorNode)
 void
 Parser::parseWarning(const pugi::xml_node& warningNode)
 {
-  const std::string message{
+  const std::string message {
     warningNode.select_node("message").node().text().as_string()
   };
   data.observations.addNotable(message);
@@ -1499,18 +1566,20 @@ Parser::extractVrfIdTableId(const std::string& _vrfIdTableId)
   std::string vrfId;
   std::string tableId;
 
-  // TODO: Need a more robust solution.
-  // Should factor out of the Boost.Spirit parser to a micro-parser
-  // that is used both there and here.
-  const std::regex r{
-    "^(([\\w_-]+)\\.)?((inet6|inet)(\\.\\d+)?)$"
-  };
-  std::smatch m;
-  if (std::regex_match(_vrfIdTableId, m, r)) {
-    vrfId = m[2];
-    tableId = m[3];
+  size_t pos1 {_vrfIdTableId.find('.')};
+  if (pos1 == std::string::npos)
+  {
+    return std::make_tuple("", "");
   }
+
+  size_t pos2 {_vrfIdTableId.find('.', pos1 + 1)};
+  if (pos2 == std::string::npos)
+  {
+    return std::make_tuple("", _vrfIdTableId);
+  }
+
+  vrfId   = _vrfIdTableId.substr(0, pos1);
+  tableId = _vrfIdTableId.substr(pos1 + 1);
 
   return std::make_tuple(vrfId, tableId);
 }
-

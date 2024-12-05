@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -58,7 +58,6 @@ typedef std::tuple<std::string, std::string> InterfaceHierarchy;
 
 struct LogicalSystem
 {
-  std::string name;
   std::map<std::string, nmdo::InterfaceNetwork> ifaces;
   std::vector<InterfaceHierarchy> ifaceHierarchies;
   std::map<std::string, nmdo::Vrf> vrfs;
@@ -90,6 +89,16 @@ typedef std::vector<Data> Results;
 
 class Parser
 {
+  // Variables
+  private:
+  protected:
+    Data data;
+
+    const std::string DEFAULT_VRF_ID {""};//{"master"};
+
+  public:
+
+  // Functions
   public:
     Results getData();
 
@@ -146,12 +155,6 @@ class Parser
     std::tuple<std::string, std::string>
     extractVrfIdTableId(const std::string&);
 
-  public:
-
   private:
-    Data data;
-
-    const std::string DEFAULT_VRF_ID {""};//{"master"};
 };
-
 #endif  /* PARSER_HPP */

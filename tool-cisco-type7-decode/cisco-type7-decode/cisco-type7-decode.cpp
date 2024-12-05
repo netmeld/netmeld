@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -29,58 +29,41 @@
 
 #include <netmeld/core/tools/AbstractTool.hpp>
 #include <netmeld/core/utils/CmdExec.hpp>
-#include <netmeld/datastore/parsers/ParserHelper.hpp>
-
 
 namespace nmct = netmeld::core::tools;
-namespace nmdp = netmeld::datastore::parsers;
-
-typedef std::vector<uint8_t>  Result;
 
 
-class Parser :
-  public qi::grammar<nmdp::IstreamIter, Result()>
-{
-  public:
-    Parser() : Parser::base_type(start)
-    {
-      start =
-        decByte >> +hexByte >> -qi::eol
-        ;
-    }
-
-    qi::rule<nmdp::IstreamIter, Result()>
-      start;
-
-    qi::uint_parser<uint8_t, 10, 2, 2> decByte;
-    qi::uint_parser<uint8_t, 16, 2, 2> hexByte;
-};
-
-
+// =============================================================================
+// Tool definition
+// =============================================================================
 class Tool : public nmct::AbstractTool
 {
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables should generally be private
-    std::string const ciscoType7Key
-      {"dsfd;kfoA,.iyewrkldJKDHSUBsgvca69834ncxv9873254k;fg87"};
+  private:    // Variables intended for internal only use
+    std::string encoded {""};
 
-  protected: // Variables intended for internal/subclass API
-  public: // Variables should rarely appear at this scope
+    const std::string ciscoType7Key {
+        R"(dsfd;kfoA,.iyewrkldJKDHSUBsgvca69834ncxv9873254k;fg87)"
+      };
+
+  protected:  // Variables intended for internal/subclass API
+    std::string decoded {""};
+
+  public:     // Variables should rarely appear at this scope
 
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  private: // Constructors should rarely appear at this scope
-  protected: // Constructors intended for internal/subclass API
-  public: // Constructors should generally be public
+  private:    // Constructors should rarely appear at this scope
+  protected:  // Constructors intended for internal/subclass API
+  public:     // Constructors should generally be public
     Tool() : nmct::AbstractTool
-      (
-       "Cisco type 7 decoder",  // unused unless printHelp() is overridden
-       PROGRAM_NAME,    // program name (set in CMakeLists.txt)
-       PROGRAM_VERSION  // program version (set in CMakeLists.txt)
+      ( "Cisco type 7 decoder"  // unused unless printHelp() is overridden
+      , PROGRAM_NAME            // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION         // program version (set in CMakeLists.txt)
       )
     {}
 
@@ -94,78 +77,155 @@ class Tool : public nmct::AbstractTool
     addToolOptions() override
     {
       opts.addRequiredOption("password", std::make_tuple(
-            "password",
-            po::value<std::string>()->required(),
-            "type 7 encoded password")
-          );
-
+            "password"
+          , po::value<std::string>()->required()
+          , "Type 7 encoded password."
+          )
+        );
       opts.addPositionalOption("password", -1);
 
       opts.addAdvancedOption("store-in-db", std::make_tuple(
-            "store-in-db",
-            NULL_SEMANTIC,
-            "Used to store results in the database. Requires 'psql' binary."
-          ));
+            "store-in-db"
+          , NULL_SEMANTIC
+          , "Used to store results in the database."
+            " Requires 'psql' binary."
+          )
+        );
 
       opts.addAdvancedOption("db-name", std::make_tuple(
-          "db-name",
-          po::value<std::string>()->default_value("site"),
-          "Database to connect to.")
-          );
+            "db-name"
+          , po::value<std::string>()->default_value("site")
+          , "Database to connect to."
+          )
+        );
 
       opts.addAdvancedOption("db-args", std::make_tuple(
-          "db-args",
-          po::value<std::string>()->default_value(""),
-          "Additional database connection args."
-          " Space separated `key=value` libpqxx connection string parameters.")
-          );
+            "db-args"
+          , po::value<std::string>()->default_value("")
+          , "Additional database connection args."
+            " Space separated `key=value` libpqxx connection string parameters."
+          )
+        );
     }
 
   protected: // Methods part of subclass API
-    int
-    runTool() override
+    uint8_t
+    fromByte(const std::string_view byte, const uint8_t radix) const
     {
-      std::ostringstream oss;
-      std::string encPass {opts.getValue("password")};
+      uint8_t val;
+      auto [ptr, ec] = std::from_chars(byte.cbegin(), byte.cend(), val, radix);
 
-      Result r {nmdp::fromString<Parser,Result>(encPass)};
+      if (ec == std::errc()) {
+        return val;
+      } else {
+        throw std::runtime_error(
+                std::format( "Conversion of {} failed for base {}"
+                           , byte
+                           , radix
+                           )
+          );
+      }
+    }
 
-      std::vector<uint8_t>::const_iterator
-        i = r.cbegin(),
-        e = r.cend();
+    std::vector<uint8_t>
+    getBytes(const std::string& data) const
+    {
+      size_t numChars {data.size()};
+      if (0 != (numChars % 2)) {
+        throw std::runtime_error("Invalid encoded data length, uneven");
+      }
 
-      size_t index = *i;
-      ++i;
+      std::vector<uint8_t> bytes;
+      for (size_t i {0}; i < numChars; i+=2) {
+        std::string_view byte {std::string_view(data).substr(i,2)};
+        if (i == 0) {
+          LOG_DEBUG << "Adding to byte vector a dec: " << byte << '\n';
+          bytes.emplace_back(fromByte(byte, 10));
+        } else {
+          LOG_DEBUG << "Adding to byte vector a hex: " << byte << '\n';
+          bytes.emplace_back(fromByte(byte, 16));
+        }
+      }
 
-      for (; i != e; ++i, ++index) {
-        oss << static_cast<char>(
-                *i ^ ciscoType7Key[index % ciscoType7Key.size()]
-               );
+      return bytes;
+    }
+
+    void
+    decode(const std::string& data)
+    {
+      if (0 == data.size()) {
+        return;
       }
 
       std::regex badChars("[^0-9a-fA-F]");
-      auto encoded = std::regex_replace(encPass, badChars, "");
-      auto decoded = oss.str();
+      encoded = std::regex_replace(data, badChars, "");
+      LOG_DEBUG << std::format( "Same: {}, Orig: {}, Cleaned: {}\n"
+                              , data == encoded
+                              , data
+                              , encoded
+                              );
+
+      std::vector<uint8_t> byteVec {getBytes(encoded)};
+
+      std::vector<uint8_t>::const_iterator i {byteVec.cbegin()}
+                                         , e {byteVec.cend()}
+        ;
+      size_t index = *i; // init as value of the decimal byte
+      ++i;
+
+      std::ostringstream oss;
+      for (; i != e; ++i, ++index) {
+        auto iVal {*i};
+        auto pow  {ciscoType7Key[index % ciscoType7Key.size()]};
+        LOG_DEBUG << std::format( "i-dist: {}, index: {}, *i: {}, pow: {}\n"
+                                , std::distance(byteVec.cbegin(), i)
+                                , index
+                                , static_cast<int>(iVal)
+                                , static_cast<int>(pow)
+                                );
+        oss << static_cast<char>(iVal ^ pow);
+      }
+      decoded = oss.str();
+    }
+
+    void
+    storeInDb() const
+    {
+      if (!nmcu::isCmdAvailable("psql")) {
+        LOG_WARN << "Can not store, 'psql' was not found\n";
+        return;
+      }
+
+      const std::string dbName {opts.getValue("db-name")};
+      const std::string dbArgs {opts.getValue("db-args")};
+
+      nmcu::cmdExecOrExit(
+          std::format( R"(psql "{} dbname={}" -c)"
+                       R"(  "INSERT INTO raw_tool_observations)"
+                         "     (tool_run_id, category, observation)"
+                         "   VALUES"
+                         "     ('{}', '{}', 'Encoded: {}\nDecoded: {}')"
+                       R"(   ON CONFLICT DO NOTHING")"
+                     , dbArgs
+                     , dbName
+                     , "32b2fd62-08ff-4d44-8da7-6fbd581a90c6"
+                     , "notable"
+                     , encoded
+                     , decoded
+                     )
+        );
+    }
+
+    int
+    runTool() override
+    {
+      decode(opts.getValue("password"));
       LOG_INFO << encoded << ": " << decoded << '\n';
 
       if (opts.exists("store-in-db")) {
-        if (nmcu::isCmdAvailable("psql")) {
-          std::string dbName {opts.getValue("db-name")};
-          std::string dbArgs {opts.getValue("db-args")};
-          nmcu::cmdExecOrExit(
-              std::format(R"(psql "{} dbname={}" -c)"
-                          R"(  "INSERT INTO raw_tool_observations)"
-                            "     (tool_run_id, category, observation)"
-                            "   VALUES"
-                            "     ('{}', '{}', 'Encoded: {}\nDecoded: {}')"
-                          R"(   ON CONFLICT DO NOTHING")",
-                          dbArgs, dbName,
-                          "32b2fd62-08ff-4d44-8da7-6fbd581a90c6", "notable",
-                          encoded, decoded));
-        } else {
-          LOG_WARN << "Could not store, 'psql' was not found\n";
-        }
+        storeInDb();
       }
+
       return nmcu::Exit::SUCCESS;
     }
 
@@ -176,8 +236,10 @@ class Tool : public nmct::AbstractTool
 // =============================================================================
 // Program entry point
 // =============================================================================
+#ifndef UNIT_TESTING
 int main(int argc, char** argv)
 {
   Tool tool;
   return tool.start(argc, argv);
 }
+#endif

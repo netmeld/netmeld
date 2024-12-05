@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -51,44 +51,44 @@ class TestTime : public nmco::Time {
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
-    pt::ptime t1 = pt::microsec_clock::universal_time();
+    pt::ptime pt1 = pt::microsec_clock::universal_time();
     TestTime time;
 
-    // add small ficticious delay so t1 != t2 as time_period() is [t1, t2)
+    // add small ficticious delay so pt1 != pt2 as time_period() is [pt1, pt2)
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    pt::ptime t2 = pt::microsec_clock::universal_time();
-    auto run = pt::time_period(t1, t2);
+    pt::ptime pt2 = pt::microsec_clock::universal_time();
+    auto run = pt::time_period(pt1, pt2);
 
-    BOOST_CHECK(run.contains(time.getTime()));
+    BOOST_TEST(run.contains(time.getTime()));
   }
 
   {
-    pt::ptime t1 = pt::microsec_clock::universal_time();
-    TestTime time {t1};
+    pt::ptime pt1 = pt::microsec_clock::universal_time();
+    TestTime time {pt1};
 
-    BOOST_CHECK_EQUAL(t1, time.getTime());
+    BOOST_TEST(pt1 == time.getTime());
   }
 
   {
-    pt::ptime t1 {pt::neg_infin};
+    pt::ptime pt1 {pt::neg_infin};
     TestTime time {"-infinity"};
 
-    BOOST_CHECK_EQUAL(t1, time.getTime());
+    BOOST_TEST(pt1 == time.getTime());
   }
 
   {
-    pt::ptime t1 {pt::pos_infin};
+    pt::ptime pt1 {pt::pos_infin};
     TestTime time {"infinity"};
 
-    BOOST_CHECK_EQUAL(t1, time.getTime());
+    BOOST_TEST(pt1 == time.getTime());
   }
 
   {
     std::string dts {"2001-01-01 00:00:00.001"};
-    pt::ptime t1 {pt::time_from_string(dts)};
+    pt::ptime pt1 {pt::time_from_string(dts)};
     TestTime time {dts};
 
-    BOOST_CHECK_EQUAL(t1, time.getTime());
+    BOOST_TEST(pt1 == time.getTime());
   }
 }
 
@@ -99,14 +99,31 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     time.readFormatted("Mon Jan 01 00:00:00 2001", "%a %b %d %H:%M:%S %Y");
     std::string dts {"2001-01-01 00:00:00"};
-    pt::ptime t1 {pt::time_from_string(dts)};
+    pt::ptime pt1 {pt::time_from_string(dts)};
 
-    BOOST_CHECK_EQUAL(t1, time.getTime());
+    BOOST_TEST(pt1 == time.getTime());
+  }
+  {
+    TestTime tt1;
+    // add small delay so tt1 != tt2
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    TestTime tt2;
+    BOOST_TEST(tt1.getTime() != tt2.getTime());
+
+    tt2 = tt1;
+    // ensure empty is a no-op
+    tt2.readFormatted("", "%a %b %d %H:%M:%S %Y");
+    BOOST_TEST(tt1.getTime() == tt2.getTime());
+
+    TestTime tt3 = tt1;
+    BOOST_TEST(tt1.getTime() == tt3.getTime());
+    BOOST_CHECK_THROW(tt3.readUnixTimestamp(""), std::exception);
+    BOOST_TEST(tt1.getTime() == tt3.getTime());
   }
 
   {
-    pt::ptime t1 = pt::microsec_clock::universal_time();
-    TestTime time1 {t1}, time2;
+    pt::ptime pt1 = pt::microsec_clock::universal_time();
+    TestTime time1 {pt1}, time2;
 
     sfs::path temp {std::to_string(fileno(std::tmpfile()))};
     std::ofstream f {temp};
@@ -114,23 +131,23 @@ BOOST_AUTO_TEST_CASE(testSetters)
     f.close();
     time2.readTime(temp);
     sfs::remove(temp);
-    BOOST_CHECK_EQUAL(time1.getTime(), time2.getTime());
+    BOOST_TEST(time1.getTime() == time2.getTime());
   }
 
   {
     {
       TestTime time {pt::not_a_date_time};
-      BOOST_CHECK(time.isNull());
+      BOOST_TEST(time.isNull());
     }
     {
       TestTime time;
-      BOOST_CHECK(!time.isNull());
+      BOOST_TEST(!time.isNull());
     }
   }
 
   {
     TestTime time {"2001-01-01 00:00:00.001"};
 
-    BOOST_CHECK_EQUAL("2001-01-01T00:00:00.001000", time.toString());
+    BOOST_TEST("2001-01-01T00:00:00.001000" == time.toString());
   }
 }

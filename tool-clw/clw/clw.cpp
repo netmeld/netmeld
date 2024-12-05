@@ -353,7 +353,7 @@ class Tool : public nmct::AbstractTool
 
             writeToFile<std::string>
               ("command_line_original.txt" , nmcu::toString(args));
-            netmeld::utils::augmentArgs(args, toolRunResults);
+            netmeld::tools::clw::augmentArgs(args, toolRunResults);
             writeToFile<std::string>
               ("command_line_modified.txt" , nmcu::toString(args));
 

@@ -26,6 +26,9 @@
 
 #include "Parser.hpp"
 
+#include <netmeld/datastore/utils/ServiceFactory.hpp>
+
+namespace nmdu = netmeld::datastore::utils;
 
 // =============================================================================
 // Parser logic
@@ -102,10 +105,8 @@ Parser::setDevId(const std::string& id)
 void
 Parser::addNtpService(const nmdo::IpAddress& ip)
 {
-  nmdo::Service service {"ntp", ip};
-  service.setProtocol("udp");
-  service.addDstPort("123"); // same port used by client and server
-  service.addSrcPort("123");
+  auto service {nmdu::ServiceFactory::makeNtp()};
+  service.setDstAddress(ip);
   service.setServiceReason(d.devInfo.getDeviceId() + "'s config");
   d.services.push_back(service);
 }
@@ -136,9 +137,6 @@ Parser::addIface2(const std::string& name,
   if (rtr.isValid()){
     nmdo::Route route;
     route.setOutIfaceName(name);
-    if ("Null0" == name) {
-      route.setNullRoute(true);
-    }
     route.setDstIpNet(ip);
     route.setNextHopIpAddr(rtr);
     route.setVrfId(DEFAULT_VRF_ID);
