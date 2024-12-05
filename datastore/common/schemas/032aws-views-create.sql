@@ -613,4 +613,270 @@ LEFT JOIN aws_network_acl_rules_joined AS t2
 -------------------------------------------------------------------------------
 
 
+-------------------------------------------------------------------------------
+-- AWS Iam
+-------------------------------------------------------------------------------
+
+CREATE VIEW unraveled_aws_iam_statements AS
+SELECT
+    tool_run_id,
+    attachment_id,
+    document_version,
+    sid,
+    effect,
+    is_action,
+    action,
+    resource,
+    principal,
+    condition
+FROM
+    raw_aws_iam_statement,
+    LATERAL unnest(actions) AS action,
+    LATERAL unnest(resources) AS resource;
+
+CREATE OR REPLACE FUNCTION match_actions(pattern TEXT)
+RETURNS TABLE (id TEXT, arn TEXT, action TEXT) AS $$
+BEGIN
+    RETURN QUERY
+    WITH cte1 AS (
+        SELECT
+            attachment_id,
+            action
+        FROM (
+            SELECT
+                tool_run_id,
+                attachment_id,
+                document_version,
+                sid,
+                effect,
+                is_action,
+                unnest(actions) AS action,
+                resources,
+                principal,
+                condition
+            FROM
+                raw_aws_iam_statement
+        ) AS subquery
+        WHERE
+            action LIKE pattern
+    )
+    SELECT
+        id,
+        arn,
+        cte1.action
+    FROM
+        raw_aws_iam_user,
+        LATERAL (
+            SELECT attachment_id, action
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.action
+    FROM
+        raw_aws_iam_role,
+        LATERAL (
+            SELECT attachment_id, action
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.action
+    FROM
+        raw_aws_iam_policy,
+        LATERAL (
+            SELECT attachment_id, action
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.action
+    FROM
+        raw_aws_iam_group,
+        LATERAL (
+            SELECT attachment_id, action
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    ORDER BY
+        3;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION match_resources(pattern TEXT)
+RETURNS TABLE (id TEXT, arn TEXT, resource TEXT) AS $$
+BEGIN
+    RETURN QUERY
+    WITH cte1 AS (
+        SELECT
+            attachment_id,
+            resource
+        FROM (
+            SELECT
+                tool_run_id,
+                attachment_id,
+                document_version,
+                sid,
+                effect,
+                is_action,
+                actions,
+                unnest(resources) AS resource,
+                principal,
+                condition
+            FROM
+                raw_aws_iam_statement
+        ) AS subquery
+        WHERE
+            action LIKE pattern
+    )
+    SELECT
+        id,
+        arn,
+        cte1.resource
+    FROM
+        raw_aws_iam_user,
+        LATERAL (
+            SELECT attachment_id, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.resource
+    FROM
+        raw_aws_iam_role,
+        LATERAL (
+            SELECT attachment_id, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.resource
+    FROM
+        raw_aws_iam_policy,
+        LATERAL (
+            SELECT attachment_id, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.resource
+    FROM
+        raw_aws_iam_group,
+        LATERAL (
+            SELECT attachment_id, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    ORDER BY
+        3;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION match_actions_and_resources(action_pattern TEXT, resource_pattern TEXT)
+RETURNS TABLE (id TEXT, arn TEXT, action TEXT, resource TEXT) AS $$
+BEGIN
+    RETURN QUERY
+    WITH cte1 AS (
+        SELECT
+            attachment_id,
+            action,
+            resource
+        FROM (
+            SELECT
+                tool_run_id,
+                attachment_id,
+                document_version,
+                sid,
+                effect,
+                is_action,
+                unnest(actions) AS actions,
+                unnest(resources) AS resource,
+                principal,
+                condition
+            FROM
+                raw_aws_iam_statement
+        ) AS subquery
+        WHERE
+            action LIKE action_pattern
+        AND
+            resource LIKE resource_pattern
+    )
+    SELECT
+        id,
+        arn,
+        cte1.action,
+        cte1.resource
+    FROM
+        raw_aws_iam_user,
+        LATERAL (
+            SELECT attachment_id, action, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.action,
+        cte1.resource
+    FROM
+        raw_aws_iam_role,
+        LATERAL (
+            SELECT attachment_id, action, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.action,
+        cte1.resource
+    FROM
+        raw_aws_iam_policy,
+        LATERAL (
+            SELECT attachment_id, action, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    UNION
+    SELECT
+        id,
+        arn,
+        cte1.action,
+        cte1.resource
+    FROM
+        raw_aws_iam_group,
+        LATERAL (
+            SELECT attachment_id, action, resource
+            FROM cte1
+            WHERE id = ANY (SELECT attachment_id FROM cte1)
+        ) AS cte1
+    ORDER BY
+        3;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-------------------------------------------------------------------------------
+
+
 COMMIT TRANSACTION;

@@ -707,6 +707,184 @@ CREATE TABLE raw_aws_network_acl_subnets (
         ON UPDATE CASCADE
 );
 
+-- ----------------------------------------------------------------------
+-- AWS IAM
+-- ----------------------------------------------------------------------
+
+CREATE TABLE raw_aws_iam_document (
+    tool_run_id UUID NOT NULL,
+    attachment_id TEXT NOT NULL,
+    secondary_id TEXT NOT NULL,
+    doc_version TEXT NOT NULL,
+    PRIMARY KEY (tool_run_id, attachment_id, secondary_id, doc_version),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_statement (
+    tool_run_id UUID NOT NULL,
+    attachment_id TEXT NOT NULL,
+    document_version TEXT NOT NULL,
+    sid TEXT NOT NULL,
+    effect TEXT NOT NULL,
+    is_action BOOLEAN NOT NULL,
+    actions TEXT[] NOT NULL,
+    resources TEXT[] NOT NULL,
+    principal JSONB NOT NULL,
+    condition JSONB NOT NULL,
+    PRIMARY KEY (tool_run_id, attachment_id, document_version, sid),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_group (
+    tool_run_id UUID NOT NULL,
+    id TEXT NOT NULL,
+    arn TEXT NOT NULL,
+    name TEXT NOT NULL,
+    create_date TEXT NOT NULL,
+    path TEXT NOT NULL,
+    tags JSONB NOT NULL,
+    PRIMARY KEY (tool_run_id, id, arn, name, create_date, path, tags),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_policy (
+    tool_run_id UUID NOT NULL,
+    id TEXT NOT NULL,
+    arn TEXT NOT NULL,
+    name TEXT NOT NULL,
+    create_date TEXT NOT NULL,
+    path TEXT NOT NULL,
+    tags JSONB NOT NULL,
+    update_date TEXT NOT NULL,
+    attachment_count INT NOT NULL,
+    default_version_id TEXT NOT NULL,
+    is_attachable BOOLEAN NOT NULL,
+    permissions_boundary_usage_count INT NOT NULL,
+    PRIMARY KEY (tool_run_id, id, arn, name, create_date,
+        path, tags, update_date, attachment_count, default_version_id,
+        is_attachable, permissions_boundary_usage_count),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_policy_document (
+    tool_run_id UUID NOT NULL,
+    attachment_id TEXT NOT NULL,
+    policy_name TEXT NOT NULL,
+    PRIMARY KEY (tool_run_id, attachment_id, policy_name),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_policy_version (
+    tool_run_id UUID NOT NULL,
+    policy_id TEXT NOT NULL,
+    version_id TEXT NOT NULL,
+    is_default_version BOOLEAN,
+    create_date TEXT NOT NULL,
+    PRIMARY KEY (tool_run_id, policy_id, version_id, is_default_version, create_date),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_role_instance_profile (
+    tool_run_id UUID NOT NULL,
+    parent_role_id TEXT NOT NULL,
+    profile_id TEXT NOT NULL,
+    profile_name TEXT NOT NULL,
+    arn TEXT NOT NULL,
+    create_date TEXT NOT NULL,
+    path TEXT NOT NULL,
+    PRIMARY KEY (tool_run_id, parent_role_id, profile_id, profile_name, arn, create_date),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_role_permission_boundary (
+    tool_run_id UUID NOT NULL,
+    role_id TEXT NOT NULL,
+    boundary_arn TEXT NOT NULL,
+    boundary_type TEXT NOT NULL,
+    PRIMARY KEY (tool_run_id, role_id, boundary_arn, boundary_type),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_user (
+    tool_run_id UUID NOT NULL,
+    id TEXT NOT NULL,
+    arn TEXT NOT NULL,
+    name TEXT NOT NULL,
+    create_date TEXT NOT NULL,
+    path TEXT NOT NULL,
+    tags JSONB NOT NULL,
+    PRIMARY KEY (tool_run_id, id, arn, name, create_date, path, tags),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_user_group (
+    tool_run_id UUID NOT NULL,
+    user_id TEXT NOT NULL,
+    group_name TEXT NOT NULL,
+    PRIMARY KEY (tool_run_id, user_id, group_name),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_attached_managed_policy (
+    tool_run_id UUID NOT NULL,
+    attachment_id TEXT NOT NULL,
+    policy_arn TEXT NOT NULL,
+    policy_name TEXT NOT NULL,
+    PRIMARY KEY (tool_run_id, attachment_id, policy_arn, policy_name),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE raw_aws_iam_role (
+    tool_run_id UUID NOT NULL,
+    id TEXT NOT NULL,
+    arn TEXT NOT NULL,
+    name TEXT NOT NULL,
+    create_date TEXT NOT NULL,
+    path TEXT NOT NULL,
+    tags JSONB NOT NULL,
+    profile_id TEXT NOT NULL,
+    last_used TEXT NOT NULL,
+    permissions_boundary_usage_count SMALLINT NOT NULL,
+    PRIMARY KEY (tool_run_id, id, arn, name, create_date, path, tags,
+        profile_id, last_used, permissions_boundary_usage_count),
+    FOREIGN KEY (tool_run_id)
+        REFERENCES tool_runs(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 -- ----------------------------------------------------------------------
 

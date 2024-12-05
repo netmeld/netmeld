@@ -59,6 +59,19 @@ add_library(${TGT_LIBRARY} SHARED
 
     ./objects/aws/Attachment.cpp
     ./objects/aws/CidrBlock.cpp
+    ./objects/aws/IamAttachedManagedPolicy.cpp
+    ./objects/aws/IamBase.cpp
+    ./objects/aws/IamDocument.cpp
+    ./objects/aws/IamGroup.cpp
+    ./objects/aws/IamPolicy.cpp
+    ./objects/aws/IamPolicyDocument.cpp
+    ./objects/aws/IamPolicyVersion.cpp
+    ./objects/aws/IamRole.cpp
+    ./objects/aws/IamRoleInstanceProfile.cpp
+    ./objects/aws/IamRolePermissionBoundary.cpp
+    ./objects/aws/IamStatement.cpp
+    ./objects/aws/IamUser.cpp
+    ./objects/aws/IamUserGroup.cpp
     ./objects/aws/Instance.cpp
     ./objects/aws/NetworkAcl.cpp
     ./objects/aws/NetworkAclRule.cpp
