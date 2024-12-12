@@ -115,10 +115,15 @@ BOOST_AUTO_TEST_CASE(testWholeVrfTable1)
     const auto& parserRule {tp.start};
 
     std::string test {
-      R"STR(  Name                             Default RD            Protocols   Interfaces
+      R"STR(
+  Garbage Data
+  ------------
+  Name                             Default RD            Protocols   Interfaces
   Internet                         <not set>             ipv4        Gi0/0/2
                                                                      Gi0/0/3
   mgmt-intf                        12345:123             ipv4,ipv6   Gi0
+  -----------
+  Garbage Data
       )STR"
       };
 
@@ -141,11 +146,16 @@ BOOST_AUTO_TEST_CASE(testWholeVrfTable2)
     const auto& parserRule {tp.start};
 
     std::string test {
-      R"STR(VRF-Name                           VRF-ID State   Reason                       
-Vrf1                                    3 Up      --                           
-default                                 1 Up      --                           
-mgmt                                    2 Up      --                           
+      R"STR(
+Garbage Data
+------------
+VRF-Name                           VRF-ID State   Reason
+Vrf1                                    3 Up      --
+default                                 1 Up      --
+mgmt                                    2 Up      --
 vrf2                                    4 Up      --
+------------
+Garbage Data
       )STR"
       };
 

@@ -32,10 +32,9 @@
 Parser::Parser() : Parser::base_type(start)
 {
   start =
-    ((vrfTable1
+    +(vrfTable1
      | vrfTable2
-     )
-    | ignoredLine
+     | ignoredLine
     )
     ;
 
@@ -55,7 +54,7 @@ Parser::Parser() : Parser::base_type(start)
 
   vrfLine1 =
     token [(pnx::bind(&nmdo::Vrf::setId, &qi::_val, qi::_1))]
-    > (qi::lit("<not set>") | routeDistinguisher)
+    >> (qi::lit("<not set>") | routeDistinguisher)
     > csValues
     > +( interfaces
       >> qi::eol) [(
@@ -84,11 +83,12 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   vrfLine2 =
-    token   [(pnx::bind(&nmdo::Vrf::setId, &qi::_val, qi::_1))]
-    > token
-    > token
-    > token
-    > qi::eol
+    (token
+    >> token
+    >> token
+    >> token
+    >> qi::eol
+    )[(pnx::bind(&nmdo::Vrf::setId, &qi::_val, qi::_1))]
     ;
 
   routeDistinguisher =
