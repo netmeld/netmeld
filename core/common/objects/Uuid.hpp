@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -59,8 +59,10 @@ namespace netmeld::core::objects {
     protected:
     public:
       Uuid();
-      explicit Uuid(const uuids::uuid&);
+      Uuid(const Uuid&);
+
       explicit Uuid(const std::string&);
+      explicit Uuid(const uuids::uuid&);
 
     // =========================================================================
     // Methods

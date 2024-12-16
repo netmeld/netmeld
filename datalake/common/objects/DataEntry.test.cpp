@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -44,14 +44,14 @@ BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
     TestDataEntry tde;
-    BOOST_CHECK(tde.getCommitter().empty());
-    BOOST_CHECK(tde.getDataPath().empty());
-    BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getNewName().empty());
-    BOOST_CHECK(tde.getSaveName().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
+    BOOST_TEST(tde.getCommitter().empty());
+    BOOST_TEST(tde.getDataPath().empty());
+    BOOST_TEST(tde.getDeviceId().empty());
+    BOOST_TEST(tde.getIngestCmd().empty());
+    BOOST_TEST(tde.getIngestTool().empty());
+    BOOST_TEST(tde.getNewName().empty());
+    BOOST_TEST(tde.getSaveName().empty());
+    BOOST_TEST(tde.getToolArgs().empty());
   }
 }
 
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
 
     for (const auto& committer : testsOk) {
       tde.setCommitter(committer);
-      BOOST_CHECK_EQUAL(committer, tde.getCommitter());
+      BOOST_TEST(committer == tde.getCommitter());
     }
 
     std::vector<std::string> testsBad {
@@ -79,37 +79,37 @@ BOOST_AUTO_TEST_CASE(testSetters)
     tde.setCommitter(empty); // reset
     for (const auto& committer : testsBad) {
       tde.setCommitter(committer);
-      BOOST_CHECK_EQUAL(empty, tde.getCommitter());
+      BOOST_TEST(empty == tde.getCommitter());
     }
     int i {0};
     for (char c {'\0'}; i <= 20; ++i, ++c) {
       std::string s(1,c);
       tde.setCommitter(s);
-      BOOST_CHECK_EQUAL(empty, tde.getCommitter());
+      BOOST_TEST(empty == tde.getCommitter());
     }
 
-    BOOST_CHECK(tde.getDataPath().empty());
-    BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getNewName().empty());
-    BOOST_CHECK(tde.getSaveName().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
+    BOOST_TEST(tde.getDataPath().empty());
+    BOOST_TEST(tde.getDeviceId().empty());
+    BOOST_TEST(tde.getIngestCmd().empty());
+    BOOST_TEST(tde.getIngestTool().empty());
+    BOOST_TEST(tde.getNewName().empty());
+    BOOST_TEST(tde.getSaveName().empty());
+    BOOST_TEST(tde.getToolArgs().empty());
   }
   {
     TestDataEntry tde;
     const std::string path {"../maybe_some/non-existant/path"};
     tde.setDataPath(path);
 
-    BOOST_CHECK_EQUAL(std::filesystem::absolute(path), tde.getDataPath());
-    BOOST_CHECK_EQUAL("path", tde.getSaveName());
+    BOOST_TEST(std::filesystem::absolute(path) == tde.getDataPath());
+    BOOST_TEST("path" == tde.getSaveName());
 
-    BOOST_CHECK(tde.getCommitter().empty());
-    BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getNewName().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
+    BOOST_TEST(tde.getCommitter().empty());
+    BOOST_TEST(tde.getDeviceId().empty());
+    BOOST_TEST(tde.getIngestCmd().empty());
+    BOOST_TEST(tde.getIngestTool().empty());
+    BOOST_TEST(tde.getNewName().empty());
+    BOOST_TEST(tde.getToolArgs().empty());
   }
 
   {
@@ -117,15 +117,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string devId {"test"};
     tde.setDeviceId(devId);
 
-    BOOST_CHECK_EQUAL(devId, tde.getDeviceId());
+    BOOST_TEST(devId == tde.getDeviceId());
 
-    BOOST_CHECK(tde.getCommitter().empty());
-    BOOST_CHECK(tde.getDataPath().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
-    BOOST_CHECK(tde.getNewName().empty());
-    BOOST_CHECK(tde.getSaveName().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
+    BOOST_TEST(tde.getCommitter().empty());
+    BOOST_TEST(tde.getDataPath().empty());
+    BOOST_TEST(tde.getIngestTool().empty());
+    BOOST_TEST(tde.getToolArgs().empty());
+    BOOST_TEST(tde.getNewName().empty());
+    BOOST_TEST(tde.getSaveName().empty());
+    BOOST_TEST(tde.getIngestCmd().empty());
   }
 
   {
@@ -135,22 +135,22 @@ BOOST_AUTO_TEST_CASE(testSetters)
     toolName = "test";
     tde.setIngestTool(toolName);
 
-    BOOST_CHECK_EQUAL(toolName, tde.getIngestTool());
-    BOOST_CHECK_EQUAL(toolName, tde.getIngestCmd());
+    BOOST_TEST(toolName == tde.getIngestTool());
+    BOOST_TEST(toolName == tde.getIngestCmd());
 
     toolName = "nmdb-import-x";
     const std::string args {" --db-name \"${DB_NAME}\" --db-args \"${DB_ARGS}\" --device-id"};
     tde.setIngestTool(toolName);
 
-    BOOST_CHECK_EQUAL(toolName, tde.getIngestTool());
-    BOOST_CHECK_EQUAL((toolName+args), tde.getIngestCmd());
+    BOOST_TEST(toolName == tde.getIngestTool());
+    BOOST_TEST((toolName+args) == tde.getIngestCmd());
 
-    BOOST_CHECK(tde.getCommitter().empty());
-    BOOST_CHECK(tde.getDataPath().empty());
-    BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
-    BOOST_CHECK(tde.getNewName().empty());
-    BOOST_CHECK(tde.getSaveName().empty());
+    BOOST_TEST(tde.getCommitter().empty());
+    BOOST_TEST(tde.getDataPath().empty());
+    BOOST_TEST(tde.getDeviceId().empty());
+    BOOST_TEST(tde.getToolArgs().empty());
+    BOOST_TEST(tde.getNewName().empty());
+    BOOST_TEST(tde.getSaveName().empty());
   }
 
   {
@@ -158,15 +158,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string name {"something"};
     tde.setNewName(name);
 
-    BOOST_CHECK_EQUAL(name, tde.getNewName());
-    BOOST_CHECK_EQUAL(name, tde.getSaveName());
+    BOOST_TEST(name == tde.getNewName());
+    BOOST_TEST(name == tde.getSaveName());
 
-    BOOST_CHECK(tde.getCommitter().empty());
-    BOOST_CHECK(tde.getDataPath().empty());
-    BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
+    BOOST_TEST(tde.getCommitter().empty());
+    BOOST_TEST(tde.getDataPath().empty());
+    BOOST_TEST(tde.getDeviceId().empty());
+    BOOST_TEST(tde.getIngestTool().empty());
+    BOOST_TEST(tde.getToolArgs().empty());
+    BOOST_TEST(tde.getIngestCmd().empty());
   }
   {
     TestDataEntry tde;
@@ -175,15 +175,15 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string name {"something"};
     tde.setNewName(name);
 
-    BOOST_CHECK_EQUAL(std::filesystem::absolute(path), tde.getDataPath());
-    BOOST_CHECK_EQUAL(name, tde.getNewName());
-    BOOST_CHECK_EQUAL(name, tde.getSaveName());
+    BOOST_TEST(std::filesystem::absolute(path) == tde.getDataPath());
+    BOOST_TEST(name == tde.getNewName());
+    BOOST_TEST(name == tde.getSaveName());
 
-    BOOST_CHECK(tde.getCommitter().empty());
-    BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getToolArgs().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
+    BOOST_TEST(tde.getCommitter().empty());
+    BOOST_TEST(tde.getDeviceId().empty());
+    BOOST_TEST(tde.getIngestTool().empty());
+    BOOST_TEST(tde.getToolArgs().empty());
+    BOOST_TEST(tde.getIngestCmd().empty());
   }
 
   {
@@ -191,14 +191,14 @@ BOOST_AUTO_TEST_CASE(testSetters)
     const std::string args {"some -rando --args"};
     tde.setToolArgs(args);
 
-    BOOST_CHECK_EQUAL(args, tde.getToolArgs());
+    BOOST_TEST(args == tde.getToolArgs());
 
-    BOOST_CHECK(tde.getCommitter().empty());
-    BOOST_CHECK(tde.getDeviceId().empty());
-    BOOST_CHECK(tde.getDataPath().empty());
-    BOOST_CHECK(tde.getIngestTool().empty());
-    BOOST_CHECK(tde.getNewName().empty());
-    BOOST_CHECK(tde.getSaveName().empty());
-    BOOST_CHECK(tde.getIngestCmd().empty());
+    BOOST_TEST(tde.getCommitter().empty());
+    BOOST_TEST(tde.getDeviceId().empty());
+    BOOST_TEST(tde.getDataPath().empty());
+    BOOST_TEST(tde.getIngestTool().empty());
+    BOOST_TEST(tde.getNewName().empty());
+    BOOST_TEST(tde.getSaveName().empty());
+    BOOST_TEST(tde.getIngestCmd().empty());
   }
 }

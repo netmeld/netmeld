@@ -119,6 +119,11 @@ function(nm_add_test target)
   set_tests_properties(${test_name}
       PROPERTIES LABELS "${TGT_MODULE_TEST}"
     )
+  target_compile_definitions(${test_target}
+    PUBLIC
+      -DPROGRAM_NAME="UnitTesting"
+      -DPROGRAM_VERSION="UnitTesting"
+    )
   add_dependencies(${TGT_MODULE_TEST} ${test_target})
 endfunction()
 

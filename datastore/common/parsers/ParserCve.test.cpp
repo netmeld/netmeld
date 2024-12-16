@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -41,19 +41,19 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
   {
     nmdo::Cve cve {0, 0};
     auto pcve = nmdp::fromString<nmdp::ParserCve, nmdo::Cve>("CVE-0-0");
-    BOOST_CHECK_EQUAL(cve, pcve);
+    BOOST_TEST(cve == pcve);
   }
 
   {
     nmdo::Cve cve {2000, 2000};
     auto pcve = nmdp::fromString<nmdp::ParserCve, nmdo::Cve>("CVE-2000-2000");
-    BOOST_CHECK_EQUAL(cve, pcve);
+    BOOST_TEST(cve == pcve);
   }
 
   {
     nmdo::Cve cve {"CVE-1234-4321"};
     auto pcve = nmdp::fromString<nmdp::ParserCve, nmdo::Cve>("CVE-1234-4321");
-    BOOST_CHECK_EQUAL(cve, pcve);
+    BOOST_TEST(cve == pcve);
   }
 
   std::string ymin = std::to_string(SHRT_MIN);
@@ -64,13 +64,13 @@ BOOST_AUTO_TEST_CASE(testWellFormed)
     nmdo::Cve cve {SHRT_MIN, INT_MIN};
     std::string cveStr {"CVE-" + ymin + "-" + nmin};
     auto pcve = nmdp::fromString<nmdp::ParserCve, nmdo::Cve>(cveStr);
-    BOOST_CHECK_EQUAL(cve, pcve);
+    BOOST_TEST(cve == pcve);
   }
   {
     nmdo::Cve cve {SHRT_MAX, INT_MAX};
     std::string cveStr {"CVE-" + ymax + "-" + nmax};
     auto pcve = nmdp::fromString<nmdp::ParserCve, nmdo::Cve>(cveStr);
-    BOOST_CHECK_EQUAL(cve, pcve);
+    BOOST_TEST(cve == pcve);
   }
 }
 
@@ -88,8 +88,8 @@ BOOST_AUTO_TEST_CASE(testMalformed)
       nmdp::IstreamIter i {dataStream}, e;
       bool const success = qi::parse(i, e, nmdp::ParserCve(), result);
 
-      BOOST_CHECK(!success);
-      BOOST_CHECK(i == e);
+      BOOST_TEST(!success);
+      BOOST_TEST((i == e));
     }
   }
 
@@ -112,8 +112,8 @@ BOOST_AUTO_TEST_CASE(testMalformed)
       nmdp::IstreamIter i {dataStream}, e;
       bool const success = qi::parse(i, e, nmdp::ParserCve(), result);
 
-      BOOST_CHECK(!success);
-      BOOST_CHECK(i != e);
+      BOOST_TEST(!success);
+      BOOST_TEST((i != e));
     }
   }
 }

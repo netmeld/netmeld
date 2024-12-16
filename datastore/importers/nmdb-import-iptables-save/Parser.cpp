@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -42,70 +42,66 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   table =
-    commentLine >>
-    qi::lexeme[qi::lit("*") >> token]
-      [(pnx::bind(&Parser::setTableName, this, qi::_1))] >> qi::eol >>
-    +(chain) >>
-    *(rule) >>
-    qi::lit("COMMIT") >> qi::eol >>
     commentLine
+    > qi::lexeme[qi::lit("*") > token]
+       [(pnx::ref(tableName) = qi::_1)]
+    > qi::eol
+    > +(chain)
+    > *(rule)
+    > qi::lit("COMMIT") > qi::eol
+    > commentLine
     ;
 
   chain =
-    (qi::lit(":") >> token >> token >> counts >> qi::eol)
+    (qi::lit(":") >> token >> token >> counts > qi::eol)
       [(pnx::bind(&Parser::updateChainPolicy, this, qi::_1, qi::_2))]
     ;
 
   rule =
-    -counts >>
-    (qi::lit("-A") >> token
-       [(pnx::bind(&Parser::updateCurRuleId, this, qi::_1))] >>
-     // TODO 09FEB19 Improve logic to match certain module formats e.g.,
-     //      -p tcp -m tcp --sport :1024 ! --dport 1024:2048
-     // http://ipset.netfilter.org/iptables-extensions.man.html
-     *(  (qi::lexeme[qi::lit("-p tcp -m tcp")] >> sportModule >> dportModule)
-           [(pnx::bind(&Parser::updateRulePort, this, "tcp", qi::_1, qi::_2))]
-       | (qi::lexeme[qi::lit("-p udp -m udp")] >> sportModule >> dportModule)
-           [(pnx::bind(&Parser::updateRulePort, this, "udp", qi::_1, qi::_2))]
-       | (qi::lexeme[qi::lit("-p icmp -m icmp")] >> icmpModule)
-           [(pnx::bind(&Parser::updateRulePort, this, "icmp", "", qi::_1))]
-       | (qi::matches[qi::lit("!")] >> optionSwitch >> optionValue)
-           [(pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2, qi::_3))]
-      ) >>
-     qi::eol)
-      [(pnx::bind(&Parser::finalizeRule, this))]
+    -counts
+    >> (  qi::lit("-A")
+       >> token [(pnx::bind(&Parser::updateCurRuleId, this, qi::_1))]
+       // http://ipset.netfilter.org/iptables-extensions.man.html
+       >> *((qi::lit("-p tcp -m tcp") >> sportModule >> dportModule)
+              [(pnx::bind(&Parser::updateRulePort, this, "tcp", qi::_1, qi::_2))]
+          | (qi::lit("-p udp -m udp") >> sportModule >> dportModule)
+              [(pnx::bind(&Parser::updateRulePort, this, "udp", qi::_1, qi::_2))]
+          | (qi::lit("-p icmp -m icmp") >> icmpModule)
+              [(pnx::bind(&Parser::updateRulePort, this, "icmp", "", qi::_1))]
+          | (qi::matches[qi::lit("!")] >> optionSwitch >> optionValue)
+              [(pnx::bind(&Parser::updateRule, this, qi::_1, qi::_2, qi::_3))]
+          ) > qi::eol
+       ) [(pnx::bind(&Parser::finalizeRule, this))]
     ;
 
   sportModule =
-    (  (qi::char_("!") >> qi::lit("--sport") >> token)
-         [(qi::_val = qi::_1 + qi::_2)]
-     | (qi::lit("--sport") >> token)
-         [(qi::_val = qi::_1)]
-     | (qi::attr(std::string()))
-         [(qi::_val = qi::_1)]
+    ( ( -qi::lit("!") [qi::_val += "!"]
+      >> qi::lit("--sport ")
+      >> token [qi::_val += qi::_1]
+      )
+    | qi::eps
     )
     ;
   dportModule =
-    (  (qi::char_("!") >> qi::lit("--dport") >> token)
-         [(qi::_val = qi::_1 + qi::_2)]
-     | (qi::lit("--dport") >> token)
-         [(qi::_val = qi::_1)]
-     | (qi::attr(std::string()))
-         [(qi::_val = qi::_1)]
+    ( ( -qi::lit("!") [qi::_val += "!"]
+      >> qi::lit("--dport ")
+      >> token [qi::_val += qi::_1]
+      )
+    | qi::eps
     )
     ;
   icmpModule =
-    (  (qi::char_("!") >>
-        (qi::lit("--icmp-type") | qi::lit("--icmpv6-type")) >> token)
-         [(qi::_val = qi::_1 + qi::_2)]
-     | ((qi::lit("--icmp-type") | qi::lit("--icmpv6-type")) >> token)
-         [(qi::_val = qi::_1)]
-    )
-    ;
+    -qi::lit("!") [qi::_val += "!"]
+    >> (qi::lit("--icmp-type") | qi::lit("--icmpv6-type"))
+    >> token [qi::_val += qi::_1]
     ;
 
   counts =
-    qi::lit("[") >> +qi::ascii::digit >> qi::lit(":") >> +qi::ascii::digit >> qi::lit("]")
+    qi::lit("[")
+    >> +qi::ascii::digit
+    >> qi::lit(":")
+    >> +qi::ascii::digit
+    > qi::lit("]")
     ;
 
   optionSwitch =
@@ -116,13 +112,15 @@ Parser::Parser() : Parser::base_type(start)
   optionValue =
     // mName [module-options]
     // module-options appear to be long form (--) and may contain negated (!)
-    *((token - (optionSwitch | (qi::lit("! ") >> optionSwitch))) >>
-      *qi::ascii::blank
+    *((token - ( optionSwitch
+               | (qi::lit("! ") >> optionSwitch)
+               )
+      ) >> *qi::ascii::blank
     )
     ;
 
   commentLine =
-    qi::lit("#") >> qi::omit[*token] >> qi::eol
+    qi::lit("#") > *token > qi::eol
     ;
 
   token =
@@ -176,27 +174,30 @@ Parser::updateRule(const bool _neg,
   //LOG_DEBUG << "Parser::updateRule: " <<_neg<<":"<<_key<<":"<<_val<<std::endl;
   std::string value = nmcu::trim(_neg ? "!" + _val : _val);
   auto& ruleObj {d.ruleBooks[bookName][curRuleId]};
-  if ("s" == _key) {
+  if ("s" == _key) {  // source
     ruleObj.addSrc(value);
     d.networkBooks[bookName][value];
-  } else if ("d" == _key) {
+  } else if ("d" == _key) { // destination
     ruleObj.addDst(value);
     d.networkBooks[bookName][value];
-  } else if ("i" == _key) {
+  } else if ("i" == _key) { // in-interface
     ruleObj.addSrcIface(value);
-  } else if ("o" == _key) {
+  } else if ("o" == _key) { // out-interface
     ruleObj.addDstIface(value);
-  } else if ("p" == _key) {
+  } else if ("p" == _key) { // protocol
     ruleObj.addService(value);
     d.serviceBooks[bookName][value];
-  } else if ("m" == _key) {
+  } else if ("m" == _key) { // match (module)
     ruleObj.addService(value);
     d.serviceBooks[bookName][value];
-  } else if ("j" == _key) {
+  } else if ("j" == _key) { // jump
+    value = nmcu::trim(_neg ? "!jump " + _val : "jump " + _val);
     ruleObj.addAction(value);
-  } else if ("g" == _key) {
+  } else if ("g" == _key) { // goto
+    value = nmcu::trim(_neg ? "!goto " + _val : "goto " + _val);
     ruleObj.addAction(value);
-  } else if ("f" == _key) {
+  } else if ("f" == _key) { // fragment
+    value = nmcu::trim(_neg ? "!fragment " + _val : "fragment " + _val);
     ruleObj.addService(value);
     d.serviceBooks[bookName][value];
   } else {

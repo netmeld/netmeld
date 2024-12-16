@@ -25,6 +25,9 @@
 // Suppressions
 // ============
 
+// 3rd party libraries
+*:./build/_deps/*
+
 // Category: warning
 // Suppress warnings about suppressions that don't match, for some reasons cppcheck shows this message a lot
 //  (e.g.) nofile:0:0: warning: Unmatched suppression: missingIncludeSystem [unmatchedSuppression]

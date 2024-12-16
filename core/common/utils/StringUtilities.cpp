@@ -25,12 +25,16 @@
 // =============================================================================
 
 #include <algorithm>
+#include <format>
+#include <vector>
+#include <tuple>
+#include <ranges>
 
 #include <netmeld/core/utils/StringUtilities.hpp>
 
 
-namespace netmeld::core::utils {
-
+namespace netmeld::core::utils
+{
   std::string
   toLower(const std::string& orig)
   {
@@ -52,25 +56,15 @@ namespace netmeld::core::utils {
   std::string
   trim(const std::string& orig)
   {
-    std::string text {orig};
-    if (text.front() == ' ') {
-      text.erase(text.begin(),
-                 std::find_if(text.begin(),
-                              text.end(),
-                              [](int ch) { return !std::isspace(ch); }
-                             )
-                );
-    }
-    if (text.back() == ' ') {
-      text.erase(std::find_if(text.rbegin(),
-                              text.rend(),
-                              [](int ch) { return !std::isspace(ch); }
-                             ).base(),
-                 text.end()
-                );
-    }
+    auto isWhitespace = [](unsigned char c) { return std::isspace(c); };
 
-    return text;
+    auto text { orig
+              | std::views::drop_while(isWhitespace)
+              | std::views::reverse
+              | std::views::drop_while(isWhitespace)
+              | std::views::reverse
+              };
+    return std::string(text.begin(), text.end());
   }
 
   std::string
@@ -86,51 +80,34 @@ namespace netmeld::core::utils {
     // Various Cisco output uses two-letter interface prefixes.
     // These short interface names need to be expanded in order to match
     // the interface names obtained from the running configuration.
-    std::string ifaceName{toLower(_ifaceName)};
+    static const std::vector<std::tuple<std::string, std::string>> lookups {
+      // reverse sort (sort!) to ensure shorter spellings don't match first
+        {"vl", "vlan"}
+      , {"twe", "twentyfivegigabitethernet"}
+      , {"tw", "twogigabitethernet"}
+      , {"tu", "tunnel"}
+      , {"te", "tengigabitethernet"}
+      , {"se", "serial"}
+      , {"po", "port-channel"}
+      , {"lo", "loopback"}
+      , {"gi", "gigabitethernet"}
+      , {"fo", "fortygigabitethernet"}
+      , {"fi", "fivegigabitethernet"}
+      , {"fa", "fastethernet"}
+      , {"et", "ethernet"}
+      };
 
+    std::string ifaceName {toLower(_ifaceName)};
     trim(ifaceName);
 
-    // Ethernet variations (ordered by speed)
-    if (ifaceName.starts_with("et") &&
-        !ifaceName.starts_with("ethernet")) {
-      ifaceName.replace(0, 2, "ethernet");
-    }
-    else if (ifaceName.starts_with("fa") &&
-             !ifaceName.starts_with("fastethernet")) {
-      ifaceName.replace(0, 2, "fastethernet");
-    }
-    else if (ifaceName.starts_with("gi") &&
-             !ifaceName.starts_with("gigabitethernet")) {
-      ifaceName.replace(0, 2, "gigabitethernet");
-    }
-    else if (ifaceName.starts_with("te") &&
-             !ifaceName.starts_with("tengigabitethernet")) {
-      ifaceName.replace(0, 2, "tengigabitethernet");
-    }
-    else if (ifaceName.starts_with("fo") &&
-             !ifaceName.starts_with("fortygigabitethernet")) {
-      ifaceName.replace(0, 2, "fortygigabitethernet");
-    }
-    // Other interface types (ordered alphabetically)
-    else if (ifaceName.starts_with("lo") &&
-             !ifaceName.starts_with("loopback")) {
-      ifaceName.replace(0, 2, "loopback");
-    }
-    else if (ifaceName.starts_with("po") &&
-             !ifaceName.starts_with("port-channel")) {
-      ifaceName.replace(0, 2, "port-channel");
-    }
-    else if (ifaceName.starts_with("se") &&
-             !ifaceName.starts_with("serial")) {
-      ifaceName.replace(0, 2, "serial");
-    }
-    else if (ifaceName.starts_with("tu") &&
-             !ifaceName.starts_with("tunnel")) {
-      ifaceName.replace(0, 2, "tunnel");
-    }
-    else if (ifaceName.starts_with("vl") &&
-             !ifaceName.starts_with("vlan")) {
-      ifaceName.replace(0, 2, "vlan");
+    for (const auto& [abbrev, full] : lookups) {
+      if (   ifaceName.starts_with(abbrev)
+         && !ifaceName.starts_with(full)
+         )
+      {
+        ifaceName.replace(0, abbrev.size(), full);
+        break;
+      }
     }
 
     return ifaceName;
