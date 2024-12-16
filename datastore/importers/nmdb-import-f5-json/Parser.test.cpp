@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(testParseNetSelf)
   BOOST_TEST_REQUIRE(out.vrfs.contains(""));
   BOOST_TEST(!out.vrfs.at("").isValid());
   dbgStr = out.vrfs.at("").toDebugString();
-  nmdp::testInString(dbgStr, "[vrfId: , ifaces: [iface-1]");
+  nmdp::testInString(dbgStr, "[vrfId: , ifaces: [[name: iface-1,");
 }
 
 BOOST_AUTO_TEST_CASE(testParseNetArpNdp)
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(testParseNetArpNdp)
   BOOST_TEST_REQUIRE(out.vrfs.contains(""));
   BOOST_TEST(!out.vrfs.at("").isValid());
   dbgStr = out.vrfs.at("").toDebugString();
-  nmdp::testInString(dbgStr, "[vrfId: , ifaces: [iface-1]");
+  nmdp::testInString(dbgStr, "[vrfId: , ifaces: [[name: iface-1,");
 }
 
 BOOST_AUTO_TEST_CASE(testParseLtmVirtualAddress)
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(testParseLtmVirtualAddress)
   BOOST_TEST_REQUIRE(out.vrfs.contains(""));
   BOOST_TEST(!out.vrfs.at("").isValid());
   dbgStr = out.vrfs.at("").toDebugString();
-  nmdp::testInString(dbgStr, "[vrfId: , ifaces: [iface-1]");
+  nmdp::testInString(dbgStr, "[vrfId: , ifaces: [[name: iface-1,");
 }
 
 BOOST_AUTO_TEST_CASE(testWhole)

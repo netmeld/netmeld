@@ -44,6 +44,7 @@ foreach(ITEM
     nmdb-import-brocade-show-ip-route
     nmdb-import-cisco
     nmdb-import-cisco-show-ip-route
+    nmdb-import-cisco-show-vrf
     nmdb-import-cisco-wireless
     nmdb-import-clw
     nmdb-import-dig

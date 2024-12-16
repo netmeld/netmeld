@@ -67,10 +67,10 @@ BOOST_AUTO_TEST_CASE(testSetters)
   // Setters
   vrf.setId(id);
   vrf.addIface("eth0");
-  vrf.addIface("eth1");
+  vrf.addIface("gi0");
 
   BOOST_TEST(id == vrf.vrfId);
   BOOST_TEST(2 == vrf.ifaces.size());
-  BOOST_TEST("eth0" == vrf.ifaces.at(0));
-  BOOST_TEST("eth1" == vrf.ifaces.at(1));
+  BOOST_TEST("eth0" == vrf.ifaces.at(0).getName());
+  BOOST_TEST("gi0" == vrf.ifaces.at(1).getName());
 }
