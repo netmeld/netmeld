@@ -680,7 +680,8 @@ BOOST_AUTO_TEST_CASE(testParseConfigVirtualRouter)
   }
 
   auto dbgStr = out.at("vrf1").toDebugString();
-  nmdp::testInString(dbgStr, "vrfId: vrf1, ifaces: [eth0, eth1]");
+  nmdp::testInString(dbgStr, "ifaces: [[name: eth0, description: ,");
+  nmdp::testInString(dbgStr, "[name: eth1, description: ,");
   nmdo::Route r1;
   r1.setVrfId("vrf1");
   r1.setProtocol("static");
@@ -692,7 +693,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigVirtualRouter)
   nmdp::testInString(dbgStr, r1.toDebugString());
 
   dbgStr = out.at("vrf2").toDebugString();
-  nmdp::testInString(dbgStr, "vrfId: vrf2, ifaces: [eth2]");
+  nmdp::testInString(dbgStr, "vrfId: vrf2, ifaces: [[name: eth2,");
   r1.setVrfId("vrf2");
   nmdp::testInString(dbgStr, r1.toDebugString());
   nmdo::Route r2;
