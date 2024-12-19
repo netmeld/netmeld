@@ -56,7 +56,9 @@ namespace netmeld::datastore::objects {
   void
   Vrf::addIface(const std::string& iface)
   {
-    ifaces.emplace_back(nmcu::toLower(iface));
+    InterfaceNetwork ifaceNetwork {iface};
+    ifaceNetwork.setPartial(true);
+    ifaces.emplace_back(ifaceNetwork);
   }
 
   void
@@ -103,12 +105,16 @@ namespace netmeld::datastore::objects {
                    , vrfId
                    );
 
+    for (auto& iface : ifaces) {
+      iface.save(t, toolRunId, deviceId);
+    }
+
     for (const auto& iface : ifaces) {
       t.exec_prepared( "insert_raw_device_vrf_interface"
                      , toolRunId
                      , deviceId
                      , vrfId
-                     , iface
+                     , iface.getName()
                      );
     }
 

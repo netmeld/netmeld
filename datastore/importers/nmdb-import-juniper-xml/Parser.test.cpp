@@ -1490,7 +1490,7 @@ BOOST_AUTO_TEST_CASE(testParseConfigRoutingInstances)
       nmdp::testInString(dbgStr, std::format("[vrfId: {}, ifaces:", name));
 
       if ("ri-1" == name) {
-        nmdp::testInString(dbgStr, "ifaces: [iface1],");
+        nmdp::testInString(dbgStr, "ifaces: [[name: iface1,");
       } else {
         nmdp::testInString(dbgStr, "ifaces: [],");
       }
