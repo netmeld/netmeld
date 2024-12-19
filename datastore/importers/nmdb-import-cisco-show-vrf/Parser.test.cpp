@@ -53,15 +53,23 @@ BOOST_AUTO_TEST_CASE(testParts)
 
     std::vector<std::tuple<std::string, std::string, std::vector<std::string>>>
       testsOk {
-        {"Internet                         <not set>             ipv4        Gi0/0/2\nGi0/0/3\n"
+        {"Internet    <not set>   ipv4    Gi0/0/2\nGi0/0/3\n"
         , "Internet"
         , { "gigabitethernet0/0/2"
           , "GigabitEthernet0/0/3"
           }
         }
-      , {"mgmt-intf                        12345:123             ipv4,ipv6   Gi0\n"
+      , {"mgmt-intf   12345:123   ipv4,ipv6   Gi0\n"
         , "mgmt-intf"
         , {"gigabitethernet0"}
+        }
+      , {"vrf1    12345:123   ipv4,ipv6\n"
+        , "vrf1"
+        , {}
+        }
+      , {"vrf1    12345:123   ipv4,ipv6   Te0/1.1\n"
+        , "vrf1"
+        , {"tengigabitethernet0/1.1"}
         }
       };
 
@@ -110,29 +118,48 @@ BOOST_AUTO_TEST_CASE(testParts)
 
 BOOST_AUTO_TEST_CASE(testWholeVrfTable1)
 {
-  { // Format 1
-    TestParser tp;
-    const auto& parserRule {tp.start};
+  TestParser tp;
+  const auto& parserRule {tp.start};
 
-    std::string test {
+  std::vector<std::string> tests {
       R"STR(
+      Name    Default RD    Protocols   Interfaces
+      vrf1    12345:123     ipv4        Gi1
+      vrf2    <not set>     ipv4        Gi2/0/1
+      vrf3    12345:123     ipv4,ipv6   Gi3.100
+      )STR"
+    , R"STR(
+      Name    Default RD    Protocols   Interfaces
+      vrf1    12345:123     ipv4        Gi1
+      vrf2    <not set>     ipv4
+      vrf3    12345:123     ipv4,ipv6
+      )STR"
+    , R"STR(
+      Name    Default RD    Protocols   Interfaces
+      vrf1    12345:123     ipv4        Gi1
+      vrf2    <not set>     ipv4        Gi2
+                                        Gi3
+      vrf3    12345:123     ipv4,ipv6   Gi4
+                                        Gi5
+      )STR"
+    , R"STR(
   Garbage Data
   ------------
   Name                             Default RD            Protocols   Interfaces
   Internet                         <not set>             ipv4        Gi0/0/2
                                                                      Gi0/0/3
   mgmt-intf                        12345:123             ipv4,ipv6   Gi0
+  other-intf                       12345:123             ipv4,ipv6   Gi1
   -----------
   Garbage Data
       )STR"
-      };
+    };
 
+  for (const auto& test : tests) {
     Result out;
     BOOST_TEST(nmdp::testAttr(test.c_str(), parserRule, out, blank),
-              "Parse rule 'testWholeVrfTable1': " << test);
-    size_t conCount {2};
-    BOOST_TEST(conCount == out.size());
-
+              "Parse rule 'start': " << test);
+    BOOST_TEST(3 == out.size()); // 3 vrfs per test
     for (const auto& vrf : out) {
       BOOST_TEST(vrf.isValid());
     }
