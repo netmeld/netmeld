@@ -875,6 +875,158 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--- Could we use these to more easily query against
+CREATE VIEW create_actions AS
+SELECT * FROM match_actions('iam:Create%');
+
+CREATE VIEW delete_actions AS
+SELECT * FROM match_actions('iam:Delete%');
+
+CREATE VIEW get_actions AS
+SELECT * FROM match_actions('iam:Get%');
+
+CREATE VIEW list_actions AS
+SELECT * FROM match_actions('iam:List%');
+
+CREATE VIEW set_actions AS
+SELECT * FROM match_actions('iam:Set%');
+
+CREATE VIEW iam_actions AS
+SELECT * FROM match_actions('iam:%');
+
+CREATE VIEW ec2_actions AS
+SELECT * FROM match_actions('ec2:%');
+
+CREATE VIEW elastic_load_balancing_actions AS
+SELECT * FROM match_actions('elasticloadbalancing:%');
+
+CREATE VIEW cloud_watch_actions AS
+SELECT * FROM match_actions('cloudwatch:%');
+
+CREATE VIEW autoscaling_actions AS
+SELECT * FROM match_actions('autoscaling:%');
+
+
+CREATE VIEW users_with_managed_policies AS
+SELECT
+    u.id AS user_id,
+    u.arn AS user_arn,
+    u.name AS user_name,
+    p.policy_arn,
+    p.policy_name
+FROM
+    raw_aws_iam_user u
+JOIN
+    raw_aws_iam_attached_managed_policy p ON u.id = p.attachment_id;
+
+CREATE VIEW roles_with_managed_policies AS
+SELECT
+    r.id AS role_id,
+    r.arn AS role_arn,
+    r.name AS role_name,
+    p.policy_arn,
+    p.policy_name
+FROM
+    raw_aws_iam_role r
+JOIN
+    raw_aws_iam_attached_managed_policy p ON r.id = p.attachment_id;
+
+CREATE VIEW groups_with_managed_policies AS
+SELECT
+    g.id AS group_id,
+    g.arn AS group_arn,
+    g.name AS group_name,
+    p.policy_arn,
+    p.policy_name
+FROM
+    raw_aws_iam_group g
+JOIN
+    raw_aws_iam_attached_managed_policy p ON g.id = p.attachment_id;
+
+CREATE VIEW users_and_groups AS
+SELECT
+    u.id AS user_id,
+    u.arn AS user_arn,
+    u.name AS user_name,
+    g.group_name
+FROM
+    raw_aws_iam_user u
+JOIN
+    raw_aws_iam_user_group g ON u.id = g.user_id;
+
+CREATE VIEW policies_and_versions AS
+SELECT
+    p.id AS policy_id,
+    p.arn AS policy_arn,
+    p.name AS policy_name,
+    v.version_id,
+    v.is_default_version,
+    v.create_date AS version_create_date
+FROM
+    raw_aws_iam_policy p
+JOIN
+    raw_aws_iam_policy_version v ON p.id = v.policy_id;
+
+CREATE VIEW roles_and_instance_profiles AS
+SELECT
+    r.id AS role_id,
+    r.arn AS role_arn,
+    r.name AS role_name,
+    ip.profile_id,
+    ip.profile_name,
+    ip.arn AS profile_arn
+FROM
+    raw_aws_iam_role r
+JOIN
+    raw_aws_iam_role_instance_profile ip ON r.id = ip.parent_role_id;
+
+CREATE VIEW roles_and_permission_boundaries AS
+SELECT
+    r.id AS role_id,
+    r.arn AS role_arn,
+    r.name AS role_name,
+    pb.boundary_arn,
+    pb.boundary_type
+FROM
+    raw_aws_iam_role r
+JOIN
+    raw_aws_iam_role_permission_boundary pb ON r.id = pb.role_id;
+
+CREATE VIEW users_and_tags AS
+SELECT
+    id AS user_id,
+    arn AS user_arn,
+    name AS user_name,
+    jsonb_each_text(tags) AS tag
+FROM
+    raw_aws_iam_user;
+
+CREATE VIEW roles_and_tags AS
+SELECT
+    id AS role_id,
+    arn AS role_arn,
+    name AS role_name,
+    jsonb_each_text(tags) AS tag
+FROM
+    raw_aws_iam_role;
+
+CREATE VIEW groups_and_tags AS
+SELECT
+    id AS group_id,
+    arn AS group_arn,
+    name AS group_name,
+    jsonb_each_text(tags) AS tag
+FROM
+    raw_aws_iam_group;
+
+CREATE VIEW policies_and_tags AS
+SELECT
+    id AS policy_id,
+    arn AS policy_arn,
+    name AS policy_name,
+    jsonb_each_text(tags) AS tag
+FROM
+    raw_aws_iam_policy;
 
 -------------------------------------------------------------------------------
 
