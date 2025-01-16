@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -76,6 +76,24 @@ Parser::fromJsonV3(std::istream& _file)
   }
 }
 
+void
+Parser::fromJsonOCSF(std::istream& _file)
+{
+  // OCSF output is a JSON array
+  Data d;
+  auto dataArray = json::parse(_file);
+  for (const auto& entry : dataArray) {
+    nmdop::ProwlerOCSFData ocsfd {entry};
+    if (ocsfd != nmdop::ProwlerOCSFData()) {
+      d.ocsfData.emplace_back(ocsfd);
+    } else {
+      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
+    }
+  }
+  if (d != Data()) {
+    r.emplace_back(d);
+  }
+}
 
 
 // =============================================================================

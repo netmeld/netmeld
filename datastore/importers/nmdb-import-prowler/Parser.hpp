@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,6 +31,7 @@
 
 #include "ProwlerV2Data.hpp"
 #include "ProwlerV3Data.hpp"
+#include "ProwlerOCSFData.hpp"
 
 namespace nmdop = netmeld::datastore::objects::prowler;
 
@@ -41,6 +42,7 @@ namespace nmdop = netmeld::datastore::objects::prowler;
 struct Data {
   std::vector<nmdop::ProwlerV2Data> v2Data;
   std::vector<nmdop::ProwlerV3Data> v3Data;
+  std::vector<nmdop::ProwlerOCSFData> ocsfData;
 
   auto operator<=>(const Data&) const = default;
   bool operator==(const Data&) const = default;
@@ -73,6 +75,7 @@ class Parser
   public:
     void fromJsonV2(std::istream&);
     void fromJsonV3(std::istream&);
+    void fromJsonOCSF(std::istream&);
     Result getData();
 };
 #endif // PARSER_HPP

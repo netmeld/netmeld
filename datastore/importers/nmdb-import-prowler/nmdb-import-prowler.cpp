@@ -80,9 +80,9 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
       this->opts.addRequiredOption("prowler-version", std::make_tuple(
             "prowler-version"
-          , po::value<uint16_t>()->default_value(3)
+          , po::value<uint16_t>()->default_value(5)
           , "Which prowler version's JSON to process."
-            " Known change between v2 and v3."
+            " Known change between v2, v3, and v5."
           )
         );
 
@@ -104,6 +104,8 @@ class Tool : public nmdt::AbstractImportTool<P,R>
           parser.fromJsonV2(f);
         } else if (3 == version) {
           parser.fromJsonV3(f);
+        } else if (5 == version) {
+          parser.fromJsonOCSF(f);
         } else {
           LOG_WARN << "No valid version given; aborting\n";
           std::exit(nmcu::Exit::FAILURE);
@@ -141,6 +143,11 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         }
 
         for (auto& entry : results.v3Data) {
+          entry.save(t, toolRunId, deviceId);
+          LOG_DEBUG << entry.toDebugString() << std::endl;
+        }
+
+        for (auto& entry : results.ocsfData) {
           entry.save(t, toolRunId, deviceId);
           LOG_DEBUG << entry.toDebugString() << std::endl;
         }
