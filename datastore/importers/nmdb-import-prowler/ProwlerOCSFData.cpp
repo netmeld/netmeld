@@ -124,7 +124,8 @@ namespace netmeld::datastore::objects::prowler {
         }
     } else {
         LOG_ERROR << "Neither severity or severity_id found. At least one of these fields is required";
-        std::exit(nmcu::Exit::FAILURE);
+        //std::exit(nmcu::Exit::FAILURE);
+        // TODO Once we resolve #181, uncomment the hard fail
     }
 
     // array values
