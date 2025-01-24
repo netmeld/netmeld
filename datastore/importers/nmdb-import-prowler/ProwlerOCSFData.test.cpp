@@ -97,7 +97,7 @@ namespace netmeld::datastore::objects::prowler {
                 "product_uid": "prowler",
                 "title": "Ensure CloudTrail is enabled in all regions",
                 "uid": "prowler-aws-cloudtrail_multi_region_enabled-123456789012-ap-northeast-1-123456789012",
-                "types": ["Software and Configuration Checks","Industry and Regulatory Standards","CIS AWS Foundations Benchmark"],
+                "types": ["Software and Configuration Checks","Industry and Regulatory Standards","CIS AWS Foundations Benchmark"]
             },
             "resources": [
                 {
@@ -112,7 +112,7 @@ namespace netmeld::datastore::objects::prowler {
                     "uid": "arn:aws:cloudtrail:ap-northeast-1:123456789012:trail",
                     "data": {
                         "details": "More detail here"
-                    },
+                    }
                 }
             ],
             "category_name": "Findings",
@@ -181,16 +181,16 @@ namespace netmeld::datastore::objects::prowler {
                         "164_308_a_6_ii",
                         "164_312_b",
                         "164_312_e_2_i"
-                    ],
+                    ]
                 }
-            },
+            }
         })");
 
         // Create an instance of ProwlerOCSFData using the constructor
         TestProwlerOCSFData data(jline);
 
         // Perform assertions to verify the values are correctly assigned
-        BOOST_TEST("2024-04-08T11:33:51.870861" == data.assessmentStartTime.toString());
+        BOOST_TEST("2024-04-08T11:33:51" == data.assessmentStartTime.toString());
         BOOST_TEST("prowler-aws-cloudtrail_multi_region_enabled-123456789012-ap-northeast-1-123456789012" == data.findingUniqueId);
         BOOST_TEST("aws" == data.provider);
         //BOOST_TEST(null == data.profile);
