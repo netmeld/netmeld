@@ -40,11 +40,11 @@ namespace netmeld::datastore::objects::prowler {
   // ===========================================================================
   ProwlerOCSFData::ProwlerOCSFData(const json& jline)
   {
-    auto jFindingInfo = jline.at("finding_info", json::object);
-    auto jResources = jline.at("resources", json::object);
-    auto jUnmapped = jline.at("unmapped", json::object);
-    auto jCloud = jline.at("cloud", json::object);
-    auto jAccount = jCloud.at("account", json::object);
+    auto jFindingInfo = jline.value("finding_info", json::object());
+    auto jResources = jline.value("resources", json::object());
+    auto jUnmapped = jline.value("unmapped", json::object());
+    auto jCloud = jline.value("cloud", json::object());
+    auto jAccount = jCloud.value("account", json::object());
     // string values
     assessmentStartTime.readFormatted(jline.value("event_time", "")
                                      , "%Y-%m-%dT%H:%M:%S");
@@ -65,7 +65,8 @@ namespace netmeld::datastore::objects::prowler {
         severity = jline["severity"];
     } else if(jline.contains("severity_id")) {
         LOG_WARN << "Key: severity not found. Assuming severity from severity_id";
-        switch(jline["severity_id"])
+        int severity_id = jline["severity_id"];
+        switch(severity_id)
         {
             case 0:
                 severity = "Unknown";
