@@ -73,7 +73,7 @@ namespace netmeld::datastore::objects::prowler {
     BOOST_AUTO_TEST_CASE(ConstructorTest)
     {
         // Create a sample JSON object
-        json jline = {
+        json jline = json::parse(R"({
             "metadata": {
                 "event_code": "cloudtrail_multi_region_enabled",
                 "product": {
@@ -184,7 +184,7 @@ namespace netmeld::datastore::objects::prowler {
                     ],
                 }
             },
-        };
+        })");
 
         // Create an instance of ProwlerOCSFData using the constructor
         TestProwlerOCSFData data(jline);
