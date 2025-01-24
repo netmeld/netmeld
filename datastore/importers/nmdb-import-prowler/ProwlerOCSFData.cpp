@@ -40,25 +40,55 @@ namespace netmeld::datastore::objects::prowler {
   // ===========================================================================
   ProwlerOCSFData::ProwlerOCSFData(const json& jline)
   {
-    auto jFindingInfo = jline.value("finding_info", json::object());
-    auto jResources = jline.value("resources", json::object());
-    auto jUnmapped = jline.value("unmapped", json::object());
-    auto jCloud = jline.value("cloud", json::object());
-    auto jAccount = jCloud.value("account", json::object());
-    // string values
+    // top level
     assessmentStartTime.readFormatted(jline.value("event_time", "")
                                      , "%Y-%m-%dT%H:%M:%S");
-    findingUniqueId = jFindingInfo.value("uid", "");
-    provider = jCloud.value("provider", "");
     //profile = jline.value("Profile", ""); // Not mapped yet
-    accountId = jAccount.value("uid", "");
-    region = jResources.value("region", "");
-    checkId = jline["metadata"].value("event_code", "");
-    checkTitle = jFindingInfo.value("title", "");
-    serviceName = jResources["group"].value("name", "");
     //subServiceName = jline.value("SubServiceName", ""); // Not mapped yet
     status = jline.value("status_code", "");
     statusExtended = jline.value("status_detail", "");
+    risk = jline.value("risk_details", "");
+
+    // finding_info
+    auto jFindingInfo = jline.value("finding_info", json::object());
+    findingUniqueId = jFindingInfo.value("uid", "");
+    checkTitle = jFindingInfo.value("title", "");
+
+    // cloud
+    auto jCloud = jline.value("cloud", json::object());
+    provider = jCloud.value("provider", "");
+    // jCloud["org"].value("name", ""); // Used to be in OrganizationsInfo
+    // jCloud["org"].value("uid", ""); // Should map to the same as jMetadata.value("tenant_uid", "");
+
+    // account
+    auto jAccount = jCloud.value("account", json::object());
+    accountId = jAccount.value("uid", "");
+    // jAccount.value("account_name", ""); // Used to be in OrganizationsInfo
+
+    // resources
+    auto jResourceArray = jline.value("resources", json::array());
+    auto jResources = jResourceArray.size() > 0 ? jResourceArray[0] : json::object();
+    region = jResources.value("region", "");
+    auto jResGroup = jResources.value("group", json::object());
+    serviceName = jResGroup.value("name", "");
+    resourceId = jResources.value("name", "");
+    resourceArn = jResources.value("uid", "");
+    resourceType = jResources.value("type", "");
+    auto jResData = jResources.value("data", json::object());
+    resourceDetails = jResData.value("details", "");
+    description = jResources.value("desc", "");
+
+    // metadata
+    auto jMetadata = jline.value("metadata", json::object());
+    checkId = jMetadata.value("event_code", "");
+    // jMetadata.value("tenant_uid", ""); // Azure had a tenant_uid that we might want
+
+    // unmapped
+    auto jUnmapped = jline.value("unmapped", json::object());
+    relatedUrl = jUnmapped.value("related_url", "");
+    notes = jUnmapped.value("notes", "");
+    // jUnmapped.value("depends_on", ""); // Wasn't used in v3?
+    // jUnmapped.value("related_to", ""); // Wasn't used in v3?
 
     // There's an enum that may not map all values
     if(jline.contains("severity")) {
@@ -96,23 +126,6 @@ namespace netmeld::datastore::objects::prowler {
         LOG_ERROR << "Neither severity or severity_id found. At least one of these fields is required";
         std::exit(nmcu::Exit::FAILURE);
     }
-
-    resourceId = jResources["name"];
-    resourceArn = jResources["uid"];
-    resourceType = jResources.value("type", "");
-    resourceDetails = jResources["data"].value("details", "");
-    description = jResources.value("desc", "");
-    risk = jline.value("risk_details", "");
-    relatedUrl = jUnmapped.value("releated_url", "");
-    notes = jUnmapped.value("notes", "");
-    // jUnmapped.value("depends_on", ""); // Wasn't used in v3?
-    // jUnmapped.value("related_to", ""); // Wasn't used in v3?
-    // jAccount.value("account_name", ""); // Used to be in OrganizationsInfo
-    // jCloud["org"].value("name", ""); // Used to be in OrganizationsInfo
-
-    // These should map to the same thing?
-    // jCloud["org"].value("uid", "");
-    // jline["metadata"].value("tenant_uid", ""); // Azure had a tenant_uid that we might want
 
     // array values
     if (jFindingInfo.contains("types")) {
