@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,49 +35,23 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestService : public nmdo::Service {
   public:
-    TestService() : Service() {};
-    TestService(const std::string& _name, nmdo::IpAddress& _ip) :
-        Service(_name, _ip) {};
+    using Service::Service;
 
-  public:
-    std::string const getAnyPort() const
-    { return ANY_PORT; }
+    using Service::dstFqdn;
+    using Service::dstAddress;
+    using Service::srcAddress;
+    using Service::isLocal;
+    using Service::interfaceName;
+    using Service::zone;
+    using Service::serviceName;
+    using Service::serviceDescription;
+    using Service::serviceReason;
+    using Service::protocol;
+    using Service::dstPorts;
+    using Service::srcPorts;
 
-    nmdo::IpAddress getDstAddress() const
-    { return dstAddress; }
-
-    nmdo::IpAddress getSrcAddress() const
-    { return srcAddress; }
-
-    bool getIsLocal() const
-    { return isLocal; }
-
-    std::string getInterfaceName() const
-    { return interfaceName; }
-
-    std::string getZone() const
-    { return zone; }
-
-    std::string getServiceDescription() const
-    { return serviceDescription; }
-
-    std::string getServiceReason() const
-    { return serviceReason; }
-
-    std::string getProtocol() const
-    { return protocol; }
-
-    std::set<std::string> getDstPorts() const
-    { return dstPorts; }
-
-    std::set<std::string> getSrcPorts() const
-    { return srcPorts; }
-
-    bool isValidDevice() const
-    { return Service::isValidDevice(); }
-
-    bool isValidNetwork() const
-    { return Service::isValidNetwork(); }
+    using Service::isValidDevice;
+    using Service::isValidNetwork;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -86,18 +60,17 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     nmdo::IpAddress ipAddr;
     TestService service;
 
-    BOOST_CHECK_EQUAL("0-65535", service.getAnyPort());
-    BOOST_CHECK_EQUAL(ipAddr, service.getDstAddress());
-    BOOST_CHECK_EQUAL(ipAddr, service.getSrcAddress());
-    BOOST_CHECK(!service.getIsLocal());
-    BOOST_CHECK_EQUAL("-", service.getInterfaceName());
-    BOOST_CHECK(service.getZone().empty());
-    BOOST_CHECK(service.getServiceName().empty());
-    BOOST_CHECK(service.getServiceDescription().empty());
-    BOOST_CHECK(service.getServiceReason().empty());
-    BOOST_CHECK(service.getProtocol().empty());
-    BOOST_CHECK(service.getDstPorts().empty());
-    BOOST_CHECK(service.getSrcPorts().empty());
+    BOOST_TEST(ipAddr == service.dstAddress);
+    BOOST_TEST(ipAddr == service.srcAddress);
+    BOOST_TEST(!service.isLocal);
+    BOOST_TEST("-" == service.interfaceName);
+    BOOST_TEST(service.zone.empty());
+    BOOST_TEST(service.serviceName.empty());
+    BOOST_TEST(service.serviceDescription.empty());
+    BOOST_TEST(service.serviceReason.empty());
+    BOOST_TEST(service.protocol.empty());
+    BOOST_TEST(service.dstPorts.empty());
+    BOOST_TEST(service.srcPorts.empty());
   }
 
   {
@@ -105,18 +78,17 @@ BOOST_AUTO_TEST_CASE(testConstructors)
     nmdo::IpAddress dIpAddr;
     TestService service {"Service", ipAddr};
 
-    BOOST_CHECK_EQUAL("0-65535", service.getAnyPort());
-    BOOST_CHECK_EQUAL(ipAddr, service.getDstAddress());
-    BOOST_CHECK_EQUAL(dIpAddr, service.getSrcAddress());
-    BOOST_CHECK(!service.getIsLocal());
-    BOOST_CHECK_EQUAL("-", service.getInterfaceName());
-    BOOST_CHECK(service.getZone().empty());
-    BOOST_CHECK_EQUAL("Service", service.getServiceName());
-    BOOST_CHECK(service.getServiceDescription().empty());
-    BOOST_CHECK(service.getServiceReason().empty());
-    BOOST_CHECK(service.getProtocol().empty());
-    BOOST_CHECK(service.getDstPorts().empty());
-    BOOST_CHECK(service.getSrcPorts().empty());
+    BOOST_TEST(ipAddr == service.dstAddress);
+    BOOST_TEST(dIpAddr == service.srcAddress);
+    BOOST_TEST(!service.isLocal);
+    BOOST_TEST("-" == service.interfaceName);
+    BOOST_TEST(service.zone.empty());
+    BOOST_TEST("Service" == service.serviceName);
+    BOOST_TEST(service.serviceDescription.empty());
+    BOOST_TEST(service.serviceReason.empty());
+    BOOST_TEST(service.protocol.empty());
+    BOOST_TEST(service.dstPorts.empty());
+    BOOST_TEST(service.srcPorts.empty());
   }
 }
 
@@ -126,26 +98,26 @@ BOOST_AUTO_TEST_CASE(testSetters)
     TestService service;
 
     service.addDstPort("1");
-    BOOST_CHECK_EQUAL(1, service.getDstPorts().size());
-    BOOST_CHECK(service.getDstPorts().count("1"));
+    BOOST_TEST(1 == service.dstPorts.size());
+    BOOST_TEST(service.dstPorts.count("1"));
     service.addDstPort("0-65535");
-    BOOST_CHECK_EQUAL(2, service.getDstPorts().size());
-    BOOST_CHECK(service.getDstPorts().count("0-65535"));
+    BOOST_TEST(2 == service.dstPorts.size());
+    BOOST_TEST(service.dstPorts.count("0-65535"));
     service.addDstPort("0-65535");
-    BOOST_CHECK_EQUAL(2, service.getDstPorts().size());
+    BOOST_TEST(2 == service.dstPorts.size());
   }
 
   {
     TestService service;
 
     service.addSrcPort("1");
-    BOOST_CHECK_EQUAL(1, service.getSrcPorts().size());
-    BOOST_CHECK(service.getSrcPorts().count("1"));
+    BOOST_TEST(1 == service.srcPorts.size());
+    BOOST_TEST(service.srcPorts.count("1"));
     service.addSrcPort("0-65535");
-    BOOST_CHECK_EQUAL(2, service.getSrcPorts().size());
-    BOOST_CHECK(service.getSrcPorts().count("0-65535"));
+    BOOST_TEST(2 == service.srcPorts.size());
+    BOOST_TEST(service.srcPorts.count("0-65535"));
     service.addSrcPort("0-65535");
-    BOOST_CHECK_EQUAL(2, service.getSrcPorts().size());
+    BOOST_TEST(2 == service.srcPorts.size());
   }
 
   {
@@ -153,7 +125,7 @@ BOOST_AUTO_TEST_CASE(testSetters)
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
     service.setDstAddress(ipAddr);
-    BOOST_CHECK_EQUAL(ipAddr, service.getDstAddress());
+    BOOST_TEST(ipAddr == service.dstAddress);
   }
 
   {
@@ -161,42 +133,42 @@ BOOST_AUTO_TEST_CASE(testSetters)
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
     service.setSrcAddress(ipAddr);
-    BOOST_CHECK_EQUAL(ipAddr, service.getSrcAddress());
+    BOOST_TEST(ipAddr == service.srcAddress);
   }
 
   {
     TestService service;
 
     service.setInterfaceName("Ifname");
-    BOOST_CHECK_EQUAL("ifname", service.getInterfaceName());
+    BOOST_TEST("ifname" == service.interfaceName);
   }
 
   {
     TestService service;
 
     service.setServiceName("Service Name");
-    BOOST_CHECK_EQUAL("Service Name", service.getServiceName());
+    BOOST_TEST("Service Name" == service.serviceName);
   }
 
   {
     TestService service;
 
     service.setServiceDescription("Service Description");
-    BOOST_CHECK_EQUAL("Service Description", service.getServiceDescription());
+    BOOST_TEST("Service Description" == service.serviceDescription);
   }
 
   {
     TestService service;
 
     service.setServiceReason("Service Reason");
-    BOOST_CHECK_EQUAL("service reason", service.getServiceReason());
+    BOOST_TEST("service reason" == service.serviceReason);
   }
 
   {
     TestService service;
 
     service.setProtocol("Protocol");
-    BOOST_CHECK_EQUAL("protocol", service.getProtocol());
+    BOOST_TEST("protocol" == service.protocol);
   }
 }
 
@@ -235,29 +207,29 @@ BOOST_AUTO_TEST_CASE(testValidity)
     {
       TestService service;
 
-      BOOST_CHECK(!service.isValid());
+      BOOST_TEST(!service.isValid());
       service.setServiceName("serviceName");
-      BOOST_CHECK(!service.isValid());
+      BOOST_TEST(!service.isValid());
       service.setDstAddress(ipAddr);
-      BOOST_CHECK(service.isValid());
+      BOOST_TEST(service.isValid());
       service.addDstPort("0-65535");
-      BOOST_CHECK(service.isValid());
-      BOOST_CHECK(service.isValidDevice());
-      BOOST_CHECK(!service.isValidNetwork());
+      BOOST_TEST(service.isValid());
+      BOOST_TEST(service.isValidDevice());
+      BOOST_TEST(!service.isValidNetwork());
     }
 
     {
       TestService service;
 
-      BOOST_CHECK(!service.isValid());
+      BOOST_TEST(!service.isValid());
       service.setDstAddress(ipAddr);
-      BOOST_CHECK(!service.isValid());
+      BOOST_TEST(!service.isValid());
       service.addDstPort("0-65535");
-      BOOST_CHECK(!service.isValid());
+      BOOST_TEST(!service.isValid());
       service.setProtocol("protocol");
-      BOOST_CHECK(service.isValid());
-      BOOST_CHECK(!service.isValidDevice());
-      BOOST_CHECK(service.isValidNetwork());
+      BOOST_TEST(service.isValid());
+      BOOST_TEST(!service.isValidDevice());
+      BOOST_TEST(service.isValidNetwork());
     }
   }
 }

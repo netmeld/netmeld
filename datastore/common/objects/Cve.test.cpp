@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,16 +35,13 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestCve : public nmdo::Cve {
   public:
-    TestCve() : Cve() {};
-    TestCve(short _year, int _number) : Cve(_year, _number) {};
-    explicit TestCve(const std::string& _id) : Cve(_id) {};
+    using Cve::Cve;
 
-  public:
-    nmdo::Port getPort() const
-    { return port; }
-
-    unsigned int getPluginId() const
-    { return pluginId; }
+    using Cve::port;
+    using Cve::pluginId;
+    // has accessor
+    //using Cve::year;
+    //using Cve::number;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
@@ -53,31 +50,31 @@ BOOST_AUTO_TEST_CASE(testConstructors)
   {
     TestCve cve;
 
-    BOOST_CHECK_EQUAL(-1, cve.getYear());
-    BOOST_CHECK_EQUAL(-1, cve.getNumber());
-    BOOST_CHECK_EQUAL(UINT_MAX, cve.getPluginId());
-    BOOST_CHECK_EQUAL(port, cve.getPort());
-    BOOST_CHECK(!cve.isValid());
+    BOOST_TEST(-1 == cve.getYear());
+    BOOST_TEST(-1 == cve.getNumber());
+    BOOST_TEST(UINT_MAX == cve.pluginId);
+    BOOST_TEST(port == cve.port);
+    BOOST_TEST(!cve.isValid());
   }
 
   {
     TestCve cve {2000, 2000};
 
-    BOOST_CHECK_EQUAL(2000, cve.getYear());
-    BOOST_CHECK_EQUAL(2000, cve.getNumber());
-    BOOST_CHECK_EQUAL(UINT_MAX, cve.getPluginId());
-    BOOST_CHECK_EQUAL(port, cve.getPort());
-    BOOST_CHECK(!cve.isValid());
+    BOOST_TEST(2000 == cve.getYear());
+    BOOST_TEST(2000 == cve.getNumber());
+    BOOST_TEST(UINT_MAX == cve.pluginId);
+    BOOST_TEST(port == cve.port);
+    BOOST_TEST(!cve.isValid());
   }
 
   {
     TestCve cve {"CVE-2000-2000"};
 
-    BOOST_CHECK_EQUAL(2000, cve.getYear());
-    BOOST_CHECK_EQUAL(2000, cve.getNumber());
-    BOOST_CHECK_EQUAL(UINT_MAX, cve.getPluginId());
-    BOOST_CHECK_EQUAL(port, cve.getPort());
-    BOOST_CHECK(!cve.isValid());
+    BOOST_TEST(2000 == cve.getYear());
+    BOOST_TEST(2000 == cve.getNumber());
+    BOOST_TEST(UINT_MAX == cve.pluginId);
+    BOOST_TEST(port == cve.port);
+    BOOST_TEST(!cve.isValid());
   }
 }
 
@@ -88,10 +85,10 @@ BOOST_AUTO_TEST_CASE(testSetters)
     nmdo::Port port;
 
     cve.setPort(port);
-    BOOST_CHECK_EQUAL(port, cve.getPort());
+    BOOST_TEST(port == cve.port);
 
     cve.setPluginId(2000);
-    BOOST_CHECK_EQUAL(2000, cve.getPluginId());
+    BOOST_TEST(2000 == cve.pluginId);
   }
 }
 
@@ -105,12 +102,12 @@ BOOST_AUTO_TEST_CASE(testValidity)
     port.setProtocol("tcp");
 
     TestCve cve {2000, 2000};
-    BOOST_CHECK(!cve.isValid());
+    BOOST_TEST(!cve.isValid());
 
     cve.setPort(port);
-    BOOST_CHECK(!cve.isValid());
+    BOOST_TEST(!cve.isValid());
 
     cve.setPluginId(2000);
-    BOOST_CHECK(cve.isValid());
+    BOOST_TEST(cve.isValid());
   }
 }

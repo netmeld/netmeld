@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -41,7 +41,7 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables should generally be private
+  private: // Variables intended for internal API
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
 
@@ -98,11 +98,6 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 
         // Process the rest of the results
         for (auto& result : results.ifaces) {
-          result.save(t, toolRunId, deviceId);
-          LOG_DEBUG << result << '\n';
-        }
-
-        for (auto& result : results.routes) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result << '\n';
         }

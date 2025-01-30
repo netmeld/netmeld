@@ -80,6 +80,10 @@ BOOST_AUTO_TEST_CASE(testParts)
       {"GigaEther1/2/3", "GigaEther1/2/3"},
       {"dynamic gi10", "gi10"},
       {"dynamic ip gi10", "gi10"},
+      {"dynamic ~ T F 333.22.1", "333.22.1"},
+      {"dynamic ~~~ F F 1.22.333", "1.22.333"},
+      {"dynamic Yes ~ gi10", "gi10"},
+      {"dynamic No  ~~~ GigaEther1/2/3", "GigaEther1/2/3"},
     };
     for (const auto& [test, shouldBe] : testsOk) {
       std::string out;
@@ -123,6 +127,7 @@ BOOST_AUTO_TEST_CASE(testParts)
       // vlan mac type learn age port
       "1  1234.1234.1234  type  Yes  0    port1",
       "1  1234.1234.1234  type  No   -99  port1",
+      "1  1234.1234.1234  type  Yes  ~    port1",
     };
     for (const auto& test : testsOk) {
       nmdo::InterfaceNetwork out;

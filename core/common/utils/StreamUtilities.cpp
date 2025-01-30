@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -34,7 +34,7 @@ namespace netmeld::core::utils {
   std::ostream& operator<<(std::ostream& _os, const std::any& _data)
   {
     if (typeid(std::string).name() == _data.type().name()) {
-      _os << '[' << std::any_cast<std::string>(_data) << ']';
+      _os << std::any_cast<std::string>(_data);
     } else if (typeid(TupStrStrType).name() == _data.type().name()) {
       auto data {std::any_cast<TupStrStrType>(_data)};
       _os << '['    << std::get<0>(data)

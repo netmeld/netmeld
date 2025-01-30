@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -48,20 +48,21 @@
 #include <map>
 #include <vector>
 
+namespace nmdo = netmeld::datastore::objects;
 
 struct LogicalSystem
 {
   std::string name;
-  std::map<std::string, netmeld::datastore::objects::InterfaceNetwork> ifaces;
-  std::map<std::string, netmeld::datastore::objects::Vrf> vrfs;
-  std::vector<netmeld::datastore::objects::Service> services;
-  std::vector<netmeld::datastore::objects::DnsResolver> dnsResolvers;
+  std::map<std::string, nmdo::InterfaceNetwork> ifaces;
+  std::map<std::string, nmdo::Vrf> vrfs;
+  std::vector<nmdo::Service> services;
+  std::vector<nmdo::DnsResolver> dnsResolvers;
   std::vector<std::string> dnsSearchDomains;
 
-  std::map<std::string, netmeld::datastore::objects::AclZone> aclZones;
-  std::map<std::string, netmeld::datastore::objects::AclIpNetSet> aclIpNetSets;
-  std::vector<netmeld::datastore::objects::AclService> aclServices;
-  std::vector<netmeld::datastore::objects::AclRuleService> aclRules;
+  std::map<std::string, nmdo::AclZone> aclZones;
+  std::map<std::string, nmdo::AclIpNetSet> aclIpNetSets;
+  std::vector<nmdo::AclService> aclServices;
+  std::vector<nmdo::AclRuleService> aclRules;
 
   auto operator<=>(const LogicalSystem&) const = default;
   bool operator==(const LogicalSystem&) const = default;
@@ -71,7 +72,7 @@ struct LogicalSystem
 struct Data
 {
   std::map<std::string, LogicalSystem> logicalSystems;
-  netmeld::datastore::objects::ToolObservations observations;
+  nmdo::ToolObservations observations;
 
   auto operator<=>(const Data&) const = default;
   bool operator==(const Data&) const = default;
@@ -80,55 +81,54 @@ struct Data
 
 class Parser
 {
+  protected:
+    Data data;
+
   public:
-    Data
-    getData();
-
-    void
-    parseConfig(const pugi::xml_node&);
-
-    void
-    parseConfigRouteInfo(const pugi::xml_node&);
+    Data getData();
 
   protected:
-    void
-    parseConfigDeviceconfig(const pugi::xml_node&, LogicalSystem&);
+    void parseConfigDeviceconfig(const pugi::xml_node&, LogicalSystem&);
 
-    void
-    parseConfigVsys(const pugi::xml_node&);
+    void parseConfigVsys(const pugi::xml_node&);
 
-    std::map<std::string, netmeld::datastore::objects::InterfaceNetwork>
-    parseConfigInterface(const pugi::xml_node&);
+    std::map<std::string, nmdo::InterfaceNetwork>
+      parseConfigInterface(const pugi::xml_node&);
 
-    netmeld::datastore::objects::InterfaceNetwork
-    parseConfigInterfaceEntry(const pugi::xml_node&);
+    nmdo::InterfaceNetwork
+      parseConfigInterfaceEntry(const pugi::xml_node&);
 
-    std::map<std::string, netmeld::datastore::objects::Vrf>
-    parseConfigVirtualRouter(const pugi::xml_node&);
+    std::map<std::string, nmdo::Vrf>
+      parseConfigVirtualRouter(const pugi::xml_node&);
 
-    std::map<std::string, netmeld::datastore::objects::AclZone>
-    parseConfigZone(const pugi::xml_node&);
+    std::map<std::string, nmdo::AclZone>
+      parseConfigZone(const pugi::xml_node&);
 
-    std::map<std::string, netmeld::datastore::objects::AclIpNetSet>
-    parseConfigAddress(const pugi::xml_node&);
+    std::map<std::string, nmdo::AclIpNetSet>
+      parseConfigAddress(const pugi::xml_node&);
 
-    std::map<std::string, netmeld::datastore::objects::AclIpNetSet>
-    parseConfigAddressGroup(const pugi::xml_node&);
+    std::map<std::string, nmdo::AclIpNetSet>
+      parseConfigAddressGroup(const pugi::xml_node&);
 
-    std::vector<netmeld::datastore::objects::AclService>
-    parseConfigService(const pugi::xml_node&);
+    std::vector<nmdo::AclService>
+      parseConfigService(const pugi::xml_node&);
 
-    std::vector<netmeld::datastore::objects::AclService>
-    parseConfigServiceGroup(const pugi::xml_node&);
+    std::vector<nmdo::AclService>
+      parseConfigServiceGroup(const pugi::xml_node&);
 
-    std::vector<netmeld::datastore::objects::AclRuleService>
-    parseConfigRulebase(const pugi::xml_node&, const LogicalSystem&);
+    std::vector<nmdo::AclRuleService>
+      parseConfigRulebase(const pugi::xml_node&, const LogicalSystem&);
 
-    std::vector<netmeld::datastore::objects::AclRuleService>
-    parseConfigRules(const pugi::xml_node&, const size_t, const LogicalSystem&);
+    std::vector<nmdo::AclRuleService>
+      parseConfigRules( const pugi::xml_node&
+                      , const size_t
+                      , const LogicalSystem&
+                      );
 
-  private:
-    Data data;
+  public:
+    void parseConfig(const pugi::xml_node&);
+    void parseConfigRouteInfo(const pugi::xml_node&);
+
 };
 
 #endif  /* PARSER_HPP */

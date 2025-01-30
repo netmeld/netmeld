@@ -67,9 +67,9 @@ namespace netmeld::core::objects {
 			void setClass(const std::string&);
       void setType(const std::string&);
 
-      std::string getFqdn() const;
-      std::string getClass() const;
-      std::string getType() const;
+      const std::string& getFqdn() const;
+      const std::string& getClass() const;
+      const std::string& getType() const;
 
       std::string toDebugString() const override;
 

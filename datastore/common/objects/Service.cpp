@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -61,14 +61,6 @@ namespace netmeld::datastore::objects {
   {
     return serviceName;
   }
-
-  /*
-  void
-  Service::setDstFqdn(const std::string& _fqdn)
-  {
-    dstFqdn = _fqdn;
-  }
-  */
 
   void
   Service::setDstAddress(const IpAddress& _addr)
@@ -137,8 +129,10 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Service::save(pqxx::transaction_base& t,
-                const nmco::Uuid& toolRunId, const std::string& deviceId)
+  Service::save( pqxx::transaction_base& t
+               , const nmco::Uuid& toolRunId
+               , const std::string& deviceId
+               )
   {
     if (!isValid()) {
       LOG_DEBUG << "Service object is not saving: " << toDebugString()
@@ -161,38 +155,42 @@ namespace netmeld::datastore::objects {
   }
 
   void
-  Service::saveAsDevice(pqxx::transaction_base& t,
-                        const nmco::Uuid& toolRunId,
-                        const std::string& deviceId)
+  Service::saveAsDevice( pqxx::transaction_base& t
+                       , const nmco::Uuid& toolRunId
+                       , const std::string& deviceId
+                       )
   {
     if (dstPorts.empty()) {
-      t.exec_prepared("insert_raw_device_ip_server",
-          toolRunId,
-          deviceId,
-          interfaceName,
-          serviceName,
-          dstAddress.toString(),
-          nullptr,
-          isLocal,
-          serviceDescription); // insert converts '' to null
+      t.exec_prepared( "insert_raw_device_ip_server"
+                     , toolRunId
+                     , deviceId
+                     , interfaceName
+                     , serviceName
+                     , dstAddress.toString()
+                     , nullptr
+                     , isLocal
+                     , serviceDescription   // insert converts '' to null
+                     );
     } else {
       for (const auto& dstPort : dstPorts) {
-        t.exec_prepared("insert_raw_device_ip_server",
-            toolRunId,
-            deviceId,
-            interfaceName,
-            serviceName,
-            dstAddress.toString(),
-            dstPort,
-            isLocal,
-            serviceDescription); // insert converts '' to null
+        t.exec_prepared( "insert_raw_device_ip_server"
+                       , toolRunId
+                       , deviceId
+                       , interfaceName
+                       , serviceName
+                       , dstAddress.toString()
+                       , dstPort
+                       , isLocal
+                       , serviceDescription   // insert converts '' to null
+                       );
       }
     }
   }
 
   void
-  Service::saveAsNetwork(pqxx::transaction_base& t,
-                         const nmco::Uuid& toolRunId)
+  Service::saveAsNetwork( pqxx::transaction_base& t
+                        , const nmco::Uuid& toolRunId
+                        )
   {
     if (srcAddress.hasUnsetPrefix()) {
       // Always use IPv4 default for datastore as only one null case
@@ -205,15 +203,16 @@ namespace netmeld::datastore::objects {
       port.setPort(std::stoi(dstPort));
       port.save(t, toolRunId, "");
 
-      t.exec_prepared("insert_raw_network_service",
-          toolRunId,
-          dstAddress.toString(),
-          protocol,
-          dstPort,
-          serviceName,
-          serviceDescription,
-          serviceReason,
-          srcAddress.toString());
+      t.exec_prepared( "insert_raw_network_service"
+                     , toolRunId
+                     , dstAddress.toString()
+                     , protocol
+                     , dstPort
+                     , serviceName
+                     , serviceDescription
+                     , serviceReason
+                     , srcAddress.toString()
+                     );
     }
   }
 
@@ -222,19 +221,17 @@ namespace netmeld::datastore::objects {
   {
     std::ostringstream oss;
     oss << "["
-        // Start of formatting
-        << "dstAddress: " << dstAddress  << ", "
-        << "srcAddress: " << srcAddress  << ", "
-        << "isLocal: " << isLocal  << ", "
-        << "interfaceName: " << interfaceName  << ", "
-        << "zone: " << zone  << ", "
-        << "serviceName: " << serviceName  << ", "
-        << "serviceDescription: " << serviceDescription  << ", "
-        << "serviceReason: " << serviceReason  << ", "
-        << "protocol: " << protocol  << ", "
-        << "dstPorts: " << dstPorts  << ", "
-        << "srcPorts: " << srcPorts
-        // End of formatting
+        << "dstAddress: " << dstAddress
+        << ", srcAddress: " << srcAddress
+        << ", isLocal: " << isLocal
+        << ", interfaceName: " << interfaceName
+        << ", zone: " << zone
+        << ", serviceName: " << serviceName
+        << ", serviceDescription: " << serviceDescription
+        << ", serviceReason: " << serviceReason
+        << ", protocol: " << protocol
+        << ", dstPorts: " << dstPorts
+        << ", srcPorts: " << srcPorts
         << "]";
 
     return oss.str();
@@ -243,40 +240,33 @@ namespace netmeld::datastore::objects {
   std::partial_ordering
   Service::operator<=>(const Service& rhs) const
   {
-    if (auto cmp = dstFqdn <=> rhs.dstFqdn; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = dstAddress <=> rhs.dstAddress; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = srcAddress <=> rhs.srcAddress; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = isLocal <=> rhs.isLocal; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = interfaceName <=> rhs.interfaceName; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = zone <=> rhs.zone; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = serviceName <=> rhs.serviceName; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = serviceDescription <=> rhs.serviceDescription; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = serviceReason <=> rhs.serviceReason; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = protocol <=> rhs.protocol; 0 != cmp) {
-      return cmp;
-    }
-    if (auto cmp = dstPorts <=> rhs.dstPorts; 0 != cmp) {
-      return cmp;
-    }
-    return srcPorts <=> rhs.srcPorts;
+    return std::tie( dstFqdn
+                   , dstAddress
+                   , srcAddress
+                   , isLocal
+                   , interfaceName
+                   , zone
+                   , serviceName
+                   , serviceDescription
+                   , serviceReason
+                   , protocol
+                   , dstPorts
+                   , srcPorts
+                   )
+       <=> std::tie( rhs.dstFqdn
+                   , rhs.dstAddress
+                   , rhs.srcAddress
+                   , rhs.isLocal
+                   , rhs.interfaceName
+                   , rhs.zone
+                   , rhs.serviceName
+                   , rhs.serviceDescription
+                   , rhs.serviceReason
+                   , rhs.protocol
+                   , rhs.dstPorts
+                   , rhs.srcPorts
+                   )
+       ;
   }
 
   bool

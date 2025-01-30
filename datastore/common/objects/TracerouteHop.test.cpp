@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,36 +35,36 @@ namespace nmdo = netmeld::datastore::objects;
 
 class TestTracerouteHop : public nmdo::TracerouteHop {
   public:
-    TestTracerouteHop() : TracerouteHop() {};
+    using TracerouteHop::TracerouteHop;
 };
 
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
     TestTracerouteHop hop;
-    BOOST_CHECK(!hop.isValid());
+    BOOST_TEST(!hop.isValid());
   }
 
   {
     TestTracerouteHop hop;
     hop.setHopCount(0);
-    BOOST_CHECK(!hop.isValid());
+    BOOST_TEST(!hop.isValid());
     hop.setHopCount(1);
-    BOOST_CHECK(!hop.isValid());
+    BOOST_TEST(!hop.isValid());
   }
 
   {
     nmdo::IpAddress nextHop {"10.0.0.1/24"};
     TestTracerouteHop hop;
     hop.setHopIp(nextHop);
-    BOOST_CHECK(!hop.isValid());
+    BOOST_TEST(!hop.isValid());
   }
 
   {
     nmdo::IpAddress destination {"100.0.0.1/24"};
     TestTracerouteHop hop;
     hop.setDstIp(destination);
-    BOOST_CHECK(!hop.isValid());
+    BOOST_TEST(!hop.isValid());
   }
 
   {
@@ -73,9 +73,9 @@ BOOST_AUTO_TEST_CASE(testValidity)
     TestTracerouteHop hop;
     hop.setHopIp(nextHop);
     hop.setDstIp(destination);
-    BOOST_CHECK(!hop.isValid());
+    BOOST_TEST(!hop.isValid());
     hop.setHopCount(0);
-    BOOST_CHECK(!hop.isValid());
+    BOOST_TEST(!hop.isValid());
   }
 
   {
@@ -85,6 +85,6 @@ BOOST_AUTO_TEST_CASE(testValidity)
     hop.setHopCount(1);
     hop.setHopIp(nextHop);
     hop.setDstIp(destination);
-    BOOST_CHECK(hop.isValid());
+    BOOST_TEST(hop.isValid());
   }
 }

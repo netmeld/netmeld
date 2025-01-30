@@ -68,19 +68,19 @@ namespace netmeld::core::objects {
     questionType = nmcu::toUpper(_type);
   }
 
-  std::string
+  const std::string&
   DnsQuestion::getFqdn() const
   {
     return questionFqdn;
   }
 
-  std::string
+  const std::string&
   DnsQuestion::getClass() const
   {
     return questionClass;
   }
 
-  std::string
+  const std::string&
   DnsQuestion::getType() const
   {
     return questionType;

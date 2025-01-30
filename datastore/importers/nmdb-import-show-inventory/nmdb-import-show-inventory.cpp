@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -26,75 +26,33 @@
 
 #include <regex>
 
-#include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/tools/AbstractImportSpiritTool.hpp>
+#include "Parser.hpp"
 
-namespace nmdo = netmeld::datastore::objects;
-namespace nmdp = netmeld::datastore::parsers;
 namespace nmdt = netmeld::datastore::tools;
-
-typedef nmdo::DeviceInformation  DevInfo;
-typedef std::vector<DevInfo>     Result;
-
-
-class Parser :
-  public qi::grammar<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-{
-  private:
-    std::string VENDOR = "Cisco";
-
-  public:
-    Parser() : Parser::base_type(start)
-    {
-      start =
-        *qi::eol >> -(deviceInfo % +qi::eol) >> *qi::eol
-        ;
-
-      deviceInfo =
-        (qi::lit("NAME:") >> token >> -qi::lit(',') >>
-         qi::lit("DESCR:") >> token >> qi::eol >>
-         qi::lit("PID:") >> token >> -qi::lit(',') >>
-         qi::lit("VID:") >> token >> -qi::lit(',') >>
-         qi::lit("SN:") >> token)
-           [(qi::_val = pnx::construct<DevInfo>(),
-             pnx::bind(&DevInfo::setVendor, &qi::_val, VENDOR),
-             pnx::bind(&DevInfo::setDeviceType, &qi::_val, qi::_1),
-             pnx::bind(&DevInfo::setDescription, &qi::_val, qi::_2),
-             pnx::bind(&DevInfo::setModel, &qi::_val, qi::_3),
-             pnx::bind(&DevInfo::setHardwareRevision, &qi::_val, qi::_4),
-             pnx::bind(&DevInfo::setSerialNumber, &qi::_val, qi::_5))]
-        ;
-
-      token =
-          (qi::lit('"') >> +(~qi::char_('"')) >> qi::lit('"'))
-        | (+(~qi::char_(" ,") - qi::eol) | qi::attr(""))
-        ;
-
-      BOOST_SPIRIT_DEBUG_NODES(
-          (start)
-          (deviceInfo)
-          //(token)
-          );
-    }
-
-    qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
-      start;
-
-    qi::rule<nmdp::IstreamIter, DevInfo, qi::ascii::blank_type>
-      deviceInfo;
-
-    qi::rule<nmdp::IstreamIter, std::string()>
-      token;
-};
 
 template<typename P, typename R>
 class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
   public:
     Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      ("show inventory", PROGRAM_NAME, PROGRAM_VERSION)
+      ("show inventory"   // command line tool imports data from
+      , PROGRAM_NAME      // program name (set in CMakeLists.txt)
+      , PROGRAM_VERSION   // program version (set in CMakeLists.txt)
+      )
     {}
 
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private:
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -117,7 +75,9 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
     }
 };
 
-
+// =============================================================================
+// Program entry point
+// =============================================================================
 int
 main (int argc, char** argv)
 {

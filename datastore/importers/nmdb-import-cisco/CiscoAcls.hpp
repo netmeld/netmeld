@@ -63,6 +63,7 @@ namespace netmeld::datastore::importers::cisco {
           ciscoAcl
         , ipv46
         , iosRule
+          , iosIgnored
           , iosRemark,   iosRemarkRuleLine
           , iosStandard, iosStandardRuleLine
           , iosExtended, iosExtendedRuleLine

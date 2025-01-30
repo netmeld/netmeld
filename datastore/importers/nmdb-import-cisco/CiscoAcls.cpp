@@ -59,8 +59,17 @@ namespace netmeld::datastore::importers::cisco {
     // IOS
     //====
     iosRule =
-      (iosRemark | iosStandard | iosExtended | iosIpv6)
+      (iosIgnored | iosRemark | iosStandard | iosExtended | iosIpv6)
       ;
+
+    iosIgnored =
+      ipv46 >> qi::lit("access-list")
+      >> ( qi::lit("log-update threshold")
+         | (qi::lit("logging") >> (qi::lit("interval") | qi::lit("rate-limit")))
+         )
+      > *token
+      ;
+
 
     iosRemark =
       qi::lit("access-list ") >> bookName >> iosRemarkRuleLine
@@ -540,7 +549,7 @@ namespace netmeld::datastore::importers::cisco {
     bool isContiguous {ipAddr.setMask(mask)};
     if (!isContiguous) {
       LOG_WARN << std::format("IpAddress ({}) set with non-contiguous"
-                              " wildcard netmask ({})"
+                              " wildcard netmask ({})\n"
                              , ipAddr.toString()
                              , mask.toString()
                              );

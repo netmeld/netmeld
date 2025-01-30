@@ -62,15 +62,22 @@ class Parser:
   private:
   protected:
     const std::string DEFAULT_VRF_ID  {""};//{"default"};
-    std::string       currVrf         {DEFAULT_VRF_ID};
-    std::string       currProtocol;
 
-    unsigned int currAdminDistance {0};
-    unsigned int currMetric {0};
+    std::string       curVrf         {DEFAULT_VRF_ID};
+    std::string       curProtocol;
+    std::string       curIfaceName;
 
-    nmdo::IpNetwork currDstIpNet;
+    unsigned int curAdminDistance {0};
+    unsigned int curMetric {0};
 
-    nmdo::ToolObservations currObservations;
+    nmdo::IpNetwork curDstIpNet;
+
+    nmdo::ToolObservations curObservations;
+
+    bool isIpv6   {false};
+    bool isIos    {false};
+    bool isIosOld {false};
+    bool isNxos   {false};
 
     std::map<std::string, std::string> typeCodeLookups {
           {"%", ""} // next-hop override
@@ -138,6 +145,8 @@ class Parser:
       , ipv6Route
       , ipv4RouteIos
       , ipv6RouteIos
+      , ipv4RouteIosOld
+      , ipv6RouteIosOld
       , ipv4RouteNxos
       , ipv6RouteNxos
       ;
@@ -160,16 +169,16 @@ class Parser:
         ipv6Addr
       ;
 
-    qi::rule<nmdp::IstreamIter, std::string(), qi::ascii::blank_type>
+    qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
         vrfHeader
       , vrfHeaderIos
+      , vrfHeaderIosOld
       , vrfHeaderNxos
       ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
         csvToken
       , token
-      , egressVrf
       ;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
@@ -180,17 +189,19 @@ class Parser:
     qi::rule<nmdp::IstreamIter>
         vrfName
       , altRoutePath
+      , ipv6Routing
       ;
 
     qi::rule<nmdp::IstreamIter, void(nmdo::Route&), qi::ascii::blank_type>
         distanceMetric
       , ipv4TypeCodeDstIpNet
-      , ipv6TypeCodeDstIpNet
+      , ipv6DstLineIos
       , ifaceName
       , rtrIpv4Addr
       , rtrIpv6Addr
       , dstIpv4Net
       , dstIpv6Net
+      , egressVrf
       ;
 
     qi::rule<nmdp::IstreamIter, void(nmdo::Route&)>
@@ -217,5 +228,4 @@ class Parser:
     void updateDstIpNet(nmdo::Route&, nmdo::IpNetwork&);
     void updateDistanceMetric(nmdo::Route&, unsigned int, unsigned int);
 };
-
 #endif // PARSER_HPP

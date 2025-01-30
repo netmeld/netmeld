@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -37,267 +37,241 @@ namespace nmcu = netmeld::core::utils;
 
 class TestInterfaceNetwork : public nmdo::InterfaceNetwork {
   public:
-    TestInterfaceNetwork() : InterfaceNetwork() {};
+    using InterfaceNetwork::InterfaceNetwork;
 
-  public:
-    std::string getDescription() const
-    { return description; }
-
-    std::string getMediaType() const
-    { return mediaType; }
-
-    bool getIsDiscoveryProtocolEnabled() const
-    { return isDiscoveryProtocolEnabled; }
-
-    nmdo::MacAddress getMacAddr() const
-    { return macAddr; }
-
-    std::string getMode()
-    { return mode; }
-
-    bool getIsPortSecurityEnabled() const
-    { return isPortSecurityEnabled; }
-
-    unsigned short getPortSecurityMaxMacAddrs() const
-    { return portSecurityMaxMacAddrs; }
-
-    std::string getPortSecurityViolationAction() const
-    { return portSecurityViolationAction; }
-
-    bool getIsPortSecurityStickyMac() const
-    { return isPortSecurityStickyMac; }
-
-    std::set<nmdo::MacAddress> getLearnedMacAddrs() const
-    { return learnedMacAddrs; }
-
-    bool getIsBpduGuardEnabled() const
-    { return isBpduGuardEnabled; }
-
-    bool getIsBpduFilterEnabled() const
-    { return isBpduFilterEnabled; }
-
-    bool getIsPortfastEnabled() const
-    { return isPortfastEnabled; }
-
-    bool getIsPartial() const
-    { return isPartial; }
-
-    std::set<nmdo::Vlan> getVlans() const
-    { return vlans; }
+    using InterfaceNetwork::description;
+    using InterfaceNetwork::isPartial;
+    using InterfaceNetwork::mediaType;
+    using InterfaceNetwork::isDiscoveryProtocolEnabled;
+    using InterfaceNetwork::macAddr;
+    using InterfaceNetwork::mode;
+    using InterfaceNetwork::isPortSecurityEnabled;
+    using InterfaceNetwork::portSecurityMaxMacAddrs;
+    using InterfaceNetwork::portSecurityViolationAction;
+    using InterfaceNetwork::isPortSecurityStickyMac;
+    using InterfaceNetwork::learnedMacAddrs;
+    using InterfaceNetwork::reachableMacAddrs;
+    using InterfaceNetwork::isBpduGuardEnabled;
+    using InterfaceNetwork::isBpduFilterEnabled;
+    using InterfaceNetwork::isPortfastEnabled;
+    // has accessor
+    //using InterfaceNetwork::name;
+    //using InterfaceNetwork::isUp;
+    //using InterfaceNetwork::vlans;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   nmdo::MacAddress macAddr;
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(interface.getName().empty());
-    BOOST_CHECK(interface.getDescription().empty());
-    BOOST_CHECK_EQUAL("ethernet", interface.getMediaType());
-    BOOST_CHECK(interface.getState());
-    BOOST_CHECK(interface.getIsDiscoveryProtocolEnabled());
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddr());
-    BOOST_CHECK_EQUAL("l3", interface.getMode());
-    BOOST_CHECK(!interface.getIsPortSecurityEnabled());
-    BOOST_CHECK_EQUAL(1, interface.getPortSecurityMaxMacAddrs());
-    BOOST_CHECK_EQUAL("shutdown", interface.getPortSecurityViolationAction());
-    BOOST_CHECK(!interface.getIsPortSecurityStickyMac());
-    BOOST_CHECK(interface.getLearnedMacAddrs().empty());
-    BOOST_CHECK(!interface.getIsBpduGuardEnabled());
-    BOOST_CHECK(!interface.getIsBpduFilterEnabled());
-    BOOST_CHECK(!interface.getIsPortfastEnabled());
-    BOOST_CHECK(!interface.getIsPartial());
+    BOOST_TEST(tin.getName().empty());
+    BOOST_TEST(tin.description.empty());
+    BOOST_TEST("ethernet" == tin.mediaType);
+    BOOST_TEST(tin.getState());
+    BOOST_TEST(tin.isDiscoveryProtocolEnabled);
+    BOOST_TEST(macAddr == tin.macAddr);
+    BOOST_TEST("l3" == tin.mode);
+    BOOST_TEST(!tin.isPortSecurityEnabled);
+    BOOST_TEST(1 == tin.portSecurityMaxMacAddrs);
+    BOOST_TEST("shutdown" == tin.portSecurityViolationAction);
+    BOOST_TEST(!tin.isPortSecurityStickyMac);
+    BOOST_TEST(tin.learnedMacAddrs.empty());
+    BOOST_TEST(!tin.isBpduGuardEnabled);
+    BOOST_TEST(!tin.isBpduFilterEnabled);
+    BOOST_TEST(!tin.isPortfastEnabled);
+    BOOST_TEST(!tin.isPartial);
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     nmdo::IpAddress ipAddr {"1.2.3.4/24"};
 
-    interface.addIpAddress(ipAddr);
-    auto ipAddrs = interface.getIpAddresses();
-    BOOST_CHECK_EQUAL(1, ipAddrs.size());
-    BOOST_CHECK_EQUAL(ipAddr, *ipAddrs.cbegin());
+    tin.addIpAddress(ipAddr);
+    auto ipAddrs = tin.getIpAddresses();
+    BOOST_TEST(1 == ipAddrs.size());
+    BOOST_TEST(ipAddr == *ipAddrs.cbegin());
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     nmdo::MacAddress macAddr {"00:11:22:33:44:55"};
 
-    interface.addPortSecurityStickyMac(macAddr);
-    interface.addPortSecurityStickyMac(macAddr);
-    auto macAddrs = interface.getLearnedMacAddrs();
-    BOOST_CHECK_EQUAL(1, macAddrs.size());
-    BOOST_CHECK_EQUAL(1, macAddrs.count(macAddr));
+    tin.addPortSecurityStickyMac(macAddr);
+    tin.addPortSecurityStickyMac(macAddr);
+    auto macAddrs = tin.learnedMacAddrs;
+    BOOST_TEST(1 == macAddrs.size());
+    BOOST_TEST(1 == macAddrs.count(macAddr));
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     uint16_t vlanId {0};
-    interface.addVlan(vlanId);
-    interface.addVlan(vlanId);
+    tin.addVlan(vlanId);
+    tin.addVlan(vlanId);
     vlanId = UINT16_MAX;
-    interface.addVlan(vlanId);
+    tin.addVlan(vlanId);
 
-    auto vlans {interface.getVlans()};
-    BOOST_CHECK_EQUAL(2, vlans.size());
-    BOOST_CHECK_EQUAL(1, vlans.count(nmdo::Vlan(vlanId)));
-    BOOST_CHECK_EQUAL(1, vlans.count(nmdo::Vlan(vlanId)));
+    auto vlans {tin.getVlans()};
+    BOOST_TEST(2 == vlans.size());
+    BOOST_TEST(1 == vlans.count(nmdo::Vlan(vlanId)));
+    BOOST_TEST(1 == vlans.count(nmdo::Vlan(vlanId)));
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(interface.getIsDiscoveryProtocolEnabled());
-    interface.setDiscoveryProtocol(false);
-    BOOST_CHECK(!interface.getIsDiscoveryProtocolEnabled());
-    interface.setDiscoveryProtocol(true);
-    BOOST_CHECK(interface.getIsDiscoveryProtocolEnabled());
+    BOOST_TEST(tin.isDiscoveryProtocolEnabled);
+    tin.setDiscoveryProtocol(false);
+    BOOST_TEST(!tin.isDiscoveryProtocolEnabled);
+    tin.setDiscoveryProtocol(true);
+    BOOST_TEST(tin.isDiscoveryProtocolEnabled);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     std::string text {"Some Description"};
 
-    interface.setDescription(text);
-    BOOST_CHECK_EQUAL(text, interface.getDescription());
+    tin.setDescription(text);
+    BOOST_TEST(text == tin.description);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     nmdo::MacAddress macAddr {"00:11:22:33:44:55"};
 
-    interface.setMacAddress(macAddr);
-    BOOST_CHECK_EQUAL(macAddr, interface.getMacAddr());
+    tin.setMacAddress(macAddr);
+    BOOST_TEST(macAddr == tin.macAddr);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     std::string text {"MeDiAtYpE"};
 
-    BOOST_CHECK_EQUAL("ethernet", interface.getMediaType());
-    interface.setMediaType(text);
-    BOOST_CHECK_EQUAL(nmcu::toLower(text), interface.getMediaType());
+    BOOST_TEST("ethernet" == tin.mediaType);
+    tin.setMediaType(text);
+    BOOST_TEST(nmcu::toLower(text) == tin.mediaType);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     std::string text {"NaMe"};
 
-    interface.setName(text);
-    BOOST_CHECK_EQUAL(nmcu::toLower(text), interface.getName());
+    tin.setName(text);
+    BOOST_TEST(nmcu::toLower(text) == tin.getName());
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(interface.getState());
-    interface.setState(true);
-    BOOST_CHECK(interface.getState());
-    interface.setState(false);
-    BOOST_CHECK(!interface.getState());
+    BOOST_TEST(tin.getState());
+    tin.setState(true);
+    BOOST_TEST(tin.getState());
+    tin.setState(false);
+    BOOST_TEST(!tin.getState());
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     std::string text {"MoDe"};
 
-    interface.setSwitchportMode(text);
-    BOOST_CHECK_EQUAL(nmcu::toLower(text), interface.getMode());
+    tin.setSwitchportMode(text);
+    BOOST_TEST(nmcu::toLower(text) == tin.mode);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(!interface.getIsPortSecurityEnabled());
-    interface.setPortSecurity(true);
-    BOOST_CHECK(interface.getIsPortSecurityEnabled());
-    interface.setPortSecurity(false);
-    BOOST_CHECK(!interface.getIsPortSecurityEnabled());
+    BOOST_TEST(!tin.isPortSecurityEnabled);
+    tin.setPortSecurity(true);
+    BOOST_TEST(tin.isPortSecurityEnabled);
+    tin.setPortSecurity(false);
+    BOOST_TEST(!tin.isPortSecurityEnabled);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK_EQUAL(1, interface.getPortSecurityMaxMacAddrs());
-    interface.setPortSecurityMaxMacAddrs(0);
-    BOOST_CHECK_EQUAL(0, interface.getPortSecurityMaxMacAddrs());
-    interface.setPortSecurityMaxMacAddrs(USHRT_MAX);
-    BOOST_CHECK_EQUAL(USHRT_MAX, interface.getPortSecurityMaxMacAddrs());
+    BOOST_TEST(1 == tin.portSecurityMaxMacAddrs);
+    tin.setPortSecurityMaxMacAddrs(0);
+    BOOST_TEST(0 == tin.portSecurityMaxMacAddrs);
+    tin.setPortSecurityMaxMacAddrs(USHRT_MAX);
+    BOOST_TEST(USHRT_MAX == tin.portSecurityMaxMacAddrs);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
     std::string text {"AcTiOn"};
 
-    BOOST_CHECK_EQUAL("shutdown", interface.getPortSecurityViolationAction());
-    interface.setPortSecurityViolationAction(text);
-    BOOST_CHECK_EQUAL(nmcu::toLower(text), interface.getPortSecurityViolationAction());
+    BOOST_TEST("shutdown" == tin.portSecurityViolationAction);
+    tin.setPortSecurityViolationAction(text);
+    BOOST_TEST(nmcu::toLower(text) == tin.portSecurityViolationAction);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(!interface.getIsPortSecurityStickyMac());
-    interface.setPortSecurityStickyMac(true);
-    BOOST_CHECK(interface.getIsPortSecurityStickyMac());
-    interface.setPortSecurityStickyMac(false);
-    BOOST_CHECK(!interface.getIsPortSecurityStickyMac());
+    BOOST_TEST(!tin.isPortSecurityStickyMac);
+    tin.setPortSecurityStickyMac(true);
+    BOOST_TEST(tin.isPortSecurityStickyMac);
+    tin.setPortSecurityStickyMac(false);
+    BOOST_TEST(!tin.isPortSecurityStickyMac);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(!interface.getIsBpduGuardEnabled());
-    interface.setBpduGuard(true);
-    BOOST_CHECK(interface.getIsBpduGuardEnabled());
-    interface.setBpduGuard(false);
-    BOOST_CHECK(!interface.getIsBpduGuardEnabled());
+    BOOST_TEST(!tin.isBpduGuardEnabled);
+    tin.setBpduGuard(true);
+    BOOST_TEST(tin.isBpduGuardEnabled);
+    tin.setBpduGuard(false);
+    BOOST_TEST(!tin.isBpduGuardEnabled);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(!interface.getIsBpduFilterEnabled());
-    interface.setBpduFilter(true);
-    BOOST_CHECK(interface.getIsBpduFilterEnabled());
-    interface.setBpduFilter(false);
-    BOOST_CHECK(!interface.getIsBpduFilterEnabled());
+    BOOST_TEST(!tin.isBpduFilterEnabled);
+    tin.setBpduFilter(true);
+    BOOST_TEST(tin.isBpduFilterEnabled);
+    tin.setBpduFilter(false);
+    BOOST_TEST(!tin.isBpduFilterEnabled);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(!interface.getIsPortfastEnabled());
-    interface.setPortfast(true);
-    BOOST_CHECK(interface.getIsPortfastEnabled());
-    interface.setPortfast(false);
-    BOOST_CHECK(!interface.getIsPortfastEnabled());
+    BOOST_TEST(!tin.isPortfastEnabled);
+    tin.setPortfast(true);
+    BOOST_TEST(tin.isPortfastEnabled);
+    tin.setPortfast(false);
+    BOOST_TEST(!tin.isPortfastEnabled);
   }
 
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(!interface.getIsPartial());
-    interface.setPartial(true);
-    BOOST_CHECK(interface.getIsPartial());
-    interface.setPartial(false);
-    BOOST_CHECK(!interface.getIsPartial());
+    BOOST_TEST(!tin.isPartial);
+    tin.setPartial(true);
+    BOOST_TEST(tin.isPartial);
+    tin.setPartial(false);
+    BOOST_TEST(!tin.isPartial);
   }
 }
 
 BOOST_AUTO_TEST_CASE(testValidity)
 {
   {
-    TestInterfaceNetwork interface;
+    TestInterfaceNetwork tin;
 
-    BOOST_CHECK(!interface.isValid());
-    interface.setName("name");
-    BOOST_CHECK(interface.isValid());
-    interface.setName("");
-    BOOST_CHECK(!interface.isValid());
+    BOOST_TEST(!tin.isValid());
+    tin.setName("name");
+    BOOST_TEST(tin.isValid());
+    tin.setName("");
+    BOOST_TEST(!tin.isValid());
   }
 }

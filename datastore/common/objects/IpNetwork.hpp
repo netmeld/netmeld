@@ -33,12 +33,14 @@
 
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
 
-using IpAddr = boost::asio::ip::address;
+namespace bai = boost::asio::ip;
 
 
 namespace netmeld::datastore::objects {
 
   class IpNetwork : public AbstractDatastoreObject {
+    using IpAddr = bai::address;
+
     // =========================================================================
     // Variables
     // =========================================================================

@@ -78,6 +78,7 @@ Parser::Parser() : Parser::base_type(start)
 
       | domainData
       | vrfInstance
+      | (qi::lit("interface breakout") > +token > qi::eol)
       | (interface)
           [(pnx::bind(&Parser::vlanAddIfaceData, this))]
       | routerId
@@ -129,11 +130,27 @@ Parser::Parser() : Parser::base_type(start)
     (  (ipMask >> ipAddr)
          [(pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2))]
        // ip_mask iface
-     | (ipMask >> (!(qi::ascii::digit | qi::lit("permanent") | qi::lit("track")) >> token))
-         [(pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2))]
+     | (ipMask >> (!( qi::ascii::digit
+                    | qi::lit("permanent")
+                    | qi::lit("track")
+                    | qi::lit("tag")
+                    | qi::lit("name")
+                    | qi::lit("vrf")
+                    )
+                  >> token
+                  )
+       ) [(pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2))]
+       // ip ip vrf id
+     | (ipAddr >> ipAddr >> qi::lit("vrf") >> token)
+         [(pnx::bind(&Parser::vrfId, this) = qi::_3
+         , pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2)
+         )]
        // ip ip
      | (ipAddr >> ipAddr)
          [(pnx::bind(&Parser::routeAddIp, this, qi::_1, qi::_2))]
+       // ip iface ip
+     | (ipAddr >> token >> ipAddr)
+         [(pnx::bind(&Parser::routeAddIfaceIp, this, qi::_1, qi::_2, qi::_3))]
        // ip iface
      | (ipAddr >> token)
          [(pnx::bind(&Parser::routeAddIface, this, qi::_1, qi::_2))]
@@ -144,6 +161,7 @@ Parser::Parser() : Parser::base_type(start)
      ) >
     -(qi::lit("track") >> qi::lit("bfd") >> -qi::uint_) >
     -(qi::lit("tag") >> token) >
+    -(qi::lit("name") >> token) >
     qi::eol
     ;
 
@@ -296,9 +314,12 @@ Parser::Parser() : Parser::base_type(start)
          > -tokens > qi::eol)
       | (qi::lit("ip name-server") > -(qi::lit("vrf") > token)
          > +ipAddr [(pnx::bind(&Parser::serviceAddDns, this, qi::_1))]
+         > -(qi::lit("use-vrf") > token)
          > qi::eol)
-      | (qi::lit("logging server")
-         > ipAddr [(pnx::bind(&Parser::serviceAddSyslog, this, qi::_1))]
+      | (qi::lit("logging ") >> (qi::lit("server ") | qi::lit("host "))
+         > ( ipAddr
+           | (qi::omit[token] >> ipAddr)
+           )[(pnx::bind(&Parser::serviceAddSyslog, this, qi::_1))]
          > -tokens > qi::eol)
     )
     ;
@@ -334,7 +355,7 @@ Parser::Parser() : Parser::base_type(start)
        ((-qi::lit("mac-address") >> (qi::lit("maximum") | qi::lit("max")) >> qi::ushort_)
           [(pnx::bind(&nmdo::InterfaceNetwork::setPortSecurityMaxMacAddrs,
                       pnx::bind(&Parser::tgtIface, this), qi::_1))]
-         > -(qi::lit("vlan") > qi::ushort_)
+         > -(qi::lit("vlan") > (qi::ushort_ | token))
           [(pnx::bind(&Parser::unsup, this,
                       "switchport port-security maximum COUNT vlan ID"))]
        )
@@ -362,6 +383,7 @@ Parser::Parser() : Parser::base_type(start)
      | (qi::lit("shutdown-time") >> qi::int_)
      | (&qi::eol)
           [(pnx::bind([&](){tgtIface->setPortSecurity(!isNo);}))]
+     | (qi::lit("limit rate") > +token)
     )
     ;
   switchportVlan =
@@ -597,6 +619,33 @@ Parser::routeAddIface( const nmdo::IpAddress& dstIpNet
   } else {
     routeRule.setNextHopIpAddr(nmdo::IpAddress::getIpv6Default());
   }
+  if ("Null0" == rtrIface) {
+    routeRule.setNullRoute(true);
+  }
+  routeRule.setProtocol("static");
+  routeRule.setMetric(0);
+
+  if (!vrfId.empty()) {
+    routeRule.setVrfId(vrfId);
+    vrfId = "";
+  } else {
+    routeRule.setVrfId(DEFAULT_VRF_ID);
+  }
+
+  d.routes.push_back(routeRule);
+}
+
+void
+Parser::routeAddIfaceIp( const nmdo::IpAddress& dstIpNet
+                       , const std::string& rtrIface
+                       , const nmdo::IpAddress& nextHopIp
+                       )
+{
+  nmdo::Route routeRule;
+  routeRule.setDstIpNet(dstIpNet);
+  routeRule.setOutIfaceName(rtrIface);
+  routeRule.setNextHopIpAddr(nextHopIp);
+
   if ("Null0" == rtrIface) {
     routeRule.setNullRoute(true);
   }

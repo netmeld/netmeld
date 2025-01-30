@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -107,10 +107,10 @@ namespace netmeld::core::utils {
       //void setConfFile(const std::string&);
 
       bool exists(const std::string&) const;
-      std::string getCommandLine() const;
+      const std::string& getCommandLine() const;
       std::string getValue(const std::string&) const;
       std::vector<std::string> getValues(const std::string&) const;
-      std::vector<std::string> getUnrecognized() const;
+      const std::vector<std::string>& getUnrecognized() const;
 
       int validateOptions(int argc, char** argv);
 

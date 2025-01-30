@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -35,80 +35,73 @@ namespace nmco = netmeld::core::objects;
 
 class TestUuid : public nmco::Uuid {
   public:
-    TestUuid() : Uuid() {};
-    explicit TestUuid(Uuid const& _id) : Uuid(_id) {};
-    explicit TestUuid(uuids::uuid _id) : Uuid(_id) {};
-    explicit TestUuid(const std::string& _id) : Uuid(_id) {};
+    using Uuid::Uuid;
 
-    auto operator<=>(const TestUuid&) const = default;
-
-  public:
-    uuids::uuid getUuid() const
-    { return uuid; }
+    using Uuid::uuid;
 };
 
 BOOST_AUTO_TEST_CASE(testConstructors)
 {
   {
-    TestUuid uuid;
+    nmco::Uuid u1;
 
-    BOOST_CHECK(!uuid.isNull());
-    BOOST_CHECK(!uuid.toString().empty());
+    BOOST_TEST(!u1.isNull());
+    BOOST_TEST(!u1.toString().empty());
   }
 
   {
     nmco::Uuid u1;
-    TestUuid uuid {u1};
+    nmco::Uuid u2 {u1};
 
-    BOOST_CHECK_EQUAL(u1, uuid);
+    BOOST_TEST(u1 == u2);
   }
 
   {
     uuids::uuid u1 {uuids::random_generator()()};
-    TestUuid uuid {u1};
+    TestUuid tu {u1};
 
-    BOOST_CHECK_EQUAL(u1, uuid.getUuid());
+    BOOST_TEST(u1 == tu.uuid);
   }
 
   {
     uuids::uuid u1 {
       uuids::string_generator()("12345678-1234-1234-1234-123456789012")
     };
-    TestUuid uuid {"12345678-1234-1234-1234-123456789012"};
+    TestUuid tu {"12345678-1234-1234-1234-123456789012"};
 
-    BOOST_CHECK_EQUAL(u1, uuid.getUuid());
+    BOOST_TEST(u1 == tu.uuid);
   }
 }
 
 BOOST_AUTO_TEST_CASE(testSetters)
 {
   {
-    TestUuid uuid1, uuid2;
+    TestUuid tu1, tu2;
 
     sfs::path temp {std::to_string(fileno(std::tmpfile()))};
     std::ofstream f {temp.string()};
-    f << uuid1.toString() << std::endl;
+    f << tu1.toString() << std::endl;
     f.close();
-    uuid2.readUuid(temp);
+    tu2.readUuid(temp);
     sfs::remove(temp);
-    BOOST_CHECK_EQUAL(uuid1, uuid2);
+    BOOST_TEST(tu1 == tu2);
   }
 
   {
     {
-      TestUuid uuid {uuids::nil_generator()()};
-      BOOST_CHECK(uuid.isNull());
+      TestUuid tu {uuids::nil_generator()()};
+      BOOST_TEST(tu.isNull());
     }
     {
-      TestUuid uuid;
-      BOOST_CHECK(!uuid.isNull());
+      TestUuid tu;
+      BOOST_TEST(!tu.isNull());
     }
   }
 
   {
     std::string u1 {"12345678-1234-1234-1234-123456789012"};
-    TestUuid uuid {u1};
+    TestUuid tu {u1};
 
-    BOOST_CHECK_EQUAL(u1, uuid.toString());
+    BOOST_TEST(u1 == tu.toString());
   }
 }

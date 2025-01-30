@@ -166,7 +166,7 @@ namespace netmeld::datastore::objects {
   IpNetwork::setAddress(const std::string& _addr)
   {
     try {
-      address = IpAddr::from_string(_addr);
+      address = bai::make_address(_addr);
       setPrefix(prefix);
     } catch (std::exception& e) {
       LOG_ERROR << "IP address malformed for parser: " << _addr << std::endl;

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -47,7 +47,7 @@ Parser::Parser() : Parser::base_type(start)
     *(  (qi::lit("set") >>
          (// show configuration | display set
             ("interfaces" >> (interfaces | qi::omit[*token]))
-          | ("routing-options" >> (routes | qi::omit[*token]))
+          | ("routing-options" >> (route | qi::omit[*token]))
           // ScreenOS: get config
           | (qi::lit("interface") >> (interface | qi::omit[*token]))
           | (qi::lit("service") >> (service | qi::omit[*token]))
@@ -62,20 +62,15 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // interface { ip|ipv6|mip|tag|zone }
-  //   ip {ip_addr/prefix|unnumbered interface interface}
-  //   ipv6 ip ip_addr/prefix
-  //   mip ip_addr host ip_addr [netmask mask] [vrouter vrouter]
-  //   tag id_num zone zone
-  //   zone zone
+  // Interface related
   interface =
     ifaceTypeName
       [(pnx::bind(&Parser::initIface, this, qi::_1[0], qi::_1[1]))] >>
-    (  (qi::lexeme[qi::lit("ip") >> -qi::lit("v6")] >> ipAddr)
+    (  (qi::lexeme[qi::lit("ip") >> -qi::lit("v6 ip")] >> ipAddr)
          [(pnx::bind(&Parser::updateIfaceIp, this, qi::_1))]
      | (qi::lit("ip unnumbered interface") >> token)
          [(pnx::bind(&Parser::unsup, this, "iface alias: " + qi::_1))]
-     // NOTE: mip == host, maybe could do withe network book...but appling
+     // NOTE: mip == host, maybe could do with network book...but having
      //       a netmask means the entire, individual, range is aliased
      | ((qi::lit("mip") >> ipAddr >> qi::lit("host") >> ipAddr) >>
         -(qi::lit("netmask") >> ipAddr) >> -vrouter)
@@ -111,7 +106,6 @@ Parser::Parser() : Parser::base_type(start)
     | (+qi::ascii::alpha >> +qi::ascii::graph)
     ;
 
-  // name protocol|+ proto [src-port num-num dst-port num-num]
   service =
     (token >> (qi::lit("protocol") | qi::lit("+")) >> token >>
      srvcSrcPort >> srvcDstPort)
@@ -120,11 +114,11 @@ Parser::Parser() : Parser::base_type(start)
     ;
 
   srvcSrcPort =
-    (qi::lit("src-port") >> token) | qi::attr("")
+    ((qi::lit("src-port") | qi::lit("type")) >> token) | qi::attr("")
     ;
 
   srvcDstPort =
-    (qi::lit("dst-port") >> token) | qi::attr("")
+    ((qi::lit("dst-port") | qi::lit("code")) >> token) | qi::attr("")
     ;
 
 
@@ -183,24 +177,39 @@ Parser::Parser() : Parser::base_type(start)
     )
     ;
 
-  // route ip/prefix interface ifaceName [gateway ip]
+  // Route related
+  auto setVrf           = [&](auto& rte, auto& val){rte.setVrfId(val);};
+  auto setDstIpNet      = [&](auto& rte, auto& val){rte.setDstIpNet(val);};
+  auto setOutIfaceName  = [&](auto& rte, auto& val){rte.setOutIfaceName(val);};
+  auto setNextHopIpAddr = [&](auto& rte, auto& val){rte.setNextHopIpAddr(val);};
+  auto addRoute         = [&](auto& rte){d.routes.emplace_back(rte);};
   route =
-    (ipAddr >> qi::lit("interface") >> token [(qi::_a = qi::_1)])
-       [(pnx::bind(&Parser::setIfaceRoute, this, qi::_a, qi::_1))] >>
-    (-qi::lit("gateway") >> ipAddr)
-      [(pnx::bind(&Parser::setIfaceGateway, this, qi::_a, qi::_1))]
-    ;
-
-  routes =
-    ("static route" >> ipAddr >> "next-hop" >> ipAddr)
-      [(pnx::bind(&Parser::setIfaceRoute, this, "", qi::_1),
-        pnx::bind(&Parser::setIfaceGateway, this, "", qi::_2))]
+    qi::eps [( qi::_a = pnx::construct<nmdo::Route>()
+            , pnx::bind(setVrf, qi::_a, DEFAULT_VRF_ID)
+            )]
+    >> (
+      ( ipAddr [pnx::bind(setDstIpNet, qi::_a, qi::_1)]
+      >> qi::lit("interface")
+      >> token [pnx::bind(setOutIfaceName, qi::_a, qi::_1)]
+      >> -(qi::lit("gateway") >> ipAddr)
+          [pnx::bind(setNextHopIpAddr, qi::_a, qi::_1)]
+      )
+    |
+      ( qi::lit("static route")
+      >> ipAddr [pnx::bind(setDstIpNet, qi::_a, qi::_1)]
+      >> qi::lit("next-hop")
+      >> ( ipAddr [pnx::bind(setNextHopIpAddr, qi::_a, qi::_1)]
+         | token [pnx::bind(setOutIfaceName, qi::_a, qi::_1)]
+         )
+      )
+    ) [pnx::bind(addRoute, qi::_a)]
     ;
 
   vrouter =
     (qi::lit("vrouter") | qi::lit("vr")) >> token
     ;
 
+  // Common
   token =
       (qi::lit('"') >> +(qi::char_ - qi::char_('"')) >> qi::lit('"'))
     | +(qi::ascii::graph)
@@ -210,7 +219,7 @@ Parser::Parser() : Parser::base_type(start)
       //(start)
       (config)
       (interface)(service)(zone)(address)(group)(policy)
-      (interfaces)(routes)
+      (interfaces)
       (route)
       (ifaceTypeName)
       (ipAddrOrFqdn)
@@ -225,20 +234,6 @@ Parser::Parser() : Parser::base_type(start)
 // Parser helper methods
 // =============================================================================
 void
-Parser::setIfaceRoute(const std::string& _iface, const nmdo::IpAddress& _ip)
-{
-  d.routes[_iface].setVrfId(DEFAULT_VRF_ID);
-  d.routes[_iface].setDstIpNet(_ip);
-}
-
-void
-Parser::setIfaceGateway(const std::string& _iface, const nmdo::IpAddress& _ip)
-{
-  d.routes[_iface].setVrfId(DEFAULT_VRF_ID);
-  d.routes[_iface].setNextHopIpAddr(_ip);
-}
-
-void
 Parser::initIface(const std::string& _type, const std::string& _slotUnit)
 {
   tgtIface = {_type + _slotUnit};
@@ -247,6 +242,7 @@ Parser::initIface(const std::string& _type, const std::string& _slotUnit)
     iface.setName(tgtIface);
     iface.setState(true);
     iface.setMediaType(_type);
+    iface.setDiscoveryProtocol(false); // default disabled in most Juniper
   }
 }
 
@@ -272,19 +268,27 @@ void
 Parser::updateNetBook(const std::string& _zone, const std::string& _bookName,
                       const std::string& _ip)
 {
+  d.networkBooks[_zone][_bookName].setId(_zone);
+  d.networkBooks[_zone][_bookName].setName(_bookName);
   d.networkBooks[_zone][_bookName].addData(_ip);
 }
 
 void
 Parser::updateNetBookGroup(const std::string& _zone,
                            const std::string& _bookName,
-                           const std::string& _zoneOther)
+                           const std::string& _bookOther)
 {
-  const auto& tgtData {d.networkBooks[_zone][_zoneOther].getData()};
+  d.networkBooks[_zone][_bookName].setId(_zone);
+  d.networkBooks[_zone][_bookName].setName(_bookName);
+
+  const auto& tgtData {d.networkBooks[_zone][_bookOther].getData()};
   if (0 == tgtData.size()) {
     LOG_DEBUG << "Parser::updateNetBookGroup: set defined after use ["
-              << _zone << "][" << _bookName << "]: " << _zoneOther << "\n";
-    d.networkBooks[_zone][_bookName].addData(_zoneOther);
+              << _zone << "][" << _bookName << "]: " << _bookOther << "\n";
+    d.networkBooks[_zone][_bookOther].setId(_zone);
+    d.networkBooks[_zone][_bookOther].setName(_bookOther);
+
+    d.networkBooks[_zone][_bookName].addData(_bookOther);
   } else {
     d.networkBooks[_zone][_bookName].addData(tgtData);
   }
@@ -293,6 +297,8 @@ Parser::updateNetBookGroup(const std::string& _zone,
 void
 Parser::updateSrvcBook(const std::string& _bookName, const std::string& _port)
 {
+  d.serviceBooks[DEFAULT_ZONE][_bookName].setId(DEFAULT_ZONE);
+  d.serviceBooks[DEFAULT_ZONE][_bookName].setName(_bookName);
   d.serviceBooks[DEFAULT_ZONE][_bookName].addData(_port);
 }
 
@@ -300,10 +306,16 @@ void
 Parser::updateSrvcBookGroup(const std::string& _bookName,
                             const std::string& _bookOther)
 {
+  d.serviceBooks[DEFAULT_ZONE][_bookName].setId(DEFAULT_ZONE);
+  d.serviceBooks[DEFAULT_ZONE][_bookName].setName(_bookName);
+
   const auto& tgtData {d.serviceBooks[DEFAULT_ZONE][_bookOther].getData()};
   if (0 == tgtData.size()) {
     LOG_DEBUG << "Parser::updateSrvcBookGroup: set defined after use ["
               << DEFAULT_ZONE << "][" << _bookName << "]: " << _bookOther << "\n";
+    d.serviceBooks[DEFAULT_ZONE][_bookOther].setId(DEFAULT_ZONE);
+    d.serviceBooks[DEFAULT_ZONE][_bookOther].setName(_bookOther);
+
     d.serviceBooks[DEFAULT_ZONE][_bookName].addData(_bookOther);
   } else {
     d.serviceBooks[DEFAULT_ZONE][_bookName].addData(tgtData);

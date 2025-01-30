@@ -30,14 +30,15 @@
 #include <string>
 
 
-namespace netmeld::core::utils {
-
+namespace netmeld::core::utils
+{
   std::string toLower(const std::string&);
   std::string toUpper(const std::string&);
   std::string trim(const std::string&);
 
-  std::string getSrvcString(const std::string&,
-                            const std::string&, const std::string&);
+  std::string getSrvcString( const std::string&, const std::string&
+                           , const std::string&
+                           );
 
   std::string expandCiscoIfaceName(const std::string&);
 }

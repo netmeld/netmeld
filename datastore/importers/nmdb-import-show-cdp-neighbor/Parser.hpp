@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -30,6 +30,7 @@
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/objects/IpAddress.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
+#include <netmeld/datastore/objects/PhysicalConnection.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
 
@@ -41,8 +42,9 @@ namespace nmdp = netmeld::datastore::parsers;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdo::IpAddress>         ipAddrs;
-  std::vector<nmdo::DeviceInformation> devInfos;
+  std::vector<nmdo::IpAddress>          ipAddrs;
+  std::vector<nmdo::DeviceInformation>  devInfos;
+  std::vector<nmdo::PhysicalConnection> physCons;
 
   std::vector<std::pair<nmdo::InterfaceNetwork, std::string>> interfaces;
 
@@ -52,11 +54,15 @@ struct Data {
 typedef std::vector<Data>  Result;
 
 struct NeighborData {
+  std::string srcIfaceName  {""};
   std::string curHostname   {""};
   std::string curIfaceName  {""};
   std::string curVendor     {""};
   std::string curModel      {""};
   std::vector<nmdo::IpAddress>  ipAddrs;
+
+  auto operator<=>(const NeighborData&) const = default;
+  bool operator==(const NeighborData&) const = default;
 };
 
 
@@ -70,28 +76,43 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+  protected:
     Data d;
     NeighborData nd;
 
-  protected:
     // Rules
     qi::rule<nmdp::IstreamIter, Result(), qi::ascii::blank_type>
       start;
 
     qi::rule<nmdp::IstreamIter, qi::ascii::blank_type>
-      config,
-      header,
-      deviceData,
-      ipAddressValue,
-      platformValue,
-      interfaceValue,
-      ignoredLine;
-
-    qi::rule<nmdp::IstreamIter>
-      hostnameValue;
+        detailConfig
+      , detailDeviceId
+      , detailEntry
+      , detailHeader
+      , detailIpAddress
+      , detailPlatform
+      , ignoredLine
+      , noDetailCapabilityCodes
+      , noDetailConfig
+      , noDetailEntry
+      , noDetailEntryCount
+      , noDetailHeader
+      ;
 
     qi::rule<nmdp::IstreamIter, std::string()>
-      token;
+        noDetailDeviceId
+      , noDetailPlatform
+      , noDetailLocalIface
+      , noDetailPortId
+      , token
+      , csvToken
+      ;
+
+    qi::rule<nmdp::IstreamIter>
+        detailInterface
+      , noDetailCapability
+      , noDetailHoldtime
+      ;
 
     nmdp::ParserIpAddress   ipAddr;
 
@@ -107,10 +128,11 @@ class Parser :
   private:
     std::string getDevice(const std::string&);
 
-    void updateIpAddrs();
-    void updateInterfaces();
-    void updateDeviceInformation();
     void finalizeData();
+    void updateDeviceInformation();
+    void updateInterfaces();
+    void updateIpAddrs();
+    void updatePhysicalConnection();
 
     // Object return
     Result getData();

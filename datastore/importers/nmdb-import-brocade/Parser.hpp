@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -29,7 +29,6 @@
 
 #include <netmeld/datastore/objects/DeviceInformation.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
-#include <netmeld/datastore/objects/Route.hpp>
 #include <netmeld/datastore/objects/Service.hpp>
 #include <netmeld/datastore/parsers/ParserDomainName.hpp>
 #include <netmeld/datastore/parsers/ParserIpAddress.hpp>
@@ -44,10 +43,8 @@ namespace nmdp = netmeld::datastore::parsers;
 // =============================================================================
 struct Data
 {
-  std::string                          domainName;
   nmdo::DeviceInformation              devInfo;
   std::vector<nmdo::InterfaceNetwork>  ifaces;
-  std::vector<nmdo::Route>             routes;
   std::vector<nmdo::Service>           services;
 
   auto operator<=>(const Data&) const = default;
@@ -66,6 +63,7 @@ class Parser :
   // Variables
   // ===========================================================================
   private:
+  protected:
     Data d;
 
     // Rules
@@ -106,7 +104,6 @@ class Parser :
 
     // InterfaceNetwork related
     void addIface(nmdo::InterfaceNetwork&);
-    void addIfaceRoute(const nmdo::IpAddress&, const std::string&);
 
     // Object return
     Result getData();

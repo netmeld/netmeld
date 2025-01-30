@@ -44,15 +44,13 @@ namespace netmeld::datastore::parsers {
         start =
           qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()]
           >> (  (qi::as_string[ipv4])
-                [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
+                  [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
              >> -(qi::lit('/') >> prefix)
-                [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
+                  [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
              )
           ;
 
-        ipv4 = // currently this expects chars, so octet can't return uints
-          //    ____
-          // 255.255
+        ipv4 = // currently needs chars, so octet can't return uints
           qi::hold[octet >> qi::repeat(3)[qi::char_('.') >> octet]]
           ;
 
@@ -85,69 +83,75 @@ namespace netmeld::datastore::parsers {
   {
     protected:
       unsigned char h16Count  {0};
-      bool          colons    {false};
+      bool          altForm   {false};
+
+      ParserIpv4Address ipv4Addr;
 
     public:
       ParserIpv6Address() : ParserIpv6Address::base_type(start)
       {
         start =
-          qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()] >>
-          ( (qi::as_string[ipv6])
-            [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
-            >>
-            -(qi::lit('/') >> prefix)
-            [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
-          )
+          qi::eps [qi::_val = pnx::construct<nmdo::IpAddress>()]
+          >> (  (qi::as_string[ipv6])
+                  [pnx::bind(&nmdo::IpAddress::setAddress, &qi::_val, qi::_1)]
+             >> -(qi::lit('/') >> prefix)
+                  [pnx::bind(&nmdo::IpAddress::setPrefix, &qi::_val, qi::_1)]
+             )
           ;
 
-        ipv6 %=
-          ( addrFull
-          | addrShortenedMiddle
-          | addrShortenedEnd
-          | addrShortenedStart
-          | addrOnlyColons
-          ) >> qi::eps(  ( pnx::ref(colons) && (pnx::ref(h16Count) <= 6))
-                      || (!pnx::ref(colons) && (pnx::ref(h16Count) == 8))
-                      )
+        ipv6 = // ms96 + ls32
+          // 1:2:3:4:5:6:(7:8|1.2.3.4)
+            qi::hold[( qi::repeat(6)[h16 >> qi::char_(':')] >> ls32)]
+          // ::1:2:3:4:(5:6|1.2.3.4)
+          | qi::hold[( qi::string("::")
+                    >> qi::repeat(4)[h16 >> qi::char_(':')] >> ls32
+                    )]
+          // ::1:2:3:(4:5|1.2.3.4)
+          | qi::hold[( qi::string("::")
+                    >> qi::repeat(3)[h16 >> qi::char_(':')] >> ls32
+                    )]
+          // ::1:2:(3:4|1.2.3.4)
+          | qi::hold[( qi::string("::")
+                    >> qi::repeat(2)[h16 >> qi::char_(':')] >> ls32
+                    )]
+          // ::1:(2:3|1.2.3.4)
+          | qi::hold[( qi::string("::") >> h16 >> qi::char_(':') >> ls32)]
+          // ::(1:2|1.2.3.4)
+          | qi::hold[(qi::string("::") >> ls32)]
+          // ::1
+          | qi::hold[(qi::string("::") >> h16)]
+          // ::
+          | qi::hold[qi::string("::")]
+          // 1::2:3:4:(5:6|1.2.3.4)
+          | qi::hold[( h16 >> qi::string("::")
+                    >> qi::repeat(3)[h16 >> qi::char_(':')] >> ls32
+                    )]
+          // (1|1:2)::3:4:(5:6|1.2.3.4)
+          | qi::hold[( qi::repeat(1,2)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> qi::repeat(2)[h16 >> qi::char_(':')]
+                    >> ls32
+                    )]
+          // (1|1:2|1:2:3)::4:(5:6|1.2.3.4)
+          | qi::hold[( qi::repeat(1,3)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> h16 >> qi::char_(':') >> ls32
+                    )]
+          // (1|1:2|1:2:3|1:2:3:4)::(5:6|1.2.3.4)
+          | qi::hold[( qi::repeat(1,4)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> ls32
+                    )]
+          // (1|1:2|1:2:3|1:2:3:4|1:2:3:4:5)::6
+          | qi::hold[( qi::repeat(1,5)[h16 >> qi::char_(':')]
+                    >> qi::char_(':') >> h16
+                    )]
+          // (1|1:2|1:2:3|1:2:3:4|1:2:3:4:5|1:2:3:4:5:6)::
+          | qi::hold[( qi::repeat(1,6)[h16 >> qi::char_(':')]
+                    >> qi::char_(':')
+                    )]
           ;
 
-        resetConstraints =
-          qi::eps [(pnx::ref(colons) = false, pnx::ref(h16Count) = 0)]
-          ;
-
-        addrFull %= // e.g., ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-          resetConstraints
-          >> qi::hold[h16 >> qi::repeat(7)[qi::hold[qi::char_(':') >> h16]]]
-          ;
-
-        addrShortenedMiddle %= // e.g., ffff::ffff
-          resetConstraints
-          >> qi::hold[  qi::repeat(1,6)[qi::hold[h16 >> qi::char_(':')]]
-                     >> qi::repeat(1,6)[qi::hold[qi::char_(':') >> h16]]
-                     ]
-          >> qi::eps [pnx::ref(colons) = true]
-          ;
-
-        addrShortenedEnd %= // e.g., ffff::
-          resetConstraints
-          >> qi::hold[  qi::repeat(1,6)[qi::hold[h16 >> qi::char_(':')]]
-                     >> qi::char_(':')
-                     ]
-          >> qi::eps [pnx::ref(colons) = true]
-          ;
-
-        addrShortenedStart %= // e.g., ::ffff
-          resetConstraints
-          >> qi::hold[  qi::char_(':')
-                     >> qi::repeat(1,6)[qi::hold[qi::char_(':') >> h16]]
-                     ]
-          >> qi::eps [pnx::ref(colons) = true]
-          ;
-
-        addrOnlyColons %= // i.e., ::
-          resetConstraints
-          >> qi::hold[qi::string("::")]
-          >> qi::eps [pnx::ref(colons) = true]
+        ls32 =
+            qi::hold[(h16 >> qi::char_(':') >> h16)]
+          | ipv4Addr.ipv4
           ;
 
         h16 %=
@@ -158,7 +162,12 @@ namespace netmeld::datastore::parsers {
           qi::uint_ [qi::_pass = (qi::_val <= 128)]
           ;
 
-        BOOST_SPIRIT_DEBUG_NODES((start)(ipv6)(prefix)(h16));
+        BOOST_SPIRIT_DEBUG_NODES(
+            (start)
+            (ipv6)
+            (prefix)
+            //(h16)
+          );
       }
 
       qi::rule<IstreamIter, nmdo::IpAddress()>
@@ -166,12 +175,9 @@ namespace netmeld::datastore::parsers {
 
       qi::rule<IstreamIter, std::string()>
           ipv6
-        , addrFull
-        , addrShortenedMiddle
-        , addrShortenedEnd
-        , addrShortenedStart
-        , addrOnlyColons
-        , h16;
+        , h16
+        , ls32
+        ;
 
       qi::rule<IstreamIter, unsigned int>
         prefix;

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -33,20 +33,20 @@
 namespace sfs = std::filesystem;
 
 
-namespace netmeld::utils {
+namespace netmeld::tools::clw {
 
   // Ensure dumpcap writes output file (-w) to the tool run directory.
   void
   augmentArgsDumpcap
-  (std::vector<std::string>& args, sfs::path const& toolRunResults);
+  (std::vector<std::string>& args, const sfs::path& toolRunResults);
 
   void
   augmentArgsDumpcap
-  (std::vector<std::string>& args, sfs::path const& toolRunResults)
+  (std::vector<std::string>& args, const sfs::path& toolRunResults)
   {
     // Unconditionally added to end so it overrides any user-specified.
-    args.push_back("-w");
-    args.push_back((toolRunResults/"results.pcapng").string());
+    args.emplace_back("-w");
+    args.emplace_back((toolRunResults/"results.pcapng").string());
   }
 
 
@@ -54,14 +54,14 @@ namespace netmeld::utils {
   // Ensure nmap always uses "--reason" and "--stats-every".
   void
   augmentArgsNmap
-  (std::vector<std::string>& args, sfs::path const& toolRunResults);
+  (std::vector<std::string>& args, const sfs::path& toolRunResults);
 
   void
   augmentArgsNmap
-  (std::vector<std::string>& args, sfs::path const& toolRunResults)
+  (std::vector<std::string>& args, const sfs::path& toolRunResults)
   {
     // Save a copy of any targets file specified with "-iL".
-    auto argI = find(args.begin(), args.end(), "-iL");
+    auto argI = std::find(args.begin(), args.end(), "-iL");
     if (args.end() != argI) {
       ++argI;  // Increment from "-iL" to the filename.
       if ((args.end() != argI) && (sfs::exists(*argI))) {
@@ -73,20 +73,20 @@ namespace netmeld::utils {
     }
 
     // Option "--reason" only needs to be present once.
-    if (args.end() == find(args.begin(), args.end(), "--reason")) {
-      args.push_back("--reason");
+    if (args.end() == std::find(args.begin(), args.end(), "--reason")) {
+      args.emplace_back("--reason");
     }
 
     // Keep user-specified "--stats-every", or add a default of "60s".
-    if (args.end() == find(args.begin(), args.end(), "--stats-every")) {
-      args.push_back("--stats-every");
-      args.push_back("60s");
+    if (args.end() == std::find(args.begin(), args.end(), "--stats-every")) {
+      args.emplace_back("--stats-every");
+      args.emplace_back("60s");
     }
 
     // Keep user-specified "--min-hostgroup", or add a default of "256".
-    if (args.end() == find(args.begin(), args.end(), "--min-hostgroup")) {
-      args.push_back("--min-hostgroup");
-      args.push_back("256");
+    if (args.end() == std::find(args.begin(), args.end(), "--min-hostgroup")) {
+      args.emplace_back("--min-hostgroup");
+      args.emplace_back("256");
     }
 
     // Keep user-specified "--min-rate", or add a default of "500".
@@ -107,15 +107,15 @@ namespace netmeld::utils {
     // So (12.5 MB/s)/(78 B/frame) = 160256 frames/s.
     // And (160256 frames/s)/(20 parallel scans) = 8012 frames/s/scan.
 
-    if (args.end() == find(args.begin(), args.end(), "--min-rate")) {
-      args.push_back("--min-rate");
-      args.push_back("500");
+    if (args.end() == std::find(args.begin(), args.end(), "--min-rate")) {
+      args.emplace_back("--min-rate");
+      args.emplace_back("500");
     }
 
     // Output all file formats.
     // Unconditionally added to end so it overrides any user-specified.
-    args.push_back("-oA");
-    args.push_back((toolRunResults/"results").string());
+    args.emplace_back("-oA");
+    args.emplace_back((toolRunResults/"results").string());
   }
 
 
@@ -123,26 +123,26 @@ namespace netmeld::utils {
   // and so we always have the IP addresses involved.
   void
   augmentArgsPing
-  (std::vector<std::string>& args, sfs::path const&);
+  (std::vector<std::string>& args, const sfs::path&);
 
   void
   augmentArgsPing
-  (std::vector<std::string>& args, sfs::path const&)
+  (std::vector<std::string>& args, const sfs::path&)
   {
     // Option "-n" only needs to be present once.
-    if (args.end() == find(args.begin(), args.end(), "-n")) {
-      args.push_back("-n");
+    if (args.end() == std::find(args.begin(), args.end(), "-n")) {
+      args.emplace_back("-n");
     }
   }
 
 
   // Actual entry point
   void
-  augmentArgs(std::vector<std::string>& args, sfs::path const& toolRunResults)
+  augmentArgs(std::vector<std::string>& args, const sfs::path& toolRunResults)
   {
     std::map<std::string,
              std::function<
-               void(std::vector<std::string>&, sfs::path const&)
+               void(std::vector<std::string>&, const sfs::path&)
             >>
       toolHandlers;
 

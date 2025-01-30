@@ -217,6 +217,9 @@ class Parser :
     // Route related
     void routeAddIp(const nmdo::IpAddress&, const nmdo::IpAddress&);
     void routeAddIface(const nmdo::IpAddress&, const std::string&);
+    void routeAddIfaceIp( const nmdo::IpAddress&, const std::string&
+                        , const nmdo::IpAddress&
+                        );
     void routeSetAdminDistance(const size_t);
 
     // Interface related

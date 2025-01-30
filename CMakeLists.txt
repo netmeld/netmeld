@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -28,7 +28,7 @@
 # CMake Settings
 # ----------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.30)
 set(TOOL_SUITE "netmeld")
 set(MODULE_NAME "netmeld")
 project(${TOOL_SUITE})
@@ -41,7 +41,6 @@ include(cmake/BuildHelpers.cmake)
 # ----------------------------------------------------------------------
 # Libraries that many things need to link against for various reasons
 # ----------------------------------------------------------------------
-
 set(BOOST_PKG_NAME_VERSION "1.83.0")
 find_package(Boost REQUIRED
   date_time
@@ -64,7 +63,8 @@ include(FetchContent)
 FetchContent_Declare(
   libpqxx
   GIT_REPOSITORY https://github.com/jtv/libpqxx.git
-  GIT_TAG 21afb0d6ec3d31424df6b7aac04c6b20c55c0a65 # 7.8.1 tag
+#  GIT_TAG 21afb0d6ec3d31424df6b7aac04c6b20c55c0a65 # 7.8.1 tag
+  GIT_TAG 1ca80b0e638f6182426c5b11255069cae4fbd542 # 7.9.2 tag
   GIT_PROGRESS YES
 )
 set(PQXX_LIBRARIES pqxx)

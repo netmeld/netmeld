@@ -36,6 +36,8 @@
 #include <netmeld/core/utils/Exit.hpp>
 #include <netmeld/core/utils/Severity.hpp>
 
+#include <netmeld/core/utils/StreamUtilities.hpp>
+
 
 namespace netmeld::core::utils {
 

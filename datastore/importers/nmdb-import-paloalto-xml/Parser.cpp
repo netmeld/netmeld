@@ -75,7 +75,7 @@ Parser::parseConfig(const pugi::xml_node& configNode)
       auto parsedIfaces{parseConfigInterface(interfaceNode)};
       logicalSystem.ifaces.merge(parsedIfaces);
       for (const auto& [conflictName, conflict] : parsedIfaces) {
-        std::cerr << "ifaces merge conflict: " << conflictName << std::endl;
+        LOG_WARN << "ifaces merge conflict: " << conflictName << std::endl;
       }
     }
 
@@ -85,7 +85,7 @@ Parser::parseConfig(const pugi::xml_node& configNode)
       auto parsedVrfs{parseConfigVirtualRouter(virtualRouterNode)};
       logicalSystem.vrfs.merge(parsedVrfs);
       for (const auto& [conflictName, conflict] : parsedVrfs) {
-        std::cerr << "ifaces merge conflict: " << conflictName << std::endl;
+        LOG_WARN << "ifaces merge conflict: " << conflictName << std::endl;
       }
     }
 
@@ -166,7 +166,11 @@ Parser::parseConfigVsys(const pugi::xml_node& vsysNode)
         importInterfaceMatch.node().text().as_string()
       };
       // Import copy of iface from base system.
-      logicalSystem.ifaces[ifaceName] = baseSystem.ifaces.at(ifaceName);
+      if (baseSystem.ifaces.contains(ifaceName)) {
+        logicalSystem.ifaces[ifaceName] = baseSystem.ifaces.at(ifaceName);
+      } else {
+        LOG_WARN << "baseSystem does not contain interface: " << ifaceName << std::endl;
+      }
     }
 
     for (const auto& zoneMatch :
@@ -175,7 +179,7 @@ Parser::parseConfigVsys(const pugi::xml_node& vsysNode)
       auto parsedZones{parseConfigZone(zoneNode)};
       logicalSystem.aclZones.merge(parsedZones);
       for (const auto& [conflictName, conflict] : parsedZones) {
-        std::cerr << "aclZones merge conflict: " << conflictName << std::endl;
+        LOG_WARN << "aclZones merge conflict: " << conflictName << std::endl;
       }
     }
     // Due to how intrazone and interzone rules work in Palo Alto,
@@ -188,7 +192,7 @@ Parser::parseConfigVsys(const pugi::xml_node& vsysNode)
       auto parsedAclIpNetSets{parseConfigAddress(addressNode)};
       logicalSystem.aclIpNetSets.merge(parsedAclIpNetSets);
       for (const auto& [conflictName, conflict] : parsedAclIpNetSets) {
-        std::cerr << "aclIpNetSets merge conflict: " << conflictName << std::endl;
+        LOG_WARN << "aclIpNetSets merge conflict: " << conflictName << std::endl;
       }
     }
     for (const auto& addressGroupMatch :
@@ -197,7 +201,7 @@ Parser::parseConfigVsys(const pugi::xml_node& vsysNode)
       auto parsedAclIpNetSets{parseConfigAddressGroup(addressGroupNode)};
       logicalSystem.aclIpNetSets.merge(parsedAclIpNetSets);
       for (const auto& [conflictName, conflict] : parsedAclIpNetSets) {
-        std::cerr << "aclIpNetSets merge conflict: " << conflictName << std::endl;
+        LOG_WARN << "aclIpNetSets merge conflict: " << conflictName << std::endl;
       }
     }
     logicalSystem.aclIpNetSets["any"].setId("any");
@@ -303,7 +307,7 @@ Parser::parseConfigInterfaceEntry(const pugi::xml_node& ifaceEntryNode)
         ipFound = true;
       }
       if (!ipFound) {
-        std::cerr << "Could not find IP for: " << ipName << std::endl;
+        LOG_WARN << "Could not find IP for: " << ipName << std::endl;
       }
     }
   }

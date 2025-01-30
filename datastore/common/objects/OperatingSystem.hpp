@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,9 +31,10 @@
 #include <netmeld/datastore/objects/IpAddress.hpp>
 
 
-namespace netmeld::datastore::objects {
-
-  class OperatingSystem : public AbstractDatastoreObject {
+namespace netmeld::datastore::objects
+{
+  class OperatingSystem : public AbstractDatastoreObject
+  {
     // =========================================================================
     // Variables
     // =========================================================================
@@ -63,10 +64,11 @@ namespace netmeld::datastore::objects {
     private:
     protected:
     public:
+      void setIpAddr(const IpAddress&);
       void setVendorName(const std::string&);
       void setProductName(const std::string&);
       void setProductVersion(const std::string&);
-      void setCpe(const std::string&);
+      void setCpe(const std::string& = "");
       void setAccuracy(const double);
 
       bool isValid() const override;
@@ -75,6 +77,7 @@ namespace netmeld::datastore::objects {
                 const nmco::Uuid&, const std::string&) override;
 
       std::string toDebugString() const override;
+      std::string toCpeString();
 
       std::partial_ordering operator<=>(const OperatingSystem&) const;
       bool operator==(const OperatingSystem&) const;

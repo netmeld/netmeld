@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-namespace netmeld::utils {
+namespace netmeld::tools::clw {
   void augmentArgs(std::vector<std::string>&, const std::filesystem::path&);
 }
 #endif  /* CLW_AUGMENT_ARGS_HPP */

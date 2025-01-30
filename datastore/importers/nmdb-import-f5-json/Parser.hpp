@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -27,19 +27,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include <netmeld/datastore/objects/AclIpNetSet.hpp>
-#include <netmeld/datastore/objects/AclRuleService.hpp>
-#include <netmeld/datastore/objects/AclService.hpp>
-#include <netmeld/datastore/objects/AclZone.hpp>
-#include <netmeld/datastore/objects/DnsResolver.hpp>
 #include <netmeld/datastore/objects/InterfaceNetwork.hpp>
-#include <netmeld/datastore/objects/IpAddress.hpp>
-#include <netmeld/datastore/objects/MacAddress.hpp>
-#include <netmeld/datastore/objects/OperatingSystem.hpp>
-#include <netmeld/datastore/objects/Port.hpp>
-#include <netmeld/datastore/objects/PortRange.hpp>
-#include <netmeld/datastore/objects/Route.hpp>
-#include <netmeld/datastore/objects/Service.hpp>
 #include <netmeld/datastore/objects/ToolObservations.hpp>
 #include <netmeld/datastore/objects/Vrf.hpp>
 
@@ -52,19 +40,12 @@
 
 using json = nlohmann::json;
 
+namespace nmdo = netmeld::datastore::objects;
+
 struct LogicalSystem
 {
-  std::string name;
-  std::map<std::string, netmeld::datastore::objects::InterfaceNetwork> ifaces;
-  std::map<std::string, netmeld::datastore::objects::Vrf> vrfs;
-  std::vector<netmeld::datastore::objects::Service> services;
-  std::vector<netmeld::datastore::objects::DnsResolver> dnsResolvers;
-  std::vector<std::string> dnsSearchDomains;
-
-  std::map<std::string, netmeld::datastore::objects::AclZone> aclZones;
-  std::map<std::string, netmeld::datastore::objects::AclIpNetSet> aclIpNetSets;
-  std::vector<netmeld::datastore::objects::AclService> aclServices;
-  std::vector<netmeld::datastore::objects::AclRuleService> aclRules;
+  std::map<std::string, nmdo::InterfaceNetwork> ifaces;
+  std::map<std::string, nmdo::Vrf> vrfs;
 
   auto operator<=>(const LogicalSystem&) const = default;
   bool operator==(const LogicalSystem&) const = default;
@@ -74,7 +55,7 @@ struct LogicalSystem
 struct Data
 {
   std::map<std::string, LogicalSystem> logicalSystems;
-  netmeld::datastore::objects::ToolObservations observations;
+  nmdo::ToolObservations observations;
 
   auto operator<=>(const Data&) const = default;
   bool operator==(const Data&) const = default;
@@ -84,34 +65,23 @@ typedef std::vector<Data>    Result;
 
 class Parser
 {
-  public:
-    Result
-    getData();
-
-    void
-    fromJson(const json&);
-
-    void
-    parseLtmVirtualAddress(const nlohmann::ordered_json&);
-
-    void
-    parseNetArpNdp(const nlohmann::ordered_json&);
-
-    void
-    parseNetSelf(const nlohmann::ordered_json&);
-
-    void
-    parseNetRoute(const nlohmann::ordered_json&);
-
-    void
-    parseUnsupported(const nlohmann::ordered_json&);
-
-  protected:
-    std::tuple<netmeld::datastore::objects::IpAddress, std::string>
-    parseIpAddrVrfStr(const std::string&) const;
-
   private:
+  protected:
     Data data;
+
+    std::tuple<nmdo::IpAddress, std::string>
+      parseIpAddrVrfStr(const std::string&) const;
+
+    void parseLtmVirtualAddress(const nlohmann::ordered_json&);
+    void parseNetArpNdp(const nlohmann::ordered_json&);
+    void parseNetSelf(const nlohmann::ordered_json&);
+    void parseNetRoute(const nlohmann::ordered_json&);
+    void parseUnsupported(const nlohmann::ordered_json&);
+
+  public:
+    Result getData();
+
+    void fromJson(const json&);
 };
 
 #endif  /* PARSER_HPP */

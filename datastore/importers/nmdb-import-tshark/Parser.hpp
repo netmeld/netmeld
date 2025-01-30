@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -57,7 +57,8 @@ class Parser :
   // ===========================================================================
   // Variables
   // ===========================================================================
-  private: // Variables are always private
+  private: // Variables should rarely appear at this scope
+  protected: // Variables intended for internal/subclass API
     // Rules
     qi::symbols<const char, qi::rule<Iter, std::string()>*>
       dataLines;
@@ -115,17 +116,17 @@ class Parser :
       , dnsNs {R"("dns.ns": )"}
       , dnsSoaMname {R"("dns.soa.mname": )"}
       , dnsSoaRname {R"("dns.soa.rname": )"}
-      , bootpOptionSubnetMask {R"("bootp.option.subnet_mask": )"}
-      , bootpOptionDomainNameServer {R"("bootp.option.domain_name_server": )"}
-      , bootpOptionDhcpServerId {R"("bootp.option.dhcp_server_id": )"}
-      , bootpOptionRouter {R"("bootp.option.router": )"}
-      , bootpOptionDomainName {R"("bootp.option.domain_name": )"}
-      , bootpOptionTftpServerAddress {R"("bootp.option.tftp_server_address": )"}
-      , bootpOptionSipServerAddress {R"("bootp.option.sip_server.address": )"}
-      , bootpOptionHostname {R"("bootp.option.hostname": )"} // client name
-      , bootpIpYour {R"("bootp.ip.your": )"} // client ip
-      , bootpIpRelay {R"("bootp.ip.relay": )"} // tricky
-      , bootpHwMacAddr {R"("bootp.hw.mac_addr": )"} // client mac
+      , dhcpOptionSubnetMask {R"("dhcp.option.subnet_mask": )"}
+      , dhcpOptionDomainNameServer {R"("dhcp.option.domain_name_server": )"}
+      , dhcpOptionDhcpServerId {R"("dhcp.option.dhcp_server_id": )"}
+      , dhcpOptionRouter {R"("dhcp.option.router": )"}
+      , dhcpOptionDomainName {R"("dhcp.option.domain_name": )"}
+      , dhcpOptionTftpServerAddress {R"("dhcp.option.tftp_server_address": )"}
+      , dhcpOptionSipServerAddress {R"("dhcp.option.sip_server.address": )"}
+      , dhcpOptionHostname {R"("dhcp.option.hostname": )"} // client name
+      , dhcpIpYour {R"("dhcp.ip.your": )"} // client ip
+      , dhcpIpRelay {R"("dhcp.ip.relay": )"} // tricky
+      , dhcpHwMacAddr {R"("dhcp.hw.mac_addr": )"} // client mac
         // what to do with these two, macs and subnets
       , dhcp6IaprefixPrefAddr {R"("dhcp6.iaprefix.pref_addr": )"} // "subnet" for c&s
       , dhcpv6DuidlltLinkLayerAddr {R"("dhcpv6.duidllt.link_layer_addr": )"} // client&server
@@ -145,6 +146,7 @@ class Parser :
     typedef std::map<std::string, std::any>  PacketData;
     PacketData pd;
 
+    size_t processedPacketCount {0};
     size_t parsedPacketCount {0};
 
     std::string tempDnsRespName;
@@ -161,6 +163,7 @@ class Parser :
   // Methods
   // ===========================================================================
   private:
+  protected:
     void setDone();
     void setNewPacket();
     void setPacketData(const std::string&, const std::string&);

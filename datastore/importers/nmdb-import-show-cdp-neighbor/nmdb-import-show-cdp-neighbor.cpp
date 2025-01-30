@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -31,14 +31,36 @@
 namespace nmdt = netmeld::datastore::tools;
 
 
+// =============================================================================
+// Import tool definition
+// =============================================================================
 template<typename P, typename R>
 class Tool : public nmdt::AbstractImportSpiritTool<P,R>
 {
+  // ===========================================================================
+  // Variables
+  // ===========================================================================
+  private:
+  protected:
+  public:
+
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+  private:
+  protected:
   public:
     Tool() : nmdt::AbstractImportSpiritTool<P,R>
-      ("show cdp neighbor detail", PROGRAM_NAME, PROGRAM_VERSION)
+      ( "show cdp neighbor [detail]"
+      , PROGRAM_NAME
+      , PROGRAM_VERSION
+      )
     {}
 
+  // ===========================================================================
+  // Methods
+  // ===========================================================================
+  private:
     void
     specificInserts(pqxx::transaction_base& t) override
     {
@@ -46,26 +68,40 @@ class Tool : public nmdt::AbstractImportSpiritTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& results : this->tResults) {
+        LOG_DEBUG << "Iterating over IpAddresses\n";
         for (auto& result : results.ipAddrs) {
           result.save(t, toolRunId, deviceId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
-        // Add newly found devices
+        LOG_DEBUG << "Iterating over DeviceHardware\n";
         for (auto& result : results.devInfos) {
           result.save(t, toolRunId);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
 
+        LOG_DEBUG << "Iterating over InterfaceNetworks\n";
         for (auto& [result, did] : results.interfaces) {
           result.save(t, toolRunId, did);
           LOG_DEBUG << result.toDebugString() << std::endl;
         }
+
+        LOG_DEBUG << "Iterating over PhysicalConnections\n";
+        for (auto& result : results.physCons) {
+          result.save(t, toolRunId, deviceId);
+          LOG_DEBUG << result.toDebugString() << std::endl;
+        }
       }
     }
+
+  protected:
+  public:
 };
 
 
+// =============================================================================
+// Program entry point
+// =============================================================================
 int
 main(int argc, char** argv)
 {

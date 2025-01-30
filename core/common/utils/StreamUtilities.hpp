@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -73,7 +73,7 @@ namespace netmeld::core::utils {
     auto iter {set.begin()};
     if (iter != set.end()) {
       os << *iter;
-      iter++;
+      ++iter;
       for (; iter != set.end(); ++iter) {
         os << ", " << *iter;
       }
@@ -86,8 +86,13 @@ namespace netmeld::core::utils {
   std::ostream& operator<<(std::ostream& os, const std::map<K,V>& map)
   {
     os << "[";
-    for (const auto& [k, v] : map) {
-      os << "{" << k << ", " << v << "}, ";
+    auto iter {map.begin()};
+    if (iter != map.end()) {
+      os << "{" << iter->first << ", " << iter->second << "}";
+      ++iter;
+      for (; iter != map.end(); ++iter) {
+        os << ", {" << iter->first << ", " << iter->second << "}";
+      }
     }
     return os << "]";
   }

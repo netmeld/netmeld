@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(testWellformedDomainName)
   for (const auto& name : names) {
     auto temp = nmdp::fromString<nmdp::ParserDomainName, std::string>(name);
 
-    BOOST_CHECK_EQUAL(temp, name);
+    BOOST_TEST(temp == name);
   }
 }
 
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(testWellformedDomainName)
 //    InputIterator i{dataStream}, e;
 //    bool const success = qi::parse(i, e, nmdp::ParserDomainName(), result);
 //
-//    BOOST_CHECK(!success);
-//    BOOST_CHECK(i != e);
+//    BOOST_TEST(!success);
+//    BOOST_TEST(i != e);
 //  }
 //}
