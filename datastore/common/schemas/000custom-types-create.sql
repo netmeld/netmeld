@@ -96,13 +96,17 @@ CREATE TYPE RouteHop AS (
 
 -- ----------------------------------------------------------------------
 -- Prowler severity enum to aid in sorting.
+-- Some of these come from the OCSF scheme. They may not exist in our use cases
 -- ----------------------------------------------------------------------
 CREATE TYPE ProwlerSeverity AS ENUM (
-    'critical'
+    'fatal'
+  , 'critical'
   , 'high'
   , 'medium'
   , 'low'
   , 'informational'
+  , 'unknown'
+  , 'other'
 );
 
 -- ----------------------------------------------------------------------

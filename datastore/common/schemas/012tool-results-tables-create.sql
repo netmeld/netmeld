@@ -961,33 +961,35 @@ ON raw_prowler_v2_checks(resource_id);
 
 -- ----------------------------------------------------------------------
 
+-- Changed most of these fields from NOT NULL to NULL
+-- TODO Take another look to verify if this is correct
 CREATE TABLE raw_prowler_v3_checks (
       tool_run_id                 UUID            NOT NULL
     , assessment_start_time       TIMESTAMP       NOT NULL
     , finding_unique_id           TEXT            NOT NULL
-    , provider                    TEXT            NOT NULL
-    , profile                     TEXT            NOT NULL
-    , account_id                  TEXT            NOT NULL
+    , provider                    TEXT            NULL
+    , profile                     TEXT            NULL
+    , account_id                  TEXT            NULL
     , organizations_info          TEXT            NULL
-    , region                      TEXT            NOT NULL
-    , check_id                    TEXT            NOT NULL
-    , check_title                 TEXT            NOT NULL
+    , region                      TEXT            NULL
+    , check_id                    TEXT            NULL
+    , check_title                 TEXT            NULL
     , check_types                 TEXT            NULL
-    , service_name                TEXT            NOT NULL
+    , service_name                TEXT            NULL
     , sub_service_name            TEXT            NULL
-    , status                      TEXT            NOT NULL
-    , status_extended             TEXT            NOT NULL
+    , status                      TEXT            NULL
+    , status_extended             TEXT            NULL
     , severity                    ProwlerSeverity NOT NULL
-    , resource_id                 TEXT            NOT NULL
+    , resource_id                 TEXT            NULL
     , resource_arn                TEXT            NULL
     , resource_tags               TEXT            NULL
-    , resource_type               TEXT            NOT NULL
+    , resource_type               TEXT            NULL
     , resource_details            TEXT            NULL
-    , description                 TEXT            NOT NULL
+    , description                 TEXT            NULL
     , risk                        TEXT            NULL
     , related_url                 TEXT            NULL
-    , recommendation              TEXT            NOT NULL
-    , recommendation_url          TEXT            NOT NULL
+    , recommendation              TEXT            NULL
+    , recommendation_url          TEXT            NULL
     , remediation_code            TEXT            NULL
     , categories                  TEXT            NULL
     , notes                       TEXT            NULL
