@@ -41,6 +41,8 @@ namespace netmeld::datastore::objects::prowler {
   // ===========================================================================
   ProwlerOCSFData::ProwlerOCSFData(const json& jline)
   {
+
+    std::vector<std::string> orgInfoBuilder;
     // top level
     assessmentStartTime.readFormatted(jline.value("event_time", "")
                                      , "%Y-%m-%dT%H:%M:%S");
@@ -54,17 +56,37 @@ namespace netmeld::datastore::objects::prowler {
     auto jFindingInfo = jline.value("finding_info", json::object());
     findingUniqueId = jFindingInfo.value("uid", "");
     checkTitle = jFindingInfo.value("title", "");
+    description = jFindingInfo.value("desc", "");
 
     // cloud
     auto jCloud = jline.value("cloud", json::object());
     provider = jCloud.value("provider", "");
-    // jCloud["org"].value("name", ""); // Used to be in OrganizationsInfo
     // jCloud["org"].value("uid", ""); // Should map to the same as jMetadata.value("tenant_uid", "");
+    auto jCloudOrg = jCloud.value("org", json::object());
 
     // account
     auto jAccount = jCloud.value("account", json::object());
     accountId = jAccount.value("uid", "");
-    // jAccount.value("account_name", ""); // Used to be in OrganizationsInfo
+
+    if(jAccount.contains("name"))
+    {
+      orgInfoBuilder.push_back(makeKeyValuePair("account_name", jAccount["name"]));
+    }
+    if(jCloudOrg.contains("name"))
+    {
+        orgInfoBuilder.push_back(makeKeyValuePair("account_org", jCloudOrg["name"]));
+    }
+
+    std::ostringstream labelsOss;
+    for(const auto& element : jAccount.value("labels", json::array()))
+    {
+      labelsOss << element.get<std::string>() << '\n';
+    }
+    std::string labelsStr = labelsOss.str();
+    if(labelsStr.size() > 0)
+    {
+      orgInfoBuilder.push_back(makeKeyValuePair("account_tags", labelsOss.str()));
+    }
 
     // resources
     auto jResourceArray = jline.value("resources", json::array());
@@ -77,7 +99,6 @@ namespace netmeld::datastore::objects::prowler {
     resourceType = jResources.value("type", "");
     auto jResData = jResources.value("data", json::object());
     resourceDetails = jResData.value("details", "");
-    description = jResources.value("desc", "");
 
     // metadata
     auto jMetadata = jline.value("metadata", json::object());
@@ -189,17 +210,40 @@ namespace netmeld::datastore::objects::prowler {
       const auto& jRemedi = jline["remediation"];
       recommendation = jRemedi.value("desc", "");
       if (jRemedi.contains("references")) {
+        std::ostringstream url;
+        std::ostringstream oss;
         const auto& jRef = jRemedi["references"];
         for (const auto& value : jRef) {
-            // Have to test for url, CLI, Terraform, NativelaC, or Other
+          std::string svalue(value);
+          // Have to test for url, CLI, Terraform, NativelaC, or Other (If we want the key)
+          if(svalue.starts_with("http"))
+          {
+            url << svalue << '\n';
+          }
+          else
+          {
+            oss << svalue << '\n';
+          }
         }
+        recommendationUrl = url.str();
+        remediationCode = oss.str();
       }
     }
+
+    organizationsInfo = nmcu::toString(orgInfoBuilder, '\n');
   }
 
   // ===========================================================================
   // Methods
   // ===========================================================================
+
+  std::string
+  ProwlerOCSFData::makeKeyValuePair(const std::string& key, const std::string& value) const
+  {
+    std::ostringstream oss;
+    oss << key << ": " << value;
+    return oss.str();
+  }
 
   bool
   ProwlerOCSFData::isValid() const

@@ -90,6 +90,8 @@ namespace netmeld::datastore::objects::prowler {
     // =========================================================================
     private: // Methods which should be hidden from API users
     protected: // Methods part of subclass API
+
+      std::string makeKeyValuePair(const std::string&, const std::string&) const;
     public: // Methods part of public API
       bool isValid() const override;
       void save(pqxx::transaction_base&,

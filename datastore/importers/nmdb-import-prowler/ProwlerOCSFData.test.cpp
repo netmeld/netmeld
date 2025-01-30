@@ -127,7 +127,7 @@ namespace netmeld::datastore::objects::prowler {
                     "uid": "123456789012"
                 },
                 "org": {
-                    "name": "",
+                    "name": "example-name",
                     "uid": ""
                 },
                 "provider": "aws",
@@ -207,18 +207,18 @@ namespace netmeld::datastore::objects::prowler {
         BOOST_TEST("arn:aws:cloudtrail:ap-northeast-1:123456789012:trail" == data.resourceArn);
         BOOST_TEST("AwsCloudTrailTrail" == data.resourceType);
         BOOST_TEST("More detail here" == data.resourceDetails);
-        BOOST_TEST("" == data.description); // Default since no value was given
+        BOOST_TEST("Ensure CloudTrail is enabled in all regions" == data.description); // Default since no value was given
         BOOST_TEST("" == data.risk); // Default since no value was given
         BOOST_TEST("https://example.com" == data.relatedUrl);
         BOOST_TEST("Example notes" == data.notes);
         BOOST_TEST("Software and Configuration Checks\nIndustry and Regulatory Standards\nCIS AWS Foundations Benchmark" == data.checkTypes);
         BOOST_TEST("forensics-ready" == data.categories);
-        BOOST_TEST("" == data.organizationsInfo); // Default since no values given
+        BOOST_TEST("account_name: test-account\naccount_org: example-name" == data.organizationsInfo); // Default since no values given
         BOOST_TEST("" == data.resourceTags); // Default since no values given
         //BOOST_TEST("Key1\n- Value1\n- Value2\nKey2\n- Value3" == data.compliance); // TODO: Way too long for now
         BOOST_TEST("Ensure Logging is set to ON on all regions (even if they are not being used at the moment." == data.recommendation);
-        //BOOST_TEST("https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrailconcepts.html#cloudtrail-concepts-management-events" == data.recommendationUrl);
-        //BOOST_TEST("" == data.remediationCode);
+        BOOST_TEST("https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrailconcepts.html#cloudtrail-concepts-management-events\n" == data.recommendationUrl);
+        BOOST_TEST("aws cloudtrail create-trail --name <trail_name> --bucket-name <s3_bucket_for_cloudtrail> --is-multi-region-trail aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail \n" == data.remediationCode);
     }
 
     BOOST_AUTO_TEST_CASE(ConstructorTestNoData)
