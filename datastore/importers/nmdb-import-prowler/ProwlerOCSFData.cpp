@@ -28,6 +28,7 @@
 
 #include <format>
 
+#include <netmeld/core/utils/StringUtilities.hpp>
 #include <netmeld/core/utils/ContainerUtilities.hpp>
 
 namespace nmcu = netmeld::core::utils;
@@ -237,7 +238,7 @@ namespace netmeld::datastore::objects::prowler {
         , subServiceName
         , status
         , statusExtended
-        , severity
+        , nmcu::toLower(severity)
         , resourceId
         , resourceArn
         , resourceTags
