@@ -178,7 +178,7 @@ namespace netmeld::datastore::objects::prowler {
         oss << key << ": " << value;
         temp.push_back(oss.str());
       }
-      organizationsInfo = nmcu::toString(temp, '\n');
+      orgInfoBuilder.push_back(makeKeyValuePair("account_labels", nmcu::toString(temp, '\n')));
     }
 
     if (jResources.contains("labels")) {
