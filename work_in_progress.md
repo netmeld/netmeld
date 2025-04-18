@@ -34,7 +34,8 @@
 #YAML
 ```yaml
 version2:
-	assessmentStartTime: ".Timestamp" # Format: "%Y-%m-%dT%H:%M:%SZ"
+	assessmentStartTime: ".Timestamp"
+	_timeFormat: "%Y-%m-%dT%H:%M:%SZ"
 	findingUniqueId:
 	provider: 'aws'
 	profile:
@@ -65,7 +66,8 @@ version2:
 	compliance: ".Level"
 
 version3:
-	assessmentStartTime: ".AssessmentStartTime" # Format: "%Y-%m-%dT%H:%M:%S"
+	assessmentStartTime: ".AssessmentStartTime"
+	_timeFormat: "%Y-%m-%dT%H:%M:%S"
 	findingUniqueId: ".FindingUniqueId"
 	provider: ".Provider"
 	profile: ".Profile"
@@ -95,12 +97,17 @@ version3:
 	notes: ".Notes"
 	compliance: ".Compliance.{}"
 ocsf:
-	assessmentStartTime: ".event_time" # Format: "%Y-%m-%dT%H:%M:%S"
+	assessmentStartTime: ".event_time"
+	_timeFormat: "%Y-%m-%dT%H:%M:%S"
 	findingUniqueId: ".finding_info.uid"
 	provider: ".cloud.provider"
 	profile: null
 	accountId: ".cloud.account.uid"
-	organizationsInfo: # .cloud.account.name, .cloud.org.name, .cloud.account.labels.[], .cloud.account.labels.{}
+	organizationsInfo:
+	  account_name: .cloud.account.name
+	  account_org: .cloud.org.name
+	  account_tags: .cloud.account.labels.[]
+	  account_labels: .cloud.account.labels.{}
 	region: ".resources[0].region"
 	checkId: ".metadata.event_code"
 	checkTitle: ".finding_info.title"
