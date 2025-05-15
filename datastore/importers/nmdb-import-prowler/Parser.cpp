@@ -37,7 +37,7 @@ using json = nlohmann::json;
 Parser::Parser()
 {}
 
-void
+/*void
 Parser::fromJsonV2(std::istream& _file)
 {
   // V2 output is a JSON lines file
@@ -91,6 +91,44 @@ Parser::fromJsonOCSF(std::istream& _file)
     }
   }
   if (d != Data()) {
+    r.emplace_back(d);
+  }
+}*/
+
+void
+Parser::fromJson(std::istream& _file, json config)
+{
+  Data d;
+  try
+  {
+    auto dataArray = json::parse(_file);
+    for (const auto& entry : dataArray) {
+      nmdop::ProwlerData pd {entry, config};
+      if (pd != nmdop::ProwlerData(json::object(), config)) {
+        d.data.emplace_back(pd);
+      } else {
+        LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
+      }
+    }
+  }
+  catch (json::parse_error& e)
+  {
+    _file.clear();
+    _file.seekg(0, std::ios::beg);
+    LOG_WARN << "Experienced an error at byte " << e.byte << ". Trying JSON lines for version 2." << std::endl;
+    // JSON lines
+    std::string line;
+    while (std::getline(_file, line)) {
+      json entry = json::parse(line);
+      nmdop::ProwlerData pd {entry, config};
+      if (pd != nmdop::ProwlerData(json::object(), config)) {
+        d.data.emplace_back(pd);
+      } else {
+        LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
+      }
+    }
+  }
+  if(d != Data()) {
     r.emplace_back(d);
   }
 }

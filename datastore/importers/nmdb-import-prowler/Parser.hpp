@@ -29,9 +29,10 @@
 
 #include <fstream>
 
-#include "ProwlerV2Data.hpp"
+/*#include "ProwlerV2Data.hpp"
 #include "ProwlerV3Data.hpp"
-#include "ProwlerOCSFData.hpp"
+#include "ProwlerOCSFData.hpp"*/
+#include "ProwlerData.hpp"
 
 namespace nmdop = netmeld::datastore::objects::prowler;
 
@@ -40,9 +41,10 @@ namespace nmdop = netmeld::datastore::objects::prowler;
 // Data containers
 // =============================================================================
 struct Data {
-  std::vector<nmdop::ProwlerV2Data> v2Data;
+  /*std::vector<nmdop::ProwlerV2Data> v2Data;
   std::vector<nmdop::ProwlerV3Data> v3Data;
-  std::vector<nmdop::ProwlerOCSFData> ocsfData;
+  std::vector<nmdop::ProwlerOCSFData> ocsfData;*/
+  std::vector<nmdop::ProwlerData> data;
 
   auto operator<=>(const Data&) const = default;
   bool operator==(const Data&) const = default;
@@ -73,9 +75,10 @@ class Parser
   // ===========================================================================
   private:
   public:
-    void fromJsonV2(std::istream&);
+    /*void fromJsonV2(std::istream&);
     void fromJsonV3(std::istream&);
-    void fromJsonOCSF(std::istream&);
+    void fromJsonOCSF(std::istream&);*/
+    void fromJson(std::istream&, json);
     Result getData();
 };
 #endif // PARSER_HPP

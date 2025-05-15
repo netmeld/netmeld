@@ -26,9 +26,10 @@
 
 add_executable(${TGT_TOOL}
     Parser.cpp
-    ProwlerV2Data.cpp
-    ProwlerV3Data.cpp
-    ProwlerOCSFData.cpp
+    #ProwlerV2Data.cpp
+    #ProwlerV3Data.cpp
+    #ProwlerOCSFData.cpp
+    ProwlerData.cpp
     ${TGT_TOOL}.cpp
   )
 
@@ -41,9 +42,10 @@ nm_install_bin(${TGT_TOOL})
 #nm_install_include(file dir)
 
 foreach(ITEM
-    ProwlerV2Data
-    ProwlerV3Data
-    ProwlerOCSFData
+    #ProwlerV2Data
+    #ProwlerV3Data
+    #ProwlerOCSFData
+    ProwlerData
   )
   nm_add_test(${ITEM})
   target_sources(${TGT_TEST}
@@ -62,12 +64,14 @@ foreach(ITEM
   nm_add_test(${ITEM})
   target_sources(${TGT_TEST}
     PRIVATE
-      ProwlerV2Data.cpp
-      ProwlerV2Data.hpp
-      ProwlerV3Data.cpp
-      ProwlerV3Data.hpp
-      ProwlerOCSFData.cpp
-      ProwlerOCSFData.hpp
+      #ProwlerV2Data.cpp
+      #ProwlerV2Data.hpp
+      #ProwlerV3Data.cpp
+      #ProwlerV3Data.hpp
+      #ProwlerOCSFData.cpp
+      #ProwlerOCSFData.hpp
+      ProwlerData.cpp
+      ProwlerData.hpp
       ${ITEM}.hpp
       ${ITEM}.cpp
       )

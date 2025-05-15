@@ -100,12 +100,15 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       try {
         Parser parser;
 
+        std::ifstream f_config("prowler_config.json");
+        json config = json::parse(f_config);
+
         if (2 == version) {
-          parser.fromJsonV2(f);
+          parser.fromJson(f, config.at("v2"));
         } else if (3 == version) {
-          parser.fromJsonV3(f);
+          parser.fromJson(f, config.at("v3"));
         } else if (5 == version) {
-          parser.fromJsonOCSF(f);
+          parser.fromJson(f, config.at("ocsf"));
         } else {
           LOG_WARN << "No valid version given; aborting\n";
           std::exit(nmcu::Exit::FAILURE);
@@ -137,7 +140,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
       for (auto& results : this->tResults) {
 
-        for (auto& entry : results.v2Data) {
+        /*for (auto& entry : results.v2Data) {
           entry.save(t, toolRunId, deviceId);
           LOG_DEBUG << entry.toDebugString() << std::endl;
         }
@@ -148,6 +151,11 @@ class Tool : public nmdt::AbstractImportTool<P,R>
         }
 
         for (auto& entry : results.ocsfData) {
+          entry.save(t, toolRunId, deviceId);
+          LOG_DEBUG << entry.toDebugString() << std::endl;
+        }*/
+
+        for (auto& entry : results.data) {
           entry.save(t, toolRunId, deviceId);
           LOG_DEBUG << entry.toDebugString() << std::endl;
         }

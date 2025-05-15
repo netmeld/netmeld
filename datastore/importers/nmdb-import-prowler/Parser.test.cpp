@@ -40,12 +40,45 @@ class TestParser : public Parser
 {
   public:
     using Parser::r;
-    using Parser::fromJsonV2;
-    using Parser::fromJsonV3;
+    using Parser::fromJson;
+    //using Parser::fromJsonV2;
+    //using Parser::fromJsonV3;
 };
 
 BOOST_AUTO_TEST_CASE(testFromJsonV2)
 {
+  auto v2Config = json::parse(R"({
+    "assessmentStartTime": ".Timestamp",
+    "_timeFormat": "%Y-%m-%dT%H:%M:%SZ",
+    "findingUniqueId": null,
+    "provider": "aws",
+    "profile": null,
+    "accountId": ".Account Number",
+    "organizationsInfo": null,
+    "region": ".Region",
+    "checkId": ".Control ID",
+    "checkTitle": null,
+    "checkTypes": null,
+    "serviceName": ".Service",
+    "subServiceName": null,
+    "status": ".Status",
+    "statusExtended": null,
+    "severity": ".Severity",
+    "resourceId": ".Resource ID",
+    "resourceArn": null,
+    "resourceTags": null,
+    "resourceType": null,
+    "resourceDetails": null,
+    "description": ".Control",
+    "risk": ".Risk",
+    "relatedUrl": null,
+    "recommendation": ".Remediation",
+    "recommendationUrl": ".Doc link",
+    "remediationCode": null,
+    "categories": null,
+    "notes": null,
+    "compliance": ".Level"
+  })");
   // NOTE: These are primarily for testing "file" logic, not data logic
   TestParser tp;
   std::string test;
@@ -53,7 +86,7 @@ BOOST_AUTO_TEST_CASE(testFromJsonV2)
 
   const auto getResult = [&](const std::string& jsonData) {
       std::istringstream is {jsonData};
-      tp.fromJsonV2(is);
+      tp.fromJson(is, v2Config);
       return tp.getData();
     };
 
@@ -80,21 +113,51 @@ BOOST_AUTO_TEST_CASE(testFromJsonV2)
   test = R"({"Account Number": "123abc"})";
   out = getResult(test);
   BOOST_TEST_REQUIRE(1 == out.size());
-  BOOST_TEST(1 == out[0].v2Data.size());
-  BOOST_TEST(0 == out[0].v3Data.size());
+  BOOST_TEST(1 == out[0].data.size());
   tp.r =  Result();
 
   test = R"({"Account Number": "123abc"}
             {"Account Number": "123abc"})";
   out = getResult(test);
   BOOST_TEST_REQUIRE(1 == out.size());
-  BOOST_TEST(2 == out[0].v2Data.size());
-  BOOST_TEST(0 == out[0].v3Data.size());
+  BOOST_TEST(2 == out[0].data.size());
   tp.r =  Result();
 }
 
 BOOST_AUTO_TEST_CASE(testFromJsonV3)
 {
+  auto v3Config = json::parse(R"({
+    "assessmentStartTime": ".AssessmentStartTime",
+    "_timeFormat": "%Y-%m-%dT%H:%M:%S",
+    "findingUniqueId": ".FindingUniqueId",
+    "provider": ".Provider",
+    "profile": ".Profile",
+    "accountId": ".AccountId",
+    "organizationsInfo": ".OrganizationsInfo",
+    "region": ".Region",
+    "checkId": ".CheckID",
+    "checkTitle": ".CheckTitle",
+    "checkTypes": ".CheckType",
+    "serviceName": ".ServiceName",
+    "subServiceName": ".SubServiceName",
+    "status": ".Status",
+    "statusExtended": ".StatusExtended",
+    "severity": ".Severity",
+    "resourceId": ".ResourceId",
+    "resourceArn": ".ResourceArn",
+    "resourceTags": ".ResourceTags",
+    "resourceType": ".ResourceType",
+    "resourceDetails": ".ResourceDetails",
+    "description": ".Description",
+    "risk": ".Risk",
+    "relatedUrl": ".RelatedUrl",
+    "recommendation": ".Remediation.Recommendation.Text",
+    "recommendationUrl": ".Remediation.Recommendation.Url",
+    "remediationCode": ".Remediation.Code",
+    "categories": ".Categories",
+    "notes": ".Notes",
+    "compliance": ".Compliance"
+  })");
   // NOTE: These are primarily for testing "file" logic, not data logic
   TestParser tp;
   std::string test;
@@ -102,7 +165,7 @@ BOOST_AUTO_TEST_CASE(testFromJsonV3)
 
   const auto getResult = [&](const std::string& jsonData) {
       std::istringstream is {jsonData};
-      tp.fromJsonV3(is);
+      tp.fromJson(is, v3Config);
       return tp.getData();
     };
 
@@ -127,19 +190,17 @@ BOOST_AUTO_TEST_CASE(testFromJsonV3)
   BOOST_TEST_REQUIRE(0 == out.size());
 
   // Parsable, some v3 data
-  test = R"([{"AccountId": "123abc"}])";
+  test = R"([{"AccountId": "123abc", "FindingUniqueId": "abc123"}])";
   out = getResult(test);
   BOOST_TEST_REQUIRE(1 == out.size());
-  BOOST_TEST(0 == out[0].v2Data.size());
-  BOOST_TEST(1 == out[0].v3Data.size());
+  BOOST_TEST(1 == out[0].data.size());
   tp.r =  Result();
 
-  test = R"([{"AccountId": "123abc"},
-             {"AccountId": "123abc"}
+  test = R"([{"AccountId": "123abc", "FindingUniqueId": "abc123"},
+             {"AccountId": "123abc", "FindingUniqueId": "abc123"}
             ])";
   out = getResult(test);
   BOOST_TEST_REQUIRE(1 == out.size());
-  BOOST_TEST(0 == out[0].v2Data.size());
-  BOOST_TEST(2 == out[0].v3Data.size());
+  BOOST_TEST(2 == out[0].data.size());
   tp.r =  Result();
 }
