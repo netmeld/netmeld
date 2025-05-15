@@ -74,6 +74,7 @@ class Parser
   // Methods
   // ===========================================================================
   private:
+    void parseJson(const json&, const json&, Data*);
   public:
     /*void fromJsonV2(std::istream&);
     void fromJsonV3(std::istream&);

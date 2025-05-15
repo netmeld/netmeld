@@ -96,19 +96,32 @@ Parser::fromJsonOCSF(std::istream& _file)
 }*/
 
 void
+Parser::parseJson(const json& entry, const json& config, Data* d)
+{
+  nmdop::ProwlerData pd {entry, config};
+  if (pd != nmdop::ProwlerData(json::object(), config)) {
+    d->data.emplace_back(pd);
+  } else {
+    LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
+  }
+}
+
+void
 Parser::fromJson(std::istream& _file, json config)
 {
   Data d;
   try
   {
     auto dataArray = json::parse(_file);
-    for (const auto& entry : dataArray) {
-      nmdop::ProwlerData pd {entry, config};
-      if (pd != nmdop::ProwlerData(json::object(), config)) {
-        d.data.emplace_back(pd);
-      } else {
-        LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
+    if(dataArray.is_array())
+    {
+      for (const auto& entry : dataArray) {
+        parseJson(entry, config, &d);
       }
+    }
+    else
+    {
+      parseJson(dataArray, config, &d); // In v2, a single entry was causing issues
     }
   }
   catch (json::parse_error& e)
@@ -120,12 +133,7 @@ Parser::fromJson(std::istream& _file, json config)
     std::string line;
     while (std::getline(_file, line)) {
       json entry = json::parse(line);
-      nmdop::ProwlerData pd {entry, config};
-      if (pd != nmdop::ProwlerData(json::object(), config)) {
-        d.data.emplace_back(pd);
-      } else {
-        LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
-      }
+      parseJson(entry, config, &d);
     }
   }
   if(d != Data()) {
