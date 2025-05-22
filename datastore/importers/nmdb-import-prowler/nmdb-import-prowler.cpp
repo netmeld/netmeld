@@ -43,6 +43,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
+    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
 
@@ -70,6 +71,14 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     void
     addToolOptions() override
     {
+      const auto& configFile {nmfm.getConfPath()/"datastore/prowler-config.json"};
+      this->opts.addRequiredOption("config-file", std::make_tuple(
+          "config-file",
+          po::value<std::string>()->required()->default_value(configFile),
+          "Config file to use."
+          " Either --config-file param or implicit last argument.")
+        );
+
       this->opts.removeRequiredOption("device-id");
       this->opts.addAdvancedOption("device-id", std::make_tuple(
             "device-id"
@@ -100,7 +109,9 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       try {
         Parser parser;
 
-        std::ifstream f_config("prowler_config.json");
+        const auto& configFile {this->opts.getValue("config-file")};
+        LOG_DEBUG << "Looking for config file: " << configFile << "\n";
+        std::ifstream f_config(configFile);
         json config = json::parse(f_config);
 
         if (2 == version) {
