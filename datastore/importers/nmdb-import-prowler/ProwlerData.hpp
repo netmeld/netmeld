@@ -89,6 +89,7 @@ namespace netmeld::datastore::objects::prowler {
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
+      void assertRequiredKey(const json&, const std::string&);
     protected: // Methods part of subclass API
       std::vector<std::string> split(std::string, const std::string&);
     public: // Methods part of public API

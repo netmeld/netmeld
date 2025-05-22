@@ -45,6 +45,15 @@ namespace netmeld::datastore::objects::prowler {
     LOG_DEBUG << "json: " << jline.dump() << std::endl << std::endl;
     LOG_DEBUG << "format: " << format.dump() << std::endl << std::endl;
 
+    // Assert required keys exist
+    assertRequiredKey(format, "assessmentStartTime");
+    assertRequiredKey(format, "provider");
+    assertRequiredKey(format, "accountId");
+    assertRequiredKey(format, "serviceName");
+    assertRequiredKey(format, "checkId");
+    assertRequiredKey(format, "severity");
+    assertRequiredKey(format, "recommendation");
+
     std::string timeString;
     smartAssign(format, "assessmentStartTime", jline, &timeString);
     std::string timeFormat = "%Y-%m-%dT%H:%M:%S";
@@ -256,6 +265,15 @@ namespace netmeld::datastore::objects::prowler {
           return;
       }
       *ref = result.template get<std::string>();
+  }
+
+  void
+  ProwlerData::assertRequiredKey(const json& format, const std::string& key)
+  {
+      if(!format.contains(key))
+      {
+          LOG_WARN << "Config is missing required key: " << key << std::endl;
+      }
   }
 
   bool
