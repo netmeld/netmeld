@@ -185,7 +185,7 @@ namespace netmeld::datastore::objects::prowler {
                 }
             }
         })");
-        json config = json::parse(R"({
+        auto config = YAML::Load(R"({
         "assessmentStartTime": ".event_time",
         "_timeFormat": "%Y-%m-%dT%H:%M:%S",
         "findingUniqueId": ".finding_info.uid",
@@ -290,7 +290,7 @@ namespace netmeld::datastore::objects::prowler {
     BOOST_AUTO_TEST_CASE(ConstructorTestNoData)
     {
         json jline = json::parse("{}");
-        json config = json::parse("{}");
+        auto config = YAML::Load("{}");
 
         // Create an instance of ProwlerData using the constructor
         TestProwlerData emptyData(jline, config);
@@ -339,7 +339,7 @@ namespace netmeld::datastore::objects::prowler {
 		"severity": "HIGH"
 	})");
 		// Minimum required fields
-		json config = json::parse(R"({
+		auto config = YAML::Load(R"({
         "assessmentStartTime": ".event_time",
         "_timeFormat": "%Y-%m-%dT%H:%M:%S",
         "provider": ".cloud.provider",
@@ -387,7 +387,7 @@ namespace netmeld::datastore::objects::prowler {
 		"severity": "HIGH"
 	})");
 		// Minimum required fields
-		json config = json::parse(R"({
+		auto config = YAML::Load(R"({
         "assessmentStartTime": ".event_time",
         "_timeFormat": "%Y-%m-%dT%H:%M:%S",
         "provider": {

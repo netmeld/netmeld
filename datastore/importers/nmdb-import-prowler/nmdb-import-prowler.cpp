@@ -24,6 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <yaml-cpp/yaml.h>
+
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
@@ -71,7 +73,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     void
     addToolOptions() override
     {
-      const auto& configFile {nmfm.getConfPath()/"datastore/prowler-config.json"};
+      const auto& configFile {nmfm.getConfPath()/"datastore/prowler_config.yaml"};
       this->opts.addRequiredOption("config-file", std::make_tuple(
           "config-file",
           po::value<std::string>()->required()->default_value(configFile),
@@ -106,20 +108,19 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto version {this->opts.template getValueAs<uint16_t>("prowler-version")};
 
       this->executionStart = nmco::Time();
-      try {
+      //try {
         Parser parser;
 
         const auto& configFile {this->opts.getValue("config-file")};
         LOG_DEBUG << "Looking for config file: " << configFile << "\n";
-        std::ifstream f_config(configFile);
-        json config = json::parse(f_config);
+        YAML::Node config {YAML::LoadFile(configFile)};
 
         if (2 == version) {
-          parser.fromJson(f, config.at("v2"));
+          parser.fromJsonLines(f, config["v2"]);
         } else if (3 == version) {
-          parser.fromJson(f, config.at("v3"));
+          parser.fromJson(f, config["v3"]);
         } else if (5 == version) {
-          parser.fromJson(f, config.at("ocsf"));
+          parser.fromJson(f, config["ocsf"]);
         } else {
           LOG_WARN << "No valid version given; aborting\n";
           std::exit(nmcu::Exit::FAILURE);
@@ -127,7 +128,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
         this->tResults = parser.getData();
 
-      } catch (json::out_of_range& ex) {
+      /*} catch (json::out_of_range& ex) {
         LOG_ERROR << "Parse error " << ex.what()
                   << std::endl
                   ;
@@ -138,7 +139,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
                   << std::endl
                   ;
         std::exit(nmcu::Exit::FAILURE);
-      }
+      }*/
       this->executionStop = nmco::Time();
     }
 

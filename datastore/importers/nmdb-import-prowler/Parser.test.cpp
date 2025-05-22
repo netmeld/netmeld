@@ -41,13 +41,12 @@ class TestParser : public Parser
   public:
     using Parser::r;
     using Parser::fromJson;
-    //using Parser::fromJsonV2;
-    //using Parser::fromJsonV3;
+    using Parser::fromJsonLines;
 };
 
 BOOST_AUTO_TEST_CASE(testFromJsonV2)
 {
-  auto v2Config = json::parse(R"({
+  auto v2Config = YAML::Load(R"({
     "assessmentStartTime": ".Timestamp",
     "_timeFormat": "%Y-%m-%dT%H:%M:%SZ",
     "findingUniqueId": null,
@@ -86,7 +85,7 @@ BOOST_AUTO_TEST_CASE(testFromJsonV2)
 
   const auto getResult = [&](const std::string& jsonData) {
       std::istringstream is {jsonData};
-      tp.fromJson(is, v2Config);
+      tp.fromJsonLines(is, v2Config);
       return tp.getData();
     };
 
@@ -126,7 +125,7 @@ BOOST_AUTO_TEST_CASE(testFromJsonV2)
 
 BOOST_AUTO_TEST_CASE(testFromJsonV3)
 {
-  auto v3Config = json::parse(R"({
+  auto v3Config = YAML::Load(R"({
     "assessmentStartTime": ".AssessmentStartTime",
     "_timeFormat": "%Y-%m-%dT%H:%M:%S",
     "findingUniqueId": ".FindingUniqueId",
@@ -207,7 +206,7 @@ BOOST_AUTO_TEST_CASE(testFromJsonV3)
 
 BOOST_AUTO_TEST_CASE(testFromJsonOCSF)
 {
-  auto ocsfConfig = json::parse(R"({
+  auto ocsfConfig = YAML::Load(R"({
       "assessmentStartTime": ".event_time",
       "_timeFormat": "%Y-%m-%dT%H:%M:%S.%f",
       "findingUniqueId": ".finding_info.uid",

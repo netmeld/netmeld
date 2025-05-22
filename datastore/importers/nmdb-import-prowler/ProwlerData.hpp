@@ -29,6 +29,7 @@
 
 #include <set>
 #include <nlohmann/json.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include <netmeld/core/objects/Time.hpp>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
@@ -83,19 +84,20 @@ namespace netmeld::datastore::objects::prowler {
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
       ProwlerData() = default;
-      explicit ProwlerData(const json&, const json&);
+      explicit ProwlerData(const json&, const YAML::Node&);
 
     // =========================================================================
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
-      void assertRequiredKey(const json&, const std::string&);
+      void assertRequiredKey(const YAML::Node&, const std::string&);
+      std::string dump(const YAML::Node&);
     protected: // Methods part of subclass API
       std::vector<std::string> split(std::string, const std::string&);
     public: // Methods part of public API
-      json keySearch(const json&, const json&);
+      json keySearch(const YAML::Node&, const json&);
       json recursiveSearch(std::vector<std::string>, const json&);
-      void smartAssign(const json&, const std::string&, const json&, std::string*);
+      void smartAssign(const YAML::Node&, const std::string&, const json&, std::string*);
 
       bool isValid() const override;
       void save(pqxx::transaction_base&,

@@ -28,10 +28,8 @@
 #define PARSER_HPP
 
 #include <fstream>
+#include <yaml-cpp/yaml.h>
 
-/*#include "ProwlerV2Data.hpp"
-#include "ProwlerV3Data.hpp"
-#include "ProwlerOCSFData.hpp"*/
 #include "ProwlerData.hpp"
 
 namespace nmdop = netmeld::datastore::objects::prowler;
@@ -41,9 +39,6 @@ namespace nmdop = netmeld::datastore::objects::prowler;
 // Data containers
 // =============================================================================
 struct Data {
-  /*std::vector<nmdop::ProwlerV2Data> v2Data;
-  std::vector<nmdop::ProwlerV3Data> v3Data;
-  std::vector<nmdop::ProwlerOCSFData> ocsfData;*/
   std::vector<nmdop::ProwlerData> data;
 
   auto operator<=>(const Data&) const = default;
@@ -74,12 +69,10 @@ class Parser
   // Methods
   // ===========================================================================
   private:
-    void parseJson(const json&, const json&, Data*);
+    void parseJson(const json&, const YAML::Node&, Data*);
   public:
-    /*void fromJsonV2(std::istream&);
-    void fromJsonV3(std::istream&);
-    void fromJsonOCSF(std::istream&);*/
-    void fromJson(std::istream&, json);
+    void fromJson(std::istream&, const YAML::Node&);
+    void fromJsonLines(std::istream&, const YAML::Node&);
     Result getData();
 };
 #endif // PARSER_HPP

@@ -40,10 +40,10 @@ namespace netmeld::datastore::objects::prowler {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-  ProwlerData::ProwlerData(const json& jline, const json& format)
+  ProwlerData::ProwlerData(const json& jline, const YAML::Node& format)
   {
     LOG_DEBUG << "json: " << jline.dump() << std::endl << std::endl;
-    LOG_DEBUG << "format: " << format.dump() << std::endl << std::endl;
+    LOG_DEBUG << "format: " << dump(format) << std::endl << std::endl;
 
     // Assert required keys exist
     assertRequiredKey(format, "assessmentStartTime");
@@ -147,24 +147,34 @@ namespace netmeld::datastore::objects::prowler {
     return tokens;
   }
 
+  std::string
+  ProwlerData::dump(const YAML::Node& node)
+  {
+      YAML::Emitter out;
+      out << node;
+      return out.c_str();
+  }
+
   json
-  ProwlerData::keySearch(const json& key, const json& obj)
+  ProwlerData::keySearch(const YAML::Node& key, const json& obj)
   {
     LOG_DEBUG << "keySearch()" << std::endl;
-    auto type = key.type();
-    if(type == nlohmann::json::value_t::null) {
+    if(key.IsNull()) {
         LOG_DEBUG << "\tnull value" << std::endl;
         return nullptr;
     }
 
-    if (type == nlohmann::json::value_t::object) {
+    if (key.IsMap()) {
         LOG_DEBUG << "\tobject" << std::endl;
         // Accepted keys: concat, filter, join, json
-        if(key.contains("concat")) {
-            LOG_DEBUG << "CONCAT KEY: " << key.dump() << std::endl;
-            auto sub = key["concat"];
+        auto concat = key["concat"];
+        auto filter = key["filter"];
+        auto join = key["join"];
+        auto _json = key["json"];
+        if(concat.IsDefined()) {
+            LOG_DEBUG << "CONCAT KEY: " << dump(key) << std::endl;
             std::ostringstream oss;
-            for(auto c : sub) {
+            for(auto c : concat) {
                 auto v = keySearch(c, obj);
                 if(v.is_null()) {
                     oss << "null";
@@ -173,12 +183,11 @@ namespace netmeld::datastore::objects::prowler {
                 }
             }
             return oss.str();
-        } else if(key.contains("filter")) {
-            LOG_DEBUG << "FILTER KEY: " << key.dump() << std::endl;
-            auto sub = key["filter"];
-            auto source = sub["source"];
-            auto regExp = std::regex(sub["regex"]);
-            auto join_str = sub.value("join_str", "\n");
+        } else if(filter.IsDefined()) {
+            LOG_DEBUG << "FILTER KEY: " << dump(key) << std::endl;
+            auto source = filter["source"];
+            auto regExp = std::regex(filter["regex"].as<std::string>());
+            auto join_str = filter["join_str"].as<std::string>();
             auto temp = keySearch(source, obj);
             std::vector<std::string> result;
             for(auto partJ : temp)
@@ -195,11 +204,10 @@ namespace netmeld::datastore::objects::prowler {
                 }
             }
             return nmcu::toString(result, join_str);
-        } else if(key.contains("join")) {
-            LOG_DEBUG << "JOIN KEY: " << key.dump() << std::endl;
-            auto sub = key["join"];
-            auto source = sub["source"];
-            auto join_str = sub["join_str"];
+        } else if(join.IsDefined()) {
+            LOG_DEBUG << "JOIN KEY: " << dump(key) << std::endl;
+            auto source = join["source"];
+            auto join_str = join["join_str"].as<std::string>();
             auto r = keySearch(source, obj);
             if(r.is_null())
             {
@@ -207,11 +215,11 @@ namespace netmeld::datastore::objects::prowler {
             }
             auto temp = r.template get<std::vector<std::string>>();
             return nmcu::toString(temp, join_str);
-        } else if(key.contains("json")) {
-            LOG_DEBUG << "JSON KEY: " << key.dump() << std::endl;
+        } else if(_json.IsDefined()) {
+            LOG_DEBUG << "JSON KEY: " << dump(key) << std::endl;
             return obj;
         }
-    } else if (type == nlohmann::json::value_t::array) {
+    } else if (key.IsSequence()) {
         LOG_DEBUG << "\tarray" << std::endl;
         // List builder
         std::vector<json> r;
@@ -219,43 +227,38 @@ namespace netmeld::datastore::objects::prowler {
             r.push_back(keySearch(k, obj));
         }
         return r;
-    } else if (type == nlohmann::json::value_t::string) {
-        LOG_DEBUG << "\tstring: " << std::endl;
+    } else if (key.IsScalar()) {
         // Convert to string
-        auto k = key.template get<std::string>();
+        auto k = key.as<std::string>();
+        if(k.empty()) {
+            // Might be an int, float, or boolean
+            LOG_DEBUG << "\tint, float, or boolean" << std::endl;
+            // TODO might have to do more conversion here. Not sure how YAML works
+            return k;
+        }
+        LOG_DEBUG << "\tstring: " << std::endl;
         if(k[0] != '.') {
             // Default value
             LOG_DEBUG << "\t\tDefault value: " << k << std::endl;
-            return key;
+            return k;
         } else {
             LOG_DEBUG << "\t\tkey: " << key << std::endl;
-            auto rest = split(key, ".");
+            auto rest = split(k, ".");
             rest.erase(rest.begin()); // Empty string at the start
             return recursiveSearch(rest, obj);
         }
-    } else if (type == nlohmann::json::value_t::number_integer) {
-        LOG_DEBUG << "\tinteger" << std::endl;
-        // Default value
-        return key;
-    } else if (type == nlohmann::json::value_t::number_float) {
-        LOG_DEBUG << "\tfloat" << std::endl;
-        // Default value
-        return key;
-    } else if (type == nlohmann::json::value_t::boolean) {
-        LOG_DEBUG << "\tboolean" << std::endl;
-        // Default value
-        return key;
     }
     LOG_DEBUG << "\tunclear" << std::endl;
     return nullptr; // How did we get here?
   }
 
   void
-  ProwlerData::smartAssign(const json& format, const std::string& key, const json& obj, std::string* ref)
+  ProwlerData::smartAssign(const YAML::Node& format, const std::string& key, const json& obj, std::string* ref)
   {
       LOG_DEBUG << "Working on " << key << std::endl;
-      if(!format.contains(key)) return; // Key not provided
-      json loc = format.value(key, json::object());
+      auto sub = format[key];
+      if(!sub.IsDefined()) return; // Key not provided
+      YAML::Node loc = format[key];
       auto result = keySearch(loc, obj);
       LOG_DEBUG << "Smart assign received: " << result.dump() << std::endl;
       if(result.is_null()) return; // No value found
@@ -268,9 +271,10 @@ namespace netmeld::datastore::objects::prowler {
   }
 
   void
-  ProwlerData::assertRequiredKey(const json& format, const std::string& key)
+  ProwlerData::assertRequiredKey(const YAML::Node& format, const std::string& key)
   {
-      if(!format.contains(key))
+      auto sub = format[key];
+      if(!sub.IsDefined())
       {
           LOG_WARN << "Config is missing required key: " << key << std::endl;
       }

@@ -32,6 +32,7 @@ add_executable(${TGT_TOOL}
 
 target_link_libraries(${TGT_TOOL}
     netmeld-datastore
+    ${YAML_CPP_LIBRARIES}
   )
 
 # The following is commented out as we don't want to actually install templates
@@ -51,6 +52,7 @@ foreach(ITEM
       )
   target_link_libraries(${TGT_TEST}
       netmeld-datastore
+      ${YAML_CPP_LIBRARIES}
     )
 endforeach()
 
@@ -67,5 +69,6 @@ foreach(ITEM
       )
   target_link_libraries(${TGT_TEST}
       netmeld-datastore
+      ${YAML_CPP_LIBRARIES}
     )
 endforeach()
