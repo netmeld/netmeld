@@ -197,11 +197,7 @@ namespace netmeld::datastore::objects::prowler {
                 "Account Name: ",
                 ".cloud.account.name",
                 ", Account Org: ",
-                ".cloud.org.name",
-                ", Account Tags: ",
-                ".cloud.account.labels",
-                ", Account Labels: ",
-                ".cloud.account.labels"
+                ".cloud.org.name"
             ]
         },
         "region": ".resources.[0].region",
@@ -283,7 +279,7 @@ namespace netmeld::datastore::objects::prowler {
         BOOST_TEST("Example notes" == data.notes);
         BOOST_TEST("Software and Configuration Checks\nIndustry and Regulatory Standards\nCIS AWS Foundations Benchmark" == data.checkTypes);
         BOOST_TEST("forensics-ready" == data.categories);
-        BOOST_TEST("Account Name: test-account, Account Org: example-name, Account Tags: null, Account Labels: null" == data.organizationsInfo); // Default since no values given
+        BOOST_TEST("Account Name: test-account, Account Org: example-name" == data.organizationsInfo); // Default since no values given
         BOOST_TEST("" == data.resourceTags); // Default since no values given
         //BOOST_TEST("Key1\n- Value1\n- Value2\nKey2\n- Value3" == data.compliance); // TODO: Way too long for now
         BOOST_TEST("Ensure Logging is set to ON on all regions (even if they are not being used at the moment." == data.recommendation);
@@ -305,7 +301,7 @@ namespace netmeld::datastore::objects::prowler {
         BOOST_TEST(defaultData == emptyData);
     }
 
-    /*BOOST_AUTO_TEST_CASE(SpaceshipOperatorTest)
+    BOOST_AUTO_TEST_CASE(SpaceshipOperatorTest)
     {
         // Create two ProwlerData objects using the default constructor
         TestProwlerData data1;
@@ -321,5 +317,124 @@ namespace netmeld::datastore::objects::prowler {
         // Change account numbider and verify that the two objects are no longer equal
         data1.accountId = "999999999";
         BOOST_TEST(data1 != data2);
-    }*/
+    }
+
+    BOOST_AUTO_TEST_CASE(SimpleTest)
+    {
+		json jline = json::parse(R"({
+		"event_time": "2025-01-01T00:00:00",
+		"cloud": {
+			"provider": "test-provider",
+			"account_uid": "test-account-id"
+		},
+		"resources": [
+			{
+				"group_name": "test-service-name"
+			},
+			{
+				"group_name": "wrong-service-name"
+			}
+		],
+		"event_code": "test-check-id",
+		"severity": "HIGH"
+	})");
+		// Minimum required fields
+		json config = json::parse(R"({
+        "assessmentStartTime": ".event_time",
+        "_timeFormat": "%Y-%m-%dT%H:%M:%S",
+        "provider": ".cloud.provider",
+        "accountId": ".cloud.account_uid",
+        "serviceName": ".resources.[0].group_name",
+        "checkId": ".event_code",
+        "severity": ".severity",
+        "recommendation": "test-recommendation"
+	})");
+
+		// Create an instance of ProwlerData using the constructor
+        TestProwlerData data(jline, config);
+
+        BOOST_TEST("2025-01-01T00:00:00" == data.assessmentStartTime.toString());
+        BOOST_TEST("test-provider" == data.provider);
+        BOOST_TEST("test-account-id" == data.accountId);
+        BOOST_TEST("test-service-name" == data.serviceName);
+        BOOST_TEST("test-check-id" == data.checkId);
+        BOOST_TEST("HIGH" == data.severity);
+        BOOST_TEST("test-recommendation" == data.recommendation);
+	}
+
+    BOOST_AUTO_TEST_CASE(SpecialTest)
+    {
+		json jline = json::parse(R"({
+		"event_time": "2025-01-01T00:00:00",
+		"cloud": {
+			"provider": "provider",
+			"helper": "helper"
+		},
+		"service_name": [
+			"test",
+			"service",
+			"name"
+		],
+		"account_id": [
+			"which values do we use?",
+			"probably not this one",
+			"test",
+			"nor this one",
+			"account",
+			"definitely not this one",
+			"id"
+		],
+		"severity": "HIGH"
+	})");
+		// Minimum required fields
+		json config = json::parse(R"({
+        "assessmentStartTime": ".event_time",
+        "_timeFormat": "%Y-%m-%dT%H:%M:%S",
+        "provider": {
+			"concat": [
+				"test-",
+				".cloud.provider",
+				"-with-",
+				".cloud.helper"
+			]
+        },
+        "accountId": {
+			"filter": {
+				"source": ".account_id",
+				"regex": "^[\\S]+$",
+				"join_str": "-"
+			}
+        },
+        "serviceName": {
+			"join": {
+				"source": ".service_name",
+				"join_str": "-"
+			}
+        },
+        "checkId": {
+			"join": {
+				"source": ".invalid",
+				"join_str": "\n"
+			}
+        },
+        "severity": ".severity",
+        "recommendation": {
+			"concat": [
+				".invalid",
+				".super.duper.invalid"
+			]
+        }
+	})");
+
+		// Create an instance of ProwlerData using the constructor
+        TestProwlerData data(jline, config);
+
+        BOOST_TEST("2025-01-01T00:00:00" == data.assessmentStartTime.toString());
+        BOOST_TEST("test-provider-with-helper" == data.provider);
+        BOOST_TEST("test-account-id" == data.accountId);
+        BOOST_TEST("test-service-name" == data.serviceName);
+        BOOST_TEST("null" == data.checkId); // Not found should be null
+        BOOST_TEST("HIGH" == data.severity);
+        BOOST_TEST("nullnull" == data.recommendation); // Multiple not founds should be null
+	}
 }

@@ -204,3 +204,108 @@ BOOST_AUTO_TEST_CASE(testFromJsonV3)
   BOOST_TEST(2 == out[0].data.size());
   tp.r =  Result();
 }
+
+BOOST_AUTO_TEST_CASE(testFromJsonOCSF)
+{
+  auto ocsfConfig = json::parse(R"({
+      "assessmentStartTime": ".event_time",
+      "_timeFormat": "%Y-%m-%dT%H:%M:%S.%f",
+      "findingUniqueId": ".finding_info.uid",
+      "provider": ".cloud.provider",
+      "profile": null,
+      "accountId": ".cloud.account.uid",
+      "organizationsInfo": {
+          "concat": [
+              "Account Name: ",
+              ".cloud.account.name",
+              ", Account Org: ",
+              ".cloud.org.name"
+          ]
+      },
+      "region": ".resources.[0].region",
+      "checkId": ".metadata.event_code",
+      "checkTitle": ".finding_info.title",
+      "checkTypes": {
+          "join": {
+              "source": ".finding_info.types",
+              "join_str": "\n"
+          }
+      },
+      "serviceName": ".resources.[0].group.name",
+      "subServiceName": null,
+      "status": ".status_code",
+      "statusExtended": ".status_detail",
+      "severity": ".severity",
+      "resourceId": ".resources.[0].name",
+      "resourceArn": ".resources.[0].uid",
+      "resourceTags": ".resources.[0].labels",
+      "resourceType": ".resources.[0].type",
+      "resourceDetails": ".resources.[0].data.details",
+      "description": ".finding_info.desc",
+      "risk": ".risk_details",
+      "relatedUrl": ".unmapped.related_url",
+      "recommendation": ".remediation.desc",
+      "recommendationUrl": {
+          "filter": {
+              "source": ".remediation.references",
+              "regex": "^http.*",
+              "join_str": "\n"
+          }
+      },
+      "remediationCode": {
+          "filter": {
+              "source": ".remediation.references",
+              "regex": "^(?!http).*",
+              "join_str": "\n"
+          }
+      },
+      "categories": ".unmapped.categories",
+      "notes": ".unmapped.notes",
+      "compliance": ".unmapped.compliance"
+  })");
+  // NOTE: These are primarily for testing "file" logic, not data logic
+  TestParser tp;
+  std::string test;
+  Result out;
+
+  const auto getResult = [&](const std::string& jsonData) {
+      std::istringstream is {jsonData};
+      tp.fromJson(is, ocsfConfig);
+      return tp.getData();
+    };
+
+  // empty, but should not error
+  test = "[{}]";
+  out = getResult(test);
+  BOOST_TEST_REQUIRE(0 == out.size());
+
+  test = "[{},{},{}]";
+  out = getResult(test);
+  BOOST_TEST_REQUIRE(0 == out.size());
+
+  // Parsable, but no ocsf data
+  test = R"([{"key1": "value", "key2": 123}])";
+  out = getResult(test);
+  BOOST_TEST_REQUIRE(0 == out.size());
+
+  test = R"([{"key1": "value", "key2": 123},
+             {"key3": "v3"}
+            ])";
+  out = getResult(test);
+  BOOST_TEST_REQUIRE(0 == out.size());
+
+  // Parsable, some ocsf data
+  test = R"([{"cloud":{"account":{"id": "123abc"}}, "finding_info": {"uid":"abc123"}}])";
+  out = getResult(test);
+  BOOST_TEST_REQUIRE(1 == out.size());
+  BOOST_TEST(1 == out[0].data.size());
+  tp.r =  Result();
+
+  test = R"([{"cloud":{"account":{"id": "123abc"}}, "finding_info": {"uid":"abc123"}},
+             {"cloud":{"account":{"id": "123abc"}}, "finding_info": {"uid":"abc123"}}
+            ])";
+  out = getResult(test);
+  BOOST_TEST_REQUIRE(1 == out.size());
+  BOOST_TEST(2 == out[0].data.size());
+  tp.r =  Result();
+}
