@@ -979,7 +979,7 @@ namespace netmeld::datastore::utils {
     // ----------------------------------------------------------------------
     // TABLE: raw_hotfixes
     // ----------------------------------------------------------------------
-    
+
     db.prepare
       ("insert_raw_hotfixes",
        "INSERT INTO raw_hotfixes"
@@ -1568,13 +1568,14 @@ namespace netmeld::datastore::utils {
            categories, notes, compliance
            )
         VALUES
-          ( $1, $2, $3
-          , nullif($4, ''), nullif($5, ''), nullif($6, ''), nullif($7, '')
-          , nullif($8, ''), nullif($9, ''), nullif($10, ''), nullif($11, '')
-          , nullif($12, ''), nullif($13, ''), nullif($14, ''), nullif($15, '')
-          , $16, nullif($17, ''), nullif($18, ''), nullif($19, '')
-          , nullif($20, ''), nullif($21, ''), nullif($22, ''), nullif($23, '')
-          , nullif($24, ''), nullif($25, ''), nullif($26, ''), nullif($27, '')
+          ( $1, $2
+          , nullif($3, ''), nullif($4, ''), nullif($5, ''), nullif($6, '')
+          , nullif($7, ''), nullif($8, ''), nullif($9, ''), nullif($10, '')
+          , nullif($11, ''), nullif($12, ''), nullif($13, ''), nullif($14, '')
+          , nullif($15, ''), $16, nullif($17, '')
+          , nullif($18, ''), nullif($19, ''), nullif($20, '')
+          , nullif($21, ''), nullif($22, ''), nullif($23, ''), nullif($24, '')
+          , nullif($25, ''), nullif($26, ''), nullif($27, '')
           , nullif($28, ''), nullif($29, ''), nullif($30, '')
           )
         ON CONFLICT

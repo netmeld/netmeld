@@ -261,6 +261,7 @@ namespace netmeld::datastore::objects::prowler {
            || accountId.empty()
            || serviceName.empty()
            || checkId.empty()
+           || severity.empty()
            || recommendation.empty()
            )
       ;

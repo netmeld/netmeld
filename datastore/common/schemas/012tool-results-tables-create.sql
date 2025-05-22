@@ -966,16 +966,16 @@ ON raw_prowler_v2_checks(resource_id);
 CREATE TABLE raw_prowler_v3_checks (
       tool_run_id                 UUID            NOT NULL
     , assessment_start_time       TIMESTAMP       NOT NULL
-    , finding_unique_id           TEXT            NOT NULL
-    , provider                    TEXT            NULL
+    , finding_unique_id           TEXT            NULL
+    , provider                    TEXT            NOT NULL
     , profile                     TEXT            NULL
-    , account_id                  TEXT            NULL
+    , account_id                  TEXT            NOT NULL
     , organizations_info          TEXT            NULL
     , region                      TEXT            NULL
-    , check_id                    TEXT            NULL
+    , check_id                    TEXT            NOT NULL
     , check_title                 TEXT            NULL
     , check_types                 TEXT            NULL
-    , service_name                TEXT            NULL
+    , service_name                TEXT            NOT NULL
     , sub_service_name            TEXT            NULL
     , status                      TEXT            NULL
     , status_extended             TEXT            NULL
@@ -988,7 +988,7 @@ CREATE TABLE raw_prowler_v3_checks (
     , description                 TEXT            NULL
     , risk                        TEXT            NULL
     , related_url                 TEXT            NULL
-    , recommendation              TEXT            NULL
+    , recommendation              TEXT            NOT NULL
     , recommendation_url          TEXT            NULL
     , remediation_code            TEXT            NULL
     , categories                  TEXT            NULL
