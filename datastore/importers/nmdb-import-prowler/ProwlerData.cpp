@@ -191,7 +191,12 @@ namespace netmeld::datastore::objects::prowler {
             auto sub = key["join"];
             auto source = sub["source"];
             auto join_str = sub["join_str"];
-            auto temp = keySearch(source, obj).template get<std::vector<std::string>>();
+            auto r = keySearch(source, obj);
+            if(r.is_null())
+            {
+                return "null"; // Different from empty string
+            }
+            auto temp = r.template get<std::vector<std::string>>();
             return nmcu::toString(temp, join_str);
         } else if(key.contains("json")) {
             LOG_DEBUG << "JSON KEY: " << key.dump() << std::endl;
