@@ -75,11 +75,7 @@
                 "Account Name: ",
                 ".cloud.account.name",
                 ", Account Org: ",
-                ".cloud.org.name",
-                ", Account Tags: ",
-                ".cloud.account.labels",
-                ", Account Labels: ",
-                ".cloud.account.labels"
+                ".cloud.org.name"
             ]
         },
         "region": ".resources.[0].region",
