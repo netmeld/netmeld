@@ -1542,21 +1542,16 @@ namespace netmeld::datastore::utils {
         INSERT INTO raw_prowler_checks
           (tool_run_id, assessment_start_time,
            provider, account_id,
-           region, check_id,
-           service_name, status,
-           severity, resource_id,
-           description, risk,
-           recommendation
+           check_id, service_name, severity,
+           recommendation, description, region,
+           resource_id, risk, status
            )
         VALUES
           ( $1, $2
           , nullif($3, ''), nullif($4, '')
-          , nullif($5, ''), nullif($6, '')
-          , nullif($7, ''), nullif($8, '')
-          , $9, nullif($10, '')
-          , nullif($11, ''), nullif($12, '')
-          , nullif($13, ''), nullif($14, '')
-          , nullif($15, '')
+          , nullif($5, ''), nullif($6, ''), $7
+          , nullif($8, ''), nullif($9, ''), nullif($10, '')
+          , nullif($11, ''), nullif($12, ''), nullif($13, '')
           )
         ON CONFLICT
         DO NOTHING
