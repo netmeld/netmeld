@@ -289,6 +289,7 @@ namespace netmeld::datastore::objects::prowler {
            || serviceName.empty()
            || checkId.empty()
            || severity.empty()
+           || description.empty()
            || recommendation.empty()
            )
       ;
@@ -305,38 +306,51 @@ namespace netmeld::datastore::objects::prowler {
     }
 
     // NOTE: The following are the suspected minimum for unique:
-    //         timestamp, findingUniqueId
-    t.exec_prepared("insert_raw_prowler_v3_check",
+    //         timestamp, provider, accountId, serviceName, checkId, severity, description, recommendation
+    t.exec_prepared("insert_raw_prowler_check",
           toolRunId
         , assessmentStartTime
-        , findingUniqueId
         , provider
-        , profile
         , accountId
-        , organizationsInfo
         , region
         , checkId
-        , checkTitle
-        , checkTypes
         , serviceName
-        , subServiceName
         , status
-        , statusExtended
         , nmcu::toLower(severity)
         , resourceId
-        , resourceArn
-        , resourceTags
-        , resourceType
-        , resourceDetails
         , description
         , risk
-        , relatedUrl
         , recommendation
-        , recommendationUrl
-        , remediationCode
-        , categories
-        , notes
-        , compliance
+      );
+
+      json extras = {
+        {"findingUniqueId", findingUniqueId},
+        {"profile", profile},
+        {"organizationsInfo", organizationsInfo},
+        {"checkTitle", checkTitle},
+        {"checkTypes", checkTypes},
+        {"subServiceName", subServiceName},
+        {"statusExtended", statusExtended},
+        {"resourceArn", resourceArn},
+        {"resourceTags", resourceTags},
+        {"resourceType", resourceType},
+        {"resourceDetails", resourceDetails},
+        {"relatedUrl", relatedUrl},
+        {"recommendationUrl", recommendationUrl},
+        {"remediationCode", remediationCode},
+        {"categories", categories},
+        {"notes", notes},
+        {"compliance", compliance}
+      };
+      t.exec_prepared("insert_raw_prowler_check_extras",
+          toolRunId
+        , assessmentStartTime
+        , provider
+        , accountId
+        , region
+        , checkId
+        , serviceName
+        , extras.dump()
       );
   }
 

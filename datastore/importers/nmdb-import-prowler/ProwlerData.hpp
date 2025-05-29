@@ -45,30 +45,34 @@ namespace netmeld::datastore::objects::prowler {
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
+      // minimum required fields: based on nmdb-export-scan needs
       nmco::Time assessmentStartTime;
-      std::string findingUniqueId; // prowler-provider-checkid-accountid-region-resourceid
       std::string provider;
-      std::string profile;
       std::string accountId;
+      std::string serviceName;
+      std::string severity;
+      std::string checkId;
+      std::string description;
+      std::string recommendation;
+
+      // Link on tool-run-id, assessmentStartTime, provider, accountId, serviceName, checkId
+
+      std::string findingUniqueId; // prowler-provider-checkid-accountid-region-resourceid
+      std::string profile;
       std::string organizationsInfo;
       std::string region;
-      std::string checkId;
       std::string checkTitle;
       std::string checkTypes;
-      std::string serviceName;
       std::string subServiceName;
       std::string status;
       std::string statusExtended;
-      std::string severity;
       std::string resourceId;
       std::string resourceArn;
       std::string resourceTags;
       std::string resourceType;
       std::string resourceDetails;
-      std::string description;
       std::string risk;
       std::string relatedUrl;
-      std::string recommendation;
       std::string recommendationUrl;
       std::string remediationCode;
       std::string categories;

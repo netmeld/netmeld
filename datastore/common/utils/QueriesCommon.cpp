@@ -1538,45 +1538,43 @@ namespace netmeld::datastore::utils {
     // ----------------------------------------------------------------------
 
     db.prepare
-    ("insert_raw_prowler_v2_check", R"(
-        INSERT INTO raw_prowler_v2_checks
-          (tool_run_id, account_number, timestamp, region,
-           level, control_id, service,
-           status, severity, control, risk, remediation, documentation_link,
-           resource_id
+    ("insert_raw_prowler_check", R"(
+        INSERT INTO raw_prowler_checks
+          (tool_run_id, assessment_start_time,
+           provider, account_id,
+           region, check_id,
+           service_name, status,
+           severity, resource_id,
+           description, risk,
+           recommendation
            )
         VALUES
-          ($1, $2, $3, $4,
-           $5, $6, $7,
-           $8, $9, $10, $11, $12, $13,
-           $14)
+          ( $1, $2
+          , nullif($3, ''), nullif($4, '')
+          , nullif($5, ''), nullif($6, '')
+          , nullif($7, ''), nullif($8, '')
+          , $9, nullif($10, '')
+          , nullif($11, ''), nullif($12, '')
+          , nullif($13, ''), nullif($14, '')
+          , nullif($15, '')
+          )
         ON CONFLICT
         DO NOTHING
       )");
 
     db.prepare
-    ("insert_raw_prowler_v3_check", R"(
-        INSERT INTO raw_prowler_v3_checks
+    ("insert_raw_prowler_check_extra", R"(
+        INSERT INTO raw_prowler_checks_extras
           (tool_run_id, assessment_start_time,
-           finding_unique_id, provider, profile, account_id,
-           organizations_info, region, check_id, check_title,
-           check_types, service_name, sub_service_name, status,
-           status_extended, severity, resource_id,
-           resource_arn, resource_tags, resource_type,
-           resource_details, description, risk, related_url,
-           recommendation, recommendation_url, remediation_code,
-           categories, notes, compliance
+           provider, account_id,
+           check_id, service_name,
+           extras
            )
         VALUES
           ( $1, $2
-          , nullif($3, ''), nullif($4, ''), nullif($5, ''), nullif($6, '')
-          , nullif($7, ''), nullif($8, ''), nullif($9, ''), nullif($10, '')
-          , nullif($11, ''), nullif($12, ''), nullif($13, ''), nullif($14, '')
-          , nullif($15, ''), $16, nullif($17, '')
-          , nullif($18, ''), nullif($19, ''), nullif($20, '')
-          , nullif($21, ''), nullif($22, ''), nullif($23, ''), nullif($24, '')
-          , nullif($25, ''), nullif($26, ''), nullif($27, '')
-          , nullif($28, ''), nullif($29, ''), nullif($30, '')
+          , nullif($3, ''), nullif($4, '')
+          , nullif($5, ''), nullif($6, '')
+          , $7
           )
         ON CONFLICT
         DO NOTHING
