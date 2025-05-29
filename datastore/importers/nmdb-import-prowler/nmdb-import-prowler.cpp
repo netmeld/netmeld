@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -108,38 +108,25 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto version {this->opts.template getValueAs<uint16_t>("prowler-version")};
 
       this->executionStart = nmco::Time();
-      //try {
-        Parser parser;
+      Parser parser;
 
-        const auto& configFile {this->opts.getValue("config-file")};
-        LOG_DEBUG << "Looking for config file: " << configFile << "\n";
-        YAML::Node config {YAML::LoadFile(configFile)};
+      const auto& configFile {this->opts.getValue("config-file")};
+      LOG_DEBUG << "Looking for config file: " << configFile << "\n";
+      YAML::Node config {YAML::LoadFile(configFile)};
 
-        if (2 == version) {
-          parser.fromJsonLines(f, config["v2"]);
-        } else if (3 == version) {
-          parser.fromJson(f, config["v3"]);
-        } else if (5 == version) {
-          parser.fromJson(f, config["ocsf"]);
-        } else {
-          LOG_WARN << "No valid version given; aborting\n";
-          std::exit(nmcu::Exit::FAILURE);
-        }
-
-        this->tResults = parser.getData();
-
-      /*} catch (json::out_of_range& ex) {
-        LOG_ERROR << "Parse error " << ex.what()
-                  << std::endl
-                  ;
+      if (2 == version) {
+        parser.fromJsonLines(f, config["v2"]);
+      } else if (3 == version) {
+        parser.fromJson(f, config["v3"]);
+      } else if (5 == version) {
+        parser.fromJson(f, config["ocsf"]);
+      } else {
+        LOG_WARN << "No valid version given; aborting\n";
         std::exit(nmcu::Exit::FAILURE);
-      } catch (json::parse_error& ex) {
-        LOG_ERROR << "Parse error at byte " << ex.byte
-                  << " -- " << ex.what()
-                  << std::endl
-                  ;
-        std::exit(nmcu::Exit::FAILURE);
-      }*/
+      }
+
+      this->tResults = parser.getData();
+
       this->executionStop = nmco::Time();
     }
 
@@ -151,21 +138,6 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto& deviceId  {this->getDeviceId()};
 
       for (auto& results : this->tResults) {
-
-        /*for (auto& entry : results.v2Data) {
-          entry.save(t, toolRunId, deviceId);
-          LOG_DEBUG << entry.toDebugString() << std::endl;
-        }
-
-        for (auto& entry : results.v3Data) {
-          entry.save(t, toolRunId, deviceId);
-          LOG_DEBUG << entry.toDebugString() << std::endl;
-        }
-
-        for (auto& entry : results.ocsfData) {
-          entry.save(t, toolRunId, deviceId);
-          LOG_DEBUG << entry.toDebugString() << std::endl;
-        }*/
 
         for (auto& entry : results.data) {
           entry.save(t, toolRunId, deviceId);
