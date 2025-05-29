@@ -4,111 +4,104 @@
 
 
 v2:
+  # Required fields
   assessmentStartTime: ".Timestamp"
   _timeFormat: "%Y-%m-%dT%H:%M:%SZ"
-  findingUniqueId:
   provider: 'aws'
-  profile:
   accountId: ".Account Number"
-  organizationsInfo:
-  region: ".Region"
   checkId: ".Control ID"
-  checkTitle: null
-  checkTypes:
   serviceName: ".Service"
-  subServiceName: null
-  status: ".Status"
-  statusExtended: null
   severity: ".Severity"
-  resourceId: ".Resource ID"
-  resourceArn:
-  resourceTags:
-  resourceType:
-  resourceDetails:
-  description: ".Control"
-  risk: ".Risk"
-  relatedUrl: null
   recommendation: ".Remediation"
-  recommendationUrl: ".Doc link"
-  remediationCode: null
-  categories:
-  notes:
-  compliance: ".Level"
+  description: ".Control"
+  # Non-required fields
+  region: ".Region"
+  resourceId: ".Resource ID"
+  risk: ".Risk"
+  status: ".Status"
+  # Extras
+  extras:
+    recommendationUrl: ".Doc link"
+    compliance: ".Level"
 v3:
+  # Required fields
   assessmentStartTime: ".AssessmentStartTime"
   _timeFormat: "%Y-%m-%dT%H:%M:%S"
-  findingUniqueId: ".FindingUniqueId"
   provider: ".Provider"
-  profile: ".Profile"
   accountId: ".AccountId"
-  organizationsInfo: ".OrganizationsInfo" # Object
-  region: ".Region"
   checkId: ".CheckID"
-  checkTitle: ".CheckTitle"
-  checkTypes: ".CheckType" # Array of strings
   serviceName: ".ServiceName"
-  subServiceName: ".SubServiceName"
-  status: ".Status"
-  statusExtended: ".StatusExtended"
   severity: ".Severity"
-  resourceId: ".ResourceId"
-  resourceArn: ".ResourceArn"
-  resourceTags: ".ResourceTags" # Object
-  resourceType: ".ResourceType"
-  resourceDetails: ".ResourceDetails"
-  description: ".Description"
-  risk: ".Risk"
-  relatedUrl: ".RelatedUrl"
   recommendation: ".Remediation.Recommendation.Text"
-  recommendationUrl: ".Remediation.Recommendation.Url"
-  remediationCode: ".Remediation.Code" # Object
-  categories: ".Categories" # Array
-  notes: ".Notes"
-  compliance: ".Compliance" # Object
+  description: ".Description"
+  # Non-required field
+  region: ".Region"
+  resourceId: ".ResourceId"
+  risk: ".Risk"
+  status: ".Status"
+  # Extras
+  extras:
+    findingUniqueId: ".FindingUniqueId"
+    profile: ".Profile"
+    organizationsInfo: ".OrganizationsInfo" # Object
+    checkTitle: ".CheckTitle"
+    checkTypes: ".CheckType" # Array of strings
+    subServiceName: ".SubServiceName"
+    statusExtended: ".StatusExtended"
+    resourceArn: ".ResourceArn"
+    resourceTags: ".ResourceTags" # Object
+    resourceType: ".ResourceType"
+    resourceDetails: ".ResourceDetails"
+    relatedUrl: ".RelatedUrl"
+    recommendationUrl: ".Remediation.Recommendation.Url"
+    remediationCode: ".Remediation.Code" # Object
+    categories: ".Categories" # Array
+    notes: ".Notes"
+    compliance: ".Compliance" # Object
 ocsf:
+  # Required fields
   assessmentStartTime: ".event_time"
   _timeFormat: "%Y-%m-%dT%H:%M:%S.%f"
-  findingUniqueId: ".finding_info.uid"
   provider: ".cloud.provider"
-  profile: null
   accountId: ".cloud.account.uid"
-  organizationsInfo:
-    concat:
-      - "Account Name: "
-      - ".cloud.account.name"
-      - ", Account Org: "
-      - ".cloud.org.name"
-  region: ".resources.[0].region"
   checkId: ".metadata.event_code"
-  checkTitle: ".finding_info.title"
-  checkTypes:
-    join:
-      source: ".finding_info.types" # Array
-      join_str: "\n"
   serviceName: ".resources.[0].group.name"
-  subServiceName: null
-  status: ".status_code"
-  statusExtended: ".status_detail"
   severity: ".severity" # .severity_id could also map
-  resourceId: ".resources.[0].name"
-  resourceArn: ".resources.[0].uid"
-  resourceTags: ".resources.[0].labels" # Object
-  resourceType: ".resources.[0].type"
-  resourceDetails: ".resources.[0].data.details"
-  description: ".finding_info.desc"
-  risk: ".risk_details"
-  relatedUrl: ".unmapped.related_url"
   recommendation: ".remediation.desc"
-  recommendationUrl:
-    filter:
-      source: ".remediation.references" # Array- Have to filter by http
-      regex: "^http.*"
-      join_str: "\n"
-  remediationCode:
-    filter:
-      source: ".remediation.references" # Array- Have to filter by !http
-      regex: "^(?!http).*"
-      join_str: "\n"
-  categories: ".unmapped.categories" # Array
-  notes: ".unmapped.notes"
-  compliance: ".unmapped.compliance" # Object with Array values
+  description: ".finding_info.desc"
+  # Non-required fields
+  region: ".resources.[0].region"
+  resourceId: ".resources.[0].name"
+  risk: ".risk_details"
+  status: ".status_code"
+  # Extras
+  extras:
+    findingUniqueId: ".finding_info.uid"
+    organizationsInfo:
+      concat:
+        - "Account Name: "
+        - ".cloud.account.name"
+        - ", Account Org: "
+        - ".cloud.org.name"
+    checkTitle: ".finding_info.title"
+    checkTypes: ".finding_info.types" # Array
+    statusExtended: ".status_detail"
+    #resources: ".resources"
+    resourceArn: ".resources.[0].uid"
+    resourceTags: ".resources.[0].labels" # Object
+    resourceType: ".resources.[0].type"
+    resourceDetails: ".resources.[0].data.details"
+    relatedUrl: ".unmapped.related_url"
+    recommendationUrl:
+      filter:
+        source: ".remediation.references" # Array- Have to filter by http
+        regex: "^http.*"
+        join_str: "\n"
+    remediationCode:
+      filter:
+        source: ".remediation.references" # Array- Have to filter by !http
+        regex: "^(?!http).*"
+        join_str: "\n"
+    categories: ".unmapped.categories" # Array
+    notes: ".unmapped.notes"
+    compliance: ".unmapped.compliance" # Object with Array values

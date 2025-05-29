@@ -49,35 +49,18 @@ namespace netmeld::datastore::objects::prowler {
       nmco::Time assessmentStartTime;
       std::string provider;
       std::string accountId;
+      std::string checkId;
       std::string serviceName;
       std::string severity;
-      std::string checkId;
-      std::string description;
       std::string recommendation;
-
-      // Link on tool-run-id, assessmentStartTime, provider, accountId, serviceName, checkId
-
-      std::string findingUniqueId; // prowler-provider-checkid-accountid-region-resourceid
-      std::string profile;
-      std::string organizationsInfo;
+      std::string description;
+      // non required fields
       std::string region;
-      std::string checkTitle;
-      std::string checkTypes;
-      std::string subServiceName;
-      std::string status;
-      std::string statusExtended;
       std::string resourceId;
-      std::string resourceArn;
-      std::string resourceTags;
-      std::string resourceType;
-      std::string resourceDetails;
       std::string risk;
-      std::string relatedUrl;
-      std::string recommendationUrl;
-      std::string remediationCode;
-      std::string categories;
-      std::string notes;
-      std::string compliance;
+      std::string status;
+      // Extras
+      json extras;
 
     public: // Variables should rarely appear at this scope
 

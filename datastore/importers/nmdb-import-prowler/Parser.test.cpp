@@ -46,38 +46,26 @@ class TestParser : public Parser
 
 BOOST_AUTO_TEST_CASE(testFromJsonV2)
 {
-  auto v2Config = YAML::Load(R"({
-    "assessmentStartTime": ".Timestamp",
-    "_timeFormat": "%Y-%m-%dT%H:%M:%SZ",
-    "findingUniqueId": null,
-    "provider": "aws",
-    "profile": null,
-    "accountId": ".Account Number",
-    "organizationsInfo": null,
-    "region": ".Region",
-    "checkId": ".Control ID",
-    "checkTitle": null,
-    "checkTypes": null,
-    "serviceName": ".Service",
-    "subServiceName": null,
-    "status": ".Status",
-    "statusExtended": null,
-    "severity": ".Severity",
-    "resourceId": ".Resource ID",
-    "resourceArn": null,
-    "resourceTags": null,
-    "resourceType": null,
-    "resourceDetails": null,
-    "description": ".Control",
-    "risk": ".Risk",
-    "relatedUrl": null,
-    "recommendation": ".Remediation",
-    "recommendationUrl": ".Doc link",
-    "remediationCode": null,
-    "categories": null,
-    "notes": null,
-    "compliance": ".Level"
-  })");
+  auto v2Config = YAML::Load(R"(# Required fields
+assessmentStartTime: ".Timestamp"
+_timeFormat: "%Y-%m-%dT%H:%M:%SZ"
+provider: 'aws'
+accountId: ".Account Number"
+checkId: ".Control ID"
+serviceName: ".Service"
+severity: ".Severity"
+recommendation: ".Remediation"
+description: ".Control"
+# Non-required fields
+region: ".Region"
+resourceId: ".Resource ID"
+risk: ".Risk"
+status: ".Status"
+# Extras
+extras:
+  recommendationUrl: ".Doc link"
+  compliance: ".Level"
+)");
   // NOTE: These are primarily for testing "file" logic, not data logic
   TestParser tp;
   std::string test;
@@ -125,38 +113,41 @@ BOOST_AUTO_TEST_CASE(testFromJsonV2)
 
 BOOST_AUTO_TEST_CASE(testFromJsonV3)
 {
-  auto v3Config = YAML::Load(R"({
-    "assessmentStartTime": ".AssessmentStartTime",
-    "_timeFormat": "%Y-%m-%dT%H:%M:%S",
-    "findingUniqueId": ".FindingUniqueId",
-    "provider": ".Provider",
-    "profile": ".Profile",
-    "accountId": ".AccountId",
-    "organizationsInfo": ".OrganizationsInfo",
-    "region": ".Region",
-    "checkId": ".CheckID",
-    "checkTitle": ".CheckTitle",
-    "checkTypes": ".CheckType",
-    "serviceName": ".ServiceName",
-    "subServiceName": ".SubServiceName",
-    "status": ".Status",
-    "statusExtended": ".StatusExtended",
-    "severity": ".Severity",
-    "resourceId": ".ResourceId",
-    "resourceArn": ".ResourceArn",
-    "resourceTags": ".ResourceTags",
-    "resourceType": ".ResourceType",
-    "resourceDetails": ".ResourceDetails",
-    "description": ".Description",
-    "risk": ".Risk",
-    "relatedUrl": ".RelatedUrl",
-    "recommendation": ".Remediation.Recommendation.Text",
-    "recommendationUrl": ".Remediation.Recommendation.Url",
-    "remediationCode": ".Remediation.Code",
-    "categories": ".Categories",
-    "notes": ".Notes",
-    "compliance": ".Compliance"
-  })");
+  auto v3Config = YAML::Load(R"(# Required fields
+assessmentStartTime: ".AssessmentStartTime"
+_timeFormat: "%Y-%m-%dT%H:%M:%S"
+provider: ".Provider"
+accountId: ".AccountId"
+checkId: ".CheckID"
+serviceName: ".ServiceName"
+severity: ".Severity"
+recommendation: ".Remediation.Recommendation.Text"
+description: ".Description"
+# Non-required field
+region: ".Region"
+resourceId: ".ResourceId"
+risk: ".Risk"
+status: ".Status"
+# Extras
+extras:
+  findingUniqueId: ".FindingUniqueId"
+  profile: ".Profile"
+  organizationsInfo: ".OrganizationsInfo" # Object
+  checkTitle: ".CheckTitle"
+  checkTypes: ".CheckType" # Array of strings
+  subServiceName: ".SubServiceName"
+  statusExtended: ".StatusExtended"
+  resourceArn: ".ResourceArn"
+  resourceTags: ".ResourceTags" # Object
+  resourceType: ".ResourceType"
+  resourceDetails: ".ResourceDetails"
+  relatedUrl: ".RelatedUrl"
+  recommendationUrl: ".Remediation.Recommendation.Url"
+  remediationCode: ".Remediation.Code" # Object
+  categories: ".Categories" # Array
+  notes: ".Notes"
+  compliance: ".Compliance" # Object
+)");
   // NOTE: These are primarily for testing "file" logic, not data logic
   TestParser tp;
   std::string test;
@@ -206,62 +197,53 @@ BOOST_AUTO_TEST_CASE(testFromJsonV3)
 
 BOOST_AUTO_TEST_CASE(testFromJsonOCSF)
 {
-  auto ocsfConfig = YAML::Load(R"({
-      "assessmentStartTime": ".event_time",
-      "_timeFormat": "%Y-%m-%dT%H:%M:%S.%f",
-      "findingUniqueId": ".finding_info.uid",
-      "provider": ".cloud.provider",
-      "profile": null,
-      "accountId": ".cloud.account.uid",
-      "organizationsInfo": {
-          "concat": [
-              "Account Name: ",
-              ".cloud.account.name",
-              ", Account Org: ",
-              ".cloud.org.name"
-          ]
-      },
-      "region": ".resources.[0].region",
-      "checkId": ".metadata.event_code",
-      "checkTitle": ".finding_info.title",
-      "checkTypes": {
-          "join": {
-              "source": ".finding_info.types",
-              "join_str": "\n"
-          }
-      },
-      "serviceName": ".resources.[0].group.name",
-      "subServiceName": null,
-      "status": ".status_code",
-      "statusExtended": ".status_detail",
-      "severity": ".severity",
-      "resourceId": ".resources.[0].name",
-      "resourceArn": ".resources.[0].uid",
-      "resourceTags": ".resources.[0].labels",
-      "resourceType": ".resources.[0].type",
-      "resourceDetails": ".resources.[0].data.details",
-      "description": ".finding_info.desc",
-      "risk": ".risk_details",
-      "relatedUrl": ".unmapped.related_url",
-      "recommendation": ".remediation.desc",
-      "recommendationUrl": {
-          "filter": {
-              "source": ".remediation.references",
-              "regex": "^http.*",
-              "join_str": "\n"
-          }
-      },
-      "remediationCode": {
-          "filter": {
-              "source": ".remediation.references",
-              "regex": "^(?!http).*",
-              "join_str": "\n"
-          }
-      },
-      "categories": ".unmapped.categories",
-      "notes": ".unmapped.notes",
-      "compliance": ".unmapped.compliance"
-  })");
+  auto ocsfConfig = YAML::Load(R"(# Required fields
+assessmentStartTime: ".event_time"
+_timeFormat: "%Y-%m-%dT%H:%M:%S.%f"
+provider: ".cloud.provider"
+accountId: ".cloud.account.uid"
+checkId: ".metadata.event_code"
+serviceName: ".resources.[0].group.name"
+severity: ".severity" # .severity_id could also map
+recommendation: ".remediation.desc"
+description: ".finding_info.desc"
+# Non-required fields
+region: ".resources.[0].region"
+resourceId: ".resources.[0].name"
+risk: ".risk_details"
+status: ".status_code"
+# Extras
+extras:
+  findingUniqueId: ".finding_info.uid"
+  organizationsInfo:
+    concat:
+      - "Account Name: "
+      - ".cloud.account.name"
+      - ", Account Org: "
+      - ".cloud.org.name"
+  checkTitle: ".finding_info.title"
+  checkTypes: ".finding_info.types" # Array
+  statusExtended: ".status_detail"
+  #resources: ".resources"
+  resourceArn: ".resources.[0].uid"
+  resourceTags: ".resources.[0].labels" # Object
+  resourceType: ".resources.[0].type"
+  resourceDetails: ".resources.[0].data.details"
+  relatedUrl: ".unmapped.related_url"
+  recommendationUrl:
+    filter:
+      source: ".remediation.references" # Array- Have to filter by http
+      regex: "^http.*"
+      join_str: "\n"
+  remediationCode:
+    filter:
+      source: ".remediation.references" # Array- Have to filter by !http
+      regex: "^(?!http).*"
+      join_str: "\n"
+  categories: ".unmapped.categories" # Array
+  notes: ".unmapped.notes"
+  compliance: ".unmapped.compliance" # Object with Array values
+)");
   // NOTE: These are primarily for testing "file" logic, not data logic
   TestParser tp;
   std::string test;
@@ -294,14 +276,14 @@ BOOST_AUTO_TEST_CASE(testFromJsonOCSF)
   BOOST_TEST_REQUIRE(0 == out.size());
 
   // Parsable, some ocsf data
-  test = R"([{"cloud":{"account":{"id": "123abc"}}, "finding_info": {"uid":"abc123"}}])";
+  test = R"([{"cloud":{"account":{"id": "123abc"}, "provider":"aws"}, "finding_info": {"desc":"description"}, "metadata":{"event_code":"123"}, "resources":[{"group":{"name":"service name"}}], "severity":"High", "remediation":{"desc":"test"}}])";
   out = getResult(test);
   BOOST_TEST_REQUIRE(1 == out.size());
   BOOST_TEST(1 == out[0].data.size());
   tp.r =  Result();
 
-  test = R"([{"cloud":{"account":{"id": "123abc"}}, "finding_info": {"uid":"abc123"}},
-             {"cloud":{"account":{"id": "123abc"}}, "finding_info": {"uid":"abc123"}}
+  test = R"([{"cloud":{"account":{"id": "123abc"}, "provider":"aws"}, "finding_info": {"desc":"description"}, "metadata":{"event_code":"123"}, "resources":[{"group":{"name":"service name"}}], "severity":"High", "remediation":{"desc":"test"}},
+             {"cloud":{"account":{"id": "123abc"}, "provider":"aws"}, "finding_info": {"desc":"description"}, "metadata":{"event_code":"123"}, "resources":[{"group":{"name":"service name"}}], "severity":"High", "remediation":{"desc":"test"}}
             ])";
   out = getResult(test);
   BOOST_TEST_REQUIRE(1 == out.size());

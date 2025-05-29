@@ -52,42 +52,39 @@ namespace netmeld::datastore::objects::prowler {
     assertRequiredKey(format, "serviceName");
     assertRequiredKey(format, "checkId");
     assertRequiredKey(format, "severity");
+    assertRequiredKey(format, "description");
     assertRequiredKey(format, "recommendation");
 
+    // Time field
     std::string timeString;
     smartAssign(format, "assessmentStartTime", jline, &timeString);
     std::string timeFormat = "%Y-%m-%dT%H:%M:%S";
     smartAssign(format, "_timeFormat", jline, &timeFormat);
     assessmentStartTime.readFormatted(timeString, timeFormat);
 
-    smartAssign(format, "findingUniqueId", jline, &findingUniqueId);
+    // Requried string fields
     smartAssign(format, "provider", jline, &provider);
-    smartAssign(format, "profile", jline, &profile);
     smartAssign(format, "accountId", jline, &accountId);
-    smartAssign(format, "organizationsInfo", jline, &organizationsInfo);
-    smartAssign(format, "region", jline, &region);
     smartAssign(format, "checkId", jline, &checkId);
-    smartAssign(format, "checkTitle", jline, &checkTitle);
-    smartAssign(format, "checkTypes", jline, &checkTypes);
     smartAssign(format, "serviceName", jline, &serviceName);
-    smartAssign(format, "subServiceName", jline, &subServiceName);
-    smartAssign(format, "status", jline, &status);
-    smartAssign(format, "statusExtended", jline, &statusExtended);
     smartAssign(format, "severity", jline, &severity);
-    smartAssign(format, "resourceId", jline, &resourceId);
-    smartAssign(format, "resourceArn", jline, &resourceArn);
-    smartAssign(format, "resourceTags", jline, &resourceTags);
-    smartAssign(format, "resourceType", jline, &resourceType);
-    smartAssign(format, "resourceDetails", jline, &resourceDetails);
-    smartAssign(format, "description", jline, &description);
-    smartAssign(format, "risk", jline, &risk);
-    smartAssign(format, "relatedUrl", jline, &relatedUrl);
     smartAssign(format, "recommendation", jline, &recommendation);
-    smartAssign(format, "recommendationUrl", jline, &recommendationUrl);
-    smartAssign(format, "remediationCode", jline, &remediationCode);
-    smartAssign(format, "categories", jline, &categories);
-    smartAssign(format, "notes", jline, &notes);
-    smartAssign(format, "compliance", jline, &compliance);
+    smartAssign(format, "description", jline, &description);
+    // Non-required fields
+    smartAssign(format, "region", jline, &region);
+    smartAssign(format, "resourceId", jline, &resourceId);
+    smartAssign(format, "risk", jline, &risk);
+    smartAssign(format, "status", jline, &status);
+
+    LOG_DEBUG << "Starting extras" << std::endl;
+    for(auto pair : format["extras"]) {
+      LOG_DEBUG << "\tKey = " << pair.first << std::endl;
+      auto result = keySearch(pair.second, jline);
+      if(!result.is_null())
+      {
+          extras[pair.first.as<std::string>()] = result;
+      }
+    }
   }
 
   // ===========================================================================
@@ -286,11 +283,12 @@ namespace netmeld::datastore::objects::prowler {
     return !( assessmentStartTime.isNull()
            || provider.empty()
            || accountId.empty()
-           || serviceName.empty()
            || checkId.empty()
+           || serviceName.empty()
            || severity.empty()
-           || description.empty()
            || recommendation.empty()
+           || description.empty()
+           || extras.is_null()
            )
       ;
   }
@@ -312,42 +310,22 @@ namespace netmeld::datastore::objects::prowler {
         , assessmentStartTime
         , provider
         , accountId
-        , region
         , checkId
         , serviceName
-        , status
         , nmcu::toLower(severity)
-        , resourceId
-        , description
-        , risk
         , recommendation
+        , description
+        , region
+        , resourceId
+        , risk
+        , status
       );
 
-      json extras = {
-        {"findingUniqueId", findingUniqueId},
-        {"profile", profile},
-        {"organizationsInfo", organizationsInfo},
-        {"checkTitle", checkTitle},
-        {"checkTypes", checkTypes},
-        {"subServiceName", subServiceName},
-        {"statusExtended", statusExtended},
-        {"resourceArn", resourceArn},
-        {"resourceTags", resourceTags},
-        {"resourceType", resourceType},
-        {"resourceDetails", resourceDetails},
-        {"relatedUrl", relatedUrl},
-        {"recommendationUrl", recommendationUrl},
-        {"remediationCode", remediationCode},
-        {"categories", categories},
-        {"notes", notes},
-        {"compliance", compliance}
-      };
       t.exec_prepared("insert_raw_prowler_check_extras",
           toolRunId
         , assessmentStartTime
         , provider
         , accountId
-        , region
         , checkId
         , serviceName
         , extras.dump()
@@ -361,34 +339,18 @@ namespace netmeld::datastore::objects::prowler {
 
     oss << R"([)"
         << R"("assessmentStartTime": ")" << assessmentStartTime
-        << R"(", "findingUniqueId": ")" << findingUniqueId
         << R"(", "provider": ")" << provider
-        << R"(", "profile": ")" << profile
         << R"(", "accountId": ")" << accountId
-        << R"(", "organizationsInfo": ")" << organizationsInfo
-        << R"(", "region": ")" << region
         << R"(", "checkId": ")" << checkId
-        << R"(", "checkTitle": ")" << checkTitle
-        << R"(", "checkTypes": ")" << checkTypes
         << R"(", "serviceName": ")" << serviceName
-        << R"(", "subServiceName": ")" << subServiceName
-        << R"(", "status": ")" << status
-        << R"(", "statusExtended": ")" << statusExtended
         << R"(", "severity": ")" << severity
-        << R"(", "resourceId": ")" << resourceId
-        << R"(", "resourceArn": ")" << resourceArn
-        << R"(", "resourceTags": ")" << resourceTags
-        << R"(", "resourceType": ")" << resourceType
-        << R"(", "resourceDetails": ")" << resourceDetails
-        << R"(", "description": ")" << description
-        << R"(", "risk": ")" << risk
-        << R"(", "relatedUrl": ")" << relatedUrl
         << R"(", "recommendation": ")" << recommendation
-        << R"(", "recommendationUrl": ")" << recommendationUrl
-        << R"(", "remediationCode": ")" << remediationCode
-        << R"(", "categories": ")" << categories
-        << R"(", "notes": ")" << notes
-        << R"(", "compliance": ")" << compliance
+        << R"(", "description": ")" << description
+        << R"(", "region": ")" << region
+        << R"(", "resourceId": ")" << resourceId
+        << R"(", "risk": ")" << risk
+        << R"(", "status": ")" << status
+        << R"(", "extras": )" << extras.dump()
         << R"("])"
         ;
 
@@ -399,64 +361,30 @@ namespace netmeld::datastore::objects::prowler {
   ProwlerData::operator<=>(const ProwlerData& rhs) const
   {
     return std::tie( // assessmentStartTime,
-                     findingUniqueId
-                   , provider
-                   , profile
+                     provider
                    , accountId
-                   , organizationsInfo
-                   , region
                    , checkId
-                   , checkTitle
-                   , checkTypes
                    , serviceName
-                   , subServiceName
-                   , status
-                   , statusExtended
                    , severity
-                   , resourceId
-                   , resourceArn
-                   , resourceTags
-                   , resourceType
-                   , resourceDetails
-                   , description
-                   , risk
-                   , relatedUrl
                    , recommendation
-                   , recommendationUrl
-                   , remediationCode
-                   , categories
-                   , notes
-                   , compliance
+                   , description
+                   , region
+                   , resourceId
+                   , risk
+                   , status
                    )
        <=> std::tie( // rhs.assessmentStartTime,
-                     rhs.findingUniqueId
-                   , rhs.provider
-                   , rhs.profile
+                     rhs.provider
                    , rhs.accountId
-                   , rhs.organizationsInfo
-                   , rhs.region
                    , rhs.checkId
-                   , rhs.checkTitle
-                   , rhs.checkTypes
                    , rhs.serviceName
-                   , rhs.subServiceName
-                   , rhs.status
-                   , rhs.statusExtended
                    , rhs.severity
-                   , rhs.resourceId
-                   , rhs.resourceArn
-                   , rhs.resourceTags
-                   , rhs.resourceType
-                   , rhs.resourceDetails
-                   , rhs.description
-                   , rhs.risk
-                   , rhs.relatedUrl
                    , rhs.recommendation
-                   , rhs.recommendationUrl
-                   , rhs.remediationCode
-                   , rhs.categories
-                   , rhs.notes
-                   , rhs.compliance
+                   , rhs.description
+                   , rhs.region
+                   , rhs.resourceId
+                   , rhs.risk
+                   , rhs.status
                    )
       ;
   }
