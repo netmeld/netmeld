@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,11 +24,12 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
-#ifndef PROWLER_V2_DATA_HPP
-#define PROWLER_V2_DATA_HPP
+#ifndef PROWLER_DATA_HPP
+#define PROWLER_DATA_HPP
 
 #include <set>
 #include <nlohmann/json.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include <netmeld/core/objects/Time.hpp>
 #include <netmeld/datastore/objects/AbstractDatastoreObject.hpp>
@@ -38,25 +39,28 @@ namespace nmco = netmeld::core::objects;
 
 namespace netmeld::datastore::objects::prowler {
 
-  class ProwlerV2Data : public AbstractDatastoreObject {
+  class ProwlerData : public AbstractDatastoreObject {
     // =========================================================================
     // Variables
     // =========================================================================
     private: // Variables will probably rarely appear at this scope
     protected: // Variables intended for internal/subclass API
-      std::string accountNumber;
-      nmco::Time  timestamp;
-      std::string region;
-      std::string control;
+      // minimum required fields: based on nmdb-export-scan needs
+      nmco::Time assessmentStartTime;
+      std::string provider;
+      std::string accountId;
+      std::string checkId;
+      std::string serviceName;
       std::string severity;
-      std::string status;
-      std::string level;
-      std::string controlId;
-      std::string service;
-      std::string risk;
-      std::string remediation;
-      std::string documentationLink;
+      std::string recommendation;
+      std::string description;
+      // non required fields
+      std::string region;
       std::string resourceId;
+      std::string risk;
+      std::string status;
+      // Extras
+      json extras;
 
     public: // Variables should rarely appear at this scope
 
@@ -66,15 +70,22 @@ namespace netmeld::datastore::objects::prowler {
     private: // Constructors which should be hidden from API users
     protected: // Constructors part of subclass API
     public: // Constructors part of public API
-      ProwlerV2Data() = default;
-      explicit ProwlerV2Data(const json&);
+      ProwlerData() = default;
+      explicit ProwlerData(const json&, const YAML::Node&);
 
     // =========================================================================
     // Methods
     // =========================================================================
     private: // Methods which should be hidden from API users
+      void assertRequiredKey(const YAML::Node&, const std::string&);
+      std::string dump(const YAML::Node&);
     protected: // Methods part of subclass API
+      std::vector<std::string> split(std::string, const std::string&);
     public: // Methods part of public API
+      json keySearch(const YAML::Node&, const json&);
+      json recursiveSearch(std::vector<std::string>, const json&);
+      void smartAssign(const YAML::Node&, const std::string&, const json&, std::string*);
+
       bool isValid() const override;
       void save(pqxx::transaction_base&,
                 const nmco::Uuid&, const std::string&) override;
@@ -82,8 +93,8 @@ namespace netmeld::datastore::objects::prowler {
       // Utilized for full object data dump, for debug purposes
       std::string toDebugString() const override;
 
-      std::strong_ordering operator<=>(const ProwlerV2Data&) const;
-      bool operator==(const ProwlerV2Data&) const;
+      std::strong_ordering operator<=>(const ProwlerData&) const;
+      bool operator==(const ProwlerData&) const;
   };
 }
-#endif // PROWLER_V2_DATA_HPP
+#endif // PROWLER_DATA_HPP

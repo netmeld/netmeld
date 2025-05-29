@@ -1,0 +1,122 @@
+{
+    "v2": {
+        "assessmentStartTime": ".Timestamp",
+        "_timeFormat": "%Y-%m-%dT%H:%M:%SZ",
+        "findingUniqueId": null,
+        "provider": "aws",
+        "profile": null,
+        "accountId": ".Account Number",
+        "organizationsInfo": null,
+        "region": ".Region",
+        "checkId": ".Control ID",
+        "checkTitle": null,
+        "checkTypes": null,
+        "serviceName": ".Service",
+        "subServiceName": null,
+        "status": ".Status",
+        "statusExtended": null,
+        "severity": ".Severity",
+        "resourceId": ".Resource ID",
+        "resourceArn": null,
+        "resourceTags": null,
+        "resourceType": null,
+        "resourceDetails": null,
+        "description": ".Control",
+        "risk": ".Risk",
+        "relatedUrl": null,
+        "recommendation": ".Remediation",
+        "recommendationUrl": ".Doc link",
+        "remediationCode": null,
+        "categories": null,
+        "notes": null,
+        "compliance": ".Level"
+    },
+    "v3": {
+        "assessmentStartTime": ".AssessmentStartTime",
+        "_timeFormat": "%Y-%m-%dT%H:%M:%S",
+        "findingUniqueId": ".FindingUniqueId",
+        "provider": ".Provider",
+        "profile": ".Profile",
+        "accountId": ".AccountId",
+        "organizationsInfo": ".OrganizationsInfo",
+        "region": ".Region",
+        "checkId": ".CheckID",
+        "checkTitle": ".CheckTitle",
+        "checkTypes": ".CheckType",
+        "serviceName": ".ServiceName",
+        "subServiceName": ".SubServiceName",
+        "status": ".Status",
+        "statusExtended": ".StatusExtended",
+        "severity": ".Severity",
+        "resourceId": ".ResourceId",
+        "resourceArn": ".ResourceArn",
+        "resourceTags": ".ResourceTags",
+        "resourceType": ".ResourceType",
+        "resourceDetails": ".ResourceDetails",
+        "description": ".Description",
+        "risk": ".Risk",
+        "relatedUrl": ".RelatedUrl",
+        "recommendation": ".Remediation.Recommendation.Text",
+        "recommendationUrl": ".Remediation.Recommendation.Url",
+        "remediationCode": ".Remediation.Code",
+        "categories": ".Categories",
+        "notes": ".Notes",
+        "compliance": ".Compliance"
+    },
+    "ocsf": {
+        "assessmentStartTime": ".event_time",
+        "_timeFormat": "%Y-%m-%dT%H:%M:%S.%f",
+        "findingUniqueId": ".finding_info.uid",
+        "provider": ".cloud.provider",
+        "profile": null,
+        "accountId": ".cloud.account.uid",
+        "organizationsInfo": {
+            "concat": [
+                "Account Name: ",
+                ".cloud.account.name",
+                ", Account Org: ",
+                ".cloud.org.name"
+            ]
+        },
+        "region": ".resources.[0].region",
+        "checkId": ".metadata.event_code",
+        "checkTitle": ".finding_info.title",
+        "checkTypes": {
+            "join": {
+                "source": ".finding_info.types",
+                "join_str": "\n"
+            }
+        },
+        "serviceName": ".resources.[0].group.name",
+        "subServiceName": null,
+        "status": ".status_code",
+        "statusExtended": ".status_detail",
+        "severity": ".severity",
+        "resourceId": ".resources.[0].name",
+        "resourceArn": ".resources.[0].uid",
+        "resourceTags": ".resources.[0].labels",
+        "resourceType": ".resources.[0].type",
+        "resourceDetails": ".resources.[0].data.details",
+        "description": ".finding_info.desc",
+        "risk": ".risk_details",
+        "relatedUrl": ".unmapped.related_url",
+        "recommendation": ".remediation.desc",
+        "recommendationUrl": {
+            "filter": {
+                "source": ".remediation.references",
+                "regex": "^http.*",
+                "join_str": "\n"
+            }
+        },
+        "remediationCode": {
+            "filter": {
+                "source": ".remediation.references",
+                "regex": "^(?!http).*",
+                "join_str": "\n"
+            }
+        },
+        "categories": ".unmapped.categories",
+        "notes": ".unmapped.notes",
+        "compliance": ".unmapped.compliance"
+    }
+}

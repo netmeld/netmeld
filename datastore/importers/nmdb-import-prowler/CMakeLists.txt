@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+# Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
 # (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
@@ -26,22 +26,23 @@
 
 add_executable(${TGT_TOOL}
     Parser.cpp
-    ProwlerV2Data.cpp
-    ProwlerV3Data.cpp
+    ProwlerData.cpp
     ${TGT_TOOL}.cpp
   )
 
 target_link_libraries(${TGT_TOOL}
     netmeld-datastore
+    ${YAML_CPP_LIBRARIES}
   )
 
 # The following is commented out as we don't want to actually install templates
 nm_install_bin(${TGT_TOOL})
+nm_install_conf(prowler_config.yaml "datastore")
+nm_install_conf(prowler_config.json "datastore")
 #nm_install_include(file dir)
 
 foreach(ITEM
-    ProwlerV2Data
-    ProwlerV3Data
+    ProwlerData
   )
   nm_add_test(${ITEM})
   target_sources(${TGT_TEST}
@@ -51,22 +52,23 @@ foreach(ITEM
       )
   target_link_libraries(${TGT_TEST}
       netmeld-datastore
+      ${YAML_CPP_LIBRARIES}
     )
 endforeach()
+
 foreach(ITEM
     Parser
   )
   nm_add_test(${ITEM})
   target_sources(${TGT_TEST}
     PRIVATE
-      ProwlerV2Data.cpp
-      ProwlerV2Data.hpp
-      ProwlerV3Data.cpp
-      ProwlerV3Data.hpp
+      ProwlerData.cpp
+      ProwlerData.hpp
       ${ITEM}.hpp
       ${ITEM}.cpp
       )
   target_link_libraries(${TGT_TEST}
       netmeld-datastore
+      ${YAML_CPP_LIBRARIES}
     )
 endforeach()

@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -38,44 +38,42 @@ Parser::Parser()
 {}
 
 void
-Parser::fromJsonV2(std::istream& _file)
+Parser::parseJson(const json& entry, const YAML::Node& config, Data* d)
 {
-  // V2 output is a JSON lines file
+  nmdop::ProwlerData pd {entry, config};
+  if (pd != nmdop::ProwlerData(json::object(), config)) {
+    d->data.emplace_back(pd);
+  } else {
+    LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
+  }
+}
+
+void
+Parser::fromJsonLines(std::istream& _file, const YAML::Node& config)
+{
   Data d;
   std::string line;
   while (std::getline(_file, line)) {
-    json jline = json::parse(line);
-    nmdop::ProwlerV2Data v2d {jline};
-    if (v2d != nmdop::ProwlerV2Data()) {
-      d.v2Data.emplace_back(v2d);
-    } else {
-      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
-    }
+    json entry = json::parse(line);
+    parseJson(entry, config, &d);
   }
-  if (d != Data()) {
+  if(d != Data()) {
     r.emplace_back(d);
   }
 }
 
 void
-Parser::fromJsonV3(std::istream& _file)
+Parser::fromJson(std::istream& _file, const YAML::Node& config)
 {
-  // V3 output is a JSON array
   Data d;
   auto dataArray = json::parse(_file);
   for (const auto& entry : dataArray) {
-    nmdop::ProwlerV3Data v3d {entry};
-    if (v3d != nmdop::ProwlerV3Data()) {
-      d.v3Data.emplace_back(v3d);
-    } else {
-      LOG_WARN << "Malformed input: Empty JSON data." << std::endl;
-    }
+    parseJson(entry, config, &d);
   }
-  if (d != Data()) {
+  if(d != Data()) {
     r.emplace_back(d);
   }
 }
-
 
 
 // =============================================================================

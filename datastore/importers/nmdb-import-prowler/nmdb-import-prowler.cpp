@@ -1,5 +1,5 @@
 // =============================================================================
-// Copyright 2022 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -24,6 +24,8 @@
 // Maintained by Sandia National Laboratories <Netmeld@sandia.gov>
 // =============================================================================
 
+#include <yaml-cpp/yaml.h>
+
 #include <netmeld/datastore/tools/AbstractImportTool.hpp>
 #include <netmeld/datastore/parsers/ParserHelper.hpp> // if parser not needed
 
@@ -43,6 +45,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
   // Variables
   // ===========================================================================
   private: // Variables should generally be private
+    nmcu::FileManager& nmfm {nmcu::FileManager::getInstance()};
   protected: // Variables intended for internal/subclass API
   public: // Variables should rarely appear at this scope
 
@@ -70,6 +73,14 @@ class Tool : public nmdt::AbstractImportTool<P,R>
     void
     addToolOptions() override
     {
+      const auto& configFile {nmfm.getConfPath()/"datastore/prowler_config.yaml"};
+      this->opts.addRequiredOption("config-file", std::make_tuple(
+          "config-file",
+          po::value<std::string>()->required()->default_value(configFile),
+          "Config file to use."
+          " Either --config-file param or implicit last argument.")
+        );
+
       this->opts.removeRequiredOption("device-id");
       this->opts.addAdvancedOption("device-id", std::make_tuple(
             "device-id"
@@ -80,9 +91,9 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
       this->opts.addRequiredOption("prowler-version", std::make_tuple(
             "prowler-version"
-          , po::value<uint16_t>()->default_value(3)
+          , po::value<uint16_t>()->default_value(5)
           , "Which prowler version's JSON to process."
-            " Known change between v2 and v3."
+            " Known change between v2, v3, and v5."
           )
         );
 
@@ -97,32 +108,25 @@ class Tool : public nmdt::AbstractImportTool<P,R>
       const auto version {this->opts.template getValueAs<uint16_t>("prowler-version")};
 
       this->executionStart = nmco::Time();
-      try {
-        Parser parser;
+      Parser parser;
 
-        if (2 == version) {
-          parser.fromJsonV2(f);
-        } else if (3 == version) {
-          parser.fromJsonV3(f);
-        } else {
-          LOG_WARN << "No valid version given; aborting\n";
-          std::exit(nmcu::Exit::FAILURE);
-        }
+      const auto& configFile {this->opts.getValue("config-file")};
+      LOG_DEBUG << "Looking for config file: " << configFile << "\n";
+      YAML::Node config {YAML::LoadFile(configFile)};
 
-        this->tResults = parser.getData();
-
-      } catch (json::out_of_range& ex) {
-        LOG_ERROR << "Parse error " << ex.what()
-                  << std::endl
-                  ;
-        std::exit(nmcu::Exit::FAILURE);
-      } catch (json::parse_error& ex) {
-        LOG_ERROR << "Parse error at byte " << ex.byte
-                  << " -- " << ex.what()
-                  << std::endl
-                  ;
+      if (2 == version) {
+        parser.fromJsonLines(f, config["v2"]);
+      } else if (3 == version) {
+        parser.fromJson(f, config["v3"]);
+      } else if (5 == version) {
+        parser.fromJson(f, config["ocsf"]);
+      } else {
+        LOG_WARN << "No valid version given; aborting\n";
         std::exit(nmcu::Exit::FAILURE);
       }
+
+      this->tResults = parser.getData();
+
       this->executionStop = nmco::Time();
     }
 
@@ -135,12 +139,7 @@ class Tool : public nmdt::AbstractImportTool<P,R>
 
       for (auto& results : this->tResults) {
 
-        for (auto& entry : results.v2Data) {
-          entry.save(t, toolRunId, deviceId);
-          LOG_DEBUG << entry.toDebugString() << std::endl;
-        }
-
-        for (auto& entry : results.v3Data) {
+        for (auto& entry : results.data) {
           entry.save(t, toolRunId, deviceId);
           LOG_DEBUG << entry.toDebugString() << std::endl;
         }
